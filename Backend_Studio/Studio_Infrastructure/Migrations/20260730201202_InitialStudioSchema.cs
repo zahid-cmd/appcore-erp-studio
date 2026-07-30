@@ -7,11 +7,57 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AppCore.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialNavigationManagement : Migration
+    public partial class InitialStudioSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "ActivityHistories",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Module = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    EntityName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    EntityId = table.Column<long>(type: "bigint", nullable: false),
+                    ActivityType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ActivityTitle = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ActivityDescription = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    PerformedBy = table.Column<long>(type: "bigint", nullable: false),
+                    PerformedByName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    PerformedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActivityHistories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MasterActivities",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    DisplayOrder = table.Column<int>(type: "integer", nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<long>(type: "bigint", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ModifiedBy = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<long>(type: "bigint", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    SequenceNo = table.Column<int>(type: "integer", nullable: false),
+                    Code = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MasterActivities", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "NavigationModules",
                 columns: table => new
@@ -20,6 +66,7 @@ namespace AppCore.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RouteKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
@@ -39,6 +86,38 @@ namespace AppCore.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "NavigationActivities",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NavigationModuleId = table.Column<long>(type: "bigint", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    DisplayOrder = table.Column<int>(type: "integer", nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<long>(type: "bigint", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ModifiedBy = table.Column<long>(type: "bigint", nullable: true),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedBy = table.Column<long>(type: "bigint", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    SequenceNo = table.Column<int>(type: "integer", nullable: false),
+                    Code = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NavigationActivities", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NavigationActivities_NavigationModules_NavigationModuleId",
+                        column: x => x.NavigationModuleId,
+                        principalTable: "NavigationModules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "NavigationMenus",
                 columns: table => new
                 {
@@ -47,6 +126,7 @@ namespace AppCore.Infrastructure.Migrations
                     NavigationModuleId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RouteKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Route = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -81,6 +161,7 @@ namespace AppCore.Infrastructure.Migrations
                     NavigationMenuId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RouteKey = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Route = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -106,37 +187,27 @@ namespace AppCore.Infrastructure.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "NavigationActivities",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    NavigationSubmenuId = table.Column<long>(type: "bigint", nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    DisplayOrder = table.Column<int>(type: "integer", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<long>(type: "bigint", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<long>(type: "bigint", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    DeletedBy = table.Column<long>(type: "bigint", nullable: true),
-                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    SequenceNo = table.Column<int>(type: "integer", nullable: false),
-                    Code = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_NavigationActivities", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_NavigationActivities_NavigationSubmenus_NavigationSubmenuId",
-                        column: x => x.NavigationSubmenuId,
-                        principalTable: "NavigationSubmenus",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivityHistories_Module_EntityName_EntityId",
+                table: "ActivityHistories",
+                columns: new[] { "Module", "EntityName", "EntityId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivityHistories_PerformedDate",
+                table: "ActivityHistories",
+                column: "PerformedDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MasterActivities_Code",
+                table: "MasterActivities",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MasterActivities_SequenceNo",
+                table: "MasterActivities",
+                column: "SequenceNo",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_NavigationActivities_Code",
@@ -145,9 +216,9 @@ namespace AppCore.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_NavigationActivities_NavigationSubmenuId_SequenceNo",
+                name: "IX_NavigationActivities_NavigationModuleId_SequenceNo",
                 table: "NavigationActivities",
-                columns: new[] { "NavigationSubmenuId", "SequenceNo" },
+                columns: new[] { "NavigationModuleId", "SequenceNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -157,20 +228,39 @@ namespace AppCore.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_NavigationMenus_NavigationModuleId",
+                name: "IX_NavigationMenus_NavigationModuleId_RouteKey",
                 table: "NavigationMenus",
-                column: "NavigationModuleId");
+                columns: new[] { "NavigationModuleId", "RouteKey" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_NavigationMenus_SequenceNo",
+                name: "IX_NavigationMenus_NavigationModuleId_SequenceNo",
                 table: "NavigationMenus",
-                column: "SequenceNo",
+                columns: new[] { "NavigationModuleId", "SequenceNo" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_NavigationModules_Code",
                 table: "NavigationModules",
                 column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NavigationModules_DisplayOrder",
+                table: "NavigationModules",
+                column: "DisplayOrder",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NavigationModules_Name",
+                table: "NavigationModules",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NavigationModules_RouteKey",
+                table: "NavigationModules",
+                column: "RouteKey",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -186,6 +276,12 @@ namespace AppCore.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_NavigationSubmenus_NavigationMenuId_RouteKey",
+                table: "NavigationSubmenus",
+                columns: new[] { "NavigationMenuId", "RouteKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_NavigationSubmenus_NavigationMenuId_SequenceNo",
                 table: "NavigationSubmenus",
                 columns: new[] { "NavigationMenuId", "SequenceNo" },
@@ -195,6 +291,12 @@ namespace AppCore.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ActivityHistories");
+
+            migrationBuilder.DropTable(
+                name: "MasterActivities");
+
             migrationBuilder.DropTable(
                 name: "NavigationActivities");
 

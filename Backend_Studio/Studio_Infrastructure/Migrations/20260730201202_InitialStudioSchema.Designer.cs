@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AppCore.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260725101547_AddMasterActivity")]
-    partial class AddMasterActivity
+    [Migration("20260730201202_InitialStudioSchema")]
+    partial class InitialStudioSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -188,7 +188,7 @@ namespace AppCore.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<long>("NavigationSubmenuId")
+                    b.Property<long>("NavigationModuleId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Remarks")
@@ -203,7 +203,7 @@ namespace AppCore.Infrastructure.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("NavigationSubmenuId", "SequenceNo")
+                    b.HasIndex("NavigationModuleId", "SequenceNo")
                         .IsUnique();
 
                     b.ToTable("NavigationActivities", (string)null);
@@ -271,12 +271,20 @@ namespace AppCore.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("RouteKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("SequenceNo")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("NavigationModuleId", "RouteKey")
                         .IsUnique();
 
                     b.HasIndex("NavigationModuleId", "SequenceNo")
@@ -339,6 +347,11 @@ namespace AppCore.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("RouteKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("SequenceNo")
                         .HasColumnType("integer");
 
@@ -351,6 +364,9 @@ namespace AppCore.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("RouteKey")
                         .IsUnique();
 
                     b.HasIndex("SequenceNo")
@@ -421,12 +437,20 @@ namespace AppCore.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("RouteKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("SequenceNo")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("NavigationMenuId", "RouteKey")
                         .IsUnique();
 
                     b.HasIndex("NavigationMenuId", "SequenceNo")
@@ -437,13 +461,13 @@ namespace AppCore.Infrastructure.Migrations
 
             modelBuilder.Entity("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationActivity", b =>
                 {
-                    b.HasOne("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationSubmenu", "Submenu")
+                    b.HasOne("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationModule", "NavigationModule")
                         .WithMany("Activities")
-                        .HasForeignKey("NavigationSubmenuId")
+                        .HasForeignKey("NavigationModuleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Submenu");
+                    b.Navigation("NavigationModule");
                 });
 
             modelBuilder.Entity("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationMenu", b =>
@@ -475,12 +499,9 @@ namespace AppCore.Infrastructure.Migrations
 
             modelBuilder.Entity("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationModule", b =>
                 {
-                    b.Navigation("Menus");
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationSubmenu", b =>
-                {
                     b.Navigation("Activities");
+
+                    b.Navigation("Menus");
                 });
 #pragma warning restore 612, 618
         }
