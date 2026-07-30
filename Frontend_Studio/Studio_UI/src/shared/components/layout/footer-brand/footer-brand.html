@@ -1,0 +1,27 @@
+<div class="footer-brand">
+
+    <button
+        type="button"
+        class="about-button"
+        (click)="openAbout()">
+
+        <i class="fas fa-circle-info"></i>
+
+        <span>About</span>
+
+    </button>
+
+    <div class="footer-brand-content">
+
+        <img
+            src="assets/logo-light.png"
+            alt="AppCore ERP">
+
+    </div>
+
+</div>
+
+<app-about-appcore
+    [visible]="showAbout"
+    (close)="closeAbout()">
+</app-about-appcore>

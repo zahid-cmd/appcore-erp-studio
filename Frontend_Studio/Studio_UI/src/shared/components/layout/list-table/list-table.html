@@ -1,0 +1,196 @@
+<div class="list-table">
+
+    <!-- HEADER -->
+    <div class="list-table-header">
+
+        <table class="list-table-grid">
+
+            <thead>
+                <tr>
+
+                    <th
+                        *ngFor="let column of columns"
+                        [style.width]="column.width"
+                        [class.left]="column.align==='left'"
+                        [class.center]="column.align==='center'"
+                        [class.right]="column.align==='right'"
+                        [class.sortable]="
+                            column.type!=='serial' &&
+                            column.type!=='actions' &&
+                            column.type!=='operation'
+                        "
+                        (click)="sort(column)"
+                    >
+                        {{column.header}}
+                    </th>
+
+                </tr>
+            </thead>
+
+        </table>
+
+    </div>
+
+
+    <!-- BODY -->
+    <div class="list-table-body">
+
+
+        <!-- LOADING -->
+        <div *ngIf="loading" class="table-state">
+            <app-orbit-loader></app-orbit-loader>
+        </div>
+
+
+        <!-- EMPTY -->
+        <div
+            *ngIf="!loading && !error && rows.length===0"
+            class="table-state">
+
+            <app-empty-state
+                icon="fas fa-table"
+                title="No Records Found"
+                subtitle="There are no records available to display.">
+            </app-empty-state>
+
+        </div>
+
+
+        <!-- ERROR -->
+        <div
+            *ngIf="!loading && error"
+            class="table-state">
+
+            <app-empty-state
+                icon="fas fa-triangle-exclamation"
+                title="Unable to Load Data"
+                subtitle="An error occurred while loading the records.">
+            </app-empty-state>
+
+        </div>
+
+
+
+        <!-- TABLE -->
+        <table
+            *ngIf="!loading && !error && rows.length>0"
+            class="list-table-grid">
+
+            <tbody>
+
+                <tr
+                    *ngFor="
+                        let row of rows;
+                        let i=index;
+                        trackBy:trackRow
+                    "
+                    class="list-table-row">
+
+
+                    <td
+                        *ngFor="let column of columns"
+                        [style.width]="column.width"
+                        [class.left]="column.align==='left'"
+                        [class.center]="column.align==='center'"
+                        [class.right]="column.align==='right'"
+                    >
+
+
+                        <!-- SERIAL -->
+                        <ng-container *ngIf="column.type==='serial'">
+                            {{getSerial(i)}}
+                        </ng-container>
+
+
+
+                        <!-- STATUS -->
+                        <ng-container *ngIf="column.type==='status'">
+
+                            <span
+                                class="status"
+                                [class.active]="getBooleanValue(row,column)"
+                                [class.inactive]="!getBooleanValue(row,column)"
+                            >
+                                {{getStatusLabel(getBooleanValue(row,column))}}
+                            </span>
+
+                        </ng-container>
+
+
+
+                        <!-- BOOLEAN -->
+                        <ng-container *ngIf="column.type==='boolean'">
+
+                            <span
+                                class="status"
+                                [class.active]="getBooleanValue(row,column)"
+                                [class.inactive]="!getBooleanValue(row,column)"
+                            >
+                                {{getBooleanLabel(getBooleanValue(row,column))}}
+                            </span>
+
+                        </ng-container>
+
+
+
+                        <!-- ACTIONS -->
+                        <ng-container *ngIf="column.type==='actions'">
+
+                            <div class="action-buttons">
+
+
+                                <button
+                                    *ngIf="actions.view"
+                                    type="button"
+                                    class="action-btn view"
+                                    (click)="onViewClick(row,$event)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+
+
+                                <button
+                                    *ngIf="actions.edit"
+                                    type="button"
+                                    class="action-btn edit"
+                                    (click)="onEditClick(row,$event)">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+
+
+                                <button
+                                    *ngIf="actions.delete"
+                                    type="button"
+                                    class="action-btn delete"
+                                    (click)="onDeleteClick(row,$event)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+
+
+                            </div>
+
+                        </ng-container>
+
+
+
+                        <!-- TEXT -->
+                        <ng-container
+                            *ngIf="
+                                !column.type ||
+                                column.type==='text'
+                            ">
+                            {{getCellValue(row,column)}}
+                        </ng-container>
+
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+
+    </div>
+
+</div>

@@ -1,0 +1,103 @@
+<div class="textarea-container">
+
+    <!-- =====================================================
+         LABEL
+    ====================================================== -->
+
+    <label
+
+        *ngIf="label"
+
+        class="textarea-label">
+
+        <span>
+
+            {{ label }}
+
+        </span>
+
+        <span
+
+            *ngIf="required"
+
+            class="textarea-required">
+
+            *
+
+        </span>
+
+    </label>
+
+    <!-- =====================================================
+         TEXTAREA
+    ====================================================== -->
+
+    <div
+
+        class="textarea"
+
+        [class.disabled]="disabled"
+
+        [class.readonly]="readonly"
+
+        [class.has-prefix]="hasPrefix"
+
+        [class.has-suffix]="hasSuffix">
+
+        <!-- =====================================================
+             PREFIX
+        ====================================================== -->
+
+        <div
+
+            *ngIf="hasPrefix"
+
+            class="textarea-prefix">
+
+            <i [class]="prefixIcon"></i>
+
+        </div>
+
+        <!-- =====================================================
+             TEXTAREA
+        ====================================================== -->
+
+        <textarea
+
+            [value]="value"
+
+            [rows]="rows"
+
+            [placeholder]="placeholder"
+
+            [disabled]="disabled"
+
+            [readonly]="readonly"
+
+            [required]="required"
+
+            [attr.maxlength]="maxLength || null"
+
+            [autofocus]="autofocus"
+
+            (input)="onInput($event)">
+
+        </textarea>
+
+        <!-- =====================================================
+             SUFFIX
+        ====================================================== -->
+
+        <div
+
+            *ngIf="hasSuffix"
+
+            class="textarea-suffix">
+
+            <i [class]="suffixIcon"></i>
+
+        </div>
+
+    </div>
+
+</div>

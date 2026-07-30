@@ -1,0 +1,342 @@
+<!--============================================================
+    Item Cart
+=============================================================-->
+
+<div class="list-table">
+
+    <!--========================================================
+        Header
+    =========================================================-->
+
+    <div class="list-table-header">
+
+        <table class="list-table-grid">
+
+            <thead>
+
+                <tr>
+
+                    <th
+
+                        *ngFor="let column of columns"
+
+                        [style.width]="column.width"
+
+                        [class.left]="column.align === 'left'"
+
+                        [class.center]="column.align === 'center'"
+
+                        [class.right]="column.align === 'right'"
+
+                        [class.permission-column]="column.headerCheckbox">
+
+                        <!--========================================
+                            Permission Header
+                        =========================================-->
+
+                        <ng-container
+
+                            *ngIf="column.headerCheckbox; else normalHeader">
+
+                            <div class="permission-header">
+
+                                <div class="permission-header-content">
+
+                                    <!--========================
+                                        Title
+                                    =========================-->
+
+                                    <span class="permission-header-title">
+
+                                        {{ column.header }}
+
+                                    </span>
+
+                                    <!--========================
+                                        Divider
+                                    =========================-->
+
+                                    <span class="permission-header-divider">
+
+                                        |
+
+                                    </span>
+
+                                    <!--========================
+                                        Select All
+                                    =========================-->
+
+                                    <div class="permission-header-action">
+
+                                        <app-checkbox
+
+                                            color="success"
+
+                                            [readOnly]="readOnly"
+
+                                            [value]="headerCheckboxStates[column.field]"
+
+                                            (valueChange)="
+                                                onHeaderCheckboxChanged(
+                                                    column.field,
+                                                    $event
+                                                )">
+
+                                        </app-checkbox>
+
+                                        <span class="permission-header-label">
+
+                                            Select All
+
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </ng-container>
+
+                        <!--========================================
+                            Normal Header
+                        =========================================-->
+
+                        <ng-template #normalHeader>
+
+                            {{ column.header }}
+
+                        </ng-template>
+
+                    </th>
+
+                </tr>
+
+            </thead>
+
+        </table>
+
+    </div>
+
+    <!--========================================================
+        Body
+    =========================================================-->
+
+    <div class="list-table-body">
+
+        <!--====================================================
+            Loading
+        =====================================================-->
+
+        <div
+
+            *ngIf="loading"
+
+            class="list-table-state">
+
+            Loading activity assignments...
+
+        </div>
+
+        <!--====================================================
+            Error
+        =====================================================-->
+
+        <div
+
+            *ngIf="
+                !loading &&
+                error
+            "
+
+            class="list-table-state">
+
+            Unable to load activity assignments.
+
+        </div>
+
+        <!--====================================================
+            Orbit Loader
+        =====================================================-->
+
+        <div
+
+            *ngIf="
+                !loading &&
+                !error &&
+                orbitLoading
+            "
+
+            class="table-state">
+
+            <app-orbit-loader
+
+                title="Loading"
+
+                message="Please wait while data is being loaded."
+
+                size="medium"
+
+                [overlay]="false">
+
+            </app-orbit-loader>
+
+        </div>
+
+        <!--====================================================
+            Table
+        =====================================================-->
+
+        <table
+
+            *ngIf="
+                !loading &&
+                !error &&
+                !orbitLoading &&
+                rows.length > 0
+            "
+
+            class="list-table-grid">
+
+            <tbody>
+
+                <tr
+
+                    *ngFor="
+                        let row of rows;
+                        let i = index;
+                        trackBy: trackRow
+                    "
+
+                    class="list-table-row">
+
+                    <td
+
+                        *ngFor="let column of columns"
+
+                        [style.width]="column.width"
+
+                        [class.left]="column.align === 'left'"
+
+                        [class.center]="column.align === 'center'"
+
+                        [class.right]="column.align === 'right'">
+
+                        <!--========================================
+                            Serial
+                        =========================================-->
+
+                        <ng-container *ngIf="column.type === 'serial'">
+
+                            {{ getSerial(i) }}
+
+                        </ng-container>
+
+                        <!--========================================
+                            Text
+                        =========================================-->
+
+                        <ng-container *ngIf="column.type === 'text'">
+
+                            {{ getCellValue(row, column) }}
+
+                        </ng-container>
+
+                        <!--========================================
+                            Master Activities
+                        =========================================-->
+
+                        <ng-container *ngIf="column.type === 'masterActivities'">
+
+                            <app-activity-selector
+
+                                [readOnly]="readOnly"
+
+                                [(activities)]="row.masterActivities"
+
+                                (changed)="onActivityChanged()">
+
+                            </app-activity-selector>
+
+                        </ng-container>
+
+                        <!--========================================
+                            Special Activities
+                        =========================================-->
+
+                        <ng-container *ngIf="column.type === 'specialActivities'">
+
+                            <app-activity-selector
+
+                                [readOnly]="readOnly"
+
+                                [(activities)]="row.specialActivities"
+
+                                (changed)="onActivityChanged()">
+
+                            </app-activity-selector>
+
+                        </ng-container>
+
+                        <!--========================================
+                            Action
+                        =========================================-->
+
+                        <ng-container *ngIf="column.type === 'action'">
+
+                            <button
+
+                                *ngIf="!readOnly"
+
+                                type="button"
+
+                                class="remove-button"
+
+                                (click)="onRemove(row, $event)"
+
+                                aria-label="Remove">
+
+                                &times;
+
+                            </button>
+
+                        </ng-container>
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+        <!--====================================================
+            Empty State
+        =====================================================-->
+
+        <div
+
+            *ngIf="
+                !loading &&
+                !error &&
+                !orbitLoading &&
+                rows.length === 0
+            "
+
+            class="table-state">
+
+            <app-empty-state
+
+                icon="fas fa-table"
+
+                title="No Activity Assignments"
+
+                subtitle="There are no activity assignments to display.">
+
+            </app-empty-state>
+
+        </div>
+
+    </div>
+
+</div>

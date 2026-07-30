@@ -1,0 +1,397 @@
+/* =====================================================
+   COMMAND CENTER
+===================================================== */
+
+.command-center
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    width: auto;
+
+    height: 48px;
+}
+
+/* =====================================================
+   LEFT
+===================================================== */
+
+.command-center-left
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    white-space: nowrap;
+}
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+
+.command-center-divider
+{
+    width: 4px;
+
+    height: 38px;
+
+    margin: 0 6px;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    opacity: .85;
+}
+
+/* =====================================================
+   RIGHT
+===================================================== */
+
+.command-center-right
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+}
+
+/* =====================================================
+   BUTTON BASE
+===================================================== */
+
+.command-button
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    width: 90px;
+
+    height: 36px;
+
+    padding: 0 16px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    box-sizing: border-box;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background .22s ease,
+        color .22s ease,
+        border-color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
+}
+
+.command-button i
+{
+    width: 14px;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    flex-shrink: 0;
+}
+
+.command-button span
+{
+    flex: 1;
+
+    text-align: center;
+}
+
+/* =====================================================
+   PRIMARY BUTTON
+===================================================== */
+
+.command-center-left .command-button:first-child
+{
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    box-shadow:
+        0 8px 18px rgba(37,99,235,.22),
+        inset 0 1px 1px rgba(255,255,255,.18);
+}
+
+.command-center-left .command-button:first-child:hover
+{
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 24px rgba(37,99,235,.28);
+}
+
+/* =====================================================
+   SECONDARY BUTTONS
+===================================================== */
+
+.command-center-left .command-button:not(:first-child)
+{
+    color: #475569;
+
+    border: 1px solid #d8e3f1;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #eef4fc 100%
+        );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95),
+        0 3px 8px rgba(15,23,42,.05);
+}
+
+.command-center-left .command-button:not(:first-child) i
+{
+    color: #2563eb;
+}
+
+.command-center-left .command-button:not(:first-child):hover
+{
+    transform: translateY(-2px);
+
+    color: #1e3a8a;
+
+    border-color: #bfd4f5;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #eaf3ff 100%
+        );
+
+    box-shadow:
+        0 10px 18px rgba(37,99,235,.12);
+}
+
+/* =====================================================
+   ICON BUTTON
+===================================================== */
+
+.command-icon-button
+{
+    position: relative;
+
+    overflow: hidden;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 36px;
+
+    height: 36px;
+
+    border: 1px solid #d8e3f1;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f7faff 45%,
+            #edf4fd 100%
+        );
+
+    color: #2563eb;
+
+    cursor: pointer;
+
+    transition:
+        background .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease,
+        transform .25s ease;
+
+    box-shadow:
+        0 4px 10px rgba(15,23,42,.05),
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.command-icon-button i
+{
+    font-size: 14px;
+
+    transition:
+        color .25s ease,
+        transform .25s ease;
+}
+
+/* =====================================================
+   ICON BUTTON SHINE
+===================================================== */
+
+.command-icon-button::before
+{
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+
+    left: -60%;
+
+    width: 45%;
+
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.60),
+            transparent
+        );
+
+    transform: skewX(-25deg);
+
+    transition: left .5s ease;
+}
+
+/* =====================================================
+   ICON BUTTON HOVER
+===================================================== */
+
+.command-icon-button:hover
+{
+    transform: translateY(-2px);
+
+    border-color: #8fb7f0;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #eef5ff 55%,
+            #dfeeff 100%
+        );
+
+    box-shadow:
+        0 10px 20px rgba(37,99,235,.14),
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.command-icon-button:hover::before
+{
+    left: 130%;
+}
+
+.command-icon-button:hover i
+{
+    color: #1d4ed8;
+
+    transform: scale(1.08);
+}
+
+.command-icon-button:active
+{
+    transform: translateY(0);
+
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,.08);
+}
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.command-button:focus-visible,
+.command-icon-button:focus-visible
+{
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.14);
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:992px)
+{
+    .command-center
+    {
+        display: flex;
+
+        flex-wrap: wrap;
+
+        align-items: center;
+
+        justify-content: flex-start;
+
+        gap: 12px;
+
+        width: 100%;
+
+        height: auto;
+    }
+
+    .command-center-left
+    {
+        flex-wrap: wrap;
+    }
+
+    .command-center-divider
+    {
+        display: none;
+    }
+
+    .command-center-right
+    {
+        justify-content: flex-start;
+    }
+
+    .command-button
+    {
+        width: 110px;
+    }
+}

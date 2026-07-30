@@ -1,0 +1,514 @@
+/* =====================================================
+   HOST
+===================================================== */
+
+:host
+{
+    display: flex;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    height: 100%;
+
+    min-height: 0;
+
+    overflow: hidden;
+}
+
+/* =====================================================
+   PROJECTED CONTENT
+===================================================== */
+
+::ng-deep [canvasBody]
+{
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    height: 100%;
+
+    min-height: 0;
+
+    overflow: hidden;
+}
+
+/* =====================================================
+   ROOT
+===================================================== */
+
+.list-table
+{
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    height: 100%;
+
+    min-height: 0;
+
+    overflow: hidden;
+
+    background: #ffffff;
+}
+
+/* =====================================================
+   TABLE HEADER
+===================================================== */
+
+.list-table-header
+{
+    display: flex;
+
+    flex: 0 0 auto;
+
+    width: 100%;
+
+    overflow: hidden;
+
+    border-radius: 12px 12px 0 0;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f7f9fc 0%,
+            #eef3f9 55%,
+            #e7eef8 100%
+        );
+
+    border-top: 1px solid #ffffff;
+
+    border-bottom: 1px solid #d8e2ef;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95),
+        inset 0 -1px 0 rgba(255,255,255,.55);
+}
+
+/* =====================================================
+   TABLE BODY
+===================================================== */
+
+.list-table-body
+{
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+
+    background: #ffffff;
+}
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.list-table-grid
+{
+    width: 100%;
+
+    border-collapse: collapse;
+
+    border-spacing: 0;
+
+    table-layout: fixed;
+
+    background: #ffffff;
+}
+
+/* =====================================================
+   DATA TABLE
+===================================================== */
+
+.list-table-body .list-table-grid
+{
+    width: 100%;
+
+    table-layout: fixed;
+
+    align-self: flex-start;
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.list-table-grid thead th
+{
+    position: sticky;
+
+    top: 0;
+
+    z-index: 20;
+
+    height: 40px;
+
+    min-height: 40px;
+
+    max-height: 40px;
+
+    padding: 0 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfe 0%,
+            #f6f9fd 50%,
+            #f1f6fc 100%
+        );
+
+    border-top: 1px solid #ffffff;
+
+    border-bottom: 1px solid #dde7f3;
+
+    color: #55667d;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: .5px;
+
+    white-space: nowrap;
+
+    vertical-align: middle;
+
+    box-sizing: border-box;
+
+    user-select: none;
+
+    transition:
+        background-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease;
+}
+
+.list-table-grid thead th.left
+{
+    text-align: left;
+}
+
+.list-table-grid thead th.center
+{
+    text-align: center;
+}
+
+.list-table-grid thead th.right
+{
+    text-align: right;
+}
+
+.list-table-grid thead th.sortable
+{
+    cursor: pointer;
+}
+
+.list-table-grid thead th.sortable:hover
+{
+    background:
+        linear-gradient(
+            180deg,
+            #f7faff 0%,
+            #edf4fd 100%
+        );
+
+    color: #2563eb;
+}
+
+/* =====================================================
+   TABLE STATES
+===================================================== */
+
+.table-state
+{
+    display: flex;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-height: 0;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fafcff 100%
+        );
+}
+
+.table-state app-orbit-loader,
+.table-state app-empty-state
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+/* =====================================================
+   BODY ROW
+===================================================== */
+
+.list-table-row
+{
+    height: 40px;
+
+    min-height: 40px;
+
+    max-height: 40px;
+
+    transition:
+        background-color .18s ease;
+}
+
+.list-table-row:nth-child(even)
+{
+    background: #fbfcfe;
+}
+
+.list-table-row:hover
+{
+    background: #eef5ff;
+}
+
+/* =====================================================
+   CELL
+===================================================== */
+
+.list-table-grid tbody td
+{
+    height: 40px;
+
+    min-height: 40px;
+
+    max-height: 40px;
+
+    padding: 0 16px;
+
+    border-bottom: 1px solid #edf2f7;
+
+    color: #4b5d73;
+
+    font-size: 15px;
+
+    font-weight: 500;
+
+    line-height: 40px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    vertical-align: middle;
+
+    box-sizing: border-box;
+}
+
+.list-table-grid tbody td.left
+{
+    text-align: left;
+}
+
+.list-table-grid tbody td.center
+{
+    text-align: center;
+}
+
+.list-table-grid tbody td.right
+{
+    text-align: right;
+}
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 78px;
+
+    height: 22px;
+
+    padding: 0 10px;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    letter-spacing: .2px;
+
+    line-height: 1;
+}
+
+.status.active
+{
+    background: #e6f7eb;
+
+    color: #1c7d45;
+}
+
+.status.inactive
+{
+    background: #fdecec;
+
+    color: #c0392b;
+}
+
+/* =====================================================
+   ACTION BUTTONS
+===================================================== */
+
+.action-buttons
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    height: 40px;
+}
+
+.action-btn
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 26px;
+
+    height: 26px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition:
+        all .18s ease;
+}
+
+.action-btn:hover
+{
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(0,0,0,.12);
+}
+
+.action-btn i
+{
+    font-size: 13px;
+
+    line-height: 1;
+}
+
+.action-btn.view
+{
+    background: #edf4ff;
+
+    color: #2563eb;
+}
+
+.action-btn.edit
+{
+    background: #fff8e5;
+
+    color: #c58b00;
+}
+
+.action-btn.delete
+{
+    background: #ffecec;
+
+    color: #dc2626;
+}
+
+/* =====================================================
+   OPERATION
+===================================================== */
+
+.operation-container
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 100%;
+
+    height: 40px;
+}
+
+.action-btn.operation
+{
+    background: #eef2ff;
+
+    color: #4f46e5;
+}
+
+/* =====================================================
+   UTILITIES
+===================================================== */
+
+.no-wrap
+{
+    white-space: nowrap;
+}
+
+.text-left
+{
+    text-align: left;
+}
+
+.text-center
+{
+    text-align: center;
+}
+
+.text-right
+{
+    text-align: right;
+}

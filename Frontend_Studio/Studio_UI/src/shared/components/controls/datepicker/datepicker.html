@@ -1,0 +1,89 @@
+<!-- =====================================================
+     DATEPICKER
+===================================================== -->
+
+<div
+
+    cdkOverlayOrigin
+
+    #origin="cdkOverlayOrigin"
+
+    class="datepicker"
+
+    [class.disabled]="disabled"
+
+    [class.readonly]="readonly">
+
+    <!-- =====================================================
+         SELECTOR
+    ====================================================== -->
+
+    <div
+
+        class="datepicker-selector"
+
+        (click)="openCalendar()">
+
+        <!-- =================================================
+             VALUE
+        ================================================== -->
+
+        <div class="datepicker-value">
+
+            <ng-container
+
+                *ngIf="displayValue; else placeholderTemplate">
+
+                {{ displayValue }}
+
+            </ng-container>
+
+            <ng-template #placeholderTemplate>
+
+                <span class="datepicker-placeholder">
+
+                    {{ placeholder }}
+
+                </span>
+
+            </ng-template>
+
+        </div>
+
+        <!-- =================================================
+             ICON
+        ================================================== -->
+
+        <div class="datepicker-icon">
+
+            <i class="far fa-calendar-alt"></i>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     OVERLAY
+===================================================== -->
+
+<app-overlay
+
+    [origin]="origin"
+
+    [(visible)]="calendarVisible"
+
+    [width]="'380px'"
+
+    (closed)="closeCalendar()">
+
+    <app-calendar
+
+        [(value)]="value"
+
+        (valueChange)="onDateSelected($event)">
+
+    </app-calendar>
+
+</app-overlay>

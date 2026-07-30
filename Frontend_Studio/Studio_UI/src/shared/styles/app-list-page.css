@@ -1,0 +1,170 @@
+/* =====================================================
+   APP LIST PAGE
+===================================================== */
+
+.app-list-page
+{
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-width: 0;
+
+    min-height: 0;
+
+    overflow: hidden;
+
+    gap: 12px;
+}
+
+/* =====================================================
+   PAGE HEADER
+===================================================== */
+
+.app-list-page > app-page-header
+{
+    flex: 0 0 auto;
+}
+
+/* =====================================================
+   PAGE TOOLBAR
+===================================================== */
+
+.app-list-page > app-page-toolbar
+{
+    flex: 0 0 auto;
+}
+
+/* =====================================================
+   PAGE CANVAS
+===================================================== */
+
+.app-list-page > app-page-canvas
+{
+    flex: 1 1 auto;
+
+    min-height: 0;
+}
+
+/* =====================================================
+   TOOLBAR AREAS
+===================================================== */
+
+:host ::ng-deep [pageToolbarLeft],
+:host ::ng-deep [pageToolbarCenter],
+:host ::ng-deep [pageToolbarRight]
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    min-width: 0;
+}
+
+:host ::ng-deep [pageToolbarLeft]
+{
+    justify-content: flex-start;
+}
+
+:host ::ng-deep [pageToolbarCenter]
+{
+    justify-content: center;
+}
+
+:host ::ng-deep [pageToolbarRight]
+{
+    justify-content: flex-end;
+}
+
+/* =====================================================
+   STANDARD TOOLBAR CONTROLS
+===================================================== */
+
+:host ::ng-deep [pageToolbarLeft] > *,
+:host ::ng-deep [pageToolbarCenter] > *,
+:host ::ng-deep [pageToolbarRight] > *
+{
+    flex-shrink: 0;
+}
+
+/* =====================================================
+   STANDARD DROPDOWNS
+===================================================== */
+
+:host ::ng-deep app-search-dropdown,
+:host ::ng-deep app-dropdown
+{
+    display: block;
+
+    width: 260px;
+
+    flex: 0 0 260px;
+
+    max-width: 100%;
+}
+
+/* =====================================================
+   STANDARD SEARCH BOX
+===================================================== */
+
+:host ::ng-deep app-search-box
+{
+    width: 300px;
+
+    max-width: 100%;
+}
+
+/* =====================================================
+   STANDARD BUTTON GROUPS
+===================================================== */
+
+:host ::ng-deep app-command-center
+{
+    flex-shrink: 0;
+}
+
+/* =====================================================
+   LOADER
+===================================================== */
+
+app-orbit-loader
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 100%;
+
+    min-height: 100%;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:1200px)
+{
+    :host ::ng-deep [pageToolbarLeft],
+    :host ::ng-deep [pageToolbarCenter],
+    :host ::ng-deep [pageToolbarRight]
+    {
+        flex-wrap: wrap;
+    }
+
+    :host ::ng-deep app-search-dropdown,
+    :host ::ng-deep app-dropdown,
+    :host ::ng-deep app-search-box
+    {
+        width: 100%;
+
+        flex: 1 1 100%;
+    }
+}

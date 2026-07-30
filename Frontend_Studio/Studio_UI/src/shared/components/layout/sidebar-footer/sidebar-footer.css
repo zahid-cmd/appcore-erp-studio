@@ -1,0 +1,86 @@
+.sidebar-footer {
+
+    height: 64px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 40px;
+
+    padding: 0 12px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    background: transparent;
+
+}
+
+.footer-icon-button {
+
+    width: 20px;
+
+    height: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: transparent;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+
+}
+
+.footer-icon-button:hover {
+
+    background: rgba(37, 99, 235, 0.18);
+
+    color: #ffffff;
+
+    transform: translateY(-1px);
+
+}
+
+.footer-icon-button:active {
+
+    transform: scale(0.95);
+
+}
+
+.footer-icon-button:focus-visible {
+
+    outline: none;
+
+    background: rgba(37, 99, 235, 0.25);
+
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+
+}
+
+.footer-icon-button i {
+
+    font-size: 18px;
+
+    line-height: 1;
+
+    pointer-events: none;
+
+}

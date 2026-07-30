@@ -1,0 +1,49 @@
+<!-- =====================================================
+     OVERLAY
+===================================================== -->
+
+<ng-template
+
+    cdkConnectedOverlay
+
+    [cdkConnectedOverlayOpen]="visible"
+
+    [cdkConnectedOverlayOrigin]="origin"
+
+    [cdkConnectedOverlayPositions]="positions"
+
+    [cdkConnectedOverlayWidth]="overlayWidth"
+
+    [cdkConnectedOverlayHasBackdrop]="hasBackdrop"
+
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+
+    [cdkConnectedOverlayPush]="true"
+
+    [cdkConnectedOverlayFlexibleDimensions]="false"
+
+    [cdkConnectedOverlayGrowAfterOpen]="false"
+
+    (attach)="onAttach()"
+
+    (detach)="onDetach()"
+
+    (backdropClick)="onBackdropClick()">
+
+    <!-- =====================================================
+         OVERLAY CONTAINER
+    ====================================================== -->
+
+    <div
+
+        class="overlay-container"
+
+        (click)="$event.stopPropagation()">
+
+        <ng-content>
+
+        </ng-content>
+
+    </div>
+
+</ng-template>

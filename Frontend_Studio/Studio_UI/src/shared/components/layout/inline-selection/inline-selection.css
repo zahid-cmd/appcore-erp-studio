@@ -1,0 +1,221 @@
+/* =====================================================
+   HOST
+===================================================== */
+
+:host
+{
+    display: block;
+
+    width: 100%;
+}
+
+
+/* =====================================================
+   INLINE SELECTION
+===================================================== */
+
+.inline-selection
+{
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    min-width: 0;
+}
+
+
+/* =====================================================
+   INLINE FIELDS
+===================================================== */
+
+.inline-selection-fields
+{
+    display: flex;
+
+    align-items: center;
+
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+/* =====================================================
+   FIELD
+===================================================== */
+
+.inline-selection-field
+{
+    display: flex;
+
+    align-items: center;
+
+    flex: 0 0 auto;
+}
+
+.inline-selection-field app-search-dropdown
+{
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+}
+
+
+/* =====================================================
+   BUTTON CONTAINER
+===================================================== */
+
+.inline-selection-button
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 0 0 auto;
+}
+
+
+/* =====================================================
+   BUTTON
+===================================================== */
+
+.add-button
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 42px;
+
+    padding: 0 20px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    background:
+        linear-gradient(
+            135deg,
+            #23315f 0%,
+            #344eb2 55%,
+            #4d6df0 100%
+        );
+
+    box-shadow:
+        0 2px 6px rgba(52,78,178,.15);
+
+    transition:
+        transform .20s ease,
+        box-shadow .20s ease,
+        background .20s ease;
+}
+
+
+/* =====================================================
+   BUTTON ICON
+===================================================== */
+
+.add-button i
+{
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   BUTTON HOVER
+===================================================== */
+
+.add-button:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 14px rgba(52,78,178,.20);
+}
+
+
+/* =====================================================
+   BUTTON ACTIVE
+===================================================== */
+
+.add-button:active:not(:disabled)
+{
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   BUTTON DISABLED
+===================================================== */
+
+.add-button:disabled
+{
+    opacity: .60;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:768px)
+{
+    .inline-selection
+    {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .inline-selection-fields
+    {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .inline-selection-field
+    {
+        width: 100%;
+    }
+
+    .inline-selection-button
+    {
+        width: 100%;
+
+        justify-content: stretch;
+    }
+
+    .add-button
+    {
+        width: 100%;
+    }
+}

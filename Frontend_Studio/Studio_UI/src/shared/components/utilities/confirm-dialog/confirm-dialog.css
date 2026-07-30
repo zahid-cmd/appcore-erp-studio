@@ -1,0 +1,705 @@
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+.dialog-overlay
+{
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            .10
+        );
+
+    backdrop-filter:
+        blur(1px);
+
+    -webkit-backdrop-filter:
+        blur(1px);
+
+    z-index:2000;
+
+    animation:
+        fadeIn .18s ease;
+}
+
+
+
+/* =====================================================
+   DIALOG BOX
+===================================================== */
+
+.dialog-box
+{
+    width:480px;
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    border:
+        1px solid #dbe5f1;
+
+    box-shadow:
+        0 20px 48px
+        rgba(
+            15,
+            23,
+            42,
+            .18
+        );
+
+    animation:
+        dialogIn .20s ease;
+}
+
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.dialog-header
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    height:56px;
+
+    padding:
+        0
+        20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #2563eb 100%
+        );
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   HEADER ICON
+===================================================== */
+
+.header-icon
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:36px;
+
+    height:36px;
+
+    min-width:36px;
+
+    border-radius:10px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .16
+        );
+
+    color:#ffffff;
+
+    font-size:16px;
+}
+
+
+
+/* =====================================================
+   HEADER CONTENT
+===================================================== */
+
+.header-content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    gap:2px;
+
+    min-width:0;
+}
+
+
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.dialog-title
+{
+    color:#ffffff;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    line-height:1.2;
+
+    letter-spacing:.2px;
+}
+
+
+
+/* =====================================================
+   SUBTITLE
+===================================================== */
+
+.dialog-subtitle
+{
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            .78
+        );
+
+    font-size:11px;
+
+    font-weight:500;
+
+    line-height:1.2;
+}
+
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.dialog-body
+{
+    height:120px;
+
+    padding:
+        8px
+        22px
+        4px;
+
+    background:#ffffff;
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:flex-start;
+
+    gap:8px;
+}
+
+/* =====================================================
+   ACTION CARD
+===================================================== */
+
+.action-card
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    min-height:66px;
+
+    padding:
+        10px
+        16px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8fafc 100%
+        );
+
+    border:
+        1px solid #e2e8f0;
+
+    box-shadow:
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .85
+        );
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   ACTION ICON
+===================================================== */
+
+.action-icon
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:44px;
+
+    height:44px;
+
+    min-width:44px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(
+                220,
+                38,
+                38,
+                .10
+            ),
+            rgba(
+                220,
+                38,
+                38,
+                .16
+            )
+        );
+
+    color:#dc2626;
+
+    font-size:18px;
+
+    box-shadow:
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .65
+        );
+}
+
+
+
+/* =====================================================
+   ACTION CONTENT
+===================================================== */
+
+.action-content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    gap:3px;
+
+    flex:1;
+
+    min-width:0;
+}
+
+
+
+/* =====================================================
+   DELETE TITLE
+===================================================== */
+
+.action-title
+{
+    color:#0f172a;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    line-height:1.25;
+
+    letter-spacing:.2px;
+}
+
+
+
+/* =====================================================
+   DELETE MESSAGE
+===================================================== */
+
+.action-message
+{
+    color:#334155;
+
+    font-size:12px;
+
+    line-height:1.45;
+}
+
+
+
+.action-message strong
+{
+    color:#dc2626;
+
+    font-weight:700;
+}
+
+
+
+/* =====================================================
+   WARNING MESSAGE
+===================================================== */
+
+.warning-text
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    min-height:36px;
+
+    margin-top:2px;
+
+    padding:
+        8px
+        12px;
+
+    border-radius:10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fffaf2 0%,
+            #fff4e8 100%
+        );
+
+    border:
+        1px solid #fed7aa;
+
+    color:#c2410c;
+
+    font-size:11.5px;
+
+    font-weight:600;
+
+    line-height:1.35;
+
+    box-sizing:border-box;
+}
+
+
+
+.warning-text i
+{
+    color:#ea580c;
+
+    font-size:13px;
+
+    flex:none;
+}
+
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.dialog-footer
+{
+    height:66px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+    padding:
+        0
+        22px;
+
+    margin-top:-4px;
+
+    background:#ffffff;
+
+    box-sizing:border-box;
+
+    border-top:
+        1px solid #eef2f7;
+}
+
+
+
+/* =====================================================
+   BUTTON BASE
+===================================================== */
+
+.btn-cancel,
+.btn-confirm
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    min-width:112px;
+
+    height:38px;
+
+    padding:
+        0
+        18px;
+
+    border-radius:10px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:
+        all .18s ease;
+}
+
+
+
+/* =====================================================
+   CANCEL
+===================================================== */
+
+.btn-cancel
+{
+    background:#ffffff;
+
+    color:#475569;
+
+    border:
+        1px solid #dbe5f1;
+}
+
+
+
+.btn-cancel:hover
+{
+    background:#f8fafc;
+
+    border-color:#94a3b8;
+
+    transform:
+        translateY(-1px);
+}
+
+
+
+/* =====================================================
+   PRIMARY
+===================================================== */
+
+.btn-primary
+{
+    background:#2563eb;
+
+    color:#ffffff;
+
+    border:
+        1px solid #2563eb;
+
+    box-shadow:
+        0
+        6px
+        14px
+        rgba(
+            37,
+            99,
+            235,
+            .22
+        );
+}
+
+
+
+.btn-primary:hover
+{
+    background:#1d4ed8;
+
+    transform:
+        translateY(-1px);
+}
+
+
+
+/* =====================================================
+   DANGER
+===================================================== */
+
+.btn-danger
+{
+    background:#dc2626;
+
+    color:#ffffff;
+
+    border:
+        1px solid #dc2626;
+
+    box-shadow:
+        0
+        6px
+        14px
+        rgba(
+            220,
+            38,
+            38,
+            .22
+        );
+}
+
+
+
+.btn-danger:hover
+{
+    background:#b91c1c;
+
+    transform:
+        translateY(-1px);
+}
+
+
+
+/* =====================================================
+   PREVIEW MODE
+===================================================== */
+
+.dialog-overlay.preview-mode
+{
+    position:relative;
+
+    inset:auto;
+
+    width:100%;
+
+    height:300px;
+
+    background:transparent;
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    pointer-events:none;
+
+    z-index:1;
+}
+
+
+
+.dialog-overlay.preview-mode
+.dialog-box
+{
+    margin-top:20px;
+
+    pointer-events:auto;
+
+    animation:none;
+
+    box-shadow:
+        0
+        12px
+        30px
+        rgba(
+            15,
+            23,
+            42,
+            .14
+        );
+}
+
+
+
+/* =====================================================
+   ANIMATION
+===================================================== */
+
+@keyframes fadeIn
+{
+    from
+    {
+        opacity:0;
+    }
+
+    to
+    {
+        opacity:1;
+    }
+}
+
+
+
+@keyframes dialogIn
+{
+    from
+    {
+        opacity:0;
+
+        transform:
+            translateY(10px)
+            scale(.97);
+    }
+
+    to
+    {
+        opacity:1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}

@@ -1,0 +1,181 @@
+@if (
+    dialogService.isOpen() ||
+    previewMode
+)
+{
+<div class="dialog-overlay">
+
+    <div class="dialog-box">
+
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <div class="dialog-header">
+
+            <div class="header-icon">
+
+                <i class="fas fa-triangle-exclamation"></i>
+
+            </div>
+
+
+            <div class="header-content">
+
+                <div class="dialog-title">
+
+                    {{
+                        previewMode
+                            ? 'Confirm Action'
+                            : dialogService.title()
+                    }}
+
+                </div>
+
+
+                <div class="dialog-subtitle">
+
+                    System Confirmation Required
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =====================================================
+             BODY
+        ====================================================== -->
+
+        <div class="dialog-body">
+
+
+            <div class="action-card">
+
+
+                <div class="action-icon">
+
+                    <i class="fas fa-trash"></i>
+
+                </div>
+
+
+                <div class="action-content">
+
+
+                    <div class="action-title">
+
+                        {{
+                            previewMode
+                                ? 'Continue Operation'
+                                : dialogService.title()
+                        }}
+
+                    </div>
+
+
+                    <div class="action-message">
+
+                        {{
+                            previewMode
+                                ? 
+                                'Are you sure you want to continue with this operation?'
+                                :
+                                dialogService.message()
+                        }}
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <div class="warning-text">
+
+                <i class="fas fa-shield-halved"></i>
+
+                This action may affect system data.
+
+            </div>
+
+
+        </div>
+
+
+
+
+        <!-- =====================================================
+             FOOTER
+        ====================================================== -->
+
+        <div class="dialog-footer">
+
+
+            <button
+
+                type="button"
+
+                class="btn-cancel"
+
+                (click)="onCancel()">
+
+
+                <i class="fas fa-xmark"></i>
+
+                {{
+                    previewMode
+                        ? 'Cancel'
+                        : dialogService.cancelText()
+                }}
+
+
+            </button>
+
+
+
+            <button
+
+                type="button"
+
+                class="btn-confirm"
+
+                [class.btn-primary]="
+                    previewMode ||
+                    dialogService.confirmStyle() === 'primary'
+                "
+
+                [class.btn-danger]="
+                    !previewMode &&
+                    dialogService.confirmStyle() === 'danger'
+                "
+
+                (click)="onConfirm()">
+
+
+                <i class="fas fa-trash"></i>
+
+
+                {{
+                    previewMode
+                        ? 'Confirm'
+                        : dialogService.confirmText()
+                }}
+
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+</div>
+}

@@ -1,0 +1,294 @@
+/* =====================================================
+   CHECKBOX
+===================================================== */
+
+.checkbox
+{
+    --checkbox-color:#2563eb;
+
+    --checkbox-shadow:rgba(37,99,235,.10);
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    outline:none;
+
+    transition:
+        all .20s ease;
+}
+
+/* =====================================================
+   COLOR THEMES
+===================================================== */
+
+.checkbox.primary
+{
+    --checkbox-color:#2563eb;
+
+    --checkbox-shadow:rgba(37,99,235,.10);
+}
+
+.checkbox.success
+{
+    --checkbox-color:#16a34a;
+
+    --checkbox-shadow:rgba(22,163,74,.10);
+}
+
+.checkbox.danger
+{
+    --checkbox-color:#dc2626;
+
+    --checkbox-shadow:rgba(220,38,38,.10);
+}
+
+.checkbox.warning
+{
+    --checkbox-color:#d97706;
+
+    --checkbox-shadow:rgba(217,119,6,.10);
+}
+
+.checkbox.secondary
+{
+    --checkbox-color:#64748b;
+
+    --checkbox-shadow:rgba(100,116,139,.10);
+}
+
+/* =====================================================
+   CONTROL
+===================================================== */
+
+.checkbox-control
+{
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-shrink:0;
+
+    transition:
+        all .20s ease;
+}
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.checkbox-label
+{
+    color:#1e293b;
+
+    font-size:14px;
+
+    font-weight:500;
+
+    line-height:1.4;
+}
+
+/* =====================================================
+   STANDARD
+===================================================== */
+
+.checkbox.standard .checkbox-control
+{
+    width:20px;
+
+    height:20px;
+
+    border:2px solid #cbd5e1;
+
+    border-radius:6px;
+
+    background:#ffffff;
+
+    color:#ffffff;
+}
+
+.checkbox.standard.checked .checkbox-control
+{
+    background:var(--checkbox-color);
+
+    border-color:var(--checkbox-color);
+}
+
+.checkbox.standard .checkbox-control i
+{
+    font-size:11px;
+}
+
+.checkbox.standard:hover .checkbox-control
+{
+    border-color:var(--checkbox-color);
+
+    box-shadow:
+        0 0 0 4px var(--checkbox-shadow);
+}
+
+/* =====================================================
+   SWITCH
+===================================================== */
+
+.checkbox.switch .checkbox-control
+{
+    position:relative;
+
+    width:44px;
+
+    height:24px;
+
+    border-radius:999px;
+
+    background:#cbd5e1;
+
+    transition:
+        all .20s ease;
+}
+
+.checkbox.switch.checked .checkbox-control
+{
+    background:var(--checkbox-color);
+}
+
+.checkbox-switch-thumb
+{
+    position:absolute;
+
+    left:3px;
+
+    top:3px;
+
+    width:18px;
+
+    height:18px;
+
+    border-radius:50%;
+
+    background:#ffffff;
+
+    transition:
+        all .20s ease;
+}
+
+.checkbox.switch.checked .checkbox-switch-thumb
+{
+    transform:translateX(20px);
+}
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.checkbox.card
+{
+    width:100%;
+
+    padding:12px 14px;
+
+    border:1px solid #d9e5f2;
+
+    border-radius:12px;
+
+    background:#ffffff;
+}
+
+.checkbox.card:hover
+{
+    border-color:var(--checkbox-color);
+
+    box-shadow:
+        0 6px 14px var(--checkbox-shadow);
+}
+
+.checkbox.card.checked
+{
+    border-color:var(--checkbox-color);
+
+    background:#eff6ff;
+}
+
+/* =====================================================
+   CARD CONTROL
+===================================================== */
+
+.checkbox.card .checkbox-control
+{
+    width:20px;
+
+    height:20px;
+
+    border:2px solid #cbd5e1;
+
+    border-radius:6px;
+
+    background:#ffffff;
+
+    color:#ffffff;
+}
+
+.checkbox.card.checked .checkbox-control
+{
+    background:var(--checkbox-color);
+
+    border-color:var(--checkbox-color);
+}
+
+.checkbox.card .checkbox-control i
+{
+    font-size:11px;
+}
+
+/* =====================================================
+   READONLY
+===================================================== */
+
+.checkbox.readonly
+{
+    cursor:default;
+}
+
+/* =====================================================
+   DISABLED
+===================================================== */
+
+.checkbox.disabled
+{
+    cursor:not-allowed;
+
+    opacity:.65;
+}
+
+.checkbox.disabled .checkbox-control
+{
+    border-color:#cbd5e1;
+}
+
+.checkbox.disabled .checkbox-label
+{
+    color:#94a3b8;
+}
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.checkbox:focus-visible
+{
+    outline:none;
+}
+
+.checkbox:focus-visible .checkbox-control
+{
+    box-shadow:
+        0 0 0 4px var(--checkbox-shadow);
+}

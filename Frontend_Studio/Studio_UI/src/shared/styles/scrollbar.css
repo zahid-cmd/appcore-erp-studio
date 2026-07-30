@@ -1,0 +1,67 @@
+/* =====================================================
+   APPCORE GLOBAL SCROLLBAR
+===================================================== */
+
+.appcore-scrollbar
+{
+    scrollbar-width:thin;
+
+    scrollbar-color:
+        #2563eb
+        transparent;
+}
+
+
+/* =====================================================
+   WEBKIT SCROLLBAR
+===================================================== */
+
+.appcore-scrollbar::-webkit-scrollbar
+{
+    width:6px;
+
+    height:6px;
+}
+
+
+/* =====================================================
+   TRACK
+===================================================== */
+
+.appcore-scrollbar::-webkit-scrollbar-track
+{
+    background:transparent;
+
+    margin-top:4px;
+
+    margin-bottom:4px;
+}
+
+
+/* =====================================================
+   THUMB
+===================================================== */
+
+.appcore-scrollbar::-webkit-scrollbar-thumb
+{
+    background:#2563eb;
+
+    border-radius:999px;
+
+    border:1px solid transparent;
+
+    background-clip:padding-box;
+
+    transition:
+        background .20s ease;
+}
+
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.appcore-scrollbar::-webkit-scrollbar-thumb:hover
+{
+    background:#1d4ed8;
+}

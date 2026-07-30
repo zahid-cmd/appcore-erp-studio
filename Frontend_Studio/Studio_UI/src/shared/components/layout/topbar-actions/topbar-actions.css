@@ -1,0 +1,383 @@
+/* =====================================================
+   HOST
+===================================================== */
+
+:host
+{
+    display: block;
+
+    width: 100%;
+    height: 100%;
+}
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.topbar-actions
+{
+    width: 100%;
+    height: 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   LEFT : GLOBAL SEARCH
+===================================================== */
+
+.actions-left
+{
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+
+    min-width: 0;
+}
+
+.global-search
+{
+    width: 100%;
+    max-width: 460px;
+}
+
+.actions-left app-search-box
+{
+    display: block;
+
+    width: 100%;
+}
+
+/* =====================================================
+   RIGHT : USER MENU
+===================================================== */
+
+.actions-right
+{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    flex-shrink: 0;
+}
+
+/* =====================================================
+   USER MENU BUTTON
+===================================================== */
+
+.user-menu-button
+{
+    height: 50px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 0 18px;
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    border-radius: 12px;
+
+    background: rgba(255,255,255,.04);
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        background .20s ease,
+        border-color .20s ease,
+        box-shadow .20s ease,
+        transform .20s ease;
+
+    box-sizing: border-box;
+}
+
+.user-menu-button:hover
+{
+    background: rgba(255,255,255,.08);
+
+    border-color: rgba(255,255,255,.15);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 8px 18px rgba(0,0,0,.20);
+}
+
+.user-menu-button:active
+{
+    transform: scale(.98);
+}
+
+/* =====================================================
+   AVATAR
+===================================================== */
+
+.avatar
+{
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: rgba(37,99,235,.18);
+
+    border: 1px solid rgba(255,255,255,.10);
+
+    color: #ffffff;
+
+    transition:
+        background .20s ease,
+        transform .20s ease;
+}
+
+.user-menu-button:hover .avatar
+{
+    background: #2563eb;
+
+    transform: scale(1.05);
+}
+
+.avatar i
+{
+    font-size: 20px;
+}
+
+/* =====================================================
+   USER DETAILS
+===================================================== */
+
+.user-details
+{
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
+    min-width: 0;
+
+    text-align: left;
+}
+
+/* =====================================================
+   USER NAME
+===================================================== */
+
+.user-name
+{
+    color: #ffffff;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    line-height: 1.25;
+
+    letter-spacing: .2px;
+
+    white-space: nowrap;
+}
+
+/* =====================================================
+   USER ROLE
+===================================================== */
+
+.user-role
+{
+    margin-top: 2px;
+
+    color: rgba(255,255,255,.72);
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+    letter-spacing: .2px;
+
+    white-space: nowrap;
+}
+
+/* =====================================================
+   MENU ARROW
+===================================================== */
+
+.menu-arrow
+{
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    color: rgba(255,255,255,.70);
+
+    transition:
+        color .20s ease,
+        transform .20s ease;
+}
+
+.menu-arrow i
+{
+    font-size: 10px;
+}
+
+.user-menu-button:hover .menu-arrow
+{
+    color: #ffffff;
+
+    transform: rotate(180deg);
+}
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.user-menu-button:focus-visible
+{
+    outline: none;
+
+    border-color: rgba(96,165,250,.70);
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.18),
+        0 8px 18px rgba(0,0,0,.20);
+}
+
+.user-menu-button *
+{
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:1400px)
+{
+    .global-search
+    {
+        max-width: 420px;
+    }
+}
+
+@media (max-width:1200px)
+{
+    .topbar-actions
+    {
+        gap: 18px;
+    }
+
+    .global-search
+    {
+        max-width: 380px;
+    }
+
+    .user-menu-button
+    {
+        padding: 0 16px;
+    }
+}
+
+@media (max-width:992px)
+{
+    .topbar-actions
+    {
+        gap: 16px;
+    }
+
+    .global-search
+    {
+        max-width: 320px;
+    }
+
+    .user-role
+    {
+        display: none;
+    }
+}
+
+@media (max-width:768px)
+{
+    .actions-left
+    {
+        flex: 1;
+    }
+
+    .global-search
+    {
+        max-width: 100%;
+    }
+
+    .user-name
+    {
+        display: none;
+    }
+
+    .menu-arrow
+    {
+        display: none;
+    }
+
+    .user-menu-button
+    {
+        width: 48px;
+        height: 48px;
+
+        padding: 0;
+
+        gap: 0;
+
+        justify-content: center;
+
+        border-radius: 50%;
+    }
+
+    .user-details
+    {
+        display: none;
+    }
+}
+
+@media (max-width:576px)
+{
+    .topbar-actions
+    {
+        gap: 12px;
+    }
+
+    .global-search
+    {
+        max-width: 250px;
+    }
+
+    .avatar
+    {
+        width: 40px;
+        height: 40px;
+    }
+
+    .avatar i
+    {
+        font-size: 18px;
+    }
+}

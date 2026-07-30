@@ -1,0 +1,247 @@
+<div class="pagination-bar">
+
+
+    <!-- =====================================================
+         LEFT : RECORD SUMMARY
+    ====================================================== -->
+
+    <div class="pagination-left">
+
+        <div class="record-info">
+
+
+            <div class="record-icon">
+
+                <i class="fas fa-table-list"></i>
+
+            </div>
+
+
+            <div class="record-summary">
+
+                <span class="record-label">
+                    Showing
+                </span>
+
+
+                <strong>
+                    {{ startRecord }}
+                </strong>
+
+
+                <span class="record-label">
+                    to
+                </span>
+
+
+                <strong>
+                    {{ endRecord }}
+                </strong>
+
+
+                <span class="record-label">
+                    of
+                </span>
+
+
+                <strong>
+                    {{ totalRecords }}
+                </strong>
+
+
+                <span class="record-label">
+                    records
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+
+    <!-- =====================================================
+         CENTER : PAGE NAVIGATION
+    ====================================================== -->
+
+
+    <div class="pagination-center">
+
+
+        <div class="pagination-box">
+
+
+            <!-- FIRST -->
+
+            <button
+                type="button"
+                class="page-btn nav-btn"
+                [disabled]="!hasPrevious"
+                (click)="goToPage(1)">
+
+                <i class="fas fa-angles-left"></i>
+
+            </button>
+
+
+
+            <!-- PREVIOUS -->
+
+            <button
+                type="button"
+                class="page-btn nav-btn"
+                [disabled]="!hasPrevious"
+                (click)="previous()">
+
+                <i class="fas fa-angle-left"></i>
+
+            </button>
+
+
+
+            <!-- PAGE NUMBERS -->
+
+            @for (page of visiblePages; track page)
+            {
+
+                <button
+                    type="button"
+                    class="page-btn"
+
+                    [class.active]="
+                        page === currentPage
+                    "
+
+                    (click)="goToPage(page)">
+
+                    {{ page }}
+
+                </button>
+
+            }
+
+
+
+
+            <!-- LAST PAGE -->
+
+            @if (
+                totalPages > 3
+                &&
+                visiblePages[visiblePages.length - 1] < totalPages
+            )
+            {
+
+                <span class="dots">
+
+                    ...
+
+                </span>
+
+
+                <button
+                    type="button"
+                    class="page-btn"
+
+                    (click)="goToPage(totalPages)">
+
+                    {{ totalPages }}
+
+                </button>
+
+            }
+
+
+
+
+            <!-- NEXT -->
+
+            <button
+                type="button"
+                class="page-btn nav-btn"
+
+                [disabled]="!hasNext"
+
+                (click)="next()">
+
+                <i class="fas fa-angle-right"></i>
+
+            </button>
+
+
+
+
+            <!-- LAST -->
+
+            <button
+                type="button"
+                class="page-btn nav-btn"
+
+                [disabled]="!hasNext"
+
+                (click)="goToPage(totalPages)">
+
+                <i class="fas fa-angles-right"></i>
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+    <!-- =====================================================
+         RIGHT : PAGE SIZE
+    ====================================================== -->
+
+
+    <div class="pagination-right">
+
+
+        <div class="page-size-container">
+
+
+            <span class="page-size-label">
+
+                Rows per page
+
+            </span>
+
+
+
+            <select
+
+                [value]="pageSize"
+
+                (change)="changePageSize($event)">
+
+                @for (size of pageSizeOptions; track size)
+                {
+
+                    <option
+                        [value]="size">
+
+                        {{ size }}
+
+                    </option>
+
+                }
+
+            </select>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

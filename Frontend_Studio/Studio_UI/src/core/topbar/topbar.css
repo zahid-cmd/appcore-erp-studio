@@ -1,0 +1,117 @@
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+.topbar
+{
+    position: relative;
+
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    background: linear-gradient(
+        90deg,
+        #08122f 0%,
+        #0c1b45 35%,
+        #13285f 70%,
+        #1a3778 100%
+    );
+
+    box-sizing: border-box;
+
+    overflow: hidden;
+
+    user-select: none;
+
+    border: none;
+
+    box-shadow: none;
+}
+
+/* =====================================================
+   APPCORE ACCENT
+===================================================== */
+
+.topbar::after
+{
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 2px;
+
+    background: linear-gradient(
+        90deg,
+        #2f80ed 0%,
+        #3fa9f5 20%,
+        #63c5ff 50%,
+        #3fa9f5 80%,
+        #2f80ed 100%
+    );
+
+    opacity: .95;
+}
+/* =====================================================
+   LEFT
+===================================================== */
+
+.topbar-left
+{
+    flex: 0 0 320px;
+
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    padding: 0 24px;
+
+    overflow: hidden;
+}
+
+/* =====================================================
+   CENTER
+===================================================== */
+
+.topbar-center
+{
+    flex: 1;
+
+    min-width: 0;
+
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 24px;
+
+    overflow: hidden;
+}
+
+/* =====================================================
+   RIGHT
+===================================================== */
+
+.topbar-right
+{
+    flex: 0 0 560px;
+
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    padding: 0 24px;
+
+    overflow: visible;
+}

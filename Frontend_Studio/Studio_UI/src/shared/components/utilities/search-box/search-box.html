@@ -1,0 +1,55 @@
+<div
+
+    class="search-box">
+
+    <!-- =====================================================
+         SEARCH ICON
+    ====================================================== -->
+
+    <div
+
+        class="search-box-icon">
+
+        <i class="fas fa-search"></i>
+
+    </div>
+
+    <!-- =====================================================
+         INPUT
+    ====================================================== -->
+
+    <input
+
+        type="text"
+
+        [ngModel]="value"
+
+        (ngModelChange)="onInput($event)"
+
+        [placeholder]="placeholder"
+
+        [disabled]="disabled"
+
+        [autofocus]="autofocus" />
+
+    <!-- =====================================================
+         CLEAR
+    ====================================================== -->
+
+    <button
+
+        *ngIf="value"
+
+        type="button"
+
+        class="search-box-clear"
+
+        [disabled]="disabled"
+
+        (click)="clear()">
+
+        <i class="fas fa-times"></i>
+
+    </button>
+
+</div>

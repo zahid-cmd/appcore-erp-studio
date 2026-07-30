@@ -1,0 +1,26 @@
+<div
+    class="control-segment"
+    role="radiogroup">
+
+    @for (item of items; track item.value)
+    {
+        <button
+            #segmentButton
+            type="button"
+            class="segment"
+            role="radio"
+            [class.segment-selected]="isSelected(item)"
+            [class.segment-disabled]="isDisabled(item)"
+            [attr.aria-checked]="isSelected(item)"
+            [attr.aria-disabled]="isDisabled(item)"
+            [disabled]="isDisabled(item)"
+            [tabIndex]="getTabIndex(item)"
+            (click)="select(item)"
+            (keydown)="onKeyDown($event, $index)">
+
+            {{ item.text }}
+
+        </button>
+    }
+
+</div>

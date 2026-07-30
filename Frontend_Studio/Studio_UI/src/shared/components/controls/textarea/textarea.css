@@ -1,0 +1,333 @@
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.textarea-container
+{
+    display: flex;
+
+    flex-direction: column;
+
+    width: 100%;
+
+    margin-bottom: 0px;
+}
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.textarea-label
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    margin-bottom: 10px;
+
+    color: #334155;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    line-height: 1.3;
+
+    user-select: none;
+}
+
+/* =====================================================
+   REQUIRED
+===================================================== */
+
+.textarea-required
+{
+    color: #ef4444;
+
+    font-size: 15px;
+
+    font-weight: 700;
+}
+
+/* =====================================================
+   TEXTAREA
+===================================================== */
+
+.textarea
+{
+    position: relative;
+
+    display: flex;
+
+    align-items: stretch;
+
+    width: 100%;
+
+    min-height: 132px;
+
+    overflow: hidden;
+
+    border: 1px solid #d9e5f2;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fcfdff 100%
+        );
+
+    box-sizing: border-box;
+
+    transition:
+        border-color .20s ease,
+        box-shadow .20s ease,
+        background .20s ease;
+}
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.textarea:hover
+{
+    border-color: #9fc2f7;
+
+    box-shadow:
+        0 4px 10px rgba(37,99,235,.08);
+}
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.textarea:focus-within
+{
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.12);
+}
+
+/* =====================================================
+   PREFIX
+===================================================== */
+
+.textarea-prefix
+{
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 44px;
+
+    padding-top: 14px;
+
+    color: #64748b;
+
+    font-size: 16px;
+
+    transition: color .20s ease;
+}
+
+/* =====================================================
+   SUFFIX
+===================================================== */
+
+.textarea-suffix
+{
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 44px;
+
+    padding-top: 14px;
+
+    color: #64748b;
+
+    font-size: 16px;
+
+    transition: color .20s ease;
+}
+
+/* =====================================================
+   TEXTAREA CONTROL
+===================================================== */
+
+.textarea textarea
+{
+    flex: 1;
+
+    width: 100%;
+
+    min-height: 132px;
+
+    padding: 12px 14px;
+
+    border: none;
+
+    outline: none;
+
+    resize: none;
+
+    background: transparent;
+
+    box-sizing: border-box;
+
+    color: #1e293b;
+
+    font-family: inherit;
+
+    font-size: 16px;
+
+    font-weight: 500;
+
+    line-height: 1.6;
+
+    overflow-y: auto;
+}
+
+/* =====================================================
+   PREFIX/SUFFIX SPACING
+===================================================== */
+
+.textarea.has-prefix textarea
+{
+    padding-left: 0;
+}
+
+.textarea.has-suffix textarea
+{
+    padding-right: 0;
+}
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.textarea textarea::placeholder
+{
+    color: #94a3b8;
+
+    font-size: 16px;
+
+    font-weight: 400;
+
+    opacity: 1;
+}
+
+/* =====================================================
+   READONLY
+===================================================== */
+
+.textarea.readonly
+{
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #f2f7ff 100%
+        );
+}
+
+.textarea.readonly textarea
+{
+    cursor: default;
+}
+
+/* =====================================================
+   DISABLED
+===================================================== */
+
+.textarea.disabled
+{
+    opacity: .70;
+
+    cursor: not-allowed;
+
+    background: #f8fafc;
+
+    box-shadow: none;
+}
+
+.textarea.disabled textarea
+{
+    cursor: not-allowed;
+}
+
+.textarea.disabled .textarea-prefix,
+.textarea.disabled .textarea-suffix
+{
+    color: #94a3b8;
+}
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+.textarea textarea::-webkit-scrollbar
+{
+    width: 8px;
+}
+
+.textarea textarea::-webkit-scrollbar-track
+{
+    background: transparent;
+}
+
+.textarea textarea::-webkit-scrollbar-thumb
+{
+    background: #cbd5e1;
+
+    border-radius: 999px;
+}
+
+.textarea textarea::-webkit-scrollbar-thumb:hover
+{
+    background: #94a3b8;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 992px)
+{
+    .textarea-container
+    {
+        margin-bottom: 20px;
+    }
+
+    .textarea
+    {
+        min-height: 120px;
+    }
+
+    .textarea textarea
+    {
+        min-height: 120px;
+    }
+
+    .textarea-prefix,
+    .textarea-suffix
+    {
+        width: 40px;
+    }
+
+    .textarea-label
+    {
+        margin-bottom: 8px;
+    }
+}

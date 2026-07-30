@@ -1,0 +1,227 @@
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+.progress-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background:
+    rgba(15,23,42,.15);
+
+  backdrop-filter:
+    blur(1px);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  z-index: 3000;
+}
+
+/* =====================================================
+   PREVIEW MODE
+===================================================== */
+
+.progress-overlay.preview-mode
+{
+  position: relative;
+
+  inset: auto;
+
+  width: 100%;
+
+  height: 260px;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  background: transparent;
+
+  backdrop-filter: none;
+
+  -webkit-backdrop-filter: none;
+
+  z-index: 1;
+}
+
+.progress-overlay.preview-mode
+.progress-dialog
+{
+  animation: none;
+}
+
+/* =====================================================
+   DIALOG
+===================================================== */
+
+.progress-dialog {
+
+  width: 480px;
+
+  background: #ffffff;
+
+  border: 1px solid #dbe4f0;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 20px 40px rgba(15,23,42,.15);
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.progress-header {
+
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 20px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0f2a44,
+      #2563eb
+    );
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.progress-body {
+
+  padding: 24px;
+}
+
+.progress-message {
+
+  margin-bottom: 14px;
+
+  font-size: 14px;
+
+  color: #475569;
+}
+
+.progress-percent {
+
+  margin-bottom: 10px;
+
+  font-size: 28px;
+
+  font-weight: 700;
+
+  color: #2563eb;
+}
+
+/* =====================================================
+   BAR
+===================================================== */
+
+.progress-bar {
+
+  height: 16px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: #e2e8f0;
+}
+
+.progress-fill {
+
+  position: relative;
+
+  height: 100%;
+
+  width: 0;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0f2a44 0%,
+      #2563eb 100%
+    );
+
+  transition:
+    width .25s ease;
+}
+
+/* =====================================================
+   GLOW BEAM
+===================================================== */
+
+.progress-fill::after {
+
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+
+  left: -10%;
+
+  width: 10%;
+
+  height: 100%;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(147, 197, 253, .35) 20%,
+      rgba(191, 219, 254, .95) 50%,
+      rgba(147, 197, 253, .35) 80%,
+      transparent 100%
+    );
+
+  box-shadow:
+    0 0 8px rgba(147,197,253,.8),
+    0 0 14px rgba(147,197,253,.45);
+
+  animation:
+    progressGlow 1.6s linear infinite;
+}
+
+/* =====================================================
+   GLOW ANIMATION
+===================================================== */
+
+@keyframes progressGlow {
+
+  from {
+
+    left: -10%;
+  }
+
+  to {
+
+    left: 100%;
+  }
+}

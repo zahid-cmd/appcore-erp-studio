@@ -1,0 +1,52 @@
+<!-- ===================================================
+     PAGE CANVAS
+=================================================== -->
+
+<div
+    class="page-canvas"
+    [class.list-mode]="isList"
+    [class.form-mode]="isForm">
+
+    <!-- ===================================================
+         BODY
+    ==================================================== -->
+
+    <div
+        class="page-canvas-body"
+        [class.scrollable]="config.bodyScrollable">
+
+        <!-- ===============================================
+             CONTENT
+        ================================================ -->
+
+        <div class="page-canvas-content">
+
+            <ng-content
+                select="[canvasBody]">
+            </ng-content>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================================
+         FOOTER
+    ==================================================== -->
+
+    <div
+        *ngIf="config.showFooter || config.reserveFooterSpace"
+        class="page-canvas-footer">
+
+        <div
+            class="page-canvas-footer-content">
+
+            <ng-content
+                *ngIf="config.showFooter"
+                select="[canvasFooter]">
+            </ng-content>
+
+        </div>
+
+    </div>
+
+</div>

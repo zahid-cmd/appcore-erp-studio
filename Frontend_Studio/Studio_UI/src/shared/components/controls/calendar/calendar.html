@@ -1,0 +1,119 @@
+<div
+
+    class="calendar"
+
+    [class.disabled]="disabled"
+
+    [class.readonly]="readonly">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="calendar-header">
+
+        <!-- =====================================================
+             PREVIOUS MONTH
+        ====================================================== -->
+
+        <button
+
+            type="button"
+
+            class="calendar-navigation-button"
+
+            [disabled]="disabled"
+
+            (click)="previousMonth()">
+
+            <i class="fas fa-chevron-left"></i>
+
+        </button>
+
+        <!-- =====================================================
+             MONTH YEAR
+        ====================================================== -->
+
+        <div class="calendar-title">
+
+            {{ monthName }}
+
+            {{ currentYear }}
+
+        </div>
+
+        <!-- =====================================================
+             NEXT MONTH
+        ====================================================== -->
+
+        <button
+
+            type="button"
+
+            class="calendar-navigation-button"
+
+            [disabled]="disabled"
+
+            (click)="nextMonth()">
+
+            <i class="fas fa-chevron-right"></i>
+
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         WEEK HEADER
+    ====================================================== -->
+
+    <div class="calendar-week-header">
+
+        <div
+
+            *ngFor="let day of weekDays; let i = index"
+
+            class="calendar-week-day"
+
+            [class.saturday]="i === 0"
+
+            [class.friday]="i === 6">
+
+            {{ day }}
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         DAYS
+    ====================================================== -->
+
+    <div class="calendar-days">
+
+        <button
+
+            type="button"
+
+            *ngFor="let day of calendarDays"
+
+            class="calendar-day"
+
+            [class.other-month]="!day.isCurrentMonth"
+
+            [class.today]="day.isToday"
+
+            [class.selected]="day.isSelected"
+
+            [class.friday]="day.isFriday"
+
+            [disabled]="disabled"
+
+            (click)="selectDate(day)">
+
+            {{ day.day }}
+
+        </button>
+
+    </div>
+
+</div>

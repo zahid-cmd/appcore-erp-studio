@@ -1,0 +1,35 @@
+<div class="control-tabs">
+
+    <!-- =====================================================
+         TAB LIST
+    ====================================================== -->
+
+    <button
+
+        class="control-tab"
+
+        *ngFor="let tab of tabs"
+
+        type="button"
+
+        [class.active]="tab.id === selectedTab"
+
+        [class.disabled]="tab.disabled"
+
+        [disabled]="tab.disabled"
+
+        (click)="selectTab(tab)">
+
+        <!-- ===================================================
+             LABEL
+        ==================================================== -->
+
+        <span class="control-tab-label">
+
+            {{ tab.label }}
+
+        </span>
+
+    </button>
+
+</div>

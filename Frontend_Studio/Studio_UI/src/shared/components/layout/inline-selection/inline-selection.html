@@ -1,0 +1,109 @@
+<!-- =====================================================
+     INLINE SELECTION
+===================================================== -->
+
+<div class="inline-selection">
+
+    <!-- =================================================
+         INLINE FIELDS
+    ================================================== -->
+
+    <div class="inline-selection-fields">
+
+        @for (dropdown of dropdowns; track $index)
+        {
+            <!-- =========================================
+                 INLINE FIELD
+            ========================================== -->
+
+            <div class="inline-selection-field">
+
+                <app-search-dropdown
+
+                    [inline]="true"
+
+                    [items]="dropdown.items ?? []"
+
+                    [value]="dropdown.value"
+
+                    [placeholder]="
+                        dropdown.placeholder ??
+                        ('Select ' + dropdown.label)
+                    "
+
+                    [disabled]="
+                        disabled || !!dropdown.disabled
+                    "
+
+                    [labelField]="
+                        dropdown.labelField ?? 'label'
+                    "
+
+                    [valueField]="
+                        dropdown.valueField ?? 'value'
+                    "
+
+                    (valueChange)="
+                        onDropdownValueChanged(
+                            dropdown,
+                            $event
+                        )
+                    ">
+
+                </app-search-dropdown>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- =================================================
+         ADD BUTTON
+    ================================================== -->
+
+    @if (showButton)
+    {
+        <div class="inline-selection-button">
+
+            <button
+
+                type="button"
+
+                class="add-button"
+
+                [disabled]="
+                    disabled
+                    ||
+                    loading
+                    ||
+                    addDisabled
+                "
+
+                (click)="onAdd()">
+
+                @if (!loading)
+                {
+                    <i
+                        [class]="icon">
+                    </i>
+                }
+
+                @if (loading)
+                {
+                    <i
+                        class="fas fa-spinner fa-spin">
+                    </i>
+                }
+
+                <span>
+
+                    {{ loading ? 'Processing...' : buttonText }}
+
+                </span>
+
+            </button>
+
+        </div>
+    }
+
+</div>

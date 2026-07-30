@@ -1,0 +1,230 @@
+/* =====================================================
+   PAGE CANVAS
+===================================================== */
+
+.page-canvas
+{
+    position: relative;
+
+    display: flex;
+
+    flex-direction: column;
+
+    width: 100%;
+
+    height: 560px;
+
+    min-height: 560px;
+
+    overflow: hidden;
+
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fcfdff 45%,
+            #f8fbff 100%
+        );
+
+    border: 1px solid #e7edf5;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 2px 8px rgba(
+            15,
+            23,
+            42,
+            .04
+        );
+}
+
+/* =====================================================
+   GLASS POLISH
+===================================================== */
+
+.page-canvas::before
+{
+    content: '';
+
+    position: absolute;
+
+    top: -120px;
+
+    right: -120px;
+
+    width: 320px;
+
+    height: 220px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(37,99,235,.05) 0%,
+            rgba(37,99,235,.02) 55%,
+            transparent 80%
+        );
+
+    pointer-events: none;
+}
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.page-canvas-body
+{
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+
+    min-height: 0;
+
+    overflow: hidden;
+
+    background: #ffffff;
+}
+
+.page-canvas-body.scrollable
+{
+    overflow: auto;
+}
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.page-canvas-content
+{
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-width: 0;
+
+    min-height: 0;
+
+    overflow: hidden;
+}
+
+.page-canvas-content > *
+{
+    display: flex;
+
+    flex: 1 1 auto;
+
+    flex-direction: column;
+
+    width: 100%;
+
+    min-width: 0;
+
+    min-height: 0;
+}
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.page-canvas-footer
+{
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: stretch;
+
+    justify-content: stretch;
+
+    flex: 0 0 56px;
+
+    height: 56px;
+
+    padding: 0;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fafcff,
+            #ffffff
+        );
+
+    border-top: 1px solid #e7edf5;
+}
+
+.page-canvas-footer-content
+{
+    display: flex;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-width: 0;
+}
+
+.page-canvas-footer-content > *
+{
+    display: flex;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+
+    min-width: 0;
+}
+
+/* =====================================================
+   LIST MODE
+===================================================== */
+
+.page-canvas.list-mode
+{
+    height: 510px;
+}
+
+/* =====================================================
+   FORM MODE
+===================================================== */
+
+.page-canvas.form-mode
+{
+    height: 510px;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 992px)
+{
+    .page-canvas
+    {
+        height: auto;
+
+        min-height: 510px;
+    }
+
+    .page-canvas-footer
+    {
+        padding: 0 12px;
+    }
+}

@@ -1,0 +1,225 @@
+/* =====================================================
+   DATEPICKER
+===================================================== */
+
+.datepicker
+{
+    position: relative;
+
+    display: block;
+
+    width: 100%;
+}
+
+/* =====================================================
+   STATES
+===================================================== */
+
+.datepicker.disabled
+{
+    opacity: .70;
+
+    cursor: not-allowed;
+
+    pointer-events: none;
+}
+
+.datepicker.readonly
+{
+    opacity: .95;
+}
+
+/* =====================================================
+   SELECTOR
+===================================================== */
+
+.datepicker-selector
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    width: 100%;
+
+    height: 36px;
+
+    padding: 0 14px;
+
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fcfdff 100%
+        );
+
+    border: 1px solid #d9e5f2;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    transition:
+        border-color .20s ease,
+        box-shadow .20s ease,
+        background .20s ease;
+}
+
+.datepicker-selector:hover
+{
+    border-color: #9fc2f7;
+
+    box-shadow:
+        0 4px 10px rgba(37,99,235,.08);
+}
+
+.datepicker-selector.open
+{
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.12);
+}
+
+/* =====================================================
+   VALUE
+===================================================== */
+
+.datepicker-value
+{
+    flex: 1;
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    color: #1e293b;
+
+    font-size: 16px;
+
+    font-weight: 500;
+}
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.datepicker-placeholder
+{
+    color: #94a3b8;
+
+    font-size: 16px;
+
+    font-weight: 400;
+}
+
+/* =====================================================
+   ICON
+===================================================== */
+
+.datepicker-icon
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 44px;
+
+    color: #64748b;
+
+    font-size: 14px;
+
+    transition:
+        color .20s ease;
+}
+
+.datepicker-selector.open .datepicker-icon
+{
+    color: #2563eb;
+}
+
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+app-overlay
+{
+    display: block;
+}
+
+app-overlay app-calendar
+{
+    display: block;
+
+    width: 100%;
+}
+
+/* =====================================================
+   READONLY
+===================================================== */
+
+.datepicker.readonly .datepicker-selector
+{
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #f2f7ff 100%
+        );
+}
+
+.datepicker.readonly .datepicker-value
+{
+    color: #475569;
+}
+
+/* =====================================================
+   DISABLED
+===================================================== */
+
+.datepicker.disabled .datepicker-selector
+{
+    background: #f8fafc;
+
+    box-shadow: none;
+}
+
+.datepicker.disabled .datepicker-value
+{
+    color: #94a3b8;
+}
+
+.datepicker.disabled .datepicker-icon
+{
+    color: #94a3b8;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:992px)
+{
+    .datepicker-selector
+    {
+        height: 42px;
+    }
+
+    .datepicker-icon
+    {
+        width: 40px;
+    }
+}

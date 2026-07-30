@@ -1,0 +1,326 @@
+@if (previewMode || opened)
+{
+    <!-- =====================================================
+         OVERLAY
+    ====================================================== -->
+
+    <div
+        class="history-overlay"
+        (click)="close()">
+    </div>
+
+    <!-- =====================================================
+         DRAWER
+    ====================================================== -->
+
+    <div
+        class="history-drawer open"
+        [style.width.px]="width"
+        (click)="$event.stopPropagation()">
+
+        <!-- ===================================================
+             HEADER
+        ==================================================== -->
+
+        <div class="drawer-header">
+
+            <div class="drawer-header-left">
+
+                <div class="drawer-header-icon">
+
+                    <i class="fas fa-clock-rotate-left"></i>
+
+                </div>
+
+                <div class="drawer-header-content">
+
+                    <div class="drawer-title">
+
+                        {{ currentTitle }}
+
+                    </div>
+
+                    <div class="drawer-subtitle">
+
+                        Audit Trail & Activity History
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="drawer-header-actions">
+
+                <button
+                    type="button"
+                    class="close-btn"
+                    (click)="close()">
+
+                    <i class="fas fa-times"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================================
+            SUMMARY
+        ==================================================== -->
+
+        @if (currentItems.length > 0)
+        {
+            <div class="history-summary">
+
+                <!-- ==========================================
+                    TOTAL ACTIVITIES
+                =========================================== -->
+
+                <div class="summary-card">
+
+                    <div class="summary-card-icon">
+
+                        <i class="fas fa-chart-line"></i>
+
+                    </div>
+
+                    <div class="summary-card-content">
+
+                        <div class="summary-card-value">
+
+                            {{ totalActivities }}
+
+                        </div>
+
+                        <div class="summary-card-title">
+
+                            Activities
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ==========================================
+                    LAST ACTION
+                =========================================== -->
+
+                <div class="summary-card">
+
+                    <div class="summary-card-icon">
+
+                        <i class="fas fa-bolt"></i>
+
+                    </div>
+
+                    <div class="summary-card-content">
+
+                        <div class="summary-card-value">
+
+                            {{ currentItems[0].badge || 'N/A' }}
+
+                        </div>
+
+                        <div class="summary-card-title">
+
+                            Last Action
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ==========================================
+                    LATEST ACTIVITY
+                =========================================== -->
+
+                <div class="summary-card">
+
+                    <div class="summary-card-icon">
+
+                        <i class="fas fa-clock"></i>
+
+                    </div>
+
+                    <div class="summary-card-content">
+
+                        <div class="summary-card-value">
+
+                            {{ latestActivity }}
+
+                        </div>
+
+                        <div class="summary-card-title">
+
+                            Latest Activity
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+        <!-- ===================================================
+             BODY
+        ==================================================== -->
+
+        <div class="drawer-body appcore-scrollbar">
+
+            <!-- ===================================================
+                 EMPTY STATE
+            ==================================================== -->
+
+            @if (currentItems.length === 0)
+            {
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+
+                        <i class="fas fa-history"></i>
+
+                    </div>
+
+                    <div class="empty-title">
+
+                        No History Available
+
+                    </div>
+
+                    <div class="empty-subtitle">
+
+                        No audit trail records found.
+
+                    </div>
+
+                </div>
+            }
+
+            <!-- ===================================================
+                 TIMELINE
+            ==================================================== -->
+
+            @if (currentItems.length > 0)
+            {
+                <div class="history-timeline">
+
+                    @for (
+                        item of currentItems;
+                        track trackByIndex($index)
+                    )
+                    {
+                        <div class="timeline-item">
+
+                            <!-- ===========================================
+                                 TIMELINE MARKER
+                            ============================================ -->
+
+                            <div class="timeline-marker">
+
+                                <div class="timeline-dot">
+
+                                    <i class="fas fa-file-signature"></i>
+
+                                </div>
+
+                            </div>
+
+                            <!-- ===========================================
+                                 TIMELINE CARD
+                            ============================================ -->
+
+                            <div
+                                class="timeline-content"
+                                [class]="getActivityClass(item)">
+
+                                <!-- =======================================
+                                     HEADER
+                                ======================================== -->
+
+                                <div class="timeline-header">
+
+                                    <div class="timeline-title">
+
+                                        {{ item.title }}
+
+                                    </div>
+
+                                    @if (item.badge)
+                                    {
+                                        <div class="timeline-badge">
+
+                                            {{ getBadge(item) }}
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                                <!-- =======================================
+                                     DESCRIPTION
+                                ======================================== -->
+
+                                @if (item.description)
+                                {
+                                    <div class="timeline-description">
+
+                                        {{ item.description }}
+
+                                    </div>
+                                }
+
+                                <!-- =======================================
+                                     FOOTER
+                                ======================================== -->
+
+                                <div class="timeline-footer">
+
+                                    @if (item.user)
+                                    {
+                                        <div class="timeline-user">
+
+                                            <i class="fas fa-user"></i>
+
+                                            <span>
+
+                                                {{ item.user }}
+
+                                            </span>
+
+                                        </div>
+                                    }
+
+                                    @if (item.dateTime)
+                                    {
+                                        <div class="timeline-date">
+
+                                            <i class="fas fa-clock"></i>
+
+                                            <span>
+
+                                                {{ item.dateTime }}
+
+                                            </span>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+}

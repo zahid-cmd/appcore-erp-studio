@@ -1,0 +1,94 @@
+/* =====================================================
+   APPCORE GLOBAL BASE STYLE
+===================================================== */
+
+
+/* =====================================================
+   DOCUMENT RESET
+===================================================== */
+
+html,
+body
+{
+    width:100%;
+
+    height:100%;
+
+    margin:0;
+
+    padding:0;
+
+    overflow:hidden;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    background:#f8fafc;
+}
+
+
+/* =====================================================
+   GLOBAL BOX MODEL
+===================================================== */
+
+*,
+*::before,
+*::after
+{
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   APPCORE GLOBAL SCROLLBAR
+===================================================== */
+
+.appcore-scrollbar
+{
+    scrollbar-width:thin;
+
+    scrollbar-color:
+        #2563eb
+        transparent;
+}
+
+
+.appcore-scrollbar::-webkit-scrollbar
+{
+    width:6px;
+
+    height:6px;
+}
+
+
+.appcore-scrollbar::-webkit-scrollbar-track
+{
+    background:transparent;
+
+    margin-top:4px;
+
+    margin-bottom:4px;
+}
+
+
+.appcore-scrollbar::-webkit-scrollbar-thumb
+{
+    background:#2563eb;
+
+    border-radius:999px;
+
+    border:1px solid transparent;
+
+    background-clip:padding-box;
+
+    transition:
+        background .20s ease;
+}
+
+
+.appcore-scrollbar::-webkit-scrollbar-thumb:hover
+{
+    background:#1d4ed8;
+}

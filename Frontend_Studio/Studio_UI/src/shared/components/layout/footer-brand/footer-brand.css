@@ -1,0 +1,120 @@
+/* =====================================================
+   FOOTER BRAND
+===================================================== */
+
+.footer-brand {
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 10px;
+    gap: 12px;
+
+    background: transparent;
+
+    overflow: hidden;
+
+}
+
+/* =====================================================
+   ABOUT BUTTON
+===================================================== */
+
+.about-button {
+
+    flex-shrink: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    height: 26px;
+    min-width: 84px;
+
+    padding: 0 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+
+    background: #f8fafc;
+
+    color: #334155;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background-color .2s ease,
+        border-color .2s ease,
+        color .2s ease,
+        box-shadow .2s ease;
+
+}
+
+.about-button:hover {
+
+    background: #eff6ff;
+
+    border-color: #2563eb;
+
+    color: #2563eb;
+
+    box-shadow: 0 0 0 2px rgba(37,99,235,.10);
+
+}
+
+.about-button:active {
+
+    transform: scale(.98);
+
+}
+
+.about-button i {
+
+    font-size: 13px;
+
+}
+
+/* =====================================================
+   BRAND AREA
+===================================================== */
+
+.footer-brand-content {
+
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+}
+
+/* =====================================================
+   LOGO
+===================================================== */
+
+.footer-brand-content img {
+
+    display: block;
+
+    max-height: 50px;
+    max-width: 170px;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    user-select: none;
+    pointer-events: none;
+
+}

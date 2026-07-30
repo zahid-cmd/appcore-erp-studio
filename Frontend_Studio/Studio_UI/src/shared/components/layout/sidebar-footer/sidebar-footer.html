@@ -1,0 +1,16 @@
+<div class="sidebar-footer">
+
+    <button
+        *ngFor="let item of items"
+        type="button"
+        class="footer-icon-button"
+        [title]="item.tooltip"
+        (click)="onItemClick(item.action)">
+
+        <i
+            [class]="item.icon">
+        </i>
+
+    </button>
+
+</div>

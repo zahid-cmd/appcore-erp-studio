@@ -1,0 +1,93 @@
+<div
+
+    class="checkbox"
+
+    [class.primary]="color === 'primary'"
+
+    [class.success]="color === 'success'"
+
+    [class.danger]="color === 'danger'"
+
+    [class.warning]="color === 'warning'"
+
+    [class.secondary]="color === 'secondary'"
+
+    [class.standard]="appearance === 'standard'"
+
+    [class.switch]="appearance === 'switch'"
+
+    [class.card]="appearance === 'card'"
+
+    [class.checked]="value"
+
+    [class.disabled]="disabled"
+
+    [class.readonly]="readOnly"
+
+    [attr.tabindex]="interactive ? 0 : -1"
+
+    (click)="toggle()"
+
+    (keydown.enter)="toggle()"
+
+    (keydown.space)="toggle(); $event.preventDefault()">
+
+    <!-- =====================================================
+         CONTROL
+    ====================================================== -->
+
+    <div
+
+        class="checkbox-control">
+
+        <!-- =============================================
+             STANDARD
+        ============================================== -->
+
+        <ng-container
+
+            *ngIf="appearance === 'standard'">
+
+            <i
+
+                *ngIf="value"
+
+                class="fas fa-check">
+
+            </i>
+
+        </ng-container>
+
+        <!-- =============================================
+             SWITCH
+        ============================================== -->
+
+        <ng-container
+
+            *ngIf="appearance === 'switch'">
+
+            <div
+
+                class="checkbox-switch-thumb">
+
+            </div>
+
+        </ng-container>
+
+    </div>
+
+    <!-- =====================================================
+         LABEL
+    ====================================================== -->
+
+    <div
+
+        *ngIf="label"
+
+        class="checkbox-label">
+
+        {{ label }}
+
+    </div>
+
+</div>

@@ -1,0 +1,117 @@
+<!-- ==========================================================
+     SIDEBAR
+=========================================================== -->
+
+<div class="sidebar">
+
+    <!-- ======================================================
+         MODULES
+    ======================================================= -->
+
+    <div
+        class="sidebar-module"
+        *ngFor="let module of modules">
+
+        <!-- ==================================================
+             MODULE HEADER
+        =================================================== -->
+
+        <button
+            type="button"
+            class="module-header"
+            (click)="toggleModule(module)">
+
+            <div class="module-title">
+
+                <i [class]="module.icon"></i>
+
+                <span>
+                    {{ module.title }}
+                </span>
+
+            </div>
+
+            <i
+                class="fas"
+                [ngClass]="
+                {
+                    'fa-chevron-down': module.expanded,
+                    'fa-chevron-right': !module.expanded
+                }">
+            </i>
+
+        </button>
+
+        <!-- ==================================================
+             MENUS
+        =================================================== -->
+
+        <div
+            class="sidebar-menus"
+            *ngIf="module.expanded">
+
+            <div
+                class="sidebar-menu"
+                *ngFor="let menu of module.menus">
+
+                <!-- ==========================================
+                     MENU HEADER
+                =========================================== -->
+
+                <button
+                    type="button"
+                    class="menu-header"
+                    (click)="toggleMenu(menu)">
+
+                    <div class="menu-title">
+
+                        <i [class]="menu.icon"></i>
+
+                        <span>
+                            {{ menu.title }}
+                        </span>
+
+                    </div>
+
+                    <i
+                        class="fas"
+                        [ngClass]="
+                        {
+                            'fa-chevron-down': menu.expanded,
+                            'fa-chevron-right': !menu.expanded
+                        }">
+                    </i>
+
+                </button>
+
+                <!-- ==========================================
+                     SUBMENUS
+                =========================================== -->
+
+                <div
+                    class="sidebar-pages"
+                    *ngIf="menu.expanded">
+
+                    <a
+                        class="page-button"
+                        *ngFor="let submenu of menu.submenus"
+                        [class.active]="submenu.active"
+                        [routerLink]="submenu.route">
+
+                        <i [class]="submenu.icon"></i>
+
+                        <span>
+                            {{ submenu.title }}
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

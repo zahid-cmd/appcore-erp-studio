@@ -1,0 +1,84 @@
+<div
+
+    class="orbit-loader"
+
+    [class.overlay]="overlay"
+
+    [class.small]="size === 'small'"
+
+    [class.medium]="size === 'medium'"
+
+    [class.large]="size === 'large'">
+
+    <!-- =====================================================
+         ORBIT
+    ====================================================== -->
+
+    <div
+
+        class="orbit-ring">
+
+        <div
+
+            class="orbit-dot">
+        </div>
+
+        <div
+
+            class="orbit-center">
+
+            <img
+
+                src="assets/appcore_icon.png"
+
+                alt="AppCore"
+
+                class="orbit-logo" />
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         CONTENT
+    ====================================================== -->
+
+    @if (showMessage)
+    {
+        <div
+
+            class="loader-title">
+
+            {{ title }}
+
+        </div>
+
+        <div
+
+            class="loader-message">
+
+            {{ message }}
+
+        </div>
+    }
+
+    <!-- =====================================================
+         DOTS
+    ====================================================== -->
+
+    @if (showMessage)
+    {
+        <div
+
+            class="loader-dots">
+
+            <span></span>
+
+            <span></span>
+
+            <span></span>
+
+        </div>
+    }
+
+</div>

@@ -1,0 +1,488 @@
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar
+{
+    display:flex;
+    flex-direction:column;
+
+    width:100%;
+    height:100%;
+
+    background:
+        linear-gradient(
+            180deg,
+            #071328 0%,
+            #0c1d42 45%,
+            #153067 100%
+        );
+
+    border-right:1px solid rgba(255,255,255,.08);
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    user-select:none;
+}
+
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.sidebar-body
+{
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:14px 10px;
+
+    min-height:0;
+}
+
+
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+.sidebar-body::-webkit-scrollbar
+{
+    width:5px;
+}
+
+.sidebar-body::-webkit-scrollbar-thumb
+{
+    background:rgba(255,255,255,.18);
+
+    border-radius:20px;
+}
+
+.sidebar-body::-webkit-scrollbar-thumb:hover
+{
+    background:rgba(255,255,255,.35);
+}
+
+
+
+/* =====================================================
+   MODULE
+===================================================== */
+
+.sidebar-module
+{
+    margin-bottom:8px;
+}
+
+
+
+/* =====================================================
+   MODULE HEADER
+===================================================== */
+
+.module-header
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    width:100%;
+
+    height:42px;
+
+    padding:0 14px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:transparent;
+
+    color:#d7e3f7;
+
+    cursor:pointer;
+
+    transition:.18s ease;
+}
+
+.module-header:hover
+{
+    background:rgba(255,255,255,.07);
+}
+
+
+
+/* =====================================================
+   MODULE TITLE
+===================================================== */
+
+.module-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+.module-title i
+{
+    width:18px;
+
+    text-align:center;
+
+    font-size:16px;
+
+    color:#7fb6ff;
+}
+
+.module-title span
+{
+    font-size:14px;
+
+    font-weight:600;
+}
+
+
+
+/* =====================================================
+   MENUS
+===================================================== */
+
+.sidebar-menus
+{
+    margin-top:4px;
+
+    margin-left:18px;
+
+    padding-left:12px;
+
+    border-left:1px solid rgba(255,255,255,.08);
+}
+
+
+
+/* =====================================================
+   MENU
+===================================================== */
+
+.sidebar-menu
+{
+    margin-bottom:4px;
+}
+
+
+
+/* =====================================================
+   MENU HEADER
+===================================================== */
+
+.menu-header
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    width:100%;
+
+    height:40px;
+
+    padding:0 14px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:transparent;
+
+    color:#c7d3e7;
+
+    cursor:pointer;
+
+    transition:.18s ease;
+}
+
+.menu-header:hover
+{
+    background:rgba(255,255,255,.06);
+}
+
+
+
+/* =====================================================
+   MENU TITLE
+===================================================== */
+
+.menu-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:11px;
+}
+
+.menu-title i
+{
+    width:18px;
+
+    text-align:center;
+
+    color:#88b9ff;
+}
+
+.menu-title span
+{
+    font-size:14px;
+
+    font-weight:500;
+}
+
+
+
+/* =====================================================
+   PAGES
+===================================================== */
+
+.sidebar-pages
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:3px;
+
+    margin-top:4px;
+
+    margin-left:18px;
+}
+
+
+
+/* =====================================================
+   PAGE BUTTON
+===================================================== */
+
+.page-button
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:100%;
+
+    height:36px;
+
+    padding:0 14px;
+
+    box-sizing:border-box;
+
+    border:none;
+
+    border-radius:9px;
+
+    background:transparent;
+
+    color:#9eb3d3;
+
+    cursor:pointer;
+
+    text-decoration:none;
+
+    outline:none;
+
+    transition:
+        background .18s ease,
+        color .18s ease,
+        transform .15s ease;
+}
+
+.page-button:hover
+{
+    background:rgba(255,255,255,.06);
+
+    color:#ffffff;
+
+    text-decoration:none;
+
+    transform:translateX(2px);
+}
+
+.page-button:focus
+{
+    text-decoration:none;
+
+    outline:none;
+}
+
+.page-button:visited
+{
+    color:#9eb3d3;
+
+    text-decoration:none;
+}
+
+.page-button:active
+{
+    color:#ffffff;
+
+    text-decoration:none;
+}
+
+
+
+/* =====================================================
+   PAGE ICON
+===================================================== */
+
+.page-button i
+{
+    width:16px;
+
+    text-align:center;
+
+    font-size:13px;
+
+    color:inherit;
+}
+
+
+
+/* =====================================================
+   PAGE TEXT
+===================================================== */
+
+.page-button span
+{
+    font-size:14px;
+
+    font-weight:500;
+
+    color:inherit;
+
+    text-decoration:none;
+}
+
+
+/* =====================================================
+   ACTIVE PAGE
+===================================================== */
+
+.page-button.active
+{
+    position:relative;
+
+    border-radius:0;
+
+    color:#ffffff;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.08) 0%,
+            rgba(255,255,255,0) 45%
+        ),
+        linear-gradient(
+            90deg,
+            #24364d 0%,
+            #1e40af 28%,
+            #2563eb 68%,
+            #3b82f6 100%
+        );
+
+    border-top:1px solid rgba(255,255,255,.08);
+
+    border-bottom:1px solid rgba(0,0,0,.18);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 3px 10px rgba(37,99,235,.20);
+
+    overflow:hidden;
+}
+
+.page-button.active::before
+{
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    bottom:0;
+
+    width:5px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #dbeafe 100%
+        );
+
+    box-shadow:
+        0 0 10px rgba(255,255,255,.45);
+}
+
+.page-button.active i
+{
+    color:#ffffff;
+}
+
+.page-button.active span
+{
+    color:#ffffff;
+
+    font-weight:600;
+}
+
+/* =====================================================
+   CHEVRON
+===================================================== */
+
+.module-header .fas:last-child,
+.menu-header .fas:last-child
+{
+    font-size:12px;
+
+    color:#93a8cb;
+
+    transition:transform .18s ease;
+}
+
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.sidebar-footer
+{
+    height:40px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:
+        rgba(0,0,0,.12);
+
+    border-top:
+        1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(12px);
+}

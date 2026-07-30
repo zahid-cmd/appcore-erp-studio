@@ -1,0 +1,311 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-list"
+
+        [title]="pageTitle"
+
+        subtitle="Manage ERP navigation submenus.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+            <!-- =============================================
+                 SUBMENU INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Submenu Information"
+
+                icon="fas fa-list">
+
+                <app-search-dropdown
+
+                    label="Navigation Menu"
+
+                    [items]="menus"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="submenu.navigationMenuId"
+
+                    (valueChange)="onMenuChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Submenu Code"
+
+                    [(value)]="submenu.code"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Submenu Name"
+
+                    [(value)]="submenu.name"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 ROUTE SETTINGS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Route Settings"
+
+                icon="fas fa-route">
+
+                <app-textbox
+
+                    label="Route Key"
+
+                    placeholder="Example: source-control"
+
+                    [(value)]="submenu.routeKey"
+
+                    (valueChange)="generateRoute(); checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Route"
+
+                    placeholder="Automatically generated"
+
+                    [(value)]="submenu.route"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Icon"
+
+                    placeholder="Example: fas fa-users"
+
+                    [(value)]="submenu.icon"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 STATUS & DESCRIPTION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Description"
+
+                icon="fas fa-comment">
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    type="number"
+
+                    [(value)]="submenu.displayOrder"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statuses"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="submenu.isActive"
+
+                    (valueChange)="onStatusChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    [(value)]="submenu.remarks"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+            <!-- =============================================
+                PREVIEW
+            ============================================== -->
+
+            <app-form-section
+
+                title="Preview"
+
+                icon="fas fa-eye">
+
+                <div class="preview">
+
+                    <div class="preview-icon">
+
+                        <i
+
+                            [class]="submenu.icon || 'fas fa-list'">
+
+                        </i>
+
+                    </div>
+
+                    <div class="preview-title">
+
+                        {{ submenu.name || 'Submenu Name' }}
+
+                    </div>
+
+                    <div class="preview-code">
+
+                        {{ submenu.code || 'Auto Generated' }}
+
+                    </div>
+
+                    <div class="preview-route">
+
+                        <i class="fas fa-route"></i>
+
+                        <span>
+
+                            {{ submenu.route || '/route-preview' }}
+
+                        </span>
+
+                    </div>
+
+                    <div class="preview-note">
+
+                        Live Preview
+
+                    </div>
+
+                </div>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

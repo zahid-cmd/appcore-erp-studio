@@ -1,0 +1,121 @@
+<div class="textbox-container">
+
+    <!-- =====================================================
+         LABEL
+    ====================================================== -->
+
+    <label
+
+        *ngIf="label"
+
+        class="textbox-label"
+
+        [attr.for]="id">
+
+        <span>
+
+            {{ label }}
+
+        </span>
+
+        <span
+
+            *ngIf="required"
+
+            class="textbox-required">
+
+            *
+
+        </span>
+
+    </label>
+
+    <!-- =====================================================
+         TEXTBOX
+    ====================================================== -->
+
+    <div
+
+        class="textbox"
+
+        [class.disabled]="disabled"
+
+        [class.readonly]="readonly"
+
+        [class.has-prefix]="hasPrefix"
+
+        [class.has-suffix]="hasSuffix">
+
+        <!-- =====================================================
+             PREFIX ICON
+        ====================================================== -->
+
+        <div
+
+            *ngIf="hasPrefix"
+
+            class="textbox-prefix">
+
+            <i [class]="prefixIcon"></i>
+
+        </div>
+
+        <!-- =====================================================
+             INPUT
+        ====================================================== -->
+
+        <input
+
+            [id]="id"
+
+            [name]="name"
+
+            [type]="type"
+
+            [value]="value"
+
+            [placeholder]="placeholder"
+
+            [disabled]="disabled"
+
+            [readonly]="readonly"
+
+            [required]="required"
+
+            [autofocus]="autofocus"
+
+            [spellcheck]="spellcheck"
+
+            [tabIndex]="tabIndex"
+
+            [autocomplete]="autocomplete"
+
+            [attr.inputmode]="inputMode"
+
+            [attr.maxlength]="maxLength ?? null"
+
+            (input)="onInput($event)"
+
+            (focus)="onFocus($event)"
+
+            (blur)="onBlur($event)"
+
+            (keydown)="onKeyDown($event)" />
+
+        <!-- =====================================================
+             SUFFIX ICON
+        ====================================================== -->
+
+        <div
+
+            *ngIf="hasSuffix"
+
+            class="textbox-suffix">
+
+            <i [class]="suffixIcon"></i>
+
+        </div>
+
+    </div>
+
+</div>

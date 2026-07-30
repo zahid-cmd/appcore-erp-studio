@@ -1,0 +1,246 @@
+/* =====================================================
+   HOST
+===================================================== */
+
+:host
+{
+    display: block;
+
+    width: 100%;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   SEARCH BOX
+===================================================== */
+
+.search-box
+{
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    height: 40px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #d6dee8;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.search-box:hover
+{
+    border-color: #b7c3d3;
+
+    background: #ffffff;
+}
+
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.search-box:focus-within
+{
+    border-color: #5567e9;
+
+    box-shadow:
+        0 0 0 3px rgba(85,103,233,.08);
+}
+
+
+/* =====================================================
+   SEARCH ICON
+===================================================== */
+
+.search-box-icon
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 40px;
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    transition: color .18s ease;
+}
+
+
+.search-box:focus-within .search-box-icon
+{
+    color: #5567e9;
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+.search-box input
+{
+    flex: 1;
+
+    width: 100%;
+
+    height: 100%;
+
+    padding: 0;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    box-sizing: border-box;
+
+    color: #0f172a;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 500;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.search-box input::placeholder
+{
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    font-weight: 400;
+
+    opacity: 1;
+}
+
+
+/* =====================================================
+   CLEAR BUTTON
+===================================================== */
+
+.search-box-clear
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 28px;
+
+    height: 28px;
+
+    margin-right: 6px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    cursor: pointer;
+
+    transition:
+        background .18s ease,
+        color .18s ease;
+}
+
+
+.search-box-clear:hover:not(:disabled)
+{
+    background: #eef2ff;
+
+    color: #5567e9;
+}
+
+
+/* =====================================================
+   DISABLED
+===================================================== */
+
+.search-box:has(input:disabled)
+{
+    background: #f8fafc;
+
+    cursor: default;
+
+    box-shadow: none;
+}
+
+
+.search-box input:disabled
+{
+    color: #94a3b8;
+
+    cursor: default;
+}
+
+
+.search-box input:disabled::placeholder
+{
+    color: #94a3b8;
+}
+
+
+.search-box-clear:disabled
+{
+    color: #cbd5e1;
+
+    cursor: default;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:992px)
+{
+    .search-box
+    {
+        height: 40px;
+    }
+
+    .search-box-icon
+    {
+        width: 40px;
+    }
+}

@@ -1,0 +1,63 @@
+<div class="page-header">
+
+    <!-- =====================================================
+         LEFT
+    ====================================================== -->
+
+    <div class="page-header-left">
+
+        <div
+            *ngIf="icon"
+            class="page-header-icon">
+
+            <i [class]="icon"></i>
+
+        </div>
+
+        <div class="page-header-content">
+
+            <div
+                *ngIf="title"
+                class="page-header-title">
+
+                {{ title }}
+
+            </div>
+
+            <div
+                *ngIf="subtitle"
+                class="page-header-subtitle">
+
+                {{ subtitle }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         CENTER
+    ====================================================== -->
+
+    <div class="page-header-center">
+
+        <ng-content
+            select="[pageHeaderCenter]">
+        </ng-content>
+
+    </div>
+
+    <!-- =====================================================
+         RIGHT
+    ====================================================== -->
+
+    <div class="page-header-right">
+
+        <ng-content
+            select="[pageHeaderRight]">
+        </ng-content>
+
+    </div>
+
+</div>

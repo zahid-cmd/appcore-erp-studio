@@ -1,0 +1,36 @@
+<!-- =====================================================
+     BREADCRUMB
+===================================================== -->
+
+<div class="breadcrumb">
+
+    <span class="breadcrumb-home">
+
+        <i class="fas fa-house"></i>
+
+    </span>
+
+    <ng-container
+        *ngFor="
+            let item of breadcrumbs;
+            let last = last
+        ">
+
+        <span
+            class="breadcrumb-separator">
+
+            <i class="fas fa-angle-right"></i>
+
+        </span>
+
+        <span
+            class="breadcrumb-item"
+            [class.active]="last">
+
+            {{ item.label }}
+
+        </span>
+
+    </ng-container>
+
+</div>

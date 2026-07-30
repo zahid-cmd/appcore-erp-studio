@@ -1,0 +1,119 @@
+/*==============================================================
+  Activity Selector
+==============================================================*/
+
+.activity-selector
+{
+    display: flex;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    justify-content: flex-start;
+
+    flex-wrap: nowrap;
+
+    width: 100%;
+
+    gap: 0;
+}
+
+/*==============================================================
+  Activity Item
+==============================================================*/
+
+.activity-item
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: flex-start;
+
+    width: 80px;
+
+    min-width: 80px;
+
+    max-width: 80px;
+
+    height: 24px;
+
+    box-sizing: border-box;
+
+    white-space: nowrap;
+}
+
+/*==============================================================
+  All Item
+==============================================================*/
+
+.activity-item:first-child
+{
+    width: 60px;
+
+    min-width: 60px;
+
+    max-width: 60px;
+
+    font-weight: 600;
+}
+
+/*==============================================================
+  Checkbox
+==============================================================*/
+
+.activity-item app-checkbox
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 0 0 auto;
+
+    margin-right: 6px;
+
+    height: 24px;
+}
+
+/*==============================================================
+  Activity Text
+==============================================================*/
+
+.activity-text
+{
+    display: flex;
+
+    align-items: center;
+
+    height: 24px;
+
+    margin: 0;
+
+    padding: 0;
+
+    font-size: 13px;
+
+    font-weight: 400;
+
+    line-height: 24px;
+
+    color: #374151;
+
+    user-select: none;
+
+    white-space: nowrap;
+}
+
+/*==============================================================
+  All Text
+==============================================================*/
+
+.activity-item:first-child .activity-text
+{
+    font-weight: 600;
+
+    color: #1f2937;
+}

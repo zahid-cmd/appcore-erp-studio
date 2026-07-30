@@ -1,0 +1,211 @@
+/* =====================================================
+   PAGE TOOLBAR
+===================================================== */
+
+.page-toolbar
+{
+    position: relative;
+
+    overflow: hidden;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 20px;
+
+    width: 100%;
+
+    min-height: 52px;
+
+    padding: 8px 18px;
+
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,.98) 0%,
+            rgba(252,253,255,.97) 45%,
+            rgba(245,248,252,.96) 100%
+        );
+
+    border: 1px solid #e7edf5;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 2px 8px rgba(15,23,42,.04),
+        inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+/* =====================================================
+   GLASS EFFECT
+===================================================== */
+
+.page-toolbar::before
+{
+    content: '';
+
+    position: absolute;
+
+    top: -70px;
+    right: -70px;
+
+    width: 240px;
+    height: 170px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(37,99,235,.10) 0%,
+            rgba(37,99,235,.04) 50%,
+            transparent 75%
+        );
+
+    pointer-events: none;
+}
+
+/* =====================================================
+   LIGHT EFFECT
+===================================================== */
+
+.page-toolbar::after
+{
+    content: '';
+
+    position: absolute;
+
+    top: -80px;
+    left: 38%;
+
+    width: 170px;
+    height: 170px;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255,255,255,.70),
+            rgba(255,255,255,.18),
+            transparent
+        );
+
+    transform: rotate(20deg);
+
+    pointer-events: none;
+}
+
+/* =====================================================
+   LEFT
+===================================================== */
+
+.page-toolbar-left
+{
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+
+    min-width: 0;
+
+    height: 100%;
+
+    padding: 2px 0;
+
+    overflow: hidden;
+
+    gap: 12px;
+}
+
+.page-toolbar-left > *
+{
+    display: flex;
+
+    align-items: center;
+
+    min-width: 0;
+}
+
+/* =====================================================
+   RIGHT
+===================================================== */
+
+.page-toolbar-right
+{
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    min-width: 0;
+
+    height: 100%;
+
+    padding: 2px 0;
+}
+
+.page-toolbar-right > *
+{
+    display: flex;
+
+    align-items: center;
+
+    min-width: 0;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 992px)
+{
+    .page-toolbar
+    {
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 14px;
+
+        padding: 12px 16px;
+    }
+
+    .page-toolbar-left,
+    .page-toolbar-right
+    {
+        width: 100%;
+
+        flex: none;
+
+        height: auto;
+
+        padding: 0;
+    }
+
+    .page-toolbar-right
+    {
+        justify-content: flex-start;
+
+        flex-wrap: wrap;
+    }
+
+    .page-toolbar-left > *,
+    .page-toolbar-right > *
+    {
+        flex: 1 1 auto;
+
+        min-width: 180px;
+    }
+}

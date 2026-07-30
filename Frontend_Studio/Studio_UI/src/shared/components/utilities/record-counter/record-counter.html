@@ -1,0 +1,78 @@
+<!-- ==========================================================
+     Record Counter
+========================================================== -->
+
+<div
+
+    class="record-counter"
+
+    [class.compact]="compact"
+
+    [class.no-border]="!showBorder"
+
+    [class.no-shadow]="!showShadow"
+
+    [style.max-width.px]="maxWidth">
+
+    <ng-container
+
+        *ngFor="
+            let section of visibleSections;
+            let last = last
+        ">
+
+        <!-- ===================================================
+             Section
+        ==================================================== -->
+
+        <div
+
+            class="counter-section"
+
+            [title]="section.tooltip ?? ''">
+
+            <!-- ===============================================
+                 Counter Item
+            ================================================ -->
+
+            <div class="counter-item">
+
+                <!-- ===========================================
+                     Value
+                ============================================ -->
+
+                <span class="counter-value">
+
+                    {{ section.value }}
+
+                </span>
+
+                <!-- ===========================================
+                     Label
+                ============================================ -->
+
+                <span class="counter-label">
+
+                    {{ section.label }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================================
+             Divider
+        ==================================================== -->
+
+        <div
+
+            *ngIf="!last"
+
+            class="counter-divider">
+
+        </div>
+
+    </ng-container>
+
+</div>

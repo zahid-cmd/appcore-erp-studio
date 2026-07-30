@@ -1,0 +1,244 @@
+<div
+
+    class="dropdown-container"
+
+    [class.dropdown-inline]="inline">
+
+    <!-- =====================================================
+         LABEL
+    ====================================================== -->
+
+    <label
+
+        *ngIf="label"
+
+        class="dropdown-label">
+
+        <span>
+
+            {{ label }}
+
+        </span>
+
+        <span
+
+            *ngIf="required"
+
+            class="dropdown-required">
+
+            *
+
+        </span>
+
+    </label>
+
+    <!-- =====================================================
+         DROPDOWN
+    ====================================================== -->
+
+    <div
+
+        class="dropdown"
+
+        [class.disabled]="disabled"
+
+        [class.readonly]="readonly">
+
+        <!-- =====================================================
+             SELECTOR
+        ====================================================== -->
+
+        <div
+
+            cdkOverlayOrigin
+
+            #origin="cdkOverlayOrigin"
+
+            class="dropdown-selector"
+
+            tabindex="0"
+
+            [class.open]="isOpen"
+
+            [class.disabled]="disabled || readonly"
+
+            [attr.aria-expanded]="isOpen"
+
+            [attr.aria-disabled]="disabled"
+
+            (click)="toggleDropdown()">
+
+            <!-- =================================================
+                 SELECTED TEXT
+            ================================================== -->
+
+            <div class="dropdown-selected-text">
+
+                <ng-container
+                    *ngIf="selectedLabel; else placeholderTemplate">
+
+                    {{ selectedLabel }}
+
+                </ng-container>
+
+                <ng-template #placeholderTemplate>
+
+                    <span class="dropdown-placeholder">
+
+                        {{ placeholder }}
+
+                    </span>
+
+                </ng-template>
+
+            </div>
+
+            <!-- =================================================
+                 ICON
+            ================================================== -->
+
+            <div class="dropdown-icon">
+
+                <i
+
+                    class="fas"
+
+                    [class.fa-chevron-down]="!isOpen"
+
+                    [class.fa-chevron-up]="isOpen">
+
+                </i>
+
+            </div>
+
+        </div>
+
+        <!-- =====================================================
+             OVERLAY
+        ====================================================== -->
+
+        <app-overlay
+
+            [origin]="origin"
+
+            [(visible)]="isOpen"
+
+            [closeOnOutsideClick]="true"
+
+            (closed)="onOverlayClosed()">
+
+            <!-- =================================================
+                 DROPDOWN PANEL
+            ================================================== -->
+
+            <div
+
+                class="dropdown-panel"
+
+                (click)="$event.stopPropagation()">
+
+                <!-- =============================================
+                     SEARCH
+                ============================================== -->
+
+                <div class="dropdown-search">
+
+                    <app-search-box
+
+                        placeholder="Search..."
+
+                        [(value)]="searchText"
+
+                        (search)="onSearch($event)">
+
+                    </app-search-box>
+
+                </div>
+
+                <!-- =============================================
+                     OPTIONS
+                ============================================== -->
+
+                <div class="dropdown-options appcore-scrollbar">
+
+                    <ng-container
+
+                        *ngIf="
+                            filteredItems.length > 0;
+                            else noDataTemplate
+                        ">
+
+                        <div
+
+                            class="dropdown-option"
+
+                            *ngFor="
+                                let option of filteredItems
+                            "
+
+                            [class.selected]="
+                                option[valueField]
+                                ==
+                                value
+                            "
+
+                            (click)="
+                                selectOption(
+                                    option,
+                                    $event
+                                )
+                            ">
+
+                            <div class="dropdown-option-label">
+
+                                {{ option[labelField] }}
+
+                            </div>
+
+                            <div
+
+                                class="dropdown-selected-icon"
+
+                                *ngIf="
+                                    option[valueField]
+                                    ==
+                                    value
+                                ">
+
+                                <i class="fas fa-check"></i>
+
+                            </div>
+
+                        </div>
+
+                    </ng-container>
+
+                    <!-- =========================================
+                         NO DATA
+                    ========================================== -->
+
+                    <ng-template #noDataTemplate>
+
+                        <div class="dropdown-no-data">
+
+                            <i class="fas fa-circle-info"></i>
+
+                            <span>
+
+                                No records found
+
+                            </span>
+
+                        </div>
+
+                    </ng-template>
+
+                </div>
+
+            </div>
+
+        </app-overlay>
+
+    </div>
+
+</div>

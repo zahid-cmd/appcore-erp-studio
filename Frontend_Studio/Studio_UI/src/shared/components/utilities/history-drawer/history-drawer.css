@@ -1,0 +1,1062 @@
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+.history-overlay
+{
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(
+        15,
+        23,
+        42,
+        .03
+    );
+
+    backdrop-filter: blur(.5px);
+
+    -webkit-backdrop-filter: blur(.5px);
+
+    z-index: 3000;
+
+    animation:
+        fadeOverlay .35s ease;
+}
+
+
+/* =====================================================
+   DRAWER
+===================================================== */
+
+.history-drawer
+{
+    position: fixed;
+
+    top: 0;
+
+    right: 0;
+
+    width: 480px;
+
+    min-width: 480px;
+
+    max-width: 480px;
+
+    height: 100vh;
+
+    display: flex;
+
+    flex-direction: column;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border-left: 1px solid #d9e5f2;
+
+    box-shadow:
+        -10px 0 28px rgba(
+            15,
+            23,
+            42,
+            .08
+        );
+
+    transform: translateX(100%);
+
+    z-index: 3001;
+}
+
+.history-drawer.open
+{
+    animation:
+        drawerSlideIn
+        .65s
+        cubic-bezier(.25,.8,.25,1)
+        forwards;
+}
+
+.history-drawer.close
+{
+    animation:
+        drawerSlideOut
+        .55s
+        cubic-bezier(.25,.8,.25,1)
+        forwards;
+}
+
+
+/* =====================================================
+   DRAWER ANIMATION
+===================================================== */
+
+@keyframes drawerSlideIn
+{
+    0%
+    {
+        transform: translateX(100%);
+    }
+
+    100%
+    {
+        transform: translateX(0);
+    }
+}
+
+@keyframes drawerSlideOut
+{
+    0%
+    {
+        transform: translateX(0);
+    }
+
+    100%
+    {
+        transform: translateX(100%);
+    }
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.drawer-header
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    height: 70px;
+
+    min-height: 70px;
+
+    padding: 0 18px;
+
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #2563eb 100%
+        );
+
+    border-bottom: 1px solid rgba(
+        255,
+        255,
+        255,
+        .12
+    );
+
+    box-shadow:
+        0 4px 12px rgba(
+            37,
+            99,
+            235,
+            .18
+        );
+
+    flex-shrink: 0;
+}
+
+
+
+/* =====================================================
+   HEADER LEFT
+===================================================== */
+
+.drawer-header-left
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+
+/* =====================================================
+   HEADER ICON
+===================================================== */
+
+.drawer-header-icon
+{
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .14
+        );
+
+    border: 1px solid rgba(
+        255,
+        255,
+        255,
+        .18
+    );
+
+    backdrop-filter: blur(8px);
+
+    -webkit-backdrop-filter: blur(8px);
+
+    color: #ffffff;
+
+    flex-shrink: 0;
+}
+
+
+.drawer-header-icon i
+{
+    font-size: 18px;
+}
+
+
+
+/* =====================================================
+   HEADER CONTENT
+===================================================== */
+
+.drawer-header-content
+{
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.drawer-title
+{
+    font-size: 18px;
+
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    color: #ffffff;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.drawer-subtitle
+{
+    margin-top: 4px;
+
+    font-size: 12px;
+
+    line-height: 1.2;
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            .82
+        );
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+
+/* =====================================================
+   HEADER ACTIONS
+===================================================== */
+
+.drawer-header-actions
+{
+    margin-left: 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+/* =====================================================
+   CLOSE BUTTON
+===================================================== */
+
+.close-btn
+{
+    width: 38px;
+
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 1px solid rgba(
+        255,
+        255,
+        255,
+        .20
+    );
+
+    border-radius: 12px;
+
+    background: rgba(
+        255,
+        255,
+        255,
+        .10
+    );
+
+    backdrop-filter: blur(8px);
+
+    -webkit-backdrop-filter: blur(8px);
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        all .18s ease;
+}
+
+.close-btn:hover
+{
+    background: rgba(
+        255,
+        255,
+        255,
+        .22
+    );
+
+    border-color: rgba(
+        255,
+        255,
+        255,
+        .35
+    );
+
+    transform: rotate(90deg);
+}
+
+.close-btn i
+{
+    font-size: 14px;
+}
+
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+.history-summary
+{
+    display: flex;
+
+    align-items: stretch;
+
+    margin: 12px;
+
+    padding: 2px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.92) 0%,
+            rgba(247,250,255,.96) 100%
+        );
+
+    backdrop-filter: blur(10px);
+
+    -webkit-backdrop-filter: blur(10px);
+
+    border: 1px solid #dbe6f4;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 4px 14px rgba(
+            37,
+            99,
+            235,
+            .05
+        );
+}
+
+/* =====================================================
+   SUMMARY CARD
+===================================================== */
+
+.summary-card
+{
+    flex: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px 14px;
+
+    background: transparent;
+
+    transition:
+        background .18s ease,
+        transform .18s ease;
+}
+
+.summary-card:not(:last-child)
+{
+    position: relative;
+}
+
+.summary-card:not(:last-child)::after
+{
+    content: '';
+
+    position: absolute;
+
+    top: 14px;
+
+    bottom: 14px;
+
+    right: 0;
+
+    width: 1px;
+
+    background:
+        linear-gradient(
+            180deg,
+            transparent,
+            #d9e5f2 20%,
+            #d9e5f2 80%,
+            transparent
+        );
+}
+
+.summary-card:hover
+{
+    background:
+        linear-gradient(
+            180deg,
+            rgba(239,246,255,.80),
+            rgba(248,251,255,.60)
+        );
+}
+
+/* =====================================================
+   ICON
+===================================================== */
+
+.summary-card-icon
+{
+    width: 32px;
+
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f7fbff,
+            #edf5ff
+        );
+
+    border: 1px solid #dbeafe;
+
+    color: #2563eb;
+
+    flex-shrink: 0;
+}
+
+.summary-card-icon i
+{
+    font-size: 13px;
+}
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.summary-card-content
+{
+    flex: 1;
+
+    min-width: 0;
+}
+
+/* =====================================================
+   VALUE
+===================================================== */
+
+.summary-card-value
+{
+    font-size: 17px;
+
+    font-weight: 700;
+
+    line-height: 1.05;
+
+    color: #1e293b;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+/* =====================================================
+   THIRD CARD
+===================================================== */
+
+.summary-card:last-child .summary-card-value
+{
+    font-size: 13px;
+
+    line-height: 1.25;
+
+    font-weight: 600;
+}
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.summary-card-title
+{
+    margin-top: 3px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: .35px;
+
+    color: #64748b;
+}
+
+
+
+
+/* =====================================================
+   DRAWER BODY
+===================================================== */
+
+.drawer-body
+{
+    flex: 1;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+
+    padding: 18px;
+
+    background: #f8fafc;
+}
+
+
+/* =====================================================
+   TIMELINE
+===================================================== */
+
+.history-timeline
+{
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+.timeline-item
+{
+    position: relative;
+
+    display: flex;
+
+    align-items: stretch;
+
+    gap: 16px;
+}
+
+/* =====================================================
+   TIMELINE MARKER
+===================================================== */
+
+.timeline-marker
+{
+    position: relative;
+
+    width: 34px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    justify-content: center;
+}
+
+.timeline-marker::before
+{
+    content: '';
+
+    position: absolute;
+
+    top: -18px;
+
+    bottom: -18px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 2px;
+
+    background: #dbeafe;
+}
+
+.timeline-item:first-child
+.timeline-marker::before
+{
+    top: 50%;
+}
+
+.timeline-item:last-child
+.timeline-marker::before
+{
+    bottom: 50%;
+}
+
+/* =====================================================
+   TIMELINE DOT
+===================================================== */
+
+.timeline-dot
+{
+    position: absolute;
+
+    top: 16px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 30px;
+
+    height: 30px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    border: 2px solid #2563eb;
+
+    color: #2563eb;
+
+    box-shadow:
+        0 2px 8px rgba(
+            37,
+            99,
+            235,
+            .12
+        );
+
+    z-index: 2;
+}
+
+.timeline-dot i
+{
+    font-size: 11px;
+}
+
+/* =====================================================
+   TIMELINE CARD
+===================================================== */
+
+.timeline-content
+{
+    flex: 1;
+
+    background: #ffffff;
+
+    border: 1px solid #d9e5f2;
+
+    border-left: 4px solid #2563eb;
+
+    border-radius: 14px;
+
+    padding: 16px;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+
+    box-shadow:
+        0 2px 8px rgba(
+            15,
+            23,
+            42,
+            .05
+        );
+}
+
+.timeline-content:hover
+{
+    border-color: #bfdbfe;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 22px rgba(
+            15,
+            23,
+            42,
+            .08
+        );
+}
+
+/* =====================================================
+   TIMELINE HEADER
+===================================================== */
+
+.timeline-header
+{
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-bottom: 10px;
+}
+
+.timeline-title
+{
+    flex: 1;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    line-height: 1.45;
+
+    color: #1e293b;
+}
+
+/* =====================================================
+   BADGE
+===================================================== */
+
+.timeline-badge
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 72px;
+
+    height: 26px;
+
+    padding: 0 12px;
+
+    border-radius: 999px;
+
+    background: #eff6ff;
+
+    border: 1px solid #bfdbfe;
+
+    color: #2563eb;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: .4px;
+
+    white-space: nowrap;
+
+    flex-shrink: 0;
+}
+
+/* =====================================================
+   DESCRIPTION
+===================================================== */
+
+.timeline-description
+{
+    margin-bottom: 14px;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    color: #64748b;
+}
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.timeline-footer
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    padding-top: 14px;
+
+    border-top: 1px solid #e2e8f0;
+}
+
+/* =====================================================
+   USER & DATE
+===================================================== */
+
+.timeline-user,
+.timeline-date
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    height: 32px;
+
+    padding: 0 12px;
+
+    border-radius: 999px;
+
+    background: #f8fafc;
+
+    border: 1px solid #dbeafe;
+
+    color: #475569;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    transition:
+        all .18s ease;
+}
+
+.timeline-user i,
+.timeline-date i
+{
+    color: #2563eb;
+
+    font-size: 11px;
+}
+
+.timeline-user span,
+.timeline-date span
+{
+    white-space: nowrap;
+}
+
+/* =====================================================
+   HOVER EFFECT
+===================================================== */
+
+.timeline-content:hover .timeline-title
+{
+    color: #2563eb;
+}
+
+.timeline-content:hover .timeline-badge
+{
+    background: #2563eb;
+
+    border-color: #2563eb;
+
+    color: #ffffff;
+}
+
+.timeline-content:hover .timeline-user,
+.timeline-content:hover .timeline-date
+{
+    background: #eff6ff;
+
+    border-color: #bfdbfe;
+}
+
+/* =====================================================
+   ACTIVITY COLORS
+===================================================== */
+
+.activity-create             { border-left-color:#16a34a; }
+.activity-update             { border-left-color:#2563eb; }
+.activity-delete             { border-left-color:#dc2626; }
+.activity-approved           { border-left-color:#16a34a; }
+.activity-reject             { border-left-color:#ea580c; }
+.activity-commit             { border-left-color:#7c3aed; }
+.activity-push               { border-left-color:#0891b2; }
+.activity-pull               { border-left-color:#0f766e; }
+.activity-merge              { border-left-color:#9333ea; }
+.activity-deploy             { border-left-color:#1d4ed8; }
+.activity-validate           { border-left-color:#ca8a04; }
+.activity-build-backend      { border-left-color:#2563eb; }
+.activity-build-frontend     { border-left-color:#7c3aed; }
+.activity-publish-backend    { border-left-color:#0f766e; }
+.activity-publish-frontend   { border-left-color:#0ea5e9; }
+.activity-backup             { border-left-color:#78716c; }
+.activity-rollback           { border-left-color:#dc2626; }
+.activity-start              { border-left-color:#16a34a; }
+.activity-stop               { border-left-color:#ef4444; }
+.activity-restart            { border-left-color:#3b82f6; }
+.activity-health-check       { border-left-color:#059669; }
+.activity-sync               { border-left-color:#4f46e5; }
+.activity-clean              { border-left-color:#64748b; }
+.activity-restore            { border-left-color:#92400e; }
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.empty-state
+{
+    min-height: 420px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    padding: 32px;
+}
+
+.empty-icon
+{
+    width: 72px;
+
+    height: 72px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-bottom: 18px;
+
+    border-radius: 50%;
+
+    background: #eff6ff;
+
+    border: 1px solid #dbeafe;
+
+    color: #2563eb;
+}
+
+.empty-icon i
+{
+    font-size: 28px;
+}
+
+.empty-title
+{
+    margin-bottom: 8px;
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+    color: #1e293b;
+}
+
+.empty-subtitle
+{
+    max-width: 260px;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    color: #64748b;
+}
+
+/* =====================================================
+   ANIMATIONS
+===================================================== */
+
+@keyframes fadeOverlay
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}

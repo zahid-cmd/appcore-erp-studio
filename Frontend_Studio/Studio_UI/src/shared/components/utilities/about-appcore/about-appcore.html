@@ -1,0 +1,256 @@
+<div
+    class="about-overlay"
+    *ngIf="visible"
+    (click)="closeDialog()">
+
+    <div
+        class="about-dialog"
+        (click)="$event.stopPropagation()">
+
+        <!-- ==================================================
+             HEADER
+        =================================================== -->
+
+        <div class="about-header">
+
+            <span class="about-title">
+
+                About AppCore
+
+            </span>
+
+            <button
+                type="button"
+                class="close-button"
+                (click)="closeDialog()">
+
+                <i class="fas fa-times"></i>
+
+            </button>
+
+        </div>
+
+        <!-- ==================================================
+             BODY
+        =================================================== -->
+
+        <div class="about-body">
+
+            <!-- ==========================================
+                 PRODUCT SECTION
+            =========================================== -->
+
+            <div class="about-top">
+
+                <!-- Brand -->
+
+                <div class="logo-panel">
+
+                    <img
+                        src="assets/logo-light.png"
+                        alt="AppCore Technologies"
+                        class="about-logo">
+
+                    <div class="company-name">
+
+                        AppCore Technologies Limited
+
+                    </div>
+
+                    <div class="company-tagline">
+
+                        Enterprise Resource Planner
+                    </div>
+
+                </div>
+
+                <!-- Product Information -->
+
+                <div class="version-panel">
+
+                    <div class="info-row">
+
+                        <span class="label">Product</span>
+
+                        <span class="value">AppCore ERP</span>
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <span class="label">Version</span>
+
+                        <span class="value">1.0.0</span>
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <span class="label">Build</span>
+
+                        <span class="value">2026.07.22</span>
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <span class="label">Release</span>
+
+                        <span class="value">Production</span>
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <span class="label">Copyright</span>
+
+                        <span class="value">© 2026</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ==========================================
+                 CONTACT SECTION
+            =========================================== -->
+
+            <div class="contact-section">
+
+                <div class="contact-title">
+
+                    <i class="fas fa-address-card"></i>
+
+                    <span>
+
+                        Contact Information
+
+                    </span>
+
+                </div>
+
+                <div class="contact-grid">
+
+                    <!-- Left -->
+
+                    <div class="contact-card">
+
+                        <div class="contact-row">
+
+                            <i class="fas fa-location-dot"></i>
+
+                            <div>
+
+                                <strong>Address</strong>
+
+                                <span>
+
+                                    House XX, Road XX<br>
+
+                                    Mirpur, Dhaka-1216
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="contact-row">
+
+                            <i class="fas fa-phone"></i>
+
+                            <div>
+
+                                <strong>Phone</strong>
+
+                                <span>
+
+                                    +880-1XXXXXXXXX
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Divider -->
+
+                    <div class="contact-divider"></div>
+
+                    <!-- Right -->
+
+                    <div class="contact-card">
+
+                        <div class="contact-row">
+
+                            <i class="fas fa-envelope"></i>
+
+                            <div>
+
+                                <strong>Email</strong>
+
+                                <span>
+
+                                    info@appcore.com
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="contact-row">
+
+                            <i class="fas fa-globe"></i>
+
+                            <div>
+
+                                <strong>Website</strong>
+
+                                <span>
+
+                                    www.appcore.com
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==================================================
+             FOOTER
+        =================================================== -->
+
+        <div class="about-footer">
+
+            <span class="footer-copyright">
+
+                © 2026 AppCore Technologies Limited
+
+            </span>
+
+            <button
+                type="button"
+                class="ok-button"
+                (click)="closeDialog()">
+
+                Close
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>

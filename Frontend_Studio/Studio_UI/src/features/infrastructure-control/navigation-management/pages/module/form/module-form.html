@@ -1,0 +1,269 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-sitemap"
+
+        [title]="pageTitle"
+
+        subtitle="Manage ERP navigation modules.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+            <!-- =============================================
+                 MODULE INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Module Information"
+
+                icon="fas fa-folder-tree">
+
+                <app-textbox
+
+                    label="Module Code"
+
+                    [(value)]="module.code"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Module Name"
+
+                    [(value)]="module.name"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Route Key"
+
+                    placeholder="Example: infrastructure-control"
+
+                    [(value)]="module.routeKey"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 DISPLAY SETTINGS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Display Settings"
+
+                icon="fas fa-sort-numeric-down">
+
+                <app-textbox
+
+                    label="Icon"
+
+                    placeholder="Example: fas fa-users"
+
+                    [(value)]="module.icon"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    type="number"
+
+                    [(value)]="module.displayOrder"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 STATUS & DESCRIPTION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Description"
+
+                icon="fas fa-comment">
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statuses"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="module.isActive"
+
+                    (valueChange)="onStatusChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    [(value)]="module.remarks"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 PREVIEW
+            ============================================== -->
+
+            <app-form-section
+
+                title="Preview"
+
+                icon="fas fa-eye">
+
+                <div class="module-preview">
+
+                    <div class="module-preview-icon">
+
+                        <i
+
+                            [class]="module.icon || 'fas fa-cubes'">
+
+                        </i>
+
+                    </div>
+
+                    <div class="module-preview-title">
+
+                        {{ module.name || 'Module Name' }}
+
+                    </div>
+
+                    <div class="module-preview-code">
+
+                        {{ module.code || 'Auto Generated' }}
+
+                    </div>
+
+                    <div class="module-preview-note">
+
+                        Live Preview
+
+                    </div>
+
+                </div>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

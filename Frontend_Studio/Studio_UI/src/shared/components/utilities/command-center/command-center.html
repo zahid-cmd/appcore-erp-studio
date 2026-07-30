@@ -1,0 +1,85 @@
+<div class="command-center">
+
+    <!-- =====================================================
+         LEFT COMMANDS
+    ====================================================== -->
+
+    <div class="command-center-left">
+
+        <button
+            *ngIf="command1Visible"
+            type="button"
+            class="command-button"
+            (click)="onCommand1Click()">
+
+            <i [class]="command1Icon"></i>
+
+            <span>{{ command1Text }}</span>
+
+        </button>
+
+        <button
+            *ngIf="command2Visible"
+            type="button"
+            class="command-button"
+            (click)="onCommand2Click()">
+
+            <i [class]="command2Icon"></i>
+
+            <span>{{ command2Text }}</span>
+
+        </button>
+
+        <button
+            *ngIf="command3Visible"
+            type="button"
+            class="command-button"
+            (click)="onCommand3Click()">
+
+            <i [class]="command3Icon"></i>
+
+            <span>{{ command3Text }}</span>
+
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         DIVIDER
+    ====================================================== -->
+
+    <div
+        *ngIf="
+            rightCommandVisible
+            &&
+            (
+                command1Visible
+                ||
+                command2Visible
+                ||
+                command3Visible
+            )
+        "
+        class="command-center-divider">
+
+    </div>
+
+    <!-- =====================================================
+         RIGHT COMMAND
+    ====================================================== -->
+
+    <div class="command-center-right">
+
+        <button
+            *ngIf="rightCommandVisible"
+            type="button"
+            class="command-icon-button"
+            (click)="onRightCommandClick()">
+
+            <i [class]="rightCommandIcon"></i>
+
+        </button>
+
+    </div>
+
+</div>

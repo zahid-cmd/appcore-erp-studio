@@ -1,0 +1,35 @@
+<div class="page-toolbar">
+
+    <!-- =====================================================
+         LEFT
+    ====================================================== -->
+
+    <div
+
+        class="page-toolbar-left"
+
+        [style.flex]="leftFlex">
+
+        <ng-content
+            select="[pageToolbarLeft]">
+        </ng-content>
+
+    </div>
+
+    <!-- =====================================================
+         RIGHT
+    ====================================================== -->
+
+    <div
+
+        class="page-toolbar-right"
+
+        [style.flex]="rightFlex">
+
+        <ng-content
+            select="[pageToolbarRight]">
+        </ng-content>
+
+    </div>
+
+</div>

@@ -1,0 +1,59 @@
+/* =====================================================
+   OVERLAY CONTAINER
+===================================================== */
+
+.overlay-container
+{
+    display: block;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    overflow: visible;
+
+    pointer-events: auto;
+
+    animation:
+        overlayFade
+        .14s
+        ease-out;
+}
+
+/* =====================================================
+   PROJECTED CONTENT
+===================================================== */
+
+.overlay-container > *
+{
+    display: block;
+
+    width: 100%;
+
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   ANIMATION
+===================================================== */
+
+@keyframes overlayFade
+{
+    from
+    {
+        opacity: 0;
+
+        transform:
+            translateY(-4px)
+            scale(.98);
+    }
+
+    to
+    {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}

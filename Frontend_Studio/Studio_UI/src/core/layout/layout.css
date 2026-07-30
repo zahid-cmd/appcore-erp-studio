@@ -1,0 +1,182 @@
+/* =====================================================
+   HOST
+===================================================== */
+
+:host
+{
+    display:block;
+
+    width:100%;
+
+    height:100vh;
+
+    overflow:hidden;
+
+    --topbar-height:70px;
+
+    --footer-height:50px;
+
+    --sidebar-width:300px;
+}
+
+
+/* =====================================================
+   LAYOUT
+===================================================== */
+
+.layout
+{
+    display:flex;
+
+    flex-direction:column;
+
+    width:100%;
+
+    height:100%;
+
+    overflow:hidden;
+
+    background:#f1f5f9;
+
+    font-family:
+        "Segoe UI",
+        Tahoma,
+        Geneva,
+        Verdana,
+        sans-serif;
+}
+
+
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+app-topbar
+{
+    display:block;
+
+    width:100%;
+
+    height:var(--topbar-height);
+
+    flex:0 0 var(--topbar-height);
+
+    overflow:hidden;
+
+    z-index:1000;
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.layout-body
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    min-width:0;
+
+    min-height:0;
+
+    overflow:hidden;
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+app-sidebar
+{
+    display:block;
+
+    width:var(--sidebar-width);
+
+    flex:0 0 var(--sidebar-width);
+
+    overflow:hidden;
+
+    transition:width .25s ease;
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    min-width:0;
+
+    min-height:0;
+
+    overflow:hidden;
+
+    padding:16px;
+
+    gap:12px;
+
+    background:#f1f5f9;
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   BREADCRUMB
+===================================================== */
+
+app-breadcrumb
+{
+    display:block;
+
+    flex:0 0 auto;
+
+    width:100%;
+
+    overflow:hidden;
+}
+
+
+/* =====================================================
+   ROUTED PAGE
+===================================================== */
+
+router-outlet
+{
+    display:none;
+}
+
+.content > *
+{
+    min-width:0;
+
+    min-height:0;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+app-footer
+{
+    display:block;
+
+    width:100%;
+
+    height:var(--footer-height);
+
+    flex:0 0 var(--footer-height);
+
+    overflow:hidden;
+}

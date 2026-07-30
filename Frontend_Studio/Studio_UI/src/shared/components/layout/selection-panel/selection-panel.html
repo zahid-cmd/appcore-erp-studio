@@ -1,0 +1,131 @@
+<!-- =====================================================
+     SELECTION PANEL
+===================================================== -->
+
+<div class="panel-selection">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="selection-header">
+
+        <div class="selection-header-content">
+
+            <div class="selection-title">
+
+                {{ title }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         BODY
+    ====================================================== -->
+
+    <div class="selection-body">
+
+        @for (dropdown of dropdowns; track $index)
+        {
+            <!-- =============================================
+                 SELECTION FIELD
+            ============================================== -->
+
+            <div class="selection-field">
+
+                <label class="selection-label">
+
+                    {{ dropdown.label }}
+
+                </label>
+
+                <app-search-dropdown
+
+                    [items]="dropdown.items ?? []"
+
+                    [value]="dropdown.value"
+
+                    [placeholder]="
+                        dropdown.placeholder ??
+                        ('Select ' + dropdown.label)
+                    "
+
+                    [disabled]="
+                        disabled || !!dropdown.disabled
+                    "
+
+                    [labelField]="
+                        dropdown.labelField ?? 'label'
+                    "
+
+                    [valueField]="
+                        dropdown.valueField ?? 'value'
+                    "
+
+                    (valueChange)="
+                        onDropdownValueChanged(
+                            dropdown,
+                            $event
+                        )
+                    ">
+
+                </app-search-dropdown>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    @if (showButton)
+    {
+        <div class="selection-footer">
+
+            <button
+
+                type="button"
+
+                class="add-button"
+
+                [disabled]="
+                    disabled
+                    ||
+                    loading
+                    ||
+                    addDisabled
+                "
+
+                (click)="onAdd()">
+
+                @if (!loading)
+                {
+                    <i
+                        [class]="icon">
+                    </i>
+                }
+
+                @if (loading)
+                {
+                    <i
+                        class="fas fa-spinner fa-spin">
+                    </i>
+                }
+
+                <span>
+
+                    {{ loading ? 'Processing...' : buttonText }}
+
+                </span>
+
+            </button>
+
+        </div>
+    }
+
+</div>

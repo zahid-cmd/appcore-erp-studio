@@ -1,0 +1,50 @@
+<div class="topbar-actions">
+
+    <!-- ==========================================
+         LEFT : GLOBAL SEARCH
+    =========================================== -->
+
+    <div class="actions-left">
+
+        <app-search-box
+            class="global-search"
+            [placeholder]="searchPlaceholder"
+            (search)="onSearch($event)">
+        </app-search-box>
+
+    </div>
+
+    <!-- ==========================================
+         RIGHT : USER MENU
+    =========================================== -->
+
+    <div class="actions-right">
+
+        <button
+            class="user-menu-button"
+            type="button"
+            (click)="onUserMenuClick()">
+
+            <div class="avatar">
+
+                <i [class]="avatarIcon"></i>
+
+            </div>
+
+            <div class="user-name">
+
+                {{ userName }}
+
+            </div>
+
+            <div class="menu-arrow">
+
+                <i class="fas fa-chevron-down"></i>
+
+            </div>
+
+        </button>
+
+    </div>
+
+</div>

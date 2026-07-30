@@ -1,0 +1,57 @@
+<div class="form-section">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div
+        *ngIf="showHeader"
+        class="form-section-header">
+
+        <div class="form-section-title">
+
+            <i
+                *ngIf="icon"
+                class="form-section-icon"
+                [class]="icon">
+            </i>
+
+            <span class="form-section-title-text">
+
+                {{ title }}
+
+            </span>
+
+        </div>
+
+        <button
+            *ngIf="collapsible"
+            type="button"
+            class="form-section-toggle"
+            (click)="toggleCollapse()">
+
+            <i
+                class="fas"
+                [class.fa-chevron-down]="!collapsed"
+                [class.fa-chevron-right]="collapsed">
+            </i>
+
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         BODY
+    ====================================================== -->
+
+    <div
+        *ngIf="!collapsed"
+        class="form-section-body">
+
+        <ng-content>
+
+        </ng-content>
+
+    </div>
+
+</div>

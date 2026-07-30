@@ -1,0 +1,41 @@
+<div class="empty-state">
+
+    <div class="empty-icon">
+
+        <div class="icon-circle">
+
+            <i [class]="icon"></i>
+
+        </div>
+
+    </div>
+
+    <div class="empty-content">
+
+        <div class="empty-title">
+
+            {{ title }}
+
+        </div>
+
+        <div class="empty-subtitle">
+
+            {{ subtitle }}
+
+        </div>
+
+        @if (showAction)
+        {
+            <button
+                class="empty-action"
+                type="button"
+                (click)="onAction()">
+
+                {{ actionText }}
+
+            </button>
+        }
+
+    </div>
+
+</div>

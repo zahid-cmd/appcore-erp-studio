@@ -1,0 +1,221 @@
+/* =====================================================
+   BREADCRUMB BAR
+===================================================== */
+
+.breadcrumb
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:100%;
+
+    min-height:56px;
+
+    padding:0 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8fbff 100%
+        );
+
+    border:1px solid #e7edf8;
+
+    border-radius:10px;
+
+    box-shadow:
+        0 2px 8px rgba(37,99,235,.05);
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    user-select:none;
+}
+
+/* =====================================================
+   HOME ICON
+===================================================== */
+
+.breadcrumb-home
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:30px;
+
+    height:30px;
+
+    flex-shrink:0;
+
+    border-radius:50%;
+
+    background:#f8fafc;
+
+    border:1px solid #dbe7f7;
+
+    color:#64748b;
+
+    transition:all .20s ease;
+}
+
+.breadcrumb-home:hover
+{
+    background:#eef4ff;
+
+    border-color:#bfdbfe;
+
+    color:#2563eb;
+}
+
+.breadcrumb-home i
+{
+    font-size:14px;
+}
+
+/* =====================================================
+   SEPARATOR
+===================================================== */
+
+.breadcrumb-separator
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:16px;
+
+    color:#c5d1e2;
+}
+
+.breadcrumb-separator i
+{
+    font-size:12px;
+}
+
+/* =====================================================
+   ITEM
+===================================================== */
+
+.breadcrumb-item
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-height:30px;
+
+    padding:0 14px;
+
+    border-radius:8px;
+
+    font-size:13px;
+
+    font-weight:500;
+
+    border:1px solid #e6edf7;
+
+    transition:all .20s ease;
+
+    box-sizing:border-box;
+}
+
+/* =====================================================
+   NORMAL ITEM
+===================================================== */
+
+.breadcrumb-item:not(.active)
+{
+    background:#ffffff;
+
+    color:#64748b;
+}
+
+.breadcrumb-item:not(.active):hover
+{
+    background:#eef4ff;
+
+    border-color:#c7dcff;
+
+    color:#2563eb;
+}
+
+/* =====================================================
+   ACTIVE ITEM
+===================================================== */
+
+.breadcrumb-item.active
+{
+    background:
+        linear-gradient(
+            180deg,
+            #edf4ff,
+            #dfeeff
+        );
+
+    border-color:#b8d4ff;
+
+    color:#2563eb;
+
+    font-weight:600;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:768px)
+{
+    .breadcrumb
+    {
+        min-height:42px;
+
+        padding:0 12px;
+
+        gap:8px;
+    }
+
+    .breadcrumb-home
+    {
+        width:26px;
+
+        height:26px;
+    }
+
+    .breadcrumb-home i
+    {
+        font-size:12px;
+    }
+
+    .breadcrumb-item
+    {
+        min-height:26px;
+
+        padding:0 10px;
+
+        font-size:12px;
+    }
+
+    .breadcrumb-separator
+    {
+        width:12px;
+    }
+
+    .breadcrumb-separator i
+    {
+        font-size:10px;
+    }
+}

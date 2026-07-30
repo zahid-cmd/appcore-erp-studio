@@ -1,0 +1,280 @@
+/* =====================================================
+   IMAGE HUB
+===================================================== */
+
+.image-hub
+{
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+
+    width: 100%;
+}
+
+/* =====================================================
+   IMAGE PREVIEW
+===================================================== */
+
+.image-hub-preview
+{
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    width: 100%;
+
+    height: 165px;
+
+    box-sizing: border-box;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #d9e5f2;
+
+    border-radius: 12px;
+
+    transition:
+        border-color .20s ease,
+        box-shadow .20s ease;
+}
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.image-hub-preview:hover
+{
+    border-color: #9fc2f7;
+
+    box-shadow:
+        0 6px 14px rgba(37,99,235,.08);
+}
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.image-hub:focus-within
+.image-hub-preview
+{
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 4px rgba(37,99,235,.12),
+        0 10px 22px rgba(37,99,235,.10);
+}
+
+/* =====================================================
+   IMAGE
+===================================================== */
+
+.image-hub-preview img
+{
+    display: block;
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: contain;
+}
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.image-hub-placeholder
+{
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 12px;
+
+    text-align: center;
+
+    color: #94a3b8;
+}
+
+.image-hub-placeholder i
+{
+    font-size: 48px;
+
+    color: #cbd5e1;
+}
+
+.image-hub-placeholder span
+{
+    font-size: 13px;
+
+    font-weight: 500;
+}
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.image-hub-actions
+{
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+}
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.image-hub-actions button
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    height: 40px;
+
+    padding: 0 18px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    transition:
+        background .20s ease,
+        box-shadow .20s ease,
+        transform .15s ease;
+}
+
+/* =====================================================
+   UPLOAD
+===================================================== */
+
+.upload-button
+{
+    background: #2563eb;
+
+    color: #ffffff;
+}
+
+.upload-button:hover:not(:disabled)
+{
+    background: #1d4ed8;
+
+    box-shadow:
+        0 6px 14px rgba(37,99,235,.20);
+}
+
+/* =====================================================
+   REMOVE
+===================================================== */
+
+.remove-button
+{
+    background: #ef4444;
+
+    color: #ffffff;
+}
+
+.remove-button:hover:not(:disabled)
+{
+    background: #dc2626;
+
+    box-shadow:
+        0 6px 14px rgba(239,68,68,.20);
+}
+
+/* =====================================================
+   BUTTON ACTIVE
+===================================================== */
+
+.image-hub-actions button:active:not(:disabled)
+{
+    transform: scale(.98);
+}
+
+/* =====================================================
+   READONLY
+===================================================== */
+
+.image-hub.readonly
+{
+    cursor: default;
+}
+
+.image-hub.readonly .image-hub-preview
+{
+    background: #ffffff;
+}
+
+/* =====================================================
+   DISABLED
+===================================================== */
+
+.image-hub.disabled
+{
+    cursor: not-allowed;
+}
+
+.image-hub.disabled .image-hub-preview
+{
+    background: #ffffff;
+}
+
+.image-hub.disabled .image-hub-placeholder
+{
+    color: #94a3b8;
+}
+
+.image-hub.disabled .image-hub-placeholder i
+{
+    color: #cbd5e1;
+}
+
+.image-hub.disabled button
+{
+    cursor: not-allowed;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:992px)
+{
+    .image-hub-preview
+    {
+        height: 180px;
+    }
+
+    .image-hub-actions
+    {
+        flex-direction: column;
+    }
+
+    .image-hub-actions button
+    {
+        width: 100%;
+    }
+}

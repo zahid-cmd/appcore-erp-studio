@@ -1,0 +1,77 @@
+@if (
+  progressService.isOpen() ||
+  previewMode
+) {
+
+  <div
+    class="progress-overlay"
+    [class.preview-mode]="previewMode"
+  >
+
+    <div class="progress-dialog">
+
+      <!-- =====================================================
+           HEADER
+      ====================================================== -->
+
+      <div class="progress-header">
+
+        <div class="progress-title">
+
+          {{
+            previewMode
+              ? 'Processing Request'
+              : progressService.title()
+          }}
+
+        </div>
+
+      </div>
+
+      <!-- =====================================================
+           BODY
+      ====================================================== -->
+
+      <div class="progress-body">
+
+        <div class="progress-message">
+
+          {{
+            previewMode
+              ? 'Please wait while the operation is being completed.'
+              : progressService.message()
+          }}
+
+        </div>
+
+        <div class="progress-percent">
+
+          {{
+            previewMode
+              ? previewProgress
+              : progressService.progress()
+          }}%
+
+        </div>
+
+        <div class="progress-bar">
+
+          <div
+            class="progress-fill"
+            [style.width.%]="
+              previewMode
+                ? previewProgress
+                : progressService.progress()
+            "
+          >
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}

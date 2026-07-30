@@ -1,0 +1,57 @@
+<div class="activity-selector">
+
+    <!--========================================================
+        ALL
+    =========================================================-->
+
+    @if (hasActivities)
+    {
+        <div class="activity-item activity-all">
+
+            <app-checkbox
+
+                [readOnly]="readOnly"
+
+                [(value)]="allChecked"
+
+                (valueChange)="onAllChanged()">
+
+            </app-checkbox>
+
+            <span class="activity-text">
+
+                All
+
+            </span>
+
+        </div>
+    }
+
+    <!--========================================================
+        ACTIVITIES
+    =========================================================-->
+
+    @for(activity of activities; track activity.id)
+    {
+        <div class="activity-item">
+
+            <app-checkbox
+
+                [readOnly]="readOnly"
+
+                [(value)]="activity.checked"
+
+                (valueChange)="onCheckedChanged()">
+
+            </app-checkbox>
+
+            <span class="activity-text">
+
+                {{ activity.text }}
+
+            </span>
+
+        </div>
+    }
+
+</div>

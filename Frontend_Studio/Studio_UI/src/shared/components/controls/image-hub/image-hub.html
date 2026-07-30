@@ -1,0 +1,107 @@
+<div
+
+    class="image-hub"
+
+    [class.disabled]="disabled"
+
+    [class.readonly]="readonly">
+
+    <!-- =====================================================
+         IMAGE PREVIEW
+    ====================================================== -->
+
+    <div
+
+        class="image-hub-preview">
+
+        <img
+
+            *ngIf="imageUrl"
+
+            [src]="imageUrl"
+
+            alt="Image Preview" />
+
+        <!-- =====================================================
+             PLACEHOLDER
+        ====================================================== -->
+
+        <div
+
+            *ngIf="!imageUrl"
+
+            class="image-hub-placeholder">
+
+            <i class="fas fa-image"></i>
+
+            <span>
+
+                {{ placeholder }}
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         ACTIONS
+    ====================================================== -->
+
+    <div
+
+        class="image-hub-actions">
+
+        <button
+
+            type="button"
+
+            class="upload-button"
+
+            [disabled]="disabled || readonly"
+
+            (click)="fileInput.click()">
+
+            <i class="fas fa-upload"></i>
+
+            Upload
+
+        </button>
+
+        <button
+
+            *ngIf="imageUrl"
+
+            type="button"
+
+            class="remove-button"
+
+            [disabled]="disabled || readonly"
+
+            (click)="removeImage()">
+
+            <i class="fas fa-trash"></i>
+
+            Remove
+
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         HIDDEN FILE INPUT
+    ====================================================== -->
+
+    <input
+
+        #fileInput
+
+        type="file"
+
+        accept="image/*"
+
+        hidden
+
+        (change)="onFileSelected($event)" />
+
+</div>

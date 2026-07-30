@@ -1,0 +1,314 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-sitemap"
+
+        [title]="pageTitle"
+
+        subtitle="Manage ERP navigation menus.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+            <!-- =============================================
+                 MENU INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Menu Information"
+
+                icon="fas fa-bars">
+
+                <app-search-dropdown
+
+                    label="Navigation Module"
+
+                    [items]="modules"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="menu.navigationModuleId"
+
+                    (valueChange)="onModuleChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Menu Code"
+
+                    [(value)]="menu.code"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Menu Name"
+
+                    [(value)]="menu.name"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Route Key"
+
+                    placeholder="Example: role-management"
+
+                    [(value)]="menu.routeKey"
+
+                    (valueChange)="onRouteKeyChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 ROUTE SETTINGS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Route Settings"
+
+                icon="fas fa-route">
+
+                <app-textbox
+
+                    label="Route"
+
+                    placeholder="Automatically generated"
+
+                    [(value)]="menu.route"
+
+                    [readonly]="true"
+
+                    [disabled]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Icon"
+
+                    placeholder="Example: fas fa-users"
+
+                    [(value)]="menu.icon"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    type="number"
+
+                    [(value)]="menu.displayOrder"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 STATUS & DESCRIPTION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Description"
+
+                icon="fas fa-comment">
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statuses"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="menu.isActive"
+
+                    (valueChange)="onStatusChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    [(value)]="menu.remarks"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+            
+            <!-- =============================================
+                PREVIEW
+            ============================================== -->
+
+            <app-form-section
+
+                title="Preview"
+
+                icon="fas fa-eye">
+
+                <div class="preview">
+
+                    <div class="preview-icon">
+
+                        <i
+
+                            [class]="menu.icon || 'fas fa-bars'">
+
+                        </i>
+
+                    </div>
+
+                    <div class="preview-title">
+
+                        {{ menu.name || 'Menu Name' }}
+
+                    </div>
+
+                    <div class="preview-code">
+
+                        {{ menu.code || 'Auto Generated' }}
+
+                    </div>
+
+                    <div class="preview-route">
+
+                        <i class="fas fa-route"></i>
+
+                        <span>
+
+                            {{ menu.route || '/route-preview' }}
+
+                        </span>
+
+                    </div>
+
+                    <div class="preview-note">
+
+                        Live Preview
+
+                    </div>
+
+                </div>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
