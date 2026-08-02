@@ -217,129 +217,199 @@ implements OnChanges
   sortDirection:
     'asc' | 'desc' = 'asc';
 
-/* =====================================================
-   SORT
-===================================================== */
+  /* =====================================================
+    SORT
+  ===================================================== */
 
-sort
-(
-    column: ListTableColumn
-):
-    void
-{
-    if
-    (
-        column.type === 'serial' ||
-        column.type === 'actions' ||
-        column.type === 'operation'
-    )
-    {
-        return;
-    }
+  sort
+  (
+      column: ListTableColumn
+  ):
+      void
+  {
+      if
+      (
+          column.type === 'serial' ||
+          column.type === 'actions' ||
+          column.type === 'operation'
+      )
+      {
+          return;
+      }
 
-    if
-    (
-        this.sortField === column.field
-    )
-    {
-        this.sortDirection =
-            this.sortDirection === 'asc'
-                ? 'desc'
-                : 'asc';
-    }
-    else
-    {
-        this.sortField =
-            column.field;
+      if
+      (
+          this.sortField === column.field
+      )
+      {
+          this.sortDirection =
+              this.sortDirection === 'asc'
+                  ? 'desc'
+                  : 'asc';
+      }
+      else
+      {
+          this.sortField =
+              column.field;
 
-        this.sortDirection =
-            'asc';
-    }
+          this.sortDirection =
+              'asc';
+      }
 
-    this.sortChange.emit(
-    {
-        field: this.sortField,
-        direction: this.sortDirection
-    });
-}
-
-/* =====================================================
-   SERIAL
-===================================================== */
-
-getSerial
-(
-    index: number
-):
-    number
-{
-    return this.serialOffset + index + 1;
-}
+      this.sortChange.emit(
+      {
+          field: this.sortField,
+          direction: this.sortDirection
+      });
+  }
 
   /* =====================================================
-     CELL VALUE
+    SERIAL
+  ===================================================== */
+
+  getSerial
+  (
+      index: number
+  ):
+      number
+  {
+      return this.serialOffset + index + 1;
+  }
+
+  /* =====================================================
+    CELL VALUE
   ===================================================== */
 
   getCellValue
   (
-    row:
-      any,
+      row: any,
 
-    column:
-      ListTableColumn
+      column: ListTableColumn
   ):
-    any
+      any
   {
-    return row[column.field];
+      return row[column.field];
   }
 
+
   /* =====================================================
-     BOOLEAN VALUE
+    STATUS VALUE
+  ===================================================== */
+
+  getStatusValue
+  (
+      row: any,
+
+      column: ListTableColumn
+  ):
+      string
+  {
+      const value =
+          row[column.field];
+
+      if
+      (
+          typeof value === 'boolean'
+      )
+      {
+          return value
+              ? 'Active'
+              : 'Inactive';
+      }
+
+      return value ?? '';
+  }
+
+
+  /* =====================================================
+    STATUS CLASS
+  ===================================================== */
+
+  getStatusClass
+  (
+      row: any,
+
+      column: ListTableColumn
+  ):
+      string
+  {
+      const value =
+          this.getStatusValue(
+              row,
+              column
+          )
+          .toLowerCase();
+
+      switch (value)
+      {
+          case 'active':
+
+          case 'completed':
+
+          case 'success':
+
+              return 'active';
+
+
+          case 'pending':
+
+          case 'running':
+
+          case 'processing':
+
+              return 'pending';
+
+
+          case 'inactive':
+
+          case 'failed':
+
+          case 'error':
+
+              return 'inactive';
+
+
+          case 'not applicable':
+
+              return 'neutral';
+
+
+          default:
+
+              return 'neutral';
+      }
+  }
+
+
+  /* =====================================================
+    BOOLEAN VALUE
   ===================================================== */
 
   getBooleanValue
   (
-    row:
-      any,
+      row: any,
 
-    column:
-      ListTableColumn
+      column: ListTableColumn
   ):
-    boolean
-  {
-    return !!row[column.field];
-  }
-
-  /* =====================================================
-     STATUS
-  ===================================================== */
-
-  getStatusLabel
-  (
-    value:
       boolean
-  ):
-    string
   {
-    return value
-      ? 'Active'
-      : 'Inactive';
+      return !!row[column.field];
   }
 
+
   /* =====================================================
-     BOOLEAN
+    BOOLEAN LABEL
   ===================================================== */
 
   getBooleanLabel
   (
-    value:
-      boolean
+      value: boolean
   ):
-    string
+      string
   {
-    return value
-      ? 'Yes'
-      : 'No';
+      return value
+          ? 'Yes'
+          : 'No';
   }
   /* =====================================================
      ACTION EVENTS

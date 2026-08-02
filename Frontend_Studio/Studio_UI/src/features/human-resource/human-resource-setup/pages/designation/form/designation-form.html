@@ -1,0 +1,135 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-id-badge"
+        [title]="pageTitle"
+        subtitle="Manage human resource designations.">
+
+        <app-command-center
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+            canvasBody
+            [columns]="4">
+
+            <!-- =============================================
+                 DESIGNATION CODE
+            ============================================== -->
+
+            <app-form-section
+                title="Designation Information"
+                icon="fas fa-id-badge">
+
+                <app-textbox
+                    label="Designation Code"
+                    [(value)]="designation.code"
+                    [readonly]="true"
+                    [required]="true">
+                </app-textbox>
+
+            </app-form-section>
+            <!-- =============================================
+                 DESIGNATION INFORMATION
+            ============================================== -->
+
+            <app-form-section
+                title="Designation Information"
+                icon="fas fa-id-badge">
+
+                <app-textbox
+                    label="Designation Name"
+                    [(value)]="designation.name"
+                    (valueChange)="checkForChanges()"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                </app-textbox>
+
+            </app-form-section>
+            <!-- =============================================
+                 CONFIGURATION
+            ============================================== -->
+
+            <app-form-section
+                title="Configuration"
+                icon="fas fa-diagram-project">
+
+                <app-dropdown
+                    label="Status"
+                    [required]="true"
+                    [(value)]="designation.isActive"
+                    (valueChange)="onStatusChange($event)"
+                    [items]="statuses"
+                    labelField="text"
+                    valueField="value"
+                    [disabled]="isViewMode">
+                </app-dropdown>
+
+            </app-form-section>
+            <!-- =============================================
+                DESCRIPTION
+            ============================================== -->
+
+            <app-form-section
+                title="Status & Description"
+                icon="fas fa-comment">
+
+                <app-textarea
+                    label="Remarks"
+                    [(value)]="designation.remarks"
+                    (valueChange)="checkForChanges()"
+                    [disabled]="isViewMode">
+                </app-textarea>
+
+            </app-form-section>
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

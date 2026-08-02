@@ -24,7 +24,7 @@ import
 {
     SidebarComponent
 }
-from '../../features/infrastructure-control/navigation-management/sidebar/sidebar';
+from '../sidebar/sidebar';
 
 import
 {

@@ -1,0 +1,113 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Designation Management"
+        subtitle="Manage human resource designations."
+        icon="fas fa-id-badge">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [(value)]="searchText"
+                placeholder="Search designations..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-plus"
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+
+                [command3Visible]="false"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+                [columns]="columns"
+                [rows]="pagedDesignations"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+
+                (view)="view($event)"
+                (edit)="edit($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+
+            [totalRecords]="filteredDesignations.length"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         HISTORY
+    ====================================================== -->
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        [title]="historyTitle"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <!-- =====================================================
+         GLOBAL COMPONENTS
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+</div>

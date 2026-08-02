@@ -1,0 +1,249 @@
+<div class="workspace-columns">
+
+    <!-- =====================================================
+         BACKEND PROJECTS
+    ====================================================== -->
+
+    <section class="workspace-section">
+
+        <div class="workspace-section-title">
+
+            <i class="fas fa-diagram-project">
+
+            </i>
+
+            <span>
+
+                Backend Projects
+
+            </span>
+
+        </div>
+
+        <app-textbox
+
+            label="API Project"
+
+            [readonly]="targetLocationReadonly"
+
+            [(value)]="apiProject"
+
+            (valueChange)="apiProjectChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Application Project"
+
+            [readonly]="targetLocationReadonly"
+
+            [(value)]="applicationProject"
+
+            (valueChange)="applicationProjectChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Domain Project"
+
+            [readonly]="targetLocationReadonly"
+
+            [(value)]="domainProject"
+
+            (valueChange)="domainProjectChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Infrastructure Project"
+
+            [readonly]="targetLocationReadonly"
+
+            [(value)]="infrastructureProject"
+
+            (valueChange)="infrastructureProjectChange.emit($event)">
+
+        </app-textbox>
+
+    </section>
+
+    <!-- =====================================================
+         STANDARD FOLDER STRUCTURE
+    ====================================================== -->
+
+    <section class="workspace-section">
+
+        <div class="workspace-section-title">
+
+            <i class="fas fa-folder-tree">
+
+            </i>
+
+            <span>
+
+                Standard Folder Structure
+
+            </span>
+
+        </div>
+
+        <app-textbox
+
+            label="Controller Folder"
+
+            [readonly]="standardStructureReadonly"
+
+            [(value)]="controllerFolder"
+
+            (valueChange)="controllerFolderChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="DTO Folder"
+
+            [readonly]="standardStructureReadonly"
+
+            [(value)]="dtoFolder"
+
+            (valueChange)="dtoFolderChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Interface Folder"
+
+            [readonly]="standardStructureReadonly"
+
+            [(value)]="interfaceFolder"
+
+            (valueChange)="interfaceFolderChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Entity Folder"
+
+            [readonly]="standardStructureReadonly"
+
+            [(value)]="entityFolder"
+
+            (valueChange)="entityFolderChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Repository Folder"
+
+            [readonly]="standardStructureReadonly"
+
+            [(value)]="repositoryFolder"
+
+            (valueChange)="repositoryFolderChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Configuration Folder"
+
+            [readonly]="standardStructureReadonly"
+
+            [(value)]="configurationFolder"
+
+            (valueChange)="configurationFolderChange.emit($event)">
+
+        </app-textbox>
+
+    </section>
+
+    <!-- =====================================================
+         REGISTRATION & DATABASE
+    ====================================================== -->
+
+    <section class="workspace-section">
+
+        <div class="workspace-section-title">
+
+            <i class="fas fa-gears">
+
+            </i>
+
+            <span>
+
+                Registration & Database
+
+            </span>
+
+        </div>
+
+        <app-textbox
+
+            label="Dependency Injection"
+
+            [readonly]="applicationRegistrationReadonly"
+
+            [(value)]="dependencyInjection"
+
+            (valueChange)="dependencyInjectionChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="AppDbContext"
+
+            [readonly]="applicationRegistrationReadonly"
+
+            [(value)]="dbContext"
+
+            (valueChange)="dbContextChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Program.cs Registration"
+
+            [readonly]="applicationRegistrationReadonly"
+
+            [(value)]="programRegistration"
+
+            (valueChange)="programRegistrationChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Migration Folder"
+
+            [readonly]="applicationRegistrationReadonly"
+
+            [(value)]="migrationFolder"
+
+            (valueChange)="migrationFolderChange.emit($event)">
+
+        </app-textbox>
+
+        <app-textbox
+
+            label="Database Provider"
+
+            [readonly]="applicationRegistrationReadonly"
+
+            [(value)]="databaseProvider"
+
+            (valueChange)="databaseProviderChange.emit($event)">
+
+        </app-textbox>
+
+    </section>
+
+</div>

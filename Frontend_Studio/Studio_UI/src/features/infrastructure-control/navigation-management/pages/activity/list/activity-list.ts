@@ -239,7 +239,7 @@ implements OnInit
 
         {
             id:'navigation',
-            label:'Navigation Activities'
+            label:'Special Activities'
         }
     ];
 

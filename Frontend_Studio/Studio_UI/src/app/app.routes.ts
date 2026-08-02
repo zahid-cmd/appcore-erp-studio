@@ -43,6 +43,48 @@ export const routes:
             },
 
             //===========================================================
+            // Security & Permission
+            //===========================================================
+            {
+                path:'security-permission',
+
+                data:
+                {
+                    breadcrumb:'Security & Permission'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/security-permission/role-management/route/security-permission.route'
+                    )
+                    .then(
+                        m =>
+                            m.SECURITY_PERMISSION_ROUTES
+                    )
+            },
+
+            //===========================================================
+            // Human Resource
+            //===========================================================
+            {
+                path:'human-resource',
+
+                data:
+                {
+                    breadcrumb:'Human Resource'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/human-resource/routes/human-resource.routes'
+                    )
+                    .then(
+                        m =>
+                            m.humanResourceRoutes
+                    )
+            },
+
+            //===========================================================
             // Fall Back
             //===========================================================
             {

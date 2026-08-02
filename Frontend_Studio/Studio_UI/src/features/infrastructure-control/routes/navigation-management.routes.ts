@@ -380,7 +380,7 @@ export const navigationManagementRoutes:
 
         loadComponent:() =>
             import(
-                '../navigation-management/sidebar/sidebar'
+                '../../../core/sidebar/sidebar'
             )
             .then(
                 m =>

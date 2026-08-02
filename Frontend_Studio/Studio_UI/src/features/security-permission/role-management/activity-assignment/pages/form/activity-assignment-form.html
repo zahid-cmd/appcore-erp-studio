@@ -1,0 +1,331 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-user-shield"
+
+        [title]="pageTitle"
+
+        subtitle="Manage activity assignments.">
+
+        <!-- =====================================================
+            CENTER
+        ====================================================== -->
+
+        <app-record-counter
+
+            pageHeaderCenter
+
+            [sections]="recordCounterSections"
+
+            [compact]="true">
+
+        </app-record-counter>
+
+        <!-- =====================================================
+            RIGHT
+        ====================================================== -->
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+        <!-- =============================================
+             LEFT
+        ============================================== -->
+
+        <div
+
+            pageToolbarLeft
+
+            class="activity-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab"
+
+                (selectedTabChange)="onTabChange($event)">
+
+            </app-control-tabs>
+
+        </div>
+
+        <!-- =============================================
+             RIGHT
+        ============================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            class="activity-toolbar-right">
+
+            <!-- =============================================
+                ROLE PROFILE
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Role Profile"
+
+                [items]="roleProfiles"
+
+                labelField="displayName"
+
+                valueField="roleProfileId"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    isRoleProfileLocked
+                "
+
+                [(value)]="selectedRoleProfileId"
+
+                (valueChange)="onRoleProfileChanged($event)">
+
+            </app-search-dropdown>
+
+            <!-- =============================================
+                MODULE
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Module"
+
+                [items]="modules"
+
+                labelField="name"
+
+                valueField="id"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedModuleId"
+
+                (valueChange)="onModuleChanged($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- =============================================
+                MENU
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Menu"
+
+                [items]="menus"
+
+                labelField="name"
+
+                valueField="id"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    selectedModuleId == null
+                "
+
+                [(value)]="selectedMenuId"
+
+                (valueChange)="onMenuChanged($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- =============================================
+                SUB MENU
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Sub Menu"
+
+                [items]="subMenus"
+
+                labelField="name"
+
+                valueField="id"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    selectedMenuId == null
+                "
+
+                [(value)]="selectedSubMenuId"
+
+                (valueChange)="onSubMenuChanged($event)">
+
+            </app-search-dropdown>
+
+            <!-- =============================================
+                ADD BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="activity-add-button"
+
+                [disabled]="addDisabled"
+
+                (click)="onAddSelection()">
+
+                <i class="fas fa-plus"></i>
+
+                <span>Add</span>
+
+            </button>
+
+            <!-- =============================================
+                RESET BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="activity-reset-button"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    itemCartRows.length === 0
+                "
+
+                (click)="onResetSelection()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>Reset</span>
+
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <!-- =============================================
+             BODY
+        ============================================== -->
+
+        <ng-container canvasBody>
+
+            <app-item-cart
+
+                [columns]="itemCartColumns"
+
+                [rows]="pagedItemCartRows"
+
+                [serialOffset]="(currentPage - 1) * pageSize"
+
+                [loading]="loading"
+
+                [orbitLoading]="orbitLoading"
+
+                [error]="loadFailed"
+
+                [readOnly]="isViewMode"
+
+                [headerCheckboxStates]="headerCheckboxStates"
+
+                (headerCheckboxStateChange)="
+                    onHeaderCheckboxStateChanged($event)
+                "
+
+                (activityChanged)="
+                    updateHeaderCheckboxStates()
+                "
+
+                (remove)="onRemoveItem($event)">
+
+            </app-item-cart>
+
+        </ng-container>
+
+        <!-- =============================================
+             FOOTER
+        ============================================== -->
+
+        <ng-container canvasFooter>
+
+            <app-pagination
+
+                [totalRecords]="itemCartRows.length"
+
+                [currentPage]="currentPage"
+
+                [pageSize]="pageSize"
+
+                (pageChange)="onPageChange($event)"
+
+                (pageSizeChange)="onPageSizeChange($event)">
+
+            </app-pagination>
+
+        </ng-container>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

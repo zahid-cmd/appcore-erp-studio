@@ -3,16 +3,16 @@
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Studio_API", "Studio_API\AppCore.API.csproj", "{DDDF7A48-C67E-4EC5-A359-69118972DA3E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppCore.API", "AppCore.API\AppCore.API.csproj", "{DDDF7A48-C67E-4EC5-A359-69118972DA3E}"
 EndProject
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Studio_Application", "Studio_Application\AppCore.Application.csproj", "{650D9D99-2AC5-47FA-9075-FB3FE3F75104}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppCore.Application", "AppCore.Application\AppCore.Application.csproj", "{650D9D99-2AC5-47FA-9075-FB3FE3F75104}"
 EndProject
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Studio_Domain", "Studio_Domain\AppCore.Domain.csproj", "{48F9EBDF-CB27-42D4-AE4C-47A49AF7D506}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppCore.Domain", "AppCore.Domain\AppCore.Domain.csproj", "{48F9EBDF-CB27-42D4-AE4C-47A49AF7D506}"
 EndProject
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Studio_Infrastructure", "Studio_Infrastructure\AppCore.Infrastructure.csproj", "{9E44AEDA-D4BA-4A26-9F1E-2FEAC0DEB89C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppCore.Infrastructure", "AppCore.Infrastructure\AppCore.Infrastructure.csproj", "{9E44AEDA-D4BA-4A26-9F1E-2FEAC0DEB89C}"
 EndProject
 
 Global

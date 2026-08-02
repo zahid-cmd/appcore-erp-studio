@@ -1,0 +1,265 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-user-shield"
+
+        [title]="pageTitle"
+
+        subtitle="Manage security role profiles.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+            <!-- =============================================
+                 ROLE PROFILE INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Role Profile Information"
+
+                icon="fas fa-user-shield">
+
+                <app-search-dropdown
+
+                    label="Designation"
+
+                    [items]="designations"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="roleProfile.profileTypeId"
+
+                    (valueChange)="onDesignationChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Profile Code"
+
+                    [(value)]="roleProfile.profileCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Profile Name"
+
+                    [(value)]="roleProfile.profileName"
+
+                    (valueChange)="onProfileNameChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 PROFILE SETTINGS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Profile Settings"
+
+                icon="fas fa-sliders">
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    [(value)]="roleProfile.displayName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    type="number"
+
+                    [(value)]="roleProfile.displayOrder"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- =============================================
+                 STATUS & DESCRIPTION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Description"
+
+                icon="fas fa-comment">
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statuses"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="roleProfile.isActive"
+
+                    (valueChange)="onStatusChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    [(value)]="roleProfile.remarks"
+
+                    (valueChange)="checkForChanges()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+            <!-- =============================================
+                PREVIEW
+            ============================================== -->
+
+            <app-form-section
+
+                title="Preview"
+
+                icon="fas fa-eye">
+
+                <div class="preview">
+
+                    <div class="preview-icon">
+
+                        <i class="fas fa-user-shield"></i>
+
+                    </div>
+
+                    <div class="preview-title">
+
+                        {{ roleProfile.profileName || 'Role Profile Name' }}
+
+                    </div>
+
+                    <div class="preview-code">
+
+                        {{ roleProfile.profileCode || 'Auto Generated' }}
+
+                    </div>
+
+                    <div class="preview-note">
+
+                        {{ roleProfile.displayName || 'Display Name' }}
+
+                    </div>
+
+                </div>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
