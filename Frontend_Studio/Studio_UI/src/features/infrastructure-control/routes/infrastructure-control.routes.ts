@@ -29,26 +29,25 @@ export const infrastructureControlRoutes:
                     m.navigationManagementRoutes
             )
     },
-
     //===========================================================
-    // Project Synchronization
+    // Development Management
     //===========================================================
 
     {
-        path:'development-management/project-synchronization',
+        path:'development-management',
 
         data:
         {
-            breadcrumb:'Project Synchronization'
+            breadcrumb:'Development Management'
         },
 
         loadChildren:() =>
             import(
-                './project-synchronization.routes'
+                '../development management/routes/development-management.routes'
             )
             .then(
                 m =>
-                    m.projectSynchronizationRoutes
+                    m.developmentManagementRoutes
             )
     },
 

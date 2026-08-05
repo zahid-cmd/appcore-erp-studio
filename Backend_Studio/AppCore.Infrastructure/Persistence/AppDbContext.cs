@@ -26,7 +26,10 @@ public class AppDbContext : DbContext
     // Constructor
     //===========================================================
 
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    public AppDbContext
+    (
+        DbContextOptions<AppDbContext> options
+    )
         : base(options)
     {
     }
@@ -50,6 +53,15 @@ public class AppDbContext : DbContext
     //===========================================================
 
     public DbSet<ProjectSynchronization> ProjectSynchronizations { get; set; } = null!;
+
+    public DbSet<ModuleSynchronization> ModuleSynchronizations { get; set; } = null!;
+
+    //===========================================================
+    // AUTO REGISTER DBSETS
+    //===========================================================
+
+    // public DbSet<Settings> Settingss { get; set; } = null!;
+
 
     //===========================================================
     // Human Resource Setup
@@ -81,14 +93,27 @@ public class AppDbContext : DbContext
     // Configure Entity Models
     //===========================================================
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating
+    (
+        ModelBuilder modelBuilder
+    )
     {
-        base.OnModelCreating(modelBuilder);
+        //=======================================================
+        // Base Configuration
+        //=======================================================
+
+        base.OnModelCreating
+        (
+            modelBuilder
+        );
 
         //=======================================================
         // Apply Entity Configurations
         //=======================================================
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly
+        (
+            typeof(AppDbContext).Assembly
+        );
     }
 }

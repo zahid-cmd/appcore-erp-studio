@@ -1,0 +1,369 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-arrows-rotate"
+
+        [title]="pageTitle"
+
+        subtitle="Manage module synchronization.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="
+                isSynchronizationMode
+                    ? (canSynchronize ? 'Sync' : 'Rollback')
+                    : saveButtonText
+            "
+
+            [command1Icon]="
+                isSynchronizationMode
+                    ? (canSynchronize
+                        ? 'fas fa-arrows-rotate'
+                        : 'fas fa-rotate-left')
+                    : 'fas fa-floppy-disk'
+            "
+
+            (command1Click)="
+                isSynchronizationMode
+                    ? (canSynchronize
+                        ? onSynchronize()
+                        : onRollback())
+                    : onSave()
+            "
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="
+                !isViewMode
+                &&
+                !isSynchronizationMode
+            "
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [selectedTab]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         SYNCHRONIZATION WORKSPACE
+    ====================================================== -->
+
+    <div class="synchronization-workspace">
+
+        @if (showFrontendWorkspace)
+        {
+            <app-sync-workspace-frontend
+
+                [modules]="modules"
+
+                [(moduleId)]="synchronization.moduleId"
+
+                (moduleIdChange)="onModuleChange($event)"
+
+                [moduleReadonly]="isNavigationReadonly"
+
+                [analyzeDisabled]="!canAnalyze"
+
+                (targetLocationEditClick)="
+                    toggleFrontendEditingSection('target')
+                "
+
+                (standardStructureEditClick)="
+                    toggleFrontendEditingSection('structure')
+                "
+
+                (applicationRegistrationEditClick)="
+                    toggleFrontendEditingSection('registration')
+                "
+
+                (analyzeClick)="analyze()"
+
+                [targetLocationReadonly]="isTargetLocationReadonly"
+
+                [frontendSolution]="synchronization.frontendSolution"
+
+                (frontendSolutionChange)="
+                    synchronization.frontendSolution = $event
+                "
+
+                [project]="synchronization.frontendProject"
+
+                (projectChange)="
+                    synchronization.frontendProject = $event
+                "
+
+                [sourceFolder]="synchronization.frontendSourceFolder"
+
+                (sourceFolderChange)="
+                    synchronization.frontendSourceFolder = $event
+                "
+
+                [featureFolder]="synchronization.frontendFeatureFolder"
+
+                (featureFolderChange)="
+                    synchronization.frontendFeatureFolder = $event
+                "
+
+                [standardStructureReadonly]="isStandardStructureReadonly"
+
+                [moduleFolder]="synchronization.frontendModuleFolder"
+
+                (moduleFolderChange)="
+                    synchronization.frontendModuleFolder = $event
+                "
+
+                [modelFolder]="synchronization.frontendModelFolder"
+
+                (modelFolderChange)="
+                    synchronization.frontendModelFolder = $event
+                "
+
+                [pagesFolder]="synchronization.frontendPagesFolder"
+
+                (pagesFolderChange)="
+                    synchronization.frontendPagesFolder = $event
+                "
+
+                [servicesFolder]="synchronization.frontendServicesFolder"
+
+                (servicesFolderChange)="
+                    synchronization.frontendServicesFolder = $event
+                "
+
+                [applicationRegistrationReadonly]="
+                    isApplicationRegistrationReadonly
+                "
+
+                [routesFolder]="
+                    synchronization.frontendRoutesFolder
+                "
+
+                (routesFolderChange)="
+                    synchronization.frontendRoutesFolder = $event
+                "
+
+                [moduleRouteFile]="
+                    synchronization.frontendModuleRouteFile
+                "
+
+                (moduleRouteFileChange)="
+                    synchronization.frontendModuleRouteFile = $event
+                "
+
+                [applicationRouteFile]="
+                    synchronization.frontendApplicationRouteFile
+                "
+
+                (applicationRouteFileChange)="
+                    synchronization.frontendApplicationRouteFile = $event
+                "
+
+                [routePath]="
+                    synchronization.frontendRoutePath
+                "
+
+                (routePathChange)="
+                    synchronization.frontendRoutePath = $event">
+
+            </app-sync-workspace-frontend>
+        }
+
+        @if (showBackendWorkspace)
+        {
+            <app-sync-workspace-backend
+
+                [modules]="modules"
+
+                [(moduleId)]="synchronization.moduleId"
+
+                (moduleIdChange)="onModuleChange($event)"
+
+                [moduleReadonly]="isNavigationReadonly"
+
+                [analyzeDisabled]="!canAnalyze"
+
+                (targetLocationEditClick)="
+                    toggleBackendEditingSection('target')
+                "
+
+                (standardStructureEditClick)="
+                    toggleBackendEditingSection('structure')
+                "
+
+                (applicationRegistrationEditClick)="
+                    toggleBackendEditingSection('registration')
+                "
+
+                (analyzeClick)="analyze()"
+
+                [targetLocationReadonly]="isTargetLocationReadonly"
+
+                [backendSolution]="
+                    synchronization.backendSolution
+                "
+
+                (backendSolutionChange)="
+                    synchronization.backendSolution = $event
+                "
+
+                [backendApiProject]="
+                    synchronization.backendApiProject
+                "
+
+                (backendApiProjectChange)="
+                    synchronization.backendApiProject = $event
+                "
+
+                [backendApplicationProject]="
+                    synchronization.backendApplicationProject
+                "
+
+                (backendApplicationProjectChange)="
+                    synchronization.backendApplicationProject = $event
+                "
+
+                [backendDomainProject]="
+                    synchronization.backendDomainProject
+                "
+
+                (backendDomainProjectChange)="
+                    synchronization.backendDomainProject = $event
+                "
+
+                [backendInfrastructureProject]="
+                    synchronization.backendInfrastructureProject
+                "
+
+                (backendInfrastructureProjectChange)="
+                    synchronization.backendInfrastructureProject = $event
+                "
+
+                [standardStructureReadonly]="
+                    isStandardStructureReadonly
+                "
+
+                [backendControllerFolder]="
+                    synchronization.backendControllerFolder
+                "
+
+                (backendControllerFolderChange)="
+                    synchronization.backendControllerFolder = $event
+                "
+
+                [backendApplicationFolder]="
+                    synchronization.backendApplicationFolder
+                "
+
+                (backendApplicationFolderChange)="
+                    synchronization.backendApplicationFolder = $event
+                "
+
+                [backendEntityFolder]="
+                    synchronization.backendEntityFolder
+                "
+
+                (backendEntityFolderChange)="
+                    synchronization.backendEntityFolder = $event
+                "
+
+                [backendRepositoryFolder]="
+                    synchronization.backendRepositoryFolder
+                "
+
+                (backendRepositoryFolderChange)="
+                    synchronization.backendRepositoryFolder = $event
+                "
+
+                [backendConfigurationFolder]="
+                    synchronization.backendConfigurationFolder
+                "
+
+                (backendConfigurationFolderChange)="
+                    synchronization.backendConfigurationFolder = $event
+                "
+
+                [applicationRegistrationReadonly]="
+                    isApplicationRegistrationReadonly
+                "
+
+                [dependencyInjectionFile]="
+                    synchronization.dependencyInjectionFile
+                "
+
+                (dependencyInjectionFileChange)="
+                    synchronization.dependencyInjectionFile = $event
+                "
+
+                [dbContextFile]="
+                    synchronization.dbContextFile
+                "
+
+                (dbContextFileChange)="
+                    synchronization.dbContextFile = $event">
+
+            </app-sync-workspace-backend>
+        }
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<app-toast>
+
+</app-toast>
+
+<!-- =========================================================
+     CONFIRM DIALOG
+========================================================= -->
+
+<app-confirm-dialog>
+
+</app-confirm-dialog>
+
+<!-- =========================================================
+     PROGRESS DIALOG
+========================================================= -->
+
+<app-progress-dialog>
+
+</app-progress-dialog>

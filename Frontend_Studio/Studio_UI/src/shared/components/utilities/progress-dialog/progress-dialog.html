@@ -29,44 +29,82 @@
       </div>
 
       <!-- =====================================================
-           BODY
-      ====================================================== -->
+          BODY
+      ===================================================== -->
 
       <div class="progress-body">
 
-        <div class="progress-message">
+          <div class="progress-message-row">
 
-          {{
-            previewMode
-              ? 'Please wait while the operation is being completed.'
-              : progressService.message()
-          }}
+              <div class="progress-message">
 
-        </div>
+                  {{
+                      previewMode
+                          ? 'Please wait while the operation is being completed.'
+                          : progressService.message()
+                  }}
 
-        <div class="progress-percent">
+              </div>
 
-          {{
-            previewMode
-              ? previewProgress
-              : progressService.progress()
-          }}%
+              <!-- =================================================
+                  ECG LOADER
+              ================================================== -->
 
-        </div>
+              <div class="ecg-loader">
 
-        <div class="progress-bar">
+                  <svg
+                      viewBox="0 0 120 24"
+                      class="ecg-svg"
+                  >
+                      <path
+                          class="ecg-line"
+                          d="
+                              M0 12
+                              L18 12
+                              L24 12
+                              L30 12
+                              L36 12
+                              L42 12
+                              L46 16
+                              L50 4
+                              L54 22
+                              L60 8
+                              L66 15
+                              L72 10
+                              L78 12
+                              L120 12
+                          "
+                      />
 
-          <div
-            class="progress-fill"
-            [style.width.%]="
-              previewMode
-                ? previewProgress
-                : progressService.progress()
-            "
-          >
+                  </svg>
+
+              </div>
+
           </div>
 
-        </div>
+          <div class="progress-percent">
+
+              {{
+                  previewMode
+                      ? previewProgress
+                      : progressService.progress()
+              }}%
+
+          </div>
+
+          <div class="progress-bar">
+
+              <div
+                  class="progress-fill"
+                  [style.width.%]="
+                      previewMode
+                          ? previewProgress
+                          : progressService.progress()
+                  "
+              >
+              </div>
+
+          </div>
 
       </div>
 

@@ -139,7 +139,20 @@
 
                         </ng-container>
 
+                        <!-- OPERATION -->
+                        <ng-container *ngIf="column.type==='operation'">
 
+                            <button
+                                type="button"
+                                class="action-btn sync"
+                                (click)="operation.emit(row); $event.stopPropagation()">
+
+                                <i class="fas fa-arrows-rotate"></i>
+
+                            </button>
+
+                        </ng-container>
+                        
                         <!-- ACTIONS -->
                         <ng-container *ngIf="column.type==='actions'">
 

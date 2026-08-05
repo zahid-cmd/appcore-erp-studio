@@ -16,22 +16,25 @@ Frontend_Studio
 Frontend is organized by modules.
 
 ===============================================================================
-2. STANDARD MODULE STRUCTURE
+2. FIXED APPLICATION STRUCTURE
 ===============================================================================
 
-Module
+The following folders are part of the application architecture and are fixed.
 
-    Models
+Frontend_Studio
+└── Studio_UI
+    └── src
+        ├── app
+        ├── core
+        ├── environments
+        ├── features
+        └── shared
 
-    Pages
+Module Synchronization shall not create, rename, or modify these folders.
 
-    Routes
+Only module-specific folders are created under:
 
-    Services
-
-    Sidebar
-
-Every frontend module shall follow this structure.
+    src/features
 
 ===============================================================================
 3. STANDARD PAGE STRUCTURE
@@ -312,15 +315,13 @@ Every new frontend page must follow this document.
 
 □ Service Created
 
-□ Routes Updated
+□ Routes Created
 
 □ List Page Created
 
 □ Form Page Created
 
-□ Navigation Added
-
-□ Sidebar Updated (If Required)
+□ Navigation Registered (If Required)
 
 □ Shared Components Used
 

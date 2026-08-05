@@ -208,6 +208,7 @@ implements OnChanges
           console.log('==============================');
       }
   }
+
   /* =====================================================
      SORT STATE
   ===================================================== */
@@ -216,6 +217,7 @@ implements OnChanges
 
   sortDirection:
     'asc' | 'desc' = 'asc';
+
 
   /* =====================================================
     SORT
@@ -411,6 +413,7 @@ implements OnChanges
           ? 'Yes'
           : 'No';
   }
+
   /* =====================================================
      ACTION EVENTS
   ===================================================== */
@@ -432,7 +435,26 @@ implements OnChanges
     this.view.emit(row);
   }
 
+  /* =====================================================
+     OPERATION CLICK
+  ===================================================== */
 
+  onOperationClick(
+    row: any,
+
+    event: MouseEvent
+  ):
+    void
+  {
+    event.stopPropagation();
+
+    console.log(
+      'OPERATION CLICK',
+      row
+    );
+
+    this.operation.emit(row);
+  }
 
   //===========================================================
   // EDIT CLICK
@@ -477,6 +499,7 @@ implements OnChanges
 
     this.delete.emit(row);
   }
+
   /* =====================================================
      TRACK ROW
   ===================================================== */

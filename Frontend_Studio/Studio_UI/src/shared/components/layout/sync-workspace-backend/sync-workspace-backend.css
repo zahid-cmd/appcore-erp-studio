@@ -1,0 +1,500 @@
+/*==============================================================
+  HOST
+==============================================================*/
+
+:host
+{
+    display:flex;
+
+    width:100%;
+
+    height:100%;
+}
+
+.workspace-host
+{
+    display:flex;
+
+    gap:16px;
+
+    width:100%;
+
+    height:100%;
+}
+
+
+/*==============================================================
+  CONTROL PANEL
+==============================================================*/
+
+.workspace-control
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:0 0 380px;
+
+    min-width:380px;
+
+    overflow:hidden;
+
+    background:#ffffff;
+
+    border:1px solid #e5edf8;
+
+    border-radius:12px;
+
+    box-shadow:
+        0 2px 8px rgba(15,23,42,.04);
+}
+
+
+/*==============================================================
+  CONTENT PANEL
+==============================================================*/
+
+.workspace-content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1;
+
+    min-width:0;
+
+    height:100%;
+
+    overflow:hidden;
+
+    background:#ffffff;
+
+    border:1px solid #e5edf8;
+
+    border-radius:12px;
+
+    box-shadow:
+        0 2px 8px rgba(15,23,42,.04);
+}
+
+
+/*==============================================================
+  CARD HEADER
+==============================================================*/
+
+.workspace-card-header
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    height:42px;
+
+    padding:0 14px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfdff 0%,
+            #f4f8fe 55%,
+            #eef5fd 100%
+        );
+
+    border-bottom:1px solid #dbe8f7;
+}
+
+.workspace-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    color:#1f2937;
+
+    font-size:13px;
+
+    font-weight:700;
+}
+
+.workspace-title i
+{
+    color:var(--brand-blue);
+}
+
+.workspace-status
+{
+    padding:2px 10px;
+
+    color:#2563eb;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.4px;
+
+    background:#eef4ff;
+
+    border:1px solid #d8e5ff;
+
+    border-radius:999px;
+}
+
+
+/*==============================================================
+  CONTROL BODY
+==============================================================*/
+
+.workspace-control .workspace-card-body
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1;
+
+    gap:14px;
+
+    padding:12px;
+
+    overflow:auto;
+}
+
+
+/*==============================================================
+  CONTENT BODY
+==============================================================*/
+
+.workspace-content .workspace-card-body
+{
+    display:grid;
+
+    grid-template-columns:
+        repeat(3,minmax(280px,1fr));
+
+    gap:14px;
+
+    flex:1;
+
+    padding:12px;
+
+    overflow:auto;
+
+    align-items:start;
+}
+
+
+/*==============================================================
+  SECTION
+==============================================================*/
+
+.workspace-section
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+    min-width:0;
+
+    height:100%;
+
+    padding:10px;
+
+    background:#ffffff;
+
+    border:1px solid #e7edf5;
+
+    border-radius:10px;
+
+    box-shadow:
+        0 1px 3px rgba(15,23,42,.03);
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================
+  SECTION HEADER
+==============================================================*/
+
+/*==============================================================
+  SECTION HEADER
+==============================================================*/
+
+.workspace-section-title
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    height:38px;
+
+    margin:
+        -10px
+        -10px
+        12px
+        -10px;
+
+    padding:0 12px;
+
+    color:#1f2937;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfdff 0%,
+            #f4f8fe 55%,
+            #eef5fd 100%
+        );
+
+    border-bottom:1px solid #dbe8f7;
+
+    border-radius:
+        10px
+        10px
+        0
+        0;
+}
+
+.workspace-section-title i
+{
+    width:16px;
+
+    color:var(--brand-blue);
+
+    font-size:14px;
+
+    text-align:center;
+}
+
+/*==============================================================
+  SECTION HEADER CONTENT
+==============================================================*/
+
+.section-title-left
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+}
+
+.section-title-left i
+{
+    width:16px;
+
+    color:var(--brand-blue);
+
+    font-size:14px;
+
+    text-align:center;
+}
+
+
+/*==============================================================
+  SECTION LOCK BUTTON
+==============================================================*/
+
+.section-lock-button
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:28px;
+
+    height:28px;
+
+    padding:0;
+
+    color:#64748b;
+
+    cursor:pointer;
+
+    background:#ffffff;
+
+    border:1px solid #dbe5f2;
+
+    border-radius:8px;
+
+    transition:
+        all .18s ease;
+}
+
+.section-lock-button:hover
+{
+    color:#2563eb;
+
+    background:#eef4ff;
+
+    border-color:#bfd6ff;
+}
+
+.section-lock-button i
+{
+    font-size:13px;
+}
+
+.section-lock-button:hover i
+{
+    color:#2563eb;
+}
+
+/*==============================================================
+  CONTROLS
+==============================================================*/
+
+.workspace-section app-textbox,
+.workspace-section app-search-dropdown,
+.workspace-section app-dropdown,
+.workspace-section app-textarea
+{
+    display:block;
+
+    width:100%;
+}
+
+
+/*==============================================================
+  BUTTON
+==============================================================*/
+
+.button-row
+{
+    display:flex;
+
+    justify-content:flex-end;
+
+    margin-top:12px;
+}
+
+.analyze-button
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    width:110px;
+
+    height:36px;
+
+    color:#ffffff;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            #233876 0%,
+            #3555c5 55%,
+            #4f67e8 100%
+        );
+
+    border:none;
+
+    border-radius:8px;
+
+    box-shadow:
+        0 6px 14px rgba(79,103,232,.20);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.analyze-button:hover:not(:disabled)
+{
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 10px 18px rgba(79,103,232,.28);
+}
+
+.analyze-button:disabled
+{
+    opacity:.55;
+
+    cursor:not-allowed;
+}
+
+
+/*==============================================================
+  SCROLLBAR
+==============================================================*/
+
+.workspace-card-body::-webkit-scrollbar
+{
+    width:8px;
+
+    height:8px;
+}
+
+.workspace-card-body::-webkit-scrollbar-thumb
+{
+    background:#d7e2f2;
+
+    border-radius:20px;
+}
+
+.workspace-card-body::-webkit-scrollbar-track
+{
+    background:#f8fafc;
+}
+
+
+/*==============================================================
+  RESPONSIVE
+==============================================================*/
+
+@media (max-width:1400px)
+{
+    .workspace-content .workspace-card-body
+    {
+        grid-template-columns:1fr;
+    }
+
+    .synchronization-workspace
+    {
+        flex-direction:column;
+
+        height:auto;
+    }
+
+    .workspace-control
+    {
+        flex:none;
+
+        min-width:100%;
+    }
+
+    .workspace-content
+    {
+        min-height:420px;
+    }
+}

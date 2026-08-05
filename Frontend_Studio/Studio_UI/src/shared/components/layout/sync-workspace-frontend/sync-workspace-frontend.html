@@ -1,0 +1,405 @@
+<div class="workspace-host">
+
+    <!-- =====================================================
+         CONTROL CENTER
+    ====================================================== -->
+
+    <section class="workspace-card workspace-control">
+
+        <div class="workspace-card-header">
+
+            <div class="workspace-title">
+
+                <i class="fas fa-sliders-h"></i>
+
+                <span>
+
+                    Synchronization Control Center
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="workspace-card-body">
+
+            <!-- =========================================
+                 MODULE SELECTION
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <i class="fas fa-cubes"></i>
+
+                    <span>
+
+                        Module Selection
+
+                    </span>
+
+                </div>
+
+                    <app-search-dropdown
+
+                        label="Module"
+
+                        placeholder="Select Module"
+
+                        [items]="modules"
+
+                        labelField="name"
+
+                        valueField="id"
+
+                        [(value)]="moduleId"
+
+                        (valueChange)="onModuleChange($event)"
+
+                        [readonly]="moduleReadonly">
+
+                    </app-search-dropdown>
+
+                <div class="button-row">
+
+                    <button
+
+                        type="button"
+
+                        class="analyze-button"
+
+                        (click)="analyze()"
+
+                        [disabled]="analyzeDisabled">
+
+                        <i class="fas fa-magnifying-glass"></i>
+
+                        <span>
+
+                            Analyze
+
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         FRONTEND WORKSPACE
+    ====================================================== -->
+
+    <section class="workspace-card workspace-content">
+
+        <div class="workspace-card-header">
+
+            <div class="workspace-title">
+
+                <i class="fas fa-laptop-code"></i>
+
+                <span>
+
+                    Frontend Synchronization Workspace
+
+                </span>
+
+            </div>
+
+            <div class="workspace-status">
+
+                Ready
+
+            </div>
+
+        </div>
+
+        <div class="workspace-card-body">
+
+            <!-- =========================================
+                TARGET LOCATION
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-location-dot"></i>
+
+                        <span>
+
+                            Target Location
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onTargetLocationEdit()">
+
+                        <i
+
+                            [class]="
+                                targetLocationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+                <app-textbox
+
+                    label="Frontend Solution"
+
+                    [(value)]="frontendSolution"
+
+                    (valueChange)="emitFrontendSolution($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Project"
+
+                    [(value)]="project"
+
+                    (valueChange)="emitProject($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Source Folder"
+
+                    [(value)]="sourceFolder"
+
+                    (valueChange)="emitSourceFolder($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Feature Folder"
+
+                    [(value)]="featureFolder"
+
+                    (valueChange)="emitFeatureFolder($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+            </div>
+
+            <!-- =========================================
+                STANDARD MODULE STRUCTURE
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-folder-tree"></i>
+
+                        <span>
+
+                            Standard Module Structure
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onStandardStructureEdit()">
+
+                        <i
+
+                            [class]="
+                                standardStructureReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+                <app-textbox
+
+                    label="Module Folder"
+
+                    [(value)]="moduleFolder"
+
+                    (valueChange)="emitModuleFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Model Folder"
+
+                    [(value)]="modelFolder"
+
+                    (valueChange)="emitModelFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Pages Folder"
+
+                    [(value)]="pagesFolder"
+
+                    (valueChange)="emitPagesFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Services Folder"
+
+                    [(value)]="servicesFolder"
+
+                    (valueChange)="emitServicesFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Routes Folder"
+
+                    [(value)]="routesFolder"
+
+                    (valueChange)="emitRoutesFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+            </div>
+
+            <!-- =========================================
+                APPLICATION REGISTRATION
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-code-branch"></i>
+
+                        <span>
+
+                            Application Registration
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onApplicationRegistrationEdit()">
+
+                        <i
+
+                            [class]="
+                                applicationRegistrationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+                <app-textbox
+
+                    label="Module Route File"
+
+                    [(value)]="moduleRouteFile"
+
+                    (valueChange)="emitModuleRouteFile($event)"
+
+                    [readonly]="applicationRegistrationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Application Route File"
+
+                    [(value)]="applicationRouteFile"
+
+                    (valueChange)="emitApplicationRouteFile($event)"
+
+                    [readonly]="applicationRegistrationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Route Path"
+
+                    [(value)]="routePath"
+
+                    (valueChange)="emitRoutePath($event)"
+
+                    [readonly]="applicationRegistrationReadonly">
+
+                </app-textbox>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>

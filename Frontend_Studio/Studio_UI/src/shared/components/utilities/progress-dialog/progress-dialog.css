@@ -225,3 +225,141 @@
     left: 100%;
   }
 }
+
+/* =====================================================
+   MESSAGE ROW
+===================================================== */
+
+.progress-message-row
+{
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-bottom: 14px;
+}
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+.progress-message-row
+.progress-message
+{
+  margin-bottom: 0;
+
+  flex: 1;
+}
+
+/* =====================================================
+   ECG LOADER
+===================================================== */
+
+.ecg-loader
+{
+  width: 90px;
+
+  height: 22px;
+
+  margin-left: 12px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+}
+
+/* =====================================================
+   SVG
+===================================================== */
+
+.ecg-svg
+{
+  width: 90px;
+
+  height: 22px;
+
+  overflow: visible;
+}
+
+/* =====================================================
+   ECG LINE
+===================================================== */
+
+.ecg-line
+{
+  fill: none;
+
+  stroke: #2563eb;
+
+  stroke-width: 2;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+
+  filter:
+    drop-shadow(0 0 3px rgba(37,99,235,.45));
+}
+
+/* =====================================================
+   ECG SCAN
+===================================================== */
+
+.ecg-loader::after
+{
+    content: '';
+
+    position: absolute;
+
+    width: 8px;
+
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #60a5fa;
+
+    box-shadow:
+        0 0 3px #60a5fa,
+        0 0 6px #60a5fa;
+
+    animation:
+        ecgScan 1.8s linear infinite;
+}
+
+/* =====================================================
+   ECG ANIMATION
+===================================================== */
+
+@keyframes ecgScan
+{
+  0%
+  {
+    transform:
+      translateX(-70px);
+
+    opacity: 0;
+  }
+
+  10%
+  {
+    opacity: 1;
+  }
+
+  90%
+  {
+    opacity: 1;
+  }
+
+  100%
+  {
+    transform:
+      translateX(8px);
+
+    opacity: 0;
+  }
+}

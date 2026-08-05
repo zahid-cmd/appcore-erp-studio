@@ -233,6 +233,10 @@ Purpose
 
 Structure
 
+    CodeMaster
+
+        Shared code generation
+
     Common
 
         Shared Repositories
@@ -245,7 +249,7 @@ Structure
 
             Menu
 
-                ModuleConfiguration.cs
+                EntityConfiguration.cs
 
     Repositories
 
@@ -253,7 +257,7 @@ Structure
 
             Menu
 
-                ModuleRepository.cs
+                EntityRepository.cs
 
     Persistence
 
@@ -270,6 +274,8 @@ Contains
     Entity Configurations
 
     Database Context
+
+    Entity Framework Migrations
 
     Dependency Injection
 
@@ -295,6 +301,27 @@ Rules
 
     All Entity Framework operations are performed here.
 
+    Configurations are organized by
+
+        Module
+
+            Menu
+
+    Repositories are organized by
+
+        Module
+
+            Menu
+
+    Multiple related configuration files may exist directly
+    under the corresponding menu folder.
+
+    Multiple related repository files may exist directly
+    under the corresponding menu folder.
+
+    Do not create an additional folder for every entity
+    unless there is a functional reason.
+
 ===============================================================================
 6. STANDARD PAGE STRUCTURE
 ===============================================================================
@@ -303,43 +330,113 @@ Studio_API
 
     InfrastructureControl
 
-        Navigation
+        DevelopmentManagement
 
-            ModuleController.cs
+            ProjectSynchronizationController.cs
+
+            ModuleSynchronizationController.cs
+
+            MenuSynchronizationController.cs
+
+            SubmenuSynchronizationController.cs
+
 
 Studio_Application
 
     InfrastructureControl
 
-        Navigation
+        DevelopmentManagement
 
-            Module
+            ProjectSynchronization
 
                 DTOs
 
-                    CreateModuleDto.cs
+                    CreateProjectSynchronizationDto.cs
 
-                    UpdateModuleDto.cs
+                    UpdateProjectSynchronizationDto.cs
 
-                    ModuleDto.cs
+                    ProjectSynchronizationDto.cs
 
-                    ModuleDefaultsDto.cs
+                    ProjectSynchronizationDefaultsDto.cs
 
-                    ModuleHistoryDto.cs (If Required)
+                    ProjectSynchronizationHistoryDto.cs (If Required)
 
                 Interfaces
 
-                    IModuleRepository.cs
+                    IProjectSynchronizationRepository.cs
+
+
+            ModuleSynchronization
+
+                DTOs
+
+                    CreateModuleSynchronizationDto.cs
+
+                    UpdateModuleSynchronizationDto.cs
+
+                    ModuleSynchronizationDto.cs
+
+                    ModuleSynchronizationDefaultsDto.cs
+
+                    ModuleSynchronizationHistoryDto.cs (If Required)
+
+                Interfaces
+
+                    IModuleSynchronizationRepository.cs
+
+
+            MenuSynchronization
+
+                DTOs
+
+                    CreateMenuSynchronizationDto.cs
+
+                    UpdateMenuSynchronizationDto.cs
+
+                    MenuSynchronizationDto.cs
+
+                    MenuSynchronizationDefaultsDto.cs
+
+                    MenuSynchronizationHistoryDto.cs (If Required)
+
+                Interfaces
+
+                    IMenuSynchronizationRepository.cs
+
+
+            SubmenuSynchronization
+
+                DTOs
+
+                    CreateSubmenuSynchronizationDto.cs
+
+                    UpdateSubmenuSynchronizationDto.cs
+
+                    SubmenuSynchronizationDto.cs
+
+                    SubmenuSynchronizationDefaultsDto.cs
+
+                    SubmenuSynchronizationHistoryDto.cs (If Required)
+
+                Interfaces
+
+                    ISubmenuSynchronizationRepository.cs
+
 
 Studio_Domain
 
     InfrastructureControl
 
-        Navigation
+        DevelopmentManagement
 
-            Module
+            ProjectSynchronization.cs
 
-                Module.cs
+            ModuleSynchronization.cs
+
+            MenuSynchronization.cs
+
+            SubmenuSynchronization.cs
+
 
 Studio_Infrastructure
 
@@ -347,36 +444,53 @@ Studio_Infrastructure
 
         InfrastructureControl
 
-            Navigation
+            DevelopmentManagement
 
-                ModuleConfiguration.cs
+                ProjectSynchronizationConfiguration.cs
+
+                ModuleSynchronizationConfiguration.cs
+
+                MenuSynchronizationConfiguration.cs
+
+                SubmenuSynchronizationConfiguration.cs
+
 
     Repositories
 
         InfrastructureControl
 
-            Navigation
+            DevelopmentManagement
 
-                ModuleRepository.cs
+                ProjectSynchronizationRepository.cs
+
+                ModuleSynchronizationRepository.cs
+
+                MenuSynchronizationRepository.cs
+
+                SubmenuSynchronizationRepository.cs
+
 
     Persistence
 
         AppDbContext.cs
 
+
     DependencyInjection.cs
 
-The same folder structure and file naming apply to
 
-    Menu
+The same folder structure and naming convention apply to
 
-    Submenu
+    Human Resource
 
-    Activity
+    Navigation Management
 
-    RoleProfile
+    Security Permission
 
-    and every future backend page.
+    Every future module
 
+    Every future menu
+
+    Every future entity.
 ===============================================================================
 8. CONTROLLER STANDARD
 ===============================================================================
