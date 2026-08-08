@@ -62,15 +62,21 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    SyncWorkspaceFrontendComponent
+    ModuleSyncWorkspaceFrontendComponent
 }
-from '../../../../../../shared/components/layout/sync-workspace-frontend/sync-workspace-frontend';
+from '../../../../../../shared/components/layout/module-sync-workspace-frontend/module-sync-workspace-frontend';
 
 import
 {
-    SyncWorkspaceBackendComponent
+    SearchDropdownComponent
 }
-from '../../../../../../shared/components/layout/sync-workspace-backend/sync-workspace-backend';
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+import
+{
+    ModuleSyncWorkspaceBackendComponent
+}
+from '../../../../../../shared/components/layout/module-sync-workspace-backend/module-sync-workspace-backend';
 
 import
 {
@@ -95,6 +101,7 @@ import
     ProgressDialogComponent
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
 //===============================================================
 // Models & Services
 //===============================================================
@@ -129,6 +136,22 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
+import
+{
+    MenuSynchronizationService
+}
+from '../../../services/menu-synchronization.service';
+
+//===============================================================
+// Types
+//===============================================================
+
+type EditingSection =
+    | 'none'
+    | 'target'
+    | 'structure'
+    | 'registration';
+
 //===============================================================
 // Component
 //===============================================================
@@ -148,9 +171,10 @@ from '../../../../../../shared/components/utilities/progress-dialog/progress-dia
         PageToolbarComponent,
         CommandCenterComponent,
         ControlTabsComponent,
+        SearchDropdownComponent,
 
-        SyncWorkspaceFrontendComponent,
-        SyncWorkspaceBackendComponent,
+        ModuleSyncWorkspaceFrontendComponent,
+        ModuleSyncWorkspaceBackendComponent,
 
         ToastComponent,
         ConfirmDialogComponent,
@@ -181,6 +205,9 @@ implements OnInit
     private readonly moduleSynchronizationService =
         inject(ModuleSynchronizationService);
 
+    private readonly menuSynchronizationService =
+        inject(MenuSynchronizationService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -196,6 +223,16 @@ implements OnInit
     private readonly progressDialog =
         inject(ProgressDialogService);
 
+    //===========================================================
+    // State
+    //===========================================================
+
+    private originalSynchronization =
+        '';
+
+    hasChanges =
+        false;
+                
     //===========================================================
     // Mode
     //===========================================================
@@ -222,43 +259,19 @@ implements OnInit
         'frontend';
 
     //===========================================================
-    // Tabs
-    //===========================================================
-
-    get tabTitle():
-        string
-    {
-        switch (this.mode)
-        {
-            case 'add':
-
-                return `Add ${this.entityName}`;
-
-            case 'edit':
-
-                return `Update ${this.entityName}`;
-
-            case 'view':
-
-                return `View ${this.entityName}`;
-
-            case 'sync':
-
-                return `Sync ${this.entityName}`;
-
-            default:
-
-                return this.entityName;
-        }
-    }
-
-    //===========================================================
     // Navigation
     //===========================================================
 
     modules:any[] =
     [];
 
+    //===========================================================
+    // Tabs
+    //===========================================================
+
+    tabs:
+        ControlTab[] =
+        [];
 
     //===========================================================
     // Model
@@ -306,13 +319,7 @@ implements OnInit
 
         frontendModuleFolder: '',
 
-        frontendModelFolder: '',
-
-        frontendPagesFolder: '',
-
         frontendRoutesFolder: '',
-
-        frontendServicesFolder: '',
 
         frontendModuleRouteFile: '',
 
@@ -321,8 +328,6 @@ implements OnInit
         //=======================================================
 
         frontendApplicationRouteFile: '',
-
-        frontendRoutePath: '',
 
         //=======================================================
         // Backend Target Location
@@ -410,43 +415,73 @@ implements OnInit
     };
 
     //===========================================================
-    // State
-    //===========================================================
-
-    private originalSynchronization =
-        '';
-
-    hasChanges =
-        false;
-
-    //===========================================================
     // Workspace Editing
     //===========================================================
 
-    frontendEditingSection:
-        'none'
-        | 'target'
-        | 'structure'
-        | 'registration'
-        = 'none';
+    frontendEditingSection: EditingSection =
+        'none';
 
-    backendEditingSection:
-        'none'
-        | 'target'
-        | 'structure'
-        | 'registration'
-        = 'none';
-        
-    //===========================================================
-    // Tabs
-    //===========================================================
-
-    tabs:
-        ControlTab[] =
-        [];
+    backendEditingSection: EditingSection =
+        'none';
 
     //===========================================================
-    // Show Frontend Workspace
+    // Synchronization Name
+    //===========================================================
+
+    get synchronizationName():
+        string
+    {
+        return this.selectedTab === 'backend'
+
+            ? 'Backend Module Synchronization'
+
+            : 'Frontend Module Synchronization';
+    }
+
+
+    //===========================================================
+    // Action Name
+    //===========================================================
+
+    get actionName():
+        string
+    {
+        switch (this.mode)
+        {
+            case 'add':
+
+                return 'Add';
+
+            case 'edit':
+
+                return 'Update';
+
+            case 'view':
+
+                return 'View';
+
+            case 'sync':
+
+                return 'Sync';
+
+            default:
+
+                return '';
+        }
+    }
+
+    //===========================================================
+    // Tab Title
+    //===========================================================
+
+    get tabTitle():
+        string
+    {
+        return `${this.actionName} ${this.synchronizationName}`;
+    }
+
+    //===========================================================
+    // Frontend Workspace Visibility
     //===========================================================
 
     get showFrontendWorkspace():
@@ -455,9 +490,8 @@ implements OnInit
         return this.selectedTab === 'frontend';
     }
 
-
     //===========================================================
-    // Show Backend Workspace
+    // Backend Workspace Visibility
     //===========================================================
 
     get showBackendWorkspace():
@@ -548,10 +582,7 @@ implements OnInit
 
     toggleFrontendEditingSection
     (
-        section:
-            'target'
-            | 'structure'
-            | 'registration'
+        section: EditingSection
     ):
         void
     {
@@ -563,17 +594,15 @@ implements OnInit
 
                 : section;
     }
-    
+
+
     //===========================================================
     // Toggle Backend Editing Section
     //===========================================================
 
     toggleBackendEditingSection
     (
-        section:
-            'target'
-            | 'structure'
-            | 'registration'
+        section: EditingSection
     ):
         void
     {
@@ -627,23 +656,21 @@ implements OnInit
     private initializeWorkspace():
         void
     {
-        const url =
-            this.router.url.toLowerCase();
-
         this.selectedTab =
+            this.router.url
+                .toLowerCase()
+                .includes('/backend')
 
-            url.includes('/backend')
+                    ? 'backend'
 
-                ? 'backend'
-
-                : 'frontend';
+                    : 'frontend';
 
         this.tabs =
         [
             {
-                id:this.selectedTab,
+                id: this.selectedTab,
 
-                label:this.tabTitle
+                label: this.tabTitle
             }
         ];
     }
@@ -652,12 +679,11 @@ implements OnInit
     // Initialization
     //===========================================================
 
-    ngOnInit():
-        void
+    ngOnInit(): void
     {
-        this.initializeWorkspace();
-
         this.initializeFormMode();
+
+        this.initializeWorkspace();
 
         this.loadModules();
 
@@ -674,28 +700,22 @@ implements OnInit
         const url =
             this.router.url.toLowerCase();
 
-        if (url.includes('/view/'))
-        {
-            this.mode =
-                'view';
-        }
-        else if (url.includes('/edit/'))
-        {
-            this.mode =
-                'edit';
-        }
-        else if (url.includes('/synchronize/'))
-        {
-            this.mode =
-                'sync';
-        }
-        else
-        {
-            this.mode =
-                'add';
-        }
-    }
+        this.mode =
 
+            url.includes('/view/')
+
+                ? 'view'
+
+            : url.includes('/edit/')
+
+                ? 'edit'
+
+            : url.includes('/synchronize/')
+
+                ? 'sync'
+
+                : 'add';
+    }
 
     //===========================================================
     // Initialize Data
@@ -704,38 +724,27 @@ implements OnInit
     private initializeData():
         void
     {
-        const id =
+        this.synchronizationId =
             Number(
                 this.route.snapshot.paramMap.get('id')
             );
 
-        //=======================================================
-        // Existing Synchronization
-        //=======================================================
-
-        if (id > 0)
+        if (this.synchronizationId <= 0)
         {
-            this.synchronizationId =
-                id;
-
-            this.loadSynchronization();
+            this.loadDefaults();
 
             return;
         }
 
-        //=======================================================
-        // Default Synchronization
-        //=======================================================
-
-        this.loadDefaults();
+        this.loadSynchronization();
     }
-
 
     //===========================================================
     // Set Synchronization
     //===========================================================
 
-    private setSynchronization(
+    private setSynchronization
+    (
         synchronization: ModuleSynchronization
     ):
         void
@@ -743,6 +752,7 @@ implements OnInit
         this.synchronization =
         {
             ...this.synchronization,
+
             ...synchronization
         };
 
@@ -772,22 +782,28 @@ implements OnInit
 
             .subscribe(
             {
-                next:(response) =>
-                {
-                    this.setSynchronization(
-                        response
-                    );
-                },
+                next:
+                    (
+                        synchronization
+                    ) =>
+                    {
+                        this.setSynchronization(
+                            synchronization
+                        );
+                    },
 
-                error:() =>
-                {
-                    this.toast.error(
-                        'Error',
-                        'Failed to load module synchronization.'
-                    );
+                error:
+                    () =>
+                    {
+                        this.toast.error
+                        (
+                            'Error',
 
-                    this.onBackToList();
-                }
+                            'Failed to load module synchronization.'
+                        );
+
+                        this.onBackToList();
+                    }
             });
     }
 
@@ -800,7 +816,9 @@ implements OnInit
     {
         const synchronizationType =
             this.selectedTab === 'backend'
+
                 ? 'Backend'
+
                 : 'Frontend';
 
         this.moduleSynchronizationService
@@ -811,22 +829,29 @@ implements OnInit
 
             .subscribe(
             {
-                next:(defaults) =>
-                {
-                    this.setSynchronization(
+                next:
+                    (
+                        defaults
+                    ) =>
                     {
-                        ...this.synchronization,
-                        ...defaults
-                    });
-                },
+                        this.setSynchronization
+                        ({
+                            ...this.synchronization,
 
-                error:() =>
-                {
-                    this.toast.error(
-                        'Error',
-                        'Failed to load default values.'
-                    );
-                }
+                            ...defaults
+                        });
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.toast.error
+                        (
+                            'Error',
+
+                            'Failed to load default values.'
+                        );
+                    }
             });
     }
 
@@ -863,7 +888,7 @@ implements OnInit
     // Track Changes
     //===========================================================
 
-    checkForChanges():
+    private checkForChanges():
         void
     {
         this.hasChanges =
@@ -1068,7 +1093,65 @@ implements OnInit
 
         await this.updateProgressAsync(90);
 
-        await this.updateProgressAsync(99);
+        await this.updateProgressAsync(95);
+
+        await this.updateProgressAsync(100);
+
+        await this.delayAsync(500);
+    }
+    //===========================================================
+    // Prepare Rollback
+    //===========================================================
+
+    private async prepareRollbackAsync():
+        Promise<void>
+    {
+        //=======================================================
+        // Open Progress Dialog
+        //=======================================================
+
+        this.progressDialog.show
+        (
+            'Rolling Back Synchronization',
+
+            'Validate Rollback'
+        );
+
+        //=======================================================
+        // Validate Rollback
+        //=======================================================
+
+        await this.updateProgressAsync(10);
+
+        await this.updateProgressAsync(20);
+
+        //=======================================================
+        // Analyze Generated Files
+        //=======================================================
+
+        this.progressDialog.update
+        (
+            20,
+            'Analyze Generated Files'
+        );
+
+        await this.updateProgressAsync(40);
+
+        await this.updateProgressAsync(80);
+
+        //=======================================================
+        // Restore Previous State
+        //=======================================================
+
+        this.progressDialog.update
+        (
+            80,
+            'Restore Previous State'
+        );
+
+        await this.updateProgressAsync(90);
+
+        await this.updateProgressAsync(95);
 
         await this.updateProgressAsync(100);
 
@@ -1085,7 +1168,7 @@ implements OnInit
     ):
         Promise<void>
     {
-        await this.delayAsync(1500);
+        await this.delayAsync(200);
 
         this.progressDialog.update
         (
@@ -1394,71 +1477,91 @@ implements OnInit
         }
 
         //=======================================================
-        // Prepare
+        // Confirm
         //=======================================================
 
-        await this.prepareSynchronizationAsync();
+        this.confirmDialog.open
+        (
+            'Synchronize Module',
 
-        //=======================================================
-        // Synchronize
-        //=======================================================
+            'This will synchronize the selected module. Do you want to continue?',
 
-        this.moduleSynchronizationService
+            async () =>
+            {
+                //===================================================
+                // Prepare
+                //===================================================
 
-            .synchronize
-            (
-                this.synchronization.id
-            )
+                await this.prepareSynchronizationAsync();
 
-            .subscribe
-            ({
-                next:() =>
-                {
-                    //===================================================
-                    // Close Progress
-                    //===================================================
+                //===================================================
+                // Synchronize
+                //===================================================
 
-                    this.progressDialog.close();
+                this.moduleSynchronizationService
 
-                    //===================================================
-                    // Refresh Synchronization
-                    //===================================================
-
-                    this.loadSynchronization();
-
-                    //===================================================
-                    // Reset State
-                    //===================================================
-
-                    this.hasChanges =
-                        false;
-
-                    //===================================================
-                    // Success
-                    //===================================================
-
-                    this.toast.success
+                    .synchronize
                     (
-                        'Synchronization',
+                        this.synchronization.id
+                    )
 
-                        'Module synchronized successfully.'
-                    );
-                },
+                    .subscribe
+                    ({
+                        next: () =>
+                        {
+                            //===================================================
+                            // Close Progress
+                            //===================================================
 
-                error:(error) =>
-                {
-                    //===================================================
-                    // Error
-                    //===================================================
+                            this.progressDialog.close();
 
-                    this.onSaveFailed
-                    (
-                        error,
+                            //===================================================
+                            // Reset State
+                            //===================================================
 
-                        'Module synchronization failed.'
-                    );
-                }
-            });
+                            this.hasChanges =
+                                false;
+
+                            //===================================================
+                            // Success
+                            //===================================================
+
+                            this.toast.success
+                            (
+                                'Synchronization',
+
+                                'Module synchronized successfully.'
+                            );
+
+                            //===================================================
+                            // Return To List
+                            //===================================================
+
+                            this.onBackToList();
+                        },
+
+                        error: (error) =>
+                        {
+                            //===================================================
+                            // Error
+                            //===================================================
+
+                            this.onSaveFailed
+                            (
+                                error,
+
+                                'Module synchronization failed.'
+                            );
+                        }
+                    });
+            },
+
+            'Synchronize',
+
+            'Cancel',
+
+            'primary'
+        );
     }
     
     //===========================================================
@@ -1469,7 +1572,7 @@ implements OnInit
         void
     {
         //=======================================================
-        // Validate
+        // Validate Synchronization
         //=======================================================
 
         if
@@ -1480,57 +1583,203 @@ implements OnInit
             return;
         }
 
+
         //=======================================================
-        // Confirm
+        // Determine Synchronization Type
         //=======================================================
 
-        this.confirmDialog.open
-        (
-            'Rollback Synchronization',
+        const synchronizationType =
+            this.selectedTab === 'backend'
+                ? 'Backend'
+                : 'Frontend';
 
-            'This will rollback the synchronized module. Do you want to continue?',
 
-            () =>
+        //=======================================================
+        // Check Menu Synchronization
+        //=======================================================
+
+        this.menuSynchronizationService
+
+            .getAll(
+                synchronizationType
+            )
+
+            .subscribe(
             {
-                this.moduleSynchronizationService
+                next:(menus) =>
+                {
+                    //===================================================
+                    // Find Synchronized Menus Under This Module
+                    //===================================================
 
-                    .rollback
+                    const synchronizedMenus =
+                        menus.filter(
+                            menu =>
+                                menu.moduleId ===
+                                    this.synchronization.moduleId
+
+                                &&
+
+                                menu.status
+                                    ?.toLowerCase() ===
+                                    'synchronized'
+                        );
+
+
+                    //===================================================
+                    // Rollback Blocked
+                    //===================================================
+
+                    if
                     (
-                        this.synchronization.id
+                        synchronizedMenus.length > 0
                     )
+                    {
+                        const menuNames =
+                            synchronizedMenus
+                                .map(
+                                    menu =>
+                                        menu.menuName
+                                )
+                                .filter(
+                                    name =>
+                                        !!name
+                                );
 
-                    .subscribe
-                    ({
-                        next:() =>
+
+                        const menuList =
+                            menuNames.length > 0
+                                ? menuNames.join(', ')
+                                : 'one or more menus';
+
+
+                        this.toast.warning
+                        (
+                            'Rollback Not Allowed',
+
+                            `This module cannot be rolled back because the following menu synchronization is still synchronized: ${menuList}. Roll back the menu synchronization first.`
+                        );
+
+                        return;
+                    }
+
+
+                    //===================================================
+                    // Confirm Rollback
+                    //===================================================
+
+                    this.confirmDialog.open
+                    (
+                        'Rollback Synchronization',
+
+                        'This will rollback the synchronized module. Do you want to continue?',
+
+                        async () =>
                         {
-                            this.loadSynchronization();
+                            //===========================================
+                            // Prepare Rollback
+                            //===========================================
 
-                            this.toast.success
-                            (
-                                'Rollback',
+                            await this.prepareRollbackAsync();
 
-                                'Module synchronization rolled back successfully.'
-                            );
+
+                            //===========================================
+                            // Rollback
+                            //===========================================
+
+                            this.moduleSynchronizationService
+
+                                .rollback
+                                (
+                                    this.synchronization.id
+                                )
+
+                                .subscribe
+                                ({
+                                    next: () =>
+                                    {
+                                        //===================================
+                                        // Close Progress
+                                        //===================================
+
+                                        this.progressDialog.close();
+
+
+                                        //===================================
+                                        // Reset State
+                                        //===================================
+
+                                        this.hasChanges =
+                                            false;
+
+
+                                        //===================================
+                                        // Success
+                                        //===================================
+
+                                        this.toast.success
+                                        (
+                                            'Rollback',
+
+                                            'Module synchronization rolled back successfully.'
+                                        );
+
+
+                                        //===================================
+                                        // Return To List
+                                        //===================================
+
+                                        this.onBackToList();
+                                    },
+
+
+                                    error: (error) =>
+                                    {
+                                        //===================================
+                                        // Error
+                                        //===================================
+
+                                        this.onSaveFailed
+                                        (
+                                            error,
+
+                                            'Module rollback failed.'
+                                        );
+                                    }
+                                });
                         },
 
-                        error:(error) =>
-                        {
-                            this.onSaveFailed
-                            (
-                                error,
+                        'Rollback',
 
-                                'Module rollback failed.'
-                            );
-                        }
-                    });
-            },
+                        'Cancel',
 
-            'Rollback',
+                        'danger'
+                    );
+                },
 
-            'Cancel',
 
-            'danger'
-        );
+                error:(error) =>
+                {
+                    //===================================================
+                    // Menu Check Failed
+                    //===================================================
+
+                    console.error
+                    (
+                        'Menu Synchronization Check Failed',
+
+                        error
+                    );
+
+
+                    this.toast.error
+                    (
+                        'Rollback',
+
+                        'Unable to verify menu synchronization status. Module rollback was not started.'
+                    );
+                }
+            });
     }
 
     //===========================================================
@@ -1560,22 +1809,55 @@ implements OnInit
     onClear():
         void
     {
-        this.resetSynchronization();
+        this.clearForm();
     }
 
     //===========================================================
-    // Reset Synchronization
+    // Clear Form
     //===========================================================
 
-    private resetSynchronization():
+    private clearForm():
         void
     {
-        if (this.isEditMode)
-        {
-            this.loadSynchronization();
+        //=======================================================
+        // Mode
+        //=======================================================
 
-            return;
-        }
+        this.mode =
+            'add';
+
+        this.synchronizationId =
+            0;
+
+        //=======================================================
+        // Clear Navigation
+        //=======================================================
+
+        this.synchronization.moduleId =
+            0;
+
+        this.synchronization.moduleCode =
+            '';
+
+        this.synchronization.moduleName =
+            '';
+
+        //=======================================================
+        // Reset Workspace
+        //=======================================================
+
+        this.frontendEditingSection =
+            'none';
+
+        this.backendEditingSection =
+            'none';
+
+        this.hasChanges =
+            false;
+
+        //=======================================================
+        // Load Defaults
+        //=======================================================
 
         this.loadDefaults();
     }
@@ -1702,6 +1984,75 @@ implements OnInit
         boolean
     {
         return this.mode === 'sync';
+    }
+
+    //===========================================================
+    // Reset Workspace
+    //===========================================================
+
+    onResetWorkspace():
+        void
+    {
+        this.resetWorkspace();
+    }
+
+    //===========================================================
+    // Reset Workspace
+    //===========================================================
+
+    private resetWorkspace():
+        void
+    {
+        const moduleId =
+            this.synchronization.moduleId;
+
+        const moduleCode =
+            this.synchronization.moduleCode;
+
+        const moduleName =
+            this.synchronization.moduleName;
+
+        this.moduleSynchronizationService
+
+            .getDefaults
+            (
+                this.selectedTab === 'backend'
+
+                    ? 'Backend'
+
+                    : 'Frontend'
+            )
+
+            .subscribe(
+            {
+                next:
+                    (
+                        defaults
+                    ) =>
+                    {
+                        this.setSynchronization
+                        ({
+                            ...defaults,
+
+                            moduleId,
+
+                            moduleCode,
+
+                            moduleName
+                        });
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.toast.error
+                        (
+                            'Error',
+
+                            'Failed to reset workspace.'
+                        );
+                    }
+            });
     }
 
 }

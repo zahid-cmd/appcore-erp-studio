@@ -59,7 +59,7 @@
     </app-page-header>
 
     <!-- =====================================================
-         PAGE TOOLBAR
+        PAGE TOOLBAR
     ====================================================== -->
 
     <app-page-toolbar>
@@ -75,6 +75,29 @@
             (selectedTabChange)="onSelectedTabChange($event)">
 
         </app-control-tabs>
+
+
+        <!-- =================================================
+            Status Filter
+        ================================================== -->
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="Select Status"
+
+            [items]="statuses"
+
+            labelField="text"
+
+            valueField="value"
+
+            [(value)]="selectedStatus"
+
+            (valueChange)="onStatusChange($event)">
+
+        </app-search-dropdown>
 
     </app-page-toolbar>
 

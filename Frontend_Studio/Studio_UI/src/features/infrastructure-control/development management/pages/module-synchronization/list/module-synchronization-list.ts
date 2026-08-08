@@ -58,6 +58,12 @@ from '../../../../../../shared/components/utilities/search-box/search-box';
 
 import
 {
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+import
+{
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
@@ -140,6 +146,8 @@ from '../../../model/module-synchronization.model';
 
         SearchBoxComponent,
 
+        SearchDropdownComponent,
+
         CommandCenterComponent,
 
         PageCanvasComponent,
@@ -190,6 +198,7 @@ implements OnInit
     private readonly route =
         inject(ActivatedRoute);
 
+
     //===========================================================
     // Page Tabs
     //===========================================================
@@ -212,6 +221,49 @@ implements OnInit
     selectedTab =
         'frontend';
 
+
+    //===========================================================
+    // Status Dropdown
+    //===========================================================
+
+    statuses:
+    {
+        text:string;
+
+        value:string;
+    }[] =
+    [
+        {
+            text:'All Status',
+
+            value:''
+        },
+
+        {
+            text:'Pending',
+
+            value:'Pending'
+        },
+
+        {
+            text:'Synchronized',
+
+            value:'Synchronized'
+        },
+
+        {
+            text:'Failed',
+
+            value:'Failed'
+        }
+    ];
+
+
+    selectedStatus:
+        string =
+        '';
+
+
     //===========================================================
     // Data Source
     //===========================================================
@@ -224,6 +276,7 @@ implements OnInit
 
     pagedSynchronizations: ModuleSynchronization[] =
     [];
+
 
     //===========================================================
     // Search & Loading
@@ -238,6 +291,7 @@ implements OnInit
     loadFailed =
         false;
 
+
     //===========================================================
     // Pagination
     //===========================================================
@@ -247,6 +301,7 @@ implements OnInit
 
     pageSize =
         10;
+
 
     //===========================================================
     // History Drawer
@@ -260,6 +315,7 @@ implements OnInit
 
     historyItems:any[] =
     [];
+
 
     //===========================================================
     // Page Canvas Configuration
@@ -288,6 +344,7 @@ implements OnInit
         footerHeight:56
     };
 
+
     //===========================================================
     // Table Columns
     //===========================================================
@@ -296,63 +353,91 @@ implements OnInit
     [
         {
             header:'#',
+
             field:'serial',
+
             type:'serial',
+
             width:'60px',
+
             align:'center'
         },
 
         {
             header:'Module',
+
             field:'moduleName',
+
             align:'left'
         },
 
         {
             header:'Created',
+
             field:'createdDate',
+
             width:'250px',
+
             align:'center'
         },
 
         {
             header:'Last Sync',
+
             field:'lastSynchronizedDate',
+
             width:'250px',
+
             align:'center'
         },
 
         {
             header:'Result',
+
             field:'lastSynchronizationResult',
+
             width:'450px',
+
             align:'center'
         },
 
         {
             header:'Operation',
+
             field:'operation',
+
             type:'operation',
+
             width:'110px',
+
             align:'center'
         },
 
         {
             header:'Status',
+
             field:'status',
+
             type:'status',
+
             width:'120px',
+
             align:'center'
         },
 
         {
             header:'Actions',
+
             field:'actions',
+
             type:'actions',
+
             width:'180px',
+
             align:'center'
         }
     ];
+
 
     //===========================================================
     // Component Initialization
@@ -379,12 +464,22 @@ implements OnInit
         }
 
         console.log('================================');
-        console.log('Selected Tab:', this.selectedTab);
-        console.log('Current URL:', url);
+
+        console.log(
+            'Selected Tab:',
+            this.selectedTab
+        );
+
+        console.log(
+            'Current URL:',
+            url
+        );
+
         console.log('================================');
 
         this.loadModuleSynchronizations();
     }
+
 
     //===========================================================
     // Selected Tab Changed
@@ -399,7 +494,19 @@ implements OnInit
         this.selectedTab =
             tabId;
 
-        if (tabId === 'backend')
+
+        //=======================================================
+        // Reset Status Filter
+        //=======================================================
+
+        this.selectedStatus =
+            '';
+
+
+        if
+        (
+            tabId === 'backend'
+        )
         {
             this.router.navigate(
             [
@@ -413,6 +520,7 @@ implements OnInit
             return;
         }
 
+
         this.router.navigate(
         [
             '/infrastructure-control/development-management/module-synchronization/frontend'
@@ -422,6 +530,29 @@ implements OnInit
             this.loadModuleSynchronizations();
         });
     }
+
+
+    //===========================================================
+    // Status Changed
+    //===========================================================
+
+    onStatusChange
+    (
+        status:string
+    ):
+        void
+    {
+        this.selectedStatus =
+            status;
+
+
+        this.currentPage =
+            1;
+
+
+        this.applyFilters();
+    }
+
 
     //===========================================================
     // Load Module Synchronization Data
@@ -449,29 +580,33 @@ implements OnInit
                 next:(response) =>
                 {
                     console.log('================================');
-                    console.log('Synchronization Type:', synchronizationType);
-                    console.log('Module Synchronization Response');
-                    console.log(response);
-                    console.log('Total Records:', response.length);
+
+                    console.log(
+                        'Synchronization Type:',
+                        synchronizationType
+                    );
+
+                    console.log(
+                        'Module Synchronization Response',
+                        response
+                    );
+
+                    console.log(
+                        'Total Records:',
+                        response.length
+                    );
+
                     console.log('================================');
+
 
                     this.synchronizations =
                     [
                         ...response
                     ];
 
-                    this.filteredSynchronizations =
-                    [
-                        ...response
-                    ].sort(
-                        (a,b)=>
-                            a.moduleName.localeCompare(b.moduleName)
-                    );
 
-                    this.currentPage =
-                        1;
+                    this.applyFilters();
 
-                    this.updatePagination();
 
                     this.loading =
                         false;
@@ -482,29 +617,145 @@ implements OnInit
                     this.cdr.detectChanges();
                 },
 
-                error:(error)=>
+
+                error:(error) =>
                 {
                     console.error(error);
 
-                    this.synchronizations = [];
+                    this.synchronizations =
+                    [];
 
-                    this.filteredSynchronizations = [];
+                    this.filteredSynchronizations =
+                    [];
 
-                    this.pagedSynchronizations = [];
+                    this.pagedSynchronizations =
+                    [];
 
-                    this.loading = false;
+                    this.loading =
+                        false;
 
-                    this.loadFailed = true;
+                    this.loadFailed =
+                        true;
 
                     this.toast.error(
                         'Load Failed',
-                    'Unable to load module synchronization.'
-                );
 
-                this.cdr.detectChanges();
-            }
-        });
-}
+                        'Unable to load module synchronization.'
+                    );
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Apply Filters
+    //===========================================================
+
+    private applyFilters():
+        void
+    {
+        const keyword =
+            this.searchText
+                .trim()
+                .toLowerCase();
+
+
+        const status =
+            this.selectedStatus
+                .trim()
+                .toLowerCase();
+
+
+        //=======================================================
+        // Filter
+        //=======================================================
+
+        this.filteredSynchronizations =
+            this.synchronizations.filter(
+                item =>
+                {
+                    //===================================================
+                    // Status Filter
+                    //===================================================
+
+                    const itemStatus =
+                        item.status
+                            ?.trim()
+                            .toLowerCase()
+                        ??
+                        '';
+
+
+                    if
+                    (
+                        status
+                        &&
+                        itemStatus !== status
+                    )
+                    {
+                        return false;
+                    }
+
+
+                    //===================================================
+                    // Search Filter
+                    //===================================================
+
+                    if
+                    (
+                        !keyword
+                    )
+                    {
+                        return true;
+                    }
+
+
+                    return (
+
+                        item.moduleCode
+                            ?.toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        item.moduleName
+                            ?.toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        item.remarks
+                            ?.toLowerCase()
+                            .includes(keyword)
+                    );
+                }
+            );
+
+
+        //=======================================================
+        // Sort
+        //=======================================================
+
+        this.filteredSynchronizations.sort(
+            (a,b) =>
+                a.moduleName.localeCompare(
+                    b.moduleName
+                )
+        );
+
+
+        //=======================================================
+        // Pagination
+        //=======================================================
+
+        this.currentPage =
+            1;
+
+        this.updatePagination();
+    }
+
 
     //===========================================================
     // Search Module Synchronization
@@ -519,51 +770,9 @@ implements OnInit
         this.searchText =
             value;
 
-        const keyword =
-            value
-                .trim()
-                .toLowerCase();
-
-        if (!keyword)
-        {
-            this.filteredSynchronizations =
-            [
-                ...this.synchronizations
-            ];
-        }
-        else
-        {
-            this.filteredSynchronizations =
-                this.synchronizations.filter(x =>
-
-                    x.moduleCode
-                        .toLowerCase()
-                        .includes(keyword)
-
-                    ||
-
-                    x.moduleName
-                        .toLowerCase()
-                        .includes(keyword)
-
-                    ||
-
-                    x.remarks
-                        ?.toLowerCase()
-                        .includes(keyword)
-                );
-        }
-
-        this.filteredSynchronizations.sort(
-            (a, b) =>
-                a.moduleName.localeCompare(b.moduleName)
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.applyFilters();
     }
+
 
     //===========================================================
     // Sort Module Synchronization
@@ -574,6 +783,7 @@ implements OnInit
         event:
         {
             field:string;
+
             direction:'asc' | 'desc';
         }
     ):
@@ -584,8 +794,9 @@ implements OnInit
             ...this.filteredSynchronizations
         ];
 
+
         this.filteredSynchronizations.sort(
-            (a:any, b:any) =>
+            (a:any,b:any) =>
             {
                 const valueA =
                     a[event.field];
@@ -593,24 +804,40 @@ implements OnInit
                 const valueB =
                     b[event.field];
 
-                if (valueA == null && valueB == null)
+
+                if
+                (
+                    valueA == null
+                    &&
+                    valueB == null
+                )
                 {
                     return 0;
                 }
 
-                if (valueA == null)
+
+                if
+                (
+                    valueA == null
+                )
                 {
                     return -1;
                 }
 
-                if (valueB == null)
+
+                if
+                (
+                    valueB == null
+                )
                 {
                     return 1;
                 }
 
+
                 if
                 (
-                    typeof valueA === 'string' &&
+                    typeof valueA === 'string'
+                    &&
                     typeof valueB === 'string'
                 )
                 {
@@ -619,28 +846,40 @@ implements OnInit
                         : valueB.localeCompare(valueA);
                 }
 
-                if (valueA < valueB)
+
+                if
+                (
+                    valueA < valueB
+                )
                 {
                     return event.direction === 'asc'
                         ? -1
                         : 1;
                 }
 
-                if (valueA > valueB)
+
+                if
+                (
+                    valueA > valueB
+                )
                 {
                     return event.direction === 'asc'
                         ? 1
                         : -1;
                 }
 
+
                 return 0;
-            });
+            }
+        );
+
 
         this.currentPage =
             1;
 
         this.updatePagination();
     }
+
 
     //===========================================================
     // Refresh Module Synchronization
@@ -652,16 +891,22 @@ implements OnInit
         this.searchText =
             '';
 
+        this.selectedStatus =
+            '';
+
         this.currentPage =
             1;
+
 
         this.filteredSynchronizations =
         [
             ...this.synchronizations
         ];
 
+
         this.loadModuleSynchronizations();
     }
+
 
     //===========================================================
     // Update Pagination
@@ -671,18 +916,23 @@ implements OnInit
         void
     {
         const start =
-            (this.currentPage - 1)
+            (
+                this.currentPage - 1
+            )
             *
             this.pageSize;
+
 
         this.pagedSynchronizations =
         [
             ...this.filteredSynchronizations.slice(
                 start,
+
                 start + this.pageSize
             )
         ];
     }
+
 
     //===========================================================
     // Page Change
@@ -699,6 +949,7 @@ implements OnInit
 
         this.updatePagination();
     }
+
 
     //===========================================================
     // Page Size Change
@@ -719,6 +970,7 @@ implements OnInit
         this.updatePagination();
     }
 
+
     //===========================================================
     // Add Module Synchronization
     //===========================================================
@@ -737,13 +989,14 @@ implements OnInit
         ]);
     }
 
+
     //===========================================================
     // View Module Synchronization
     //===========================================================
 
     view
     (
-        item: ModuleSynchronization
+        item:ModuleSynchronization
     ):
         void
     {
@@ -755,13 +1008,19 @@ implements OnInit
         this.router.navigate(
         [
             '/infrastructure-control',
+
             'development-management',
+
             'module-synchronization',
+
             prefix,
+
             'view',
+
             item.id
         ]);
     }
+
 
     //===========================================================
     // Edit Module Synchronization
@@ -769,7 +1028,7 @@ implements OnInit
 
     edit
     (
-        item: ModuleSynchronization
+        item:ModuleSynchronization
     ):
         void
     {
@@ -781,13 +1040,19 @@ implements OnInit
         this.router.navigate(
         [
             '/infrastructure-control',
+
             'development-management',
+
             'module-synchronization',
+
             prefix,
+
             'edit',
+
             item.id
         ]);
     }
+
 
     //===========================================================
     // Synchronize Module
@@ -795,7 +1060,7 @@ implements OnInit
 
     synchronize
     (
-        item: ModuleSynchronization
+        item:ModuleSynchronization
     ):
         void
     {
@@ -807,10 +1072,15 @@ implements OnInit
         this.router.navigate(
         [
             '/infrastructure-control',
+
             'development-management',
+
             'module-synchronization',
+
             prefix,
+
             'synchronize',
+
             item.id
         ]);
     }
@@ -822,12 +1092,36 @@ implements OnInit
 
     delete
     (
-        item: ModuleSynchronization
+        item:ModuleSynchronization
     ):
         void
     {
-        this.confirmDialog.open(
+        //=======================================================
+        // Prevent Deleting Synchronized Module
+        //=======================================================
 
+        if
+        (
+            item.status?.toLowerCase() === 'synchronized'
+        )
+        {
+            this.toast.warning
+            (
+                'Delete Not Allowed',
+
+                'This module is synchronized. Roll back the synchronization before deleting the module.'
+            );
+
+            return;
+        }
+
+
+        //=======================================================
+        // Confirm Delete
+        //=======================================================
+
+        this.confirmDialog.open
+        (
             'Delete Module Synchronization',
 
             `Are you sure you want to delete "${item.moduleName}" ?`,
@@ -835,13 +1129,17 @@ implements OnInit
             () =>
             {
                 this.moduleSynchronizationService
-                    .delete(item.id)
+
+                    .delete(
+                        item.id
+                    )
+
                     .subscribe(
                     {
                         next:() =>
                         {
-                            this.toast.success(
-
+                            this.toast.success
+                            (
                                 'Delete Successful',
 
                                 `${item.moduleName} deleted successfully.`
@@ -850,12 +1148,15 @@ implements OnInit
                             this.loadModuleSynchronizations();
                         },
 
+
                         error:(error) =>
                         {
-                            console.error(error);
+                            console.error(
+                                error
+                            );
 
-                            this.toast.error(
-
+                            this.toast.error
+                            (
                                 'Delete Failed',
 
                                 'Failed to delete module synchronization.'
@@ -865,6 +1166,7 @@ implements OnInit
             }
         );
     }
+
 
     //===========================================================
     // Restore
@@ -891,6 +1193,7 @@ implements OnInit
             'primary'
         );
     }
+
 
     //===========================================================
     // Restore Module Synchronization
@@ -924,6 +1227,7 @@ implements OnInit
                     this.loadModuleSynchronizations();
                 },
 
+
                 error:(error) =>
                 {
                     this.toast.error(
@@ -938,6 +1242,7 @@ implements OnInit
             });
     }
 
+
     //===========================================================
     // Open History Drawer
     //===========================================================
@@ -946,6 +1251,7 @@ implements OnInit
         void
     {
         this.moduleSynchronizationService
+
             .getHistory()
 
             .subscribe(
@@ -978,29 +1284,37 @@ implements OnInit
                             })
                         );
 
+
                     this.historyTitle =
                         'Module Synchronization History';
+
 
                     this.historyOpened =
                         true;
 
+
                     this.cdr.detectChanges();
                 },
+
 
                 error:(error:any) =>
                 {
                     console.error(
                         'History Load Failed',
+
                         error
                     );
 
+
                     this.toast.error(
                         'History',
+
                         'Failed to load module synchronization history.'
                     );
                 }
             });
     }
+
 
     //===========================================================
     // Close History Drawer

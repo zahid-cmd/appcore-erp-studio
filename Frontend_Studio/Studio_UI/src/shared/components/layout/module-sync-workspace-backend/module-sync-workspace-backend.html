@@ -1,0 +1,314 @@
+<div class="workspace-host">
+
+    <!-- =====================================================
+         BACKEND WORKSPACE
+    ====================================================== -->
+
+    <section class="workspace-card workspace-content">
+
+        <div class="workspace-card-header">
+
+            <div class="workspace-title">
+
+                <i class="fas fa-server"></i>
+
+                <span>
+
+                    Backend Synchronization Workspace
+
+                </span>
+
+            </div>
+
+            <div class="workspace-status">
+
+                Ready
+
+            </div>
+
+        </div>
+
+        <div class="workspace-card-body">
+
+            <!-- =========================================
+                TARGET LOCATION
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-location-dot"></i>
+
+                        <span>
+
+                            Target Location
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onTargetLocationEdit()">
+
+                        <i
+
+                            [class]="
+                                targetLocationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+                <app-textbox
+
+                    label="Backend Solution"
+
+                    [(value)]="backendSolution"
+
+                    (valueChange)="emitBackendSolution($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="API Project"
+
+                    [(value)]="backendApiProject"
+
+                    (valueChange)="emitBackendApiProject($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Application Project"
+
+                    [(value)]="backendApplicationProject"
+
+                    (valueChange)="emitBackendApplicationProject($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+
+
+                <app-textbox
+
+                    label="Domain Project"
+
+                    [(value)]="backendDomainProject"
+
+                    (valueChange)="emitBackendDomainProject($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+                <app-textbox
+
+                    label="Infrastructure Project"
+
+                    [(value)]="backendInfrastructureProject"
+
+                    (valueChange)="emitBackendInfrastructureProject($event)"
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+            </div>
+
+            <!-- =========================================
+                STANDARD MODULE STRUCTURE
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-folder-tree"></i>
+
+                        <span>
+
+                            Standard Module Structure
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onStandardStructureEdit()">
+
+                        <i
+
+                            [class]="
+                                standardStructureReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+                <app-textbox
+
+                    label="Controller Folder"
+
+                    [(value)]="backendControllerFolder"
+
+                    (valueChange)="emitBackendControllerFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Application Folder"
+
+                    [(value)]="backendApplicationFolder"
+
+                    (valueChange)="emitBackendApplicationFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Domain Folder"
+
+                    [(value)]="backendEntityFolder"
+
+                    (valueChange)="emitBackendDomainFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Configuration Folder"
+
+                    [(value)]="backendConfigurationFolder"
+
+                    (valueChange)="emitBackendConfigurationFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+                
+                <app-textbox
+
+                    label="Repository Folder"
+
+                    [(value)]="backendRepositoryFolder"
+
+                    (valueChange)="emitBackendRepositoryFolder($event)"
+
+                    [readonly]="standardStructureReadonly">
+
+                </app-textbox>
+
+            </div>
+
+            <!-- =========================================
+                APPLICATION REGISTRATION
+            ========================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-code-branch"></i>
+
+                        <span>
+
+                            Application Registration
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onApplicationRegistrationEdit()">
+
+                        <i
+
+                            [class]="
+                                applicationRegistrationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+                <app-textbox
+
+                    label="Dependency Injection File"
+
+                    [(value)]="dependencyInjectionFile"
+
+                    (valueChange)="emitDependencyInjectionFile($event)"
+
+                    [readonly]="applicationRegistrationReadonly">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="DbContext File"
+
+                    [(value)]="dbContextFile"
+
+                    (valueChange)="emitDbContextFile($event)"
+
+                    [readonly]="applicationRegistrationReadonly">
+
+                </app-textbox>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>

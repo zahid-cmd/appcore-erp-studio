@@ -120,7 +120,7 @@
 
                     [(value)]="submenu.name"
 
-                    (valueChange)="checkForChanges()"
+                    (valueChange)="onValueChange()"
 
                     [disabled]="isViewMode"
 
@@ -148,7 +148,7 @@
 
                     [(value)]="submenu.routeKey"
 
-                    (valueChange)="generateRoute(); checkForChanges()"
+                    (valueChange)="onRouteKeyChange()"
 
                     [disabled]="isViewMode"
 

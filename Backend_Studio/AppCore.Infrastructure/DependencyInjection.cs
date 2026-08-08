@@ -33,12 +33,13 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ProjectSynchronization.Interfaces;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.Interfaces;
+using AppCore.Application.InfrastructureControl.DevelopmentManagement.MenuSynchronization.Interfaces;
 
 using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
 using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
-
+using AppCore.Application.Platform.MenuFrontendSynchronizationEngine.Interfaces;
+using AppCore.Application.Platform.MenuBackendSynchronizationEngine.Interfaces;
 using AppCore.Infrastructure.Platform.Synchronization;
-
 
 //===============================================================
 // Platform Common
@@ -67,25 +68,20 @@ using AppCore.Application.SecurityPermission.RoleManagement.ActivityAssignment.I
 
 using AppCore.Infrastructure.Repositories.Common;
 
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Module;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Menu;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Submenu;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Activity;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.MasterActivity;
 
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
+
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.ProjectSynchronization;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.MenuSynchronization;
 
 using AppCore.Infrastructure.Repositories.HumanResource.HumanResourceSetup;
 using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
-
-
-//===============================================================
-// Namespace
-//===============================================================
-
-namespace AppCore.Infrastructure;
 
 
 //===============================================================
@@ -142,6 +138,8 @@ public static class DependencyInjection
 
         services.AddScoped<IModuleSynchronizationRepository, ModuleSynchronizationRepository>();
 
+        services.AddScoped<IMenuSynchronizationRepository, MenuSynchronizationRepository>();
+
         //=======================================================
         // Platform Common
         //=======================================================
@@ -152,15 +150,35 @@ public static class DependencyInjection
 
         services.AddScoped<IFileGenerator, FileGenerator>();
 
+        services.AddScoped<IFileUpdater, FileUpdater>();
+
+        services.AddScoped<IFileRemover, FileRemover>();
+
         //=======================================================
         // Development Management Engine
         //=======================================================
 
         services.AddScoped<IModuleSynchronizationEngine, ModuleSynchronizationEngine>();
 
-        services.AddScoped<IBackendSynchronizationEngine, BackendSynchronizationEngine>();
+        services.AddScoped<IMenuSynchronizationEngine, MenuSynchronizationEngine>();
 
-        services.AddScoped<IFrontendSynchronizationEngine, FrontendSynchronizationEngine>();
+
+        //=======================================================
+        // Module Synchronization Engine
+        //=======================================================
+
+        services.AddScoped<IBackendSynchronizationEngine, ModuleBackendSynchronizationEngine>();
+
+        services.AddScoped<IFrontendSynchronizationEngine, ModuleFrontendSynchronizationEngine>();
+
+
+        //=======================================================
+        // Menu Synchronization Engine
+        //=======================================================
+
+        services.AddScoped<IMenuBackendSynchronizationEngine, MenuBackendSynchronizationEngine>();
+
+        services.AddScoped<IMenuFrontendSynchronizationEngine, MenuFrontendSynchronizationEngine>();
 
         //=======================================================
         // AUTO REGISTER REPOSITORIES

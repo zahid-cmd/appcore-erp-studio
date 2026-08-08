@@ -44,23 +44,15 @@ public class CreateModuleSynchronizationDto
 
     public string FrontendModuleFolder { get; set; } = string.Empty;
 
-    public string FrontendModelFolder { get; set; } = string.Empty;
-
-    public string FrontendPagesFolder { get; set; } = string.Empty;
-
     public string FrontendRoutesFolder { get; set; } = string.Empty;
-
-    public string FrontendServicesFolder { get; set; } = string.Empty;
-
-    public string FrontendModuleRouteFile { get; set; } = string.Empty;
 
     //===========================================================
     // Frontend Application Registration
     //===========================================================
 
-    public string FrontendApplicationRouteFile { get; set; } = string.Empty;
+    public string FrontendModuleRouteFile { get; set; } = string.Empty;
 
-    public string FrontendRoutePath { get; set; } = string.Empty;
+    public string FrontendApplicationRouteFile { get; set; } = string.Empty;
 
     //===========================================================
     // Backend Target Location
@@ -111,6 +103,7 @@ public class CreateModuleSynchronizationDto
     //===========================================================
 
     public string? Remarks { get; set; }
+
     //===========================================================
     // Last Synchronization
     //===========================================================
@@ -120,7 +113,7 @@ public class CreateModuleSynchronizationDto
     public DateTime? LastSynchronizedDate { get; set; }
 
     public string LastSynchronizationResult { get; set; } = string.Empty;
-    
+
     //===========================================================
     // Status
     //===========================================================

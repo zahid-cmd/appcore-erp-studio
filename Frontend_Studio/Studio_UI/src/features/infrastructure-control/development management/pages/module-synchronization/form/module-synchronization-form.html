@@ -66,17 +66,83 @@
          PAGE TOOLBAR
     ====================================================== -->
 
-    <app-page-toolbar>
+    <app-page-toolbar
 
-        <app-control-tabs
+        leftFlex="0 0 auto"
 
+        rightFlex="1 1 auto">
+
+        <!-- LEFT -->
+
+        <div
             pageToolbarLeft
+            class="module-toolbar-left">
 
-            [tabs]="tabs"
+            <app-control-tabs
 
-            [selectedTab]="selectedTab">
+                [tabs]="tabs"
 
-        </app-control-tabs>
+                [selectedTab]="selectedTab">
+
+            </app-control-tabs>
+
+        </div>
+
+        <!-- RIGHT -->
+
+        <div
+            pageToolbarRight
+            class="module-toolbar-right">
+
+            <app-search-dropdown
+
+                placeholder="Select Module"
+
+                [items]="modules"
+
+                labelField="name"
+
+                valueField="id"
+
+                [readonly]="isNavigationReadonly"
+
+                [(value)]="synchronization.moduleId"
+
+                (valueChange)="onModuleChange($event)">
+
+            </app-search-dropdown>
+
+            <button
+
+                type="button"
+
+                class="module-analyze-button"
+
+                [disabled]="!canAnalyze"
+
+                (click)="analyze()">
+
+                <i class="fas fa-magnifying-glass"></i>
+
+                <span>Analyze</span>
+
+            </button>
+
+            <button
+
+                type="button"
+
+                class="module-reset-button"
+
+                (click)="onResetWorkspace()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>Reset</span>
+
+            </button>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -88,17 +154,7 @@
 
         @if (showFrontendWorkspace)
         {
-            <app-sync-workspace-frontend
-
-                [modules]="modules"
-
-                [(moduleId)]="synchronization.moduleId"
-
-                (moduleIdChange)="onModuleChange($event)"
-
-                [moduleReadonly]="isNavigationReadonly"
-
-                [analyzeDisabled]="!canAnalyze"
+            <app-module-sync-workspace-frontend
 
                 (targetLocationEditClick)="
                     toggleFrontendEditingSection('target')
@@ -112,62 +168,52 @@
                     toggleFrontendEditingSection('registration')
                 "
 
-                (analyzeClick)="analyze()"
+                [targetLocationReadonly]="
+                    isTargetLocationReadonly
+                "
 
-                [targetLocationReadonly]="isTargetLocationReadonly"
-
-                [frontendSolution]="synchronization.frontendSolution"
+                [frontendSolution]="
+                    synchronization.frontendSolution
+                "
 
                 (frontendSolutionChange)="
                     synchronization.frontendSolution = $event
                 "
 
-                [project]="synchronization.frontendProject"
+                [project]="
+                    synchronization.frontendProject
+                "
 
                 (projectChange)="
                     synchronization.frontendProject = $event
                 "
 
-                [sourceFolder]="synchronization.frontendSourceFolder"
+                [sourceFolder]="
+                    synchronization.frontendSourceFolder
+                "
 
                 (sourceFolderChange)="
                     synchronization.frontendSourceFolder = $event
                 "
 
-                [featureFolder]="synchronization.frontendFeatureFolder"
+                [featureFolder]="
+                    synchronization.frontendFeatureFolder
+                "
 
                 (featureFolderChange)="
                     synchronization.frontendFeatureFolder = $event
                 "
 
-                [standardStructureReadonly]="isStandardStructureReadonly"
+                [standardStructureReadonly]="
+                    isStandardStructureReadonly
+                "
 
-                [moduleFolder]="synchronization.frontendModuleFolder"
+                [moduleFolder]="
+                    synchronization.frontendModuleFolder
+                "
 
                 (moduleFolderChange)="
                     synchronization.frontendModuleFolder = $event
-                "
-
-                [modelFolder]="synchronization.frontendModelFolder"
-
-                (modelFolderChange)="
-                    synchronization.frontendModelFolder = $event
-                "
-
-                [pagesFolder]="synchronization.frontendPagesFolder"
-
-                (pagesFolderChange)="
-                    synchronization.frontendPagesFolder = $event
-                "
-
-                [servicesFolder]="synchronization.frontendServicesFolder"
-
-                (servicesFolderChange)="
-                    synchronization.frontendServicesFolder = $event
-                "
-
-                [applicationRegistrationReadonly]="
-                    isApplicationRegistrationReadonly
                 "
 
                 [routesFolder]="
@@ -176,6 +222,10 @@
 
                 (routesFolderChange)="
                     synchronization.frontendRoutesFolder = $event
+                "
+
+                [applicationRegistrationReadonly]="
+                    isApplicationRegistrationReadonly
                 "
 
                 [moduleRouteFile]="
@@ -191,32 +241,14 @@
                 "
 
                 (applicationRouteFileChange)="
-                    synchronization.frontendApplicationRouteFile = $event
-                "
+                    synchronization.frontendApplicationRouteFile = $event">
 
-                [routePath]="
-                    synchronization.frontendRoutePath
-                "
-
-                (routePathChange)="
-                    synchronization.frontendRoutePath = $event">
-
-            </app-sync-workspace-frontend>
+            </app-module-sync-workspace-frontend>
         }
 
         @if (showBackendWorkspace)
         {
-            <app-sync-workspace-backend
-
-                [modules]="modules"
-
-                [(moduleId)]="synchronization.moduleId"
-
-                (moduleIdChange)="onModuleChange($event)"
-
-                [moduleReadonly]="isNavigationReadonly"
-
-                [analyzeDisabled]="!canAnalyze"
+            <app-module-sync-workspace-backend
 
                 (targetLocationEditClick)="
                     toggleBackendEditingSection('target')
@@ -230,9 +262,9 @@
                     toggleBackendEditingSection('registration')
                 "
 
-                (analyzeClick)="analyze()"
-
-                [targetLocationReadonly]="isTargetLocationReadonly"
+                [targetLocationReadonly]="
+                    isTargetLocationReadonly
+                "
 
                 [backendSolution]="
                     synchronization.backendSolution
@@ -337,7 +369,7 @@
                 (dbContextFileChange)="
                     synchronization.dbContextFile = $event">
 
-            </app-sync-workspace-backend>
+            </app-module-sync-workspace-backend>
         }
 
     </div>

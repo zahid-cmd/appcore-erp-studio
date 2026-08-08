@@ -334,6 +334,37 @@ implements OnInit
     }
 
     //===========================================================
+    // Generate Route Key
+    //===========================================================
+
+    generateRouteKey():
+        void
+    {
+        this.module.routeKey =
+            this.module.name
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+
+        this.checkForChanges();
+    }
+
+    //===========================================================
+    // Module Name Changed
+    //===========================================================
+
+    onModuleNameChanged():
+        void
+    {
+        this.generateRouteKey();
+
+        this.checkForChanges();
+    }
+
+    //===========================================================
     // Initialize
     //===========================================================
 

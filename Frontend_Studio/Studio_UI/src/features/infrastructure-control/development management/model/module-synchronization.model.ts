@@ -44,23 +44,15 @@ export interface ModuleSynchronization
 
     frontendModuleFolder: string;
 
-    frontendModelFolder: string;
-
-    frontendPagesFolder: string;
-
     frontendRoutesFolder: string;
-
-    frontendServicesFolder: string;
-
-    frontendModuleRouteFile: string;
 
     //===========================================================
     // Frontend Application Registration
     //===========================================================
 
-    frontendApplicationRouteFile: string;
+    frontendModuleRouteFile: string;
 
-    frontendRoutePath: string;
+    frontendApplicationRouteFile: string;
 
     //===========================================================
     // Backend Target Location

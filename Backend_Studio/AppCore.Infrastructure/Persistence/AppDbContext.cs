@@ -56,12 +56,17 @@ public class AppDbContext : DbContext
 
     public DbSet<ModuleSynchronization> ModuleSynchronizations { get; set; } = null!;
 
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // ADD THIS
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    public DbSet<MenuSynchronization> MenuSynchronizations { get; set; } = null!;
+
     //===========================================================
     // AUTO REGISTER DBSETS
     //===========================================================
 
     // public DbSet<Settings> Settingss { get; set; } = null!;
-
 
     //===========================================================
     // Human Resource Setup

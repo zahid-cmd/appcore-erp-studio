@@ -426,6 +426,51 @@ implements OnInit
             this.originalSubmenu;
     }
 
+    //===========================================================
+    // Generate Route Key
+    //===========================================================
+
+    private generateRouteKey():
+        void
+    {
+        if
+        (
+            this.mode !== 'add'
+        )
+        {
+            return;
+        }
+
+        this.submenu.routeKey =
+            (this.submenu.name ?? '')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+        this.generateRoute();
+    }
+
+    //===========================================================
+    // Route Key Changed
+    //===========================================================
+
+    onRouteKeyChange():
+        void
+    {
+        this.submenu.routeKey =
+            (this.submenu.routeKey ?? '')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+        this.generateRoute();
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
 
     //===========================================================
     // Initialize
@@ -1255,13 +1300,17 @@ implements OnInit
 
 
     //===========================================================
-    // Code Changed
+    // Value Changed
     //===========================================================
 
     onValueChange():
         void
     {
+        this.generateRouteKey();
+
         this.checkForChanges();
+
+        this.cdr.detectChanges();
     }
 
 }

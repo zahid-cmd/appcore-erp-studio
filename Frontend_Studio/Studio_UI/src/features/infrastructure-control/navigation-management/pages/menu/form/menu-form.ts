@@ -367,6 +367,37 @@ implements OnInit
     }
 
     //===========================================================
+    // Generate Route Key
+    //===========================================================
+
+    generateRouteKey():
+        void
+    {
+        this.menu.routeKey =
+            this.menu.name
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+
+        this.generateRoute();
+
+        this.checkForChanges();
+    }
+
+    //===========================================================
+    // Menu Name Changed
+    //===========================================================
+
+    onMenuNameChanged():
+        void
+    {
+        this.generateRouteKey();
+    }
+    
+    //===========================================================
     // Initialize
     //===========================================================
 

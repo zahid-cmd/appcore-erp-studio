@@ -269,30 +269,18 @@ public class ModuleSynchronizationEngine
             FrontendModuleFolder =
                 entity.FrontendModuleFolder,
 
-            FrontendModelFolder =
-                entity.FrontendModelFolder,
-
-            FrontendPagesFolder =
-                entity.FrontendPagesFolder,
-
             FrontendRoutesFolder =
                 entity.FrontendRoutesFolder,
-
-            FrontendServicesFolder =
-                entity.FrontendServicesFolder,
-
-            FrontendModuleRouteFile =
-                entity.FrontendModuleRouteFile,
 
             //===================================================
             // Frontend Application Registration
             //===================================================
 
+            FrontendModuleRouteFile =
+                entity.FrontendModuleRouteFile,
+
             FrontendApplicationRouteFile =
                 entity.FrontendApplicationRouteFile,
-
-            FrontendRoutePath =
-                entity.FrontendRoutePath,
 
             //===================================================
             // Backend Target Location
@@ -385,10 +373,9 @@ public class ModuleSynchronizationEngine
 
             CreatedDate =
                 entity.CreatedDate
-
         };
     }
-
+    
     //===========================================================
     // Validate Synchronization
     //===========================================================

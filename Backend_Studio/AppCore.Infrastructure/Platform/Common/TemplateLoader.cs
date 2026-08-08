@@ -2,8 +2,8 @@
 // Namespaces
 //===============================================================
 
-using System.IO;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 using AppCore.Application.Platform.CommonInterfaces;
@@ -36,11 +36,37 @@ public class TemplateLoader
         // Validate
         //=======================================================
 
-        if (string.IsNullOrWhiteSpace(templatePath))
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                templatePath
+            )
+        )
         {
-            throw new FileNotFoundException(
-                "Template path is empty.");
+            throw new FileNotFoundException
+            (
+                "Template path is empty."
+            );
         }
+
+        //=======================================================
+        // Resolve Infrastructure Root
+        //=======================================================
+
+        var infrastructureRoot =
+            Path.GetFullPath
+            (
+                Path.Combine
+                (
+                    AppContext.BaseDirectory,
+                    "..",
+                    "..",
+                    "..",
+                    "..",
+                    "AppCore.Infrastructure"
+                )
+            );
 
         //=======================================================
         // Resolve Template Path
@@ -49,24 +75,28 @@ public class TemplateLoader
         var fullPath =
             Path.Combine
             (
-                AppContext.BaseDirectory,
-                "..",
-                "..",
-                "..",
-                "..",
-                "AppCore.Infrastructure",
+                infrastructureRoot,
                 "Platform",
                 templatePath
             );
 
         fullPath =
-            Path.GetFullPath(fullPath);
+            Path.GetFullPath
+            (
+                fullPath
+            );
 
         //=======================================================
         // File Exists
         //=======================================================
 
-        if (!File.Exists(fullPath))
+        if
+        (
+            !File.Exists
+            (
+                fullPath
+            )
+        )
         {
             throw new FileNotFoundException
             (
@@ -75,7 +105,7 @@ public class TemplateLoader
         }
 
         //=======================================================
-        // Load
+        // Load Template
         //=======================================================
 
         var template =
@@ -88,13 +118,23 @@ public class TemplateLoader
         // Validate Template
         //=======================================================
 
-        if (string.IsNullOrWhiteSpace(template))
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                template
+            )
+        )
         {
             throw new InvalidDataException
             (
                 $"Template is empty: {fullPath}"
             );
         }
+
+        //=======================================================
+        // Completed
+        //=======================================================
 
         return template;
     }
