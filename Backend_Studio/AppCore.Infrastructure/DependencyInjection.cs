@@ -8,11 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 using AppCore.Infrastructure.Persistence;
 
+
 //===============================================================
 // Activity History
 //===============================================================
 
 using AppCore.Application.Common.ActivityHistory.Interfaces;
+
 
 //===============================================================
 // Navigation Management
@@ -25,6 +27,7 @@ using AppCore.Application.InfrastructureControl.NavigationManagement.Activity.In
 using AppCore.Application.InfrastructureControl.NavigationManagement.MasterActivity.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.Sidebar.Interfaces;
 
+
 //===============================================================
 // Development Management
 //===============================================================
@@ -34,12 +37,19 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ProjectSynchronization.Interfaces;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.Interfaces;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.MenuSynchronization.Interfaces;
+using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.Interfaces;
 
 using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
 using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
+
 using AppCore.Application.Platform.MenuFrontendSynchronizationEngine.Interfaces;
 using AppCore.Application.Platform.MenuBackendSynchronizationEngine.Interfaces;
+
+using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
+using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interfaces;
+
 using AppCore.Infrastructure.Platform.Synchronization;
+
 
 //===============================================================
 // Platform Common
@@ -48,6 +58,7 @@ using AppCore.Infrastructure.Platform.Synchronization;
 using AppCore.Application.Platform.CommonInterfaces;
 using AppCore.Infrastructure.Platform.Common;
 
+
 //===============================================================
 // Human Resource Setup
 //===============================================================
@@ -55,12 +66,14 @@ using AppCore.Infrastructure.Platform.Common;
 using AppCore.Application.Contracts.Persistence.HumanResource.HumanResourceSetup;
 using AppCore.Application.HumanResource.HumanResourceSetup.Designation.Interfaces;
 
+
 //===============================================================
 // Security & Permission
 //===============================================================
 
 using AppCore.Application.SecurityPermission.RoleManagement.RoleProfiles.Interfaces;
 using AppCore.Application.SecurityPermission.RoleManagement.ActivityAssignment.Interfaces;
+
 
 //===============================================================
 // Repositories
@@ -79,6 +92,7 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManage
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.ProjectSynchronization;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.MenuSynchronization;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization;
 
 using AppCore.Infrastructure.Repositories.HumanResource.HumanResourceSetup;
 using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
@@ -90,6 +104,7 @@ using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
 
 public static class DependencyInjection
 {
+
     //===========================================================
     // Register Infrastructure Services
     //===========================================================
@@ -97,94 +112,224 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure
     (
         this IServiceCollection services,
+
         IConfiguration configuration
     )
     {
+
         //=======================================================
         // Database Context
         //=======================================================
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection")));
+        services.AddDbContext<AppDbContext>
+        (
+            options =>
+                options.UseNpgsql
+                (
+                    configuration.GetConnectionString
+                    (
+                        "DefaultConnection"
+                    )
+                )
+        );
+
 
         //=======================================================
         // Common Repository
         //=======================================================
 
-        services.AddScoped<IActivityHistoryRepository, ActivityHistoryRepository>();
+        services.AddScoped
+        <
+            IActivityHistoryRepository,
+            ActivityHistoryRepository
+        >();
+
 
         //=======================================================
         // Navigation Management Repository
         //=======================================================
 
-        services.AddScoped<INavigationModuleRepository, NavigationModuleRepository>();
+        services.AddScoped
+        <
+            INavigationModuleRepository,
+            NavigationModuleRepository
+        >();
 
-        services.AddScoped<INavigationMenuRepository, NavigationMenuRepository>();
+        services.AddScoped
+        <
+            INavigationMenuRepository,
+            NavigationMenuRepository
+        >();
 
-        services.AddScoped<INavigationSubmenuRepository, NavigationSubmenuRepository>();
+        services.AddScoped
+        <
+            INavigationSubmenuRepository,
+            NavigationSubmenuRepository
+        >();
 
-        services.AddScoped<INavigationActivityRepository, NavigationActivityRepository>();
+        services.AddScoped
+        <
+            INavigationActivityRepository,
+            NavigationActivityRepository
+        >();
 
-        services.AddScoped<IMasterActivityRepository, MasterActivityRepository>();
+        services.AddScoped
+        <
+            IMasterActivityRepository,
+            MasterActivityRepository
+        >();
 
-        services.AddScoped<ISidebarRepository, SidebarRepository>();
+        services.AddScoped
+        <
+            ISidebarRepository,
+            SidebarRepository
+        >();
+
 
         //=======================================================
         // Development Management Repository
         //=======================================================
 
-        services.AddScoped<IProjectSynchronizationRepository, ProjectSynchronizationRepository>();
+        services.AddScoped
+        <
+            IProjectSynchronizationRepository,
+            ProjectSynchronizationRepository
+        >();
 
-        services.AddScoped<IModuleSynchronizationRepository, ModuleSynchronizationRepository>();
+        services.AddScoped
+        <
+            IModuleSynchronizationRepository,
+            ModuleSynchronizationRepository
+        >();
 
-        services.AddScoped<IMenuSynchronizationRepository, MenuSynchronizationRepository>();
+        services.AddScoped
+        <
+            IMenuSynchronizationRepository,
+            MenuSynchronizationRepository
+        >();
+
+        services.AddScoped
+        <
+            ISubmenuSynchronizationRepository,
+            SubmenuSynchronizationRepository
+        >();
+
 
         //=======================================================
         // Platform Common
         //=======================================================
 
-        services.AddScoped<ITemplateLoader, TemplateLoader>();
+        services.AddScoped
+        <
+            ITemplateLoader,
+            TemplateLoader
+        >();
 
-        services.AddScoped<IPlaceholderEngine, PlaceholderEngine>();
+        services.AddScoped
+        <
+            IPlaceholderEngine,
+            PlaceholderEngine
+        >();
 
-        services.AddScoped<IFileGenerator, FileGenerator>();
+        services.AddScoped
+        <
+            IFileGenerator,
+            FileGenerator
+        >();
 
-        services.AddScoped<IFileUpdater, FileUpdater>();
+        services.AddScoped
+        <
+            IFileUpdater,
+            FileUpdater
+        >();
 
-        services.AddScoped<IFileRemover, FileRemover>();
+        services.AddScoped
+        <
+            IFileRemover,
+            FileRemover
+        >();
+
 
         //=======================================================
         // Development Management Engine
         //=======================================================
 
-        services.AddScoped<IModuleSynchronizationEngine, ModuleSynchronizationEngine>();
+        services.AddScoped
+        <
+            IModuleSynchronizationEngine,
+            ModuleSynchronizationEngine
+        >();
 
-        services.AddScoped<IMenuSynchronizationEngine, MenuSynchronizationEngine>();
+        services.AddScoped
+        <
+            IMenuSynchronizationEngine,
+            MenuSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            ISubmenuSynchronizationEngine,
+            SubmenuSynchronizationEngine
+        >();
 
 
         //=======================================================
         // Module Synchronization Engine
         //=======================================================
 
-        services.AddScoped<IBackendSynchronizationEngine, ModuleBackendSynchronizationEngine>();
+        services.AddScoped
+        <
+            IBackendSynchronizationEngine,
+            ModuleBackendSynchronizationEngine
+        >();
 
-        services.AddScoped<IFrontendSynchronizationEngine, ModuleFrontendSynchronizationEngine>();
+        services.AddScoped
+        <
+            IFrontendSynchronizationEngine,
+            ModuleFrontendSynchronizationEngine
+        >();
 
 
         //=======================================================
         // Menu Synchronization Engine
         //=======================================================
 
-        services.AddScoped<IMenuBackendSynchronizationEngine, MenuBackendSynchronizationEngine>();
+        services.AddScoped
+        <
+            IMenuBackendSynchronizationEngine,
+            MenuBackendSynchronizationEngine
+        >();
 
-        services.AddScoped<IMenuFrontendSynchronizationEngine, MenuFrontendSynchronizationEngine>();
+        services.AddScoped
+        <
+            IMenuFrontendSynchronizationEngine,
+            MenuFrontendSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Submenu Synchronization Engine
+        //=======================================================
+
+        services.AddScoped
+        <
+            ISubmenuBackendSynchronizationEngine,
+            SubmenuBackendSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            ISubmenuFrontendSynchronizationEngine,
+            SubmenuFrontendSynchronizationEngine
+        >();
+
 
         //=======================================================
         // AUTO REGISTER REPOSITORIES
         //=======================================================
+
         // services.AddScoped<ISettingsRepository, SettingsRepository>();
-  
+
 
         //=======================================================
         // AUTO REGISTER SERVICES
@@ -195,20 +340,47 @@ public static class DependencyInjection
         // Human Resource Setup Repository
         //=======================================================
 
-        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+        services.AddScoped
+        <
+            IDepartmentRepository,
+            DepartmentRepository
+        >();
 
-        services.AddScoped<IDesignationRepository, DesignationRepository>();
+        services.AddScoped
+        <
+            IDesignationRepository,
+            DesignationRepository
+        >();
+
 
         //=======================================================
         // Security & Permission Repository
         //=======================================================
 
-        services.AddScoped<IRoleProfileRepository, RoleProfileRepository>();
+        services.AddScoped
+        <
+            IRoleProfileRepository,
+            RoleProfileRepository
+        >();
 
-        services.AddScoped<IActivityAssignmentRepository, ActivityAssignmentRepository>();
+        services.AddScoped
+        <
+            IActivityAssignmentRepository,
+            ActivityAssignmentRepository
+        >();
 
-        services.AddScoped<IActivityAssignmentDetailRepository, ActivityAssignmentDetailRepository>();
+        services.AddScoped
+        <
+            IActivityAssignmentDetailRepository,
+            ActivityAssignmentDetailRepository
+        >();
+
+
+        //=======================================================
+        // Return Services
+        //=======================================================
 
         return services;
     }
+
 }

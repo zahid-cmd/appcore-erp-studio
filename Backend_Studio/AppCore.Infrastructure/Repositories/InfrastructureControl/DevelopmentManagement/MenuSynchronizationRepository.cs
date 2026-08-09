@@ -132,12 +132,6 @@ public class MenuSynchronizationRepository
                 FrontendPagesFolder =
                     string.Empty,
 
-                FrontendFormFolder =
-                    string.Empty,
-
-                FrontendListFolder =
-                    string.Empty,
-
                 FrontendRoutesFolder =
                     string.Empty,
 
@@ -359,12 +353,6 @@ public class MenuSynchronizationRepository
                     FrontendPagesFolder =
                         x.FrontendPagesFolder,
 
-                    FrontendFormFolder =
-                        x.FrontendFormFolder,
-
-                    FrontendListFolder =
-                        x.FrontendListFolder,
-
                     FrontendRoutesFolder =
                         x.FrontendRoutesFolder,
 
@@ -576,12 +564,6 @@ public class MenuSynchronizationRepository
 
                     FrontendPagesFolder =
                         x.FrontendPagesFolder,
-
-                    FrontendFormFolder =
-                        x.FrontendFormFolder,
-
-                    FrontendListFolder =
-                        x.FrontendListFolder,
 
                     FrontendRoutesFolder =
                         x.FrontendRoutesFolder,
@@ -1184,25 +1166,6 @@ public class MenuSynchronizationRepository
                 "pages"
             );
 
-
-        configuration.FrontendFormFolder =
-            Path.Combine
-            (
-                configuration.FrontendPagesFolder,
-
-                "form"
-            );
-
-
-        configuration.FrontendListFolder =
-            Path.Combine
-            (
-                configuration.FrontendPagesFolder,
-
-                "list"
-            );
-
-
         configuration.FrontendRoutesFolder =
             Path.Combine
             (
@@ -1224,8 +1187,6 @@ public class MenuSynchronizationRepository
 
                 $"{menuName}.routes.ts"
             );
-
-
 
         //=======================================================
         // Frontend Module Route File
@@ -1572,12 +1533,6 @@ public class MenuSynchronizationRepository
                 FrontendPagesFolder =
                     dto.FrontendPagesFolder,
 
-                FrontendFormFolder =
-                    dto.FrontendFormFolder,
-
-                FrontendListFolder =
-                    dto.FrontendListFolder,
-
                 FrontendRoutesFolder =
                     dto.FrontendRoutesFolder,
 
@@ -1837,12 +1792,6 @@ public class MenuSynchronizationRepository
 
         synchronization.FrontendPagesFolder =
             dto.FrontendPagesFolder;
-
-        synchronization.FrontendFormFolder =
-            dto.FrontendFormFolder;
-
-        synchronization.FrontendListFolder =
-            dto.FrontendListFolder;
 
         synchronization.FrontendRoutesFolder =
             dto.FrontendRoutesFolder;

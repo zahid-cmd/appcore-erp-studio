@@ -312,12 +312,6 @@ public class MenuSynchronizationEngine
             FrontendPagesFolder =
                 entity.FrontendPagesFolder,
 
-            FrontendFormFolder =
-                entity.FrontendFormFolder,
-
-            FrontendListFolder =
-                entity.FrontendListFolder,
-
             FrontendRoutesFolder =
                 entity.FrontendRoutesFolder,
 
@@ -779,9 +773,6 @@ public class MenuSynchronizationEngine
                 result.FailedOperations
         };
     }
-
-
-
 
     //===========================================================
     // Execute Rollback

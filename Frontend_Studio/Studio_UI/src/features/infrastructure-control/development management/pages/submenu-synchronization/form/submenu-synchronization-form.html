@@ -1,0 +1,605 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-arrows-rotate"
+
+        [title]="pageTitle"
+
+        subtitle="Manage submenu synchronization.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="
+                isSynchronizationMode
+                    ? (canSynchronize ? 'Sync' : 'Rollback')
+                    : saveButtonText
+            "
+
+            [command1Icon]="
+                isSynchronizationMode
+                    ? (
+                        canSynchronize
+                            ? 'fas fa-arrows-rotate'
+                            : 'fas fa-rotate-left'
+                    )
+                    : 'fas fa-floppy-disk'
+            "
+
+            (command1Click)="
+                isSynchronizationMode
+                    ? (
+                        canSynchronize
+                            ? onSynchronize()
+                            : onRollback()
+                    )
+                    : onSave()
+            "
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="
+                !isViewMode
+                &&
+                !isSynchronizationMode
+            "
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div
+
+            pageToolbarLeft
+
+            class="module-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [selectedTab]="selectedTab">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            class="module-toolbar-right">
+
+            <!-- MODULE -->
+
+            <app-search-dropdown
+
+                placeholder="Select Module"
+
+                [items]="modules"
+
+                labelField="name"
+
+                valueField="id"
+
+                [readonly]="isNavigationReadonly"
+
+                [(value)]="selectedModuleId"
+
+                (valueChange)="onModuleChange($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- MENU -->
+
+            <app-search-dropdown
+
+                placeholder="Select Menu"
+
+                [items]="menus"
+
+                labelField="name"
+
+                valueField="id"
+
+                [readonly]="
+                    isNavigationReadonly
+                    ||
+                    !selectedModuleId
+                "
+
+                [(value)]="selectedMenuId"
+
+                (valueChange)="onMenuChange($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- SUBMENU -->
+
+            <app-search-dropdown
+
+                placeholder="Select Submenu"
+
+                [items]="submenus"
+
+                labelField="name"
+
+                valueField="id"
+
+                [readonly]="
+                    isNavigationReadonly
+                    ||
+                    !selectedMenuId
+                "
+
+                [(value)]="selectedSubmenuId"
+
+                (valueChange)="onSubmenuChange($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- ANALYZE -->
+
+            <button
+
+                type="button"
+
+                class="module-analyze-button"
+
+                [disabled]="!canAnalyze"
+
+                (click)="analyze()">
+
+                <i class="fas fa-magnifying-glass"></i>
+
+                <span>Analyze</span>
+
+            </button>
+
+
+            <!-- RESET -->
+
+            <button
+
+                type="button"
+
+                class="module-reset-button"
+
+                (click)="onResetWorkspace()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>Reset</span>
+
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         SYNCHRONIZATION WORKSPACE
+    ====================================================== -->
+
+    <div class="synchronization-workspace">
+
+        @if (showFrontendWorkspace)
+        {
+            <app-submenu-sync-workspace-frontend
+
+                (targetLocationEditClick)="
+                    toggleFrontendEditingSection('target')
+                "
+
+                [targetLocationReadonly]="
+                    isTargetLocationReadonly
+                "
+
+                [frontendSolution]="
+                    synchronization.frontendSolution
+                "
+
+                (frontendSolutionChange)="
+                    synchronization.frontendSolution = $event
+                "
+
+                [project]="
+                    synchronization.frontendProject
+                "
+
+                (projectChange)="
+                    synchronization.frontendProject = $event
+                "
+
+                [sourceFolder]="
+                    synchronization.frontendSourceFolder
+                "
+
+                (sourceFolderChange)="
+                    synchronization.frontendSourceFolder = $event
+                "
+
+                [featureFolder]="
+                    synchronization.frontendFeatureFolder
+                "
+
+                (featureFolderChange)="
+                    synchronization.frontendFeatureFolder = $event
+                "
+
+                [menuFolder]="
+                    synchronization.frontendMenuFolder
+                "
+
+                (menuFolderChange)="
+                    synchronization.frontendMenuFolder = $event
+                "
+
+                (submenuLocationEditClick)="
+                    toggleFrontendEditingSection('structure')
+                "
+
+                [submenuLocationReadonly]="
+                    isStandardStructureReadonly
+                "
+
+                [submenuFolder]="
+                    synchronization.frontendSubmenuFolder
+                "
+
+                (submenuFolderChange)="
+                    synchronization.frontendSubmenuFolder = $event
+                "
+
+                [pagesFolder]="
+                    synchronization.frontendPagesFolder
+                "
+
+                (pagesFolderChange)="
+                    synchronization.frontendPagesFolder = $event
+                "
+
+                [formFolder]="
+                    synchronization.frontendFormFolder
+                "
+
+                (formFolderChange)="
+                    synchronization.frontendFormFolder = $event
+                "
+
+                [listFolder]="
+                    synchronization.frontendListFolder
+                "
+
+                (listFolderChange)="
+                    synchronization.frontendListFolder = $event
+                "
+
+                (coreFilesEditClick)="
+                    toggleFrontendEditingSection('core')
+                "
+
+                [coreFilesReadonly]="
+                    isCoreFilesReadonly
+                "
+
+                [submenuModelFile]="
+                    synchronization.frontendSubmenuModelFile
+                "
+
+                (submenuModelFileChange)="
+                    synchronization.frontendSubmenuModelFile = $event
+                "
+
+                [submenuServiceFile]="
+                    synchronization.frontendSubmenuServiceFile
+                "
+
+                (submenuServiceFileChange)="
+                    synchronization.frontendSubmenuServiceFile = $event
+                "
+
+                [submenuRouteFile]="
+                    synchronization.frontendSubmenuRouteFile
+                "
+
+                (submenuRouteFileChange)="
+                    synchronization.frontendSubmenuRouteFile = $event
+                "
+
+                (pageFilesEditClick)="
+                    toggleFrontendEditingSection('pages')
+                "
+
+                [pageFilesReadonly]="
+                    isPageFilesReadonly
+                "
+
+                [submenuFormTsFile]="
+                    synchronization.frontendSubmenuFormTsFile
+                "
+
+                (submenuFormTsFileChange)="
+                    synchronization.frontendSubmenuFormTsFile = $event
+                "
+
+                [submenuFormHtmlFile]="
+                    synchronization.frontendSubmenuFormHtmlFile
+                "
+
+                (submenuFormHtmlFileChange)="
+                    synchronization.frontendSubmenuFormHtmlFile = $event
+                "
+
+                [submenuFormCssFile]="
+                    synchronization.frontendSubmenuFormCssFile
+                "
+
+                (submenuFormCssFileChange)="
+                    synchronization.frontendSubmenuFormCssFile = $event
+                "
+
+                [submenuListTsFile]="
+                    synchronization.frontendSubmenuListTsFile
+                "
+
+                (submenuListTsFileChange)="
+                    synchronization.frontendSubmenuListTsFile = $event
+                "
+
+                [submenuListHtmlFile]="
+                    synchronization.frontendSubmenuListHtmlFile
+                "
+
+                (submenuListHtmlFileChange)="
+                    synchronization.frontendSubmenuListHtmlFile = $event
+                "
+
+                [submenuListCssFile]="
+                    synchronization.frontendSubmenuListCssFile
+                "
+
+                (submenuListCssFileChange)="
+                    synchronization.frontendSubmenuListCssFile = $event
+                ">
+
+            </app-submenu-sync-workspace-frontend>
+        }
+
+
+        @if (showBackendWorkspace)
+        {
+            <app-submenu-sync-workspace-backend
+
+                (targetLocationEditClick)="
+                    toggleBackendEditingSection('target')
+                "
+
+                [targetLocationReadonly]="
+                    isBackendTargetLocationReadonly
+                "
+
+                [backendSolution]="
+                    synchronization.backendSolution
+                "
+
+                (backendSolutionChange)="
+                    synchronization.backendSolution = $event
+                "
+
+                [backendApplicationProject]="
+                    synchronization.backendApplicationProject
+                "
+
+                (backendApplicationProjectChange)="
+                    synchronization.backendApplicationProject = $event
+                "
+
+                [backendDomainProject]="
+                    synchronization.backendDomainProject
+                "
+
+                (backendDomainProjectChange)="
+                    synchronization.backendDomainProject = $event
+                "
+
+                [backendInfrastructureProject]="
+                    synchronization.backendInfrastructureProject
+                "
+
+                (backendInfrastructureProjectChange)="
+                    synchronization.backendInfrastructureProject = $event
+                "
+
+                (backendApiEditClick)="
+                    toggleBackendEditingSection('api')
+                "
+
+                [backendApiReadonly]="
+                    isBackendApiReadonly
+                "
+
+                [backendControllerFile]="
+                    synchronization.backendControllerFile
+                "
+
+                (backendControllerFileChange)="
+                    synchronization.backendControllerFile = $event
+                "
+
+                (backendApplicationEditClick)="
+                    toggleBackendEditingSection('application')
+                "
+
+                [backendApplicationReadonly]="
+                    isBackendApplicationReadonly
+                "
+
+                [backendApplicationSubMenuFolder]="
+                    synchronization.backendApplicationSubMenuFolder
+                "
+
+                (backendApplicationSubMenuFolderChange)="
+                    synchronization.backendApplicationSubMenuFolder = $event
+                "
+
+                [backendApplicationDtosFolder]="
+                    synchronization.backendApplicationDtosFolder
+                "
+
+                (backendApplicationDtosFolderChange)="
+                    synchronization.backendApplicationDtosFolder = $event
+                "
+
+                [backendApplicationInterfacesFolder]="
+                    synchronization.backendApplicationInterfacesFolder
+                "
+
+                (backendApplicationInterfacesFolderChange)="
+                    synchronization.backendApplicationInterfacesFolder = $event
+                "
+
+                [backendSubMenuDtoFile]="
+                    synchronization.backendSubMenuDtoFile
+                "
+
+                (backendSubMenuDtoFileChange)="
+                    synchronization.backendSubMenuDtoFile = $event
+                "
+
+                [backendCreateSubMenuDtoFile]="
+                    synchronization.backendCreateSubMenuDtoFile
+                "
+
+                (backendCreateSubMenuDtoFileChange)="
+                    synchronization.backendCreateSubMenuDtoFile = $event
+                "
+
+                [backendUpdateSubMenuDtoFile]="
+                    synchronization.backendUpdateSubMenuDtoFile
+                "
+
+                (backendUpdateSubMenuDtoFileChange)="
+                    synchronization.backendUpdateSubMenuDtoFile = $event
+                "
+
+                [backendSubMenuDefaultsDtoFile]="
+                    synchronization.backendSubMenuDefaultsDtoFile
+                "
+
+                (backendSubMenuDefaultsDtoFileChange)="
+                    synchronization.backendSubMenuDefaultsDtoFile = $event
+                "
+
+                [backendSubMenuRepositoryInterfaceFile]="
+                    synchronization.backendSubMenuRepositoryInterfaceFile
+                "
+
+                (backendSubMenuRepositoryInterfaceFileChange)="
+                    synchronization.backendSubMenuRepositoryInterfaceFile = $event
+                "
+
+                (backendDomainInfrastructureEditClick)="
+                    toggleBackendEditingSection('domainInfrastructure')
+                "
+
+                [backendDomainInfrastructureReadonly]="
+                    isBackendDomainInfrastructureReadonly
+                "
+
+                [backendSubMenuEntityFile]="
+                    synchronization.backendSubMenuEntityFile
+                "
+
+                (backendSubMenuEntityFileChange)="
+                    synchronization.backendSubMenuEntityFile = $event
+                "
+
+                [backendSubMenuConfigurationFile]="
+                    synchronization.backendSubMenuConfigurationFile
+                "
+
+                (backendSubMenuConfigurationFileChange)="
+                    synchronization.backendSubMenuConfigurationFile = $event
+                "
+
+                [backendSubMenuRepositoryFile]="
+                    synchronization.backendSubMenuRepositoryFile
+                "
+
+                (backendSubMenuRepositoryFileChange)="
+                    synchronization.backendSubMenuRepositoryFile = $event
+                ">
+
+            </app-submenu-sync-workspace-backend>
+        }
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<app-toast>
+</app-toast>
+
+
+<!-- =========================================================
+     CONFIRM DIALOG
+========================================================= -->
+
+<app-confirm-dialog>
+</app-confirm-dialog>
+
+
+<!-- =========================================================
+     PROGRESS DIALOG
+========================================================= -->
+
+<app-progress-dialog>
+</app-progress-dialog>

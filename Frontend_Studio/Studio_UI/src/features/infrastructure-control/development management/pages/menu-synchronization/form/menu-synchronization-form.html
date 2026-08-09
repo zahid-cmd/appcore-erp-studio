@@ -206,9 +206,11 @@
                     toggleFrontendEditingSection('registration')
                 "
 
+
                 [targetLocationReadonly]="
                     isTargetLocationReadonly
                 "
+
 
                 [frontendSolution]="
                     synchronization.frontendSolution
@@ -218,6 +220,7 @@
                     synchronization.frontendSolution = $event
                 "
 
+
                 [project]="
                     synchronization.frontendProject
                 "
@@ -225,6 +228,7 @@
                 (projectChange)="
                     synchronization.frontendProject = $event
                 "
+
 
                 [sourceFolder]="
                     synchronization.frontendSourceFolder
@@ -234,6 +238,7 @@
                     synchronization.frontendSourceFolder = $event
                 "
 
+
                 [featureFolder]="
                     synchronization.frontendFeatureFolder
                 "
@@ -242,9 +247,11 @@
                     synchronization.frontendFeatureFolder = $event
                 "
 
+
                 [standardStructureReadonly]="
                     isStandardStructureReadonly
                 "
+
 
                 [menuFolder]="
                     synchronization.frontendMenuFolder
@@ -254,6 +261,7 @@
                     synchronization.frontendMenuFolder = $event
                 "
 
+
                 [modelsFolder]="
                     synchronization.frontendModelsFolder
                 "
@@ -261,6 +269,7 @@
                 (modelsFolderChange)="
                     synchronization.frontendModelsFolder = $event
                 "
+
 
                 [servicesFolder]="
                     synchronization.frontendServicesFolder
@@ -270,6 +279,7 @@
                     synchronization.frontendServicesFolder = $event
                 "
 
+
                 [pagesFolder]="
                     synchronization.frontendPagesFolder
                 "
@@ -278,21 +288,6 @@
                     synchronization.frontendPagesFolder = $event
                 "
 
-                [formFolder]="
-                    synchronization.frontendFormFolder
-                "
-
-                (formFolderChange)="
-                    synchronization.frontendFormFolder = $event
-                "
-
-                [listFolder]="
-                    synchronization.frontendListFolder
-                "
-
-                (listFolderChange)="
-                    synchronization.frontendListFolder = $event
-                "
 
                 [routesFolder]="
                     synchronization.frontendRoutesFolder
@@ -302,9 +297,11 @@
                     synchronization.frontendRoutesFolder = $event
                 "
 
+
                 [applicationRegistrationReadonly]="
                     isApplicationRegistrationReadonly
                 "
+
 
                 [menuRouteFile]="
                     synchronization.frontendMenuRouteFile
@@ -314,12 +311,14 @@
                     synchronization.frontendMenuRouteFile = $event
                 "
 
+
                 [moduleRouteFile]="
                     synchronization.frontendModuleRouteFile
                 "
 
                 (moduleRouteFileChange)="
-                    synchronization.frontendModuleRouteFile = $event">
+                    synchronization.frontendModuleRouteFile = $event
+                ">
 
             </app-menu-sync-workspace-frontend>
         }

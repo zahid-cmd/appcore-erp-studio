@@ -125,14 +125,6 @@ public class MenuSynchronizationConfiguration
             .HasMaxLength(300);
 
 
-        builder.Property(x => x.FrontendFormFolder)
-            .HasMaxLength(300);
-
-
-        builder.Property(x => x.FrontendListFolder)
-            .HasMaxLength(300);
-
-
         builder.Property(x => x.FrontendRoutesFolder)
             .HasMaxLength(300);
 

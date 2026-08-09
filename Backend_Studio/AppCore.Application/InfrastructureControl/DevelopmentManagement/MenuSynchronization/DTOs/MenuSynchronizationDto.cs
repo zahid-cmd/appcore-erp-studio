@@ -66,10 +66,6 @@ public class MenuSynchronizationDto
 
     public string FrontendPagesFolder { get; set; } = string.Empty;
 
-    public string FrontendFormFolder { get; set; } = string.Empty;
-
-    public string FrontendListFolder { get; set; } = string.Empty;
-
     public string FrontendRoutesFolder { get; set; } = string.Empty;
 
 

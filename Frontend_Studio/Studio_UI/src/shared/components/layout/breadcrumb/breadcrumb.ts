@@ -13,7 +13,6 @@ from '@angular/core';
 
 import
 {
-    ActivatedRoute,
     NavigationEnd,
     Router,
     RouterModule
@@ -34,6 +33,7 @@ import
 }
 from 'rxjs';
 
+
 //===============================================================
 // Breadcrumb Item
 //===============================================================
@@ -44,6 +44,7 @@ interface BreadcrumbItem
 
     url: string;
 }
+
 
 //===============================================================
 // Component
@@ -70,6 +71,7 @@ interface BreadcrumbItem
     ]
 })
 
+
 //===============================================================
 // Breadcrumb Component
 //===============================================================
@@ -77,6 +79,7 @@ interface BreadcrumbItem
 export class BreadcrumbComponent
 implements OnInit, OnDestroy
 {
+
     //===========================================================
     // Fields
     //===========================================================
@@ -84,22 +87,24 @@ implements OnInit, OnDestroy
     private readonly destroy$ =
         new Subject<void>();
 
+
     breadcrumbs: BreadcrumbItem[] =
-    [];
+        [];
+
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    constructor(
+    constructor
+    (
         private readonly router: Router,
-
-        private readonly activatedRoute: ActivatedRoute,
 
         private readonly cdr: ChangeDetectorRef
     )
     {
     }
+
 
     //===========================================================
     // Component Initialization
@@ -109,26 +114,41 @@ implements OnInit, OnDestroy
         void
     {
         this.router.events
-            .pipe(
-                filter(
+
+            .pipe
+            (
+                filter
+                (
                     event =>
                         event instanceof NavigationEnd
                 ),
-                takeUntil(
+
+                takeUntil
+                (
                     this.destroy$
                 )
             )
-            .subscribe(() =>
-            {
-                setTimeout(() =>
-                {
-                    this.build();
 
-                },0);
-            });
+            .subscribe
+            (
+                () =>
+                {
+                    setTimeout
+                    (
+                        () =>
+                        {
+                            this.build();
+                        },
+
+                        0
+                    );
+                }
+            );
+
 
         this.build();
     }
+
 
     //===========================================================
     // Component Destroy
@@ -142,42 +162,69 @@ implements OnInit, OnDestroy
         this.destroy$.complete();
     }
 
+
     //===========================================================
     // Build Breadcrumb
     //===========================================================
 
-    private build(): void
+    private build():
+        void
     {
-        console.log('==============================');
-        console.log('BREADCRUMB BUILD');
-        console.log('URL:', this.router.url);
-        console.log(
-            'STATE:',
-            this.router.routerState.snapshot
+        console.log
+        (
+            '=============================='
         );
 
+
+        console.log
+        (
+            'BREADCRUMB BUILD'
+        );
+
+
+        console.log
+        (
+            'URL:',
+
+            this.router.url
+        );
+
+
         this.breadcrumbs =
-            this.collect(
+            this.collect
+            (
                 this.router.routerState.snapshot.root
             );
 
+
         this.cdr.detectChanges();
 
-        console.log(
+
+        console.log
+        (
             'RESULT:',
+
             this.breadcrumbs
         );
 
-        console.log('==============================');
+
+        console.log
+        (
+            '=============================='
+        );
     }
+
 
     //===========================================================
     // Collect Breadcrumb Items
     //===========================================================
 
-    private collect(
+    private collect
+    (
         route: any,
+
         url: string = '',
+
         items: BreadcrumbItem[] = []
     ):
         BreadcrumbItem[]
@@ -185,43 +232,112 @@ implements OnInit, OnDestroy
         const child =
             route.firstChild;
 
-        if (!child)
+
+        //=======================================================
+        // No More Child Routes
+        //=======================================================
+
+        if
+        (
+            !child
+        )
         {
             return items;
         }
 
 
+        //=======================================================
+        // Route Segment
+        //=======================================================
+
         const segment =
             child.url
-                .map(
-                    (part:any) =>
+
+                .map
+                (
+                    (part: any) =>
                         part.path
                 )
+
                 .join('/');
 
 
+        //=======================================================
+        // Next URL
+        //=======================================================
+
         const nextUrl =
             segment
+
                 ? `${url}/${segment}`
+
                 : url;
 
+
+        //=======================================================
+        // Breadcrumb Label
+        //=======================================================
 
         const label =
             child.data['breadcrumb'];
 
 
-        if (label)
-        {
-            items.push(
-            {
-                label,
+        //=======================================================
+        // Add Breadcrumb
+        //=======================================================
 
-                url: nextUrl
-            });
+        if
+        (
+            label
+        )
+        {
+            const previousItem =
+                items.length > 0
+
+                    ? items[items.length - 1]
+
+                    : null;
+
+
+            //===================================================
+            // Prevent Consecutive Duplicate Breadcrumb
+            //===================================================
+
+            const isDuplicate =
+                previousItem != null
+                &&
+                previousItem.label
+                    .trim()
+                    .toLowerCase()
+                ===
+                label
+                    .trim()
+                    .toLowerCase();
+
+
+            if
+            (
+                !isDuplicate
+            )
+            {
+                items.push
+                (
+                    {
+                        label,
+
+                        url: nextUrl
+                    }
+                );
+            }
         }
 
 
-        return this.collect(
+        //=======================================================
+        // Continue Through Route Tree
+        //=======================================================
+
+        return this.collect
+        (
             child,
 
             nextUrl,

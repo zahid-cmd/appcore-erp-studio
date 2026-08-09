@@ -349,10 +349,6 @@ implements OnInit
 
         frontendPagesFolder: '',
 
-        frontendFormFolder: '',
-
-        frontendListFolder: '',
-
         frontendRoutesFolder: '',
 
 
@@ -1990,6 +1986,7 @@ implements OnInit
 
                 : '/infrastructure-control/development-management/menu-synchronization/frontend';
 
+
         //=======================================================
         // No Changes
         //=======================================================
@@ -2003,13 +2000,13 @@ implements OnInit
             !this.hasChanges
         )
         {
-            this.router.navigate(
-            [
+            this.router.navigateByUrl(
                 route
-            ]);
+            );
 
             return;
         }
+
 
         //=======================================================
         // Confirm
@@ -2023,10 +2020,9 @@ implements OnInit
 
             () =>
             {
-                this.router.navigate(
-                [
+                this.router.navigateByUrl(
                     route
-                ]);
+                );
             },
 
             'Leave',

@@ -1,12 +1,13 @@
 import
 {
-Routes
+    Routes
 }
 from '@angular/router';
 
 export const developmentManagementRoutes:
 Routes =
 [
+
 //===========================================================
 // Module Synchronization
 //===========================================================
@@ -48,6 +49,28 @@ Routes =
         .then(
             m =>
                 m.menuSynchronizationRoutes
+        )
+},
+
+//===========================================================
+// Submenu Synchronization
+//===========================================================
+
+{
+    path:'submenu-synchronization',
+
+    data:
+    {
+        breadcrumb:'Submenu Synchronization'
+    },
+
+    loadChildren:() =>
+        import(
+            './submenu-synchronization.routes'
+        )
+        .then(
+            m =>
+                m.submenuSynchronizationRoutes
         )
 },
 

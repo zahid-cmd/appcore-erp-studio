@@ -92,6 +92,7 @@ public class MenuFrontendSynchronizationEngine
     }
 
 
+
     //===========================================================
     // Create Typescript Variable Name
     //===========================================================
@@ -182,7 +183,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         await PrepareFrontendTargetAsync
         (
             synchronization
@@ -215,7 +215,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -260,6 +259,9 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
+        //=======================================================
+        // Create Menu Folder
+        //=======================================================
 
         await CreateFolderAsync
         (
@@ -267,11 +269,19 @@ public class MenuFrontendSynchronizationEngine
         );
 
 
+        //=======================================================
+        // Create Models Folder
+        //=======================================================
+
         await CreateFolderAsync
         (
             synchronization.FrontendModelsFolder
         );
 
+
+        //=======================================================
+        // Create Services Folder
+        //=======================================================
 
         await CreateFolderAsync
         (
@@ -279,23 +289,24 @@ public class MenuFrontendSynchronizationEngine
         );
 
 
+        //=======================================================
+        // Create Pages Folder
+        //=======================================================
+        // Form and List folders are NOT created here.
+        //
+        // Their creation belongs to the
+        // Submenu Synchronization Engine.
+        //=======================================================
+
         await CreateFolderAsync
         (
             synchronization.FrontendPagesFolder
         );
 
 
-        await CreateFolderAsync
-        (
-            synchronization.FrontendFormFolder
-        );
-
-
-        await CreateFolderAsync
-        (
-            synchronization.FrontendListFolder
-        );
-
+        //=======================================================
+        // Create Routes Folder
+        //=======================================================
 
         await CreateFolderAsync
         (
@@ -323,6 +334,8 @@ public class MenuFrontendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Generate Menu Route File
     //===========================================================
@@ -332,7 +345,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         //=======================================================
         // Validate Menu Route File
         //=======================================================
@@ -444,7 +456,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         //=======================================================
         // Validate Module Route File
         //=======================================================
@@ -592,6 +603,9 @@ public class MenuFrontendSynchronizationEngine
             content
         );
     }
+
+
+
     //===========================================================
     // Rollback
     //===========================================================
@@ -601,7 +615,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         await DeleteFrontendStructureAsync
         (
             synchronization
@@ -617,6 +630,8 @@ public class MenuFrontendSynchronizationEngine
         };
     }
 
+
+
     //===========================================================
     // Delete Frontend Structure
     //===========================================================
@@ -626,7 +641,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         //=======================================================
         // Remove Menu Registration From Existing Module Route
         //=======================================================
@@ -647,23 +661,22 @@ public class MenuFrontendSynchronizationEngine
         );
 
 
+        //=======================================================
+        // Delete Routes Folder
+        //=======================================================
+
         await DeleteFolderAsync
         (
             synchronization.FrontendRoutesFolder
         );
 
 
-        await DeleteFolderAsync
-        (
-            synchronization.FrontendListFolder
-        );
-
-
-        await DeleteFolderAsync
-        (
-            synchronization.FrontendFormFolder
-        );
-
+        //=======================================================
+        // Delete Pages Folder
+        //=======================================================
+        // Form and List folders are no longer owned by
+        // Menu Synchronization.
+        //=======================================================
 
         await DeleteFolderAsync
         (
@@ -671,11 +684,19 @@ public class MenuFrontendSynchronizationEngine
         );
 
 
+        //=======================================================
+        // Delete Services Folder
+        //=======================================================
+
         await DeleteFolderAsync
         (
             synchronization.FrontendServicesFolder
         );
 
+
+        //=======================================================
+        // Delete Models Folder
+        //=======================================================
 
         await DeleteFolderAsync
         (
@@ -683,12 +704,18 @@ public class MenuFrontendSynchronizationEngine
         );
 
 
+        //=======================================================
+        // Delete Menu Folder
+        //=======================================================
+
         await DeleteFolderAsync
         (
             synchronization.FrontendMenuFolder
         );
     }
-    
+
+
+
     //===========================================================
     // Unregister Menu From Existing Module Route
     //===========================================================
@@ -698,7 +725,6 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
-
         //=======================================================
         // Validate Module Route File
         //=======================================================
@@ -745,6 +771,8 @@ public class MenuFrontendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Delete Menu Route File
     //===========================================================
@@ -754,6 +782,9 @@ public class MenuFrontendSynchronizationEngine
         MenuSynchronizationDto synchronization
     )
     {
+        //=======================================================
+        // Validate Menu Route File
+        //=======================================================
 
         if
         (
@@ -767,6 +798,9 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
+        //=======================================================
+        // File Exists
+        //=======================================================
 
         if
         (
@@ -780,12 +814,18 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Delete Menu Route File
+        //=======================================================
 
         await _fileRemover.DeleteFileAsync
         (
             synchronization.FrontendMenuRouteFile
         );
     }
+
+
+
     //===========================================================
     // Create Folder
     //===========================================================
@@ -795,6 +835,9 @@ public class MenuFrontendSynchronizationEngine
         string folderPath
     )
     {
+        //=======================================================
+        // Validate Path
+        //=======================================================
 
         if
         (
@@ -808,12 +851,20 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Normalize Path
+        //=======================================================
+
         folderPath =
             Path.GetFullPath
             (
                 folderPath
             );
 
+
+        //=======================================================
+        // Create Folder
+        //=======================================================
 
         if
         (
@@ -830,6 +881,10 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Completed
+        //=======================================================
+
         await Task.CompletedTask;
     }
 
@@ -844,6 +899,9 @@ public class MenuFrontendSynchronizationEngine
         string folderPath
     )
     {
+        //=======================================================
+        // Validate Path
+        //=======================================================
 
         if
         (
@@ -857,12 +915,20 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Normalize Path
+        //=======================================================
+
         folderPath =
             Path.GetFullPath
             (
                 folderPath
             );
 
+
+        //=======================================================
+        // Folder Exists
+        //=======================================================
 
         if
         (
@@ -874,7 +940,6 @@ public class MenuFrontendSynchronizationEngine
         {
             return;
         }
-
 
 
         //=======================================================
@@ -897,7 +962,6 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
-
         foreach
         (
             var directory
@@ -916,7 +980,6 @@ public class MenuFrontendSynchronizationEngine
         }
 
 
-
         //=======================================================
         // Delete Root Folder
         //=======================================================
@@ -926,6 +989,10 @@ public class MenuFrontendSynchronizationEngine
             folderPath
         );
 
+
+        //=======================================================
+        // Completed
+        //=======================================================
 
         await Task.CompletedTask;
     }

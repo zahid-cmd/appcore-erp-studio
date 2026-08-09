@@ -86,12 +86,6 @@ export class MenuSyncWorkspaceFrontendComponent
     pagesFolder:string = '';
 
     @Input()
-    formFolder:string = '';
-
-    @Input()
-    listFolder:string = '';
-
-    @Input()
     routesFolder:string = '';
 
     /* ===========================================================
@@ -145,14 +139,6 @@ export class MenuSyncWorkspaceFrontendComponent
 
     @Output()
     pagesFolderChange =
-        new EventEmitter<string>();
-
-    @Output()
-    formFolderChange =
-        new EventEmitter<string>();
-
-    @Output()
-    listFolderChange =
         new EventEmitter<string>();
 
     @Output()
@@ -233,16 +219,6 @@ export class MenuSyncWorkspaceFrontendComponent
     emitPagesFolder(value:string | number):void
     {
         this.pagesFolderChange.emit(value.toString());
-    }
-
-    emitFormFolder(value:string | number):void
-    {
-        this.formFolderChange.emit(value.toString());
-    }
-
-    emitListFolder(value:string | number):void
-    {
-        this.listFolderChange.emit(value.toString());
     }
 
     emitRoutesFolder(value:string | number):void

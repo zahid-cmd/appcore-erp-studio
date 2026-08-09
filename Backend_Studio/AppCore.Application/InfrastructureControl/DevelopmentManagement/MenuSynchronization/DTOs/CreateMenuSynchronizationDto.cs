@@ -10,9 +10,9 @@ namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.MenuSy
 
 public class CreateMenuSynchronizationDto
 {
-//===========================================================
-// Navigation
-//===========================================================
+    //===========================================================
+    // Navigation
+    //===========================================================
 
     public long ModuleId { get; set; }
 
@@ -26,15 +26,15 @@ public class CreateMenuSynchronizationDto
 
     public string MenuName { get; set; } = string.Empty;
 
-//===========================================================
-// Synchronization Type
-//===========================================================
+    //===========================================================
+    // Synchronization Type
+    //===========================================================
 
     public string SynchronizationType { get; set; } = string.Empty;
 
-//===========================================================
-// Frontend Target Location
-//===========================================================
+    //===========================================================
+    // Frontend Target Location
+    //===========================================================
 
     public string FrontendSolution { get; set; } = string.Empty;
 
@@ -44,9 +44,9 @@ public class CreateMenuSynchronizationDto
 
     public string FrontendFeatureFolder { get; set; } = string.Empty;
 
-//===========================================================
-// Frontend Menu Structure
-//===========================================================
+    //===========================================================
+    // Frontend Menu Structure
+    //===========================================================
 
     public string FrontendMenuFolder { get; set; } = string.Empty;
 
@@ -56,37 +56,33 @@ public class CreateMenuSynchronizationDto
 
     public string FrontendPagesFolder { get; set; } = string.Empty;
 
-    public string FrontendFormFolder { get; set; } = string.Empty;
-
-    public string FrontendListFolder { get; set; } = string.Empty;
-
     public string FrontendRoutesFolder { get; set; } = string.Empty;
 
-//===========================================================
-// Frontend Route Ownership
-//===========================================================
+    //===========================================================
+    // Frontend Route Ownership
+    //===========================================================
 
-//===========================================================
-// Menu Synchronization Route File
-//===========================================================
+    //===========================================================
+    // Menu Synchronization Route File
+    //===========================================================
 
     public string FrontendMenuRouteFile { get; set; } = string.Empty;
 
-//===========================================================
-// Module Synchronization Route File
-//===========================================================
+    //===========================================================
+    // Module Synchronization Route File
+    //===========================================================
 
     public string FrontendModuleRouteFile { get; set; } = string.Empty;
 
-//===========================================================
-// Application Route File
-//===========================================================
+    //===========================================================
+    // Application Route File
+    //===========================================================
 
     public string FrontendApplicationRouteFile { get; set; } = string.Empty;
 
-//===========================================================
-// Backend Target Location
-//===========================================================
+    //===========================================================
+    // Backend Target Location
+    //===========================================================
 
     public string BackendSolution { get; set; } = string.Empty;
 
@@ -110,21 +106,21 @@ public class CreateMenuSynchronizationDto
 
     public string BackendConfigurationFolder { get; set; } = string.Empty;
 
-//===========================================================
-// Synchronization
-//===========================================================
+    //===========================================================
+    // Synchronization
+    //===========================================================
 
     public string Status { get; set; } = "Pending";
 
-//===========================================================
-// Configuration
-//===========================================================
+    //===========================================================
+    // Configuration
+    //===========================================================
 
     public string? Remarks { get; set; }
 
-//===========================================================
-// Last Synchronization
-//===========================================================
+    //===========================================================
+    // Last Synchronization
+    //===========================================================
 
     public long? LastSynchronizedBy { get; set; }
 
@@ -132,9 +128,9 @@ public class CreateMenuSynchronizationDto
 
     public string LastSynchronizationResult { get; set; } = string.Empty;
 
-//===========================================================
-// Status
-//===========================================================
+    //===========================================================
+    // Status
+    //===========================================================
 
     public bool IsActive { get; set; } = true;
 }

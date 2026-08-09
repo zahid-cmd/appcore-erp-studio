@@ -10,11 +10,13 @@ using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 using AppCore.Domain.Entities.HumanResource.HumanResourceSetup;
 using AppCore.Domain.Entities.SecurityPermission.RoleManagement;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Infrastructure.Persistence;
+
 
 //===============================================================
 // Application Database Context
@@ -22,6 +24,7 @@ namespace AppCore.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
+
     //===========================================================
     // Constructor
     //===========================================================
@@ -33,6 +36,8 @@ public class AppDbContext : DbContext
         : base(options)
     {
     }
+
+
 
     //===========================================================
     // Navigation Management
@@ -48,6 +53,8 @@ public class AppDbContext : DbContext
 
     public DbSet<MasterActivity> MasterActivities { get; set; } = null!;
 
+
+
     //===========================================================
     // Development Management
     //===========================================================
@@ -56,17 +63,19 @@ public class AppDbContext : DbContext
 
     public DbSet<ModuleSynchronization> ModuleSynchronizations { get; set; } = null!;
 
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // ADD THIS
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
     public DbSet<MenuSynchronization> MenuSynchronizations { get; set; } = null!;
+
+    public DbSet<SubmenuSynchronization> SubmenuSynchronizations { get; set; } = null!;
+
+
 
     //===========================================================
     // AUTO REGISTER DBSETS
     //===========================================================
 
     // public DbSet<Settings> Settingss { get; set; } = null!;
+
+
 
     //===========================================================
     // Human Resource Setup
@@ -75,6 +84,8 @@ public class AppDbContext : DbContext
     public DbSet<Department> Departments { get; set; } = null!;
 
     public DbSet<Designation> Designations { get; set; } = null!;
+
+
 
     //===========================================================
     // Security & Permission
@@ -88,11 +99,15 @@ public class AppDbContext : DbContext
 
     public DbSet<ActivityAssignmentPermission> ActivityAssignmentPermissions { get; set; } = null!;
 
+
+
     //===========================================================
     // Common
     //===========================================================
 
     public DbSet<ActivityHistory> ActivityHistories { get; set; } = null!;
+
+
 
     //===========================================================
     // Configure Entity Models
@@ -112,6 +127,7 @@ public class AppDbContext : DbContext
             modelBuilder
         );
 
+
         //=======================================================
         // Apply Entity Configurations
         //=======================================================
@@ -121,4 +137,5 @@ public class AppDbContext : DbContext
             typeof(AppDbContext).Assembly
         );
     }
+
 }

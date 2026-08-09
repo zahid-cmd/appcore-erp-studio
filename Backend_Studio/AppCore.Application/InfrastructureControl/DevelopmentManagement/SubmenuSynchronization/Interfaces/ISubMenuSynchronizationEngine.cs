@@ -10,13 +10,13 @@ using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSyn
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
+namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.Interfaces;
 
 //===============================================================
-// Submenu Frontend Synchronization Engine Interface
+// Submenu Synchronization Engine Interface
 //===============================================================
 
-public interface ISubmenuFrontendSynchronizationEngine
+public interface ISubmenuSynchronizationEngine
 {
     //===========================================================
     // Synchronize
@@ -24,7 +24,7 @@ public interface ISubmenuFrontendSynchronizationEngine
 
     Task<SubmenuSynchronizationResultDto> SynchronizeAsync
     (
-        SubmenuSynchronizationDto synchronization
+        long synchronizationId
     );
 
     //===========================================================
@@ -33,6 +33,6 @@ public interface ISubmenuFrontendSynchronizationEngine
 
     Task<SubmenuSynchronizationResultDto> RollbackAsync
     (
-        SubmenuSynchronizationDto synchronization
+        long synchronizationId
     );
 }

@@ -65,15 +65,15 @@ public string FrontendFeatureFolder { get; set; } = string.Empty;
 
 public string FrontendMenuFolder { get; set; } = string.Empty;
 
+
 public string FrontendModelsFolder { get; set; } = string.Empty;
+
 
 public string FrontendServicesFolder { get; set; } = string.Empty;
 
+
 public string FrontendPagesFolder { get; set; } = string.Empty;
 
-public string FrontendFormFolder { get; set; } = string.Empty;
-
-public string FrontendListFolder { get; set; } = string.Empty;
 
 public string FrontendRoutesFolder { get; set; } = string.Empty;
 

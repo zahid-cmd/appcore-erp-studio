@@ -1,0 +1,517 @@
+<!-- =========================================================
+     WORKSPACE HOST
+========================================================= -->
+
+<div class="workspace-host">
+
+    <div class="workspace-content">
+
+
+        <!-- =================================================
+             CARD HEADER
+        ================================================== -->
+
+        <div class="workspace-card-header">
+
+            <div class="workspace-title">
+
+                <i class="fas fa-server"></i>
+
+                <span>
+                    Backend Synchronization Workspace
+                </span>
+
+            </div>
+
+
+            <div class="workspace-status">
+
+                Ready
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CARD BODY
+        ================================================== -->
+
+        <div class="workspace-card-body">
+
+
+            <!-- =================================================
+                 TARGET LOCATION
+            ================================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-location-dot"></i>
+
+                        <span>
+                            Target Location
+                        </span>
+
+                    </div>
+
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="onTargetLocationEdit()">
+
+                        <i
+
+                            [class]="
+                                targetLocationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+
+                <app-textbox
+
+                    label="Backend Solution"
+
+                    [(value)]="backendSolution"
+
+                    (valueChange)="
+                        emitBackendSolution($event)
+                    "
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Application Project"
+
+                    [(value)]="backendApplicationProject"
+
+                    (valueChange)="
+                        emitBackendApplicationProject($event)
+                    "
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Domain Project"
+
+                    [(value)]="backendDomainProject"
+
+                    (valueChange)="
+                        emitBackendDomainProject($event)
+                    "
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Infrastructure Project"
+
+                    [(value)]="backendInfrastructureProject"
+
+                    (valueChange)="
+                        emitBackendInfrastructureProject($event)
+                    "
+
+                    [readonly]="targetLocationReadonly">
+
+                </app-textbox>
+
+            </div>
+
+
+            <!-- =================================================
+                 BACKEND FOLDERS
+            ================================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-code"></i>
+
+                        <span>
+                            Backend Folders
+                        </span>
+
+                    </div>
+
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="
+                            onBackendApplicationEdit()
+                        ">
+
+                        <i
+
+                            [class]="
+                                backendApplicationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+
+                <app-textbox
+
+                    label="SubMenu Folder"
+
+                    [(value)]="
+                        backendApplicationSubMenuFolder
+                    "
+
+                    (valueChange)="
+                        emitBackendApplicationSubMenuFolder($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="DTOs Folder"
+
+                    [(value)]="
+                        backendApplicationDtosFolder
+                    "
+
+                    (valueChange)="
+                        emitBackendApplicationDtosFolder($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Interfaces Folder"
+
+                    [(value)]="
+                        backendApplicationInterfacesFolder
+                    "
+
+                    (valueChange)="
+                        emitBackendApplicationInterfacesFolder($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+            </div>
+
+
+            <!-- =================================================
+                 APPLICATION FILES
+            ================================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-layer-group"></i>
+
+                        <span>
+                            Application Files
+                        </span>
+
+                    </div>
+
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="
+                            onBackendApplicationEdit()
+                        ">
+
+                        <i
+
+                            [class]="
+                                backendApplicationReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+
+                <app-textbox
+
+                    label="SubMenuDto.cs"
+
+                    [(value)]="
+                        backendSubMenuDtoFile
+                    "
+
+                    (valueChange)="
+                        emitBackendSubMenuDtoFile($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="CreateSubMenuDto.cs"
+
+                    [(value)]="
+                        backendCreateSubMenuDtoFile
+                    "
+
+                    (valueChange)="
+                        emitBackendCreateSubMenuDtoFile($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="UpdateSubMenuDto.cs"
+
+                    [(value)]="
+                        backendUpdateSubMenuDtoFile
+                    "
+
+                    (valueChange)="
+                        emitBackendUpdateSubMenuDtoFile($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="SubMenuDefaultsDto.cs"
+
+                    [(value)]="
+                        backendSubMenuDefaultsDtoFile
+                    "
+
+                    (valueChange)="
+                        emitBackendSubMenuDefaultsDtoFile($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="ISubMenuRepository.cs"
+
+                    [(value)]="
+                        backendSubMenuRepositoryInterfaceFile
+                    "
+
+                    (valueChange)="
+                        emitBackendSubMenuRepositoryInterfaceFile($event)
+                    "
+
+                    [readonly]="
+                        backendApplicationReadonly
+                    ">
+
+                </app-textbox>
+
+            </div>
+
+
+            <!-- =================================================
+                API, DOMAIN & INFRASTRUCTURE FILES
+            ================================================== -->
+
+            <div class="workspace-section">
+
+                <div class="workspace-section-title">
+
+                    <div class="section-title-left">
+
+                        <i class="fas fa-server"></i>
+
+                        <span>
+                            api, Domain &amp; Infrastructure Files
+                        </span>
+
+                    </div>
+
+
+                    <button
+
+                        type="button"
+
+                        class="section-lock-button"
+
+                        (click)="
+                            onBackendDomainInfrastructureEdit()
+                        ">
+
+                        <i
+
+                            [class]="
+                                backendDomainInfrastructureReadonly
+                                    ? 'fas fa-pen'
+                                    : 'fas fa-check'
+                            ">
+
+                        </i>
+
+                    </button>
+
+                </div>
+
+
+                <app-textbox
+
+                    label="Controller File"
+
+                    [(value)]="
+                        backendControllerFile
+                    "
+
+                    (valueChange)="
+                        emitBackendControllerFile($event)
+                    "
+
+                    [readonly]="
+                        backendApiReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="SubMenu.cs"
+
+                    [(value)]="
+                        backendSubMenuEntityFile
+                    "
+
+                    (valueChange)="
+                        emitBackendSubMenuEntityFile($event)
+                    "
+
+                    [readonly]="
+                        backendDomainInfrastructureReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="SubMenuConfiguration.cs"
+
+                    [(value)]="
+                        backendSubMenuConfigurationFile
+                    "
+
+                    (valueChange)="
+                        emitBackendSubMenuConfigurationFile($event)
+                    "
+
+                    [readonly]="
+                        backendDomainInfrastructureReadonly
+                    ">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="SubMenuRepository.cs"
+
+                    [(value)]="
+                        backendSubMenuRepositoryFile
+                    "
+
+                    (valueChange)="
+                        emitBackendSubMenuRepositoryFile($event)
+                    "
+
+                    [readonly]="
+                        backendDomainInfrastructureReadonly
+                    ">
+
+                </app-textbox>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</div>
