@@ -34,11 +34,14 @@ public class SubmenuSynchronizationEngine
 
     private readonly AppDbContext _context;
 
+
     private readonly ISubmenuFrontendSynchronizationEngine
         _frontendSynchronizationEngine;
 
+
     private readonly ISubmenuBackendSynchronizationEngine
         _backendSynchronizationEngine;
+
 
 
     //===========================================================
@@ -54,14 +57,18 @@ public class SubmenuSynchronizationEngine
         ISubmenuBackendSynchronizationEngine backendSynchronizationEngine
     )
     {
-        _context = context;
+        _context =
+            context;
+
 
         _frontendSynchronizationEngine =
             frontendSynchronizationEngine;
 
+
         _backendSynchronizationEngine =
             backendSynchronizationEngine;
     }
+
 
 
     //===========================================================
@@ -79,11 +86,13 @@ public class SubmenuSynchronizationEngine
                 synchronizationId
             );
 
+
         var validationResult =
             await ValidateSynchronizationAsync
             (
                 synchronization
             );
+
 
         if
         (
@@ -93,11 +102,13 @@ public class SubmenuSynchronizationEngine
             return validationResult;
         }
 
+
         var result =
             await ExecuteSynchronizationAsync
             (
                 synchronization
             );
+
 
         if
         (
@@ -107,6 +118,7 @@ public class SubmenuSynchronizationEngine
             return result;
         }
 
+
         await UpdateSynchronizationStatusAsync
         (
             synchronization,
@@ -114,26 +126,34 @@ public class SubmenuSynchronizationEngine
             result
         );
 
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
+
 
             Message =
                 "Submenu synchronization completed successfully.",
 
+
             SynchronizedDate =
                 DateTime.UtcNow,
+
 
             TotalOperations =
                 result.TotalOperations,
 
+
             SuccessfulOperations =
                 result.SuccessfulOperations,
+
 
             FailedOperations =
                 result.FailedOperations
         };
     }
+
 
 
     //===========================================================
@@ -163,6 +183,7 @@ public class SubmenuSynchronizationEngine
                 );
         }
 
+
         if
         (
             synchronization.SynchronizationType
@@ -180,14 +201,18 @@ public class SubmenuSynchronizationEngine
                 );
         }
 
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = false,
+            Success =
+                false,
+
 
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
         };
     }
+
 
 
     //===========================================================
@@ -209,12 +234,14 @@ public class SubmenuSynchronizationEngine
                 (
                     x =>
 
-                    x.Id == synchronizationId
+                    x.Id ==
+                    synchronizationId
 
                     &&
 
                     !x.IsDeleted
                 );
+
 
         if
         (
@@ -227,11 +254,13 @@ public class SubmenuSynchronizationEngine
             );
         }
 
+
         return BuildSynchronizationDto
         (
             entity
         );
     }
+
 
 
     //===========================================================
@@ -245,35 +274,65 @@ public class SubmenuSynchronizationEngine
     {
         return new SubmenuSynchronizationDto
         {
+            //===================================================
+            // Primary Key
+            //===================================================
+
             Id =
                 entity.Id,
+
+
+            //===================================================
+            // Module
+            //===================================================
 
             ModuleId =
                 entity.ModuleId,
 
+
             ModuleCode =
                 entity.ModuleCode,
+
 
             ModuleName =
                 entity.ModuleName,
 
+
+            //===================================================
+            // Menu
+            //===================================================
+
             MenuId =
                 entity.MenuId,
+
 
             MenuCode =
                 entity.MenuCode,
 
+
             MenuName =
                 entity.MenuName,
+
+
+            //===================================================
+            // Submenu
+            //===================================================
 
             SubmenuId =
                 entity.SubmenuId,
 
+
             SubmenuCode =
                 entity.SubmenuCode,
 
+
             SubmenuName =
                 entity.SubmenuName,
+
+
+            //===================================================
+            // Synchronization Type
+            //===================================================
 
             SynchronizationType =
                 entity.SynchronizationType,
@@ -286,14 +345,18 @@ public class SubmenuSynchronizationEngine
             FrontendSolution =
                 entity.FrontendSolution,
 
+
             FrontendProject =
                 entity.FrontendProject,
+
 
             FrontendSourceFolder =
                 entity.FrontendSourceFolder,
 
+
             FrontendFeatureFolder =
                 entity.FrontendFeatureFolder,
+
 
             FrontendMenuFolder =
                 entity.FrontendMenuFolder,
@@ -306,11 +369,10 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuFolder =
                 entity.FrontendSubmenuFolder,
 
-            FrontendPagesFolder =
-                entity.FrontendPagesFolder,
 
             FrontendFormFolder =
                 entity.FrontendFormFolder,
+
 
             FrontendListFolder =
                 entity.FrontendListFolder,
@@ -323,8 +385,10 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuModelFile =
                 entity.FrontendSubmenuModelFile,
 
+
             FrontendSubmenuServiceFile =
                 entity.FrontendSubmenuServiceFile,
+
 
             FrontendSubmenuRouteFile =
                 entity.FrontendSubmenuRouteFile,
@@ -337,17 +401,22 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuFormTsFile =
                 entity.FrontendSubmenuFormTsFile,
 
+
             FrontendSubmenuFormHtmlFile =
                 entity.FrontendSubmenuFormHtmlFile,
+
 
             FrontendSubmenuFormCssFile =
                 entity.FrontendSubmenuFormCssFile,
 
+
             FrontendSubmenuListTsFile =
                 entity.FrontendSubmenuListTsFile,
 
+
             FrontendSubmenuListHtmlFile =
                 entity.FrontendSubmenuListHtmlFile,
+
 
             FrontendSubmenuListCssFile =
                 entity.FrontendSubmenuListCssFile,
@@ -360,11 +429,14 @@ public class SubmenuSynchronizationEngine
             BackendSolution =
                 entity.BackendSolution,
 
+
             BackendApplicationProject =
                 entity.BackendApplicationProject,
 
+
             BackendDomainProject =
                 entity.BackendDomainProject,
+
 
             BackendInfrastructureProject =
                 entity.BackendInfrastructureProject,
@@ -385,23 +457,30 @@ public class SubmenuSynchronizationEngine
             BackendApplicationSubMenuFolder =
                 entity.BackendApplicationSubMenuFolder,
 
+
             BackendApplicationDtosFolder =
                 entity.BackendApplicationDtosFolder,
+
 
             BackendApplicationInterfacesFolder =
                 entity.BackendApplicationInterfacesFolder,
 
+
             BackendSubMenuDtoFile =
                 entity.BackendSubMenuDtoFile,
+
 
             BackendCreateSubMenuDtoFile =
                 entity.BackendCreateSubMenuDtoFile,
 
+
             BackendUpdateSubMenuDtoFile =
                 entity.BackendUpdateSubMenuDtoFile,
 
+
             BackendSubMenuDefaultsDtoFile =
                 entity.BackendSubMenuDefaultsDtoFile,
+
 
             BackendSubMenuRepositoryInterfaceFile =
                 entity.BackendSubMenuRepositoryInterfaceFile,
@@ -421,6 +500,7 @@ public class SubmenuSynchronizationEngine
 
             BackendSubMenuConfigurationFile =
                 entity.BackendSubMenuConfigurationFile,
+
 
             BackendSubMenuRepositoryFile =
                 entity.BackendSubMenuRepositoryFile,
@@ -449,8 +529,10 @@ public class SubmenuSynchronizationEngine
             LastSynchronizedBy =
                 entity.LastSynchronizedBy,
 
+
             LastSynchronizedDate =
                 entity.LastSynchronizedDate,
+
 
             LastSynchronizationResult =
                 entity.LastSynchronizationResult,
@@ -474,6 +556,7 @@ public class SubmenuSynchronizationEngine
     }
 
 
+
     //===========================================================
     // Validate Synchronization
     //===========================================================
@@ -495,12 +578,15 @@ public class SubmenuSynchronizationEngine
         {
             return new SubmenuSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
+
 
                 Message =
                     "Module is required."
             };
         }
+
 
 
         //=======================================================
@@ -514,12 +600,15 @@ public class SubmenuSynchronizationEngine
         {
             return new SubmenuSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
+
 
                 Message =
                     "Menu is required."
             };
         }
+
 
 
         //=======================================================
@@ -533,12 +622,15 @@ public class SubmenuSynchronizationEngine
         {
             return new SubmenuSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
+
 
                 Message =
                     "Submenu is required."
             };
         }
+
 
 
         //=======================================================
@@ -555,12 +647,15 @@ public class SubmenuSynchronizationEngine
         {
             return new SubmenuSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
+
 
                 Message =
                     "Synchronization type is required."
             };
         }
+
 
 
         //=======================================================
@@ -587,13 +682,16 @@ public class SubmenuSynchronizationEngine
             {
                 return new SubmenuSynchronizationResultDto
                 {
-                    Success = false,
+                    Success =
+                        false,
+
 
                     Message =
                         "Frontend solution is required."
                 };
             }
         }
+
 
 
         //=======================================================
@@ -624,12 +722,15 @@ public class SubmenuSynchronizationEngine
             {
                 return new SubmenuSynchronizationResultDto
                 {
-                    Success = false,
+                    Success =
+                        false,
+
 
                     Message =
                         "Backend solution is required."
                 };
             }
+
 
 
             //===================================================
@@ -674,7 +775,9 @@ public class SubmenuSynchronizationEngine
             {
                 return new SubmenuSynchronizationResultDto
                 {
-                    Success = false,
+                    Success =
+                        false,
+
 
                     Message =
                         "No backend configuration was provided."
@@ -683,20 +786,25 @@ public class SubmenuSynchronizationEngine
         }
 
 
+
         //=======================================================
         // Validation Passed
         //=======================================================
 
         await Task.CompletedTask;
 
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
+
 
             Message =
                 "Validation completed successfully."
         };
     }
+
 
 
     //===========================================================
@@ -725,6 +833,7 @@ public class SubmenuSynchronizationEngine
                     !x.IsDeleted
                 );
 
+
         if
         (
             entity == null
@@ -736,26 +845,36 @@ public class SubmenuSynchronizationEngine
             );
         }
 
+
+
         entity.Status =
             "Synchronized";
+
 
         entity.LastSynchronizedDate =
             DateTime.UtcNow;
 
+
         entity.LastSynchronizationResult =
             result.Message;
+
 
         entity.LastSynchronizedBy =
             1;
 
+
         entity.ModifiedDate =
             DateTime.UtcNow;
+
 
         entity.ModifiedBy =
             1;
 
+
+
         await _context.SaveChangesAsync();
     }
+
 
 
     //===========================================================
@@ -773,11 +892,13 @@ public class SubmenuSynchronizationEngine
                 synchronizationId
             );
 
+
         var validationResult =
             await ValidateSynchronizationAsync
             (
                 synchronization
             );
+
 
         if
         (
@@ -787,11 +908,14 @@ public class SubmenuSynchronizationEngine
             return validationResult;
         }
 
+
+
         var result =
             await ExecuteRollbackAsync
             (
                 synchronization
             );
+
 
         if
         (
@@ -801,31 +925,42 @@ public class SubmenuSynchronizationEngine
             return result;
         }
 
+
+
         await UpdateRollbackStatusAsync
         (
             synchronization
         );
 
+
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
+
 
             Message =
                 "Submenu rollback completed successfully.",
 
+
             SynchronizedDate =
                 DateTime.UtcNow,
+
 
             TotalOperations =
                 result.TotalOperations,
 
+
             SuccessfulOperations =
                 result.SuccessfulOperations,
+
 
             FailedOperations =
                 result.FailedOperations
         };
     }
+
 
 
     //===========================================================
@@ -855,6 +990,8 @@ public class SubmenuSynchronizationEngine
                 );
         }
 
+
+
         if
         (
             synchronization.SynchronizationType
@@ -872,14 +1009,19 @@ public class SubmenuSynchronizationEngine
                 );
         }
 
+
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = false,
+            Success =
+                false,
+
 
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
         };
     }
+
 
 
     //===========================================================
@@ -906,6 +1048,7 @@ public class SubmenuSynchronizationEngine
                     !x.IsDeleted
                 );
 
+
         if
         (
             entity == null
@@ -917,20 +1060,28 @@ public class SubmenuSynchronizationEngine
             );
         }
 
+
+
         entity.Status =
             "Pending";
+
 
         entity.LastSynchronizedDate =
             null;
 
+
         entity.LastSynchronizationResult =
             "Rollback completed successfully.";
+
 
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+
         entity.ModifiedBy =
             1;
+
+
 
         await _context.SaveChangesAsync();
     }

@@ -46,7 +46,6 @@ from '../../controls/textbox/textbox';
     styleUrl:'./sub-menu-sync-workspace-frontend.css'
 })
 
-
 export class SubMenuSyncWorkspaceFrontendComponent
 {
 
@@ -78,6 +77,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
     menuFolder:string = '';
 
 
+
     /* ===========================================================
        SUBMENU LOCATION
     =========================================================== */
@@ -91,15 +91,12 @@ export class SubMenuSyncWorkspaceFrontendComponent
 
 
     @Input()
-    pagesFolder:string = '';
-
-
-    @Input()
     formFolder:string = '';
 
 
     @Input()
     listFolder:string = '';
+
 
 
     /* ===========================================================
@@ -120,6 +117,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
 
     @Input()
     submenuRouteFile:string = '';
+
 
 
     /* ===========================================================
@@ -154,6 +152,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
     submenuListCssFile:string = '';
 
 
+
     /* ===========================================================
        TARGET LOCATION
     =========================================================== */
@@ -183,17 +182,13 @@ export class SubMenuSyncWorkspaceFrontendComponent
         new EventEmitter<string>();
 
 
+
     /* ===========================================================
        SUBMENU LOCATION
     =========================================================== */
 
     @Output()
     submenuFolderChange =
-        new EventEmitter<string>();
-
-
-    @Output()
-    pagesFolderChange =
         new EventEmitter<string>();
 
 
@@ -205,6 +200,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
     @Output()
     listFolderChange =
         new EventEmitter<string>();
+
 
 
     /* ===========================================================
@@ -224,6 +220,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
     @Output()
     submenuRouteFileChange =
         new EventEmitter<string>();
+
 
 
     /* ===========================================================
@@ -260,6 +257,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
         new EventEmitter<string>();
 
 
+
     /* ===========================================================
        ACTIONS
     =========================================================== */
@@ -282,6 +280,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
     @Output()
     pageFilesEditClick =
         new EventEmitter<void>();
+
 
 
     /* ===========================================================
@@ -343,6 +342,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
     }
 
 
+
     /* ===========================================================
        SUBMENU LOCATION
     =========================================================== */
@@ -353,17 +353,6 @@ export class SubMenuSyncWorkspaceFrontendComponent
         void
     {
         this.submenuFolderChange.emit(
-            value.toString()
-        );
-    }
-
-
-    emitPagesFolder(
-        value:string | number
-    ):
-        void
-    {
-        this.pagesFolderChange.emit(
             value.toString()
         );
     }
@@ -389,6 +378,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
             value.toString()
         );
     }
+
 
 
     /* ===========================================================
@@ -426,6 +416,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
             value.toString()
         );
     }
+
 
 
     /* ===========================================================
@@ -496,6 +487,7 @@ export class SubMenuSyncWorkspaceFrontendComponent
             value.toString()
         );
     }
+
 
 
     /* ===========================================================

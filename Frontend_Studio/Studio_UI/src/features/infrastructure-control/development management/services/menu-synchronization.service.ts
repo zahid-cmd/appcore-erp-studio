@@ -12,9 +12,10 @@ import { environment } from '../../../../environments/environment';
 
 import
 {
-MenuSynchronization
+    MenuSynchronization
 }
 from '../model/menu-synchronization.model';
+
 
 //===============================================================
 // Service
@@ -22,19 +23,22 @@ from '../model/menu-synchronization.model';
 
 @Injectable(
 {
-providedIn:'root'
+    providedIn:'root'
 })
 export class MenuSynchronizationService
 {
-//===========================================================
-// Fields
-//===========================================================
+    //===========================================================
+    // Fields
+    //===========================================================
 
     private readonly http =
         inject(HttpClient);
 
+
     private readonly apiUrl =
         `${environment.apiUrl}/infrastructure-control/development-management/menu-synchronization`;
+
+
 
     //===========================================================
     // Get Defaults
@@ -50,6 +54,8 @@ export class MenuSynchronizationService
             `${this.apiUrl}/defaults?type=${synchronizationType}`);
     }
 
+
+
     //===========================================================
     // Get All
     //===========================================================
@@ -64,6 +70,8 @@ export class MenuSynchronizationService
             `${this.apiUrl}?type=${synchronizationType}`);
     }
 
+
+
     //===========================================================
     // Get By Id
     //===========================================================
@@ -77,6 +85,8 @@ export class MenuSynchronizationService
         return this.http.get<MenuSynchronization>(
             `${this.apiUrl}/${id}`);
     }
+
+
 
     //===========================================================
     // Analyze
@@ -97,6 +107,8 @@ export class MenuSynchronizationService
         );
     }
 
+
+
     //===========================================================
     // Get List History
     //===========================================================
@@ -107,6 +119,8 @@ export class MenuSynchronizationService
         return this.http.get<any[]>(
             `${this.apiUrl}/history`);
     }
+
+
 
     //===========================================================
     // Get Entity History
@@ -121,6 +135,8 @@ export class MenuSynchronizationService
         return this.http.get<any[]>(
             `${this.apiUrl}/${id}/history`);
     }
+
+
 
     //===========================================================
     // Create
@@ -139,6 +155,8 @@ export class MenuSynchronizationService
             synchronization);
     }
 
+
+
     //===========================================================
     // Update
     //===========================================================
@@ -153,6 +171,8 @@ export class MenuSynchronizationService
             `${this.apiUrl}/${synchronization.id}`,
             synchronization);
     }
+
+
 
     //===========================================================
     // Synchronize
@@ -171,6 +191,26 @@ export class MenuSynchronizationService
         );
     }
 
+
+
+    //===========================================================
+    // Rollback Validation
+    //===========================================================
+
+    validateRollback
+    (
+        id:number
+    ):
+        Observable<MenuSynchronizationRollbackValidation>
+    {
+        return this.http.get<MenuSynchronizationRollbackValidation>
+        (
+            `${this.apiUrl}/${id}/rollback-validation`
+        );
+    }
+
+
+
     //===========================================================
     // Rollback
     //===========================================================
@@ -188,6 +228,8 @@ export class MenuSynchronizationService
         );
     }
 
+
+
     //===========================================================
     // Delete
     //===========================================================
@@ -201,6 +243,8 @@ export class MenuSynchronizationService
         return this.http.delete<void>(
             `${this.apiUrl}/${id}`);
     }
+
+
 
     //===========================================================
     // Restore
@@ -217,4 +261,16 @@ export class MenuSynchronizationService
             {}
         );
     }
+}
+
+
+//===============================================================
+// Rollback Validation Result
+//===============================================================
+
+export interface MenuSynchronizationRollbackValidation
+{
+    canRollback:boolean;
+
+    message:string;
 }

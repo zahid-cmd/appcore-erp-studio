@@ -4,6 +4,7 @@ import
 }
 from '@angular/router';
 
+
 export const settingsRoutes:
     Routes =
 [
@@ -17,6 +18,7 @@ export const settingsRoutes:
     //   • Activity/Page routes
     //===========================================================
 
+
     //===========================================================
     // Default
     //===========================================================
@@ -28,7 +30,6 @@ export const settingsRoutes:
 
         pathMatch:'full'
     },
-
     // AUTO-BEGIN : MNU-005-001
 
     //===========================================================

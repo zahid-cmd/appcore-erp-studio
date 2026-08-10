@@ -12,11 +12,13 @@ using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interface
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Infrastructure.Platform.Synchronization;
+
 
 //===============================================================
 // Submenu Backend Synchronization Engine
@@ -25,6 +27,7 @@ namespace AppCore.Infrastructure.Platform.Synchronization;
 public class SubmenuBackendSynchronizationEngine
     : ISubmenuBackendSynchronizationEngine
 {
+
     //===========================================================
     // Constructor
     //===========================================================
@@ -32,6 +35,8 @@ public class SubmenuBackendSynchronizationEngine
     public SubmenuBackendSynchronizationEngine()
     {
     }
+
+
 
     //===========================================================
     // Synchronize
@@ -42,12 +47,25 @@ public class SubmenuBackendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        ValidateSynchronization(synchronization);
+        ValidateSynchronization
+        (
+            synchronization
+        );
 
-        await PrepareBackendTargetAsync(synchronization);
 
-        return await CreateBackendStructureAsync(synchronization);
+        await PrepareBackendTargetAsync
+        (
+            synchronization
+        );
+
+
+        return await CreateBackendStructureAsync
+        (
+            synchronization
+        );
     }
+
+
 
     //===========================================================
     // Validate
@@ -58,12 +76,19 @@ public class SubmenuBackendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        if (synchronization == null)
+        if
+        (
+            synchronization == null
+        )
         {
-            throw new ArgumentNullException(
-                nameof(synchronization));
+            throw new ArgumentNullException
+            (
+                nameof(synchronization)
+            );
         }
     }
+
+
 
     //===========================================================
     // Backend Preparation
@@ -74,22 +99,48 @@ public class SubmenuBackendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        if (string.IsNullOrWhiteSpace(
-            synchronization.BackendSolution))
+        //=======================================================
+        // Validate Backend Solution
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.BackendSolution
+            )
+        )
         {
-            throw new InvalidOperationException(
-                "Backend solution path is not configured.");
+            throw new InvalidOperationException
+            (
+                "Backend solution path is not configured."
+            );
         }
 
-        if (!Directory.Exists(
-            synchronization.BackendSolution))
+
+        //=======================================================
+        // Validate Backend Solution Exists
+        //=======================================================
+
+        if
+        (
+            !Directory.Exists
+            (
+                synchronization.BackendSolution
+            )
+        )
         {
-            throw new DirectoryNotFoundException(
-                $"Backend solution was not found: {synchronization.BackendSolution}");
+            throw new DirectoryNotFoundException
+            (
+                $"Backend solution was not found: {synchronization.BackendSolution}"
+            );
         }
+
 
         await Task.CompletedTask;
     }
+
+
 
     //===========================================================
     // Create Backend Structure
@@ -101,6 +152,14 @@ public class SubmenuBackendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        //=======================================================
+        // Backend Folders
+        //=======================================================
+        //
+        // These are the explicitly configured folders.
+        //
+        //=======================================================
+
         var folders =
             new List<string>
             {
@@ -111,61 +170,210 @@ public class SubmenuBackendSynchronizationEngine
                 synchronization.BackendApplicationInterfacesFolder
             };
 
+
         folders =
             folders
-                .Where(x =>
-                    !string.IsNullOrWhiteSpace(x))
-                .Distinct(
-                    StringComparer.OrdinalIgnoreCase)
+                .Where
+                (
+                    x =>
+                        !string.IsNullOrWhiteSpace(x)
+                )
+                .Select
+                (
+                    Path.GetFullPath
+                )
+                .Distinct
+                (
+                    StringComparer.OrdinalIgnoreCase
+                )
                 .ToList();
 
-        if (folders.Count == 0)
+
+
+        //=======================================================
+        // Backend Files
+        //=======================================================
+        //
+        // EMPTY files only.
+        //
+        // No templates.
+        // No source code.
+        // No placeholder replacement.
+        //
+        //=======================================================
+
+        var files =
+            new List<string>
+            {
+                synchronization.BackendControllerFile,
+
+                synchronization.BackendSubMenuDtoFile,
+
+                synchronization.BackendCreateSubMenuDtoFile,
+
+                synchronization.BackendUpdateSubMenuDtoFile,
+
+                synchronization.BackendSubMenuDefaultsDtoFile,
+
+                synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+                synchronization.BackendSubMenuEntityFile,
+
+                synchronization.BackendSubMenuConfigurationFile,
+
+                synchronization.BackendSubMenuRepositoryFile
+            };
+
+
+        files =
+            files
+                .Where
+                (
+                    x =>
+                        !string.IsNullOrWhiteSpace(x)
+                )
+                .Select
+                (
+                    Path.GetFullPath
+                )
+                .Distinct
+                (
+                    StringComparer.OrdinalIgnoreCase
+                )
+                .ToList();
+
+
+
+        //=======================================================
+        // Validate Configuration
+        //=======================================================
+
+        if
+        (
+            folders.Count == 0
+            &&
+            files.Count == 0
+        )
         {
             return new SubmenuSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
+
 
                 Message =
-                    "No backend folder configuration was provided."
+                    "No backend folder or file configuration was provided."
             };
         }
 
-        var success = 0;
 
-        var failed = 0;
 
-        foreach (var folder in folders)
+        //=======================================================
+        // Operation Counters
+        //=======================================================
+
+        var totalOperations =
+            folders.Count +
+            files.Count;
+
+
+        var successfulOperations =
+            0;
+
+
+        var failedOperations =
+            0;
+
+
+
+        //=======================================================
+        // Create Folders
+        //=======================================================
+
+        foreach
+        (
+            var folder in folders
+        )
         {
             try
             {
-                await CreateFolderAsync(folder);
+                await CreateFolderAsync
+                (
+                    folder
+                );
 
-                success++;
+
+                successfulOperations++;
             }
             catch
             {
-                failed++;
+                failedOperations++;
             }
         }
 
+
+
+        //=======================================================
+        // Create Files
+        //=======================================================
+
+        foreach
+        (
+            var file in files
+        )
+        {
+            try
+            {
+                await CreateEmptyFileAsync
+                (
+                    file
+                );
+
+
+                successfulOperations++;
+            }
+            catch
+            {
+                failedOperations++;
+            }
+        }
+
+
+
+        //=======================================================
+        // Result
+        //=======================================================
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = failed == 0,
+            Success =
+                failedOperations == 0,
+
 
             Message =
-                failed == 0
-                    ? "Submenu backend folder synchronization completed successfully."
-                    : "One or more backend folders failed.",
+                failedOperations == 0
+                    ? "Submenu backend synchronization completed successfully."
+                    : "Submenu backend synchronization completed with errors.",
 
-            SynchronizedDate = DateTime.UtcNow,
 
-            TotalOperations = folders.Count,
+            SynchronizedDate =
+                DateTime.UtcNow,
 
-            SuccessfulOperations = success,
 
-            FailedOperations = failed
+            TotalOperations =
+                totalOperations,
+
+
+            SuccessfulOperations =
+                successfulOperations,
+
+
+            FailedOperations =
+                failedOperations
         };
     }
+
+
 
     //===========================================================
     // Create Folder
@@ -176,21 +384,163 @@ public class SubmenuBackendSynchronizationEngine
         string folderPath
     )
     {
-        if (string.IsNullOrWhiteSpace(folderPath))
+        //=======================================================
+        // Validate
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                folderPath
+            )
+        )
         {
             return;
         }
 
-        folderPath =
-            Path.GetFullPath(folderPath);
 
-        if (!Directory.Exists(folderPath))
+        //=======================================================
+        // Normalize
+        //=======================================================
+
+        folderPath =
+            Path.GetFullPath
+            (
+                folderPath
+            );
+
+
+        //=======================================================
+        // Create
+        //=======================================================
+
+        if
+        (
+            !Directory.Exists
+            (
+                folderPath
+            )
+        )
         {
-            Directory.CreateDirectory(folderPath);
+            Directory.CreateDirectory
+            (
+                folderPath
+            );
         }
+
 
         await Task.CompletedTask;
     }
+
+
+
+    //===========================================================
+    // Create Empty File
+    //===========================================================
+
+    private async Task CreateEmptyFileAsync
+    (
+        string filePath
+    )
+    {
+        //=======================================================
+        // Validate
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                filePath
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Normalize
+        //=======================================================
+
+        filePath =
+            Path.GetFullPath
+            (
+                filePath
+            );
+
+
+        //=======================================================
+        // Existing File
+        //=======================================================
+        //
+        // Never overwrite an existing file.
+        //
+        //=======================================================
+
+        if
+        (
+            File.Exists
+            (
+                filePath
+            )
+        )
+        {
+            await Task.CompletedTask;
+
+            return;
+        }
+
+
+        //=======================================================
+        // Create Parent Directory
+        //=======================================================
+
+        var parentDirectory =
+            Path.GetDirectoryName
+            (
+                filePath
+            );
+
+
+        if
+        (
+            !string.IsNullOrWhiteSpace
+            (
+                parentDirectory
+            )
+        )
+        {
+            if
+            (
+                !Directory.Exists
+                (
+                    parentDirectory
+                )
+            )
+            {
+                Directory.CreateDirectory
+                (
+                    parentDirectory
+                );
+            }
+        }
+
+
+        //=======================================================
+        // Create EMPTY File
+        //=======================================================
+
+        await File.WriteAllTextAsync
+        (
+            filePath,
+
+            string.Empty
+        );
+    }
+
+
 
     //===========================================================
     // Rollback
@@ -201,11 +551,19 @@ public class SubmenuBackendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        ValidateSynchronization(synchronization);
+        ValidateSynchronization
+        (
+            synchronization
+        );
 
-        return await DeleteBackendStructureAsync(
-            synchronization);
+
+        return await DeleteBackendStructureAsync
+        (
+            synchronization
+        );
     }
+
+
 
     //===========================================================
     // Delete Backend Structure
@@ -217,88 +575,400 @@ public class SubmenuBackendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        //=======================================================
+        // Backend Files
+        //=======================================================
+
+        var files =
+            new List<string>
+            {
+                synchronization.BackendControllerFile,
+
+                synchronization.BackendSubMenuDtoFile,
+
+                synchronization.BackendCreateSubMenuDtoFile,
+
+                synchronization.BackendUpdateSubMenuDtoFile,
+
+                synchronization.BackendSubMenuDefaultsDtoFile,
+
+                synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+                synchronization.BackendSubMenuEntityFile,
+
+                synchronization.BackendSubMenuConfigurationFile,
+
+                synchronization.BackendSubMenuRepositoryFile
+            };
+
+
+        files =
+            files
+                .Where
+                (
+                    x =>
+                        !string.IsNullOrWhiteSpace(x)
+                )
+                .Select
+                (
+                    Path.GetFullPath
+                )
+                .Distinct
+                (
+                    StringComparer.OrdinalIgnoreCase
+                )
+                .ToList();
+
+
+
+        //=======================================================
+        // Backend Folders
+        //=======================================================
+        //
+        // IMPORTANT:
+        //
+        // Deletion MUST happen from the deepest folder
+        // toward the parent folder.
+        //
+        // Structure:
+        //
+        // Submenu
+        //     |
+        //     +-- DTOs
+        //     |
+        //     +-- Interfaces
+        //
+        // Therefore:
+        //
+        // 1. DTOs
+        // 2. Interfaces
+        // 3. Submenu
+        //
+        // Otherwise the Submenu folder is still non-empty
+        // when it is checked and will remain behind.
+        //
+        //=======================================================
+
         var folders =
             new List<string>
             {
-                synchronization.BackendApplicationSubMenuFolder,
-
                 synchronization.BackendApplicationDtosFolder,
 
-                synchronization.BackendApplicationInterfacesFolder
+                synchronization.BackendApplicationInterfacesFolder,
+
+                synchronization.BackendApplicationSubMenuFolder
             };
+
 
         folders =
             folders
-                .Where(x =>
-                    !string.IsNullOrWhiteSpace(x))
-                .Distinct(
-                    StringComparer.OrdinalIgnoreCase)
+                .Where
+                (
+                    x =>
+                        !string.IsNullOrWhiteSpace(x)
+                )
+                .Select
+                (
+                    Path.GetFullPath
+                )
+                .Distinct
+                (
+                    StringComparer.OrdinalIgnoreCase
+                )
+                .OrderByDescending
+                (
+                    x =>
+                        x.Length
+                )
                 .ToList();
 
-        var success = 0;
 
-        var failed = 0;
 
-        foreach (var folder in folders)
+        //=======================================================
+        // Operation Counters
+        //=======================================================
+        //
+        // Files and folders are both rollback operations.
+        //
+        //=======================================================
+
+        var totalOperations =
+            files.Count +
+            folders.Count;
+
+
+        var successfulOperations =
+            0;
+
+
+        var failedOperations =
+            0;
+
+
+
+        //=======================================================
+        // Delete Files
+        //=======================================================
+
+        foreach
+        (
+            var file in files
+        )
         {
             try
             {
-                await DeleteFolderAsync(folder);
+                await DeleteFileAsync
+                (
+                    file
+                );
 
-                success++;
+
+                successfulOperations++;
             }
             catch
             {
-                failed++;
+                failedOperations++;
             }
         }
 
+
+
+        //=======================================================
+        // Remove Empty Folders
+        //=======================================================
+        //
+        // IMPORTANT:
+        //
+        // This is intentionally performed AFTER all files
+        // have been deleted.
+        //
+        // Folders are processed deepest-first.
+        //
+        // Existing parent folders are preserved because
+        // they will only be deleted when they are actually
+        // empty and are explicitly part of this submenu
+        // configuration.
+        //
+        //=======================================================
+
+        foreach
+        (
+            var folder in folders
+        )
+        {
+            try
+            {
+                var deleted =
+                    await DeleteEmptyFolderAsync
+                    (
+                        folder
+                    );
+
+
+                if
+                (
+                    deleted
+                )
+                {
+                    successfulOperations++;
+                }
+            }
+            catch
+            {
+                failedOperations++;
+            }
+        }
+
+
+
+        //=======================================================
+        // Result
+        //=======================================================
+
         return new SubmenuSynchronizationResultDto
         {
-            Success = failed == 0,
+            Success =
+                failedOperations == 0,
+
 
             Message =
-                failed == 0
+                failedOperations == 0
                     ? "Submenu backend rollback completed successfully."
-                    : "One or more folders could not be removed.",
+                    : "Submenu backend rollback completed with errors.",
 
-            SynchronizedDate = DateTime.UtcNow,
 
-            TotalOperations = folders.Count,
+            SynchronizedDate =
+                DateTime.UtcNow,
 
-            SuccessfulOperations = success,
 
-            FailedOperations = failed
+            TotalOperations =
+                totalOperations,
+
+
+            SuccessfulOperations =
+                successfulOperations,
+
+
+            FailedOperations =
+                failedOperations
         };
     }
 
+
+
     //===========================================================
-    // Delete Folder
+    // Delete File
     //===========================================================
 
-    private async Task DeleteFolderAsync
+    private async Task DeleteFileAsync
+    (
+        string filePath
+    )
+    {
+        //=======================================================
+        // Validate
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                filePath
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Normalize
+        //=======================================================
+
+        filePath =
+            Path.GetFullPath
+            (
+                filePath
+            );
+
+
+        //=======================================================
+        // File Does Not Exist
+        //=======================================================
+
+        if
+        (
+            !File.Exists
+            (
+                filePath
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Delete
+        //=======================================================
+
+        File.Delete
+        (
+            filePath
+        );
+
+
+        await Task.CompletedTask;
+    }
+
+
+
+    //===========================================================
+    // Delete Empty Folder
+    //===========================================================
+
+    private async Task<bool> DeleteEmptyFolderAsync
     (
         string folderPath
     )
     {
-        if (string.IsNullOrWhiteSpace(folderPath))
+        //=======================================================
+        // Validate
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                folderPath
+            )
+        )
         {
-            return;
+            return false;
         }
+
+
+        //=======================================================
+        // Normalize
+        //=======================================================
 
         folderPath =
-            Path.GetFullPath(folderPath);
+            Path.GetFullPath
+            (
+                folderPath
+            );
 
-        if (!Directory.Exists(folderPath))
+
+        //=======================================================
+        // Folder Does Not Exist
+        //=======================================================
+
+        if
+        (
+            !Directory.Exists
+            (
+                folderPath
+            )
+        )
         {
-            return;
+            return false;
         }
 
-        if (Directory.GetFileSystemEntries(folderPath).Length == 0)
+
+        //=======================================================
+        // Check Contents
+        //=======================================================
+
+        var entries =
+            Directory.GetFileSystemEntries
+            (
+                folderPath
+            );
+
+
+        //=======================================================
+        // Delete Only If Empty
+        //=======================================================
+
+        if
+        (
+            entries.Length != 0
+        )
         {
-            Directory.Delete(folderPath);
+            return false;
         }
+
+
+        Directory.Delete
+        (
+            folderPath
+        );
+
 
         await Task.CompletedTask;
+
+
+        return true;
     }
+
 }

@@ -4,9 +4,7 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using AppCore.Application.Platform.CommonInterfaces;
 using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
@@ -33,24 +31,8 @@ public class SubmenuFrontendSynchronizationEngine
     // Fields
     //===========================================================
 
-    private readonly ITemplateLoader
-        _templateLoader;
-
-
-    private readonly IPlaceholderEngine
-        _placeholderEngine;
-
-
-    private readonly IFileGenerator
-        _fileGenerator;
-
-
     private readonly IFileRemover
         _fileRemover;
-
-
-    private readonly IFileUpdater
-        _fileUpdater;
 
 
 
@@ -60,116 +42,11 @@ public class SubmenuFrontendSynchronizationEngine
 
     public SubmenuFrontendSynchronizationEngine
     (
-        ITemplateLoader templateLoader,
-
-        IPlaceholderEngine placeholderEngine,
-
-        IFileGenerator fileGenerator,
-
-        IFileUpdater fileUpdater,
-
         IFileRemover fileRemover
     )
     {
-        _templateLoader =
-            templateLoader;
-
-
-        _placeholderEngine =
-            placeholderEngine;
-
-
-        _fileGenerator =
-            fileGenerator;
-
-
-        _fileUpdater =
-            fileUpdater;
-
-
         _fileRemover =
             fileRemover;
-    }
-
-
-
-    //===========================================================
-    // Create Typescript Variable Name
-    //===========================================================
-
-    private static string CreateTypescriptVariableName
-    (
-        string value
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(value)
-        )
-        {
-            return string.Empty;
-        }
-
-
-        var parts =
-            value.Split
-            (
-                '-',
-                StringSplitOptions.RemoveEmptyEntries
-            );
-
-
-        var result =
-            string.Empty;
-
-
-        foreach
-        (
-            var part in parts
-        )
-        {
-            var cleaned =
-                new string
-                (
-                    part
-                    .Where(char.IsLetterOrDigit)
-                    .ToArray()
-                );
-
-
-            if
-            (
-                string.IsNullOrWhiteSpace(cleaned)
-            )
-            {
-                continue;
-            }
-
-
-            if
-            (
-                result.Length == 0
-            )
-            {
-                result =
-                    cleaned.ToLowerInvariant();
-            }
-            else
-            {
-                result +=
-                    char.ToUpperInvariant
-                    (
-                        cleaned[0]
-                    )
-                    +
-                    cleaned
-                    .Substring(1)
-                    .ToLowerInvariant();
-            }
-        }
-
-
-        return result;
     }
 
 
@@ -189,19 +66,10 @@ public class SubmenuFrontendSynchronizationEngine
         );
 
 
-        await CreateFrontendStructureAsync
+        return await CreateFrontendStructureAsync
         (
             synchronization
         );
-
-
-        return new SubmenuSynchronizationResultDto
-        {
-            Success = true,
-
-            Message =
-                "Submenu frontend synchronization completed successfully."
-        };
     }
 
 
@@ -215,6 +83,26 @@ public class SubmenuFrontendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        //=======================================================
+        // Validate Synchronization
+        //=======================================================
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            throw new ArgumentNullException
+            (
+                nameof(synchronization)
+            );
+        }
+
+
+        //=======================================================
+        // Validate Frontend Solution
+        //=======================================================
+
         if
         (
             string.IsNullOrWhiteSpace
@@ -229,6 +117,10 @@ public class SubmenuFrontendSynchronizationEngine
             );
         }
 
+
+        //=======================================================
+        // Validate Frontend Solution Exists
+        //=======================================================
 
         if
         (
@@ -254,13 +146,37 @@ public class SubmenuFrontendSynchronizationEngine
     // Create Frontend Structure
     //===========================================================
 
-    private async Task CreateFrontendStructureAsync
+    private async Task<SubmenuSynchronizationResultDto>
+    CreateFrontendStructureAsync
     (
         SubmenuSynchronizationDto synchronization
     )
     {
+        var totalOperations =
+            0;
+
+
+        var successfulOperations =
+            0;
+
+
+        var failedOperations =
+            0;
+
+
+
         //=======================================================
         // Create Submenu Folder
+        //=======================================================
+        //
+        // Existing Menu
+        //     |
+        //     +-- pages
+        //          |
+        //          +-- <submenu>
+        //
+        // The existing pages folder is NEVER created.
+        //
         //=======================================================
 
         await CreateFolderAsync
@@ -268,15 +184,6 @@ public class SubmenuFrontendSynchronizationEngine
             synchronization.FrontendSubmenuFolder
         );
 
-
-        //=======================================================
-        // Create Pages Folder
-        //=======================================================
-
-        await CreateFolderAsync
-        (
-            synchronization.FrontendPagesFolder
-        );
 
 
         //=======================================================
@@ -289,6 +196,7 @@ public class SubmenuFrontendSynchronizationEngine
         );
 
 
+
         //=======================================================
         // Create List Folder
         //=======================================================
@@ -299,606 +207,512 @@ public class SubmenuFrontendSynchronizationEngine
         );
 
 
-        //=======================================================
-        // Generate Model File
-        //=======================================================
-
-        await GenerateSubmenuModelFileAsync
-        (
-            synchronization
-        );
-
 
         //=======================================================
-        // Generate Service File
+        // Create Model File
+        //=======================================================
+        //
+        // Existing Menu
+        //     |
+        //     +-- models
+        //          |
+        //          +-- <submenu>.model.ts
+        //
+        // IMPORTANT:
+        //
+        // The "models" folder belongs to the existing Menu.
+        //
+        // This engine NEVER creates the models folder.
+        //
+        // The folder must already exist.
+        //
+        // EMPTY FILE ONLY.
+        //
         //=======================================================
 
-        await GenerateSubmenuServiceFileAsync
-        (
-            synchronization
-        );
-
-
-        //=======================================================
-        // Generate Submenu Route File
-        //=======================================================
-
-        await GenerateSubmenuRouteFileAsync
-        (
-            synchronization
-        );
-
-
-        //=======================================================
-        // Register Submenu Into Existing Menu Route
-        //=======================================================
-
-        await RegisterSubmenuMenuRouteAsync
-        (
-            synchronization
-        );
-
-
-        //=======================================================
-        // Generate Form Files
-        //=======================================================
-
-        await GenerateSubmenuFormFilesAsync
-        (
-            synchronization
-        );
-
-
-        //=======================================================
-        // Generate List Files
-        //=======================================================
-
-        await GenerateSubmenuListFilesAsync
-        (
-            synchronization
-        );
-    }
-
-
-
-    //===========================================================
-    // Generate Submenu Model File
-    //===========================================================
-
-    private async Task GenerateSubmenuModelFileAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                synchronization.FrontendSubmenuModelFile
-            )
-        )
-        {
-            return;
-        }
-
-
-        if
-        (
-            File.Exists
-            (
-                synchronization.FrontendSubmenuModelFile
-            )
-        )
-        {
-            return;
-        }
-
-
-        var template =
-            await _templateLoader.LoadTemplateAsync
-            (
-                "Templates/Frontend/Submenu/SubmenuModel.tpl"
-            );
-
-
-        var submenuVariable =
-            CreateTypescriptVariableName
-            (
-                synchronization.SubmenuCode
-            );
-
-
-        var content =
-            _placeholderEngine.Replace
-            (
-                template,
-
-                new Dictionary<string, string>
-                {
-                    {
-                        "{{SubmenuCode}}",
-                        synchronization.SubmenuCode
-                    },
-
-                    {
-                        "{{SubmenuVariable}}",
-                        submenuVariable
-                    },
-
-                    {
-                        "{{SubmenuName}}",
-                        synchronization.SubmenuName
-                    }
-                }
-            );
-
-
-        await _fileGenerator.GenerateAsync
+        await CreateEmptyFileAsync
         (
             synchronization.FrontendSubmenuModelFile,
 
-            content
+            true,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
         );
-    }
 
 
 
-    //===========================================================
-    // Generate Submenu Service File
-    //===========================================================
+        //=======================================================
+        // Create Service File
+        //=======================================================
+        //
+        // Existing Menu
+        //     |
+        //     +-- services
+        //          |
+        //          +-- <submenu>.service.ts
+        //
+        // IMPORTANT:
+        //
+        // The "services" folder belongs to the existing Menu.
+        //
+        // This engine NEVER creates the services folder.
+        //
+        // The folder must already exist.
+        //
+        // EMPTY FILE ONLY.
+        //
+        //=======================================================
 
-    private async Task GenerateSubmenuServiceFileAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                synchronization.FrontendSubmenuServiceFile
-            )
-        )
-        {
-            return;
-        }
-
-
-        if
-        (
-            File.Exists
-            (
-                synchronization.FrontendSubmenuServiceFile
-            )
-        )
-        {
-            return;
-        }
-
-
-        var template =
-            await _templateLoader.LoadTemplateAsync
-            (
-                "Templates/Frontend/Submenu/SubmenuService.tpl"
-            );
-
-
-        var submenuVariable =
-            CreateTypescriptVariableName
-            (
-                synchronization.SubmenuCode
-            );
-
-
-        var content =
-            _placeholderEngine.Replace
-            (
-                template,
-
-                new Dictionary<string, string>
-                {
-                    {
-                        "{{SubmenuCode}}",
-                        synchronization.SubmenuCode
-                    },
-
-                    {
-                        "{{SubmenuVariable}}",
-                        submenuVariable
-                    },
-
-                    {
-                        "{{SubmenuName}}",
-                        synchronization.SubmenuName
-                    }
-                }
-            );
-
-
-        await _fileGenerator.GenerateAsync
+        await CreateEmptyFileAsync
         (
             synchronization.FrontendSubmenuServiceFile,
 
-            content
+            true,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
         );
+
+
+
+        //=======================================================
+        // Create Route File
+        //=======================================================
+        //
+        // Existing Menu
+        //     |
+        //     +-- routes
+        //          |
+        //          +-- <submenu>.routes.ts
+        //
+        // IMPORTANT:
+        //
+        // The "routes" folder belongs to the existing Menu.
+        //
+        // This engine NEVER creates the routes folder.
+        //
+        // The folder must already exist.
+        //
+        // EMPTY FILE ONLY.
+        //
+        // This engine does NOT modify the existing Menu route.
+        //
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuRouteFile,
+
+            true,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Create Form TypeScript File
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuFormTsFile,
+
+            false,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Create Form HTML File
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuFormHtmlFile,
+
+            false,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Create Form CSS File
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuFormCssFile,
+
+            false,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Create List TypeScript File
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuListTsFile,
+
+            false,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Create List HTML File
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuListHtmlFile,
+
+            false,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Create List CSS File
+        //=======================================================
+
+        await CreateEmptyFileAsync
+        (
+            synchronization.FrontendSubmenuListCssFile,
+
+            false,
+
+            () =>
+            {
+                totalOperations++;
+
+                successfulOperations++;
+            },
+
+            () =>
+            {
+                failedOperations++;
+            }
+        );
+
+
+
+        //=======================================================
+        // Result
+        //=======================================================
+
+        return new SubmenuSynchronizationResultDto
+        {
+            Success =
+                failedOperations == 0,
+
+
+            Message =
+                failedOperations == 0
+                    ? "Submenu frontend synchronization completed successfully."
+                    : "Submenu frontend synchronization completed with errors.",
+
+
+            SynchronizedDate =
+                DateTime.UtcNow,
+
+
+            TotalOperations =
+                totalOperations,
+
+
+            SuccessfulOperations =
+                successfulOperations,
+
+
+            FailedOperations =
+                failedOperations
+        };
     }
 
 
 
     //===========================================================
-    // Generate Submenu Route File
+    // Create Empty File
     //===========================================================
 
-    private async Task GenerateSubmenuRouteFileAsync
+    private async Task CreateEmptyFileAsync
     (
-        SubmenuSynchronizationDto synchronization
+        string filePath,
+
+        bool parentDirectoryMustExist,
+
+        Action onSuccess,
+
+        Action onFailure
     )
     {
+        //=======================================================
+        // Validate Path
+        //=======================================================
+
         if
         (
             string.IsNullOrWhiteSpace
             (
-                synchronization.FrontendSubmenuRouteFile
+                filePath
             )
         )
         {
             return;
         }
 
+
+        //=======================================================
+        // Normalize Path
+        //=======================================================
+
+        filePath =
+            Path.GetFullPath
+            (
+                filePath
+            );
+
+
+        //=======================================================
+        // Existing File
+        //=======================================================
+        //
+        // Never overwrite an existing file.
+        //
+        //=======================================================
 
         if
         (
             File.Exists
             (
-                synchronization.FrontendSubmenuRouteFile
+                filePath
             )
         )
         {
+            onSuccess();
+
+            await Task.CompletedTask;
+
             return;
         }
 
 
-        var template =
-            await _templateLoader.LoadTemplateAsync
+        try
+        {
+            //===================================================
+            // Resolve Parent Directory
+            //===================================================
+
+            var parentDirectory =
+                Path.GetDirectoryName
+                (
+                    filePath
+                );
+
+
+            //===================================================
+            // Validate Parent Directory
+            //===================================================
+
+            if
             (
-                "Templates/Frontend/Route/SubmenuRoute.tpl"
-            );
-
-
-        var submenuVariable =
-            CreateTypescriptVariableName
-            (
-                synchronization.SubmenuCode
-            );
-
-
-        var content =
-            _placeholderEngine.Replace
-            (
-                template,
-
-                new Dictionary<string, string>
-                {
-                    {
-                        "{{SubmenuCode}}",
-                        synchronization.SubmenuCode
-                    },
-
-                    {
-                        "{{SubmenuVariable}}",
-                        submenuVariable
-                    },
-
-                    {
-                        "{{SubmenuName}}",
-                        synchronization.SubmenuName
-                    }
-                }
-            );
-
-
-        await _fileGenerator.GenerateAsync
-        (
-            synchronization.FrontendSubmenuRouteFile,
-
-            content
-        );
-    }
-
-
-
-    //===========================================================
-    // Register Submenu Into Existing Menu Route
-    //===========================================================
-
-    private async Task RegisterSubmenuMenuRouteAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                synchronization.FrontendMenuRouteFile
+                parentDirectoryMustExist
+                &&
+                (
+                    string.IsNullOrWhiteSpace
+                    (
+                        parentDirectory
+                    )
+                    ||
+                    !Directory.Exists
+                    (
+                        parentDirectory
+                    )
+                )
             )
-        )
-        {
-            return;
-        }
+            {
+                throw new DirectoryNotFoundException
+                (
+                    $"Required existing frontend folder was not found: {parentDirectory}"
+                );
+            }
 
 
-        if
-        (
-            !File.Exists
+            //===================================================
+            // Create Parent Directory
+            //===================================================
+            //
+            // Only files belonging to newly-created submenu
+            // folders are allowed to create their parent.
+            //
+            // Existing Menu folders such as:
+            //
+            // models
+            // services
+            // routes
+            //
+            // are NEVER created here.
+            //
+            //===================================================
+
+            if
             (
-                synchronization.FrontendMenuRouteFile
+                !parentDirectoryMustExist
+                &&
+                !string.IsNullOrWhiteSpace
+                (
+                    parentDirectory
+                )
+                &&
+                !Directory.Exists
+                (
+                    parentDirectory
+                )
             )
-        )
-        {
-            return;
-        }
+            {
+                Directory.CreateDirectory
+                (
+                    parentDirectory
+                );
+            }
 
 
-        var template =
-            await _templateLoader.LoadTemplateAsync
+            //===================================================
+            // Create EMPTY File
+            //===================================================
+            //
+            // No template.
+            // No code.
+            // No placeholder replacement.
+            //
+            //===================================================
+
+            await File.WriteAllTextAsync
             (
-                "Templates/Frontend/Route/SubmenuMenuRouteRegistration.tpl"
+                filePath,
+
+                string.Empty
             );
 
 
-        var submenuRoutePath =
-            new DirectoryInfo
+            //===================================================
+            // Confirm File Created
+            //===================================================
+
+            if
             (
-                synchronization.FrontendSubmenuFolder
+                File.Exists
+                (
+                    filePath
+                )
             )
-            .Name;
-
-
-        var submenuRouteFile =
-            Path.GetFileNameWithoutExtension
-            (
-                synchronization.FrontendSubmenuRouteFile
-            );
-
-
-        var submenuRouteImport =
-            "../"
-            +
-            submenuRoutePath
-            +
-            "/routes/"
-            +
-            submenuRouteFile;
-
-
-        var submenuVariable =
-            CreateTypescriptVariableName
-            (
-                synchronization.SubmenuCode
-            );
-
-
-        var content =
-            _placeholderEngine.Replace
-            (
-                template,
-
-                new Dictionary<string, string>
-                {
-                    {
-                        "{{SubmenuCode}}",
-                        synchronization.SubmenuCode
-                    },
-
-                    {
-                        "{{SubmenuName}}",
-                        synchronization.SubmenuName
-                    },
-
-                    {
-                        "{{SubmenuRoutePath}}",
-                        submenuRoutePath
-                    },
-
-                    {
-                        "{{SubmenuRouteFile}}",
-                        submenuRouteFile
-                    },
-
-                    {
-                        "{{SubmenuRouteImport}}",
-                        submenuRouteImport
-                    },
-
-                    {
-                        "{{SubmenuVariable}}",
-                        submenuVariable
-                    }
-                }
-            );
-
-
-        await _fileUpdater.InsertManagedBlockAsync
-        (
-            synchronization.FrontendMenuRouteFile,
-
-            "Menu Routes",
-
-            content
-        );
-    }
-
-
-
-    //===========================================================
-    // Generate Submenu Form Files
-    //===========================================================
-
-    private async Task GenerateSubmenuFormFilesAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        await GenerateFileAsync
-        (
-            synchronization.FrontendSubmenuFormTsFile,
-
-            "Templates/Frontend/Submenu/SubmenuForm.ts.tpl",
-
-            synchronization
-        );
-
-
-        await GenerateFileAsync
-        (
-            synchronization.FrontendSubmenuFormHtmlFile,
-
-            "Templates/Frontend/Submenu/SubmenuForm.html.tpl",
-
-            synchronization
-        );
-
-
-        await GenerateFileAsync
-        (
-            synchronization.FrontendSubmenuFormCssFile,
-
-            "Templates/Frontend/Submenu/SubmenuForm.css.tpl",
-
-            synchronization
-        );
-    }
-
-
-
-    //===========================================================
-    // Generate Submenu List Files
-    //===========================================================
-
-    private async Task GenerateSubmenuListFilesAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        await GenerateFileAsync
-        (
-            synchronization.FrontendSubmenuListTsFile,
-
-            "Templates/Frontend/Submenu/SubmenuList.ts.tpl",
-
-            synchronization
-        );
-
-
-        await GenerateFileAsync
-        (
-            synchronization.FrontendSubmenuListHtmlFile,
-
-            "Templates/Frontend/Submenu/SubmenuList.html.tpl",
-
-            synchronization
-        );
-
-
-        await GenerateFileAsync
-        (
-            synchronization.FrontendSubmenuListCssFile,
-
-            "Templates/Frontend/Submenu/SubmenuList.css.tpl",
-
-            synchronization
-        );
-    }
-
-
-
-    //===========================================================
-    // Generate File
-    //===========================================================
-
-    private async Task GenerateFileAsync
-    (
-        string filePath,
-
-        string templatePath,
-
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(filePath)
-        )
-        {
-            return;
+            {
+                onSuccess();
+            }
+            else
+            {
+                onFailure();
+            }
         }
-
-
-        if
-        (
-            File.Exists(filePath)
-        )
+        catch
         {
-            return;
+            onFailure();
+
+            throw;
         }
-
-
-        var template =
-            await _templateLoader.LoadTemplateAsync
-            (
-                templatePath
-            );
-
-
-        var submenuVariable =
-            CreateTypescriptVariableName
-            (
-                synchronization.SubmenuCode
-            );
-
-
-        var content =
-            _placeholderEngine.Replace
-            (
-                template,
-
-                new Dictionary<string, string>
-                {
-                    {
-                        "{{SubmenuCode}}",
-                        synchronization.SubmenuCode
-                    },
-
-                    {
-                        "{{SubmenuName}}",
-                        synchronization.SubmenuName
-                    },
-
-                    {
-                        "{{SubmenuVariable}}",
-                        submenuVariable
-                    },
-
-                    {
-                        "{{MenuCode}}",
-                        synchronization.MenuCode
-                    },
-
-                    {
-                        "{{MenuName}}",
-                        synchronization.MenuName
-                    }
-                }
-            );
-
-
-        await _fileGenerator.GenerateAsync
-        (
-            filePath,
-
-            content
-        );
     }
 
 
@@ -912,6 +726,18 @@ public class SubmenuFrontendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        if
+        (
+            synchronization == null
+        )
+        {
+            throw new ArgumentNullException
+            (
+                nameof(synchronization)
+            );
+        }
+
+
         await DeleteFrontendStructureAsync
         (
             synchronization
@@ -920,10 +746,16 @@ public class SubmenuFrontendSynchronizationEngine
 
         return new SubmenuSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
+
 
             Message =
-                "Submenu frontend rollback completed successfully."
+                "Submenu frontend rollback completed successfully.",
+
+
+            SynchronizedDate =
+                DateTime.UtcNow
         };
     }
 
@@ -939,17 +771,87 @@ public class SubmenuFrontendSynchronizationEngine
     )
     {
         //=======================================================
-        // Remove Submenu Registration From Menu Route
+        // Delete Form TypeScript File
         //=======================================================
 
-        await UnregisterSubmenuMenuRouteAsync
+        await DeleteFileAsync
         (
-            synchronization
+            synchronization.FrontendSubmenuFormTsFile
         );
 
 
         //=======================================================
-        // Delete Submenu Route File
+        // Delete Form HTML File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuFormHtmlFile
+        );
+
+
+        //=======================================================
+        // Delete Form CSS File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuFormCssFile
+        );
+
+
+        //=======================================================
+        // Delete List TypeScript File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuListTsFile
+        );
+
+
+        //=======================================================
+        // Delete List HTML File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuListHtmlFile
+        );
+
+
+        //=======================================================
+        // Delete List CSS File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuListCssFile
+        );
+
+
+        //=======================================================
+        // Delete Model File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuModelFile
+        );
+
+
+        //=======================================================
+        // Delete Service File
+        //=======================================================
+
+        await DeleteFileAsync
+        (
+            synchronization.FrontendSubmenuServiceFile
+        );
+
+
+        //=======================================================
+        // Delete Route File
         //=======================================================
 
         await DeleteFileAsync
@@ -959,88 +861,53 @@ public class SubmenuFrontendSynchronizationEngine
 
 
         //=======================================================
-        // Delete List Folder
+        // Remove Empty Form Folder
         //=======================================================
 
-        await DeleteFolderAsync
-        (
-            synchronization.FrontendListFolder
-        );
-
-
-        //=======================================================
-        // Delete Form Folder
-        //=======================================================
-
-        await DeleteFolderAsync
+        await DeleteEmptyFolderAsync
         (
             synchronization.FrontendFormFolder
         );
 
 
         //=======================================================
-        // Delete Pages Folder
+        // Remove Empty List Folder
         //=======================================================
 
-        await DeleteFolderAsync
+        await DeleteEmptyFolderAsync
         (
-            synchronization.FrontendPagesFolder
+            synchronization.FrontendListFolder
         );
 
 
         //=======================================================
-        // Delete Submenu Folder
+        // Remove Empty Submenu Folder
+        //=======================================================
+        //
+        // Only pages/<submenu> is eligible.
+        //
+        // FrontendPagesFolder is NEVER deleted.
+        //
         //=======================================================
 
-        await DeleteFolderAsync
+        await DeleteEmptyFolderAsync
         (
             synchronization.FrontendSubmenuFolder
         );
-    }
 
 
-
-    //===========================================================
-    // Unregister Submenu From Existing Menu Route
-    //===========================================================
-
-    private async Task UnregisterSubmenuMenuRouteAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                synchronization.FrontendMenuRouteFile
-            )
-        )
-        {
-            return;
-        }
-
-
-        if
-        (
-            !File.Exists
-            (
-                synchronization.FrontendMenuRouteFile
-            )
-        )
-        {
-            return;
-        }
-
-
-        await _fileRemover.RemoveManagedBlockAsync
-        (
-            synchronization.FrontendMenuRouteFile,
-
-            $"// AUTO-BEGIN : {synchronization.SubmenuCode}",
-
-            $"// AUTO-END : {synchronization.SubmenuCode}"
-        );
+        //=======================================================
+        // IMPORTANT
+        //=======================================================
+        //
+        // These existing folders are NEVER deleted:
+        //
+        // FrontendPagesFolder
+        // Existing Menu/models
+        // Existing Menu/services
+        // Existing Menu/routes
+        //
+        //=======================================================
     }
 
 
@@ -1054,23 +921,52 @@ public class SubmenuFrontendSynchronizationEngine
         string filePath
     )
     {
+        //=======================================================
+        // Validate Path
+        //=======================================================
+
         if
         (
-            string.IsNullOrWhiteSpace(filePath)
+            string.IsNullOrWhiteSpace
+            (
+                filePath
+            )
         )
         {
             return;
         }
 
 
+        //=======================================================
+        // Normalize Path
+        //=======================================================
+
+        filePath =
+            Path.GetFullPath
+            (
+                filePath
+            );
+
+
+        //=======================================================
+        // File Exists
+        //=======================================================
+
         if
         (
-            !File.Exists(filePath)
+            !File.Exists
+            (
+                filePath
+            )
         )
         {
             return;
         }
 
+
+        //=======================================================
+        // Delete
+        //=======================================================
 
         await _fileRemover.DeleteFileAsync
         (
@@ -1089,14 +985,25 @@ public class SubmenuFrontendSynchronizationEngine
         string folderPath
     )
     {
+        //=======================================================
+        // Validate Path
+        //=======================================================
+
         if
         (
-            string.IsNullOrWhiteSpace(folderPath)
+            string.IsNullOrWhiteSpace
+            (
+                folderPath
+            )
         )
         {
             return;
         }
 
+
+        //=======================================================
+        // Normalize Path
+        //=======================================================
 
         folderPath =
             Path.GetFullPath
@@ -1104,6 +1011,10 @@ public class SubmenuFrontendSynchronizationEngine
                 folderPath
             );
 
+
+        //=======================================================
+        // Create Folder
+        //=======================================================
 
         if
         (
@@ -1126,22 +1037,33 @@ public class SubmenuFrontendSynchronizationEngine
 
 
     //===========================================================
-    // Delete Folder
+    // Delete Empty Folder
     //===========================================================
 
-    private async Task DeleteFolderAsync
+    private async Task DeleteEmptyFolderAsync
     (
         string folderPath
     )
     {
+        //=======================================================
+        // Validate Path
+        //=======================================================
+
         if
         (
-            string.IsNullOrWhiteSpace(folderPath)
+            string.IsNullOrWhiteSpace
+            (
+                folderPath
+            )
         )
         {
             return;
         }
 
+
+        //=======================================================
+        // Normalize Path
+        //=======================================================
 
         folderPath =
             Path.GetFullPath
@@ -1149,6 +1071,10 @@ public class SubmenuFrontendSynchronizationEngine
                 folderPath
             );
 
+
+        //=======================================================
+        // Folder Exists
+        //=======================================================
 
         if
         (
@@ -1162,44 +1088,31 @@ public class SubmenuFrontendSynchronizationEngine
         }
 
 
-        foreach
-        (
-            var file
-            in Directory.GetFiles
+        //=======================================================
+        // Check Contents
+        //=======================================================
+
+        var entries =
+            Directory.GetFileSystemEntries
             (
                 folderPath
-            )
-        )
-        {
-            File.Delete
-            (
-                file
             );
-        }
 
 
-        foreach
+        //=======================================================
+        // Delete Only If Empty
+        //=======================================================
+
+        if
         (
-            var directory
-            in Directory.GetDirectories
-            (
-                folderPath
-            )
+            entries.Length == 0
         )
         {
             Directory.Delete
             (
-                directory,
-
-                true
+                folderPath
             );
         }
-
-
-        Directory.Delete
-        (
-            folderPath
-        );
 
 
         await Task.CompletedTask;

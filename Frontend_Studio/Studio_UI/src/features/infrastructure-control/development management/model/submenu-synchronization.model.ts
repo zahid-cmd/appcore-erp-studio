@@ -64,8 +64,6 @@ export interface SubmenuSynchronization
 
     frontendSubmenuFolder:string;
 
-    frontendPagesFolder:string;
-
     frontendFormFolder:string;
 
     frontendListFolder:string;

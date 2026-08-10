@@ -4,22 +4,24 @@
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
 
+
 //===============================================================
 // Submenu Synchronization DTO
 //===============================================================
 
 public class SubmenuSynchronizationDto
 {
-//===========================================================
-// Primary Key
-//===========================================================
+
+    //===========================================================
+    // Primary Key
+    //===========================================================
 
     public long Id { get; set; }
 
 
-//===========================================================
-// Navigation
-//===========================================================
+    //===========================================================
+    // Navigation
+    //===========================================================
 
     public long ModuleId { get; set; }
 
@@ -42,16 +44,16 @@ public class SubmenuSynchronizationDto
     public string SubmenuName { get; set; } = string.Empty;
 
 
-//===========================================================
-// Synchronization Type
-//===========================================================
+    //===========================================================
+    // Synchronization Type
+    //===========================================================
 
     public string SynchronizationType { get; set; } = string.Empty;
 
 
-//===========================================================
-// Frontend Target Location
-//===========================================================
+    //===========================================================
+    // Frontend Target Location
+    //===========================================================
 
     public string FrontendSolution { get; set; } = string.Empty;
 
@@ -64,29 +66,27 @@ public class SubmenuSynchronizationDto
     public string FrontendMenuFolder { get; set; } = string.Empty;
 
 
-//===========================================================
-// Frontend Menu Route
-//===========================================================
+    //===========================================================
+    // Frontend Menu Route
+    //===========================================================
 
     public string FrontendMenuRouteFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Frontend Submenu Location
-//===========================================================
+    //===========================================================
+    // Frontend Submenu Location
+    //===========================================================
 
     public string FrontendSubmenuFolder { get; set; } = string.Empty;
-
-    public string FrontendPagesFolder { get; set; } = string.Empty;
 
     public string FrontendFormFolder { get; set; } = string.Empty;
 
     public string FrontendListFolder { get; set; } = string.Empty;
 
 
-//===========================================================
-// Frontend Submenu Core Files
-//===========================================================
+    //===========================================================
+    // Frontend Submenu Core Files
+    //===========================================================
 
     public string FrontendSubmenuModelFile { get; set; } = string.Empty;
 
@@ -95,9 +95,9 @@ public class SubmenuSynchronizationDto
     public string FrontendSubmenuRouteFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Frontend Submenu Page Files
-//===========================================================
+    //===========================================================
+    // Frontend Submenu Page Files
+    //===========================================================
 
     public string FrontendSubmenuFormTsFile { get; set; } = string.Empty;
 
@@ -113,9 +113,9 @@ public class SubmenuSynchronizationDto
     public string FrontendSubmenuListCssFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Backend Target Location
-//===========================================================
+    //===========================================================
+    // Backend Target Location
+    //===========================================================
 
     public string BackendSolution { get; set; } = string.Empty;
 
@@ -126,16 +126,16 @@ public class SubmenuSynchronizationDto
     public string BackendInfrastructureProject { get; set; } = string.Empty;
 
 
-//===========================================================
-// Backend API
-//===========================================================
+    //===========================================================
+    // Backend API
+    //===========================================================
 
     public string BackendControllerFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Backend Application
-//===========================================================
+    //===========================================================
+    // Backend Application
+    //===========================================================
 
     public string BackendApplicationSubMenuFolder { get; set; } = string.Empty;
 
@@ -155,39 +155,39 @@ public class SubmenuSynchronizationDto
     public string BackendSubMenuRepositoryInterfaceFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Backend Domain
-//===========================================================
+    //===========================================================
+    // Backend Domain
+    //===========================================================
 
     public string BackendSubMenuEntityFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Backend Infrastructure
-//===========================================================
+    //===========================================================
+    // Backend Infrastructure
+    //===========================================================
 
     public string BackendSubMenuConfigurationFile { get; set; } = string.Empty;
 
     public string BackendSubMenuRepositoryFile { get; set; } = string.Empty;
 
 
-//===========================================================
-// Synchronization
-//===========================================================
+    //===========================================================
+    // Synchronization
+    //===========================================================
 
     public string Status { get; set; } = "Pending";
 
 
-//===========================================================
-// Configuration
-//===========================================================
+    //===========================================================
+    // Configuration
+    //===========================================================
 
     public string? Remarks { get; set; }
 
 
-//===========================================================
-// Last Synchronization
-//===========================================================
+    //===========================================================
+    // Last Synchronization
+    //===========================================================
 
     public long? LastSynchronizedBy { get; set; }
 
@@ -196,16 +196,17 @@ public class SubmenuSynchronizationDto
     public string LastSynchronizationResult { get; set; } = string.Empty;
 
 
-//===========================================================
-// Status
-//===========================================================
+    //===========================================================
+    // Status
+    //===========================================================
 
     public bool IsActive { get; set; } = true;
 
 
-//===========================================================
-// Audit
-//===========================================================
+    //===========================================================
+    // Audit
+    //===========================================================
 
     public DateTime CreatedDate { get; set; }
+
 }

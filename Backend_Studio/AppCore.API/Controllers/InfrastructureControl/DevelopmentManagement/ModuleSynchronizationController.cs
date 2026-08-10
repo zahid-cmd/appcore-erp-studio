@@ -24,16 +24,25 @@ namespace AppCore.Api.Controllers.InfrastructureControl.DevelopmentManagement;
 //===============================================================
 
 [ApiController]
-[Route("api/infrastructure-control/development-management/module-synchronization")]
-public class ModuleSynchronizationController : ControllerBase
+
+[Route(
+    "api/infrastructure-control/development-management/module-synchronization"
+)]
+
+public class ModuleSynchronizationController
+    : ControllerBase
 {
     //===========================================================
     // Fields
     //===========================================================
 
-    private readonly IModuleSynchronizationRepository _repository;
+    private readonly IModuleSynchronizationRepository
+        _repository;
 
-    private readonly IActivityHistoryRepository _activityHistoryRepository;
+
+    private readonly IActivityHistoryRepository
+        _activityHistoryRepository;
+
 
 
     //===========================================================
@@ -43,15 +52,18 @@ public class ModuleSynchronizationController : ControllerBase
     public ModuleSynchronizationController
     (
         IModuleSynchronizationRepository repository,
+
         IActivityHistoryRepository activityHistoryRepository
     )
     {
         _repository =
             repository;
 
+
         _activityHistoryRepository =
             activityHistoryRepository;
     }
+
 
 
     //===========================================================
@@ -59,15 +71,22 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("defaults")]
-    public async Task<ActionResult<ModuleSynchronizationDefaultsDto>> GetDefaults
+
+    public async Task<ActionResult<ModuleSynchronizationDefaultsDto>>
+        GetDefaults
     (
         [FromQuery] string type
     )
     {
-        return Ok(
-            await _repository.GetDefaultsAsync(type)
+        return Ok
+        (
+            await _repository.GetDefaultsAsync
+            (
+                type
+            )
         );
     }
+
 
 
     //===========================================================
@@ -75,7 +94,9 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("analyze/{moduleId:long}")]
-    public async Task<ActionResult<ModuleSynchronizationDto>> Analyze
+
+    public async Task<ActionResult<ModuleSynchronizationDto>>
+        Analyze
     (
         long moduleId,
 
@@ -83,79 +104,218 @@ public class ModuleSynchronizationController : ControllerBase
     )
     {
         var result =
-            await _repository.AnalyzeAsync(
+            await _repository.AnalyzeAsync
+            (
                 moduleId,
+
                 type
             );
 
-        if (result == null)
+
+        if
+        (
+            result == null
+        )
         {
             return NotFound();
         }
 
-        return Ok(result);
+
+        return Ok
+        (
+            result
+        );
     }
 
 
+
     //===========================================================
-    // Sync
+    // Synchronize
     //===========================================================
 
     [HttpPost("{id:long}/sync")]
-    public async Task<ActionResult> Sync
+
+    public async Task<ActionResult>
+        Sync
     (
         long id
     )
     {
         var synchronized =
-            await _repository.SynchronizeAsync(id);
-
-        if (!synchronized)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
-    }
-
-    //===========================================================
-    // Rollback
-    //===========================================================
-
-    [HttpPost("{id:long}/rollback")]
-    public async Task<ActionResult> Rollback
-    (
-        long id
-    )
-    {
-        var rolledBack =
-            await _repository.RollbackAsync
+            await _repository.SynchronizeAsync
             (
                 id
             );
 
-        if (!rolledBack)
+
+        if
+        (
+            !synchronized
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
-    
+
+
+
+    //===========================================================
+    // Rollback Validation
+    //===========================================================
+    //
+    // This endpoint ONLY validates whether the Module
+    // Synchronization can be rolled back.
+    //
+    // It does NOT execute rollback.
+    //
+    // Frontend flow:
+    //
+    //     Rollback
+    //          ↓
+    //     Validate Rollback
+    //          ↓
+    //     CanRollback = false
+    //          ↓
+    //     Show Blocked Message
+    //
+    // OR
+    //
+    //     CanRollback = true
+    //          ↓
+    //     Open Confirm Dialog
+    //          ↓
+    //     Execute Rollback
+    //
+    //===========================================================
+
+    [HttpGet("{id:long}/rollback-validation")]
+
+    public async Task
+        <ActionResult<ModuleSynchronizationRollbackValidationDto>>
+        ValidateRollback
+    (
+        long id
+    )
+    {
+        var validation =
+            await _repository.ValidateRollbackAsync
+            (
+                id
+            );
+
+
+        if
+        (
+            validation == null
+        )
+        {
+            return NotFound();
+        }
+
+
+        return Ok
+        (
+            validation
+        );
+    }
+
+
+
+    //===========================================================
+    // Rollback
+    //===========================================================
+    //
+    // This endpoint performs the actual rollback.
+    //
+    // Rollback validation is performed BEFORE the confirmation
+    // dialog by the frontend.
+    //
+    // The repository remains the authoritative protection
+    // during actual rollback execution.
+    //
+    // Therefore, even if validation is bypassed, the backend
+    // can still reject the rollback safely.
+    //
+    //===========================================================
+
+    [HttpPost("{id:long}/rollback")]
+
+    public async Task<ActionResult>
+        Rollback
+    (
+        long id
+    )
+    {
+        try
+        {
+            var rolledBack =
+                await _repository.RollbackAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !rolledBack
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
+        }
+
+
+        //=======================================================
+        // Rollback Dependency Exception
+        //=======================================================
+        //
+        // If dependent synchronization data is detected
+        // during the actual rollback, convert the exception
+        // into HTTP 400 so Angular can display the message.
+        //
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
     //===========================================================
     // Get All
     //===========================================================
 
     [HttpGet]
-    public async Task<ActionResult<List<ModuleSynchronizationDto>>> GetAll
+
+    public async Task<ActionResult<List<ModuleSynchronizationDto>>>
+        GetAll
     (
         [FromQuery] string type
     )
     {
-        return Ok(
-            await _repository.GetAllAsync(type)
+        return Ok
+        (
+            await _repository.GetAllAsync
+            (
+                type
+            )
         );
     }
+
 
 
     //===========================================================
@@ -163,21 +323,35 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<ModuleSynchronizationDto>> GetById
+
+    public async Task<ActionResult<ModuleSynchronizationDto>>
+        GetById
     (
         long id
     )
     {
         var synchronization =
-            await _repository.GetByIdAsync(id);
+            await _repository.GetByIdAsync
+            (
+                id
+            );
 
-        if (synchronization == null)
+
+        if
+        (
+            synchronization == null
+        )
         {
             return NotFound();
         }
 
-        return Ok(synchronization);
+
+        return Ok
+        (
+            synchronization
+        );
     }
+
 
 
     //===========================================================
@@ -185,16 +359,26 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpPost]
-    public async Task<ActionResult<long>> Create
+
+    public async Task<ActionResult<long>>
+        Create
     (
         CreateModuleSynchronizationDto dto
     )
     {
         var id =
-            await _repository.CreateAsync(dto);
+            await _repository.CreateAsync
+            (
+                dto
+            );
 
-        return Ok(id);
+
+        return Ok
+        (
+            id
+        );
     }
+
 
 
     //===========================================================
@@ -202,28 +386,43 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpPut("{id:long}")]
-    public async Task<ActionResult> Update
+
+    public async Task<ActionResult>
+        Update
     (
         long id,
 
         UpdateModuleSynchronizationDto dto
     )
     {
-        if (id != dto.Id)
+        if
+        (
+            id != dto.Id
+        )
         {
             return BadRequest();
         }
 
-        var updated =
-            await _repository.UpdateAsync(dto);
 
-        if (!updated)
+        var updated =
+            await _repository.UpdateAsync
+            (
+                dto
+            );
+
+
+        if
+        (
+            !updated
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
+
 
 
     //===========================================================
@@ -231,21 +430,32 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpDelete("{id:long}")]
-    public async Task<ActionResult> Delete
+
+    public async Task<ActionResult>
+        Delete
     (
         long id
     )
     {
         var deleted =
-            await _repository.DeleteAsync(id);
+            await _repository.DeleteAsync
+            (
+                id
+            );
 
-        if (!deleted)
+
+        if
+        (
+            !deleted
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
+
 
 
     //===========================================================
@@ -253,22 +463,35 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpPut("restore")]
-    public async Task<ActionResult> Restore
+
+    public async Task<ActionResult>
+        Restore
     (
         [FromQuery] string type
     )
     {
         var restored =
-            await _repository.RestoreAsync(type);
+            await _repository.RestoreAsync
+            (
+                type
+            );
 
-        if (!restored)
+
+        if
+        (
+            !restored
+        )
         {
-            return NotFound(
-                $"No deleted {type} module synchronization configuration found.");
+            return NotFound
+            (
+                $"No deleted {type} module synchronization configuration found."
+            );
         }
+
 
         return NoContent();
     }
+
 
 
     //===========================================================
@@ -276,17 +499,26 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("history")]
-    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
+
+    public async Task<ActionResult<List<ActivityHistoryDto>>>
+        GetHistory()
     {
         var history =
             await _activityHistoryRepository
-                .GetListHistoryAsync(
+                .GetListHistoryAsync
+                (
                     "Infrastructure Control",
+
                     "Module Synchronization"
                 );
 
-        return Ok(history);
+
+        return Ok
+        (
+            history
+        );
     }
+
 
 
     //===========================================================
@@ -294,19 +526,28 @@ public class ModuleSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("{id:long}/history")]
-    public async Task<ActionResult<List<ActivityHistoryDto>>> GetEntityHistory
+
+    public async Task<ActionResult<List<ActivityHistoryDto>>>
+        GetEntityHistory
     (
         long id
     )
     {
         var history =
             await _activityHistoryRepository
-                .GetHistoryAsync(
+                .GetHistoryAsync
+                (
                     "Infrastructure Control",
+
                     "Module Synchronization",
+
                     id
                 );
 
-        return Ok(history);
+
+        return Ok
+        (
+            history
+        );
     }
 }

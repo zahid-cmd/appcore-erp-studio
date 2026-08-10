@@ -703,6 +703,9 @@ public class MenuSynchronizationEngine
         long synchronizationId
     )
     {
+        //=======================================================
+        // Load Synchronization
+        //=======================================================
 
         var synchronization =
             await LoadSynchronizationAsync
@@ -710,6 +713,10 @@ public class MenuSynchronizationEngine
                 synchronizationId
             );
 
+
+        //=======================================================
+        // Validate Synchronization
+        //=======================================================
 
         var validationResult =
             await ValidateSynchronizationAsync
@@ -726,7 +733,57 @@ public class MenuSynchronizationEngine
             return validationResult;
         }
 
+        //=======================================================
+        // Validate Dependent Submenu Synchronizations
+        //=======================================================
+        //
+        // A Menu cannot be rolled back while dependent Submenu
+        // Synchronization exists.
+        //
+        // NavigationSubmenus are master data and must NOT block
+        // Menu Synchronization rollback.
+        //
+        //=======================================================
 
+        var hasDependentSubmenuSynchronizations =
+            await _context.SubmenuSynchronizations
+
+                .AnyAsync
+                (
+                    x =>
+
+                        x.MenuId ==
+                        synchronization.MenuId
+
+                        &&
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.Status ==
+                        "Synchronized"
+                );
+
+
+        if
+        (
+            hasDependentSubmenuSynchronizations
+        )
+        {
+            return new MenuSynchronizationResultDto
+            {
+                Success =
+                    false,
+
+                Message =
+                    $"Rollback blocked. Menu '{synchronization.MenuName}' has dependent Submenu Synchronization data. Please rollback all dependent Submenu Synchronizations before rolling back the Menu."
+            };
+        }
+
+        //=======================================================
+        // Execute Rollback
+        //=======================================================
 
         var result =
             await ExecuteRollbackAsync
@@ -735,6 +792,9 @@ public class MenuSynchronizationEngine
             );
 
 
+        //=======================================================
+        // Validate Rollback Result
+        //=======================================================
 
         if
         (
@@ -746,6 +806,10 @@ public class MenuSynchronizationEngine
 
 
 
+        //=======================================================
+        // Update Rollback Status
+        //=======================================================
+
         await UpdateRollbackStatusAsync
         (
             synchronization
@@ -753,9 +817,14 @@ public class MenuSynchronizationEngine
 
 
 
+        //=======================================================
+        // Completed
+        //=======================================================
+
         return new MenuSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Menu rollback completed successfully.",

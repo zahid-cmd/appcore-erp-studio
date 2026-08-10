@@ -1,13 +1,16 @@
 //===============================================================
 // Namespaces
 //===============================================================
+
 using System.IO;
+
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.DTOs;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.Interfaces;
+
 using AppCore.Domain.Common;
 using AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
 
@@ -19,7 +22,6 @@ using AppCore.Infrastructure.Persistence;
 //===============================================================
 
 namespace AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement;
-
 
 
 //===============================================================
@@ -39,24 +41,28 @@ public class ModuleSynchronizationRepository
     private readonly IModuleSynchronizationEngine
         _moduleSynchronizationEngine;
 
-        //===========================================================
-        // Constructor
-        //===========================================================
 
-        public ModuleSynchronizationRepository
-        (
-            AppDbContext context,
 
-            IModuleSynchronizationEngine
-                moduleSynchronizationEngine
-        )
-        {
-            _context =
-                context;
+    //===========================================================
+    // Constructor
+    //===========================================================
 
-            _moduleSynchronizationEngine =
-                moduleSynchronizationEngine;
-        }
+    public ModuleSynchronizationRepository
+    (
+        AppDbContext context,
+
+        IModuleSynchronizationEngine
+            moduleSynchronizationEngine
+    )
+    {
+        _context =
+            context;
+
+        _moduleSynchronizationEngine =
+            moduleSynchronizationEngine;
+    }
+
+
 
     //===========================================================
     // Get Defaults
@@ -80,11 +86,13 @@ public class ModuleSynchronizationRepository
 
                 ModuleName = string.Empty,
 
+
                 //===================================================
                 // Synchronization Type
                 //===================================================
 
                 SynchronizationType = synchronizationType,
+
 
                 //===================================================
                 // Frontend Target Location
@@ -98,6 +106,7 @@ public class ModuleSynchronizationRepository
 
                 FrontendFeatureFolder = string.Empty,
 
+
                 //===================================================
                 // Frontend Standard Module Structure
                 //===================================================
@@ -106,6 +115,7 @@ public class ModuleSynchronizationRepository
 
                 FrontendRoutesFolder = string.Empty,
 
+
                 //===================================================
                 // Frontend Application Registration
                 //===================================================
@@ -113,6 +123,7 @@ public class ModuleSynchronizationRepository
                 FrontendModuleRouteFile = string.Empty,
 
                 FrontendApplicationRouteFile = string.Empty,
+
 
                 //===================================================
                 // Backend Target Location
@@ -127,6 +138,7 @@ public class ModuleSynchronizationRepository
                 BackendDomainProject = string.Empty,
 
                 BackendInfrastructureProject = string.Empty,
+
 
                 //===================================================
                 // Backend Standard Module Structure
@@ -144,6 +156,7 @@ public class ModuleSynchronizationRepository
 
                 BackendConfigurationFolder = string.Empty,
 
+
                 //===================================================
                 // Backend Application Registration
                 //===================================================
@@ -152,11 +165,13 @@ public class ModuleSynchronizationRepository
 
                 DbContextFile = string.Empty,
 
+
                 //===================================================
                 // Synchronization
                 //===================================================
 
                 Status = "Pending",
+
 
                 //===================================================
                 // Status
@@ -165,6 +180,8 @@ public class ModuleSynchronizationRepository
                 IsActive = true
             });
     }
+
+
 
     //===========================================================
     // Get All
@@ -177,140 +194,197 @@ public class ModuleSynchronizationRepository
     {
         return await _context.ModuleSynchronizations
 
-            .Where(x =>
+            .Where
+            (
+                x =>
 
-                !x.IsDeleted
+                    !x.IsDeleted
 
-                &&
+                    &&
 
-                x.SynchronizationType == synchronizationType
+                    x.SynchronizationType ==
+                    synchronizationType
             )
 
-            .OrderBy(x => x.ModuleCode)
+            .OrderBy
+            (
+                x => x.ModuleCode
+            )
 
-            .Select(x => new ModuleSynchronizationDto
-            {
-                Id = x.Id,
+            .Select
+            (
+                x => new ModuleSynchronizationDto
+                {
+                    Id =
+                        x.Id,
 
-                //===================================================
-                // Navigation
-                //===================================================
 
-                ModuleId = x.ModuleId,
+                    //===================================================
+                    // Navigation
+                    //===================================================
 
-                ModuleCode = x.ModuleCode,
+                    ModuleId =
+                        x.ModuleId,
 
-                ModuleName = x.ModuleName,
+                    ModuleCode =
+                        x.ModuleCode,
 
-                //===================================================
-                // Synchronization Type
-                //===================================================
+                    ModuleName =
+                        x.ModuleName,
 
-                SynchronizationType = x.SynchronizationType,
 
-                //===================================================
-                // Frontend Target Location
-                //===================================================
+                    //===================================================
+                    // Synchronization Type
+                    //===================================================
 
-                FrontendSolution = x.FrontendSolution,
+                    SynchronizationType =
+                        x.SynchronizationType,
 
-                FrontendProject = x.FrontendProject,
 
-                FrontendSourceFolder = x.FrontendSourceFolder,
+                    //===================================================
+                    // Frontend Target Location
+                    //===================================================
 
-                FrontendFeatureFolder = x.FrontendFeatureFolder,
+                    FrontendSolution =
+                        x.FrontendSolution,
 
-                //===================================================
-                // Frontend Standard Module Structure
-                //===================================================
+                    FrontendProject =
+                        x.FrontendProject,
 
-                FrontendModuleFolder = x.FrontendModuleFolder,
+                    FrontendSourceFolder =
+                        x.FrontendSourceFolder,
 
-                FrontendRoutesFolder = x.FrontendRoutesFolder,
+                    FrontendFeatureFolder =
+                        x.FrontendFeatureFolder,
 
-                //===================================================
-                // Frontend Application Registration
-                //===================================================
 
-                FrontendModuleRouteFile = x.FrontendModuleRouteFile,
+                    //===================================================
+                    // Frontend Standard Module Structure
+                    //===================================================
 
-                FrontendApplicationRouteFile = x.FrontendApplicationRouteFile,
+                    FrontendModuleFolder =
+                        x.FrontendModuleFolder,
 
-                //===================================================
-                // Backend Target Location
-                //===================================================
+                    FrontendRoutesFolder =
+                        x.FrontendRoutesFolder,
 
-                BackendSolution = x.BackendSolution,
 
-                BackendApiProject = x.BackendApiProject,
+                    //===================================================
+                    // Frontend Application Registration
+                    //===================================================
 
-                BackendApplicationProject = x.BackendApplicationProject,
+                    FrontendModuleRouteFile =
+                        x.FrontendModuleRouteFile,
 
-                BackendDomainProject = x.BackendDomainProject,
+                    FrontendApplicationRouteFile =
+                        x.FrontendApplicationRouteFile,
 
-                BackendInfrastructureProject = x.BackendInfrastructureProject,
 
-                //===================================================
-                // Backend Standard Module Structure
-                //===================================================
+                    //===================================================
+                    // Backend Target Location
+                    //===================================================
 
-                BackendControllerFolder = x.BackendControllerFolder,
+                    BackendSolution =
+                        x.BackendSolution,
 
-                BackendApplicationFolder = x.BackendApplicationFolder,
+                    BackendApiProject =
+                        x.BackendApiProject,
 
-                BackendInterfaceFolder = x.BackendInterfaceFolder,
+                    BackendApplicationProject =
+                        x.BackendApplicationProject,
 
-                BackendEntityFolder = x.BackendEntityFolder,
+                    BackendDomainProject =
+                        x.BackendDomainProject,
 
-                BackendRepositoryFolder = x.BackendRepositoryFolder,
+                    BackendInfrastructureProject =
+                        x.BackendInfrastructureProject,
 
-                BackendConfigurationFolder = x.BackendConfigurationFolder,
 
-                //===================================================
-                // Backend Application Registration
-                //===================================================
+                    //===================================================
+                    // Backend Standard Module Structure
+                    //===================================================
 
-                DependencyInjectionFile = x.DependencyInjectionFile,
+                    BackendControllerFolder =
+                        x.BackendControllerFolder,
 
-                DbContextFile = x.DbContextFile,
+                    BackendApplicationFolder =
+                        x.BackendApplicationFolder,
 
-                //===================================================
-                // Synchronization
-                //===================================================
+                    BackendInterfaceFolder =
+                        x.BackendInterfaceFolder,
 
-                Status = x.Status,
+                    BackendEntityFolder =
+                        x.BackendEntityFolder,
 
-                //===================================================
-                // Audit
-                //===================================================
+                    BackendRepositoryFolder =
+                        x.BackendRepositoryFolder,
 
-                CreatedDate = x.CreatedDate,
+                    BackendConfigurationFolder =
+                        x.BackendConfigurationFolder,
 
-                //===================================================
-                // Configuration
-                //===================================================
 
-                Remarks = x.Remarks,
+                    //===================================================
+                    // Backend Application Registration
+                    //===================================================
 
-                //===================================================
-                // Last Synchronization
-                //===================================================
+                    DependencyInjectionFile =
+                        x.DependencyInjectionFile,
 
-                LastSynchronizedBy = x.LastSynchronizedBy,
+                    DbContextFile =
+                        x.DbContextFile,
 
-                LastSynchronizedDate = x.LastSynchronizedDate,
 
-                LastSynchronizationResult = x.LastSynchronizationResult,
+                    //===================================================
+                    // Synchronization
+                    //===================================================
 
-                //===================================================
-                // Status
-                //===================================================
+                    Status =
+                        x.Status,
 
-                IsActive = x.IsActive
-            })
+
+                    //===================================================
+                    // Audit
+                    //===================================================
+
+                    CreatedDate =
+                        x.CreatedDate,
+
+
+                    //===================================================
+                    // Configuration
+                    //===================================================
+
+                    Remarks =
+                        x.Remarks,
+
+
+                    //===================================================
+                    // Last Synchronization
+                    //===================================================
+
+                    LastSynchronizedBy =
+                        x.LastSynchronizedBy,
+
+                    LastSynchronizedDate =
+                        x.LastSynchronizedDate,
+
+                    LastSynchronizationResult =
+                        x.LastSynchronizationResult,
+
+
+                    //===================================================
+                    // Status
+                    //===================================================
+
+                    IsActive =
+                        x.IsActive
+                }
+            )
 
             .ToListAsync();
     }
+
+
 
     //===========================================================
     // Get By Id
@@ -323,154 +397,192 @@ public class ModuleSynchronizationRepository
     {
         return await _context.ModuleSynchronizations
 
-            .Where(x =>
+            .Where
+            (
+                x =>
 
-                x.Id == id
+                    x.Id == id
 
-                &&
+                    &&
 
-                !x.IsDeleted
+                    !x.IsDeleted
             )
 
-            .Select(x => new ModuleSynchronizationDto
-            {
-                Id = x.Id,
+            .Select
+            (
+                x => new ModuleSynchronizationDto
+                {
+                    Id =
+                        x.Id,
 
-                //===================================================
-                // Navigation
-                //===================================================
 
-                ModuleId = x.ModuleId,
+                    //===================================================
+                    // Navigation
+                    //===================================================
 
-                ModuleCode = x.ModuleCode,
+                    ModuleId =
+                        x.ModuleId,
 
-                ModuleName = x.ModuleName,
+                    ModuleCode =
+                        x.ModuleCode,
 
-                //===================================================
-                // Synchronization Type
-                //===================================================
+                    ModuleName =
+                        x.ModuleName,
 
-                SynchronizationType = x.SynchronizationType,
 
-                //===================================================
-                // Frontend Target Location
-                //===================================================
+                    //===================================================
+                    // Synchronization Type
+                    //===================================================
 
-                FrontendSolution = x.FrontendSolution,
+                    SynchronizationType =
+                        x.SynchronizationType,
 
-                FrontendProject = x.FrontendProject,
 
-                FrontendSourceFolder = x.FrontendSourceFolder,
+                    //===================================================
+                    // Frontend Target Location
+                    //===================================================
 
-                FrontendFeatureFolder = x.FrontendFeatureFolder,
+                    FrontendSolution =
+                        x.FrontendSolution,
 
-                //===================================================
-                // Frontend Standard Module Structure
-                //===================================================
+                    FrontendProject =
+                        x.FrontendProject,
 
-                FrontendModuleFolder = x.FrontendModuleFolder,
+                    FrontendSourceFolder =
+                        x.FrontendSourceFolder,
 
-                FrontendRoutesFolder = x.FrontendRoutesFolder,
+                    FrontendFeatureFolder =
+                        x.FrontendFeatureFolder,
 
-                //===================================================
-                // Frontend Application Registration
-                //===================================================
 
-                FrontendModuleRouteFile = x.FrontendModuleRouteFile,
+                    //===================================================
+                    // Frontend Standard Module Structure
+                    //===================================================
 
-                FrontendApplicationRouteFile = x.FrontendApplicationRouteFile,
+                    FrontendModuleFolder =
+                        x.FrontendModuleFolder,
 
-                //===================================================
-                // Backend Target Location
-                //===================================================
+                    FrontendRoutesFolder =
+                        x.FrontendRoutesFolder,
 
-                BackendSolution = x.BackendSolution,
 
-                BackendApiProject = x.BackendApiProject,
+                    //===================================================
+                    // Frontend Application Registration
+                    //===================================================
 
-                BackendApplicationProject = x.BackendApplicationProject,
+                    FrontendModuleRouteFile =
+                        x.FrontendModuleRouteFile,
 
-                BackendDomainProject = x.BackendDomainProject,
+                    FrontendApplicationRouteFile =
+                        x.FrontendApplicationRouteFile,
 
-                BackendInfrastructureProject = x.BackendInfrastructureProject,
 
-                //===================================================
-                // Backend Standard Module Structure
-                //===================================================
+                    //===================================================
+                    // Backend Target Location
+                    //===================================================
 
-                BackendControllerFolder =
-                    x.BackendControllerFolder,
+                    BackendSolution =
+                        x.BackendSolution,
 
-                BackendApplicationFolder =
-                    x.BackendApplicationFolder,
+                    BackendApiProject =
+                        x.BackendApiProject,
 
-                BackendInterfaceFolder =
-                    x.BackendInterfaceFolder,
+                    BackendApplicationProject =
+                        x.BackendApplicationProject,
 
-                BackendEntityFolder =
-                    x.BackendEntityFolder,
+                    BackendDomainProject =
+                        x.BackendDomainProject,
 
-                BackendRepositoryFolder =
-                    x.BackendRepositoryFolder,
+                    BackendInfrastructureProject =
+                        x.BackendInfrastructureProject,
 
-                BackendConfigurationFolder =
-                    x.BackendConfigurationFolder,
 
-                //===================================================
-                // Backend Application Registration
-                //===================================================
+                    //===================================================
+                    // Backend Standard Module Structure
+                    //===================================================
 
-                DependencyInjectionFile =
-                    x.DependencyInjectionFile,
+                    BackendControllerFolder =
+                        x.BackendControllerFolder,
 
-                DbContextFile =
-                    x.DbContextFile,
+                    BackendApplicationFolder =
+                        x.BackendApplicationFolder,
 
-                //===================================================
-                // Synchronization
-                //===================================================
+                    BackendInterfaceFolder =
+                        x.BackendInterfaceFolder,
 
-                Status =
-                    x.Status,
+                    BackendEntityFolder =
+                        x.BackendEntityFolder,
 
-                //===================================================
-                // Audit
-                //===================================================
+                    BackendRepositoryFolder =
+                        x.BackendRepositoryFolder,
 
-                CreatedDate =
-                    x.CreatedDate,
+                    BackendConfigurationFolder =
+                        x.BackendConfigurationFolder,
 
-                //===================================================
-                // Configuration
-                //===================================================
 
-                Remarks =
-                    x.Remarks,
+                    //===================================================
+                    // Backend Application Registration
+                    //===================================================
 
-                //===================================================
-                // Last Synchronization
-                //===================================================
+                    DependencyInjectionFile =
+                        x.DependencyInjectionFile,
 
-                LastSynchronizedBy =
-                    x.LastSynchronizedBy,
+                    DbContextFile =
+                        x.DbContextFile,
 
-                LastSynchronizedDate =
-                    x.LastSynchronizedDate,
 
-                LastSynchronizationResult =
-                    x.LastSynchronizationResult,
+                    //===================================================
+                    // Synchronization
+                    //===================================================
 
-                //===================================================
-                // Status
-                //===================================================
+                    Status =
+                        x.Status,
 
-                IsActive =
-                    x.IsActive
-            })
+
+                    //===================================================
+                    // Audit
+                    //===================================================
+
+                    CreatedDate =
+                        x.CreatedDate,
+
+
+                    //===================================================
+                    // Configuration
+                    //===================================================
+
+                    Remarks =
+                        x.Remarks,
+
+
+                    //===================================================
+                    // Last Synchronization
+                    //===================================================
+
+                    LastSynchronizedBy =
+                        x.LastSynchronizedBy,
+
+                    LastSynchronizedDate =
+                        x.LastSynchronizedDate,
+
+                    LastSynchronizationResult =
+                        x.LastSynchronizationResult,
+
+
+                    //===================================================
+                    // Status
+                    //===================================================
+
+                    IsActive =
+                        x.IsActive
+                }
+            )
 
             .FirstOrDefaultAsync();
     }
-            
+
+
+
     //===========================================================
     // Analyze
     //===========================================================
@@ -486,11 +598,31 @@ public class ModuleSynchronizationRepository
         // Diagnostics
         //=======================================================
 
-        Console.WriteLine("=================================================");
-        Console.WriteLine("MODULE SYNCHRONIZATION ANALYZE");
-        Console.WriteLine($"Requested Module Id : {moduleId}");
-        Console.WriteLine($"Requested Type      : '{synchronizationType}'");
-        Console.WriteLine("=================================================");
+        Console.WriteLine
+        (
+            "================================================="
+        );
+
+        Console.WriteLine
+        (
+            "MODULE SYNCHRONIZATION ANALYZE"
+        );
+
+        Console.WriteLine
+        (
+            $"Requested Module Id : {moduleId}"
+        );
+
+        Console.WriteLine
+        (
+            $"Requested Type      : '{synchronizationType}'"
+        );
+
+        Console.WriteLine
+        (
+            "================================================="
+        );
+
 
         //=======================================================
         // Existing Synchronization
@@ -507,29 +639,41 @@ public class ModuleSynchronizationRepository
 
                         &&
 
-                        x.ModuleId == moduleId
+                        x.ModuleId ==
+                        moduleId
 
                         &&
 
-                        x.SynchronizationType == synchronizationType
+                        x.SynchronizationType ==
+                        synchronizationType
                 );
 
-        if (existing != null)
+
+        if
+        (
+            existing != null
+        )
         {
             Console.WriteLine
             (
                 $"FOUND EXISTING RECORD : Id = {existing.Id}"
             );
 
-            return await GetByIdAsync(existing.Id)
 
-                ?? new ModuleSynchronizationDto();
+            return await GetByIdAsync
+            (
+                existing.Id
+            )
+
+            ?? new ModuleSynchronizationDto();
         }
+
 
         Console.WriteLine
         (
             "NO EXISTING SYNCHRONIZATION FOUND."
         );
+
 
         //=======================================================
         // Load Navigation Module
@@ -542,32 +686,84 @@ public class ModuleSynchronizationRepository
                 (
                     x =>
 
-                        x.Id == moduleId
+                        x.Id ==
+                        moduleId
 
                         &&
 
                         !x.IsDeleted
                 );
 
-        if (module == null)
+
+        if
+        (
+            module == null
+        )
         {
             Console.WriteLine
             (
                 "NAVIGATION MODULE NOT FOUND."
             );
 
+
             return new ModuleSynchronizationDto();
         }
+
 
         //=======================================================
         // Build Names
         //=======================================================
+        //
+        // Folder and file names may contain only:
+        // Letters
+        // Numbers
+        // Hyphen
+        //
+        // Technical symbols are removed.
+        //
+        // Example:
+        //
+        // Accounts & Finance
+        //        ↓
+        // accounts-finance
+        //
+        //=======================================================
 
         var featureName =
-            module.Name
-                .Trim()
-                .Replace(" ", "-")
-                .ToLowerInvariant();
+            string.Join
+            (
+                "-",
+
+                module.Name
+                    .Trim()
+                    .ToLowerInvariant()
+                    .Split
+                    (
+                        ' ',
+                        StringSplitOptions.RemoveEmptyEntries
+                    )
+                    .Select
+                    (
+                        part =>
+                            new string
+                            (
+                                part
+                                    .Where
+                                    (
+                                        c =>
+                                            char.IsLetterOrDigit(c)
+                                            || c == '-'
+                                    )
+                                    .ToArray()
+                            )
+                    )
+                    .Where
+                    (
+                        part =>
+                            !string.IsNullOrWhiteSpace(part)
+                    )
+            );
+
 
         //=======================================================
         // Solution Roots
@@ -579,6 +775,7 @@ public class ModuleSynchronizationRepository
         var solutionRoot =
             currentDirectory;
 
+
         while
         (
             !Directory.Exists
@@ -589,15 +786,24 @@ public class ModuleSynchronizationRepository
                     "Backend_Studio"
                 )
             )
+
             &&
-            Directory.GetParent(solutionRoot) != null
+
+            Directory.GetParent
+            (
+                solutionRoot
+            ) != null
         )
         {
             solutionRoot =
                 Directory
-                    .GetParent(solutionRoot)!
+                    .GetParent
+                    (
+                        solutionRoot
+                    )!
                     .FullName;
         }
+
 
         //=======================================================
         // Studio Roots
@@ -607,21 +813,42 @@ public class ModuleSynchronizationRepository
             Path.Combine
             (
                 solutionRoot,
+
                 "Frontend_Studio",
+
                 "Studio_UI"
             );
+
 
         var backendRoot =
             Path.Combine
             (
                 solutionRoot,
+
                 "Backend_Studio"
             );
 
-        Console.WriteLine($"Current Directory : {currentDirectory}");
-        Console.WriteLine($"Solution Root     : {solutionRoot}");
-        Console.WriteLine($"Frontend Root     : {frontendRoot}");
-        Console.WriteLine($"Backend Root      : {backendRoot}");
+
+        Console.WriteLine
+        (
+            $"Current Directory : {currentDirectory}"
+        );
+
+        Console.WriteLine
+        (
+            $"Solution Root     : {solutionRoot}"
+        );
+
+        Console.WriteLine
+        (
+            $"Frontend Root     : {frontendRoot}"
+        );
+
+        Console.WriteLine
+        (
+            $"Backend Root      : {backendRoot}"
+        );
+
 
         //=======================================================
         // Create Configuration
@@ -643,12 +870,14 @@ public class ModuleSynchronizationRepository
                 ModuleName =
                     module.Name,
 
+
                 //===================================================
                 // Synchronization Type
                 //===================================================
 
                 SynchronizationType =
                     synchronizationType,
+
 
                 //===================================================
                 // Synchronization
@@ -657,12 +886,14 @@ public class ModuleSynchronizationRepository
                 Status =
                     "Ready",
 
+
                 //===================================================
                 // Configuration
                 //===================================================
 
                 Remarks =
                     string.Empty,
+
 
                 //===================================================
                 // Status
@@ -671,6 +902,7 @@ public class ModuleSynchronizationRepository
                 IsActive =
                     module.IsActive
             };
+
 
         //=======================================================
         // Analyze Frontend
@@ -685,6 +917,7 @@ public class ModuleSynchronizationRepository
             featureName
         );
 
+
         //=======================================================
         // Analyze Backend
         //=======================================================
@@ -698,6 +931,7 @@ public class ModuleSynchronizationRepository
             module.Name
         );
 
+
         //=======================================================
         // Completed
         //=======================================================
@@ -707,8 +941,12 @@ public class ModuleSynchronizationRepository
             "RETURNING DEFAULT CONFIGURATION."
         );
 
+
         return configuration;
     }
+
+
+
     //===========================================================
     // Analyze Frontend
     //===========================================================
@@ -736,12 +974,15 @@ public class ModuleSynchronizationRepository
             Path.Combine
             (
                 frontendRoot,
+
                 "src",
+
                 "features"
             );
 
         configuration.FrontendFeatureFolder =
             featureName;
+
 
         //=======================================================
         // Frontend Standard Module Structure
@@ -751,15 +992,19 @@ public class ModuleSynchronizationRepository
             Path.Combine
             (
                 configuration.FrontendSourceFolder,
+
                 featureName
             );
+
 
         configuration.FrontendRoutesFolder =
             Path.Combine
             (
                 configuration.FrontendModuleFolder,
+
                 "routes"
             );
+
 
         //=======================================================
         // Frontend Application Registration
@@ -769,18 +1014,25 @@ public class ModuleSynchronizationRepository
             Path.Combine
             (
                 configuration.FrontendRoutesFolder,
+
                 $"{featureName}.routes.ts"
             );
+
 
         configuration.FrontendApplicationRouteFile =
             Path.Combine
             (
                 frontendRoot,
+
                 "src",
+
                 "app",
+
                 "app.routes.ts"
             );
     }
+
+
 
     //===========================================================
     // Analyze Backend
@@ -795,6 +1047,41 @@ public class ModuleSynchronizationRepository
         string moduleName
     )
     {
+        //=======================================================
+        // Build Backend Module Name
+        //=======================================================
+        //
+        // Backend folder and namespace names:
+        //
+        // Letters and numbers only.
+        //
+        // Spaces and technical symbols are removed.
+        //
+        // Examples:
+        //
+        // Accounts & Finance
+        //        ↓
+        // AccountsFinance
+        //
+        // Human Resource
+        //        ↓
+        // HumanResource
+        //
+        //=======================================================
+
+        var backendModuleName =
+            new string
+            (
+                moduleName
+                    .Where
+                    (
+                        c =>
+                            char.IsLetterOrDigit(c)
+                    )
+                    .ToArray()
+            );
+
+
         //=======================================================
         // Backend Target Location
         //=======================================================
@@ -814,6 +1101,7 @@ public class ModuleSynchronizationRepository
         configuration.BackendInfrastructureProject =
             "AppCore.Infrastructure";
 
+
         //=======================================================
         // Backend Standard Module Structure
         //=======================================================
@@ -824,7 +1112,7 @@ public class ModuleSynchronizationRepository
                 backendRoot,
                 "AppCore.Api",
                 "Controllers",
-                moduleName
+                backendModuleName
             );
 
         configuration.BackendApplicationFolder =
@@ -832,7 +1120,7 @@ public class ModuleSynchronizationRepository
             (
                 backendRoot,
                 "AppCore.Application",
-                moduleName
+                backendModuleName
             );
 
         configuration.BackendEntityFolder =
@@ -840,7 +1128,7 @@ public class ModuleSynchronizationRepository
             (
                 backendRoot,
                 "AppCore.Domain",
-                moduleName
+                backendModuleName
             );
 
         configuration.BackendRepositoryFolder =
@@ -849,7 +1137,7 @@ public class ModuleSynchronizationRepository
                 backendRoot,
                 "AppCore.Infrastructure",
                 "Repositories",
-                moduleName
+                backendModuleName
             );
 
         configuration.BackendConfigurationFolder =
@@ -858,8 +1146,9 @@ public class ModuleSynchronizationRepository
                 backendRoot,
                 "AppCore.Infrastructure",
                 "Configurations",
-                moduleName
+                backendModuleName
             );
+
 
         //=======================================================
         // Backend Application Registration
@@ -883,6 +1172,8 @@ public class ModuleSynchronizationRepository
             );
     }
 
+
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -903,12 +1194,143 @@ public class ModuleSynchronizationRepository
                     id
                 );
 
+
         //=======================================================
         // Completed
         //=======================================================
 
         return result.Success;
     }
+
+
+
+    //===========================================================
+    // Validate Rollback
+    //===========================================================
+    //
+    // Module Synchronization rollback is blocked when active
+    // Menu Synchronization data exists for the same module.
+    //
+    // Navigation master data itself does NOT block rollback.
+    //
+    // Dependency:
+    //
+    // Module Synchronization
+    //        ↓
+    //      ModuleId
+    //        ↓
+    // Menu Synchronization
+    //
+    //===========================================================
+
+    public async Task<ModuleSynchronizationRollbackValidationDto?>
+        ValidateRollbackAsync
+    (
+        long synchronizationId
+    )
+    {
+        //=======================================================
+        // Load Synchronization
+        //=======================================================
+
+        var synchronization =
+            await _context.ModuleSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        synchronizationId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        //=======================================================
+        // Not Found
+        //=======================================================
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return null;
+        }
+
+
+        //=======================================================
+        // Check Menu Synchronization Dependency
+        //=======================================================
+        //
+        // An active Menu Synchronization record using the same
+        // ModuleId means the Module Synchronization is currently
+        // a parent configuration for dependent synchronization
+        // data.
+        //
+        // Therefore module rollback must be blocked until the
+        // dependent Menu Synchronization is rolled back first.
+        //
+        //=======================================================
+
+        var hasMenuSynchronization =
+            await _context.MenuSynchronizations
+
+                .AsNoTracking()
+
+                .AnyAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.ModuleId ==
+                        synchronization.ModuleId
+                );
+
+
+        //=======================================================
+        // Rollback Blocked
+        //=======================================================
+
+        if
+        (
+            hasMenuSynchronization
+        )
+        {
+            return new ModuleSynchronizationRollbackValidationDto
+            {
+                CanRollback =
+                    false,
+
+                Message =
+                    "Module rollback is blocked because dependent Menu Synchronization data exists for this module. Roll back the dependent Menu Synchronization first."
+            };
+        }
+
+
+        //=======================================================
+        // Rollback Allowed
+        //=======================================================
+
+        return new ModuleSynchronizationRollbackValidationDto
+        {
+            CanRollback =
+                true,
+
+            Message =
+                "Module rollback validation completed successfully."
+        };
+    }
+
+
 
     //===========================================================
     // Rollback
@@ -930,11 +1352,15 @@ public class ModuleSynchronizationRepository
                     id
                 );
 
+
         //=======================================================
         // Validation
         //=======================================================
 
-        if (!result.Success)
+        if
+        (
+            !result.Success
+        )
         {
             throw new InvalidOperationException
             (
@@ -942,13 +1368,16 @@ public class ModuleSynchronizationRepository
             );
         }
 
+
         //=======================================================
         // Completed
         //=======================================================
 
         return true;
     }
-    
+
+
+
     //===========================================================
     // Exists By Module
     //===========================================================
@@ -962,28 +1391,36 @@ public class ModuleSynchronizationRepository
         long? excludeId = null
     )
     {
-        return await _context.ModuleSynchronizations.AnyAsync(x =>
+        return await _context.ModuleSynchronizations.AnyAsync
+        (
+            x =>
 
-            !x.IsDeleted
+                !x.IsDeleted
 
-            &&
+                &&
 
-            x.ModuleId == moduleId
+                x.ModuleId ==
+                moduleId
 
-            &&
+                &&
 
-            x.SynchronizationType == synchronizationType
+                x.SynchronizationType ==
+                synchronizationType
 
-            &&
+                &&
 
-            (
-                !excludeId.HasValue
+                (
+                    !excludeId.HasValue
 
-                ||
+                    ||
 
-                x.Id != excludeId.Value
-            ));
+                    x.Id !=
+                    excludeId.Value
+                )
+        );
     }
+
+
 
     //===========================================================
     // Create
@@ -996,6 +1433,7 @@ public class ModuleSynchronizationRepository
     {
         const long userId = 1;
 
+
         //=======================================================
         // Duplicate Check
         //=======================================================
@@ -1004,16 +1442,22 @@ public class ModuleSynchronizationRepository
             await ExistsByModuleAsync
             (
                 dto.ModuleId,
+
                 dto.SynchronizationType
             );
 
-        if (exists)
+
+        if
+        (
+            exists
+        )
         {
             throw new InvalidOperationException
             (
                 $"A {dto.SynchronizationType} synchronization already exists for '{dto.ModuleName}'."
             );
         }
+
 
         //=======================================================
         // Create Entity
@@ -1035,12 +1479,14 @@ public class ModuleSynchronizationRepository
                 ModuleName =
                     dto.ModuleName,
 
+
                 //===================================================
                 // Synchronization Type
                 //===================================================
 
                 SynchronizationType =
                     dto.SynchronizationType,
+
 
                 //===================================================
                 // Frontend Target Location
@@ -1058,6 +1504,7 @@ public class ModuleSynchronizationRepository
                 FrontendFeatureFolder =
                     dto.FrontendFeatureFolder,
 
+
                 //===================================================
                 // Frontend Standard Module Structure
                 //===================================================
@@ -1068,6 +1515,7 @@ public class ModuleSynchronizationRepository
                 FrontendRoutesFolder =
                     dto.FrontendRoutesFolder,
 
+
                 //===================================================
                 // Frontend Application Registration
                 //===================================================
@@ -1077,6 +1525,7 @@ public class ModuleSynchronizationRepository
 
                 FrontendApplicationRouteFile =
                     dto.FrontendApplicationRouteFile,
+
 
                 //===================================================
                 // Backend Target Location
@@ -1097,6 +1546,7 @@ public class ModuleSynchronizationRepository
                 BackendInfrastructureProject =
                     dto.BackendInfrastructureProject,
 
+
                 //===================================================
                 // Backend Standard Module Structure
                 //===================================================
@@ -1116,6 +1566,7 @@ public class ModuleSynchronizationRepository
                 BackendConfigurationFolder =
                     dto.BackendConfigurationFolder,
 
+
                 //===================================================
                 // Backend Application Registration
                 //===================================================
@@ -1126,6 +1577,7 @@ public class ModuleSynchronizationRepository
                 DbContextFile =
                     dto.DbContextFile,
 
+
                 //===================================================
                 // Synchronization
                 //===================================================
@@ -1133,12 +1585,14 @@ public class ModuleSynchronizationRepository
                 Status =
                     dto.Status,
 
+
                 //===================================================
                 // Configuration
                 //===================================================
 
                 Remarks =
                     dto.Remarks,
+
 
                 //===================================================
                 // Last Synchronization
@@ -1153,6 +1607,7 @@ public class ModuleSynchronizationRepository
                 LastSynchronizationResult =
                     dto.LastSynchronizationResult,
 
+
                 //===================================================
                 // Status
                 //===================================================
@@ -1162,6 +1617,7 @@ public class ModuleSynchronizationRepository
 
                 IsDeleted =
                     false,
+
 
                 //===================================================
                 // Audit
@@ -1174,12 +1630,15 @@ public class ModuleSynchronizationRepository
                     DateTime.UtcNow
             };
 
+
         _context.ModuleSynchronizations.Add
         (
             synchronization
         );
 
+
         await _context.SaveChangesAsync();
+
 
         //=======================================================
         // Activity History
@@ -1218,10 +1677,14 @@ public class ModuleSynchronizationRepository
             }
         );
 
+
         await _context.SaveChangesAsync();
+
 
         return synchronization.Id;
     }
+
+
 
     //===========================================================
     // Update
@@ -1234,6 +1697,7 @@ public class ModuleSynchronizationRepository
     {
         const long userId = 1;
 
+
         //=======================================================
         // Duplicate Check
         //=======================================================
@@ -1242,17 +1706,24 @@ public class ModuleSynchronizationRepository
             await ExistsByModuleAsync
             (
                 dto.ModuleId,
+
                 dto.SynchronizationType,
+
                 dto.Id
             );
 
-        if (exists)
+
+        if
+        (
+            exists
+        )
         {
             throw new InvalidOperationException
             (
                 $"A {dto.SynchronizationType} synchronization already exists for '{dto.ModuleName}'."
             );
         }
+
 
         //=======================================================
         // Load Entity
@@ -1265,17 +1736,23 @@ public class ModuleSynchronizationRepository
                 (
                     x =>
 
-                        x.Id == dto.Id
+                        x.Id ==
+                        dto.Id
 
                         &&
 
                         !x.IsDeleted
                 );
 
-        if (synchronization == null)
+
+        if
+        (
+            synchronization == null
+        )
         {
             return false;
         }
+
 
         //=======================================================
         // Navigation
@@ -1290,12 +1767,14 @@ public class ModuleSynchronizationRepository
         synchronization.ModuleName =
             dto.ModuleName;
 
+
         //=======================================================
         // Synchronization Type
         //=======================================================
 
         synchronization.SynchronizationType =
             dto.SynchronizationType;
+
 
         //=======================================================
         // Frontend Target Location
@@ -1313,6 +1792,7 @@ public class ModuleSynchronizationRepository
         synchronization.FrontendFeatureFolder =
             dto.FrontendFeatureFolder;
 
+
         //=======================================================
         // Frontend Standard Module Structure
         //=======================================================
@@ -1323,6 +1803,7 @@ public class ModuleSynchronizationRepository
         synchronization.FrontendRoutesFolder =
             dto.FrontendRoutesFolder;
 
+
         //=======================================================
         // Frontend Application Registration
         //=======================================================
@@ -1332,6 +1813,7 @@ public class ModuleSynchronizationRepository
 
         synchronization.FrontendApplicationRouteFile =
             dto.FrontendApplicationRouteFile;
+
 
         //=======================================================
         // Backend Target Location
@@ -1352,6 +1834,7 @@ public class ModuleSynchronizationRepository
         synchronization.BackendInfrastructureProject =
             dto.BackendInfrastructureProject;
 
+
         //=======================================================
         // Backend Standard Module Structure
         //=======================================================
@@ -1371,6 +1854,7 @@ public class ModuleSynchronizationRepository
         synchronization.BackendConfigurationFolder =
             dto.BackendConfigurationFolder;
 
+
         //=======================================================
         // Backend Application Registration
         //=======================================================
@@ -1381,6 +1865,7 @@ public class ModuleSynchronizationRepository
         synchronization.DbContextFile =
             dto.DbContextFile;
 
+
         //=======================================================
         // Synchronization
         //=======================================================
@@ -1388,12 +1873,14 @@ public class ModuleSynchronizationRepository
         synchronization.Status =
             dto.Status;
 
+
         //=======================================================
         // Configuration
         //=======================================================
 
         synchronization.Remarks =
             dto.Remarks;
+
 
         //=======================================================
         // Last Synchronization
@@ -1408,12 +1895,14 @@ public class ModuleSynchronizationRepository
         synchronization.LastSynchronizationResult =
             dto.LastSynchronizationResult;
 
+
         //=======================================================
         // Status
         //=======================================================
 
         synchronization.IsActive =
             dto.IsActive;
+
 
         //=======================================================
         // Audit
@@ -1425,7 +1914,9 @@ public class ModuleSynchronizationRepository
         synchronization.ModifiedDate =
             DateTime.UtcNow;
 
+
         await _context.SaveChangesAsync();
+
 
         //=======================================================
         // Activity History
@@ -1464,95 +1955,155 @@ public class ModuleSynchronizationRepository
             }
         );
 
+
         await _context.SaveChangesAsync();
+
 
         return true;
     }
+
+
 
     //===========================================================
     // Delete
     //===========================================================
 
-    public async Task<bool> DeleteAsync(long id)
+    public async Task<bool> DeleteAsync
+    (
+        long id
+    )
     {
         const long userId = 1;
 
+
         var synchronization =
             await _context.ModuleSynchronizations
-                .FirstOrDefaultAsync(x =>
-                    x.Id == id &&
-                    !x.IsDeleted);
 
-        if (synchronization == null)
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            synchronization == null
+        )
         {
             return false;
         }
+
 
         //=======================================================
         // Soft Delete
         //=======================================================
 
-        synchronization.IsDeleted = true;
-        synchronization.DeletedBy = userId;
-        synchronization.DeletedDate = DateTime.UtcNow;
+        synchronization.IsDeleted =
+            true;
+
+        synchronization.DeletedBy =
+            userId;
+
+        synchronization.DeletedDate =
+            DateTime.UtcNow;
+
 
         await _context.SaveChangesAsync();
+
 
         //=======================================================
         // Activity History
         //=======================================================
 
-        _context.ActivityHistories.Add(
+        _context.ActivityHistories.Add
+        (
             new ActivityHistory
             {
-                Module = "Infrastructure Control",
+                Module =
+                    "Infrastructure Control",
 
-                EntityName = "Module Synchronization",
+                EntityName =
+                    "Module Synchronization",
 
-                EntityId = synchronization.Id,
+                EntityId =
+                    synchronization.Id,
 
-                ActivityType = "Delete",
+                ActivityType =
+                    "Delete",
 
-                ActivityTitle = "Module Synchronization Deleted",
+                ActivityTitle =
+                    "Module Synchronization Deleted",
 
                 ActivityDescription =
                     $"'{synchronization.SynchronizationType}' synchronization configuration deleted for '{synchronization.ModuleName}'.",
 
-                PerformedBy = userId,
+                PerformedBy =
+                    userId,
 
-                PerformedByName = "System",
+                PerformedByName =
+                    "System",
 
-                PerformedDate = DateTime.UtcNow
-            });
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
+
 
         await _context.SaveChangesAsync();
 
+
         return true;
     }
+
+
 
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task<bool> RestoreAsync(
-        string synchronizationType)
+    public async Task<bool> RestoreAsync
+    (
+        string synchronizationType
+    )
     {
         var entity =
             await _context.ModuleSynchronizations
 
-                .Where(x =>
-                    x.IsDeleted &&
-                    x.SynchronizationType == synchronizationType)
+                .Where
+                (
+                    x =>
 
-                .OrderByDescending(x =>
-                    x.DeletedDate)
+                        x.IsDeleted
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronizationType
+                )
+
+                .OrderByDescending
+                (
+                    x => x.DeletedDate
+                )
 
                 .FirstOrDefaultAsync();
 
-        if (entity == null)
+
+        if
+        (
+            entity == null
+        )
         {
             return false;
         }
+
 
         entity.IsDeleted =
             false;
@@ -1563,13 +2114,16 @@ public class ModuleSynchronizationRepository
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+
         await _context.SaveChangesAsync();
+
 
         //=======================================================
         // Activity History
         //=======================================================
 
-        _context.ActivityHistories.Add(
+        _context.ActivityHistories.Add
+        (
             new ActivityHistory
             {
                 Module =
@@ -1598,9 +2152,12 @@ public class ModuleSynchronizationRepository
 
                 PerformedDate =
                     DateTime.UtcNow
-            });
+            }
+        );
+
 
         await _context.SaveChangesAsync();
+
 
         return true;
     }

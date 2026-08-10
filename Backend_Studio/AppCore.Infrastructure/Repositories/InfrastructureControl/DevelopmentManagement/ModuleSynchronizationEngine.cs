@@ -3,6 +3,7 @@
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
+
 using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
 using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
 
@@ -10,6 +11,7 @@ using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSync
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.Interfaces;
 
 using AppCore.Infrastructure.Persistence;
+
 
 //===============================================================
 // Namespace
@@ -30,8 +32,14 @@ public class ModuleSynchronizationEngine
     //===========================================================
 
     private readonly AppDbContext _context;
-    private readonly IBackendSynchronizationEngine _backendSynchronizationEngine;
-    private readonly IFrontendSynchronizationEngine _frontendSynchronizationEngine;
+
+    private readonly IBackendSynchronizationEngine
+        _backendSynchronizationEngine;
+
+    private readonly IFrontendSynchronizationEngine
+        _frontendSynchronizationEngine;
+
+
 
     //===========================================================
     // Constructor
@@ -56,6 +64,8 @@ public class ModuleSynchronizationEngine
             frontendSynchronizationEngine;
     }
 
+
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -65,19 +75,12 @@ public class ModuleSynchronizationEngine
         long synchronizationId
     )
     {
-        //=======================================================
-        // Load Synchronization
-        //=======================================================
-
         var synchronization =
             await LoadSynchronizationAsync
             (
                 synchronizationId
             );
 
-        //=======================================================
-        // Validate Synchronization
-        //=======================================================
 
         var validationResult =
             await ValidateSynchronizationAsync
@@ -85,14 +88,15 @@ public class ModuleSynchronizationEngine
                 synchronization
             );
 
-        if (!validationResult.Success)
+
+        if
+        (
+            !validationResult.Success
+        )
         {
             return validationResult;
         }
 
-        //=======================================================
-        // Execute Synchronization
-        //=======================================================
 
         var result =
             await ExecuteSynchronizationAsync
@@ -100,36 +104,33 @@ public class ModuleSynchronizationEngine
                 synchronization
             );
 
-        //=======================================================
-        // Synchronization Failed
-        //=======================================================
 
-        if (!result.Success)
+        if
+        (
+            !result.Success
+        )
         {
             return result;
         }
 
-        //=======================================================
-        // Update Synchronization Status
-        //=======================================================
 
         await UpdateSynchronizationStatusAsync
         (
             synchronization
         );
 
-        //=======================================================
-        // Completed
-        //=======================================================
 
         return new ModuleSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Module synchronization completed successfully."
         };
     }
+
+
 
     //===========================================================
     // Execute Synchronization
@@ -147,35 +148,33 @@ public class ModuleSynchronizationEngine
             "Frontend"
         )
         {
-            return
-                await _frontendSynchronizationEngine
-                    .SynchronizeAsync
-                    (
-                        synchronization
-                    );
-        }
-
-        return
-            await _backendSynchronizationEngine
+            return await _frontendSynchronizationEngine
                 .SynchronizeAsync
                 (
                     synchronization
                 );
+        }
+
+
+        return await _backendSynchronizationEngine
+            .SynchronizeAsync
+            (
+                synchronization
+            );
     }
+
+
 
     //===========================================================
     // Load Synchronization
     //===========================================================
 
-    private async Task<ModuleSynchronizationDto> LoadSynchronizationAsync
+    private async Task<ModuleSynchronizationDto>
+    LoadSynchronizationAsync
     (
         long synchronizationId
     )
     {
-        //=======================================================
-        // Load Entity
-        //=======================================================
-
         var entity =
             await _context.ModuleSynchronizations
 
@@ -183,14 +182,16 @@ public class ModuleSynchronizationEngine
 
                 .FirstOrDefaultAsync
                 (
-                    x => x.Id == synchronizationId
+                    x =>
+                        x.Id ==
+                        synchronizationId
                 );
 
-        //=======================================================
-        // Validate
-        //=======================================================
 
-        if (entity == null)
+        if
+        (
+            entity == null
+        )
         {
             throw new InvalidOperationException
             (
@@ -198,15 +199,14 @@ public class ModuleSynchronizationEngine
             );
         }
 
-        //=======================================================
-        // Build DTO
-        //=======================================================
 
         return BuildSynchronizationDto
         (
             entity
         );
     }
+
+
 
     //===========================================================
     // Build Synchronization DTO
@@ -219,16 +219,8 @@ public class ModuleSynchronizationEngine
     {
         return new ModuleSynchronizationDto
         {
-            //===================================================
-            // Primary Key
-            //===================================================
-
             Id =
                 entity.Id,
-
-            //===================================================
-            // Navigation
-            //===================================================
 
             ModuleId =
                 entity.ModuleId,
@@ -239,16 +231,8 @@ public class ModuleSynchronizationEngine
             ModuleName =
                 entity.ModuleName,
 
-            //===================================================
-            // Synchronization Type
-            //===================================================
-
             SynchronizationType =
                 entity.SynchronizationType,
-
-            //===================================================
-            // Frontend Target Location
-            //===================================================
 
             FrontendSolution =
                 entity.FrontendSolution,
@@ -262,29 +246,17 @@ public class ModuleSynchronizationEngine
             FrontendFeatureFolder =
                 entity.FrontendFeatureFolder,
 
-            //===================================================
-            // Frontend Standard Module Structure
-            //===================================================
-
             FrontendModuleFolder =
                 entity.FrontendModuleFolder,
 
             FrontendRoutesFolder =
                 entity.FrontendRoutesFolder,
 
-            //===================================================
-            // Frontend Application Registration
-            //===================================================
-
             FrontendModuleRouteFile =
                 entity.FrontendModuleRouteFile,
 
             FrontendApplicationRouteFile =
                 entity.FrontendApplicationRouteFile,
-
-            //===================================================
-            // Backend Target Location
-            //===================================================
 
             BackendSolution =
                 entity.BackendSolution,
@@ -300,10 +272,6 @@ public class ModuleSynchronizationEngine
 
             BackendInfrastructureProject =
                 entity.BackendInfrastructureProject,
-
-            //===================================================
-            // Backend Standard Module Structure
-            //===================================================
 
             BackendControllerFolder =
                 entity.BackendControllerFolder,
@@ -323,33 +291,17 @@ public class ModuleSynchronizationEngine
             BackendConfigurationFolder =
                 entity.BackendConfigurationFolder,
 
-            //===================================================
-            // Backend Application Registration
-            //===================================================
-
             DependencyInjectionFile =
                 entity.DependencyInjectionFile,
 
             DbContextFile =
                 entity.DbContextFile,
 
-            //===================================================
-            // Synchronization
-            //===================================================
-
             Status =
                 entity.Status,
 
-            //===================================================
-            // Configuration
-            //===================================================
-
             Remarks =
                 entity.Remarks,
-
-            //===================================================
-            // Last Synchronization
-            //===================================================
 
             LastSynchronizedBy =
                 entity.LastSynchronizedBy,
@@ -360,49 +312,41 @@ public class ModuleSynchronizationEngine
             LastSynchronizationResult =
                 entity.LastSynchronizationResult,
 
-            //===================================================
-            // Status
-            //===================================================
-
             IsActive =
                 entity.IsActive,
-
-            //===================================================
-            // Audit
-            //===================================================
 
             CreatedDate =
                 entity.CreatedDate
         };
     }
-    
+
+
+
     //===========================================================
     // Validate Synchronization
     //===========================================================
 
-    private async Task<ModuleSynchronizationResultDto> ValidateSynchronizationAsync
+    private async Task<ModuleSynchronizationResultDto>
+    ValidateSynchronizationAsync
     (
         ModuleSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Validate Module
-        //=======================================================
-
-        if (synchronization.ModuleId <= 0)
+        if
+        (
+            synchronization.ModuleId <= 0
+        )
         {
             return new ModuleSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
 
                 Message =
                     "Module is required."
             };
         }
 
-        //=======================================================
-        // Validate Synchronization Type
-        //=======================================================
 
         if
         (
@@ -414,16 +358,14 @@ public class ModuleSynchronizationEngine
         {
             return new ModuleSynchronizationResultDto
             {
-                Success = false,
+                Success =
+                    false,
 
                 Message =
                     "Synchronization type is required."
             };
         }
 
-        //=======================================================
-        // Validate Frontend
-        //=======================================================
 
         if
         (
@@ -441,7 +383,8 @@ public class ModuleSynchronizationEngine
             {
                 return new ModuleSynchronizationResultDto
                 {
-                    Success = false,
+                    Success =
+                        false,
 
                     Message =
                         "Frontend solution is required."
@@ -449,9 +392,6 @@ public class ModuleSynchronizationEngine
             }
         }
 
-        //=======================================================
-        // Validate Backend
-        //=======================================================
 
         if
         (
@@ -469,7 +409,8 @@ public class ModuleSynchronizationEngine
             {
                 return new ModuleSynchronizationResultDto
                 {
-                    Success = false,
+                    Success =
+                        false,
 
                     Message =
                         "Backend solution is required."
@@ -477,20 +418,21 @@ public class ModuleSynchronizationEngine
             }
         }
 
-        //=======================================================
-        // Validation Passed
-        //=======================================================
 
         await Task.CompletedTask;
 
+
         return new ModuleSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Validation completed successfully."
         };
     }
+
+
 
     //===========================================================
     // Update Synchronization Status
@@ -501,23 +443,21 @@ public class ModuleSynchronizationEngine
         ModuleSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Load Entity
-        //=======================================================
-
         var entity =
             await _context.ModuleSynchronizations
 
                 .FirstOrDefaultAsync
                 (
-                    x => x.Id == synchronization.Id
+                    x =>
+                        x.Id ==
+                        synchronization.Id
                 );
 
-        //=======================================================
-        // Validate
-        //=======================================================
 
-        if (entity == null)
+        if
+        (
+            entity == null
+        )
         {
             throw new InvalidOperationException
             (
@@ -525,38 +465,151 @@ public class ModuleSynchronizationEngine
             );
         }
 
-        //=======================================================
-        // Synchronization
-        //=======================================================
 
         entity.Status =
             "Synchronized";
 
+
         entity.LastSynchronizedDate =
             DateTime.UtcNow;
+
 
         entity.LastSynchronizationResult =
             "Synchronization completed successfully.";
 
+
         entity.LastSynchronizedBy =
             1;
 
-        //=======================================================
-        // Audit
-        //=======================================================
 
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+
         entity.ModifiedBy =
             1;
 
-        //=======================================================
-        // Save
-        //=======================================================
 
         await _context.SaveChangesAsync();
     }
+
+
+
+    //===========================================================
+    // Rollback Validation
+    //===========================================================
+    //
+    // This method validates whether the Module Synchronization
+    // itself can be rolled back.
+    //
+    // Navigation master data does NOT block rollback.
+    //
+    // Menu Synchronizations DO block rollback because they are
+    // dependent synchronized development data belonging to the
+    // Module.
+    //
+    //===========================================================
+
+    public async Task<ModuleSynchronizationRollbackValidationDto?>
+        ValidateRollbackAsync
+    (
+        long synchronizationId
+    )
+    {
+        var synchronization =
+            await LoadSynchronizationAsync
+            (
+                synchronizationId
+            );
+
+
+        var validationResult =
+            await ValidateSynchronizationAsync
+            (
+                synchronization
+            );
+
+
+        if
+        (
+            !validationResult.Success
+        )
+        {
+            return new ModuleSynchronizationRollbackValidationDto
+            {
+                CanRollback =
+                    false,
+
+                Message =
+                    validationResult.Message
+            };
+        }
+
+
+        //=======================================================
+        // Validate Dependent Menu Synchronizations
+        //=======================================================
+        //
+        // A Module cannot be rolled back while a dependent
+        // Menu Synchronization is still synchronized.
+        //
+        // NavigationMenus are master data and do NOT block
+        // Module Synchronization rollback.
+        //
+        // MenuSynchronizations DO block rollback.
+        //
+        //=======================================================
+
+        var hasDependentMenuSynchronizations =
+            await _context.MenuSynchronizations
+
+                .AnyAsync
+                (
+                    x =>
+                        x.ModuleId ==
+                        synchronization.ModuleId
+
+                        &&
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.Status ==
+                        "Synchronized"
+                );
+
+
+        if
+        (
+            hasDependentMenuSynchronizations
+        )
+        {
+            return new ModuleSynchronizationRollbackValidationDto
+            {
+                CanRollback =
+                    false,
+
+                Message =
+                    $"Rollback blocked. Module '{synchronization.ModuleName}' has dependent Menu Synchronization data. Please rollback all dependent Menu Synchronizations before rolling back the Module."
+            };
+        }
+
+
+        //=======================================================
+        // Rollback Allowed
+        //=======================================================
+
+        return new ModuleSynchronizationRollbackValidationDto
+        {
+            CanRollback =
+                true,
+
+            Message =
+                "Module rollback validation completed successfully."
+        };
+    }
+
 
 
     //===========================================================
@@ -568,19 +621,12 @@ public class ModuleSynchronizationEngine
         long synchronizationId
     )
     {
-        //=======================================================
-        // Load Synchronization
-        //=======================================================
-
         var synchronization =
             await LoadSynchronizationAsync
             (
                 synchronizationId
             );
 
-        //=======================================================
-        // Validate Synchronization
-        //=======================================================
 
         var validationResult =
             await ValidateSynchronizationAsync
@@ -588,10 +634,54 @@ public class ModuleSynchronizationEngine
                 synchronization
             );
 
-        if (!validationResult.Success)
+
+        if
+        (
+            !validationResult.Success
+        )
         {
             return validationResult;
         }
+
+
+        //=======================================================
+        // Validate Dependent Menu Synchronizations
+        //=======================================================
+        //
+        // This is the authoritative server-side protection.
+        //
+        // Even if the frontend bypasses validation or the
+        // confirmation dialog, the Module rollback cannot
+        // continue while dependent Menu Synchronizations exist.
+        //
+        //=======================================================
+
+        var rollbackValidation =
+            await ValidateRollbackAsync
+            (
+                synchronizationId
+            );
+
+
+        if
+        (
+            rollbackValidation == null
+            ||
+            !rollbackValidation.CanRollback
+        )
+        {
+            return new ModuleSynchronizationResultDto
+            {
+                Success =
+                    false,
+
+                Message =
+                    rollbackValidation?.Message
+                    ??
+                    "Module rollback is blocked because dependent Menu Synchronization data exists."
+            };
+        }
+
 
         //=======================================================
         // Execute Rollback
@@ -603,14 +693,15 @@ public class ModuleSynchronizationEngine
                 synchronization
             );
 
-        //=======================================================
-        // Rollback Failed
-        //=======================================================
 
-        if (!result.Success)
+        if
+        (
+            !result.Success
+        )
         {
             return result;
         }
+
 
         //=======================================================
         // Update Rollback Status
@@ -621,18 +712,18 @@ public class ModuleSynchronizationEngine
             synchronization
         );
 
-        //=======================================================
-        // Completed
-        //=======================================================
 
         return new ModuleSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Module rollback completed successfully."
         };
     }
+
+
 
     //===========================================================
     // Execute Rollback
@@ -650,21 +741,22 @@ public class ModuleSynchronizationEngine
             "Frontend"
         )
         {
-            return
-                await _frontendSynchronizationEngine
-                    .RollbackAsync
-                    (
-                        synchronization
-                    );
-        }
-
-        return
-            await _backendSynchronizationEngine
+            return await _frontendSynchronizationEngine
                 .RollbackAsync
                 (
                     synchronization
                 );
+        }
+
+
+        return await _backendSynchronizationEngine
+            .RollbackAsync
+            (
+                synchronization
+            );
     }
+
+
 
     //===========================================================
     // Update Rollback Status
@@ -675,23 +767,21 @@ public class ModuleSynchronizationEngine
         ModuleSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Load Entity
-        //=======================================================
-
         var entity =
             await _context.ModuleSynchronizations
 
                 .FirstOrDefaultAsync
                 (
-                    x => x.Id == synchronization.Id
+                    x =>
+                        x.Id ==
+                        synchronization.Id
                 );
 
-        //=======================================================
-        // Validate
-        //=======================================================
 
-        if (entity == null)
+        if
+        (
+            entity == null
+        )
         {
             throw new InvalidOperationException
             (
@@ -699,25 +789,22 @@ public class ModuleSynchronizationEngine
             );
         }
 
-        //=======================================================
-        // Rollback
-        //=======================================================
 
         entity.Status =
             "Pending";
 
+
         entity.LastSynchronizationResult =
             "Rollback completed successfully.";
+
 
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+
         entity.ModifiedBy =
             1;
 
-        //=======================================================
-        // Save
-        //=======================================================
 
         await _context.SaveChangesAsync();
     }

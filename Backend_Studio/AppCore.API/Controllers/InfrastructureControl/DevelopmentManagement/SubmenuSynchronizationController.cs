@@ -70,7 +70,10 @@ public class SubmenuSynchronizationController : ControllerBase
     {
         return Ok
         (
-            await _repository.GetDefaultsAsync(type)
+            await _repository.GetDefaultsAsync
+            (
+                type
+            )
         );
     }
 
@@ -103,6 +106,7 @@ public class SubmenuSynchronizationController : ControllerBase
                 type
             );
 
+
         if
         (
             result == null
@@ -111,7 +115,11 @@ public class SubmenuSynchronizationController : ControllerBase
             return NotFound();
         }
 
-        return Ok(result);
+
+        return Ok
+        (
+            result
+        );
     }
 
 
@@ -126,7 +134,11 @@ public class SubmenuSynchronizationController : ControllerBase
     )
     {
         var synchronized =
-            await _repository.SynchronizeAsync(id);
+            await _repository.SynchronizeAsync
+            (
+                id
+            );
+
 
         if
         (
@@ -135,6 +147,7 @@ public class SubmenuSynchronizationController : ControllerBase
         {
             return NotFound();
         }
+
 
         return NoContent();
     }
@@ -151,7 +164,11 @@ public class SubmenuSynchronizationController : ControllerBase
     )
     {
         var rolledBack =
-            await _repository.RollbackAsync(id);
+            await _repository.RollbackAsync
+            (
+                id
+            );
+
 
         if
         (
@@ -160,6 +177,7 @@ public class SubmenuSynchronizationController : ControllerBase
         {
             return NotFound();
         }
+
 
         return NoContent();
     }
@@ -177,7 +195,10 @@ public class SubmenuSynchronizationController : ControllerBase
     {
         return Ok
         (
-            await _repository.GetAllAsync(type)
+            await _repository.GetAllAsync
+            (
+                type
+            )
         );
     }
 
@@ -193,7 +214,11 @@ public class SubmenuSynchronizationController : ControllerBase
     )
     {
         var synchronization =
-            await _repository.GetByIdAsync(id);
+            await _repository.GetByIdAsync
+            (
+                id
+            );
+
 
         if
         (
@@ -203,7 +228,11 @@ public class SubmenuSynchronizationController : ControllerBase
             return NotFound();
         }
 
-        return Ok(synchronization);
+
+        return Ok
+        (
+            synchronization
+        );
     }
 
 
@@ -218,9 +247,16 @@ public class SubmenuSynchronizationController : ControllerBase
     )
     {
         var id =
-            await _repository.CreateAsync(dto);
+            await _repository.CreateAsync
+            (
+                dto
+            );
 
-        return Ok(id);
+
+        return Ok
+        (
+            id
+        );
     }
 
 
@@ -244,8 +280,13 @@ public class SubmenuSynchronizationController : ControllerBase
             return BadRequest();
         }
 
+
         var updated =
-            await _repository.UpdateAsync(dto);
+            await _repository.UpdateAsync
+            (
+                dto
+            );
+
 
         if
         (
@@ -254,6 +295,7 @@ public class SubmenuSynchronizationController : ControllerBase
         {
             return NotFound();
         }
+
 
         return NoContent();
     }
@@ -270,7 +312,11 @@ public class SubmenuSynchronizationController : ControllerBase
     )
     {
         var deleted =
-            await _repository.DeleteAsync(id);
+            await _repository.DeleteAsync
+            (
+                id
+            );
+
 
         if
         (
@@ -279,6 +325,7 @@ public class SubmenuSynchronizationController : ControllerBase
         {
             return NotFound();
         }
+
 
         return NoContent();
     }
@@ -295,7 +342,11 @@ public class SubmenuSynchronizationController : ControllerBase
     )
     {
         var restored =
-            await _repository.RestoreAsync(type);
+            await _repository.RestoreAsync
+            (
+                type
+            );
+
 
         if
         (
@@ -307,6 +358,7 @@ public class SubmenuSynchronizationController : ControllerBase
                 $"No deleted {type} submenu synchronization configuration found."
             );
         }
+
 
         return NoContent();
     }
@@ -328,7 +380,11 @@ public class SubmenuSynchronizationController : ControllerBase
                     "Submenu Synchronization"
                 );
 
-        return Ok(history);
+
+        return Ok
+        (
+            history
+        );
     }
 
 
@@ -353,7 +409,11 @@ public class SubmenuSynchronizationController : ControllerBase
                     id
                 );
 
-        return Ok(history);
+
+        return Ok
+        (
+            history
+        );
     }
 
 }

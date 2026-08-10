@@ -11,11 +11,13 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.MenuSynchronization.DTOs;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Api.Controllers.InfrastructureControl.DevelopmentManagement;
+
 
 //===============================================================
 // Menu Synchronization Controller
@@ -25,13 +27,19 @@ namespace AppCore.Api.Controllers.InfrastructureControl.DevelopmentManagement;
 [Route("api/infrastructure-control/development-management/menu-synchronization")]
 public class MenuSynchronizationController : ControllerBase
 {
+
     //===========================================================
     // Fields
     //===========================================================
 
-    private readonly IMenuSynchronizationRepository _repository;
+    private readonly IMenuSynchronizationRepository
+        _repository;
 
-    private readonly IActivityHistoryRepository _activityHistoryRepository;
+
+    private readonly IActivityHistoryRepository
+        _activityHistoryRepository;
+
+
 
     //===========================================================
     // Constructor
@@ -40,15 +48,19 @@ public class MenuSynchronizationController : ControllerBase
     public MenuSynchronizationController
     (
         IMenuSynchronizationRepository repository,
+
         IActivityHistoryRepository activityHistoryRepository
     )
     {
         _repository =
             repository;
 
+
         _activityHistoryRepository =
             activityHistoryRepository;
     }
+
+
 
     //===========================================================
     // Get Defaults
@@ -60,10 +72,16 @@ public class MenuSynchronizationController : ControllerBase
         [FromQuery] string type
     )
     {
-        return Ok(
-            await _repository.GetDefaultsAsync(type)
+        return Ok
+        (
+            await _repository.GetDefaultsAsync
+            (
+                type
+            )
         );
     }
+
+
 
     //===========================================================
     // Analyze Menu
@@ -89,14 +107,24 @@ public class MenuSynchronizationController : ControllerBase
                 type
             );
 
-        if (result == null)
+
+        if
+        (
+            result == null
+        )
         {
             return NotFound();
         }
 
-        return Ok(result);
+
+        return Ok
+        (
+            result
+        );
     }
-    
+
+
+
     //===========================================================
     // Sync
     //===========================================================
@@ -108,15 +136,77 @@ public class MenuSynchronizationController : ControllerBase
     )
     {
         var synchronized =
-            await _repository.SynchronizeAsync(id);
+            await _repository.SynchronizeAsync
+            (
+                id
+            );
 
-        if (!synchronized)
+
+        if
+        (
+            !synchronized
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
+
+
+
+    //===========================================================
+    // Rollback Validation
+    //===========================================================
+    //
+    // This endpoint ONLY checks whether rollback is allowed.
+    //
+    // It does NOT execute rollback.
+    //
+    // The frontend calls this endpoint before displaying the
+    // rollback confirmation dialog.
+    //
+    // If dependent Submenu data exists:
+    //
+    //     CanRollback = false
+    //
+    // The confirmation dialog can therefore remain open while
+    // the Rollback button is disabled and the dependency warning
+    // is displayed.
+    //
+    //===========================================================
+
+    [HttpGet("{id:long}/rollback-validation")]
+    public async Task<ActionResult<MenuSynchronizationRollbackValidationDto>>
+        ValidateRollback
+    (
+        long id
+    )
+    {
+        var validation =
+            await _repository.ValidateRollbackAsync
+            (
+                id
+            );
+
+
+        if
+        (
+            validation == null
+        )
+        {
+            return NotFound();
+        }
+
+
+        return Ok
+        (
+            validation
+        );
+    }
+
+
 
     //===========================================================
     // Rollback
@@ -129,15 +219,25 @@ public class MenuSynchronizationController : ControllerBase
     )
     {
         var rolledBack =
-            await _repository.RollbackAsync(id);
+            await _repository.RollbackAsync
+            (
+                id
+            );
 
-        if (!rolledBack)
+
+        if
+        (
+            !rolledBack
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
+
+
 
     //===========================================================
     // Get All
@@ -149,10 +249,16 @@ public class MenuSynchronizationController : ControllerBase
         [FromQuery] string type
     )
     {
-        return Ok(
-            await _repository.GetAllAsync(type)
+        return Ok
+        (
+            await _repository.GetAllAsync
+            (
+                type
+            )
         );
     }
+
+
 
     //===========================================================
     // Get By Id
@@ -165,15 +271,28 @@ public class MenuSynchronizationController : ControllerBase
     )
     {
         var synchronization =
-            await _repository.GetByIdAsync(id);
+            await _repository.GetByIdAsync
+            (
+                id
+            );
 
-        if (synchronization == null)
+
+        if
+        (
+            synchronization == null
+        )
         {
             return NotFound();
         }
 
-        return Ok(synchronization);
+
+        return Ok
+        (
+            synchronization
+        );
     }
+
+
 
     //===========================================================
     // Create
@@ -186,10 +305,19 @@ public class MenuSynchronizationController : ControllerBase
     )
     {
         var id =
-            await _repository.CreateAsync(dto);
+            await _repository.CreateAsync
+            (
+                dto
+            );
 
-        return Ok(id);
+
+        return Ok
+        (
+            id
+        );
     }
+
+
 
     //===========================================================
     // Update
@@ -203,21 +331,35 @@ public class MenuSynchronizationController : ControllerBase
         UpdateMenuSynchronizationDto dto
     )
     {
-        if (id != dto.Id)
+        if
+        (
+            id != dto.Id
+        )
         {
             return BadRequest();
         }
 
-        var updated =
-            await _repository.UpdateAsync(dto);
 
-        if (!updated)
+        var updated =
+            await _repository.UpdateAsync
+            (
+                dto
+            );
+
+
+        if
+        (
+            !updated
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
+
+
 
     //===========================================================
     // Delete
@@ -230,15 +372,25 @@ public class MenuSynchronizationController : ControllerBase
     )
     {
         var deleted =
-            await _repository.DeleteAsync(id);
+            await _repository.DeleteAsync
+            (
+                id
+            );
 
-        if (!deleted)
+
+        if
+        (
+            !deleted
+        )
         {
             return NotFound();
         }
 
+
         return NoContent();
     }
+
+
 
     //===========================================================
     // Restore
@@ -251,17 +403,28 @@ public class MenuSynchronizationController : ControllerBase
     )
     {
         var restored =
-            await _repository.RestoreAsync(type);
+            await _repository.RestoreAsync
+            (
+                type
+            );
 
-        if (!restored)
+
+        if
+        (
+            !restored
+        )
         {
-            return NotFound(
+            return NotFound
+            (
                 $"No deleted {type} menu synchronization configuration found."
             );
         }
 
+
         return NoContent();
     }
+
+
 
     //===========================================================
     // Get List History
@@ -275,11 +438,18 @@ public class MenuSynchronizationController : ControllerBase
                 .GetListHistoryAsync
                 (
                     "Infrastructure Control",
+
                     "Menu Synchronization"
                 );
 
-        return Ok(history);
+
+        return Ok
+        (
+            history
+        );
     }
+
+
 
     //===========================================================
     // Get Menu Synchronization History
@@ -296,10 +466,17 @@ public class MenuSynchronizationController : ControllerBase
                 .GetHistoryAsync
                 (
                     "Infrastructure Control",
+
                     "Menu Synchronization",
+
                     id
                 );
 
-        return Ok(history);
+
+        return Ok
+        (
+            history
+        );
     }
+
 }

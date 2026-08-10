@@ -63,6 +63,107 @@ public class SubmenuSynchronizationRepository
 
 
     //===========================================================
+    // Normalize Physical Name
+    //===========================================================
+    //
+    // Used ONLY for physical file/folder names.
+    //
+    // Allowed characters:
+    //
+    // Letters
+    // Numbers
+    // Hyphen (-)
+    //
+    // Spaces are converted to hyphens.
+    //
+    // All other technical/special characters are removed.
+    //
+    // Database/display names remain unchanged.
+    //
+    //===========================================================
+
+    private static string NormalizePhysicalName
+    (
+        string value
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(value)
+        )
+        {
+            return string.Empty;
+        }
+
+
+        var normalized =
+            new string
+            (
+                value
+                    .Trim()
+                    .Select
+                    (
+                        character =>
+                        {
+                            if
+                            (
+                                char.IsLetterOrDigit(character)
+                            )
+                            {
+                                return character;
+                            }
+
+
+                            if
+                            (
+                                character ==
+                                '-'
+                            )
+                            {
+                                return '-';
+                            }
+
+
+                            if
+                            (
+                                char.IsWhiteSpace(character)
+                            )
+                            {
+                                return '-';
+                            }
+
+
+                            return '\0';
+                        }
+                    )
+                    .Where
+                    (
+                        character =>
+                            character != '\0'
+                    )
+                    .ToArray()
+            );
+
+
+        while
+        (
+            normalized.Contains("--")
+        )
+        {
+            normalized =
+                normalized.Replace
+                (
+                    "--",
+                    "-"
+                );
+        }
+
+
+        return normalized.Trim('-');
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -79,23 +180,32 @@ public class SubmenuSynchronizationRepository
                 // Navigation
                 //===================================================
 
-                ModuleId = 0,
+                ModuleId =
+                    0,
 
-                ModuleCode = string.Empty,
+                ModuleCode =
+                    string.Empty,
 
-                ModuleName = string.Empty,
+                ModuleName =
+                    string.Empty,
 
-                MenuId = 0,
+                MenuId =
+                    0,
 
-                MenuCode = string.Empty,
+                MenuCode =
+                    string.Empty,
 
-                MenuName = string.Empty,
+                MenuName =
+                    string.Empty,
 
-                SubmenuId = 0,
+                SubmenuId =
+                    0,
 
-                SubmenuCode = string.Empty,
+                SubmenuCode =
+                    string.Empty,
 
-                SubmenuName = string.Empty,
+                SubmenuName =
+                    string.Empty,
 
 
                 //===================================================
@@ -131,9 +241,6 @@ public class SubmenuSynchronizationRepository
                 //===================================================
 
                 FrontendSubmenuFolder =
-                    string.Empty,
-
-                FrontendPagesFolder =
                     string.Empty,
 
                 FrontendFormFolder =
@@ -396,9 +503,6 @@ public class SubmenuSynchronizationRepository
                     FrontendSubmenuFolder =
                         x.FrontendSubmenuFolder,
 
-                    FrontendPagesFolder =
-                        x.FrontendPagesFolder,
-
                     FrontendFormFolder =
                         x.FrontendFormFolder,
 
@@ -624,9 +728,6 @@ public class SubmenuSynchronizationRepository
                     FrontendSubmenuFolder =
                         x.FrontendSubmenuFolder,
 
-                    FrontendPagesFolder =
-                        x.FrontendPagesFolder,
-
                     FrontendFormFolder =
                         x.FrontendFormFolder,
 
@@ -750,6 +851,10 @@ public class SubmenuSynchronizationRepository
         string synchronizationType
     )
     {
+        //=======================================================
+        // Solution Root
+        //=======================================================
+
         var currentDirectory =
             Environment.CurrentDirectory;
 
@@ -778,6 +883,10 @@ public class SubmenuSynchronizationRepository
                     .FullName;
         }
 
+
+        //=======================================================
+        // Studio Roots
+        //=======================================================
 
         var frontendRoot =
             Path.Combine
@@ -923,38 +1032,43 @@ public class SubmenuSynchronizationRepository
 
 
         //=======================================================
-        // Build Names
+        // Physical Names
+        //=======================================================
+        //
+        // Database/navigation names remain unchanged.
+        //
+        // Physical folders and files use normalized names.
+        //
+        // Example:
+        //
+        // Account Settings
+        //     -> AccountSettings
+        //
+        // Account Class
+        //     -> AccountClass
+        //
+        // Account Ledger
+        //     -> AccountLedger
+        //
         //=======================================================
 
         var featureName =
-            module.Name
-                .Trim()
-                .Replace
-                (
-                    " ",
-                    "-"
-                )
-                .ToLowerInvariant();
+            NormalizePhysicalName
+            (
+                module.Name
+            );
 
         var menuName =
-            menu.Name
-                .Trim()
-                .Replace
-                (
-                    " ",
-                    "-"
-                )
-                .ToLowerInvariant();
+            NormalizePhysicalName
+            (
+                menu.Name
+            );
 
         var submenuName =
-            submenu.Name
-                .Trim()
-                .Replace
-                (
-                    " ",
-                    "-"
-                )
-                .ToLowerInvariant();
+            NormalizePhysicalName
+            (
+                submenu.Name
+            );
 
 
         //=======================================================
@@ -964,6 +1078,10 @@ public class SubmenuSynchronizationRepository
         var configuration =
             new SubmenuSynchronizationDto
             {
+                //===================================================
+                // Navigation
+                //===================================================
+
                 ModuleId =
                     module.Id,
 
@@ -990,6 +1108,11 @@ public class SubmenuSynchronizationRepository
 
                 SubmenuName =
                     submenu.Name,
+
+
+                //===================================================
+                // Synchronization
+                //===================================================
 
                 SynchronizationType =
                     synchronizationType,
@@ -1033,13 +1156,17 @@ public class SubmenuSynchronizationRepository
 
             backendRoot,
 
-            module.Name,
+            featureName,
 
-            menu.Name,
+            menuName,
 
-            submenu.Name
+            submenuName
         );
 
+
+        //=======================================================
+        // Completed
+        //=======================================================
 
         return configuration;
     }
@@ -1062,9 +1189,17 @@ public class SubmenuSynchronizationRepository
         string submenuName
     )
     {
+        //=======================================================
+        // Frontend Solution
+        //=======================================================
+
         configuration.FrontendSolution =
             frontendRoot;
 
+
+        //=======================================================
+        // Frontend Project
+        //=======================================================
 
         configuration.FrontendProject =
             "Studio_UI";
@@ -1092,7 +1227,7 @@ public class SubmenuSynchronizationRepository
 
 
         //=======================================================
-        // Menu
+        // Existing Menu
         //=======================================================
 
         configuration.FrontendMenuFolder =
@@ -1105,28 +1240,32 @@ public class SubmenuSynchronizationRepository
 
 
         //=======================================================
+        // Existing Menu Pages
+        //=======================================================
+        //
+        // "pages" is an existing folder under the Menu.
+        //
+        // It is NOT created by the Submenu Synchronization
+        // Engine.
+        //
+        //=======================================================
+
+        var pagesFolder =
+            Path.Combine
+            (
+                configuration.FrontendMenuFolder,
+                "pages"
+            );
+
+
+        //=======================================================
         // Submenu
         //=======================================================
 
         configuration.FrontendSubmenuFolder =
             Path.Combine
             (
-                configuration.FrontendMenuFolder,
-                submenuName
-            );
-
-
-        //=======================================================
-        // Pages
-        //=======================================================
-
-        configuration.FrontendPagesFolder =
-            Path.Combine
-            (
-                configuration.FrontendSourceFolder,
-                featureName,
-                menuName,
-                "pages",
+                pagesFolder,
                 submenuName
             );
 
@@ -1138,7 +1277,7 @@ public class SubmenuSynchronizationRepository
         configuration.FrontendFormFolder =
             Path.Combine
             (
-                configuration.FrontendPagesFolder,
+                configuration.FrontendSubmenuFolder,
                 "form"
             );
 
@@ -1150,7 +1289,7 @@ public class SubmenuSynchronizationRepository
         configuration.FrontendListFolder =
             Path.Combine
             (
-                configuration.FrontendPagesFolder,
+                configuration.FrontendSubmenuFolder,
                 "list"
             );
 
@@ -1162,7 +1301,7 @@ public class SubmenuSynchronizationRepository
         configuration.FrontendSubmenuModelFile =
             Path.Combine
             (
-                configuration.FrontendSubmenuFolder,
+                configuration.FrontendMenuFolder,
                 "models",
                 $"{submenuName}.model.ts"
             );
@@ -1175,7 +1314,7 @@ public class SubmenuSynchronizationRepository
         configuration.FrontendSubmenuServiceFile =
             Path.Combine
             (
-                configuration.FrontendSubmenuFolder,
+                configuration.FrontendMenuFolder,
                 "services",
                 $"{submenuName}.service.ts"
             );
@@ -1188,7 +1327,7 @@ public class SubmenuSynchronizationRepository
         configuration.FrontendSubmenuRouteFile =
             Path.Combine
             (
-                configuration.FrontendSubmenuFolder,
+                configuration.FrontendMenuFolder,
                 "routes",
                 $"{submenuName}.routes.ts"
             );
@@ -1250,6 +1389,7 @@ public class SubmenuSynchronizationRepository
             );
     }
 
+
     //===========================================================
     // Analyze Backend
     //===========================================================
@@ -1267,9 +1407,17 @@ public class SubmenuSynchronizationRepository
         string submenuName
     )
     {
+        //=======================================================
+        // Backend Solution
+        //=======================================================
+
         configuration.BackendSolution =
             backendRoot;
 
+
+        //=======================================================
+        // Backend Projects
+        //=======================================================
 
         configuration.BackendApplicationProject =
             "AppCore.Application";
@@ -1284,7 +1432,7 @@ public class SubmenuSynchronizationRepository
 
 
         //=======================================================
-        // Controller
+        // API Controller
         //=======================================================
 
         configuration.BackendControllerFile =
@@ -1305,7 +1453,7 @@ public class SubmenuSynchronizationRepository
 
 
         //=======================================================
-        // Application
+        // Application Submenu Folder
         //=======================================================
 
         configuration.BackendApplicationSubMenuFolder =
@@ -1323,6 +1471,10 @@ public class SubmenuSynchronizationRepository
             );
 
 
+        //=======================================================
+        // Application DTOs Folder
+        //=======================================================
+
         configuration.BackendApplicationDtosFolder =
             Path.Combine
             (
@@ -1331,6 +1483,10 @@ public class SubmenuSynchronizationRepository
                 "DTOs"
             );
 
+
+        //=======================================================
+        // Application Interfaces Folder
+        //=======================================================
 
         configuration.BackendApplicationInterfacesFolder =
             Path.Combine
@@ -1341,6 +1497,10 @@ public class SubmenuSynchronizationRepository
             );
 
 
+        //=======================================================
+        // Submenu DTO
+        //=======================================================
+
         configuration.BackendSubMenuDtoFile =
             Path.Combine
             (
@@ -1349,6 +1509,10 @@ public class SubmenuSynchronizationRepository
                 $"{submenuName}Dto.cs"
             );
 
+
+        //=======================================================
+        // Create Submenu DTO
+        //=======================================================
 
         configuration.BackendCreateSubMenuDtoFile =
             Path.Combine
@@ -1359,6 +1523,10 @@ public class SubmenuSynchronizationRepository
             );
 
 
+        //=======================================================
+        // Update Submenu DTO
+        //=======================================================
+
         configuration.BackendUpdateSubMenuDtoFile =
             Path.Combine
             (
@@ -1368,6 +1536,10 @@ public class SubmenuSynchronizationRepository
             );
 
 
+        //=======================================================
+        // Submenu Defaults DTO
+        //=======================================================
+
         configuration.BackendSubMenuDefaultsDtoFile =
             Path.Combine
             (
@@ -1376,6 +1548,10 @@ public class SubmenuSynchronizationRepository
                 $"{submenuName}DefaultsDto.cs"
             );
 
+
+        //=======================================================
+        // Submenu Repository Interface
+        //=======================================================
 
         configuration.BackendSubMenuRepositoryInterfaceFile =
             Path.Combine
@@ -1387,15 +1563,7 @@ public class SubmenuSynchronizationRepository
 
 
         //=======================================================
-        // Domain
-        //=======================================================
-        // Corrected structure:
-        //
-        // AppCore.Domain
-        //     Settings
-        //         General Settings
-        //             Company
-        //                 Company.cs
+        // Domain Entity
         //=======================================================
 
         configuration.BackendSubMenuEntityFile =
@@ -1409,23 +1577,12 @@ public class SubmenuSynchronizationRepository
 
                 menuName,
 
-                submenuName,
-
                 $"{submenuName}.cs"
             );
 
 
         //=======================================================
         // Infrastructure Configuration
-        //=======================================================
-        // Corrected structure:
-        //
-        // AppCore.Infrastructure
-        //     Configurations
-        //         Settings
-        //             General Settings
-        //                 Company
-        //                     CompanyConfiguration.cs
         //=======================================================
 
         configuration.BackendSubMenuConfigurationFile =
@@ -1441,23 +1598,12 @@ public class SubmenuSynchronizationRepository
 
                 menuName,
 
-                submenuName,
-
                 $"{submenuName}Configuration.cs"
             );
 
 
         //=======================================================
         // Infrastructure Repository
-        //=======================================================
-        // Corrected structure:
-        //
-        // AppCore.Infrastructure
-        //     Repositories
-        //         Settings
-        //             General Settings
-        //                 Company
-        //                     CompanyRepository.cs
         //=======================================================
 
         configuration.BackendSubMenuRepositoryFile =
@@ -1473,11 +1619,10 @@ public class SubmenuSynchronizationRepository
 
                 menuName,
 
-                submenuName,
-
                 $"{submenuName}Repository.cs"
             );
     }
+
 
     //===========================================================
     // Synchronize
@@ -1543,28 +1688,32 @@ public class SubmenuSynchronizationRepository
         long? excludeId = null
     )
     {
-        return await _context.SubmenuSynchronizations.AnyAsync(x =>
+        return await _context.SubmenuSynchronizations.AnyAsync
+        (
+            x =>
 
-            !x.IsDeleted
+                !x.IsDeleted
 
-            &&
+                &&
 
-            x.SubmenuId == submenuId
+                x.SubmenuId ==
+                submenuId
 
-            &&
+                &&
 
-            x.SynchronizationType ==
-            synchronizationType
+                x.SynchronizationType ==
+                synchronizationType
 
-            &&
+                &&
 
-            (
-                !excludeId.HasValue
+                (
+                    !excludeId.HasValue
 
-                ||
+                    ||
 
-                x.Id != excludeId.Value
-            ));
+                    x.Id != excludeId.Value
+                )
+        );
     }
 
 
@@ -1663,9 +1812,6 @@ public class SubmenuSynchronizationRepository
 
                 FrontendSubmenuFolder =
                     dto.FrontendSubmenuFolder,
-
-                FrontendPagesFolder =
-                    dto.FrontendPagesFolder,
 
                 FrontendFormFolder =
                     dto.FrontendFormFolder,
@@ -1969,9 +2115,6 @@ public class SubmenuSynchronizationRepository
 
         synchronization.FrontendSubmenuFolder =
             dto.FrontendSubmenuFolder;
-
-        synchronization.FrontendPagesFolder =
-            dto.FrontendPagesFolder;
 
         synchronization.FrontendFormFolder =
             dto.FrontendFormFolder;

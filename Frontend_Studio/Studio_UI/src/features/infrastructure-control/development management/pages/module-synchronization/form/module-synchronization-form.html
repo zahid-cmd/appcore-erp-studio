@@ -62,6 +62,7 @@
 
     </app-page-header>
 
+
     <!-- =====================================================
          PAGE TOOLBAR
     ====================================================== -->
@@ -72,10 +73,15 @@
 
         rightFlex="1 1 auto">
 
-        <!-- LEFT -->
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
 
         <div
+
             pageToolbarLeft
+
             class="module-toolbar-left">
 
             <app-control-tabs
@@ -88,11 +94,19 @@
 
         </div>
 
-        <!-- RIGHT -->
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
 
         <div
+
             pageToolbarRight
+
             class="module-toolbar-right">
+
+
+            <!-- MODULE -->
 
             <app-search-dropdown
 
@@ -112,6 +126,9 @@
 
             </app-search-dropdown>
 
+
+            <!-- ANALYZE -->
+
             <button
 
                 type="button"
@@ -127,6 +144,9 @@
                 <span>Analyze</span>
 
             </button>
+
+
+            <!-- RESET -->
 
             <button
 
@@ -146,11 +166,17 @@
 
     </app-page-toolbar>
 
+
     <!-- =====================================================
          SYNCHRONIZATION WORKSPACE
     ====================================================== -->
 
     <div class="synchronization-workspace">
+
+
+        <!-- =================================================
+             FRONTEND SYNCHRONIZATION WORKSPACE
+        ================================================== -->
 
         @if (showFrontendWorkspace)
         {
@@ -168,9 +194,11 @@
                     toggleFrontendEditingSection('registration')
                 "
 
+
                 [targetLocationReadonly]="
                     isTargetLocationReadonly
                 "
+
 
                 [frontendSolution]="
                     synchronization.frontendSolution
@@ -180,6 +208,7 @@
                     synchronization.frontendSolution = $event
                 "
 
+
                 [project]="
                     synchronization.frontendProject
                 "
@@ -187,6 +216,7 @@
                 (projectChange)="
                     synchronization.frontendProject = $event
                 "
+
 
                 [sourceFolder]="
                     synchronization.frontendSourceFolder
@@ -196,6 +226,7 @@
                     synchronization.frontendSourceFolder = $event
                 "
 
+
                 [featureFolder]="
                     synchronization.frontendFeatureFolder
                 "
@@ -204,9 +235,11 @@
                     synchronization.frontendFeatureFolder = $event
                 "
 
+
                 [standardStructureReadonly]="
                     isStandardStructureReadonly
                 "
+
 
                 [moduleFolder]="
                     synchronization.frontendModuleFolder
@@ -216,6 +249,7 @@
                     synchronization.frontendModuleFolder = $event
                 "
 
+
                 [routesFolder]="
                     synchronization.frontendRoutesFolder
                 "
@@ -224,9 +258,11 @@
                     synchronization.frontendRoutesFolder = $event
                 "
 
+
                 [applicationRegistrationReadonly]="
                     isApplicationRegistrationReadonly
                 "
+
 
                 [moduleRouteFile]="
                     synchronization.frontendModuleRouteFile
@@ -236,15 +272,22 @@
                     synchronization.frontendModuleRouteFile = $event
                 "
 
+
                 [applicationRouteFile]="
                     synchronization.frontendApplicationRouteFile
                 "
 
                 (applicationRouteFileChange)="
-                    synchronization.frontendApplicationRouteFile = $event">
+                    synchronization.frontendApplicationRouteFile = $event
+                ">
 
             </app-module-sync-workspace-frontend>
         }
+
+
+        <!-- =================================================
+             BACKEND SYNCHRONIZATION WORKSPACE
+        ================================================== -->
 
         @if (showBackendWorkspace)
         {
@@ -262,9 +305,11 @@
                     toggleBackendEditingSection('registration')
                 "
 
+
                 [targetLocationReadonly]="
                     isTargetLocationReadonly
                 "
+
 
                 [backendSolution]="
                     synchronization.backendSolution
@@ -274,6 +319,7 @@
                     synchronization.backendSolution = $event
                 "
 
+
                 [backendApiProject]="
                     synchronization.backendApiProject
                 "
@@ -281,6 +327,7 @@
                 (backendApiProjectChange)="
                     synchronization.backendApiProject = $event
                 "
+
 
                 [backendApplicationProject]="
                     synchronization.backendApplicationProject
@@ -290,6 +337,7 @@
                     synchronization.backendApplicationProject = $event
                 "
 
+
                 [backendDomainProject]="
                     synchronization.backendDomainProject
                 "
@@ -297,6 +345,7 @@
                 (backendDomainProjectChange)="
                     synchronization.backendDomainProject = $event
                 "
+
 
                 [backendInfrastructureProject]="
                     synchronization.backendInfrastructureProject
@@ -306,9 +355,11 @@
                     synchronization.backendInfrastructureProject = $event
                 "
 
+
                 [standardStructureReadonly]="
                     isStandardStructureReadonly
                 "
+
 
                 [backendControllerFolder]="
                     synchronization.backendControllerFolder
@@ -318,6 +369,7 @@
                     synchronization.backendControllerFolder = $event
                 "
 
+
                 [backendApplicationFolder]="
                     synchronization.backendApplicationFolder
                 "
@@ -325,6 +377,7 @@
                 (backendApplicationFolderChange)="
                     synchronization.backendApplicationFolder = $event
                 "
+
 
                 [backendEntityFolder]="
                     synchronization.backendEntityFolder
@@ -334,6 +387,7 @@
                     synchronization.backendEntityFolder = $event
                 "
 
+
                 [backendRepositoryFolder]="
                     synchronization.backendRepositoryFolder
                 "
@@ -341,6 +395,7 @@
                 (backendRepositoryFolderChange)="
                     synchronization.backendRepositoryFolder = $event
                 "
+
 
                 [backendConfigurationFolder]="
                     synchronization.backendConfigurationFolder
@@ -350,9 +405,11 @@
                     synchronization.backendConfigurationFolder = $event
                 "
 
+
                 [applicationRegistrationReadonly]="
                     isApplicationRegistrationReadonly
                 "
+
 
                 [dependencyInjectionFile]="
                     synchronization.dependencyInjectionFile
@@ -362,12 +419,14 @@
                     synchronization.dependencyInjectionFile = $event
                 "
 
+
                 [dbContextFile]="
                     synchronization.dbContextFile
                 "
 
                 (dbContextFileChange)="
-                    synchronization.dbContextFile = $event">
+                    synchronization.dbContextFile = $event
+                ">
 
             </app-module-sync-workspace-backend>
         }
@@ -375,6 +434,7 @@
     </div>
 
 </div>
+
 
 <!-- =========================================================
      TOAST
@@ -384,13 +444,15 @@
 
 </app-toast>
 
+
 <!-- =========================================================
-     CONFIRM DIALOG
+     NORMAL CONFIRM DIALOG
 ========================================================= -->
 
 <app-confirm-dialog>
 
 </app-confirm-dialog>
+
 
 <!-- =========================================================
      PROGRESS DIALOG

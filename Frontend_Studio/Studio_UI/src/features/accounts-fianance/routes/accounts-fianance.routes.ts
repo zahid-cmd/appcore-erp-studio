@@ -4,8 +4,7 @@ import
 }
 from '@angular/router';
 
-
-export const accountsFinanceRoutes:
+export const accountsFiananceRoutes:
     Routes =
 [
     //===========================================================
@@ -18,7 +17,6 @@ export const accountsFinanceRoutes:
     //   • Activity/Page routes
     //===========================================================
 
-
     //===========================================================
     // Default
     //===========================================================
@@ -29,5 +27,31 @@ export const accountsFinanceRoutes:
         redirectTo:'',
 
         pathMatch:'full'
-    }
+    },
+    // AUTO-BEGIN : MNU-007-001
+
+    //===========================================================
+    // Account Class
+    //===========================================================
+
+    {
+        path:'account-class',
+
+        data:
+        {
+            breadcrumb:'Account Class'
+        },
+
+        loadChildren:() =>
+            import(
+                '../account-class/routes/account-class.routes'
+            )
+            .then(
+                m =>
+                    m.mnu007001Routes
+            )
+    },
+
+    // AUTO-END : MNU-007-001
+
 ];

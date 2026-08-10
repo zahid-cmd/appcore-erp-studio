@@ -102,6 +102,7 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
 
+
 //===============================================================
 // Models & Services
 //===============================================================
@@ -136,11 +137,6 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
-import
-{
-    MenuSynchronizationService
-}
-from '../../../services/menu-synchronization.service';
 
 //===============================================================
 // Types
@@ -151,6 +147,7 @@ type EditingSection =
     | 'target'
     | 'structure'
     | 'registration';
+
 
 //===============================================================
 // Component
@@ -205,9 +202,6 @@ implements OnInit
     private readonly moduleSynchronizationService =
         inject(ModuleSynchronizationService);
 
-    private readonly menuSynchronizationService =
-        inject(MenuSynchronizationService);
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -223,6 +217,7 @@ implements OnInit
     private readonly progressDialog =
         inject(ProgressDialogService);
 
+
     //===========================================================
     // State
     //===========================================================
@@ -232,7 +227,8 @@ implements OnInit
 
     hasChanges =
         false;
-                
+
+
     //===========================================================
     // Mode
     //===========================================================
@@ -258,12 +254,14 @@ implements OnInit
         'frontend' | 'backend' =
         'frontend';
 
+
     //===========================================================
     // Navigation
     //===========================================================
 
     modules:any[] =
-    [];
+        [];
+
 
     //===========================================================
     // Tabs
@@ -272,6 +270,7 @@ implements OnInit
     tabs:
         ControlTab[] =
         [];
+
 
     //===========================================================
     // Model
@@ -414,6 +413,7 @@ implements OnInit
         isDeleted: false
     };
 
+
     //===========================================================
     // Workspace Editing
     //===========================================================
@@ -423,6 +423,7 @@ implements OnInit
 
     backendEditingSection: EditingSection =
         'none';
+
 
     //===========================================================
     // Synchronization Name
@@ -470,6 +471,7 @@ implements OnInit
         }
     }
 
+
     //===========================================================
     // Tab Title
     //===========================================================
@@ -479,6 +481,7 @@ implements OnInit
     {
         return `${this.actionName} ${this.synchronizationName}`;
     }
+
 
     //===========================================================
     // Frontend Workspace Visibility
@@ -490,6 +493,7 @@ implements OnInit
         return this.selectedTab === 'frontend';
     }
 
+
     //===========================================================
     // Backend Workspace Visibility
     //===========================================================
@@ -499,6 +503,7 @@ implements OnInit
     {
         return this.selectedTab === 'backend';
     }
+
 
     //===========================================================
     // Navigation Readonly
@@ -576,6 +581,7 @@ implements OnInit
             : this.backendEditingSection !== 'registration';
     }
 
+
     //===========================================================
     // Toggle Frontend Editing Section
     //===========================================================
@@ -615,6 +621,7 @@ implements OnInit
                 : section;
     }
 
+
     //===========================================================
     // Analyze Enabled
     //===========================================================
@@ -629,6 +636,7 @@ implements OnInit
         );
     }
 
+
     //===========================================================
     // Can Synchronize
     //===========================================================
@@ -639,6 +647,7 @@ implements OnInit
         return this.synchronization.status !== 'Synchronized';
     }
 
+
     //===========================================================
     // Can Rollback
     //===========================================================
@@ -648,6 +657,7 @@ implements OnInit
     {
         return this.synchronization.status === 'Synchronized';
     }
+
 
     //===========================================================
     // Initialize Workspace
@@ -675,6 +685,7 @@ implements OnInit
         ];
     }
 
+
     //===========================================================
     // Initialization
     //===========================================================
@@ -689,6 +700,7 @@ implements OnInit
 
         this.initializeData();
     }
+
 
     //===========================================================
     // Initialize Form Mode
@@ -717,6 +729,7 @@ implements OnInit
                 : 'add';
     }
 
+
     //===========================================================
     // Initialize Data
     //===========================================================
@@ -738,6 +751,7 @@ implements OnInit
 
         this.loadSynchronization();
     }
+
 
     //===========================================================
     // Set Synchronization
@@ -766,6 +780,7 @@ implements OnInit
 
         this.cdr.detectChanges();
     }
+
 
     //===========================================================
     // Load Synchronization
@@ -806,6 +821,7 @@ implements OnInit
                     }
             });
     }
+
 
     //===========================================================
     // Load Defaults
@@ -855,6 +871,7 @@ implements OnInit
             });
     }
 
+
     //===========================================================
     // Load Modules
     //===========================================================
@@ -883,6 +900,7 @@ implements OnInit
                 }
             });
     }
+
 
     //===========================================================
     // Track Changes
@@ -933,6 +951,7 @@ implements OnInit
 
         this.checkForChanges();
     }
+
 
     //===========================================================
     // Analyze
@@ -1041,6 +1060,7 @@ implements OnInit
             });
     }
 
+
     //===========================================================
     // Prepare Synchronization
     //===========================================================
@@ -1048,10 +1068,6 @@ implements OnInit
     private async prepareSynchronizationAsync():
         Promise<void>
     {
-        //=======================================================
-        // Open Progress Dialog
-        //=======================================================
-
         this.progressDialog.show
         (
             'Preparing Synchronization',
@@ -1059,17 +1075,9 @@ implements OnInit
             'Validate Configuration'
         );
 
-        //=======================================================
-        // Validate Configuration
-        //=======================================================
-
         await this.updateProgressAsync(10);
 
         await this.updateProgressAsync(20);
-
-        //=======================================================
-        // Analyze Workspace
-        //=======================================================
 
         this.progressDialog.update
         (
@@ -1080,10 +1088,6 @@ implements OnInit
         await this.updateProgressAsync(40);
 
         await this.updateProgressAsync(80);
-
-        //=======================================================
-        // Populate All Paths
-        //=======================================================
 
         this.progressDialog.update
         (
@@ -1099,6 +1103,8 @@ implements OnInit
 
         await this.delayAsync(500);
     }
+
+
     //===========================================================
     // Prepare Rollback
     //===========================================================
@@ -1106,28 +1112,14 @@ implements OnInit
     private async prepareRollbackAsync():
         Promise<void>
     {
-        //=======================================================
-        // Open Progress Dialog
-        //=======================================================
-
         this.progressDialog.show
         (
             'Rolling Back Synchronization',
 
-            'Validate Rollback'
+            'Prepare Rollback'
         );
 
-        //=======================================================
-        // Validate Rollback
-        //=======================================================
-
         await this.updateProgressAsync(10);
-
-        await this.updateProgressAsync(20);
-
-        //=======================================================
-        // Analyze Generated Files
-        //=======================================================
 
         this.progressDialog.update
         (
@@ -1135,28 +1127,33 @@ implements OnInit
             'Analyze Generated Files'
         );
 
+        await this.updateProgressAsync(20);
+
         await this.updateProgressAsync(40);
-
-        await this.updateProgressAsync(80);
-
-        //=======================================================
-        // Restore Previous State
-        //=======================================================
 
         this.progressDialog.update
         (
-            80,
+            60,
+            'Remove Generated Files'
+        );
+
+        await this.updateProgressAsync(60);
+
+        await this.updateProgressAsync(80);
+
+        this.progressDialog.update
+        (
+            90,
             'Restore Previous State'
         );
 
         await this.updateProgressAsync(90);
 
-        await this.updateProgressAsync(95);
-
         await this.updateProgressAsync(100);
 
         await this.delayAsync(500);
     }
+
 
     //===========================================================
     // Update Progress
@@ -1175,6 +1172,7 @@ implements OnInit
             progress
         );
     }
+
 
     //===========================================================
     // Delay
@@ -1198,6 +1196,7 @@ implements OnInit
         );
     }
 
+
     //===========================================================
     // Save
     //===========================================================
@@ -1205,18 +1204,10 @@ implements OnInit
     async onSave():
         Promise<void>
     {
-        //=======================================================
-        // Validate
-        //=======================================================
-
         if (!this.validateSynchronization())
         {
             return;
         }
-
-        //=======================================================
-        // Synchronization Mode
-        //=======================================================
 
         if (this.isSynchronizationMode)
         {
@@ -1225,15 +1216,7 @@ implements OnInit
             return;
         }
 
-        //=======================================================
-        // Prepare Synchronization
-        //=======================================================
-
         await this.prepareSynchronizationAsync();
-
-        //=======================================================
-        // Create
-        //=======================================================
 
         if (this.mode === 'add')
         {
@@ -1242,12 +1225,9 @@ implements OnInit
             return;
         }
 
-        //=======================================================
-        // Update
-        //=======================================================
-
         this.updateSynchronization();
     }
+
 
     //===========================================================
     // Save Successful
@@ -1259,15 +1239,7 @@ implements OnInit
     ):
         void
     {
-        //=======================================================
-        // Close Progress Dialog
-        //=======================================================
-
         this.progressDialog.close();
-
-        //=======================================================
-        // Reset State
-        //=======================================================
 
         this.originalSynchronization =
             JSON.stringify
@@ -1278,22 +1250,15 @@ implements OnInit
         this.hasChanges =
             false;
 
-        //=======================================================
-        // Success
-        //=======================================================
-
         this.toast.success
         (
             'Success',
             message
         );
 
-        //=======================================================
-        // Return To List
-        //=======================================================
-
         this.onBackToList();
     }
+
 
     //===========================================================
     // Save Failed
@@ -1307,33 +1272,32 @@ implements OnInit
     ):
         void
     {
-        //=======================================================
-        // Close Progress Dialog
-        //=======================================================
-
         this.progressDialog.close();
-
-        //=======================================================
-        // Log
-        //=======================================================
 
         console.error
         (
             error
         );
 
-        //=======================================================
-        // Error
-        //=======================================================
+        const serverMessage =
+            typeof error?.error === 'string'
+
+                ? error.error
+
+                : error?.error?.message
+                    ??
+                  error?.message
+                    ??
+                  message;
 
         this.toast.error
         (
             'Error',
 
-            error?.error ??
-            message
+            serverMessage
         );
     }
+
 
     //===========================================================
     // Create Synchronization
@@ -1342,18 +1306,10 @@ implements OnInit
     private createSynchronization():
         void
     {
-        //=======================================================
-        // Synchronization Type
-        //=======================================================
-
         this.synchronization.synchronizationType =
             this.selectedTab === 'backend'
                 ? 'Backend'
                 : 'Frontend';
-
-        //=======================================================
-        // Create
-        //=======================================================
 
         this.moduleSynchronizationService
 
@@ -1396,6 +1352,7 @@ implements OnInit
             });
     }
 
+
     //===========================================================
     // Update Synchronization
     //===========================================================
@@ -1403,18 +1360,10 @@ implements OnInit
     private updateSynchronization():
         void
     {
-        //=======================================================
-        // Synchronization Type
-        //=======================================================
-
         this.synchronization.synchronizationType =
             this.selectedTab === 'backend'
                 ? 'Backend'
                 : 'Frontend';
-
-        //=======================================================
-        // Update
-        //=======================================================
 
         this.moduleSynchronizationService
 
@@ -1441,6 +1390,7 @@ implements OnInit
             });
     }
 
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -1448,18 +1398,10 @@ implements OnInit
     async onSynchronize():
         Promise<void>
     {
-        //=======================================================
-        // Validate
-        //=======================================================
-
         if (!this.validateSynchronization())
         {
             return;
         }
-
-        //=======================================================
-        // Configuration Must Be Saved
-        //=======================================================
 
         if
         (
@@ -1476,10 +1418,6 @@ implements OnInit
             return;
         }
 
-        //=======================================================
-        // Confirm
-        //=======================================================
-
         this.confirmDialog.open
         (
             'Synchronize Module',
@@ -1488,15 +1426,7 @@ implements OnInit
 
             async () =>
             {
-                //===================================================
-                // Prepare
-                //===================================================
-
                 await this.prepareSynchronizationAsync();
-
-                //===================================================
-                // Synchronize
-                //===================================================
 
                 this.moduleSynchronizationService
 
@@ -1509,22 +1439,10 @@ implements OnInit
                     ({
                         next: () =>
                         {
-                            //===================================================
-                            // Close Progress
-                            //===================================================
-
                             this.progressDialog.close();
-
-                            //===================================================
-                            // Reset State
-                            //===================================================
 
                             this.hasChanges =
                                 false;
-
-                            //===================================================
-                            // Success
-                            //===================================================
 
                             this.toast.success
                             (
@@ -1533,19 +1451,11 @@ implements OnInit
                                 'Module synchronized successfully.'
                             );
 
-                            //===================================================
-                            // Return To List
-                            //===================================================
-
                             this.onBackToList();
                         },
 
                         error: (error) =>
                         {
-                            //===================================================
-                            // Error
-                            //===================================================
-
                             this.onSaveFailed
                             (
                                 error,
@@ -1563,16 +1473,39 @@ implements OnInit
             'primary'
         );
     }
-    
+
+
     //===========================================================
     // Rollback
+    //===========================================================
+    //
+    // Flow:
+    //
+    // Rollback Button
+    //       ↓
+    // Validate Rollback
+    //       ↓
+    // Dependency Exists?
+    //       ↓
+    //    YES → Toast
+    //       ↓
+    //    NO
+    //       ↓
+    // Confirm Dialog
+    //       ↓
+    // Confirm
+    //       ↓
+    // Progress Dialog
+    //       ↓
+    // Execute Rollback
+    //
     //===========================================================
 
     onRollback():
         void
     {
         //=======================================================
-        // Validate Synchronization
+        // Validate Synchronization Id
         //=======================================================
 
         if
@@ -1580,207 +1513,182 @@ implements OnInit
             this.synchronization.id <= 0
         )
         {
+            this.toast.warning
+            (
+                'Rollback',
+
+                'Module synchronization configuration was not found.'
+            );
+
             return;
         }
 
 
         //=======================================================
-        // Determine Synchronization Type
+        // Validate Rollback
         //=======================================================
 
-        const synchronizationType =
-            this.selectedTab === 'backend'
-                ? 'Backend'
-                : 'Frontend';
+        this.moduleSynchronizationService
 
-
-        //=======================================================
-        // Check Menu Synchronization
-        //=======================================================
-
-        this.menuSynchronizationService
-
-            .getAll(
-                synchronizationType
+            .validateRollback
+            (
+                this.synchronization.id
             )
 
-            .subscribe(
-            {
-                next:(menus) =>
+            .subscribe
+            ({
+                //=================================================
+                // Validation Response
+                //=================================================
+
+                next: (validation) =>
                 {
-                    //===================================================
-                    // Find Synchronized Menus Under This Module
-                    //===================================================
-
-                    const synchronizedMenus =
-                        menus.filter(
-                            menu =>
-                                menu.moduleId ===
-                                    this.synchronization.moduleId
-
-                                &&
-
-                                menu.status
-                                    ?.toLowerCase() ===
-                                    'synchronized'
-                        );
-
-
-                    //===================================================
+                    //=============================================
                     // Rollback Blocked
-                    //===================================================
+                    //=============================================
 
                     if
                     (
-                        synchronizedMenus.length > 0
+                        !validation.canRollback
                     )
                     {
-                        const menuNames =
-                            synchronizedMenus
-                                .map(
-                                    menu =>
-                                        menu.menuName
-                                )
-                                .filter(
-                                    name =>
-                                        !!name
-                                );
-
-
-                        const menuList =
-                            menuNames.length > 0
-                                ? menuNames.join(', ')
-                                : 'one or more menus';
-
-
                         this.toast.warning
                         (
-                            'Rollback Not Allowed',
+                            'Rollback Blocked',
 
-                            `This module cannot be rolled back because the following menu synchronization is still synchronized: ${menuList}. Roll back the menu synchronization first.`
+                            validation.message
                         );
 
                         return;
                     }
 
 
-                    //===================================================
-                    // Confirm Rollback
-                    //===================================================
+                    //=============================================
+                    // Rollback Allowed
+                    //=============================================
 
-                    this.confirmDialog.open
-                    (
-                        'Rollback Synchronization',
-
-                        'This will rollback the synchronized module. Do you want to continue?',
-
-                        async () =>
-                        {
-                            //===========================================
-                            // Prepare Rollback
-                            //===========================================
-
-                            await this.prepareRollbackAsync();
-
-
-                            //===========================================
-                            // Rollback
-                            //===========================================
-
-                            this.moduleSynchronizationService
-
-                                .rollback
-                                (
-                                    this.synchronization.id
-                                )
-
-                                .subscribe
-                                ({
-                                    next: () =>
-                                    {
-                                        //===================================
-                                        // Close Progress
-                                        //===================================
-
-                                        this.progressDialog.close();
-
-
-                                        //===================================
-                                        // Reset State
-                                        //===================================
-
-                                        this.hasChanges =
-                                            false;
-
-
-                                        //===================================
-                                        // Success
-                                        //===================================
-
-                                        this.toast.success
-                                        (
-                                            'Rollback',
-
-                                            'Module synchronization rolled back successfully.'
-                                        );
-
-
-                                        //===================================
-                                        // Return To List
-                                        //===================================
-
-                                        this.onBackToList();
-                                    },
-
-
-                                    error: (error) =>
-                                    {
-                                        //===================================
-                                        // Error
-                                        //===================================
-
-                                        this.onSaveFailed
-                                        (
-                                            error,
-
-                                            'Module rollback failed.'
-                                        );
-                                    }
-                                });
-                        },
-
-                        'Rollback',
-
-                        'Cancel',
-
-                        'danger'
-                    );
+                    this.openRollbackConfirmation();
                 },
 
 
-                error:(error) =>
-                {
-                    //===================================================
-                    // Menu Check Failed
-                    //===================================================
+                //=================================================
+                // Validation Failed
+                //=================================================
 
+                error: (error) =>
+                {
                     console.error
                     (
-                        'Menu Synchronization Check Failed',
+                        'ROLLBACK VALIDATION FAILED',
 
                         error
                     );
 
 
+                    const serverMessage =
+                        typeof error?.error === 'string'
+
+                            ? error.error
+
+                            : error?.error?.message
+                                ??
+                              error?.message
+                                ??
+                              'Unable to validate module rollback.';
+
+
                     this.toast.error
                     (
-                        'Rollback',
+                        'Rollback Validation',
 
-                        'Unable to verify menu synchronization status. Module rollback was not started.'
+                        serverMessage
                     );
                 }
             });
     }
+
+
+    //===========================================================
+    // Open Rollback Confirmation
+    //===========================================================
+
+    private openRollbackConfirmation():
+        void
+    {
+        this.confirmDialog.open
+        (
+            'Rollback Synchronization',
+
+            'This will rollback the synchronized module. Do you want to continue?',
+
+            async () =>
+            {
+                //===============================================
+                // Prepare Rollback
+                //===============================================
+
+                await this.prepareRollbackAsync();
+
+
+                //===============================================
+                // Execute Rollback
+                //===============================================
+
+                this.moduleSynchronizationService
+
+                    .rollback
+                    (
+                        this.synchronization.id
+                    )
+
+                    .subscribe
+                    ({
+                        //=========================================
+                        // Success
+                        //=========================================
+
+                        next: () =>
+                        {
+                            this.progressDialog.close();
+
+                            this.hasChanges =
+                                false;
+
+                            this.toast.success
+                            (
+                                'Rollback',
+
+                                'Module synchronization rolled back successfully.'
+                            );
+
+                            this.onBackToList();
+                        },
+
+
+                        //=========================================
+                        // Failure
+                        //=========================================
+
+                        error: (error) =>
+                        {
+                            this.onSaveFailed
+                            (
+                                error,
+
+                                'Module rollback failed.'
+                            );
+                        }
+                    });
+            },
+
+            'Rollback',
+
+            'Cancel',
+
+            'danger'
+        );
+    }
+
 
     //===========================================================
     // Validate Synchronization
@@ -1802,6 +1710,7 @@ implements OnInit
         return true;
     }
 
+
     //===========================================================
     // Clear
     //===========================================================
@@ -1812,6 +1721,7 @@ implements OnInit
         this.clearForm();
     }
 
+
     //===========================================================
     // Clear Form
     //===========================================================
@@ -1819,19 +1729,11 @@ implements OnInit
     private clearForm():
         void
     {
-        //=======================================================
-        // Mode
-        //=======================================================
-
         this.mode =
             'add';
 
         this.synchronizationId =
             0;
-
-        //=======================================================
-        // Clear Navigation
-        //=======================================================
 
         this.synchronization.moduleId =
             0;
@@ -1842,10 +1744,6 @@ implements OnInit
         this.synchronization.moduleName =
             '';
 
-        //=======================================================
-        // Reset Workspace
-        //=======================================================
-
         this.frontendEditingSection =
             'none';
 
@@ -1855,12 +1753,9 @@ implements OnInit
         this.hasChanges =
             false;
 
-        //=======================================================
-        // Load Defaults
-        //=======================================================
-
         this.loadDefaults();
     }
+
 
     //===========================================================
     // Back To List
@@ -1876,9 +1771,6 @@ implements OnInit
 
                 : '/infrastructure-control/development-management/module-synchronization/frontend';
 
-        //=======================================================
-        // No Changes
-        //=======================================================
 
         if
         (
@@ -1897,9 +1789,6 @@ implements OnInit
             return;
         }
 
-        //=======================================================
-        // Confirm
-        //=======================================================
 
         this.confirmDialog.open(
 
@@ -1922,6 +1811,7 @@ implements OnInit
             'primary'
         );
     }
+
 
     //===========================================================
     // Save Button Text
@@ -1986,6 +1876,7 @@ implements OnInit
         return this.mode === 'sync';
     }
 
+
     //===========================================================
     // Reset Workspace
     //===========================================================
@@ -1995,6 +1886,7 @@ implements OnInit
     {
         this.resetWorkspace();
     }
+
 
     //===========================================================
     // Reset Workspace
@@ -2054,5 +1946,4 @@ implements OnInit
                     }
             });
     }
-
 }

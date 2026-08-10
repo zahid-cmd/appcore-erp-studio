@@ -4,11 +4,13 @@
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.DTOs;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
+
 
 //===============================================================
 // Module Synchronization Repository Interface
@@ -25,6 +27,8 @@ public interface IModuleSynchronizationRepository
         string synchronizationType
     );
 
+
+
     //===========================================================
     // Get All
     //===========================================================
@@ -34,6 +38,8 @@ public interface IModuleSynchronizationRepository
         string synchronizationType
     );
 
+
+
     //===========================================================
     // Get By Id
     //===========================================================
@@ -42,6 +48,8 @@ public interface IModuleSynchronizationRepository
     (
         long id
     );
+
+
 
     //===========================================================
     // Analyze
@@ -54,6 +62,8 @@ public interface IModuleSynchronizationRepository
         string synchronizationType
     );
 
+
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -63,6 +73,28 @@ public interface IModuleSynchronizationRepository
         long id
     );
 
+
+
+    //===========================================================
+    // Rollback Validation
+    //===========================================================
+    //
+    // Checks whether the Module can safely be rolled back.
+    //
+    // This does NOT execute rollback.
+    //
+    // The validation checks for dependent Menu data.
+    //
+    //===========================================================
+
+    Task<ModuleSynchronizationRollbackValidationDto?>
+        ValidateRollbackAsync
+    (
+        long id
+    );
+
+
+
     //===========================================================
     // Rollback
     //===========================================================
@@ -71,7 +103,9 @@ public interface IModuleSynchronizationRepository
     (
         long id
     );
-    
+
+
+
     //===========================================================
     // Create
     //===========================================================
@@ -80,6 +114,8 @@ public interface IModuleSynchronizationRepository
     (
         CreateModuleSynchronizationDto dto
     );
+
+
 
     //===========================================================
     // Update
@@ -90,6 +126,8 @@ public interface IModuleSynchronizationRepository
         UpdateModuleSynchronizationDto dto
     );
 
+
+
     //===========================================================
     // Delete
     //===========================================================
@@ -99,6 +137,8 @@ public interface IModuleSynchronizationRepository
         long id
     );
 
+
+
     //===========================================================
     // Restore
     //===========================================================
@@ -107,6 +147,8 @@ public interface IModuleSynchronizationRepository
     (
         string synchronizationType
     );
+
+
 
     //===========================================================
     // Exists By Module

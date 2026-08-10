@@ -23,6 +23,7 @@ namespace AppCore.Infrastructure.Platform.Common;
 public class TemplateLoader
     : ITemplateLoader
 {
+
     //===========================================================
     // Load Template
     //===========================================================
@@ -50,23 +51,14 @@ public class TemplateLoader
             );
         }
 
+
         //=======================================================
         // Resolve Infrastructure Root
         //=======================================================
 
         var infrastructureRoot =
-            Path.GetFullPath
-            (
-                Path.Combine
-                (
-                    AppContext.BaseDirectory,
-                    "..",
-                    "..",
-                    "..",
-                    "..",
-                    "AppCore.Infrastructure"
-                )
-            );
+            FindInfrastructureRoot();
+
 
         //=======================================================
         // Resolve Template Path
@@ -76,15 +68,19 @@ public class TemplateLoader
             Path.Combine
             (
                 infrastructureRoot,
+
                 "Platform",
+
                 templatePath
             );
+
 
         fullPath =
             Path.GetFullPath
             (
                 fullPath
             );
+
 
         //=======================================================
         // File Exists
@@ -104,6 +100,7 @@ public class TemplateLoader
             );
         }
 
+
         //=======================================================
         // Load Template
         //=======================================================
@@ -113,6 +110,7 @@ public class TemplateLoader
             (
                 fullPath
             );
+
 
         //=======================================================
         // Validate Template
@@ -132,10 +130,76 @@ public class TemplateLoader
             );
         }
 
+
         //=======================================================
         // Completed
         //=======================================================
 
         return template;
     }
+
+
+
+    //===========================================================
+    // Find Infrastructure Root
+    //===========================================================
+
+    private static string FindInfrastructureRoot()
+    {
+        //=======================================================
+        // Start From Application Base Directory
+        //=======================================================
+
+        var currentDirectory =
+            new DirectoryInfo
+            (
+                AppContext.BaseDirectory
+            );
+
+
+        //=======================================================
+        // Search Current Directory And Parents
+        //=======================================================
+
+        while
+        (
+            currentDirectory != null
+        )
+        {
+            var infrastructureDirectory =
+                Path.Combine
+                (
+                    currentDirectory.FullName,
+
+                    "AppCore.Infrastructure"
+                );
+
+
+            if
+            (
+                Directory.Exists
+                (
+                    infrastructureDirectory
+                )
+            )
+            {
+                return infrastructureDirectory;
+            }
+
+
+            currentDirectory =
+                currentDirectory.Parent;
+        }
+
+
+        //=======================================================
+        // Fallback
+        //=======================================================
+
+        throw new DirectoryNotFoundException
+        (
+            "AppCore.Infrastructure project directory could not be found."
+        );
+    }
+
 }

@@ -4,11 +4,13 @@
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
+
 
 //===============================================================
 // Submenu Synchronization Repository Interface
@@ -16,6 +18,7 @@ namespace AppCore.Application.Contracts.Persistence.InfrastructureControl.Develo
 
 public interface ISubmenuSynchronizationRepository
 {
+
     //===========================================================
     // Get Defaults
     //===========================================================
@@ -24,6 +27,7 @@ public interface ISubmenuSynchronizationRepository
     (
         string synchronizationType
     );
+
 
     //===========================================================
     // Get All
@@ -34,6 +38,7 @@ public interface ISubmenuSynchronizationRepository
         string synchronizationType
     );
 
+
     //===========================================================
     // Get By Id
     //===========================================================
@@ -42,6 +47,7 @@ public interface ISubmenuSynchronizationRepository
     (
         long id
     );
+
 
     //===========================================================
     // Analyze
@@ -58,6 +64,7 @@ public interface ISubmenuSynchronizationRepository
         string synchronizationType
     );
 
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -66,6 +73,7 @@ public interface ISubmenuSynchronizationRepository
     (
         long id
     );
+
 
     //===========================================================
     // Rollback
@@ -76,6 +84,7 @@ public interface ISubmenuSynchronizationRepository
         long id
     );
 
+
     //===========================================================
     // Create
     //===========================================================
@@ -84,6 +93,7 @@ public interface ISubmenuSynchronizationRepository
     (
         CreateSubmenuSynchronizationDto dto
     );
+
 
     //===========================================================
     // Update
@@ -94,6 +104,7 @@ public interface ISubmenuSynchronizationRepository
         UpdateSubmenuSynchronizationDto dto
     );
 
+
     //===========================================================
     // Delete
     //===========================================================
@@ -103,6 +114,7 @@ public interface ISubmenuSynchronizationRepository
         long id
     );
 
+
     //===========================================================
     // Restore
     //===========================================================
@@ -111,6 +123,7 @@ public interface ISubmenuSynchronizationRepository
     (
         string synchronizationType
     );
+
 
     //===========================================================
     // Exists By Submenu
@@ -124,4 +137,5 @@ public interface ISubmenuSynchronizationRepository
 
         long? excludeId = null
     );
+
 }

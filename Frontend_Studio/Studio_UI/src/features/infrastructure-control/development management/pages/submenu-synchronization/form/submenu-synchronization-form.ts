@@ -384,8 +384,6 @@ implements OnInit
 
         frontendSubmenuFolder:'',
 
-        frontendPagesFolder:'',
-
         frontendFormFolder:'',
 
         frontendListFolder:'',

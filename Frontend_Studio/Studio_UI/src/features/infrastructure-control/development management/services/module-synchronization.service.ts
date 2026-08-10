@@ -2,19 +2,48 @@
 // Imports
 //===============================================================
 
-import { Injectable, inject } from '@angular/core';
+import
+{
+    Injectable,
+    inject
+}
+from '@angular/core';
 
-import { HttpClient } from '@angular/common/http';
+import
+{
+    HttpClient
+}
+from '@angular/common/http';
 
-import { Observable } from 'rxjs';
+import
+{
+    Observable
+}
+from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
+import
+{
+    environment
+}
+from '../../../../environments/environment';
 
 import
 {
     ModuleSynchronization
 }
 from '../model/module-synchronization.model';
+
+
+//===============================================================
+// Rollback Validation Result
+//===============================================================
+
+export interface ModuleSynchronizationRollbackValidation
+{
+    canRollback:boolean;
+
+    message:string;
+}
 
 
 //===============================================================
@@ -34,8 +63,11 @@ export class ModuleSynchronizationService
     private readonly http =
         inject(HttpClient);
 
+
     private readonly apiUrl =
         `${environment.apiUrl}/infrastructure-control/development-management/module-synchronization`;
+
+
 
     //===========================================================
     // Get Defaults
@@ -47,9 +79,13 @@ export class ModuleSynchronizationService
     ):
         Observable<ModuleSynchronization>
     {
-        return this.http.get<ModuleSynchronization>(
-            `${this.apiUrl}/defaults?type=${synchronizationType}`);
+        return this.http.get<ModuleSynchronization>
+        (
+            `${this.apiUrl}/defaults?type=${synchronizationType}`
+        );
     }
+
+
 
     //===========================================================
     // Get All
@@ -61,9 +97,13 @@ export class ModuleSynchronizationService
     ):
         Observable<ModuleSynchronization[]>
     {
-        return this.http.get<ModuleSynchronization[]>(
-            `${this.apiUrl}?type=${synchronizationType}`);
+        return this.http.get<ModuleSynchronization[]>
+        (
+            `${this.apiUrl}?type=${synchronizationType}`
+        );
     }
+
+
 
     //===========================================================
     // Get By Id
@@ -75,9 +115,13 @@ export class ModuleSynchronizationService
     ):
         Observable<ModuleSynchronization>
     {
-        return this.http.get<ModuleSynchronization>(
-            `${this.apiUrl}/${id}`);
+        return this.http.get<ModuleSynchronization>
+        (
+            `${this.apiUrl}/${id}`
+        );
     }
+
+
 
     //===========================================================
     // Analyze
@@ -91,9 +135,13 @@ export class ModuleSynchronizationService
     ):
         Observable<ModuleSynchronization>
     {
-        return this.http.get<ModuleSynchronization>(
-            `${this.apiUrl}/analyze/${moduleId}?type=${synchronizationType}`);
+        return this.http.get<ModuleSynchronization>
+        (
+            `${this.apiUrl}/analyze/${moduleId}?type=${synchronizationType}`
+        );
     }
+
+
 
     //===========================================================
     // Get List History
@@ -102,9 +150,13 @@ export class ModuleSynchronizationService
     getHistory():
         Observable<any[]>
     {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/history`);
+        return this.http.get<any[]>
+        (
+            `${this.apiUrl}/history`
+        );
     }
+
+
 
     //===========================================================
     // Get Entity History
@@ -116,9 +168,13 @@ export class ModuleSynchronizationService
     ):
         Observable<any[]>
     {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`);
+        return this.http.get<any[]>
+        (
+            `${this.apiUrl}/${id}/history`
+        );
     }
+
+
 
     //===========================================================
     // Create
@@ -132,10 +188,15 @@ export class ModuleSynchronizationService
     ):
         Observable<number>
     {
-        return this.http.post<number>(
+        return this.http.post<number>
+        (
             `${this.apiUrl}?type=${synchronizationType}`,
-            synchronization);
+
+            synchronization
+        );
     }
+
+
 
     //===========================================================
     // Update
@@ -147,10 +208,15 @@ export class ModuleSynchronizationService
     ):
         Observable<void>
     {
-        return this.http.put<void>(
+        return this.http.put<void>
+        (
             `${this.apiUrl}/${synchronization.id}`,
-            synchronization);
+
+            synchronization
+        );
     }
+
+
 
     //===========================================================
     // Synchronize
@@ -165,12 +231,48 @@ export class ModuleSynchronizationService
         return this.http.post<void>
         (
             `${this.apiUrl}/${id}/sync`,
+
             {}
         );
     }
-    
+
+
+
+    //===========================================================
+    // Rollback Validation
+    //===========================================================
+    //
+    // Checks whether the Module can be rolled back.
+    //
+    // This does NOT execute rollback.
+    //
+    // The backend checks for dependent Menu
+    // Synchronization data.
+    //
+    //===========================================================
+
+    validateRollback
+    (
+        id:number
+    ):
+        Observable<ModuleSynchronizationRollbackValidation>
+    {
+        return this.http.get<ModuleSynchronizationRollbackValidation>
+        (
+            `${this.apiUrl}/${id}/rollback-validation`
+        );
+    }
+
+
+
     //===========================================================
     // Rollback
+    //===========================================================
+    //
+    // Executes the actual rollback.
+    //
+    // Validation is performed before this call.
+    //
     //===========================================================
 
     rollback
@@ -182,9 +284,12 @@ export class ModuleSynchronizationService
         return this.http.post<void>
         (
             `${this.apiUrl}/${id}/rollback`,
+
             {}
         );
     }
+
+
 
     //===========================================================
     // Delete
@@ -196,9 +301,13 @@ export class ModuleSynchronizationService
     ):
         Observable<void>
     {
-        return this.http.delete<void>(
-            `${this.apiUrl}/${id}`);
+        return this.http.delete<void>
+        (
+            `${this.apiUrl}/${id}`
+        );
     }
+
+
 
     //===========================================================
     // Restore
@@ -210,8 +319,10 @@ export class ModuleSynchronizationService
     ):
         Observable<void>
     {
-        return this.http.put<void>(
+        return this.http.put<void>
+        (
             `${this.apiUrl}/restore?type=${synchronizationType}`,
+
             {}
         );
     }
