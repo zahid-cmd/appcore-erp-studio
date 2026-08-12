@@ -149,6 +149,12 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
+import
+{
+    ModuleSynchronizationService
+}
+from '../../../services/module-synchronization.service';
+
 
 //===============================================================
 // Types
@@ -233,6 +239,8 @@ implements OnInit
     private readonly moduleService =
         inject(ModuleService);
 
+    private readonly moduleSynchronizationService =
+        inject(ModuleSynchronizationService);
 
     //===========================================================
     // State
@@ -242,25 +250,6 @@ implements OnInit
         '';
 
     hasChanges =
-        false;
-
-
-    //===========================================================
-    // Rollback Validation
-    //===========================================================
-
-    rollbackBlocked =
-        false;
-
-    rollbackValidationMessage =
-        '';
-
-
-    //===========================================================
-    // Rollback Blocked Dialog
-    //===========================================================
-
-    rollbackBlockedDialogOpen =
         false;
 
 
@@ -520,7 +509,10 @@ implements OnInit
     get isTargetLocationReadonly():
         boolean
     {
-        if (this.isViewMode)
+        if
+        (
+            this.isViewMode
+        )
         {
             return true;
         }
@@ -540,7 +532,10 @@ implements OnInit
     get isStandardStructureReadonly():
         boolean
     {
-        if (this.isViewMode)
+        if
+        (
+            this.isViewMode
+        )
         {
             return true;
         }
@@ -560,7 +555,10 @@ implements OnInit
     get isApplicationRegistrationReadonly():
         boolean
     {
-        if (this.isViewMode)
+        if
+        (
+            this.isViewMode
+        )
         {
             return true;
         }
@@ -734,7 +732,10 @@ implements OnInit
                 this.route.snapshot.paramMap.get('id')
             );
 
-        if (this.synchronizationId <= 0)
+        if
+        (
+            this.synchronizationId <= 0
+        )
         {
             this.loadDefaults();
 
@@ -871,6 +872,26 @@ implements OnInit
     private loadModules():
         void
     {
+        //===========================================================
+        // Synchronization Type
+        //===========================================================
+        //
+        // Frontend and Backend are completely independent.
+        //
+        //===========================================================
+
+        const synchronizationType =
+            this.selectedTab === 'backend'
+
+                ? 'Backend'
+
+                : 'Frontend';
+
+
+        //===========================================================
+        // Load All Navigation Modules
+        //===========================================================
+
         this.moduleService
 
             .getAll()
@@ -879,16 +900,169 @@ implements OnInit
             {
                 next:(modules:NavigationModule[]) =>
                 {
-                    this.modules =
-                        modules;
+                    //=======================================================
+                    // Load Existing Module Synchronizations
+                    //=======================================================
+                    //
+                    // IMPORTANT:
+                    //
+                    // A module is available in the Menu dropdown ONLY when
+                    // a Module Synchronization record already exists for
+                    // the selected synchronization type.
+                    //
+                    // Status does NOT matter.
+                    //
+                    // Pending
+                    // Ready
+                    // Synchronized
+                    // Any other status
+                    //
+                    // All count as an existing synchronization record.
+                    //
+                    //=======================================================
+
+                    this.moduleSynchronizationService
+
+                        .getAll
+                        (
+                            synchronizationType
+                        )
+
+                        .subscribe(
+                        {
+                            next:(synchronizations) =>
+                            {
+                                //===================================================
+                                // Existing Synchronized Module IDs
+                                //===================================================
+                                //
+                                // Keep only Module IDs that already have a
+                                // synchronization record.
+                                //
+                                //===================================================
+
+                                const existingModuleIds =
+                                    new Set
+                                    (
+                                        synchronizations
+
+                                            .map
+                                            (
+                                                synchronization =>
+                                                    synchronization.moduleId
+                                            )
+                                    );
+
+
+                                //===================================================
+                                // Filter Module Dropdown
+                                //===================================================
+                                //
+                                // Only modules already registered in the
+                                // Module Synchronization table for this
+                                // Frontend / Backend type are available.
+                                //
+                                //===================================================
+
+                                this.modules =
+                                    modules.filter
+                                    (
+                                        module =>
+                                            existingModuleIds.has
+                                            (
+                                                module.id
+                                            )
+                                    );
+
+
+                                //===================================================
+                                // Keep Current Module During Edit / View / Sync
+                                //===================================================
+                                //
+                                // When editing/viewing an existing Menu
+                                // Synchronization, keep its current module
+                                // available even if the synchronization
+                                // collection changes while the page is open.
+                                //
+                                //===================================================
+
+                                if
+                                (
+                                    this.synchronization.moduleId > 0
+
+                                    &&
+
+                                    !this.modules.some
+                                    (
+                                        module =>
+                                            module.id ===
+                                            this.synchronization.moduleId
+                                    )
+                                )
+                                {
+                                    const currentModule =
+                                        modules.find
+                                        (
+                                            module =>
+                                                module.id ===
+                                                this.synchronization.moduleId
+                                        );
+
+
+                                    if
+                                    (
+                                        currentModule
+                                    )
+                                    {
+                                        this.modules =
+                                        [
+                                            currentModule,
+
+                                            ...this.modules
+                                        ];
+                                    }
+                                }
+
+
+                                //===================================================
+                                // Change Detection
+                                //===================================================
+
+                                this.cdr.detectChanges();
+                            },
+
+
+                            error:() =>
+                            {
+                                this.modules =
+                                    [];
+
+                                this.toast.error
+                                (
+                                    'Error',
+
+                                    'Failed to load module synchronization records.'
+                                );
+
+                                this.cdr.detectChanges();
+                            }
+                        });
                 },
+
 
                 error:() =>
                 {
-                    this.toast.error(
+                    this.modules =
+                        [];
+
+                    this.toast.error
+                    (
                         'Error',
+
                         'Failed to load modules.'
                     );
+
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -904,6 +1078,22 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            moduleId <= 0
+        )
+        {
+            this.menus =
+                [];
+
+            return;
+        }
+
+
+        //===========================================================
+        // Load All Menus For Selected Module
+        //===========================================================
+
         this.menuService
 
             .getByModule(moduleId)
@@ -912,14 +1102,151 @@ implements OnInit
             {
                 next:(menus) =>
                 {
-                    this.menus =
-                        menus;
+                    //=======================================================
+                    // Synchronization Type
+                    //=======================================================
+                    //
+                    // Frontend and Backend are completely independent.
+                    //
+                    //=======================================================
+
+                    const synchronizationType =
+                        this.selectedTab === 'backend'
+
+                            ? 'Backend'
+
+                            : 'Frontend';
+
+
+                    //=======================================================
+                    // Load Existing Synchronizations
+                    //=======================================================
+
+                    this.menuSynchronizationService
+
+                        .getAll
+                        (
+                            synchronizationType
+                        )
+
+                        .subscribe(
+                        {
+                            next:(synchronizations) =>
+                            {
+                                //===================================================
+                                // Existing Menu IDs
+                                //===================================================
+                                //
+                                // Block menus already synchronized for THIS
+                                // synchronization type only.
+                                //
+                                // The current synchronization is excluded so
+                                // Edit / View / Sync can still display its menu.
+                                //
+                                //===================================================
+
+                                const existingMenuIds =
+                                    new Set
+                                    (
+                                        synchronizations
+
+                                            .filter
+                                            (
+                                                synchronization =>
+
+                                                    synchronization.id !==
+                                                    this.synchronizationId
+                                            )
+
+                                            .map
+                                            (
+                                                synchronization =>
+
+                                                    synchronization.menuId
+                                            )
+                                    );
+
+
+                                //===================================================
+                                // Filter Menu Dropdown
+                                //===================================================
+                                //
+                                // NavigationMenu uses "id".
+                                // MenuSynchronization uses "menuId".
+                                //
+                                //===================================================
+
+                                this.menus =
+                                    menus.filter
+                                    (
+                                        menu =>
+                                            !existingMenuIds.has
+                                            (
+                                                menu.id
+                                            )
+                                    );
+
+
+                                //===================================================
+                                // Keep Current Menu During Edit / View / Sync
+                                //===================================================
+
+                                if
+                                (
+                                    this.synchronization.menuId > 0
+                                    &&
+                                    !this.menus.some
+                                    (
+                                        menu =>
+                                            menu.id ===
+                                            this.synchronization.menuId
+                                    )
+                                )
+                                {
+                                    const currentMenu =
+                                        menus.find
+                                        (
+                                            menu =>
+                                                menu.id ===
+                                                this.synchronization.menuId
+                                        );
+
+
+                                    if
+                                    (
+                                        currentMenu
+                                    )
+                                    {
+                                        this.menus =
+                                        [
+                                            currentMenu,
+
+                                            ...this.menus
+                                        ];
+                                    }
+                                }
+                            },
+
+
+                            error:() =>
+                            {
+                                this.toast.error
+                                (
+                                    'Error',
+
+                                    'Failed to load menu synchronization records.'
+                                );
+                            }
+                        });
                 },
+
 
                 error:() =>
                 {
-                    this.toast.error(
+                    this.toast.error
+                    (
                         'Error',
+
                         'Failed to load menus.'
                     );
                 }
@@ -1041,9 +1368,10 @@ implements OnInit
 
         const menu =
             this.menus.find(
-                x => x.id === menuId
+                x =>
+                    x.id === menuId
                     ||
-                     x.menuId === menuId
+                    x.menuId === menuId
             );
 
         if
@@ -1052,10 +1380,18 @@ implements OnInit
         )
         {
             this.synchronization.menuCode =
-                menu.code ?? menu.menuCode ?? '';
+                menu.code
+                ??
+                menu.menuCode
+                ??
+                '';
 
             this.synchronization.menuName =
-                menu.name ?? menu.menuName ?? '';
+                menu.name
+                ??
+                menu.menuName
+                ??
+                '';
         }
 
         this.checkForChanges();
@@ -1237,36 +1573,88 @@ implements OnInit
         (
             'Rolling Back Synchronization',
 
-            'Validate Rollback'
+            'Restore Previous State'
         );
 
-        await this.updateProgressAsync(10);
-
-        await this.updateProgressAsync(20);
+        await this.updateRollbackProgressAsync
+        (
+            20
+        );
 
         this.progressDialog.update
         (
             20,
-            'Analyze Generated Files'
+
+            'Validate Previous State'
         );
 
-        await this.updateProgressAsync(40);
+        await this.updateRollbackProgressAsync
+        (
+            40
+        );
 
-        await this.updateProgressAsync(80);
+        this.progressDialog.update
+        (
+            40,
+
+            'Restore Previous Files'
+        );
+
+        await this.updateRollbackProgressAsync
+        (
+            60
+        );
+
+        this.progressDialog.update
+        (
+            60,
+
+            'Restore Route Registration'
+        );
+
+        await this.updateRollbackProgressAsync
+        (
+            80
+        );
 
         this.progressDialog.update
         (
             80,
-            'Restore Previous State'
+
+            'Finalize Rollback'
         );
 
-        await this.updateProgressAsync(90);
+        await this.updateRollbackProgressAsync
+        (
+            100
+        );
 
-        await this.updateProgressAsync(95);
+        await this.delayAsync
+        (
+            500
+        );
+    }
 
-        await this.updateProgressAsync(100);
 
-        await this.delayAsync(500);
+    //===========================================================
+    // Update Rollback Progress
+    //===========================================================
+
+    private async updateRollbackProgressAsync
+    (
+        progress:number
+    ):
+        Promise<void>
+    {
+        await this.delayAsync
+        (
+            200
+        );
+
+        this.progressDialog.update
+        (
+            progress
+        );
     }
 
 
@@ -1595,35 +1983,74 @@ implements OnInit
     //===========================================================
     // Rollback
     //===========================================================
+    //
+    // Required flow:
+    //
+    // Rollback Button
+    //       ↓
+    // Validate Rollback
+    //       ↓
+    // Dependency Exists?
+    //       ↓
+    //    YES → Rollback Blocked Toast → STOP
+    //       ↓
+    //    NO
+    //       ↓
+    // Confirm Dialog
+    //       ↓
+    // Confirm
+    //       ↓
+    // Progress Dialog
+    //       ↓
+    // Execute Rollback
+    //
+    //===========================================================
 
     onRollback():
         void
     {
+        //=======================================================
+        // Validate Synchronization Id
+        //=======================================================
+
         if
         (
             this.synchronization.id <= 0
         )
         {
+            this.toast.warning
+            (
+                'Rollback',
+
+                'Menu synchronization configuration was not found.'
+            );
+
             return;
         }
 
 
         //=======================================================
-        // Reset Previous Validation State
+        // Validate Synchronization Status
         //=======================================================
 
-        this.rollbackBlocked =
-            false;
+        if
+        (
+            !this.canRollback
+        )
+        {
+            this.toast.warning
+            (
+                'Rollback',
 
-        this.rollbackValidationMessage =
-            '';
+                'Only synchronized menu data can be rolled back.'
+            );
 
-        this.rollbackBlockedDialogOpen =
-            false;
+            return;
+        }
 
 
         //=======================================================
-        // Validate Rollback Dependencies
+        // Validate Rollback Dependency
         //=======================================================
 
         this.menuSynchronizationService
@@ -1635,134 +2062,85 @@ implements OnInit
 
             .subscribe
             ({
-                //===================================================
-                // Validation Success
-                //===================================================
-
-                next:
-                    (
-                        validation
-                    ) =>
-                    {
-                        //===============================================
-                        // Store Validation Result
-                        //===============================================
-
-                        this.rollbackBlocked =
-                            !validation.canRollback;
-
-                        this.rollbackValidationMessage =
-                            validation.message;
-
-
-                        //===============================================
-                        // Rollback Blocked
-                        //===============================================
-
-                        if
-                        (
-                            !validation.canRollback
-                        )
-                        {
-                            this.rollbackBlockedDialogOpen =
-                                true;
-
-                            this.cdr.detectChanges();
-
-                            return;
-                        }
-
-
-                        //===============================================
-                        // Rollback Allowed
-                        //===============================================
-
-                        this.confirmDialog.open
-                        (
-                            'Rollback Synchronization',
-
-                            'This will rollback the synchronized menu. Do you want to continue?',
-
-                            async () =>
-                            {
-                                await this.executeRollbackAsync();
-                            },
-
-                            'Rollback',
-
-                            'Cancel',
-
-                            'danger'
-                        );
-                    },
-
-
-                //===================================================
-                // Validation Error
-                //===================================================
-
-                error:
-                    (error) =>
-                    {
-                        console.error
-                        (
-                            'ROLLBACK VALIDATION FAILED',
-                            error
-                        );
-
-                        this.toast.error
-                        (
-                            'Rollback',
-
-                            'Unable to validate menu rollback.'
-                        );
-                    }
-            });
-    }
-
-
-    //===========================================================
-    // Execute Rollback
-    //===========================================================
-
-    private async executeRollbackAsync():
-        Promise<void>
-    {
-        await this.prepareRollbackAsync();
-
-        this.menuSynchronizationService
-
-            .rollback
-            (
-                this.synchronization.id
-            )
-
-            .subscribe
-            ({
-                next: () =>
+                next: (validation) =>
                 {
-                    this.progressDialog.close();
+                    const message =
+                        (
+                            validation?.message
+                            ??
+                            ''
+                        ).trim();
 
-                    this.hasChanges =
-                        false;
 
-                    this.toast.success
+                    //=============================================
+                    // Rollback Blocked
+                    //=============================================
+                    //
+                    // The backend validation is authoritative.
+                    //
+                    // If a dependent Submenu Synchronization is
+                    // synchronized, the confirmation dialog MUST
+                    // NOT open.
+                    //
+                    //=============================================
+
+                    if
                     (
-                        'Rollback',
+                        validation?.canRollback !== true
+                    )
+                    {
+                        this.toast.warning
+                        (
+                            'Rollback Blocked',
 
-                        'Menu synchronization rolled back successfully.'
-                    );
+                            message
+                            ||
+                            'Menu rollback is blocked because a dependent Submenu Synchronization has already been successfully synchronized. Roll back the dependent Submenu Synchronization first.'
+                        );
 
-                    this.onBackToList();
+                        return;
+                    }
+
+
+                    //=============================================
+                    // Rollback Allowed
+                    //=============================================
+
+                    this.openRollbackConfirmation();
                 },
+
+
+                //=================================================
+                // Validation Request Failed
+                //=================================================
 
                 error: (error) =>
                 {
-                    this.onSaveFailed
+                    console.error
                     (
-                        error,
+                        'ROLLBACK VALIDATION FAILED',
 
-                        'Menu rollback failed.'
+                        error
+                    );
+
+
+                    const serverMessage =
+                        typeof error?.error === 'string'
+
+                            ? error.error
+
+                            : error?.error?.message
+                                ??
+                              error?.message
+                                ??
+                              'Unable to validate menu rollback.';
+
+
+                    this.toast.error
+                    (
+                        'Rollback Validation',
+
+                        serverMessage
                     );
                 }
             });
@@ -1770,20 +2148,99 @@ implements OnInit
 
 
     //===========================================================
-    // Close Rollback Blocked Dialog
+    // Open Rollback Confirmation
     //===========================================================
 
-    closeRollbackBlockedDialog():
+    private openRollbackConfirmation():
         void
     {
-        this.rollbackBlockedDialogOpen =
-            false;
+        this.confirmDialog.open
+        (
+            'Rollback Synchronization',
 
-        this.rollbackBlocked =
-            false;
+            'This will rollback the synchronized menu. Do you want to continue?',
 
-        this.rollbackValidationMessage =
-            '';
+            async () =>
+            {
+                //===============================================
+                // Prepare Rollback
+                //===============================================
+
+                await this.prepareRollbackAsync();
+
+
+                //===============================================
+                // Execute Rollback
+                //===============================================
+
+                this.menuSynchronizationService
+
+                    .rollback
+                    (
+                        this.synchronization.id
+                    )
+
+                    .subscribe
+                    ({
+                        //=========================================
+                        // Success
+                        //=========================================
+
+                        next: () =>
+                        {
+                            this.progressDialog.close();
+
+                            this.hasChanges =
+                                false;
+
+                            this.toast.success
+                            (
+                                'Rollback',
+
+                                'Menu synchronization rolled back successfully.'
+                            );
+
+                            this.onBackToList();
+                        },
+
+
+                        //=========================================
+                        // Failure
+                        //=========================================
+
+                        error: (error) =>
+                        {
+                            this.progressDialog.close();
+
+
+                            const backendMessage =
+                                typeof error?.error === 'string'
+
+                                    ? error.error
+
+                                    : error?.error?.message
+                                        ??
+                                      error?.message
+                                        ??
+                                      'Menu rollback failed.';
+
+
+                            this.toast.error
+                            (
+                                'Rollback',
+
+                                backendMessage
+                            );
+                        }
+                    });
+            },
+
+            'Rollback',
+
+            'Cancel',
+
+            'danger'
+        );
     }
 
 
@@ -1851,15 +2308,6 @@ implements OnInit
             'none';
 
         this.hasChanges =
-            false;
-
-        this.rollbackBlocked =
-            false;
-
-        this.rollbackValidationMessage =
-            '';
-
-        this.rollbackBlockedDialogOpen =
             false;
 
         this.loadDefaults();

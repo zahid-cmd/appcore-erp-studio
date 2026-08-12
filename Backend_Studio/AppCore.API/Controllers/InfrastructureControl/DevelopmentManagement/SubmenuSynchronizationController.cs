@@ -24,8 +24,13 @@ namespace AppCore.Api.Controllers.InfrastructureControl.DevelopmentManagement;
 //===============================================================
 
 [ApiController]
-[Route("api/infrastructure-control/development-management/submenu-synchronization")]
-public class SubmenuSynchronizationController : ControllerBase
+
+[Route(
+    "api/infrastructure-control/development-management/submenu-synchronization"
+)]
+
+public class SubmenuSynchronizationController
+    : ControllerBase
 {
 
     //===========================================================
@@ -35,8 +40,10 @@ public class SubmenuSynchronizationController : ControllerBase
     private readonly ISubmenuSynchronizationRepository
         _repository;
 
+
     private readonly IActivityHistoryRepository
         _activityHistoryRepository;
+
 
 
     //===========================================================
@@ -53,9 +60,11 @@ public class SubmenuSynchronizationController : ControllerBase
         _repository =
             repository;
 
+
         _activityHistoryRepository =
             activityHistoryRepository;
     }
+
 
 
     //===========================================================
@@ -63,7 +72,9 @@ public class SubmenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("defaults")]
-    public async Task<ActionResult<SubmenuSynchronizationDefaultsDto>> GetDefaults
+
+    public async Task<ActionResult<SubmenuSynchronizationDefaultsDto>>
+        GetDefaults
     (
         [FromQuery] string type
     )
@@ -78,12 +89,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Analyze Submenu
     //===========================================================
 
     [HttpGet("analyze/{moduleId:long}/{menuId:long}/{submenuId:long}")]
-    public async Task<ActionResult<SubmenuSynchronizationDto>> Analyze
+
+    public async Task<ActionResult<SubmenuSynchronizationDto>>
+        Analyze
     (
         long moduleId,
 
@@ -123,64 +137,131 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Sync
     //===========================================================
+    //
+    // Submenu synchronization is allowed only when its parent
+    // Menu Synchronization has already been successfully
+    // synchronized.
+    //
+    // The repository remains responsible for enforcing this
+    // business rule.
+    //
+    // If the repository rejects the operation because the
+    // parent Menu is not synchronized, return HTTP 400 so the
+    // frontend can display the business-rule message.
+    //
+    //===========================================================
 
     [HttpPost("{id:long}/sync")]
-    public async Task<ActionResult> Sync
+
+    public async Task<ActionResult>
+        Sync
     (
         long id
     )
     {
-        var synchronized =
-            await _repository.SynchronizeAsync
-            (
-                id
-            );
-
-
-        if
-        (
-            !synchronized
-        )
+        try
         {
-            return NotFound();
+            var synchronized =
+                await _repository.SynchronizeAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !synchronized
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
         }
 
 
-        return NoContent();
+        //=======================================================
+        // Parent Menu Synchronization Dependency
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
     }
+
 
 
     //===========================================================
     // Rollback
     //===========================================================
+    //
+    // The repository remains the authoritative protection
+    // during actual rollback execution.
+    //
+    // If a dependent synchronization prevents rollback,
+    // return HTTP 400 instead of allowing an unhandled
+    // exception to become HTTP 500.
+    //
+    //===========================================================
 
     [HttpPost("{id:long}/rollback")]
-    public async Task<ActionResult> Rollback
+
+    public async Task<ActionResult>
+        Rollback
     (
         long id
     )
     {
-        var rolledBack =
-            await _repository.RollbackAsync
-            (
-                id
-            );
-
-
-        if
-        (
-            !rolledBack
-        )
+        try
         {
-            return NotFound();
+            var rolledBack =
+                await _repository.RollbackAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !rolledBack
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
         }
 
 
-        return NoContent();
+        //=======================================================
+        // Rollback Dependency Exception
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
     }
+
 
 
     //===========================================================
@@ -188,7 +269,9 @@ public class SubmenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet]
-    public async Task<ActionResult<List<SubmenuSynchronizationDto>>> GetAll
+
+    public async Task<ActionResult<List<SubmenuSynchronizationDto>>>
+        GetAll
     (
         [FromQuery] string type
     )
@@ -203,12 +286,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Get By Id
     //===========================================================
 
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<SubmenuSynchronizationDto>> GetById
+
+    public async Task<ActionResult<SubmenuSynchronizationDto>>
+        GetById
     (
         long id
     )
@@ -236,12 +322,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Create
     //===========================================================
 
     [HttpPost]
-    public async Task<ActionResult<long>> Create
+
+    public async Task<ActionResult<long>>
+        Create
     (
         CreateSubmenuSynchronizationDto dto
     )
@@ -260,12 +349,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Update
     //===========================================================
 
     [HttpPut("{id:long}")]
-    public async Task<ActionResult> Update
+
+    public async Task<ActionResult>
+        Update
     (
         long id,
 
@@ -301,12 +393,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Delete
     //===========================================================
 
     [HttpDelete("{id:long}")]
-    public async Task<ActionResult> Delete
+
+    public async Task<ActionResult>
+        Delete
     (
         long id
     )
@@ -331,12 +426,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Restore
     //===========================================================
 
     [HttpPut("restore")]
-    public async Task<ActionResult> Restore
+
+    public async Task<ActionResult>
+        Restore
     (
         [FromQuery] string type
     )
@@ -364,12 +462,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Get List History
     //===========================================================
 
     [HttpGet("history")]
-    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
+
+    public async Task<ActionResult<List<ActivityHistoryDto>>>
+        GetHistory()
     {
         var history =
             await _activityHistoryRepository
@@ -388,12 +489,15 @@ public class SubmenuSynchronizationController : ControllerBase
     }
 
 
+
     //===========================================================
     // Get Submenu Synchronization History
     //===========================================================
 
     [HttpGet("{id:long}/history")]
-    public async Task<ActionResult<List<ActivityHistoryDto>>> GetEntityHistory
+
+    public async Task<ActionResult<List<ActivityHistoryDto>>>
+        GetEntityHistory
     (
         long id
     )

@@ -17,6 +17,7 @@
     overflow: hidden;
 }
 
+
 /* =====================================================
    PROJECTED CONTENT
 ===================================================== */
@@ -37,6 +38,7 @@
 
     overflow: hidden;
 }
+
 
 /* =====================================================
    ROOT
@@ -60,6 +62,7 @@
 
     background: #ffffff;
 }
+
 
 /* =====================================================
    TABLE HEADER
@@ -94,6 +97,7 @@
         inset 0 -1px 0 rgba(255,255,255,.55);
 }
 
+
 /* =====================================================
    TABLE BODY
 ===================================================== */
@@ -117,6 +121,7 @@
     background: #ffffff;
 }
 
+
 /* =====================================================
    TABLE
 ===================================================== */
@@ -134,6 +139,7 @@
     background: #ffffff;
 }
 
+
 /* =====================================================
    DATA TABLE
 ===================================================== */
@@ -146,6 +152,7 @@
 
     align-self: flex-start;
 }
+
 
 /* =====================================================
    HEADER
@@ -203,25 +210,30 @@
         box-shadow .18s ease;
 }
 
+
 .list-table-grid thead th.left
 {
     text-align: left;
 }
+
 
 .list-table-grid thead th.center
 {
     text-align: center;
 }
 
+
 .list-table-grid thead th.right
 {
     text-align: right;
 }
 
+
 .list-table-grid thead th.sortable
 {
     cursor: pointer;
 }
+
 
 .list-table-grid thead th.sortable:hover
 {
@@ -234,6 +246,7 @@
 
     color: #2563eb;
 }
+
 
 /* =====================================================
    TABLE STATES
@@ -261,6 +274,7 @@
         );
 }
 
+
 .table-state app-orbit-loader,
 .table-state app-empty-state
 {
@@ -270,6 +284,7 @@
 
     justify-content: center;
 }
+
 
 /* =====================================================
    BODY ROW
@@ -287,15 +302,18 @@
         background-color .18s ease;
 }
 
+
 .list-table-row:nth-child(even)
 {
     background: #fbfcfe;
 }
 
+
 .list-table-row:hover
 {
     background: #eef5ff;
 }
+
 
 /* =====================================================
    CELL
@@ -332,20 +350,24 @@
     box-sizing: border-box;
 }
 
+
 .list-table-grid tbody td.left
 {
     text-align: left;
 }
+
 
 .list-table-grid tbody td.center
 {
     text-align: center;
 }
 
+
 .list-table-grid tbody td.right
 {
     text-align: right;
 }
+
 
 /* =====================================================
    STATUS
@@ -434,6 +456,7 @@
     border: 1px solid #cbd5e1;
 }
 
+
 /* =====================================================
    ACTION BUTTONS
 ===================================================== */
@@ -450,6 +473,7 @@
 
     height: 40px;
 }
+
 
 .action-btn
 {
@@ -473,6 +497,7 @@
         all .18s ease;
 }
 
+
 .action-btn:hover
 {
     transform: translateY(-1px);
@@ -481,12 +506,14 @@
         0 4px 10px rgba(0,0,0,.12);
 }
 
+
 .action-btn i
 {
     font-size: 13px;
 
     line-height: 1;
 }
+
 
 .action-btn.view
 {
@@ -495,12 +522,14 @@
     color: #2563eb;
 }
 
+
 .action-btn.edit
 {
     background: #fff8e5;
 
     color: #c58b00;
 }
+
 
 .action-btn.delete
 {
@@ -509,8 +538,9 @@
     color: #dc2626;
 }
 
+
 /* =====================================================
-   OPERATION
+   OPERATION - SYNC
 ===================================================== */
 
 .action-btn.sync
@@ -520,12 +550,34 @@
     color: #4f46e5;
 }
 
+
 .action-btn.sync:hover
 {
     background: #dbeafe;
 
     color: #2563eb;
 }
+
+
+/* =====================================================
+   OPERATION - ROLLBACK
+===================================================== */
+
+.action-btn.rollback
+{
+    background: #fff7ed;
+
+    color: #ea580c;
+}
+
+
+.action-btn.rollback:hover
+{
+    background: #ffedd5;
+
+    color: #c2410c;
+}
+
 
 /* =====================================================
    UTILITIES
@@ -536,15 +588,18 @@
     white-space: nowrap;
 }
 
+
 .text-left
 {
     text-align: left;
 }
 
+
 .text-center
 {
     text-align: center;
 }
+
 
 .text-right
 {

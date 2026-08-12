@@ -112,9 +112,9 @@ from '../../../../../../shared/components/utilities/toast/toast.service';
 
 import
 {
-    SubmenuSynchronizationService
+    CodeSynchronizationService
 }
-from '../../../services/submenu-synchronization.service';
+from '../../../services/code-synchronization.service';
 
 import
 {
@@ -153,7 +153,7 @@ from '../../../../navigation-management/models/navigation-menu.model';
 
 @Component(
 {
-    selector:'app-submenu-synchronization-list',
+    selector:'app-code-synchronization-list',
 
     standalone:true,
 
@@ -186,17 +186,17 @@ from '../../../../navigation-management/models/navigation-menu.model';
         ToastComponent
     ],
 
-    templateUrl:'./submenu-synchronization-list.html',
+    templateUrl:'./code-synchronization-list.html',
 
-    styleUrl:'./submenu-synchronization-list.css'
+    styleUrl:'./code-synchronization-list.css'
 })
 
 
 //===============================================================
-// Submenu Synchronization List Component
+// Code Synchronization List Component
 //===============================================================
 
-export class SubmenuSynchronizationListComponent
+export class CodeSynchronizationListComponent
 implements OnInit
 {
 
@@ -204,8 +204,8 @@ implements OnInit
     // Dependency Injection
     //===========================================================
 
-    private readonly submenuSynchronizationService =
-        inject(SubmenuSynchronizationService);
+    private readonly codeSynchronizationService =
+        inject(CodeSynchronizationService);
 
 
     private readonly moduleSynchronizationService =
@@ -316,9 +316,9 @@ implements OnInit
         },
 
         {
-            text:'Pending',
+            text:'Ready',
 
-            value:'Pending'
+            value:'Ready'
         },
 
         {
@@ -386,7 +386,7 @@ implements OnInit
 
 
     historyTitle =
-        'Submenu Synchronization History';
+        'Code Synchronization History';
 
 
     historyItems:any[] =
@@ -483,7 +483,7 @@ implements OnInit
 
 
         {
-            header:'Last Sync',
+            header:'Last Code Sync',
 
             field:'lastSynchronizedDate',
 
@@ -496,7 +496,7 @@ implements OnInit
         {
             header:'Operation',
 
-            field:'operation',
+            field:'codeOperation',
 
             type:'operation',
 
@@ -550,7 +550,7 @@ implements OnInit
 
         if
         (
-            url.includes('/submenu-synchronization/backend')
+            url.includes('/code-synchronization/backend')
         )
         {
             this.selectedTab =
@@ -586,10 +586,10 @@ implements OnInit
 
 
         //=======================================================
-        // Load Submenu Synchronization
+        // Load Code Synchronization
         //=======================================================
 
-        this.loadSubmenuSynchronizations();
+        this.loadCodeSynchronizations();
     }
 
 
@@ -654,13 +654,13 @@ implements OnInit
         {
             this.router.navigate(
             [
-                '/infrastructure-control/development-management/submenu-synchronization/backend'
+                '/infrastructure-control/development-management/code-synchronization/backend'
             ])
             .then(() =>
             {
                 this.loadModules();
 
-                this.loadSubmenuSynchronizations();
+                this.loadCodeSynchronizations();
             });
 
 
@@ -674,13 +674,13 @@ implements OnInit
 
         this.router.navigate(
         [
-            '/infrastructure-control/development-management/submenu-synchronization/frontend'
+            '/infrastructure-control/development-management/code-synchronization/frontend'
         ])
         .then(() =>
         {
             this.loadModules();
 
-            this.loadSubmenuSynchronizations();
+            this.loadCodeSynchronizations();
         });
     }
 
@@ -1105,10 +1105,10 @@ implements OnInit
 
 
     //===========================================================
-    // Load Submenu Synchronization Data
+    // Load Code Synchronization Data
     //===========================================================
 
-    loadSubmenuSynchronizations():
+    loadCodeSynchronizations():
         void
     {
         this.loading =
@@ -1125,7 +1125,7 @@ implements OnInit
                 : 'Frontend';
 
 
-        this.submenuSynchronizationService
+        this.codeSynchronizationService
 
             .getAll(
                 synchronizationType
@@ -1143,7 +1143,7 @@ implements OnInit
                     );
 
                     console.log(
-                        'Submenu Synchronization Response:',
+                        'Code Synchronization Response:',
                         response
                     );
 
@@ -1179,7 +1179,7 @@ implements OnInit
                 error:(error) =>
                 {
                     console.error(
-                        'Submenu Synchronization Load Failed:',
+                        'Code Synchronization Load Failed:',
                         error
                     );
 
@@ -1207,7 +1207,7 @@ implements OnInit
                     this.toast.error(
                         'Load Failed',
 
-                        'Unable to load submenu synchronization.'
+                        'Unable to load code synchronization.'
                     );
 
 
@@ -1379,7 +1379,7 @@ implements OnInit
 
 
     //===========================================================
-    // Search Submenu Synchronization
+    // Search Code Synchronization
     //===========================================================
 
     onSearch
@@ -1397,7 +1397,7 @@ implements OnInit
 
 
     //===========================================================
-    // Sort Submenu Synchronization
+    // Sort Code Synchronization
     //===========================================================
 
     onSort
@@ -1512,7 +1512,7 @@ implements OnInit
 
 
     //===========================================================
-    // Refresh Submenu Synchronization
+    // Refresh Code Synchronization
     //===========================================================
 
     refresh():
@@ -1549,7 +1549,7 @@ implements OnInit
         this.loadModules();
 
 
-        this.loadSubmenuSynchronizations();
+        this.loadCodeSynchronizations();
     }
 
 
@@ -1620,27 +1620,7 @@ implements OnInit
 
 
     //===========================================================
-    // Add Submenu Synchronization
-    //===========================================================
-
-    add():
-        void
-    {
-        const prefix =
-            this.selectedTab === 'backend'
-                ? 'backend'
-                : 'frontend';
-
-
-        this.router.navigate(
-        [
-            `/infrastructure-control/development-management/submenu-synchronization/${prefix}/new`
-        ]);
-    }
-
-
-    //===========================================================
-    // View Submenu Synchronization
+    // View Code Synchronization
     //===========================================================
 
     view
@@ -1649,64 +1629,24 @@ implements OnInit
     ):
         void
     {
-        const prefix =
-            this.selectedTab === 'backend'
-                ? 'backend'
-                : 'frontend';
+        //=======================================================
+        // Code Files View Popup
+        //=======================================================
+        //
+        // The reusable Code Files View popup will be opened
+        // from this action.
+        //
+        //=======================================================
 
-
-        this.router.navigate(
-        [
-            '/infrastructure-control',
-
-            'development-management',
-
-            'submenu-synchronization',
-
-            prefix,
-
-            'view',
-
-            item.id
-        ]);
+        console.log(
+            'VIEW CODE SYNCHRONIZATION',
+            item
+        );
     }
 
 
     //===========================================================
-    // Edit Submenu Synchronization
-    //===========================================================
-
-    edit
-    (
-        item:SubmenuSynchronization
-    ):
-        void
-    {
-        const prefix =
-            this.selectedTab === 'backend'
-                ? 'backend'
-                : 'frontend';
-
-
-        this.router.navigate(
-        [
-            '/infrastructure-control',
-
-            'development-management',
-
-            'submenu-synchronization',
-
-            prefix,
-
-            'edit',
-
-            item.id
-        ]);
-    }
-
-
-    //===========================================================
-    // Synchronize Submenu
+    // Synchronize / Rollback Code
     //===========================================================
 
     synchronize
@@ -1715,53 +1655,97 @@ implements OnInit
     ):
         void
     {
-        const prefix =
-            this.selectedTab === 'backend'
-                ? 'backend'
-                : 'frontend';
-
-
-        this.router.navigate(
-        [
-            '/infrastructure-control',
-
-            'development-management',
-
-            'submenu-synchronization',
-
-            prefix,
-
-            'synchronize',
-
-            item.id
-        ]);
-    }
-
-
-    //===========================================================
-    // Delete Submenu Synchronization
-    //===========================================================
-
-    delete
-    (
-        item:SubmenuSynchronization
-    ):
-        void
-    {
         //=======================================================
-        // Prevent Deleting Synchronized Submenu
+        // Validate Item
         //=======================================================
 
         if
         (
-            item.status?.toLowerCase() === 'synchronized'
+            !item
+            ||
+            item.id <= 0
         )
         {
-            this.toast.warning
-            (
-                'Delete Not Allowed',
+            return;
+        }
 
-                'This submenu is synchronized. Roll back the synchronization before deleting the submenu.'
+
+        //=======================================================
+        // Determine Current Status
+        //=======================================================
+
+        const isSynchronized =
+            item.status
+                ?.toLowerCase()
+                ===
+            'synchronized';
+
+
+        //=======================================================
+        // Rollback
+        //=======================================================
+
+        if
+        (
+            isSynchronized
+        )
+        {
+            this.confirmDialog.open
+            (
+                'Rollback Code',
+
+                `Are you sure you want to roll back the generated code for "${item.submenuName}" ?`,
+
+                () =>
+                {
+                    this.codeSynchronizationService
+
+                        .rollback(
+                            item.id
+                        )
+
+                        .subscribe(
+                        {
+                            next:() =>
+                            {
+                                this.toast.success
+                                (
+                                    'Code Rollback',
+
+                                    `${item.submenuName} code rolled back successfully.`
+                                );
+
+
+                                this.loadCodeSynchronizations();
+                            },
+
+
+                            error:(error) =>
+                            {
+                                console.error(
+                                    'Code Rollback Failed',
+
+                                    error
+                                );
+
+
+                                this.toast.error
+                                (
+                                    'Code Rollback Failed',
+
+                                    error?.error
+                                    ??
+                                    'Failed to roll back code.'
+                                );
+                            }
+                        });
+                },
+
+                'Rollback',
+
+                'Cancel',
+
+                'primary'
             );
 
 
@@ -1770,20 +1754,20 @@ implements OnInit
 
 
         //=======================================================
-        // Confirm Delete
+        // Synchronize
         //=======================================================
 
         this.confirmDialog.open
         (
-            'Delete Submenu Synchronization',
+            'Synchronize Code',
 
-            `Are you sure you want to delete "${item.submenuName}" ?`,
+            `Are you sure you want to generate code for "${item.submenuName}" ?`,
 
             () =>
             {
-                this.submenuSynchronizationService
+                this.codeSynchronizationService
 
-                    .delete(
+                    .synchronize(
                         item.id
                     )
 
@@ -1793,32 +1777,42 @@ implements OnInit
                         {
                             this.toast.success
                             (
-                                'Delete Successful',
+                                'Code Synchronization',
 
-                                `${item.submenuName} deleted successfully.`
+                                `${item.submenuName} code synchronized successfully.`
                             );
 
 
-                            this.loadSubmenuSynchronizations();
+                            this.loadCodeSynchronizations();
                         },
 
 
                         error:(error) =>
                         {
                             console.error(
+                                'Code Synchronization Failed',
+
                                 error
                             );
 
 
                             this.toast.error
                             (
-                                'Delete Failed',
+                                'Code Synchronization Failed',
 
-                                'Failed to delete submenu synchronization.'
+                                error?.error
+                                ??
+                                'Failed to synchronize code.'
                             );
                         }
                     });
-            }
+            },
+
+            'Synchronize',
+
+            'Cancel',
+
+            'primary'
         );
     }
 
@@ -1832,13 +1826,13 @@ implements OnInit
     {
         this.confirmDialog.open(
 
-            'Restore Submenu Synchronization',
+            'Restore Code Synchronization',
 
-            'Are you sure you want to restore the most recently deleted submenu synchronization configuration?',
+            'Are you sure you want to restore the most recently deleted code synchronization record?',
 
             () =>
             {
-                this.restoreSubmenuSynchronization();
+                this.restoreCodeSynchronization();
             },
 
             'Restore',
@@ -1851,10 +1845,10 @@ implements OnInit
 
 
     //===========================================================
-    // Restore Submenu Synchronization
+    // Restore Code Synchronization
     //===========================================================
 
-    private restoreSubmenuSynchronization():
+    private restoreCodeSynchronization():
         void
     {
         const synchronizationType =
@@ -1863,40 +1857,12 @@ implements OnInit
                 : 'Frontend';
 
 
-        this.submenuSynchronizationService
+        this.toast.warning
+        (
+            'Not Available',
 
-            .restore(
-                synchronizationType
-            )
-
-            .subscribe(
-            {
-                next:() =>
-                {
-                    this.toast.success(
-
-                        'Restore Successful',
-
-                        'The most recently deleted submenu synchronization configuration has been restored.'
-                    );
-
-
-                    this.loadSubmenuSynchronizations();
-                },
-
-
-                error:(error) =>
-                {
-                    this.toast.error(
-
-                        'Restore Failed',
-
-                        error?.error ??
-
-                        'Failed to restore submenu synchronization configuration.'
-                    );
-                }
-            });
+            `Restore for Code Synchronization (${synchronizationType}) is not implemented yet.`
+        );
     }
 
 
@@ -1907,69 +1873,12 @@ implements OnInit
     openHistory():
         void
     {
-        this.submenuSynchronizationService
+        this.toast.warning
+        (
+            'Not Available',
 
-            .getHistory()
-
-            .subscribe(
-            {
-                next:(response:any[]) =>
-                {
-                    this.historyItems =
-                        response.map(
-                            item =>
-                            ({
-                                title:
-                                    item.activityTitle,
-
-                                description:
-                                    item.activityDescription,
-
-                                user:
-                                    item.performedByName
-                                    ??
-                                    'System',
-
-                                dateTime:
-                                    new Date(
-                                        item.performedDate
-                                    )
-                                    .toLocaleString(),
-
-                                badge:
-                                    item.activityType
-                            })
-                        );
-
-
-                    this.historyTitle =
-                        'Submenu Synchronization History';
-
-
-                    this.historyOpened =
-                        true;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:(error:any) =>
-                {
-                    console.error(
-                        'History Load Failed',
-
-                        error
-                    );
-
-
-                    this.toast.error(
-                        'History',
-
-                        'Failed to load submenu synchronization history.'
-                    );
-                }
-            });
+            'Code Synchronization history is not implemented yet.'
+        );
     }
 
 
@@ -1983,4 +1892,5 @@ implements OnInit
         this.historyOpened =
             false;
     }
+
 }

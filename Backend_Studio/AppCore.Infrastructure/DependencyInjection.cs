@@ -38,6 +38,7 @@ using AppCore.Application.InfrastructureControl.DevelopmentManagement.ProjectSyn
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.Interfaces;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.MenuSynchronization.Interfaces;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.Interfaces;
+using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.Interfaces;
 
 using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
 using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
@@ -93,6 +94,7 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManag
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.ProjectSynchronization;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.MenuSynchronization;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.CodeSynchronization;
 
 using AppCore.Infrastructure.Repositories.HumanResource.HumanResourceSetup;
 using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
@@ -214,6 +216,12 @@ public static class DependencyInjection
             SubmenuSynchronizationRepository
         >();
 
+        services.AddScoped
+        <
+            ICodeSynchronizationRepository,
+            CodeSynchronizationRepository
+        >();
+
 
         //=======================================================
         // Platform Common
@@ -270,6 +278,17 @@ public static class DependencyInjection
         <
             ISubmenuSynchronizationEngine,
             SubmenuSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Code Synchronization Engine
+        //=======================================================
+
+        services.AddScoped
+        <
+            ICodeSynchronizationEngine,
+            CodeSynchronizationEngine
         >();
 
 

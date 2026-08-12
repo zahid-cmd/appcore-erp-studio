@@ -5,9 +5,14 @@
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Domain.Common;
+
 using AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
 using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
+
+using AppCore.Domain.InfrastructureControl.DevelopmentManagement;
+
 using AppCore.Domain.Entities.HumanResource.HumanResourceSetup;
+
 using AppCore.Domain.Entities.SecurityPermission.RoleManagement;
 
 
@@ -43,15 +48,44 @@ public class AppDbContext : DbContext
     // Navigation Management
     //===========================================================
 
-    public DbSet<NavigationModule> NavigationModules { get; set; } = null!;
+    public DbSet<NavigationModule>
+        NavigationModules
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<NavigationMenu> NavigationMenus { get; set; } = null!;
 
-    public DbSet<NavigationSubmenu> NavigationSubmenus { get; set; } = null!;
+    public DbSet<NavigationMenu>
+        NavigationMenus
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<NavigationActivity> NavigationActivities { get; set; } = null!;
 
-    public DbSet<MasterActivity> MasterActivities { get; set; } = null!;
+    public DbSet<NavigationSubmenu>
+        NavigationSubmenus
+        {
+            get;
+            set;
+        } = null!;
+
+
+    public DbSet<NavigationActivity>
+        NavigationActivities
+        {
+            get;
+            set;
+        } = null!;
+
+
+    public DbSet<MasterActivity>
+        MasterActivities
+        {
+            get;
+            set;
+        } = null!;
 
 
 
@@ -59,13 +93,44 @@ public class AppDbContext : DbContext
     // Development Management
     //===========================================================
 
-    public DbSet<ProjectSynchronization> ProjectSynchronizations { get; set; } = null!;
+    public DbSet<ProjectSynchronization>
+        ProjectSynchronizations
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<ModuleSynchronization> ModuleSynchronizations { get; set; } = null!;
 
-    public DbSet<MenuSynchronization> MenuSynchronizations { get; set; } = null!;
+    public DbSet<ModuleSynchronization>
+        ModuleSynchronizations
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<SubmenuSynchronization> SubmenuSynchronizations { get; set; } = null!;
+
+    public DbSet<MenuSynchronization>
+        MenuSynchronizations
+        {
+            get;
+            set;
+        } = null!;
+
+
+    public DbSet<SubmenuSynchronization>
+        SubmenuSynchronizations
+        {
+            get;
+            set;
+        } = null!;
+
+
+    public DbSet<CodeSynchronization>
+        CodeSynchronizations
+        {
+            get;
+            set;
+        } = null!;
 
 
 
@@ -81,9 +146,20 @@ public class AppDbContext : DbContext
     // Human Resource Setup
     //===========================================================
 
-    public DbSet<Department> Departments { get; set; } = null!;
+    public DbSet<Department>
+        Departments
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<Designation> Designations { get; set; } = null!;
+
+    public DbSet<Designation>
+        Designations
+        {
+            get;
+            set;
+        } = null!;
 
 
 
@@ -91,13 +167,36 @@ public class AppDbContext : DbContext
     // Security & Permission
     //===========================================================
 
-    public DbSet<RoleProfile> RoleProfiles { get; set; } = null!;
+    public DbSet<RoleProfile>
+        RoleProfiles
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<ActivityAssignment> ActivityAssignments { get; set; } = null!;
 
-    public DbSet<ActivityAssignmentDetail> ActivityAssignmentDetails { get; set; } = null!;
+    public DbSet<ActivityAssignment>
+        ActivityAssignments
+        {
+            get;
+            set;
+        } = null!;
 
-    public DbSet<ActivityAssignmentPermission> ActivityAssignmentPermissions { get; set; } = null!;
+
+    public DbSet<ActivityAssignmentDetail>
+        ActivityAssignmentDetails
+        {
+            get;
+            set;
+        } = null!;
+
+
+    public DbSet<ActivityAssignmentPermission>
+        ActivityAssignmentPermissions
+        {
+            get;
+            set;
+        } = null!;
 
 
 
@@ -105,7 +204,12 @@ public class AppDbContext : DbContext
     // Common
     //===========================================================
 
-    public DbSet<ActivityHistory> ActivityHistories { get; set; } = null!;
+    public DbSet<ActivityHistory>
+        ActivityHistories
+        {
+            get;
+            set;
+        } = null!;
 
 
 
@@ -118,6 +222,7 @@ public class AppDbContext : DbContext
         ModelBuilder modelBuilder
     )
     {
+
         //=======================================================
         // Base Configuration
         //=======================================================

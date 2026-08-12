@@ -4,10 +4,9 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
+using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.Interfaces;
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
-using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.Interfaces;
 
 using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
 using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interfaces;
@@ -16,25 +15,34 @@ using AppCore.Infrastructure.Persistence;
 
 
 //===============================================================
+// Entity Alias
+//===============================================================
+
+using CodeSynchronizationEntity =
+    AppCore.Domain.InfrastructureControl.DevelopmentManagement.CodeSynchronization;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization;
+namespace AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.CodeSynchronization;
 
 
 //===============================================================
-// Submenu Synchronization Engine
+// Code Synchronization Engine
 //===============================================================
 
-public class SubmenuSynchronizationEngine
-    : ISubmenuSynchronizationEngine
+public class CodeSynchronizationEngine
+    : ICodeSynchronizationEngine
 {
 
     //===========================================================
     // Fields
     //===========================================================
 
-    private readonly AppDbContext _context;
+    private readonly AppDbContext
+        _context;
 
 
     private readonly ISubmenuFrontendSynchronizationEngine
@@ -45,24 +53,20 @@ public class SubmenuSynchronizationEngine
         _backendSynchronizationEngine;
 
 
-    private readonly ICodeSynchronizationRepository
-        _codeSynchronizationRepository;
-
-
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public SubmenuSynchronizationEngine
+    public CodeSynchronizationEngine
     (
         AppDbContext context,
 
-        ISubmenuFrontendSynchronizationEngine frontendSynchronizationEngine,
+        ISubmenuFrontendSynchronizationEngine
+            frontendSynchronizationEngine,
 
-        ISubmenuBackendSynchronizationEngine backendSynchronizationEngine,
-
-        ICodeSynchronizationRepository codeSynchronizationRepository
+        ISubmenuBackendSynchronizationEngine
+            backendSynchronizationEngine
     )
     {
         _context =
@@ -75,10 +79,6 @@ public class SubmenuSynchronizationEngine
 
         _backendSynchronizationEngine =
             backendSynchronizationEngine;
-
-
-        _codeSynchronizationRepository =
-            codeSynchronizationRepository;
     }
 
 
@@ -87,22 +87,31 @@ public class SubmenuSynchronizationEngine
     // Synchronize
     //===========================================================
 
-    public async Task<SubmenuSynchronizationResultDto> SynchronizeAsync
+    public async Task<CodeSynchronizationEngineResult>
+        SynchronizeAsync
     (
-        long synchronizationId
+        long id
     )
     {
-        var synchronization =
-            await LoadSynchronizationAsync
+        //=======================================================
+        // Load Code Synchronization
+        //=======================================================
+
+        var codeSynchronization =
+            await LoadCodeSynchronizationAsync
             (
-                synchronizationId
+                id
             );
 
+
+        //=======================================================
+        // Validate
+        //=======================================================
 
         var validationResult =
             await ValidateSynchronizationAsync
             (
-                synchronization
+                codeSynchronization
             );
 
 
@@ -115,12 +124,144 @@ public class SubmenuSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Load Submenu Synchronization
+        //=======================================================
+
+        var submenuSynchronization =
+            await LoadSubmenuSynchronizationAsync
+            (
+                codeSynchronization.SubmenuSynchronizationId
+            );
+
+
+        //=======================================================
+        // Execute
+        //=======================================================
+
         var result =
             await ExecuteSynchronizationAsync
             (
-                synchronization
+                submenuSynchronization
             );
 
+
+        //=======================================================
+        // Failed
+        //=======================================================
+
+        if
+        (
+            !result.Success
+        )
+        {
+            await UpdateFailedSynchronizationAsync
+            (
+                codeSynchronization,
+
+                result.Message
+            );
+
+
+            return result;
+        }
+
+
+        //=======================================================
+        // Update Status
+        //=======================================================
+
+        await UpdateSynchronizationStatusAsync
+        (
+            codeSynchronization,
+
+            result.Message
+        );
+
+
+        //=======================================================
+        // Result
+        //=======================================================
+
+        return new CodeSynchronizationEngineResult
+        {
+            Success =
+                true,
+
+
+            Message =
+                result.Message
+        };
+    }
+
+
+
+    //===========================================================
+    // Rollback
+    //===========================================================
+
+    public async Task<CodeSynchronizationEngineResult>
+        RollbackAsync
+    (
+        long id
+    )
+    {
+        //=======================================================
+        // Load Code Synchronization
+        //=======================================================
+
+        var codeSynchronization =
+            await LoadCodeSynchronizationAsync
+            (
+                id
+            );
+
+
+        //=======================================================
+        // Validate Rollback
+        //=======================================================
+
+        var validationResult =
+            await ValidateRollbackAsync
+            (
+                codeSynchronization
+            );
+
+
+        if
+        (
+            !validationResult.Success
+        )
+        {
+            return validationResult;
+        }
+
+
+        //=======================================================
+        // Load Submenu Synchronization
+        //=======================================================
+
+        var submenuSynchronization =
+            await LoadSubmenuSynchronizationAsync
+            (
+                codeSynchronization.SubmenuSynchronizationId
+            );
+
+
+        //=======================================================
+        // Execute Rollback
+        //=======================================================
+
+        var result =
+            await ExecuteRollbackAsync
+            (
+                submenuSynchronization
+            );
+
+
+        //=======================================================
+        // Failed
+        //=======================================================
 
         if
         (
@@ -132,136 +273,83 @@ public class SubmenuSynchronizationEngine
 
 
         //=======================================================
-        // Update Submenu Synchronization Status
+        // Update Status
         //=======================================================
 
-        await UpdateSynchronizationStatusAsync
+        await UpdateRollbackStatusAsync
         (
-            synchronization,
-
-            result
+            codeSynchronization
         );
-
-
-        //=======================================================
-        // Create Code Synchronization
-        //=======================================================
-        //
-        // A Code Synchronization record is created only after
-        // the Submenu Synchronization has successfully completed.
-        //
-        // If the record already exists, the repository returns
-        // the existing Code Synchronization Id.
-        //
-        //=======================================================
-
-        await _codeSynchronizationRepository
-            .CreateFromSubmenuSynchronizationAsync
-            (
-                synchronization.Id
-            );
 
 
         //=======================================================
         // Result
         //=======================================================
 
-        return new SubmenuSynchronizationResultDto
+        return new CodeSynchronizationEngineResult
         {
             Success =
                 true,
 
 
             Message =
-                "Submenu synchronization completed successfully.",
-
-
-            SynchronizedDate =
-                DateTime.UtcNow,
-
-
-            TotalOperations =
-                result.TotalOperations,
-
-
-            SuccessfulOperations =
-                result.SuccessfulOperations,
-
-
-            FailedOperations =
-                result.FailedOperations
+                result.Message
         };
     }
 
 
 
     //===========================================================
-    // Execute Synchronization
+    // Load Code Synchronization
     //===========================================================
 
-    private async Task<SubmenuSynchronizationResultDto>
-    ExecuteSynchronizationAsync
+    private async Task<CodeSynchronizationEntity>
+        LoadCodeSynchronizationAsync
     (
-        SubmenuSynchronizationDto synchronization
+        long id
     )
     {
+        var synchronization =
+            await _context.CodeSynchronizations
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                    x.Id ==
+                    id
+
+                    &&
+
+                    !x.IsDeleted
+                );
+
+
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Frontend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization == null
         )
         {
-            return await _frontendSynchronizationEngine
-                .SynchronizeAsync
-                (
-                    synchronization
-                );
+            throw new InvalidOperationException
+            (
+                "Code synchronization record was not found."
+            );
         }
 
 
-        if
-        (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Backend",
-                    StringComparison.OrdinalIgnoreCase
-                )
-        )
-        {
-            return await _backendSynchronizationEngine
-                .SynchronizeAsync
-                (
-                    synchronization
-                );
-        }
-
-
-        return new SubmenuSynchronizationResultDto
-        {
-            Success =
-                false,
-
-
-            Message =
-                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
-        };
+        return synchronization;
     }
 
 
 
     //===========================================================
-    // Load Synchronization
+    // Load Submenu Synchronization
     //===========================================================
 
     private async Task<SubmenuSynchronizationDto>
-    LoadSynchronizationAsync
+        LoadSubmenuSynchronizationAsync
     (
-        long synchronizationId
+        long id
     )
     {
         var entity =
@@ -274,7 +362,7 @@ public class SubmenuSynchronizationEngine
                     x =>
 
                     x.Id ==
-                    synchronizationId
+                    id
 
                     &&
 
@@ -289,12 +377,12 @@ public class SubmenuSynchronizationEngine
         {
             throw new InvalidOperationException
             (
-                "Submenu synchronization configuration was not found."
+                "The associated Submenu Synchronization record was not found."
             );
         }
 
 
-        return BuildSynchronizationDto
+        return BuildSubmenuSynchronizationDto
         (
             entity
         );
@@ -303,12 +391,14 @@ public class SubmenuSynchronizationEngine
 
 
     //===========================================================
-    // Build Synchronization DTO
+    // Build Submenu Synchronization DTO
     //===========================================================
 
-    private static SubmenuSynchronizationDto BuildSynchronizationDto
+    private static SubmenuSynchronizationDto
+        BuildSubmenuSynchronizationDto
     (
-        Domain.Entities.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization entity
+        AppCore.Domain.Entities.InfrastructureControl
+            .DevelopmentManagement.SubmenuSynchronization entity
     )
     {
         return new SubmenuSynchronizationDto
@@ -328,10 +418,8 @@ public class SubmenuSynchronizationEngine
             ModuleId =
                 entity.ModuleId,
 
-
             ModuleCode =
                 entity.ModuleCode,
-
 
             ModuleName =
                 entity.ModuleName,
@@ -344,10 +432,8 @@ public class SubmenuSynchronizationEngine
             MenuId =
                 entity.MenuId,
 
-
             MenuCode =
                 entity.MenuCode,
-
 
             MenuName =
                 entity.MenuName,
@@ -360,10 +446,8 @@ public class SubmenuSynchronizationEngine
             SubmenuId =
                 entity.SubmenuId,
 
-
             SubmenuCode =
                 entity.SubmenuCode,
-
 
             SubmenuName =
                 entity.SubmenuName,
@@ -378,104 +462,93 @@ public class SubmenuSynchronizationEngine
 
 
             //===================================================
-            // Frontend Target Location
+            // Frontend Target
             //===================================================
 
             FrontendSolution =
                 entity.FrontendSolution,
 
-
             FrontendProject =
                 entity.FrontendProject,
-
 
             FrontendSourceFolder =
                 entity.FrontendSourceFolder,
 
-
             FrontendFeatureFolder =
                 entity.FrontendFeatureFolder,
-
 
             FrontendMenuFolder =
                 entity.FrontendMenuFolder,
 
 
             //===================================================
-            // Frontend Submenu Location
+            // Frontend Submenu
             //===================================================
 
             FrontendSubmenuFolder =
                 entity.FrontendSubmenuFolder,
 
-
             FrontendFormFolder =
                 entity.FrontendFormFolder,
-
 
             FrontendListFolder =
                 entity.FrontendListFolder,
 
 
             //===================================================
-            // Frontend Submenu Core Files
+            // Frontend Core Files
             //===================================================
 
             FrontendSubmenuModelFile =
                 entity.FrontendSubmenuModelFile,
 
-
             FrontendSubmenuServiceFile =
                 entity.FrontendSubmenuServiceFile,
-
 
             FrontendSubmenuRouteFile =
                 entity.FrontendSubmenuRouteFile,
 
 
             //===================================================
-            // Frontend Submenu Page Files
+            // Frontend Form Files
             //===================================================
 
             FrontendSubmenuFormTsFile =
                 entity.FrontendSubmenuFormTsFile,
 
-
             FrontendSubmenuFormHtmlFile =
                 entity.FrontendSubmenuFormHtmlFile,
-
 
             FrontendSubmenuFormCssFile =
                 entity.FrontendSubmenuFormCssFile,
 
 
+            //===================================================
+            // Frontend List Files
+            //===================================================
+
             FrontendSubmenuListTsFile =
                 entity.FrontendSubmenuListTsFile,
 
-
             FrontendSubmenuListHtmlFile =
                 entity.FrontendSubmenuListHtmlFile,
-
 
             FrontendSubmenuListCssFile =
                 entity.FrontendSubmenuListCssFile,
 
 
             //===================================================
-            // Backend Target Location
+            // Backend Target
             //===================================================
 
             BackendSolution =
                 entity.BackendSolution,
 
-
             BackendApplicationProject =
                 entity.BackendApplicationProject,
 
-
             BackendDomainProject =
                 entity.BackendDomainProject,
-
 
             BackendInfrastructureProject =
                 entity.BackendInfrastructureProject,
@@ -496,10 +569,8 @@ public class SubmenuSynchronizationEngine
             BackendApplicationSubMenuFolder =
                 entity.BackendApplicationSubMenuFolder,
 
-
             BackendApplicationDtosFolder =
                 entity.BackendApplicationDtosFolder,
-
 
             BackendApplicationInterfacesFolder =
                 entity.BackendApplicationInterfacesFolder,
@@ -508,18 +579,14 @@ public class SubmenuSynchronizationEngine
             BackendSubMenuDtoFile =
                 entity.BackendSubMenuDtoFile,
 
-
             BackendCreateSubMenuDtoFile =
                 entity.BackendCreateSubMenuDtoFile,
-
 
             BackendUpdateSubMenuDtoFile =
                 entity.BackendUpdateSubMenuDtoFile,
 
-
             BackendSubMenuDefaultsDtoFile =
                 entity.BackendSubMenuDefaultsDtoFile,
-
 
             BackendSubMenuRepositoryInterfaceFile =
                 entity.BackendSubMenuRepositoryInterfaceFile,
@@ -540,13 +607,12 @@ public class SubmenuSynchronizationEngine
             BackendSubMenuConfigurationFile =
                 entity.BackendSubMenuConfigurationFile,
 
-
             BackendSubMenuRepositoryFile =
                 entity.BackendSubMenuRepositoryFile,
 
 
             //===================================================
-            // Synchronization
+            // Synchronization Status
             //===================================================
 
             Status =
@@ -568,10 +634,8 @@ public class SubmenuSynchronizationEngine
             LastSynchronizedBy =
                 entity.LastSynchronizedBy,
 
-
             LastSynchronizedDate =
                 entity.LastSynchronizedDate,
-
 
             LastSynchronizationResult =
                 entity.LastSynchronizationResult,
@@ -600,48 +664,39 @@ public class SubmenuSynchronizationEngine
     // Validate Synchronization
     //===========================================================
 
-    private async Task<SubmenuSynchronizationResultDto>
-    ValidateSynchronizationAsync
+    private async Task<CodeSynchronizationEngineResult>
+        ValidateSynchronizationAsync
     (
-        SubmenuSynchronizationDto synchronization
+        CodeSynchronizationEntity synchronization
     )
     {
         //=======================================================
-        // Validate Module
+        // Validate Submenu Synchronization Reference
         //=======================================================
 
         if
         (
-            synchronization.ModuleId <= 0
+            synchronization.SubmenuSynchronizationId <= 0
         )
         {
-            return new SubmenuSynchronizationResultDto
+            return new CodeSynchronizationEngineResult
             {
                 Success =
                     false,
 
 
                 Message =
-                    "Module is required."
+                    "Code Synchronization does not have a valid Submenu Synchronization reference."
             };
         }
 
 
-
         //=======================================================
-        // Validate Parent Module Synchronization
-        //=======================================================
-        //
-        // A Submenu cannot be synchronized until its parent
-        // Module has been successfully synchronized.
-        //
-        // Saving a Submenu configuration as Pending is allowed.
-        // Only actual synchronization is blocked here.
-        //
+        // Validate Submenu Synchronization Status
         //=======================================================
 
-        var moduleSynchronized =
-            await _context.ModuleSynchronizations
+        var submenuSynchronized =
+            await _context.SubmenuSynchronizations
 
                 .AsNoTracking()
 
@@ -649,13 +704,8 @@ public class SubmenuSynchronizationEngine
                 (
                     x =>
 
-                    x.ModuleId ==
-                    synchronization.ModuleId
-
-                    &&
-
-                    x.SynchronizationType ==
-                    synchronization.SynchronizationType
+                    x.Id ==
+                    synchronization.SubmenuSynchronizationId
 
                     &&
 
@@ -670,123 +720,19 @@ public class SubmenuSynchronizationEngine
 
         if
         (
-            !moduleSynchronized
+            !submenuSynchronized
         )
         {
-            return new SubmenuSynchronizationResultDto
+            return new CodeSynchronizationEngineResult
             {
                 Success =
                     false,
 
 
                 Message =
-                    "Submenu synchronization cannot continue because the parent Module has not been synchronized."
+                    "Code Synchronization cannot continue because the associated Submenu Synchronization has not been synchronized."
             };
         }
-
-
-
-        //=======================================================
-        // Validate Menu
-        //=======================================================
-
-        if
-        (
-            synchronization.MenuId <= 0
-        )
-        {
-            return new SubmenuSynchronizationResultDto
-            {
-                Success =
-                    false,
-
-
-                Message =
-                    "Menu is required."
-            };
-        }
-
-
-
-        //=======================================================
-        // Validate Parent Menu Synchronization
-        //=======================================================
-        //
-        // A Submenu belongs to a Menu.
-        //
-        // Therefore the Menu must also be successfully
-        // synchronized before the Submenu can be synchronized.
-        //
-        // A saved Pending Menu does NOT satisfy this condition.
-        //
-        //=======================================================
-
-        var menuSynchronized =
-            await _context.MenuSynchronizations
-
-                .AsNoTracking()
-
-                .AnyAsync
-                (
-                    x =>
-
-                    x.MenuId ==
-                    synchronization.MenuId
-
-                    &&
-
-                    x.SynchronizationType ==
-                    synchronization.SynchronizationType
-
-                    &&
-
-                    x.Status ==
-                    "Synchronized"
-
-                    &&
-
-                    !x.IsDeleted
-                );
-
-
-        if
-        (
-            !menuSynchronized
-        )
-        {
-            return new SubmenuSynchronizationResultDto
-            {
-                Success =
-                    false,
-
-
-                Message =
-                    "Submenu synchronization cannot continue because the parent Menu has not been synchronized."
-            };
-        }
-
-
-
-        //=======================================================
-        // Validate Submenu
-        //=======================================================
-
-        if
-        (
-            synchronization.SubmenuId <= 0
-        )
-        {
-            return new SubmenuSynchronizationResultDto
-            {
-                Success =
-                    false,
-
-
-                Message =
-                    "Submenu is required."
-            };
-        }
-
 
 
         //=======================================================
@@ -801,7 +747,7 @@ public class SubmenuSynchronizationEngine
             )
         )
         {
-            return new SubmenuSynchronizationResultDto
+            return new CodeSynchronizationEngineResult
             {
                 Success =
                     false,
@@ -813,144 +759,44 @@ public class SubmenuSynchronizationEngine
         }
 
 
-
         //=======================================================
-        // Validate Frontend
-        //=======================================================
-
-        if
-        (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Frontend",
-                    StringComparison.OrdinalIgnoreCase
-                )
-        )
-        {
-            if
-            (
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.FrontendSolution
-                )
-            )
-            {
-                return new SubmenuSynchronizationResultDto
-                {
-                    Success =
-                        false,
-
-
-                    Message =
-                        "Frontend solution is required."
-                };
-            }
-        }
-
-
-
-        //=======================================================
-        // Validate Backend
+        // Validate Supported Type
         //=======================================================
 
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Backend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            !synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+
+            &&
+
+            !synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
-            //===================================================
-            // Validate Backend Solution
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.BackendSolution
-                )
-            )
+            return new CodeSynchronizationEngineResult
             {
-                return new SubmenuSynchronizationResultDto
-                {
-                    Success =
-                        false,
+                Success =
+                    false,
 
 
-                    Message =
-                        "Backend solution is required."
-                };
-            }
-
-
-
-            //===================================================
-            // Validate Backend Configuration
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.BackendControllerFile
-                )
-
-                &&
-
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.BackendApplicationSubMenuFolder
-                )
-
-                &&
-
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.BackendSubMenuEntityFile
-                )
-
-                &&
-
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.BackendSubMenuRepositoryFile
-                )
-
-                &&
-
-                string.IsNullOrWhiteSpace
-                (
-                    synchronization.BackendSubMenuConfigurationFile
-                )
-            )
-            {
-                return new SubmenuSynchronizationResultDto
-                {
-                    Success =
-                        false,
-
-
-                    Message =
-                        "No backend configuration was provided."
-                };
-            }
+                Message =
+                    $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+            };
         }
-
 
 
         //=======================================================
         // Validation Passed
         //=======================================================
 
-        await Task.CompletedTask;
-
-
-        return new SubmenuSynchronizationResultDto
+        return new CodeSynchronizationEngineResult
         {
             Success =
                 true,
@@ -964,18 +810,298 @@ public class SubmenuSynchronizationEngine
 
 
     //===========================================================
+    // Validate Rollback
+    //===========================================================
+
+    private async Task<CodeSynchronizationEngineResult>
+        ValidateRollbackAsync
+    (
+        CodeSynchronizationEntity synchronization
+    )
+    {
+        //=======================================================
+        // Validate Reference
+        //=======================================================
+
+        if
+        (
+            synchronization.SubmenuSynchronizationId <= 0
+        )
+        {
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    false,
+
+
+                Message =
+                    "Code Synchronization does not have a valid Submenu Synchronization reference."
+            };
+        }
+
+
+        //=======================================================
+        // Validate Status
+        //=======================================================
+
+        if
+        (
+            !synchronization.Status.Equals
+            (
+                "Synchronized",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    false,
+
+
+                Message =
+                    "Code Synchronization is not currently synchronized."
+            };
+        }
+
+
+        //=======================================================
+        // Validate Type
+        //=======================================================
+
+        if
+        (
+            !synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+
+            &&
+
+            !synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    false,
+
+
+                Message =
+                    $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+            };
+        }
+
+
+        return new CodeSynchronizationEngineResult
+        {
+            Success =
+                true,
+
+
+            Message =
+                "Rollback validation completed successfully."
+        };
+    }
+
+
+
+    //===========================================================
+    // Execute Synchronization
+    //===========================================================
+
+    private async Task<CodeSynchronizationEngineResult>
+        ExecuteSynchronizationAsync
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Frontend
+        //=======================================================
+
+        if
+        (
+            synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var result =
+                await _frontendSynchronizationEngine
+                    .SynchronizeAsync
+                    (
+                        synchronization
+                    );
+
+
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    result.Success,
+
+
+                Message =
+                    result.Message
+            };
+        }
+
+
+        //=======================================================
+        // Backend
+        //=======================================================
+
+        if
+        (
+            synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var result =
+                await _backendSynchronizationEngine
+                    .SynchronizeAsync
+                    (
+                        synchronization
+                    );
+
+
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    result.Success,
+
+
+                Message =
+                    result.Message
+            };
+        }
+
+
+        return new CodeSynchronizationEngineResult
+        {
+            Success =
+                false,
+
+
+            Message =
+                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+        };
+    }
+
+
+
+    //===========================================================
+    // Execute Rollback
+    //===========================================================
+
+    private async Task<CodeSynchronizationEngineResult>
+        ExecuteRollbackAsync
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Frontend
+        //=======================================================
+
+        if
+        (
+            synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var result =
+                await _frontendSynchronizationEngine
+                    .RollbackAsync
+                    (
+                        synchronization
+                    );
+
+
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    result.Success,
+
+
+                Message =
+                    result.Message
+            };
+        }
+
+
+        //=======================================================
+        // Backend
+        //=======================================================
+
+        if
+        (
+            synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var result =
+                await _backendSynchronizationEngine
+                    .RollbackAsync
+                    (
+                        synchronization
+                    );
+
+
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    result.Success,
+
+
+                Message =
+                    result.Message
+            };
+        }
+
+
+        return new CodeSynchronizationEngineResult
+        {
+            Success =
+                false,
+
+
+            Message =
+                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+        };
+    }
+
+
+
+    //===========================================================
     // Update Synchronization Status
     //===========================================================
 
     private async Task UpdateSynchronizationStatusAsync
     (
-        SubmenuSynchronizationDto synchronization,
+        CodeSynchronizationEntity synchronization,
 
-        SubmenuSynchronizationResultDto result
+        string resultMessage
     )
     {
         var entity =
-            await _context.SubmenuSynchronizations
+            await _context.CodeSynchronizations
 
                 .FirstOrDefaultAsync
                 (
@@ -997,10 +1123,9 @@ public class SubmenuSynchronizationEngine
         {
             throw new InvalidOperationException
             (
-                "Submenu synchronization configuration was not found."
+                "Code synchronization record was not found."
             );
         }
-
 
 
         entity.Status =
@@ -1012,7 +1137,7 @@ public class SubmenuSynchronizationEngine
 
 
         entity.LastSynchronizationResult =
-            result.Message;
+            resultMessage;
 
 
         entity.LastSynchronizedBy =
@@ -1027,170 +1152,24 @@ public class SubmenuSynchronizationEngine
             1;
 
 
-
         await _context.SaveChangesAsync();
     }
 
 
 
     //===========================================================
-    // Rollback
+    // Update Failed Synchronization
     //===========================================================
 
-    public async Task<SubmenuSynchronizationResultDto> RollbackAsync
+    private async Task UpdateFailedSynchronizationAsync
     (
-        long synchronizationId
-    )
-    {
-        var synchronization =
-            await LoadSynchronizationAsync
-            (
-                synchronizationId
-            );
+        CodeSynchronizationEntity synchronization,
 
-
-        var validationResult =
-            await ValidateSynchronizationAsync
-            (
-                synchronization
-            );
-
-
-        if
-        (
-            !validationResult.Success
-        )
-        {
-            return validationResult;
-        }
-
-
-
-        var result =
-            await ExecuteRollbackAsync
-            (
-                synchronization
-            );
-
-
-        if
-        (
-            !result.Success
-        )
-        {
-            return result;
-        }
-
-
-
-        await UpdateRollbackStatusAsync
-        (
-            synchronization
-        );
-
-
-
-        return new SubmenuSynchronizationResultDto
-        {
-            Success =
-                true,
-
-
-            Message =
-                "Submenu rollback completed successfully.",
-
-
-            SynchronizedDate =
-                DateTime.UtcNow,
-
-
-            TotalOperations =
-                result.TotalOperations,
-
-
-            SuccessfulOperations =
-                result.SuccessfulOperations,
-
-
-            FailedOperations =
-                result.FailedOperations
-        };
-    }
-
-
-
-    //===========================================================
-    // Execute Rollback
-    //===========================================================
-
-    private async Task<SubmenuSynchronizationResultDto>
-    ExecuteRollbackAsync
-    (
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        if
-        (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Frontend",
-                    StringComparison.OrdinalIgnoreCase
-                )
-        )
-        {
-            return await _frontendSynchronizationEngine
-                .RollbackAsync
-                (
-                    synchronization
-                );
-        }
-
-
-
-        if
-        (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Backend",
-                    StringComparison.OrdinalIgnoreCase
-                )
-        )
-        {
-            return await _backendSynchronizationEngine
-                .RollbackAsync
-                (
-                    synchronization
-                );
-        }
-
-
-
-        return new SubmenuSynchronizationResultDto
-        {
-            Success =
-                false,
-
-
-            Message =
-                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
-        };
-    }
-
-
-
-    //===========================================================
-    // Update Rollback Status
-    //===========================================================
-
-    private async Task UpdateRollbackStatusAsync
-    (
-        SubmenuSynchronizationDto synchronization
+        string resultMessage
     )
     {
         var entity =
-            await _context.SubmenuSynchronizations
+            await _context.CodeSynchronizations
 
                 .FirstOrDefaultAsync
                 (
@@ -1212,14 +1191,71 @@ public class SubmenuSynchronizationEngine
         {
             throw new InvalidOperationException
             (
-                "Submenu synchronization configuration was not found."
+                "Code synchronization record was not found."
             );
         }
 
 
+        entity.Status =
+            "Failed";
+
+
+        entity.LastSynchronizationResult =
+            resultMessage;
+
+
+        entity.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        entity.ModifiedBy =
+            1;
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+
+    //===========================================================
+    // Update Rollback Status
+    //===========================================================
+
+    private async Task UpdateRollbackStatusAsync
+    (
+        CodeSynchronizationEntity synchronization
+    )
+    {
+        var entity =
+            await _context.CodeSynchronizations
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                    x.Id ==
+                    synchronization.Id
+
+                    &&
+
+                    !x.IsDeleted
+                );
+
+
+        if
+        (
+            entity == null
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Code synchronization record was not found."
+            );
+        }
+
 
         entity.Status =
-            "Pending";
+            "Ready";
 
 
         entity.LastSynchronizedDate =
@@ -1236,7 +1272,6 @@ public class SubmenuSynchronizationEngine
 
         entity.ModifiedBy =
             1;
-
 
 
         await _context.SaveChangesAsync();

@@ -30,32 +30,6 @@ export const settingsRoutes:
 
         pathMatch:'full'
     },
-    // AUTO-BEGIN : MNU-005-001
-
-    //===========================================================
-    // General Settings
-    //===========================================================
-
-    {
-        path:'general-settings',
-
-        data:
-        {
-            breadcrumb:'General Settings'
-        },
-
-        loadChildren:() =>
-            import(
-                '../general-settings/routes/general-settings.routes'
-            )
-            .then(
-                m =>
-                    m.mnu005001Routes
-            )
-    },
-
-    // AUTO-END : MNU-005-001
-
     // AUTO-BEGIN : MNU-005-002
 
     //===========================================================
@@ -81,5 +55,31 @@ export const settingsRoutes:
     },
 
     // AUTO-END : MNU-005-002
+
+    // AUTO-BEGIN : MNU-005-001
+
+    //===========================================================
+    // General Settings
+    //===========================================================
+
+    {
+        path:'general-settings',
+
+        data:
+        {
+            breadcrumb:'General Settings'
+        },
+
+        loadChildren:() =>
+            import(
+                '../general-settings/routes/general-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu005001Routes
+            )
+    },
+
+    // AUTO-END : MNU-005-001
 
 ];

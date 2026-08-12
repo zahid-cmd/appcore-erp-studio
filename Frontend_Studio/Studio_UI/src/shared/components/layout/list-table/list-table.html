@@ -1,6 +1,9 @@
 <div class="list-table">
 
-    <!-- HEADER -->
+    <!-- =========================================================
+        HEADER
+    ========================================================= -->
+
     <div class="list-table-header">
 
         <table class="list-table-grid">
@@ -11,18 +14,26 @@
 
                     <th
                         *ngFor="let column of columns"
+
                         [style.width]="column.width"
+
                         [class.left]="column.align==='left'"
+
                         [class.center]="column.align==='center'"
+
                         [class.right]="column.align==='right'"
+
                         [class.sortable]="
                             column.type!=='serial' &&
                             column.type!=='actions' &&
                             column.type!=='operation'
                         "
+
                         (click)="sort(column)"
                     >
+
                         {{ column.header }}
+
                     </th>
 
                 </tr>
@@ -34,11 +45,17 @@
     </div>
 
 
-    <!-- BODY -->
+    <!-- =========================================================
+        BODY
+    ========================================================= -->
+
     <div class="list-table-body">
 
 
-        <!-- LOADING -->
+        <!-- =====================================================
+            LOADING
+        ====================================================== -->
+
         <div
             *ngIf="loading"
             class="table-state">
@@ -50,9 +67,16 @@
         </div>
 
 
-        <!-- EMPTY -->
+        <!-- =====================================================
+            EMPTY
+        ====================================================== -->
+
         <div
-            *ngIf="!loading && !error && rows.length===0"
+            *ngIf="
+                !loading &&
+                !error &&
+                rows.length===0
+            "
             class="table-state">
 
             <app-empty-state
@@ -65,9 +89,15 @@
         </div>
 
 
-        <!-- ERROR -->
+        <!-- =====================================================
+            ERROR
+        ====================================================== -->
+
         <div
-            *ngIf="!loading && error"
+            *ngIf="
+                !loading &&
+                error
+            "
             class="table-state">
 
             <app-empty-state
@@ -80,9 +110,16 @@
         </div>
 
 
-        <!-- TABLE -->
+        <!-- =====================================================
+            TABLE
+        ====================================================== -->
+
         <table
-            *ngIf="!loading && !error && rows.length>0"
+            *ngIf="
+                !loading &&
+                !error &&
+                rows.length>0
+            "
             class="list-table-grid">
 
             <tbody>
@@ -93,100 +130,323 @@
                         let i=index;
                         trackBy:trackRow
                     "
+
                     class="list-table-row">
+
 
                     <td
                         *ngFor="let column of columns"
+
                         [style.width]="column.width"
+
                         [class.left]="column.align==='left'"
+
                         [class.center]="column.align==='center'"
+
                         [class.right]="column.align==='right'">
 
 
-                        <!-- SERIAL -->
-                        <ng-container *ngIf="column.type==='serial'">
+                        <!-- =================================================
+                            SERIAL
+                        ================================================== -->
+
+                        <ng-container
+                            *ngIf="
+                                column.type==='serial'
+                            ">
 
                             {{ getSerial(i) }}
 
                         </ng-container>
 
 
-                        <!-- STATUS -->
-                        <ng-container *ngIf="column.type==='status'">
+                        <!-- =================================================
+                            STATUS
+                        ================================================== -->
+
+                        <ng-container
+                            *ngIf="
+                                column.type==='status'
+                            ">
 
                             <span
                                 class="status"
-                                [ngClass]="getStatusClass(row,column)">
 
-                                {{ getStatusValue(row,column) }}
+                                [ngClass]="
+                                    getStatusClass(
+                                        row,
+                                        column
+                                    )
+                                ">
+
+                                {{
+                                    getStatusValue(
+                                        row,
+                                        column
+                                    )
+                                }}
 
                             </span>
 
                         </ng-container>
 
 
-                        <!-- BOOLEAN -->
-                        <ng-container *ngIf="column.type==='boolean'">
+                        <!-- =================================================
+                            BOOLEAN
+                        ================================================== -->
+
+                        <ng-container
+                            *ngIf="
+                                column.type==='boolean'
+                            ">
 
                             <span
                                 class="status"
-                                [class.active]="getBooleanValue(row,column)"
-                                [class.inactive]="!getBooleanValue(row,column)">
 
-                                {{ getBooleanLabel(getBooleanValue(row,column)) }}
+                                [class.active]="
+                                    getBooleanValue(
+                                        row,
+                                        column
+                                    )
+                                "
+
+                                [class.inactive]="
+                                    !getBooleanValue(
+                                        row,
+                                        column
+                                    )
+                                ">
+
+                                {{
+                                    getBooleanLabel(
+                                        getBooleanValue(
+                                            row,
+                                            column
+                                        )
+                                    )
+                                }}
 
                             </span>
 
                         </ng-container>
 
-                        <!-- OPERATION -->
-                        <ng-container *ngIf="column.type==='operation'">
 
-                            <button
-                                type="button"
-                                class="action-btn sync"
-                                (click)="operation.emit(row); $event.stopPropagation()">
+                        <!-- =================================================
+                            OPERATION
+                        ================================================== -->
 
-                                <i class="fas fa-arrows-rotate"></i>
+                        <ng-container
+                            *ngIf="
+                                column.type==='operation'
+                            ">
 
-                            </button>
+
+                            <!-- =============================================
+                                CODE SYNCHRONIZATION
+                            ============================================== -->
+
+                            <ng-container
+                                *ngIf="
+                                    column.field==='codeOperation';
+                                    else standardOperation
+                                ">
+
+                                <button
+                                    type="button"
+
+                                    class="action-btn"
+
+                                    [class.sync]="
+                                        row.status?.toLowerCase()
+                                        !==
+                                        'synchronized'
+                                    "
+
+                                    [class.rollback]="
+                                        row.status?.toLowerCase()
+                                        ===
+                                        'synchronized'
+                                    "
+
+                                    [title]="
+                                        row.status?.toLowerCase()
+                                        ===
+                                        'synchronized'
+                                            ? 'Rollback'
+                                            : 'Synchronize'
+                                    "
+
+                                    (click)="
+                                        operation.emit(row);
+                                        $event.stopPropagation()
+                                    ">
+
+
+                                    <!-- =====================================
+                                        ROLLBACK
+                                    ====================================== -->
+
+                                    <i
+                                        *ngIf="
+                                            row.status?.toLowerCase()
+                                            ===
+                                            'synchronized'
+                                        "
+
+                                        class="fas fa-rotate-left">
+
+                                    </i>
+
+
+                                    <!-- =====================================
+                                        SYNCHRONIZE
+                                    ====================================== -->
+
+                                    <i
+                                        *ngIf="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                        "
+
+                                        class="fas fa-arrows-rotate">
+
+                                    </i>
+
+                                </button>
+
+                            </ng-container>
+
+
+                            <!-- =============================================
+                                STANDARD OPERATION
+                            ============================================== -->
+
+                            <ng-template
+                                #standardOperation>
+
+                                <button
+                                    type="button"
+
+                                    class="action-btn sync"
+
+                                    title="Synchronize"
+
+                                    (click)="
+                                        operation.emit(row);
+                                        $event.stopPropagation()
+                                    ">
+
+                                    <i
+                                        class="fas fa-arrows-rotate">
+
+                                    </i>
+
+                                </button>
+
+                            </ng-template>
 
                         </ng-container>
-                        
-                        <!-- ACTIONS -->
-                        <ng-container *ngIf="column.type==='actions'">
+
+
+                        <!-- =================================================
+                            ACTIONS
+                        ================================================== -->
+
+                        <ng-container
+                            *ngIf="
+                                column.type==='actions'
+                            ">
 
                             <div class="action-buttons">
 
+
+                                <!-- =========================================
+                                    VIEW
+                                ========================================== -->
+
                                 <button
-                                    *ngIf="actions.view"
+                                    *ngIf="
+                                        actions.view
+                                    "
+
                                     type="button"
+
                                     class="action-btn view"
-                                    (click)="onViewClick(row,$event)">
 
-                                    <i class="fas fa-eye"></i>
+                                    title="View"
+
+                                    (click)="
+                                        onViewClick(
+                                            row,
+                                            $event
+                                        )
+                                    ">
+
+                                    <i
+                                        class="fas fa-eye">
+
+                                    </i>
 
                                 </button>
 
 
+                                <!-- =========================================
+                                    EDIT
+                                ========================================== -->
+
                                 <button
-                                    *ngIf="actions.edit"
+                                    *ngIf="
+                                        actions.edit
+                                    "
+
                                     type="button"
+
                                     class="action-btn edit"
-                                    (click)="onEditClick(row,$event)">
 
-                                    <i class="fas fa-pen"></i>
+                                    title="Edit"
+
+                                    (click)="
+                                        onEditClick(
+                                            row,
+                                            $event
+                                        )
+                                    ">
+
+                                    <i
+                                        class="fas fa-pen">
+
+                                    </i>
 
                                 </button>
 
 
-                                <button
-                                    *ngIf="actions.delete"
-                                    type="button"
-                                    class="action-btn delete"
-                                    (click)="onDeleteClick(row,$event)">
+                                <!-- =========================================
+                                    DELETE
+                                ========================================== -->
 
-                                    <i class="fas fa-trash"></i>
+                                <button
+                                    *ngIf="
+                                        actions.delete
+                                    "
+
+                                    type="button"
+
+                                    class="action-btn delete"
+
+                                    title="Delete"
+
+                                    (click)="
+                                        onDeleteClick(
+                                            row,
+                                            $event
+                                        )
+                                    ">
+
+                                    <i
+                                        class="fas fa-trash">
+
+                                    </i>
 
                                 </button>
 
@@ -195,14 +455,22 @@
                         </ng-container>
 
 
-                        <!-- TEXT -->
+                        <!-- =================================================
+                            TEXT
+                        ================================================== -->
+
                         <ng-container
                             *ngIf="
                                 !column.type ||
                                 column.type==='text'
                             ">
 
-                            {{ getCellValue(row,column) }}
+                            {{
+                                getCellValue(
+                                    row,
+                                    column
+                                )
+                            }}
 
                         </ng-container>
 

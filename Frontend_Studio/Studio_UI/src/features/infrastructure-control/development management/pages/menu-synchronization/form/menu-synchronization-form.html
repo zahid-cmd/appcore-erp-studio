@@ -106,7 +106,9 @@
             class="module-toolbar-right">
 
 
-            <!-- MODULE -->
+            <!-- =================================================
+                 MODULE
+            ================================================== -->
 
             <app-search-dropdown
 
@@ -127,7 +129,9 @@
             </app-search-dropdown>
 
 
-            <!-- MENU -->
+            <!-- =================================================
+                 MENU
+            ================================================== -->
 
             <app-search-dropdown
 
@@ -152,7 +156,9 @@
             </app-search-dropdown>
 
 
-            <!-- ANALYZE -->
+            <!-- =================================================
+                 ANALYZE
+            ================================================== -->
 
             <button
 
@@ -171,7 +177,9 @@
             </button>
 
 
-            <!-- RESET -->
+            <!-- =================================================
+                 RESET
+            ================================================== -->
 
             <button
 
@@ -467,151 +475,6 @@
 <app-confirm-dialog>
 
 </app-confirm-dialog>
-
-
-<!-- =========================================================
-     MENU ROLLBACK BLOCKED DIALOG
-========================================================= -->
-
-@if (rollbackBlockedDialogOpen)
-{
-
-    <div class="menu-rollback-blocked-overlay">
-
-
-        <div class="menu-rollback-blocked-dialog">
-
-
-            <!-- =================================================
-                 HEADER
-            ================================================== -->
-
-            <div class="menu-rollback-blocked-header">
-
-
-                <div class="menu-rollback-blocked-icon">
-
-                    <i class="fas fa-triangle-exclamation"></i>
-
-                </div>
-
-
-                <div>
-
-                    <div class="menu-rollback-blocked-title">
-
-                        Rollback Blocked
-
-                    </div>
-
-
-                    <div class="menu-rollback-blocked-subtitle">
-
-                        System Confirmation Required
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 BODY
-            ================================================== -->
-
-            <div class="menu-rollback-blocked-body">
-
-
-                <div class="menu-rollback-blocked-card">
-
-
-                    <div class="menu-rollback-blocked-card-icon">
-
-                        <i class="fas fa-sitemap"></i>
-
-                    </div>
-
-
-                    <div class="menu-rollback-blocked-card-content">
-
-
-                        <div class="menu-rollback-blocked-card-title">
-
-                            Dependent Submenu Data Found
-
-                        </div>
-
-
-                        <div class="menu-rollback-blocked-card-message">
-
-                            {{
-                                rollbackValidationMessage
-                            }}
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="menu-rollback-blocked-warning">
-
-                    <i class="fas fa-shield-halved"></i>
-
-                    Menu rollback cannot continue while dependent
-                    Submenu data exists.
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 FOOTER
-            ================================================== -->
-
-            <div class="menu-rollback-blocked-footer">
-
-
-                <button
-
-                    type="button"
-
-                    class="btn-cancel"
-
-                    (click)="closeRollbackBlockedDialog()">
-
-                    <i class="fas fa-xmark"></i>
-
-                    Close
-
-                </button>
-
-
-                <button
-
-                    type="button"
-
-                    class="btn-confirm btn-danger"
-
-                    disabled>
-
-                    <i class="fas fa-ban"></i>
-
-                    Rollback Blocked
-
-                </button>
-
-
-            </div>
-
-        </div>
-
-    </div>
-
-}
 
 
 <!-- =========================================================

@@ -420,7 +420,7 @@ implements OnInit
 
             type:'status',
 
-            width:'120px',
+            width:'150px',
 
             align:'center'
         },
@@ -1097,27 +1097,14 @@ implements OnInit
         void
     {
         //=======================================================
-        // Prevent Deleting Synchronized Module
-        //=======================================================
-
-        if
-        (
-            item.status?.toLowerCase() === 'synchronized'
-        )
-        {
-            this.toast.warning
-            (
-                'Delete Not Allowed',
-
-                'This module is synchronized. Roll back the synchronization before deleting the module.'
-            );
-
-            return;
-        }
-
-
-        //=======================================================
         // Confirm Delete
+        //=======================================================
+        //
+        // Dependency validation is handled by the backend.
+        //
+        // Any active dependent Menu Synchronization record,
+        // regardless of its status, blocks deletion.
+        //
         //=======================================================
 
         this.confirmDialog.open
@@ -1155,11 +1142,75 @@ implements OnInit
                                 error
                             );
 
+
+                            //===========================================
+                            // Extract Backend Message
+                            //===========================================
+
+                            const backendMessage =
+                                typeof error?.error === 'string'
+
+                                    ? error.error
+
+                                    : error?.error?.message
+                                        ??
+                                        error?.message
+                                        ??
+                                        'Failed to delete module synchronization.';
+
+
+                            //===========================================
+                            // Dependency Delete Blocked
+                            //===========================================
+                            //
+                            // This is an expected business-rule result,
+                            // not a system error.
+                            //
+                            // The backend is authoritative and checks
+                            // for any active dependent Menu Synchronization
+                            // regardless of its status.
+                            //
+                            //===========================================
+
+                            if
+                            (
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('cannot be deleted')
+
+                                ||
+
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('dependent menu')
+
+                                ||
+
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('menu synchronization')
+                            )
+                            {
+                                this.toast.warning
+                                (
+                                    'Delete Blocked',
+
+                                    backendMessage
+                                );
+
+                                return;
+                            }
+
+
+                            //===========================================
+                            // Genuine Delete Failure
+                            //===========================================
+
                             this.toast.error
                             (
                                 'Delete Failed',
 
-                                'Failed to delete module synchronization.'
+                                backendMessage
                             );
                         }
                     });

@@ -411,6 +411,17 @@ implements OnInit
 
 
         {
+            header:'Module',
+
+            field:'moduleName',
+
+            width:'300px',
+
+            align:'left'
+        },
+
+
+        {
             header:'Menu',
 
             field:'menuName',
@@ -442,17 +453,6 @@ implements OnInit
 
 
         {
-            header:'Result',
-
-            field:'lastSynchronizationResult',
-
-            width:'450px',
-
-            align:'center'
-        },
-
-
-        {
             header:'Operation',
 
             field:'operation',
@@ -472,7 +472,7 @@ implements OnInit
 
             type:'status',
 
-            width:'120px',
+            width:'150px',
 
             align:'center'
         },
@@ -732,6 +732,7 @@ implements OnInit
             });
     }
 
+
     //===========================================================
     // Module Changed
     //===========================================================
@@ -762,6 +763,7 @@ implements OnInit
 
         this.applyFilters();
     }
+
 
     //===========================================================
     // Status Changed
@@ -1390,28 +1392,14 @@ implements OnInit
         void
     {
         //=======================================================
-        // Prevent Deleting Synchronized Menu
-        //=======================================================
-
-        if
-        (
-            item.status?.toLowerCase() === 'synchronized'
-        )
-        {
-            this.toast.warning
-            (
-                'Delete Not Allowed',
-
-                'This menu is synchronized. Roll back the synchronization before deleting the menu.'
-            );
-
-
-            return;
-        }
-
-
-        //=======================================================
         // Confirm Delete
+        //=======================================================
+        //
+        // Dependency validation is handled by the backend.
+        //
+        // Any active dependent Submenu Synchronization blocks
+        // deletion regardless of its status.
+        //
         //=======================================================
 
         this.confirmDialog.open
@@ -1451,11 +1439,68 @@ implements OnInit
                             );
 
 
+                            //===========================================
+                            // Dependency Delete Blocked
+                            //===========================================
+
+                            const backendMessage =
+                                typeof error?.error === 'string'
+
+                                    ? error.error
+
+                                    : error?.error?.message
+                                        ??
+                                        error?.message
+                                        ??
+                                        'Failed to delete menu synchronization.';
+
+
+                            if
+                            (
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('cannot be deleted')
+
+                                ||
+
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('dependent submenu')
+
+                                ||
+
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('delete is blocked')
+
+                                ||
+
+                                backendMessage
+                                    .toLowerCase()
+                                    .includes('deletion is blocked')
+                            )
+                            {
+                                this.toast.warning
+                                (
+                                    'Delete Blocked',
+
+                                    backendMessage
+                                );
+
+
+                                return;
+                            }
+
+
+                            //===========================================
+                            // Genuine Delete Failure
+                            //===========================================
+
                             this.toast.error
                             (
                                 'Delete Failed',
 
-                                'Failed to delete menu synchronization.'
+                                backendMessage
                             );
                         }
                     });

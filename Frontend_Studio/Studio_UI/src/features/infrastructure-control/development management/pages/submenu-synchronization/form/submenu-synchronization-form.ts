@@ -139,6 +139,12 @@ from '../../../../navigation-management/services/menu.service';
 
 import
 {
+    MenuSynchronizationService
+}
+from '../../../services/menu-synchronization.service';
+
+import
+{
     NavigationSubmenuService
 }
 from '../../../../navigation-management/services/submenu.service';
@@ -154,6 +160,12 @@ import
     ProgressDialogService
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
+    ModuleSynchronizationService
+}
+from '../../../services/module-synchronization.service';
 
 
 //===============================================================
@@ -241,6 +253,9 @@ implements OnInit
     private readonly menuService =
         inject(NavigationMenuService);
 
+    private readonly menuSynchronizationService =
+        inject(MenuSynchronizationService);
+
     private readonly submenuService =
         inject(NavigationSubmenuService);
 
@@ -250,6 +265,8 @@ implements OnInit
     private readonly moduleService =
         inject(ModuleService);
 
+    private readonly moduleSynchronizationService =
+        inject(ModuleSynchronizationService);
 
     //===========================================================
     // State
@@ -1043,7 +1060,6 @@ implements OnInit
             });
     }
 
-
     //===========================================================
     // Load Modules
     //===========================================================
@@ -1051,8 +1067,28 @@ implements OnInit
     private loadModules():
         void
     {
+        //===========================================================
+        // Synchronization Type
+        //===========================================================
+        //
+        // Frontend and Backend are completely independent.
+        //
+        //===========================================================
+
+        const synchronizationType =
+            this.selectedTab === 'backend'
+                ? 'Backend'
+                : 'Frontend';
+
+
+        //===========================================================
+        // Load Navigation Modules
+        //===========================================================
+
         this.moduleService
+
             .getAll()
+
             .subscribe(
             {
                 next:
@@ -1060,17 +1096,180 @@ implements OnInit
                         modules:NavigationModule[]
                     ) =>
                     {
-                        this.modules =
-                            modules;
+                        //=======================================================
+                        // Load Existing Module Synchronizations
+                        //=======================================================
+                        //
+                        // A module is available here only when it already
+                        // exists in INF_ModuleSynchronization for the
+                        // selected Frontend / Backend synchronization type.
+                        //
+                        // Status is intentionally NOT checked.
+                        //
+                        // Ready
+                        // Pending
+                        // Synchronized
+                        // Any other status
+                        //
+                        // All count as an existing synchronization record.
+                        //
+                        //=======================================================
+
+                        this.moduleSynchronizationService
+
+                            .getAll(
+                                synchronizationType
+                            )
+
+                            .subscribe(
+                            {
+                                next:
+                                    (
+                                        synchronizations
+                                    ) =>
+                                    {
+                                        //===========================================
+                                        // Existing Module IDs
+                                        //===========================================
+
+                                        const existingModuleIds =
+                                            new Set<number>
+                                            (
+                                                synchronizations
+
+                                                    .map
+                                                    (
+                                                        synchronization =>
+                                                            synchronization.moduleId
+                                                    )
+                                            );
+
+
+                                        //===========================================
+                                        // Filter Module Dropdown
+                                        //===========================================
+                                        //
+                                        // Only modules registered in the
+                                        // Module Synchronization table for
+                                        // this synchronization type are shown.
+                                        //
+                                        //===========================================
+
+                                        this.modules =
+                                            modules.filter
+                                            (
+                                                module =>
+                                                    existingModuleIds.has(
+                                                        module.id
+                                                    )
+                                            );
+
+
+                                        //===========================================
+                                        // Clear Invalid Current Module
+                                        //===========================================
+                                        //
+                                        // If the current module is no longer
+                                        // registered for this synchronization
+                                        // type, it must not remain available
+                                        // in the dropdown.
+                                        //
+                                        //===========================================
+
+                                        if
+                                        (
+                                            this.selectedModuleId > 0
+                                            &&
+                                            !existingModuleIds.has(
+                                                this.selectedModuleId
+                                            )
+                                        )
+                                        {
+                                            this.selectedModuleId =
+                                                0;
+
+                                            this.synchronization.moduleId =
+                                                0;
+
+                                            this.synchronization.moduleCode =
+                                                '';
+
+                                            this.synchronization.moduleName =
+                                                '';
+
+                                            this.selectedMenuId =
+                                                0;
+
+                                            this.synchronization.menuId =
+                                                0;
+
+                                            this.synchronization.menuCode =
+                                                '';
+
+                                            this.synchronization.menuName =
+                                                '';
+
+                                            this.selectedSubmenuId =
+                                                0;
+
+                                            this.synchronization.submenuId =
+                                                0;
+
+                                            this.synchronization.submenuCode =
+                                                '';
+
+                                            this.synchronization.submenuName =
+                                                '';
+
+                                            this.menus =
+                                                [];
+
+                                            this.submenus =
+                                                [];
+                                        }
+
+
+                                        //===========================================
+                                        // Refresh
+                                        //===========================================
+
+                                        this.cdr.detectChanges();
+                                    },
+
+
+                                error:
+                                    () =>
+                                    {
+                                        this.modules =
+                                            [];
+
+                                        this.toast.error
+                                        (
+                                            'Error',
+
+                                            'Failed to load module synchronization records.'
+                                        );
+
+                                        this.cdr.detectChanges();
+                                    }
+                            });
                     },
+
 
                 error:
                     () =>
                     {
-                        this.toast.error(
+                        this.modules =
+                            [];
+
+                        this.toast.error
+                        (
                             'Error',
+
                             'Failed to load modules.'
                         );
+
+                        this.cdr.detectChanges();
                     }
             });
     }
@@ -1089,10 +1288,32 @@ implements OnInit
         this.menus =
             [];
 
-        if (moduleId <= 0)
+        if
+        (
+            moduleId <= 0
+        )
         {
             return;
         }
+
+
+        //===========================================================
+        // Synchronization Type
+        //===========================================================
+        //
+        // Frontend and Backend are completely independent.
+        //
+        //===========================================================
+
+        const synchronizationType =
+            this.selectedTab === 'backend'
+                ? 'Backend'
+                : 'Frontend';
+
+
+        //===========================================================
+        // Load Navigation Menus For Selected Module
+        //===========================================================
 
         this.menuService
             .getByModule(
@@ -1105,31 +1326,158 @@ implements OnInit
                         menus
                     ) =>
                     {
-                        this.menus =
-                            [
-                                ...menus
-                            ];
+                        //=======================================================
+                        // Load Existing Menu Synchronizations
+                        //=======================================================
+                        //
+                        // A menu is available in Submenu Synchronization
+                        // only when it already exists in the Menu
+                        // Synchronization table for the selected
+                        // Frontend / Backend synchronization type.
+                        //
+                        // Status does NOT matter.
+                        //
+                        // Pending
+                        // Ready
+                        // Synchronized
+                        // Any other status
+                        //
+                        // All count as an existing synchronization record.
+                        //
+                        //=======================================================
 
-                        this.cdr.detectChanges();
+                        this.menuSynchronizationService
+                            .getAll(
+                                synchronizationType
+                            )
+                            .subscribe
+                            ({
+                                next:
+                                    (
+                                        synchronizations
+                                    ) =>
+                                    {
+                                        //===========================================
+                                        // Existing Menu IDs
+                                        //===========================================
+
+                                        const existingMenuIds =
+                                            new Set<number>
+                                            (
+                                                synchronizations
+
+                                                    .filter
+                                                    (
+                                                        synchronization =>
+                                                            synchronization.moduleId ===
+                                                            moduleId
+                                                    )
+
+                                                    .map
+                                                    (
+                                                        synchronization =>
+                                                            synchronization.menuId
+                                                    )
+                                            );
+
+
+                                        //===========================================
+                                        // Filter Menu Dropdown
+                                        //===========================================
+                                        //
+                                        // Only menus already saved in the
+                                        // Menu Synchronization table for the
+                                        // selected module and synchronization
+                                        // type are available.
+                                        //
+                                        // The current menu remains available
+                                        // while editing/viewing/synchronizing
+                                        // an existing record.
+                                        //
+                                        //===========================================
+
+                                        this.menus =
+                                            menus.filter
+                                            (
+                                                menu =>
+                                                {
+                                                    if
+                                                    (
+                                                        menu.id ===
+                                                        this.synchronization.menuId
+                                                    )
+                                                    {
+                                                        return true;
+                                                    }
+
+
+                                                    return existingMenuIds.has
+                                                    (
+                                                        menu.id
+                                                    );
+                                                }
+                                            );
+
+
+                                        this.cdr.detectChanges();
+                                    },
+
+
+                                error:
+                                    (
+                                        error
+                                    ) =>
+                                    {
+                                        console.error
+                                        (
+                                            'Menu Synchronization Load Failed',
+
+                                            error
+                                        );
+
+
+                                        this.menus =
+                                            [];
+
+
+                                        this.toast.error
+                                        (
+                                            'Menu Load Failed',
+
+                                            'Unable to load menu synchronization records.'
+                                        );
+
+
+                                        this.cdr.detectChanges();
+                                    }
+                            });
                     },
+
 
                 error:
                     (
                         error
                     ) =>
                     {
-                        console.error(
+                        console.error
+                        (
                             'Menu Load Failed',
+
                             error
                         );
+
 
                         this.menus =
                             [];
 
-                        this.toast.error(
+
+                        this.toast.error
+                        (
                             'Menu Load Failed',
+
                             'Unable to load menus for the selected module.'
                         );
+
 
                         this.cdr.detectChanges();
                     }
@@ -1155,6 +1503,25 @@ implements OnInit
             return;
         }
 
+
+        //===========================================================
+        // Synchronization Type
+        //===========================================================
+        //
+        // Frontend and Backend are completely independent.
+        //
+        //===========================================================
+
+        const synchronizationType =
+            this.selectedTab === 'backend'
+                ? 'Backend'
+                : 'Frontend';
+
+
+        //===========================================================
+        // Load Navigation Submenus For Selected Menu
+        //===========================================================
+
         this.submenuService
             .getByMenu(
                 menuId
@@ -1166,13 +1533,136 @@ implements OnInit
                         submenus
                     ) =>
                     {
-                        this.submenus =
-                            [
-                                ...submenus
-                            ];
+                        //=======================================================
+                        // Load Existing Submenu Synchronizations
+                        //=======================================================
+                        //
+                        // A submenu that already exists in the Submenu
+                        // Synchronization table for this Frontend / Backend
+                        // synchronization type is NOT available for a new
+                        // synchronization.
+                        //
+                        // Status does NOT matter.
+                        //
+                        // Pending
+                        // Ready
+                        // Synchronized
+                        // Failed
+                        // Any other status
+                        //
+                        // All count as an existing synchronization record.
+                        //
+                        // Frontend and Backend are checked independently.
+                        //
+                        //=======================================================
 
-                        this.cdr.detectChanges();
+                        this.submenuSynchronizationService
+                            .getAll(
+                                synchronizationType
+                            )
+                            .subscribe
+                            ({
+                                next:
+                                    (
+                                        synchronizations
+                                    ) =>
+                                    {
+                                        //===========================================
+                                        // Existing Submenu IDs
+                                        //===========================================
+
+                                        const existingSubmenuIds =
+                                            new Set<number>
+                                            (
+                                                synchronizations
+
+                                                    .filter
+                                                    (
+                                                        synchronization =>
+                                                            synchronization.menuId ===
+                                                            menuId
+                                                    )
+
+                                                    .map
+                                                    (
+                                                        synchronization =>
+                                                            synchronization.submenuId
+                                                    )
+                                            );
+
+
+                                        //===========================================
+                                        // Filter Submenu Dropdown
+                                        //===========================================
+                                        //
+                                        // Only submenus that have NOT already been
+                                        // saved in the Submenu Synchronization
+                                        // table for this menu and synchronization
+                                        // type are available for ADD.
+                                        //
+                                        // The current submenu remains available
+                                        // while editing/viewing/synchronizing an
+                                        // existing synchronization record.
+                                        //
+                                        //===========================================
+
+                                        this.submenus =
+                                            submenus.filter
+                                            (
+                                                submenu =>
+                                                {
+                                                    if
+                                                    (
+                                                        submenu.id ===
+                                                        this.synchronization.submenuId
+                                                    )
+                                                    {
+                                                        return true;
+                                                    }
+
+
+                                                    return !existingSubmenuIds.has
+                                                    (
+                                                        submenu.id
+                                                    );
+                                                }
+                                            );
+
+
+                                        this.cdr.detectChanges();
+                                    },
+
+
+                                error:
+                                    (
+                                        error
+                                    ) =>
+                                    {
+                                        console.error
+                                        (
+                                            'Submenu Synchronization Load Failed',
+
+                                            error
+                                        );
+
+
+                                        this.submenus =
+                                            [];
+
+
+                                        this.toast.error
+                                        (
+                                            'Submenu Load Failed',
+
+                                            'Unable to load submenu synchronization records.'
+                                        );
+
+
+                                        this.cdr.detectChanges();
+                                    }
+                            });
                     },
+
 
                 error:
                     (
@@ -1181,21 +1671,27 @@ implements OnInit
                     {
                         console.error(
                             'Submenu Load Failed',
+
                             error
                         );
+
 
                         this.submenus =
                             [];
 
+
                         this.toast.error(
                             'Submenu Load Failed',
+
                             'Unable to load submenus for the selected menu.'
                         );
+
 
                         this.cdr.detectChanges();
                     }
             });
     }
+
 
 
     //===========================================================
@@ -1968,26 +2464,71 @@ implements OnInit
     onRollback():
         void
     {
-        if (this.synchronization.id <= 0)
+        //=======================================================
+        // Synchronization Record Required
+        //=======================================================
+
+        if
+        (
+            this.synchronization.id <= 0
+        )
         {
             return;
         }
 
 
-        this.confirmDialog.open(
+        //=======================================================
+        // Confirmation
+        //=======================================================
+        //
+        // IMPORTANT:
+        //
+        // Submenu rollback is currently unconditional.
+        //
+        // There is NO:
+        //
+        // - dependency validation
+        // - child synchronization validation
+        // - submenu dependency lookup
+        // - confirmation blocking
+        //
+        // Dependent-file rollback rules will be introduced
+        // later when dependent files are actually implemented.
+        //
+        //=======================================================
+
+        this.confirmDialog.open
+        (
             'Rollback Synchronization',
+
             'This will rollback the synchronized submenu. Do you want to continue?',
 
             async () =>
             {
+                //===============================================
+                // Progress Dialog
+                //===============================================
+
                 await this.prepareRollbackAsync();
 
+
+                //===============================================
+                // Execute Rollback
+                //===============================================
+
                 this.submenuSynchronizationService
-                    .rollback(
+
+                    .rollback
+                    (
                         this.synchronization.id
                     )
+
                     .subscribe
                     ({
+                        //=========================================
+                        // Success
+                        //=========================================
+
                         next:
                             () =>
                             {
@@ -1996,21 +2537,30 @@ implements OnInit
                                 this.hasChanges =
                                     false;
 
-                                this.toast.success(
+                                this.toast.success
+                                (
                                     'Rollback',
+
                                     'Submenu synchronization rolled back successfully.'
                                 );
 
                                 this.onBackToList();
                             },
 
+
+                        //=========================================
+                        // Failure
+                        //=========================================
+
                         error:
                             (
                                 error
                             ) =>
                             {
-                                this.onSaveFailed(
+                                this.onSaveFailed
+                                (
                                     error,
+
                                     'Submenu rollback failed.'
                                 );
                             }
@@ -2018,11 +2568,12 @@ implements OnInit
             },
 
             'Rollback',
+
             'Cancel',
+
             'danger'
         );
     }
-
 
     //===========================================================
     // Validate

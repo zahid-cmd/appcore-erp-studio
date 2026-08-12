@@ -504,9 +504,18 @@ public class ModuleSynchronizationEngine
     //
     // Navigation master data does NOT block rollback.
     //
-    // Menu Synchronizations DO block rollback because they are
-    // dependent synchronized development data belonging to the
-    // Module.
+    // Menu Synchronizations DO block rollback only when the
+    // dependent Menu Synchronization has successfully completed
+    // synchronization.
+    //
+    // A saved / Pending Menu Synchronization does NOT block
+    // Module rollback.
+    //
+    // Frontend Module Synchronization is checked only against
+    // Frontend Menu Synchronization.
+    //
+    // Backend Module Synchronization is checked only against
+    // Backend Menu Synchronization.
     //
     //===========================================================
 
@@ -550,13 +559,13 @@ public class ModuleSynchronizationEngine
         // Validate Dependent Menu Synchronizations
         //=======================================================
         //
-        // A Module cannot be rolled back while a dependent
-        // Menu Synchronization is still synchronized.
+        // Only a successfully synchronized Menu belonging to
+        // the same Module AND the same Synchronization Type
+        // blocks Module rollback.
         //
-        // NavigationMenus are master data and do NOT block
-        // Module Synchronization rollback.
+        // Pending / saved Menu configuration does NOT block.
         //
-        // MenuSynchronizations DO block rollback.
+        // Deleted Menu Synchronization does NOT block.
         //
         //=======================================================
 
@@ -568,6 +577,11 @@ public class ModuleSynchronizationEngine
                     x =>
                         x.ModuleId ==
                         synchronization.ModuleId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
 
                         &&
 
@@ -591,7 +605,7 @@ public class ModuleSynchronizationEngine
                     false,
 
                 Message =
-                    $"Rollback blocked. Module '{synchronization.ModuleName}' has dependent Menu Synchronization data. Please rollback all dependent Menu Synchronizations before rolling back the Module."
+                    $"Module Rollback Blocked ! Menu Synchronization Found under this module !"
             };
         }
 
@@ -652,7 +666,10 @@ public class ModuleSynchronizationEngine
         //
         // Even if the frontend bypasses validation or the
         // confirmation dialog, the Module rollback cannot
-        // continue while dependent Menu Synchronizations exist.
+        // continue while a dependent successfully synchronized
+        // Menu exists.
+        //
+        // Pending / saved Menu configuration does NOT block.
         //
         //=======================================================
 

@@ -1208,18 +1208,21 @@ public class ModuleSynchronizationRepository
     // Validate Rollback
     //===========================================================
     //
-    // Module Synchronization rollback is blocked when active
-    // Menu Synchronization data exists for the same module.
+    // Module rollback is blocked ONLY when a dependent Menu
+    // Synchronization has ACTUALLY been synchronized.
     //
-    // Navigation master data itself does NOT block rollback.
+    // Saving or analyzing a Menu Synchronization does NOT
+    // block Module rollback.
     //
     // Dependency:
     //
     // Module Synchronization
     //        ↓
-    //      ModuleId
+    // ModuleId
     //        ↓
     // Menu Synchronization
+    //        ↓
+    // Status = Synchronized
     //
     //===========================================================
 
@@ -1265,20 +1268,25 @@ public class ModuleSynchronizationRepository
 
 
         //=======================================================
-        // Check Menu Synchronization Dependency
+        // Check Successfully Synchronized Menu Dependency
         //=======================================================
         //
-        // An active Menu Synchronization record using the same
-        // ModuleId means the Module Synchronization is currently
-        // a parent configuration for dependent synchronization
-        // data.
+        // ONLY Menu Synchronization records with:
         //
-        // Therefore module rollback must be blocked until the
-        // dependent Menu Synchronization is rolled back first.
+        //     Status = "Synchronized"
+        //
+        // block Module rollback.
+        //
+        // Pending / Ready / Failed records do NOT block rollback.
+        //
+        // The dependency must also belong to:
+        //
+        //     Same Module
+        //     Same Synchronization Type
         //
         //=======================================================
 
-        var hasMenuSynchronization =
+        var hasSynchronizedMenu =
             await _context.MenuSynchronizations
 
                 .AsNoTracking()
@@ -1293,6 +1301,16 @@ public class ModuleSynchronizationRepository
 
                         x.ModuleId ==
                         synchronization.ModuleId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+
+                        &&
+
+                        x.Status ==
+                        "Synchronized"
                 );
 
 
@@ -1302,7 +1320,7 @@ public class ModuleSynchronizationRepository
 
         if
         (
-            hasMenuSynchronization
+            hasSynchronizedMenu
         )
         {
             return new ModuleSynchronizationRollbackValidationDto
@@ -1311,7 +1329,7 @@ public class ModuleSynchronizationRepository
                     false,
 
                 Message =
-                    "Module rollback is blocked because dependent Menu Synchronization data exists for this module. Roll back the dependent Menu Synchronization first."
+                    "Module rollback is blocked because a dependent Menu Synchronization has already been successfully synchronized. Roll back the dependent Menu Synchronization first."
             };
         }
 
@@ -1326,7 +1344,7 @@ public class ModuleSynchronizationRepository
                 true,
 
             Message =
-                "Module rollback validation completed successfully."
+                "Module rollback is allowed."
         };
     }
 
@@ -1335,12 +1353,65 @@ public class ModuleSynchronizationRepository
     //===========================================================
     // Rollback
     //===========================================================
+    //
+    // IMPORTANT:
+    //
+    // Rollback validation is enforced HERE before the engine is
+    // called.
+    //
+    // This prevents callers from bypassing the business rule by
+    // directly invoking the repository rollback operation.
+    //
+    //===========================================================
 
     public async Task<bool> RollbackAsync
     (
         long id
     )
     {
+        //=======================================================
+        // Validate Rollback
+        //=======================================================
+
+        var validation =
+            await ValidateRollbackAsync
+            (
+                id
+            );
+
+
+        //=======================================================
+        // Synchronization Not Found
+        //=======================================================
+
+        if
+        (
+            validation == null
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Module synchronization configuration was not found."
+            );
+        }
+
+
+        //=======================================================
+        // Rollback Blocked
+        //=======================================================
+
+        if
+        (
+            !validation.CanRollback
+        )
+        {
+            throw new InvalidOperationException
+            (
+                validation.Message
+            );
+        }
+
+
         //=======================================================
         // Execute Rollback
         //=======================================================
@@ -1998,6 +2069,56 @@ public class ModuleSynchronizationRepository
         )
         {
             return false;
+        }
+
+
+        //=======================================================
+        // Validate Dependent Menu Synchronizations
+        //=======================================================
+        //
+        // A Module Synchronization cannot be deleted while
+        // any active dependent Menu Synchronization exists.
+        //
+        // The dependency is checked regardless of the Menu
+        // Synchronization status.
+        //
+        // Frontend and Backend remain independent because the
+        // SynchronizationType must match.
+        //
+        // Deleted Menu Synchronizations do not block deletion.
+        //
+        //=======================================================
+
+        var hasDependentMenuSynchronizations =
+            await _context.MenuSynchronizations
+
+                .AnyAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.ModuleId ==
+                        synchronization.ModuleId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+                );
+
+
+        if
+        (
+            hasDependentMenuSynchronizations
+        )
+        {
+            throw new InvalidOperationException
+            (
+                $"Module '{synchronization.ModuleName}' cannot be deleted because dependent Menu Synchronization data exists. Delete the dependent Menu Synchronization first."
+            );
         }
 
 

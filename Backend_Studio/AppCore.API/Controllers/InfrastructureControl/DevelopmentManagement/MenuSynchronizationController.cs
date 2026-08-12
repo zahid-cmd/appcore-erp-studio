@@ -24,7 +24,11 @@ namespace AppCore.Api.Controllers.InfrastructureControl.DevelopmentManagement;
 //===============================================================
 
 [ApiController]
-[Route("api/infrastructure-control/development-management/menu-synchronization")]
+
+[Route(
+    "api/infrastructure-control/development-management/menu-synchronization"
+)]
+
 public class MenuSynchronizationController : ControllerBase
 {
 
@@ -67,6 +71,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("defaults")]
+
     public async Task<ActionResult<MenuSynchronizationDefaultsDto>> GetDefaults
     (
         [FromQuery] string type
@@ -88,6 +93,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("analyze/{moduleId:long}/{menuId:long}")]
+
     public async Task<ActionResult<MenuSynchronizationDto>> Analyze
     (
         long moduleId,
@@ -128,30 +134,62 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
     // Sync
     //===========================================================
+    //
+    // Menu synchronization is allowed only when the parent
+    // Module Synchronization has already been successfully
+    // synchronized.
+    //
+    // The repository is responsible for applying that rule.
+    //
+    // If the repository rejects the operation because the
+    // parent Module is not synchronized, return HTTP 400 so
+    // the frontend can display the business-rule message.
+    //
+    //===========================================================
 
     [HttpPost("{id:long}/sync")]
+
     public async Task<ActionResult> Sync
     (
         long id
     )
     {
-        var synchronized =
-            await _repository.SynchronizeAsync
-            (
-                id
-            );
-
-
-        if
-        (
-            !synchronized
-        )
+        try
         {
-            return NotFound();
+            var synchronized =
+                await _repository.SynchronizeAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !synchronized
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
         }
 
 
-        return NoContent();
+        //=======================================================
+        // Parent Module Synchronization Dependency
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
     }
 
 
@@ -167,17 +205,14 @@ public class MenuSynchronizationController : ControllerBase
     // The frontend calls this endpoint before displaying the
     // rollback confirmation dialog.
     //
-    // If dependent Submenu data exists:
-    //
-    //     CanRollback = false
-    //
-    // The confirmation dialog can therefore remain open while
-    // the Rollback button is disabled and the dependency warning
-    // is displayed.
+    // The repository remains responsible for determining
+    // whether a dependent Submenu Synchronization has actually
+    // been synchronized.
     //
     //===========================================================
 
     [HttpGet("{id:long}/rollback-validation")]
+
     public async Task<ActionResult<MenuSynchronizationRollbackValidationDto>>
         ValidateRollback
     (
@@ -211,30 +246,61 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
     // Rollback
     //===========================================================
+    //
+    // This endpoint performs the actual rollback.
+    //
+    // The repository remains the authoritative protection
+    // during actual rollback execution.
+    //
+    // If dependent synchronization data prevents rollback,
+    // return HTTP 400 instead of allowing an unhandled
+    // exception to become HTTP 500.
+    //
+    //===========================================================
 
     [HttpPost("{id:long}/rollback")]
+
     public async Task<ActionResult> Rollback
     (
         long id
     )
     {
-        var rolledBack =
-            await _repository.RollbackAsync
-            (
-                id
-            );
-
-
-        if
-        (
-            !rolledBack
-        )
+        try
         {
-            return NotFound();
+            var rolledBack =
+                await _repository.RollbackAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !rolledBack
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
         }
 
 
-        return NoContent();
+        //=======================================================
+        // Rollback Dependency Exception
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
     }
 
 
@@ -244,6 +310,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet]
+
     public async Task<ActionResult<List<MenuSynchronizationDto>>> GetAll
     (
         [FromQuery] string type
@@ -265,6 +332,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("{id:long}")]
+
     public async Task<ActionResult<MenuSynchronizationDto>> GetById
     (
         long id
@@ -299,6 +367,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpPost]
+
     public async Task<ActionResult<long>> Create
     (
         CreateMenuSynchronizationDto dto
@@ -324,6 +393,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpPut("{id:long}")]
+
     public async Task<ActionResult> Update
     (
         long id,
@@ -366,28 +436,56 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpDelete("{id:long}")]
+
     public async Task<ActionResult> Delete
     (
         long id
     )
     {
-        var deleted =
-            await _repository.DeleteAsync
-            (
-                id
-            );
-
-
-        if
-        (
-            !deleted
-        )
+        try
         {
-            return NotFound();
+            var deleted =
+                await _repository.DeleteAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !deleted
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
         }
 
 
-        return NoContent();
+        //=======================================================
+        // Delete Dependency Exception
+        //=======================================================
+        //
+        // If active dependent Submenu Synchronization data
+        // exists, the repository rejects the delete operation.
+        //
+        // This is an expected business-rule result, so return
+        // HTTP 400 with the repository message for the frontend.
+        //
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
     }
 
 
@@ -397,6 +495,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpPut("restore")]
+
     public async Task<ActionResult> Restore
     (
         [FromQuery] string type
@@ -431,6 +530,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("history")]
+
     public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
         var history =
@@ -456,6 +556,7 @@ public class MenuSynchronizationController : ControllerBase
     //===========================================================
 
     [HttpGet("{id:long}/history")]
+
     public async Task<ActionResult<List<ActivityHistoryDto>>> GetEntityHistory
     (
         long id

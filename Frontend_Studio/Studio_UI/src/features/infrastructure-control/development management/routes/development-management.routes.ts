@@ -4,88 +4,115 @@ import
 }
 from '@angular/router';
 
+
 export const developmentManagementRoutes:
 Routes =
 [
 
-//===========================================================
-// Module Synchronization
-//===========================================================
+    //===========================================================
+    // Module Synchronization
+    //===========================================================
 
-{
-    path:'module-synchronization',
-
-    data:
     {
-        breadcrumb:'Module Synchronization'
+        path:'module-synchronization',
+
+        data:
+        {
+            breadcrumb:'Module Synchronization'
+        },
+
+        loadChildren:() =>
+            import(
+                './module-synchronization.routes'
+            )
+            .then(
+                m =>
+                    m.moduleSynchronizationRoutes
+            )
     },
 
-    loadChildren:() =>
-        import(
-            './module-synchronization.routes'
-        )
-        .then(
-            m =>
-                m.moduleSynchronizationRoutes
-        )
-},
 
-//===========================================================
-// Menu Synchronization
-//===========================================================
+    //===========================================================
+    // Menu Synchronization
+    //===========================================================
 
-{
-    path:'menu-synchronization',
-
-    data:
     {
-        breadcrumb:'Menu Synchronization'
+        path:'menu-synchronization',
+
+        data:
+        {
+            breadcrumb:'Menu Synchronization'
+        },
+
+        loadChildren:() =>
+            import(
+                './menu-synchronization.routes'
+            )
+            .then(
+                m =>
+                    m.menuSynchronizationRoutes
+            )
     },
 
-    loadChildren:() =>
-        import(
-            './menu-synchronization.routes'
-        )
-        .then(
-            m =>
-                m.menuSynchronizationRoutes
-        )
-},
 
-//===========================================================
-// Submenu Synchronization
-//===========================================================
+    //===========================================================
+    // Submenu Synchronization
+    //===========================================================
 
-{
-    path:'submenu-synchronization',
-
-    data:
     {
-        breadcrumb:'Submenu Synchronization'
+        path:'submenu-synchronization',
+
+        data:
+        {
+            breadcrumb:'Submenu Synchronization'
+        },
+
+        loadChildren:() =>
+            import(
+                './submenu-synchronization.routes'
+            )
+            .then(
+                m =>
+                    m.submenuSynchronizationRoutes
+            )
     },
 
-    loadChildren:() =>
-        import(
-            './submenu-synchronization.routes'
-        )
-        .then(
-            m =>
-                m.submenuSynchronizationRoutes
-        )
-},
 
-//===========================================================
-// Default
-//===========================================================
+    //===========================================================
+    // Code Synchronization
+    //===========================================================
 
-{
-    path:'',
+    {
+        path:'code-synchronization',
 
-    redirectTo:
-        'project-synchronization',
+        data:
+        {
+            breadcrumb:'Code Synchronization'
+        },
 
-    pathMatch:
-        'full'
-}
+        loadChildren:() =>
+            import(
+                './code-synchronization.routes'
+            )
+            .then(
+                m =>
+                    m.codeSynchronizationRoutes
+            )
+    },
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:
+            'project-synchronization',
+
+        pathMatch:
+            'full'
+    }
 
 ];

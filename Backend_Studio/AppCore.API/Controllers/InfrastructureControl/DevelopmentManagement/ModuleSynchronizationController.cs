@@ -171,6 +171,16 @@ public class ModuleSynchronizationController
     //
     // It does NOT execute rollback.
     //
+    // The repository applies the business rule:
+    //
+    //     Saved Menu Synchronization
+    //              ↓
+    //          DOES NOT BLOCK
+    //
+    //     Successfully Synchronized Menu
+    //              ↓
+    //          BLOCKS ROLLBACK
+    //
     // Frontend flow:
     //
     //     Rollback
@@ -230,14 +240,11 @@ public class ModuleSynchronizationController
     //
     // This endpoint performs the actual rollback.
     //
-    // Rollback validation is performed BEFORE the confirmation
-    // dialog by the frontend.
-    //
     // The repository remains the authoritative protection
     // during actual rollback execution.
     //
-    // Therefore, even if validation is bypassed, the backend
-    // can still reject the rollback safely.
+    // Therefore, even if the frontend validation is bypassed,
+    // the backend can still reject an invalid rollback.
     //
     //===========================================================
 
@@ -275,9 +282,11 @@ public class ModuleSynchronizationController
         // Rollback Dependency Exception
         //=======================================================
         //
-        // If dependent synchronization data is detected
-        // during the actual rollback, convert the exception
-        // into HTTP 400 so Angular can display the message.
+        // If the repository / synchronization engine detects
+        // a protected dependency during actual rollback,
+        // convert the exception into HTTP 400.
+        //
+        // Angular can then display the returned message.
         //
         //=======================================================
 
@@ -437,23 +446,50 @@ public class ModuleSynchronizationController
         long id
     )
     {
-        var deleted =
-            await _repository.DeleteAsync
-            (
-                id
-            );
-
-
-        if
-        (
-            !deleted
-        )
+        try
         {
-            return NotFound();
+            var deleted =
+                await _repository.DeleteAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !deleted
+            )
+            {
+                return NotFound();
+            }
+
+
+            return NoContent();
         }
 
 
-        return NoContent();
+        //=======================================================
+        // Delete Dependency Exception
+        //=======================================================
+        //
+        // If active dependent Menu Synchronization data exists,
+        // the repository rejects the delete operation.
+        //
+        // This is an expected business-rule result, so return
+        // HTTP 400 with the repository message for the frontend.
+        //
+        //=======================================================
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
     }
 
 

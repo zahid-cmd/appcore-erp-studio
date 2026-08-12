@@ -1034,23 +1034,6 @@ public class SubmenuSynchronizationRepository
         //=======================================================
         // Physical Names
         //=======================================================
-        //
-        // Database/navigation names remain unchanged.
-        //
-        // Physical folders and files use normalized names.
-        //
-        // Example:
-        //
-        // Account Settings
-        //     -> AccountSettings
-        //
-        // Account Class
-        //     -> AccountClass
-        //
-        // Account Ledger
-        //     -> AccountLedger
-        //
-        //=======================================================
 
         var featureName =
             NormalizePhysicalName
@@ -1241,13 +1224,6 @@ public class SubmenuSynchronizationRepository
 
         //=======================================================
         // Existing Menu Pages
-        //=======================================================
-        //
-        // "pages" is an existing folder under the Menu.
-        //
-        // It is NOT created by the Submenu Synchronization
-        // Engine.
-        //
         //=======================================================
 
         var pagesFolder =
@@ -1627,12 +1603,167 @@ public class SubmenuSynchronizationRepository
     //===========================================================
     // Synchronize
     //===========================================================
+    //
+    // BUSINESS RULE:
+    //
+    // Module
+    //     ↓
+    // Menu
+    //     ↓
+    // Submenu
+    //
+    // A Submenu may only be synchronized when its immediate
+    // parent Menu Synchronization has already completed
+    // successfully.
+    //
+    // Saving / creating / analyzing a Menu Synchronization
+    // configuration does NOT satisfy this requirement.
+    //
+    // Required parent state:
+    //
+    //     MenuSynchronization.Status == "Synchronized"
+    //
+    // Matching:
+    //
+    //     ModuleId
+    //     MenuId
+    //     SynchronizationType
+    //
+    //===========================================================
 
     public async Task<bool> SynchronizeAsync
     (
         long id
     )
     {
+        //=======================================================
+        // Load Submenu Synchronization
+        //=======================================================
+
+        var synchronization =
+            await _context.SubmenuSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id == id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        //=======================================================
+        // Synchronization Not Found
+        //=======================================================
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Submenu synchronization configuration was not found."
+            );
+        }
+
+
+        //=======================================================
+        // Validate Parent Menu Synchronization
+        //=======================================================
+        //
+        // IMPORTANT:
+        //
+        // A Menu Synchronization record may exist in the database
+        // while still being:
+        //
+        // Pending
+        // Ready
+        // Failed
+        //
+        // Such a record does NOT mean that the Menu has actually
+        // been synchronized.
+        //
+        // Only Status = "Synchronized" is authoritative.
+        //
+        //=======================================================
+
+        var parentMenuSynchronization =
+            await _context.MenuSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.ModuleId ==
+                        synchronization.ModuleId
+
+                        &&
+
+                        x.MenuId ==
+                        synchronization.MenuId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+                );
+
+
+        //=======================================================
+        // Parent Menu Configuration Not Found
+        //=======================================================
+
+        if
+        (
+            parentMenuSynchronization == null
+        )
+        {
+            throw new InvalidOperationException
+            (
+                $"The parent menu '{synchronization.MenuName}' has not been synchronized. Synchronize the parent menu before synchronizing the submenu."
+            );
+        }
+
+
+        //=======================================================
+        // Parent Menu Not Successfully Synchronized
+        //=======================================================
+
+        if
+        (
+            !string.Equals
+            (
+                parentMenuSynchronization.Status,
+
+                "Synchronized",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                $"The parent menu '{synchronization.MenuName}' is not successfully synchronized. Current status: '{parentMenuSynchronization.Status}'. Synchronize the parent menu successfully before synchronizing the submenu."
+            );
+        }
+
+
+        //=======================================================
+        // Execute Submenu Synchronization
+        //=======================================================
+
         var result =
             await _submenuSynchronizationEngine
                 .SynchronizeAsync
@@ -1640,7 +1771,28 @@ public class SubmenuSynchronizationRepository
                     id
                 );
 
-        return result.Success;
+
+        //=======================================================
+        // Validation
+        //=======================================================
+
+        if
+        (
+            !result.Success
+        )
+        {
+            throw new InvalidOperationException
+            (
+                result.Message
+            );
+        }
+
+
+        //=======================================================
+        // Completed
+        //=======================================================
+
+        return true;
     }
 
 
@@ -1653,12 +1805,21 @@ public class SubmenuSynchronizationRepository
         long id
     )
     {
+        //=======================================================
+        // Execute Rollback
+        //=======================================================
+
         var result =
             await _submenuSynchronizationEngine
                 .RollbackAsync
                 (
                     id
                 );
+
+
+        //=======================================================
+        // Validation
+        //=======================================================
 
         if
         (
@@ -1670,6 +1831,11 @@ public class SubmenuSynchronizationRepository
                 result.Message
             );
         }
+
+
+        //=======================================================
+        // Completed
+        //=======================================================
 
         return true;
     }
@@ -1711,7 +1877,8 @@ public class SubmenuSynchronizationRepository
 
                     ||
 
-                    x.Id != excludeId.Value
+                    x.Id !=
+                    excludeId.Value
                 )
         );
     }
@@ -1741,6 +1908,7 @@ public class SubmenuSynchronizationRepository
                 dto.SynchronizationType
             );
 
+
         if
         (
             exists
@@ -1760,6 +1928,10 @@ public class SubmenuSynchronizationRepository
         var synchronization =
             new AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization
             {
+                //===================================================
+                // Navigation
+                //===================================================
+
                 ModuleId =
                     dto.ModuleId,
 
@@ -1786,6 +1958,11 @@ public class SubmenuSynchronizationRepository
 
                 SubmenuName =
                     dto.SubmenuName,
+
+
+                //===================================================
+                // Synchronization Type
+                //===================================================
 
                 SynchronizationType =
                     dto.SynchronizationType,
@@ -1919,6 +2096,11 @@ public class SubmenuSynchronizationRepository
                 LastSynchronizationResult =
                     dto.LastSynchronizationResult,
 
+
+                //===================================================
+                // Status
+                //===================================================
+
                 IsActive =
                     dto.IsActive,
 
@@ -1942,6 +2124,7 @@ public class SubmenuSynchronizationRepository
         (
             synchronization
         );
+
 
         await _context.SaveChangesAsync();
 
@@ -1983,7 +2166,9 @@ public class SubmenuSynchronizationRepository
             }
         );
 
+
         await _context.SaveChangesAsync();
+
 
         return synchronization.Id;
     }
@@ -2015,6 +2200,7 @@ public class SubmenuSynchronizationRepository
                 dto.Id
             );
 
+
         if
         (
             exists
@@ -2044,6 +2230,7 @@ public class SubmenuSynchronizationRepository
 
                         !x.IsDeleted
                 );
+
 
         if
         (
@@ -2222,6 +2409,11 @@ public class SubmenuSynchronizationRepository
         synchronization.LastSynchronizationResult =
             dto.LastSynchronizationResult;
 
+
+        //=======================================================
+        // Status
+        //=======================================================
+
         synchronization.IsActive =
             dto.IsActive;
 
@@ -2235,6 +2427,7 @@ public class SubmenuSynchronizationRepository
 
         synchronization.ModifiedDate =
             DateTime.UtcNow;
+
 
         await _context.SaveChangesAsync();
 
@@ -2276,7 +2469,9 @@ public class SubmenuSynchronizationRepository
             }
         );
 
+
         await _context.SaveChangesAsync();
+
 
         return true;
     }
@@ -2308,6 +2503,7 @@ public class SubmenuSynchronizationRepository
                         !x.IsDeleted
                 );
 
+
         if
         (
             synchronization == null
@@ -2329,6 +2525,7 @@ public class SubmenuSynchronizationRepository
 
         synchronization.DeletedDate =
             DateTime.UtcNow;
+
 
         await _context.SaveChangesAsync();
 
@@ -2370,7 +2567,9 @@ public class SubmenuSynchronizationRepository
             }
         );
 
+
         await _context.SaveChangesAsync();
+
 
         return true;
     }
@@ -2445,6 +2644,7 @@ public class SubmenuSynchronizationRepository
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+
         await _context.SaveChangesAsync();
 
 
@@ -2485,7 +2685,9 @@ public class SubmenuSynchronizationRepository
             }
         );
 
+
         await _context.SaveChangesAsync();
+
 
         return true;
     }

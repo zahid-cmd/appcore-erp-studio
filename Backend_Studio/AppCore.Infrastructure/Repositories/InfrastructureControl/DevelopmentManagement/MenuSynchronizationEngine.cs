@@ -324,6 +324,8 @@ public class MenuSynchronizationEngine
 
             FrontendApplicationRouteFile =
                 entity.FrontendApplicationRouteFile,
+
+
             //===================================================
             // Backend Target Location
             //===================================================
@@ -436,6 +438,67 @@ public class MenuSynchronizationEngine
 
                 Message =
                     "Module is required."
+            };
+        }
+
+
+
+        //=======================================================
+        // Validate Parent Module Synchronization
+        //=======================================================
+        //
+        // A Menu Synchronization belongs to a Module
+        // Synchronization.
+        //
+        // The parent Module Synchronization must already be
+        // successfully synchronized before Menu Synchronization
+        // is allowed.
+        //
+        // This checks the synchronization type as well so that
+        // Frontend Menu Synchronization depends on the
+        // Frontend Module Synchronization and Backend Menu
+        // Synchronization depends on the Backend Module
+        // Synchronization.
+        //
+        //=======================================================
+
+        var parentModuleSynchronized =
+            await _context.ModuleSynchronizations
+
+                .AnyAsync
+                (
+                    x =>
+
+                        x.ModuleId ==
+                        synchronization.ModuleId
+
+                        &&
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+
+                        &&
+
+                        x.Status ==
+                        "Synchronized"
+                );
+
+
+        if
+        (
+            !parentModuleSynchronized
+        )
+        {
+            return new MenuSynchronizationResultDto
+            {
+                Success = false,
+
+                Message =
+                    $"Menu synchronization is blocked. Parent Module '{synchronization.ModuleName}' has not been successfully synchronized yet. Please synchronize the parent Module before synchronizing this Menu."
             };
         }
 
@@ -623,6 +686,9 @@ public class MenuSynchronizationEngine
                 "Validation completed successfully."
         };
     }
+
+
+
     //===========================================================
     // Update Synchronization Status
     //===========================================================
@@ -693,7 +759,6 @@ public class MenuSynchronizationEngine
 
 
 
-
     //===========================================================
     // Rollback
     //===========================================================
@@ -733,12 +798,43 @@ public class MenuSynchronizationEngine
             return validationResult;
         }
 
+
+        //=======================================================
+        // Validate Rollback Status
+        //=======================================================
+        //
+        // Rollback is allowed only when this Menu Synchronization
+        // has already been successfully synchronized.
+        //
+        //=======================================================
+
+        if
+        (
+            !synchronization.Status.Equals
+            (
+                "Synchronized",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new MenuSynchronizationResultDto
+            {
+                Success =
+                    false,
+
+                Message =
+                    $"Menu rollback is blocked because '{synchronization.MenuName}' has not been successfully synchronized."
+            };
+        }
+
+
         //=======================================================
         // Validate Dependent Submenu Synchronizations
         //=======================================================
         //
-        // A Menu cannot be rolled back while dependent Submenu
-        // Synchronization exists.
+        // A Menu cannot be rolled back while a dependent Submenu
+        // Synchronization has already been successfully
+        // synchronized.
         //
         // NavigationSubmenus are master data and must NOT block
         // Menu Synchronization rollback.
@@ -776,10 +872,11 @@ public class MenuSynchronizationEngine
                 Success =
                     false,
 
-                Message =
-                    $"Rollback blocked. Menu '{synchronization.MenuName}' has dependent Submenu Synchronization data. Please rollback all dependent Submenu Synchronizations before rolling back the Menu."
-            };
+            Message =
+                $"Menu Rollback Blocked ! Submenu Synchronization Found under this menu !"
+                        };
         }
+
 
         //=======================================================
         // Execute Rollback
@@ -843,6 +940,8 @@ public class MenuSynchronizationEngine
         };
     }
 
+
+
     //===========================================================
     // Execute Rollback
     //===========================================================
@@ -900,7 +999,6 @@ public class MenuSynchronizationEngine
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
         };
     }
-
 
 
 

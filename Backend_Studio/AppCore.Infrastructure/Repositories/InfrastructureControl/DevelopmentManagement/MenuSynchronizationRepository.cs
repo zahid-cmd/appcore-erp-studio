@@ -24,7 +24,6 @@ using AppCore.Infrastructure.Persistence;
 namespace AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.MenuSynchronization;
 
 
-
 //===============================================================
 // Menu Synchronization Repository
 //===============================================================
@@ -77,161 +76,52 @@ public class MenuSynchronizationRepository
         (
             new MenuSynchronizationDefaultsDto
             {
-                //===================================================
-                // Navigation
-                //===================================================
+                ModuleId = 0,
+                ModuleCode = string.Empty,
+                ModuleName = string.Empty,
 
-                ModuleId =
-                    0,
-
-                ModuleCode =
-                    string.Empty,
-
-                ModuleName =
-                    string.Empty,
-
-                MenuId =
-                    0,
-
-                MenuCode =
-                    string.Empty,
-
-                MenuName =
-                    string.Empty,
-
-
-                //===================================================
-                // Synchronization Type
-                //===================================================
+                MenuId = 0,
+                MenuCode = string.Empty,
+                MenuName = string.Empty,
 
                 SynchronizationType =
                     synchronizationType,
 
+                FrontendSolution = string.Empty,
+                FrontendProject = string.Empty,
+                FrontendSourceFolder = string.Empty,
+                FrontendFeatureFolder = string.Empty,
 
-                //===================================================
-                // Frontend Target Location
-                //===================================================
+                FrontendMenuFolder = string.Empty,
+                FrontendModelsFolder = string.Empty,
+                FrontendServicesFolder = string.Empty,
+                FrontendPagesFolder = string.Empty,
+                FrontendRoutesFolder = string.Empty,
 
-                FrontendSolution =
-                    string.Empty,
+                FrontendMenuRouteFile = string.Empty,
+                FrontendModuleRouteFile = string.Empty,
+                FrontendApplicationRouteFile = string.Empty,
 
-                FrontendProject =
-                    string.Empty,
+                BackendSolution = string.Empty,
+                BackendApplicationProject = string.Empty,
+                BackendDomainProject = string.Empty,
+                BackendInfrastructureProject = string.Empty,
 
-                FrontendSourceFolder =
-                    string.Empty,
+                BackendControllerFolder = string.Empty,
+                BackendApplicationFolder = string.Empty,
+                BackendDomainFolder = string.Empty,
+                BackendConfigurationFolder = string.Empty,
+                BackendRepositoryFolder = string.Empty,
 
-                FrontendFeatureFolder =
-                    string.Empty,
+                Status = "Pending",
 
+                Remarks = string.Empty,
 
-                //===================================================
-                // Frontend Menu Structure
-                //===================================================
+                LastSynchronizedBy = null,
+                LastSynchronizedDate = null,
+                LastSynchronizationResult = string.Empty,
 
-                FrontendMenuFolder =
-                    string.Empty,
-
-                FrontendModelsFolder =
-                    string.Empty,
-
-                FrontendServicesFolder =
-                    string.Empty,
-
-                FrontendPagesFolder =
-                    string.Empty,
-
-                FrontendRoutesFolder =
-                    string.Empty,
-
-
-                //===================================================
-                // Frontend Application Registration
-                //===================================================
-
-                FrontendMenuRouteFile =
-                    string.Empty,
-
-                FrontendModuleRouteFile =
-                    string.Empty,
-
-                FrontendApplicationRouteFile =
-                    string.Empty,
-
-
-                //===================================================
-                // Backend Target Location
-                //===================================================
-
-                BackendSolution =
-                    string.Empty,
-
-                BackendApplicationProject =
-                    string.Empty,
-
-                BackendDomainProject =
-                    string.Empty,
-
-                BackendInfrastructureProject =
-                    string.Empty,
-
-
-                //===================================================
-                // Backend Menu Structure
-                //===================================================
-
-                BackendControllerFolder =
-                    string.Empty,
-
-                BackendApplicationFolder =
-                    string.Empty,
-
-                BackendDomainFolder =
-                    string.Empty,
-
-                BackendConfigurationFolder =
-                    string.Empty,
-
-                BackendRepositoryFolder =
-                    string.Empty,
-
-
-                //===================================================
-                // Synchronization
-                //===================================================
-
-                Status =
-                    "Pending",
-
-
-                //===================================================
-                // Configuration
-                //===================================================
-
-                Remarks =
-                    string.Empty,
-
-
-                //===================================================
-                // Last Synchronization
-                //===================================================
-
-                LastSynchronizedBy =
-                    null,
-
-                LastSynchronizedDate =
-                    null,
-
-                LastSynchronizationResult =
-                    string.Empty,
-
-
-                //===================================================
-                // Status
-                //===================================================
-
-                IsActive =
-                    true
+                IsActive = true
             }
         );
     }
@@ -249,10 +139,6 @@ public class MenuSynchronizationRepository
     {
         return await _context.MenuSynchronizations
 
-            //=======================================================
-            // Filter
-            //=======================================================
-
             .Where
             (
                 x =>
@@ -264,11 +150,6 @@ public class MenuSynchronizationRepository
                     x.SynchronizationType ==
                     synchronizationType
             )
-
-
-            //=======================================================
-            // Order
-            //=======================================================
 
             .OrderBy
             (
@@ -282,57 +163,22 @@ public class MenuSynchronizationRepository
                     x.MenuCode
             )
 
-
-            //=======================================================
-            // Projection
-            //=======================================================
-
             .Select
             (
                 x => new MenuSynchronizationDto
                 {
-                    //===================================================
-                    // Primary Key
-                    //===================================================
+                    Id = x.Id,
 
-                    Id =
-                        x.Id,
+                    ModuleId = x.ModuleId,
+                    ModuleCode = x.ModuleCode,
+                    ModuleName = x.ModuleName,
 
-
-                    //===================================================
-                    // Navigation
-                    //===================================================
-
-                    ModuleId =
-                        x.ModuleId,
-
-                    ModuleCode =
-                        x.ModuleCode,
-
-                    ModuleName =
-                        x.ModuleName,
-
-                    MenuId =
-                        x.MenuId,
-
-                    MenuCode =
-                        x.MenuCode,
-
-                    MenuName =
-                        x.MenuName,
-
-
-                    //===================================================
-                    // Synchronization Type
-                    //===================================================
+                    MenuId = x.MenuId,
+                    MenuCode = x.MenuCode,
+                    MenuName = x.MenuName,
 
                     SynchronizationType =
                         x.SynchronizationType,
-
-
-                    //===================================================
-                    // Frontend Target Location
-                    //===================================================
 
                     FrontendSolution =
                         x.FrontendSolution,
@@ -345,11 +191,6 @@ public class MenuSynchronizationRepository
 
                     FrontendFeatureFolder =
                         x.FrontendFeatureFolder,
-
-
-                    //===================================================
-                    // Frontend Menu Structure
-                    //===================================================
 
                     FrontendMenuFolder =
                         x.FrontendMenuFolder,
@@ -366,11 +207,6 @@ public class MenuSynchronizationRepository
                     FrontendRoutesFolder =
                         x.FrontendRoutesFolder,
 
-
-                    //===================================================
-                    // Frontend Application Registration
-                    //===================================================
-
                     FrontendMenuRouteFile =
                         x.FrontendMenuRouteFile,
 
@@ -379,11 +215,6 @@ public class MenuSynchronizationRepository
 
                     FrontendApplicationRouteFile =
                         x.FrontendApplicationRouteFile,
-
-
-                    //===================================================
-                    // Backend Target Location
-                    //===================================================
 
                     BackendSolution =
                         x.BackendSolution,
@@ -396,11 +227,6 @@ public class MenuSynchronizationRepository
 
                     BackendInfrastructureProject =
                         x.BackendInfrastructureProject,
-
-
-                    //===================================================
-                    // Backend Menu Structure
-                    //===================================================
 
                     BackendControllerFolder =
                         x.BackendControllerFolder,
@@ -417,26 +243,11 @@ public class MenuSynchronizationRepository
                     BackendConfigurationFolder =
                         x.BackendConfigurationFolder,
 
-
-                    //===================================================
-                    // Synchronization
-                    //===================================================
-
                     Status =
                         x.Status,
 
-
-                    //===================================================
-                    // Configuration
-                    //===================================================
-
                     Remarks =
                         x.Remarks,
-
-
-                    //===================================================
-                    // Last Synchronization
-                    //===================================================
 
                     LastSynchronizedBy =
                         x.LastSynchronizedBy,
@@ -447,28 +258,13 @@ public class MenuSynchronizationRepository
                     LastSynchronizationResult =
                         x.LastSynchronizationResult,
 
-
-                    //===================================================
-                    // Status
-                    //===================================================
-
                     IsActive =
                         x.IsActive,
-
-
-                    //===================================================
-                    // Audit
-                    //===================================================
 
                     CreatedDate =
                         x.CreatedDate
                 }
             )
-
-
-            //=======================================================
-            // Execute
-            //=======================================================
 
             .ToListAsync();
     }
@@ -502,48 +298,18 @@ public class MenuSynchronizationRepository
             (
                 x => new MenuSynchronizationDto
                 {
-                    //===================================================
-                    // Primary Key
-                    //===================================================
+                    Id = x.Id,
 
-                    Id =
-                        x.Id,
+                    ModuleId = x.ModuleId,
+                    ModuleCode = x.ModuleCode,
+                    ModuleName = x.ModuleName,
 
-
-                    //===================================================
-                    // Navigation
-                    //===================================================
-
-                    ModuleId =
-                        x.ModuleId,
-
-                    ModuleCode =
-                        x.ModuleCode,
-
-                    ModuleName =
-                        x.ModuleName,
-
-                    MenuId =
-                        x.MenuId,
-
-                    MenuCode =
-                        x.MenuCode,
-
-                    MenuName =
-                        x.MenuName,
-
-
-                    //===================================================
-                    // Synchronization Type
-                    //===================================================
+                    MenuId = x.MenuId,
+                    MenuCode = x.MenuCode,
+                    MenuName = x.MenuName,
 
                     SynchronizationType =
                         x.SynchronizationType,
-
-
-                    //===================================================
-                    // Frontend Target Location
-                    //===================================================
 
                     FrontendSolution =
                         x.FrontendSolution,
@@ -556,11 +322,6 @@ public class MenuSynchronizationRepository
 
                     FrontendFeatureFolder =
                         x.FrontendFeatureFolder,
-
-
-                    //===================================================
-                    // Frontend Menu Structure
-                    //===================================================
 
                     FrontendMenuFolder =
                         x.FrontendMenuFolder,
@@ -577,11 +338,6 @@ public class MenuSynchronizationRepository
                     FrontendRoutesFolder =
                         x.FrontendRoutesFolder,
 
-
-                    //===================================================
-                    // Frontend Route Ownership
-                    //===================================================
-
                     FrontendMenuRouteFile =
                         x.FrontendMenuRouteFile,
 
@@ -590,11 +346,6 @@ public class MenuSynchronizationRepository
 
                     FrontendApplicationRouteFile =
                         x.FrontendApplicationRouteFile,
-
-
-                    //===================================================
-                    // Backend Target Location
-                    //===================================================
 
                     BackendSolution =
                         x.BackendSolution,
@@ -607,11 +358,6 @@ public class MenuSynchronizationRepository
 
                     BackendInfrastructureProject =
                         x.BackendInfrastructureProject,
-
-
-                    //===================================================
-                    // Backend Menu Structure
-                    //===================================================
 
                     BackendControllerFolder =
                         x.BackendControllerFolder,
@@ -628,26 +374,11 @@ public class MenuSynchronizationRepository
                     BackendRepositoryFolder =
                         x.BackendRepositoryFolder,
 
-
-                    //===================================================
-                    // Synchronization
-                    //===================================================
-
                     Status =
                         x.Status,
 
-
-                    //===================================================
-                    // Configuration
-                    //===================================================
-
                     Remarks =
                         x.Remarks,
-
-
-                    //===================================================
-                    // Last Synchronization
-                    //===================================================
 
                     LastSynchronizedBy =
                         x.LastSynchronizedBy,
@@ -658,18 +389,8 @@ public class MenuSynchronizationRepository
                     LastSynchronizationResult =
                         x.LastSynchronizationResult,
 
-
-                    //===================================================
-                    // Status
-                    //===================================================
-
                     IsActive =
                         x.IsActive,
-
-
-                    //===================================================
-                    // Audit
-                    //===================================================
 
                     CreatedDate =
                         x.CreatedDate
@@ -694,10 +415,6 @@ public class MenuSynchronizationRepository
         string synchronizationType
     )
     {
-        //=======================================================
-        // Diagnostics
-        //=======================================================
-
         Console.WriteLine
         (
             "================================================="
@@ -728,10 +445,6 @@ public class MenuSynchronizationRepository
             "================================================="
         );
 
-
-        //=======================================================
-        // Solution Root
-        //=======================================================
 
         var currentDirectory =
             Environment.CurrentDirectory;
@@ -770,10 +483,6 @@ public class MenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Studio Roots
-        //=======================================================
-
         var frontendRoot =
             Path.Combine
             (
@@ -790,10 +499,6 @@ public class MenuSynchronizationRepository
                 "Backend_Studio"
             );
 
-
-        //=======================================================
-        // Existing Synchronization
-        //=======================================================
 
         var existing =
             await _context.MenuSynchronizations
@@ -841,10 +546,6 @@ public class MenuSynchronizationRepository
                 ?? new MenuSynchronizationDto();
 
 
-            //===================================================
-            // Restore Missing Module Route Reference
-            //===================================================
-
             if
             (
                 string.IsNullOrWhiteSpace
@@ -885,15 +586,10 @@ public class MenuSynchronizationRepository
                         Path.Combine
                         (
                             frontendRoot,
-
                             "src",
-
                             "features",
-
                             existingFeatureName,
-
                             "routes",
-
                             $"{existingFeatureName}.routes.ts"
                         );
                 }
@@ -909,10 +605,6 @@ public class MenuSynchronizationRepository
             "NO EXISTING SYNCHRONIZATION FOUND."
         );
 
-
-        //=======================================================
-        // Load Module
-        //=======================================================
 
         var module =
             await _context.NavigationModules
@@ -945,10 +637,6 @@ public class MenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Load Menu
-        //=======================================================
-
         var menu =
             await _context.NavigationMenus
 
@@ -980,10 +668,6 @@ public class MenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Build Frontend Names
-        //=======================================================
-
         var featureName =
             NormalizeFrontendPhysicalName
             (
@@ -997,21 +681,6 @@ public class MenuSynchronizationRepository
                 menu.Name
             );
 
-
-        //=======================================================
-        // Build Backend Physical Names
-        //=======================================================
-        //
-        // Display/database names remain unchanged.
-        //
-        // Physical folder names MUST NOT contain spaces.
-        //
-        // Example:
-        //
-        // Account Settings -> AccountSettings
-        // Account Class    -> AccountClass
-        //
-        //=======================================================
 
         var backendModuleName =
             NormalizePhysicalName
@@ -1027,17 +696,9 @@ public class MenuSynchronizationRepository
             );
 
 
-        //=======================================================
-        // Create Configuration
-        //=======================================================
-
         var configuration =
             new MenuSynchronizationDto
             {
-                //===================================================
-                // Navigation
-                //===================================================
-
                 ModuleId =
                     module.Id,
 
@@ -1046,7 +707,6 @@ public class MenuSynchronizationRepository
 
                 ModuleName =
                     module.Name,
-
 
                 MenuId =
                     menu.Id,
@@ -1057,75 +717,37 @@ public class MenuSynchronizationRepository
                 MenuName =
                     menu.Name,
 
-
-                //===================================================
-                // Synchronization Type
-                //===================================================
-
                 SynchronizationType =
                     synchronizationType,
-
-
-                //===================================================
-                // Synchronization
-                //===================================================
 
                 Status =
                     "Ready",
 
-
-                //===================================================
-                // Configuration
-                //===================================================
-
                 Remarks =
                     string.Empty,
-
-
-                //===================================================
-                // Status
-                //===================================================
 
                 IsActive =
                     menu.IsActive
             };
 
 
-        //=======================================================
-        // Analyze Frontend
-        //=======================================================
-
         AnalyzeFrontend
         (
             configuration,
-
             frontendRoot,
-
             featureName,
-
             menuName
         );
 
 
-        //=======================================================
-        // Analyze Backend
-        //=======================================================
-
         AnalyzeBackend
         (
             configuration,
-
             backendRoot,
-
             backendModuleName,
-
             backendMenuName
         );
 
-
-        //=======================================================
-        // Completed
-        //=======================================================
 
         Console.WriteLine
         (
@@ -1153,10 +775,6 @@ public class MenuSynchronizationRepository
         string menuName
     )
     {
-        //=======================================================
-        // Frontend Target Location
-        //=======================================================
-
         configuration.FrontendSolution =
             frontendRoot;
 
@@ -1178,17 +796,11 @@ public class MenuSynchronizationRepository
             featureName;
 
 
-        //=======================================================
-        // Frontend Menu Structure
-        //=======================================================
-
         configuration.FrontendMenuFolder =
             Path.Combine
             (
                 configuration.FrontendSourceFolder,
-
                 featureName,
-
                 menuName
             );
 
@@ -1197,7 +809,6 @@ public class MenuSynchronizationRepository
             Path.Combine
             (
                 configuration.FrontendMenuFolder,
-
                 "models"
             );
 
@@ -1206,7 +817,6 @@ public class MenuSynchronizationRepository
             Path.Combine
             (
                 configuration.FrontendMenuFolder,
-
                 "services"
             );
 
@@ -1215,7 +825,6 @@ public class MenuSynchronizationRepository
             Path.Combine
             (
                 configuration.FrontendMenuFolder,
-
                 "pages"
             );
 
@@ -1224,61 +833,34 @@ public class MenuSynchronizationRepository
             Path.Combine
             (
                 configuration.FrontendMenuFolder,
-
                 "routes"
             );
 
-
-        //=======================================================
-        // Frontend Menu Route File
-        //=======================================================
 
         configuration.FrontendMenuRouteFile =
             Path.Combine
             (
                 configuration.FrontendRoutesFolder,
-
                 $"{menuName}.routes.ts"
             );
 
-
-        //=======================================================
-        // Frontend Module Route File
-        //=======================================================
-        //
-        // Menu Synchronization does not create module route.
-        //
-        // It only registers the Menu inside the existing
-        // Module route.
-        //
-        //=======================================================
 
         configuration.FrontendModuleRouteFile =
             Path.Combine
             (
                 configuration.FrontendSourceFolder,
-
                 featureName,
-
                 "routes",
-
                 $"{featureName}.routes.ts"
             );
 
-
-        //=======================================================
-        // Frontend Application Route File
-        //=======================================================
 
         configuration.FrontendApplicationRouteFile =
             Path.Combine
             (
                 frontendRoot,
-
                 "src",
-
                 "app",
-
                 "app.routes.ts"
             );
     }
@@ -1300,10 +882,6 @@ public class MenuSynchronizationRepository
         string menuName
     )
     {
-        //=======================================================
-        // Backend Target Location
-        //=======================================================
-
         configuration.BackendSolution =
             backendRoot;
 
@@ -1320,108 +898,55 @@ public class MenuSynchronizationRepository
             "AppCore.Infrastructure";
 
 
-        //=======================================================
-        // Backend Menu Folder Structure
-        //=======================================================
-        //
-        // IMPORTANT:
-        //
-        // moduleName and menuName have already been normalized
-        // by NormalizePhysicalName().
-        //
-        // Therefore no backend physical folder generated here
-        // can contain spaces.
-        //
-        //=======================================================
-
-
-        //=======================================================
-        // API Controller Folder
-        //=======================================================
-
         configuration.BackendControllerFolder =
             Path.Combine
             (
                 backendRoot,
-
                 "AppCore.Api",
-
                 "Controllers",
-
                 moduleName,
-
                 menuName
             );
 
-
-        //=======================================================
-        // Application Folder
-        //=======================================================
 
         configuration.BackendApplicationFolder =
             Path.Combine
             (
                 backendRoot,
-
                 "AppCore.Application",
-
                 moduleName,
-
                 menuName
             );
 
-
-        //=======================================================
-        // Domain Folder
-        //=======================================================
 
         configuration.BackendDomainFolder =
             Path.Combine
             (
                 backendRoot,
-
                 "AppCore.Domain",
-
                 moduleName,
-
                 menuName
             );
 
-
-        //=======================================================
-        // Infrastructure Configuration Folder
-        //=======================================================
 
         configuration.BackendConfigurationFolder =
             Path.Combine
             (
                 backendRoot,
-
                 "AppCore.Infrastructure",
-
                 "Configurations",
-
                 moduleName,
-
                 menuName
             );
 
-
-        //=======================================================
-        // Infrastructure Repository Folder
-        //=======================================================
 
         configuration.BackendRepositoryFolder =
             Path.Combine
             (
                 backendRoot,
-
                 "AppCore.Infrastructure",
-
                 "Repositories",
-
                 moduleName,
-
                 menuName
             );
     }
@@ -1430,23 +955,6 @@ public class MenuSynchronizationRepository
 
     //===========================================================
     // Normalize Frontend Physical Name
-    //===========================================================
-    //
-    // Used ONLY for frontend physical file/folder names.
-    //
-    // Database/display names are never modified.
-    //
-    // Only letters, numbers and hyphen are allowed.
-    //
-    // Spaces are converted to hyphens.
-    //
-    // Technical/special characters are removed.
-    //
-    // Example:
-    //
-    // Account Settings -> account-settings
-    // Account & Class  -> account-class
-    //
     //===========================================================
 
     private static string NormalizeFrontendPhysicalName
@@ -1549,19 +1057,6 @@ public class MenuSynchronizationRepository
     //===========================================================
     // Normalize Backend Physical Name
     //===========================================================
-    //
-    // Used ONLY for backend physical file/folder names.
-    //
-    // Database/display names are never modified.
-    //
-    // Spaces and technical/special characters are removed.
-    //
-    // Example:
-    //
-    // Account Settings -> AccountSettings
-    // Account & Class  -> AccountClass
-    //
-    //===========================================================
 
     private static string NormalizePhysicalName
     (
@@ -1606,10 +1101,6 @@ public class MenuSynchronizationRepository
         long id
     )
     {
-        //=======================================================
-        // Execute Synchronization
-        //=======================================================
-
         var result =
             await _menuSynchronizationEngine
                 .SynchronizeAsync
@@ -1618,15 +1109,31 @@ public class MenuSynchronizationRepository
                 );
 
 
-        //=======================================================
-        // Completed
-        //=======================================================
-
         return result.Success;
     }
 
+
+
     //===========================================================
     // Validate Rollback
+    //===========================================================
+    //
+    // IMPORTANT:
+    //
+    // This validation follows the same pattern as the Module
+    // Synchronization rollback validation.
+    //
+    // A dependent Submenu Synchronization blocks rollback ONLY
+    // when:
+    //
+    //     - It is not deleted
+    //     - It belongs to this Menu
+    //     - It belongs to the same Synchronization Type
+    //     - Its Status is "Synchronized"
+    //
+    // Pending / Ready / Failed Submenu Synchronizations do NOT
+    // block Menu rollback.
+    //
     //===========================================================
 
     public async Task<MenuSynchronizationRollbackValidationDto?>
@@ -1670,26 +1177,61 @@ public class MenuSynchronizationRepository
         }
 
 
-
         //=======================================================
-        // No Navigation Dependency Check
+        // Check Successfully Synchronized Submenu Dependency
         //=======================================================
         //
-        // IMPORTANT:
-        //
-        // Do NOT check:
-        //
-        // NavigationSubmenus
-        // SubmenuSynchronizations
-        // NavigationMenus
-        //
-        // These are database master/configuration data.
-        //
-        // They are created before synchronization and must not
-        // block rollback.
+        // ONLY successfully synchronized Submenu Synchronization
+        // records block Menu rollback.
         //
         //=======================================================
 
+        var hasSynchronizedSubmenu =
+            await _context.SubmenuSynchronizations
+
+                .AsNoTracking()
+
+                .AnyAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.MenuId ==
+                        synchronization.MenuId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+
+                        &&
+
+                        x.Status ==
+                        "Synchronized"
+                );
+
+
+        //=======================================================
+        // Rollback Blocked
+        //=======================================================
+
+        if
+        (
+            hasSynchronizedSubmenu
+        )
+        {
+            return new MenuSynchronizationRollbackValidationDto
+            {
+                CanRollback =
+                    false,
+
+                Message =
+                    "Menu rollback is blocked because a dependent Submenu Synchronization has already been successfully synchronized. Roll back the dependent Submenu Synchronization first."
+            };
+        }
 
 
         //=======================================================
@@ -1706,6 +1248,8 @@ public class MenuSynchronizationRepository
         };
     }
 
+
+
     //===========================================================
     // Rollback
     //===========================================================
@@ -1715,6 +1259,49 @@ public class MenuSynchronizationRepository
         long id
     )
     {
+        //=======================================================
+        // Validate Rollback
+        //=======================================================
+
+        var validation =
+            await ValidateRollbackAsync
+            (
+                id
+            );
+
+
+        //=======================================================
+        // Synchronization Not Found
+        //=======================================================
+
+        if
+        (
+            validation == null
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Menu synchronization configuration was not found."
+            );
+        }
+
+
+        //=======================================================
+        // Rollback Blocked
+        //=======================================================
+
+        if
+        (
+            !validation.CanRollback
+        )
+        {
+            throw new InvalidOperationException
+            (
+                validation.Message
+            );
+        }
+
+
         //=======================================================
         // Execute Rollback
         //=======================================================
@@ -1809,15 +1396,10 @@ public class MenuSynchronizationRepository
             1;
 
 
-        //=======================================================
-        // Duplicate Check
-        //=======================================================
-
         var exists =
             await ExistsByMenuAsync
             (
                 dto.MenuId,
-
                 dto.SynchronizationType
             );
 
@@ -1834,17 +1416,9 @@ public class MenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Create Entity
-        //=======================================================
-
         var synchronization =
             new AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement.MenuSynchronization
             {
-                //===================================================
-                // Navigation
-                //===================================================
-
                 ModuleId =
                     dto.ModuleId,
 
@@ -1863,18 +1437,8 @@ public class MenuSynchronizationRepository
                 MenuName =
                     dto.MenuName,
 
-
-                //===================================================
-                // Synchronization Type
-                //===================================================
-
                 SynchronizationType =
                     dto.SynchronizationType,
-
-
-                //===================================================
-                // Frontend Target Location
-                //===================================================
 
                 FrontendSolution =
                     dto.FrontendSolution,
@@ -1887,11 +1451,6 @@ public class MenuSynchronizationRepository
 
                 FrontendFeatureFolder =
                     dto.FrontendFeatureFolder,
-
-
-                //===================================================
-                // Frontend Menu Structure
-                //===================================================
 
                 FrontendMenuFolder =
                     dto.FrontendMenuFolder,
@@ -1908,21 +1467,11 @@ public class MenuSynchronizationRepository
                 FrontendRoutesFolder =
                     dto.FrontendRoutesFolder,
 
-
-                //===================================================
-                // Frontend Application Registration
-                //===================================================
-
                 FrontendMenuRouteFile =
                     dto.FrontendMenuRouteFile,
 
                 FrontendModuleRouteFile =
                     dto.FrontendModuleRouteFile,
-
-
-                //===================================================
-                // Backend Target Location
-                //===================================================
 
                 BackendSolution =
                     dto.BackendSolution,
@@ -1935,11 +1484,6 @@ public class MenuSynchronizationRepository
 
                 BackendInfrastructureProject =
                     dto.BackendInfrastructureProject,
-
-
-                //===================================================
-                // Backend Menu Folder Structure
-                //===================================================
 
                 BackendControllerFolder =
                     dto.BackendControllerFolder,
@@ -1956,26 +1500,11 @@ public class MenuSynchronizationRepository
                 BackendConfigurationFolder =
                     dto.BackendConfigurationFolder,
 
-
-                //===================================================
-                // Synchronization
-                //===================================================
-
                 Status =
                     dto.Status,
 
-
-                //===================================================
-                // Configuration
-                //===================================================
-
                 Remarks =
                     dto.Remarks,
-
-
-                //===================================================
-                // Last Synchronization
-                //===================================================
 
                 LastSynchronizedBy =
                     dto.LastSynchronizedBy,
@@ -1986,21 +1515,11 @@ public class MenuSynchronizationRepository
                 LastSynchronizationResult =
                     dto.LastSynchronizationResult,
 
-
-                //===================================================
-                // Status
-                //===================================================
-
                 IsActive =
                     dto.IsActive,
 
                 IsDeleted =
                     false,
-
-
-                //===================================================
-                // Audit
-                //===================================================
 
                 CreatedBy =
                     userId,
@@ -2018,10 +1537,6 @@ public class MenuSynchronizationRepository
 
         await _context.SaveChangesAsync();
 
-
-        //=======================================================
-        // Activity History
-        //=======================================================
 
         _context.ActivityHistories.Add
         (
@@ -2078,17 +1593,11 @@ public class MenuSynchronizationRepository
             1;
 
 
-        //=======================================================
-        // Duplicate Check
-        //=======================================================
-
         var exists =
             await ExistsByMenuAsync
             (
                 dto.MenuId,
-
                 dto.SynchronizationType,
-
                 dto.Id
             );
 
@@ -2104,10 +1613,6 @@ public class MenuSynchronizationRepository
             );
         }
 
-
-        //=======================================================
-        // Load Entity
-        //=======================================================
 
         var synchronization =
             await _context.MenuSynchronizations
@@ -2134,10 +1639,6 @@ public class MenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Navigation
-        //=======================================================
-
         synchronization.ModuleId =
             dto.ModuleId;
 
@@ -2156,18 +1657,8 @@ public class MenuSynchronizationRepository
         synchronization.MenuName =
             dto.MenuName;
 
-
-        //=======================================================
-        // Synchronization Type
-        //=======================================================
-
         synchronization.SynchronizationType =
             dto.SynchronizationType;
-
-
-        //=======================================================
-        // Frontend Target Location
-        //=======================================================
 
         synchronization.FrontendSolution =
             dto.FrontendSolution;
@@ -2180,11 +1671,6 @@ public class MenuSynchronizationRepository
 
         synchronization.FrontendFeatureFolder =
             dto.FrontendFeatureFolder;
-
-
-        //=======================================================
-        // Frontend Menu Structure
-        //=======================================================
 
         synchronization.FrontendMenuFolder =
             dto.FrontendMenuFolder;
@@ -2201,21 +1687,11 @@ public class MenuSynchronizationRepository
         synchronization.FrontendRoutesFolder =
             dto.FrontendRoutesFolder;
 
-
-        //=======================================================
-        // Frontend Application Registration
-        //=======================================================
-
         synchronization.FrontendMenuRouteFile =
             dto.FrontendMenuRouteFile;
 
         synchronization.FrontendModuleRouteFile =
             dto.FrontendModuleRouteFile;
-
-
-        //=======================================================
-        // Backend Target Location
-        //=======================================================
 
         synchronization.BackendSolution =
             dto.BackendSolution;
@@ -2228,11 +1704,6 @@ public class MenuSynchronizationRepository
 
         synchronization.BackendInfrastructureProject =
             dto.BackendInfrastructureProject;
-
-
-        //=======================================================
-        // Backend Menu Folder Structure
-        //=======================================================
 
         synchronization.BackendControllerFolder =
             dto.BackendControllerFolder;
@@ -2249,26 +1720,11 @@ public class MenuSynchronizationRepository
         synchronization.BackendConfigurationFolder =
             dto.BackendConfigurationFolder;
 
-
-        //=======================================================
-        // Synchronization
-        //=======================================================
-
         synchronization.Status =
             dto.Status;
 
-
-        //=======================================================
-        // Configuration
-        //=======================================================
-
         synchronization.Remarks =
             dto.Remarks;
-
-
-        //=======================================================
-        // Last Synchronization
-        //=======================================================
 
         synchronization.LastSynchronizedBy =
             dto.LastSynchronizedBy;
@@ -2279,18 +1735,8 @@ public class MenuSynchronizationRepository
         synchronization.LastSynchronizationResult =
             dto.LastSynchronizationResult;
 
-
-        //=======================================================
-        // Status
-        //=======================================================
-
         synchronization.IsActive =
             dto.IsActive;
-
-
-        //=======================================================
-        // Audit
-        //=======================================================
 
         synchronization.ModifiedBy =
             userId;
@@ -2301,10 +1747,6 @@ public class MenuSynchronizationRepository
 
         await _context.SaveChangesAsync();
 
-
-        //=======================================================
-        // Activity History
-        //=======================================================
 
         _context.ActivityHistories.Add
         (
@@ -2387,8 +1829,53 @@ public class MenuSynchronizationRepository
 
 
         //=======================================================
-        // Soft Delete
+        // Validate Dependent Submenu Synchronizations
         //=======================================================
+        //
+        // A Menu Synchronization cannot be deleted while any
+        // active dependent Submenu Synchronization exists.
+        //
+        // The dependency is checked regardless of Submenu
+        // Synchronization status.
+        //
+        // Deleted Submenu Synchronizations do not block deletion.
+        //
+        // Frontend and Backend remain independent.
+        //
+        //=======================================================
+
+        var hasDependentSubmenuSynchronizations =
+            await _context.SubmenuSynchronizations
+
+                .AnyAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.MenuId ==
+                        synchronization.MenuId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+                );
+
+
+        if
+        (
+            hasDependentSubmenuSynchronizations
+        )
+        {
+            throw new InvalidOperationException
+            (
+                $"Menu '{synchronization.MenuName}' cannot be deleted because dependent Submenu Synchronization data exists. Delete the dependent Submenu Synchronization first."
+            );
+        }
+
 
         synchronization.IsDeleted =
             true;
@@ -2402,10 +1889,6 @@ public class MenuSynchronizationRepository
 
         await _context.SaveChangesAsync();
 
-
-        //=======================================================
-        // Activity History
-        //=======================================================
 
         _context.ActivityHistories.Add
         (
@@ -2462,10 +1945,6 @@ public class MenuSynchronizationRepository
             1;
 
 
-        //=======================================================
-        // Load Deleted Entity
-        //=======================================================
-
         var entity =
             await _context.MenuSynchronizations
 
@@ -2499,20 +1978,11 @@ public class MenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Restore
-        //=======================================================
-
         entity.IsDeleted =
             false;
 
         entity.DeletedDate =
             null;
-
-
-        //=======================================================
-        // Audit
-        //=======================================================
 
         entity.ModifiedBy =
             userId;
@@ -2523,10 +1993,6 @@ public class MenuSynchronizationRepository
 
         await _context.SaveChangesAsync();
 
-
-        //=======================================================
-        // Activity History
-        //=======================================================
 
         _context.ActivityHistories.Add
         (
