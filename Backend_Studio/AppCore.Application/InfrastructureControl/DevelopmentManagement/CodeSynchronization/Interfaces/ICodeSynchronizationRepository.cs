@@ -42,6 +42,56 @@ public interface ICodeSynchronizationRepository
 
 
     //===========================================================
+    // Get Generated Files
+    //===========================================================
+
+    Task<List<CodeSynchronizationFileDto>>
+        GetFilesAsync
+        (
+            long id
+        );
+
+
+    //===========================================================
+    // Restore File
+    //===========================================================
+    //
+    // Restores one modified generated file to the state
+    // produced by the last successful synchronization.
+    //
+    // This is separate from Code Synchronization Rollback.
+    //
+    //===========================================================
+
+    Task<bool>
+        RestoreFileAsync
+        (
+            long id,
+
+            string fileName
+        );
+
+
+    //===========================================================
+    // Restore All Modified Files
+    //===========================================================
+    //
+    // Restores all modified generated files belonging to this
+    // Code Synchronization record to their last synchronized
+    // state.
+    //
+    // This does not perform Code Synchronization Rollback.
+    //
+    //===========================================================
+
+    Task<bool>
+        RestoreAllFilesAsync
+        (
+            long id
+        );
+
+
+    //===========================================================
     // Synchronize Code
     //===========================================================
 

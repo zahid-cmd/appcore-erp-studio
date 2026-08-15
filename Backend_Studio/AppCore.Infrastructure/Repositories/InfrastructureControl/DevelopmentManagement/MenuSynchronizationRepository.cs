@@ -368,11 +368,11 @@ public class MenuSynchronizationRepository
                     BackendDomainFolder =
                         x.BackendDomainFolder,
 
-                    BackendConfigurationFolder =
-                        x.BackendConfigurationFolder,
-
                     BackendRepositoryFolder =
                         x.BackendRepositoryFolder,
+
+                    BackendConfigurationFolder =
+                        x.BackendConfigurationFolder,
 
                     Status =
                         x.Status,
@@ -1095,12 +1095,105 @@ public class MenuSynchronizationRepository
     //===========================================================
     // Synchronize
     //===========================================================
+    //
+    // Menu synchronization is allowed only when the parent
+    // Module Synchronization has already been successfully
+    // synchronized.
+    //
+    //===========================================================
 
     public async Task<bool> SynchronizeAsync
     (
         long id
     )
     {
+        //=======================================================
+        // Load Menu Synchronization
+        //=======================================================
+
+        var synchronization =
+            await _context.MenuSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        //=======================================================
+        // Synchronization Not Found
+        //=======================================================
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Validate Parent Module Synchronization
+        //=======================================================
+
+        var moduleSynchronized =
+            await _context.ModuleSynchronizations
+
+                .AsNoTracking()
+
+                .AnyAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.ModuleId ==
+                        synchronization.ModuleId
+
+                        &&
+
+                        x.SynchronizationType ==
+                        synchronization.SynchronizationType
+
+                        &&
+
+                        x.Status ==
+                        "Synchronized"
+                );
+
+
+        //=======================================================
+        // Parent Module Synchronization Not Synchronized
+        //=======================================================
+
+        if
+        (
+            !moduleSynchronized
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Menu Synchronization cannot continue because the associated Module Synchronization has not been synchronized."
+            );
+        }
+
+
+        //=======================================================
+        // Execute Synchronization
+        //=======================================================
+
         var result =
             await _menuSynchronizationEngine
                 .SynchronizeAsync
@@ -1109,7 +1202,27 @@ public class MenuSynchronizationRepository
                 );
 
 
-        return result.Success;
+        //=======================================================
+        // Validation
+        //=======================================================
+
+        if
+        (
+            !result.Success
+        )
+        {
+            throw new InvalidOperationException
+            (
+                result.Message
+            );
+        }
+
+
+        //=======================================================
+        // Completed
+        //=======================================================
+
+        return true;
     }
 
 
@@ -1118,18 +1231,8 @@ public class MenuSynchronizationRepository
     // Validate Rollback
     //===========================================================
     //
-    // IMPORTANT:
-    //
-    // This validation follows the same pattern as the Module
-    // Synchronization rollback validation.
-    //
-    // A dependent Submenu Synchronization blocks rollback ONLY
-    // when:
-    //
-    //     - It is not deleted
-    //     - It belongs to this Menu
-    //     - It belongs to the same Synchronization Type
-    //     - Its Status is "Synchronized"
+    // Menu rollback is blocked when a dependent Submenu
+    // Synchronization has already been successfully synchronized.
     //
     // Pending / Ready / Failed Submenu Synchronizations do NOT
     // block Menu rollback.
@@ -1178,12 +1281,7 @@ public class MenuSynchronizationRepository
 
 
         //=======================================================
-        // Check Successfully Synchronized Submenu Dependency
-        //=======================================================
-        //
-        // ONLY successfully synchronized Submenu Synchronization
-        // records block Menu rollback.
-        //
+        // Check Synchronized Submenu Dependency
         //=======================================================
 
         var hasSynchronizedSubmenu =
@@ -1830,18 +1928,6 @@ public class MenuSynchronizationRepository
 
         //=======================================================
         // Validate Dependent Submenu Synchronizations
-        //=======================================================
-        //
-        // A Menu Synchronization cannot be deleted while any
-        // active dependent Submenu Synchronization exists.
-        //
-        // The dependency is checked regardless of Submenu
-        // Synchronization status.
-        //
-        // Deleted Submenu Synchronizations do not block deletion.
-        //
-        // Frontend and Backend remain independent.
-        //
         //=======================================================
 
         var hasDependentSubmenuSynchronizations =

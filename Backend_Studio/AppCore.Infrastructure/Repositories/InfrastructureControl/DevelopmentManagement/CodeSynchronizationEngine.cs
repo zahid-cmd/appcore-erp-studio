@@ -94,20 +94,12 @@ public class CodeSynchronizationEngine
         long id
     )
     {
-        //=======================================================
-        // Load Code Synchronization
-        //=======================================================
-
         var codeSynchronization =
             await LoadCodeSynchronizationAsync
             (
                 id
             );
 
-
-        //=======================================================
-        // Validate
-        //=======================================================
 
         var validationResult =
             await ValidateSynchronizationAsync
@@ -125,10 +117,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Load Submenu Synchronization
-        //=======================================================
-
         var submenuSynchronization =
             await LoadSubmenuSynchronizationAsync
             (
@@ -136,20 +124,12 @@ public class CodeSynchronizationEngine
             );
 
 
-        //=======================================================
-        // Execute Synchronization
-        //=======================================================
-
         var result =
             await ExecuteSynchronizationAsync
             (
                 submenuSynchronization
             );
 
-
-        //=======================================================
-        // Failed
-        //=======================================================
 
         if
         (
@@ -168,10 +148,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Update Status
-        //=======================================================
-
         await UpdateSynchronizationStatusAsync
         (
             codeSynchronization,
@@ -180,10 +156,6 @@ public class CodeSynchronizationEngine
         );
 
 
-        //=======================================================
-        // Activity History
-        //=======================================================
-
         await AddSynchronizationHistoryAsync
         (
             codeSynchronization,
@@ -191,10 +163,6 @@ public class CodeSynchronizationEngine
             result.Message
         );
 
-
-        //=======================================================
-        // Result
-        //=======================================================
 
         return new CodeSynchronizationEngineResult
         {
@@ -272,7 +240,7 @@ public class CodeSynchronizationEngine
 
 
         //=======================================================
-        // Failed
+        // Rollback Failed
         //=======================================================
 
         if
@@ -281,6 +249,34 @@ public class CodeSynchronizationEngine
         )
         {
             return result;
+        }
+
+
+        //=======================================================
+        // Remove Synchronization Baselines
+        //=======================================================
+        //
+        // Baseline files are temporary Code Synchronization
+        // support files.
+        //
+        // They must be removed when the synchronization itself
+        // is rolled back.
+        //
+        //=======================================================
+
+        var baselineResult =
+            RemoveSynchronizationBaselines
+            (
+                submenuSynchronization
+            );
+
+
+        if
+        (
+            !baselineResult.Success
+        )
+        {
+            return baselineResult;
         }
 
 
@@ -424,17 +420,9 @@ public class CodeSynchronizationEngine
     {
         return new SubmenuSynchronizationDto
         {
-            //===================================================
-            // Primary Key
-            //===================================================
-
             Id =
                 entity.Id,
 
-
-            //===================================================
-            // Module
-            //===================================================
 
             ModuleId =
                 entity.ModuleId,
@@ -446,10 +434,6 @@ public class CodeSynchronizationEngine
                 entity.ModuleName,
 
 
-            //===================================================
-            // Menu
-            //===================================================
-
             MenuId =
                 entity.MenuId,
 
@@ -459,10 +443,6 @@ public class CodeSynchronizationEngine
             MenuName =
                 entity.MenuName,
 
-
-            //===================================================
-            // Submenu
-            //===================================================
 
             SubmenuId =
                 entity.SubmenuId,
@@ -474,17 +454,9 @@ public class CodeSynchronizationEngine
                 entity.SubmenuName,
 
 
-            //===================================================
-            // Synchronization Type
-            //===================================================
-
             SynchronizationType =
                 entity.SynchronizationType,
 
-
-            //===================================================
-            // Frontend Target
-            //===================================================
 
             FrontendSolution =
                 entity.FrontendSolution,
@@ -502,17 +474,9 @@ public class CodeSynchronizationEngine
                 entity.FrontendMenuFolder,
 
 
-            //===================================================
-            // Frontend Menu Route
-            //===================================================
-
             FrontendMenuRouteFile =
                 entity.FrontendMenuRouteFile,
 
-
-            //===================================================
-            // Frontend Submenu
-            //===================================================
 
             FrontendSubmenuFolder =
                 entity.FrontendSubmenuFolder,
@@ -524,10 +488,6 @@ public class CodeSynchronizationEngine
                 entity.FrontendListFolder,
 
 
-            //===================================================
-            // Frontend Core Files
-            //===================================================
-
             FrontendSubmenuModelFile =
                 entity.FrontendSubmenuModelFile,
 
@@ -537,10 +497,6 @@ public class CodeSynchronizationEngine
             FrontendSubmenuRouteFile =
                 entity.FrontendSubmenuRouteFile,
 
-
-            //===================================================
-            // Frontend Form Files
-            //===================================================
 
             FrontendSubmenuFormTsFile =
                 entity.FrontendSubmenuFormTsFile,
@@ -552,10 +508,6 @@ public class CodeSynchronizationEngine
                 entity.FrontendSubmenuFormCssFile,
 
 
-            //===================================================
-            // Frontend List Files
-            //===================================================
-
             FrontendSubmenuListTsFile =
                 entity.FrontendSubmenuListTsFile,
 
@@ -565,10 +517,6 @@ public class CodeSynchronizationEngine
             FrontendSubmenuListCssFile =
                 entity.FrontendSubmenuListCssFile,
 
-
-            //===================================================
-            // Backend Target
-            //===================================================
 
             BackendSolution =
                 entity.BackendSolution,
@@ -583,17 +531,9 @@ public class CodeSynchronizationEngine
                 entity.BackendInfrastructureProject,
 
 
-            //===================================================
-            // Backend API
-            //===================================================
-
             BackendControllerFile =
                 entity.BackendControllerFile,
 
-
-            //===================================================
-            // Backend Application
-            //===================================================
 
             BackendApplicationSubMenuFolder =
                 entity.BackendApplicationSubMenuFolder,
@@ -620,17 +560,9 @@ public class CodeSynchronizationEngine
                 entity.BackendSubMenuRepositoryInterfaceFile,
 
 
-            //===================================================
-            // Backend Domain
-            //===================================================
-
             BackendSubMenuEntityFile =
                 entity.BackendSubMenuEntityFile,
 
-
-            //===================================================
-            // Backend Infrastructure
-            //===================================================
 
             BackendSubMenuConfigurationFile =
                 entity.BackendSubMenuConfigurationFile,
@@ -639,25 +571,13 @@ public class CodeSynchronizationEngine
                 entity.BackendSubMenuRepositoryFile,
 
 
-            //===================================================
-            // Synchronization Status
-            //===================================================
-
             Status =
                 entity.Status,
 
 
-            //===================================================
-            // Configuration
-            //===================================================
-
             Remarks =
                 entity.Remarks,
 
-
-            //===================================================
-            // Last Synchronization
-            //===================================================
 
             LastSynchronizedBy =
                 entity.LastSynchronizedBy,
@@ -669,17 +589,9 @@ public class CodeSynchronizationEngine
                 entity.LastSynchronizationResult,
 
 
-            //===================================================
-            // Status
-            //===================================================
-
             IsActive =
                 entity.IsActive,
 
-
-            //===================================================
-            // Audit
-            //===================================================
 
             CreatedDate =
                 entity.CreatedDate
@@ -698,10 +610,6 @@ public class CodeSynchronizationEngine
         CodeSynchronizationEntity synchronization
     )
     {
-        //=======================================================
-        // Validate Submenu Synchronization Reference
-        //=======================================================
-
         if
         (
             synchronization.SubmenuSynchronizationId <= 0
@@ -717,10 +625,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Validate Submenu Synchronization Status
-        //=======================================================
 
         var submenuSynchronized =
             await _context.SubmenuSynchronizations
@@ -761,10 +665,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Validate Synchronization Type
-        //=======================================================
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -783,10 +683,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Validate Supported Type
-        //=======================================================
 
         if
         (
@@ -815,10 +711,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Validation Passed
-        //=======================================================
 
         return new CodeSynchronizationEngineResult
         {
@@ -842,10 +734,6 @@ public class CodeSynchronizationEngine
         CodeSynchronizationEntity synchronization
     )
     {
-        //=======================================================
-        // Validate Reference
-        //=======================================================
-
         if
         (
             synchronization.SubmenuSynchronizationId <= 0
@@ -861,10 +749,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Validate Status
-        //=======================================================
 
         if
         (
@@ -885,10 +769,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Validate Type
-        //=======================================================
 
         if
         (
@@ -918,10 +798,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Validation Passed
-        //=======================================================
-
         return new CodeSynchronizationEngineResult
         {
             Success =
@@ -944,10 +820,6 @@ public class CodeSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Frontend Code Synchronization
-        //=======================================================
-
         if
         (
             synchronization.SynchronizationType.Equals
@@ -976,10 +848,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Backend Code Synchronization
-        //=======================================================
-
         if
         (
             synchronization.SynchronizationType.Equals
@@ -1007,10 +875,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Unsupported
-        //=======================================================
 
         return new CodeSynchronizationEngineResult
         {
@@ -1034,10 +898,6 @@ public class CodeSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Frontend Code Synchronization
-        //=======================================================
-
         if
         (
             synchronization.SynchronizationType.Equals
@@ -1065,10 +925,6 @@ public class CodeSynchronizationEngine
             };
         }
 
-
-        //=======================================================
-        // Backend Code Synchronization
-        //=======================================================
 
         if
         (
@@ -1098,10 +954,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Unsupported
-        //=======================================================
-
         return new CodeSynchronizationEngineResult
         {
             Success =
@@ -1109,6 +961,180 @@ public class CodeSynchronizationEngine
 
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+        };
+    }
+
+
+
+    //===========================================================
+    // Remove Synchronization Baselines
+    //===========================================================
+    //
+    // Removes all .appcore-sync-baseline files belonging to
+    // this Code Synchronization record.
+    //
+    // These files are temporary synchronization support files.
+    //
+    // They must not remain after row-level rollback.
+    //
+    //===========================================================
+
+    private static CodeSynchronizationEngineResult
+        RemoveSynchronizationBaselines
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        var files =
+            new List<string>();
+
+
+        //=======================================================
+        // Frontend Files
+        //=======================================================
+
+        if
+        (
+            synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            files.AddRange
+            (
+                new[]
+                {
+                    synchronization.FrontendSubmenuModelFile,
+
+                    synchronization.FrontendSubmenuServiceFile,
+
+                    synchronization.FrontendSubmenuRouteFile,
+
+                    synchronization.FrontendSubmenuFormTsFile,
+
+                    synchronization.FrontendSubmenuFormHtmlFile,
+
+                    synchronization.FrontendSubmenuFormCssFile,
+
+                    synchronization.FrontendSubmenuListTsFile,
+
+                    synchronization.FrontendSubmenuListHtmlFile,
+
+                    synchronization.FrontendSubmenuListCssFile
+                }
+            );
+        }
+
+
+        //=======================================================
+        // Backend Files
+        //=======================================================
+
+        if
+        (
+            synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            files.AddRange
+            (
+                new[]
+                {
+                    synchronization.BackendControllerFile,
+
+                    synchronization.BackendSubMenuDtoFile,
+
+                    synchronization.BackendCreateSubMenuDtoFile,
+
+                    synchronization.BackendUpdateSubMenuDtoFile,
+
+                    synchronization.BackendSubMenuDefaultsDtoFile,
+
+                    synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+                    synchronization.BackendSubMenuEntityFile,
+
+                    synchronization.BackendSubMenuConfigurationFile,
+
+                    synchronization.BackendSubMenuRepositoryFile
+                }
+            );
+        }
+
+
+        //=======================================================
+        // Delete Baselines
+        //=======================================================
+
+        try
+        {
+            foreach
+            (
+                var filePath in files
+            )
+            {
+                if
+                (
+                    string.IsNullOrWhiteSpace(
+                        filePath
+                    )
+                )
+                {
+                    continue;
+                }
+
+
+                var fullPath =
+                    Path.GetFullPath(
+                        filePath
+                    );
+
+
+                var baselinePath =
+                    $"{fullPath}.appcore-sync-baseline";
+
+
+                if
+                (
+                    File.Exists(
+                        baselinePath
+                    )
+                )
+                {
+                    File.Delete(
+                        baselinePath
+                    );
+                }
+            }
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            return new CodeSynchronizationEngineResult
+            {
+                Success =
+                    false,
+
+                Message =
+                    $"Code Synchronization rollback completed, but synchronization baseline cleanup failed. {exception.Message}"
+            };
+        }
+
+
+        return new CodeSynchronizationEngineResult
+        {
+            Success =
+                true,
+
+            Message =
+                "Synchronization baseline cleanup completed successfully."
         };
     }
 
@@ -1153,17 +1179,9 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Status
-        //=======================================================
-
         entity.Status =
             "Synchronized";
 
-
-        //=======================================================
-        // Synchronization Information
-        //=======================================================
 
         entity.LastSynchronizedDate =
             DateTime.UtcNow;
@@ -1176,10 +1194,6 @@ public class CodeSynchronizationEngine
         entity.LastSynchronizedBy =
             1;
 
-
-        //=======================================================
-        // Audit
-        //=======================================================
 
         entity.ModifiedDate =
             DateTime.UtcNow;
@@ -1287,10 +1301,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Status
-        //=======================================================
-
         entity.Status =
             "Failed";
 
@@ -1298,10 +1308,6 @@ public class CodeSynchronizationEngine
         entity.LastSynchronizationResult =
             resultMessage;
 
-
-        //=======================================================
-        // Audit
-        //=======================================================
 
         entity.ModifiedDate =
             DateTime.UtcNow;
@@ -1353,17 +1359,9 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Status
-        //=======================================================
-
         entity.Status =
             "Ready";
 
-
-        //=======================================================
-        // Synchronization Information
-        //=======================================================
 
         entity.LastSynchronizedDate =
             null;
@@ -1372,10 +1370,6 @@ public class CodeSynchronizationEngine
         entity.LastSynchronizationResult =
             "Rollback completed successfully.";
 
-
-        //=======================================================
-        // Audit
-        //=======================================================
 
         entity.ModifiedDate =
             DateTime.UtcNow;

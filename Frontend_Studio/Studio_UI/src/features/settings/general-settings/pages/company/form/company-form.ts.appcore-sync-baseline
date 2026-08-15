@@ -143,17 +143,17 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
-    {{MODEL_NAME}},
-    Create{{MODEL_NAME}},
-    Update{{MODEL_NAME}}
+    Company,
+    CreateCompany,
+    UpdateCompany
 }
-from '{{MODEL_PATH}}';
+from '../../../models/company.model';
 
 import
 {
-    {{SERVICE_NAME}}
+    CompanyService
 }
-from '{{SERVICE_PATH}}';
+from '../../../services/company.service';
 
 
 //===============================================================
@@ -162,7 +162,7 @@ from '{{SERVICE_PATH}}';
 
 @Component(
 {
-    selector:'{{SELECTOR}}',
+    selector:'company-form',
 
     standalone:true,
 
@@ -215,17 +215,17 @@ from '{{SERVICE_PATH}}';
     ],
 
 
-    templateUrl:'{{FORM_HTML_FILE}}',
+    templateUrl:'./company-form.html',
 
 
     styleUrls:
     [
-        '{{FORM_CSS_FILE}}'
+        './company-form.css'
     ]
 })
 
 
-export class {{CLASS_NAME}}
+export class CompanyForm
 implements OnInit
 {
 
@@ -241,8 +241,8 @@ implements OnInit
         inject(Router);
 
 
-    private readonly {{SERVICE_PROPERTY}} =
-        inject({{SERVICE_NAME}});
+    private readonly companyservice =
+        inject(CompanyService);
 
 
     private readonly confirmDialog =
@@ -279,12 +279,12 @@ implements OnInit
 
     pageTitle:
         string =
-        '{{PAGE_TITLE}}';
+        'Company';
 
 
     entityName:
         string =
-        '{{ENTITY_NAME}}';
+        'Company';
 
 
 
@@ -367,9 +367,33 @@ implements OnInit
     //===========================================================
 
     entity:
-        {{MODEL_NAME}}
+        Company
     =
-        {{ENTITY_INITIALIZER}};
+        {
+        id: 0,
+
+        menuId: 0,
+
+        menuCode: '',
+
+        menuName: '',
+
+        code: '',
+
+        name: '',
+
+        icon: '',
+
+        routeKey: '',
+
+        route: '',
+
+        displayOrder: 0,
+
+        remarks: '',
+
+        isActive: true
+    };
 
 
 
@@ -493,7 +517,31 @@ implements OnInit
         void
     {
         this.entity =
-            {{ENTITY_INITIALIZER}};
+            {
+        id: 0,
+
+        menuId: 0,
+
+        menuCode: '',
+
+        menuName: '',
+
+        code: '',
+
+        name: '',
+
+        icon: '',
+
+        routeKey: '',
+
+        route: '',
+
+        displayOrder: 0,
+
+        remarks: '',
+
+        isActive: true
+    };
 
 
         this.originalEntity =
@@ -515,7 +563,7 @@ implements OnInit
     private loadEntity():
         void
     {
-        this.{{SERVICE_PROPERTY}}
+        this.companyservice
             .getById(
                 this.entityId
             )
@@ -544,7 +592,7 @@ implements OnInit
                 error:(error) =>
                 {
                     console.error(
-                        'Load {{ENTITY_NAME}} Error',
+                        'Load Company Error',
                         error
                     );
 
@@ -552,7 +600,7 @@ implements OnInit
                     this.toast.error(
                         'Error',
 
-                        'Failed to load {{ENTITY_NAME}}.'
+                        'Failed to load Company.'
                     );
 
 
@@ -632,7 +680,19 @@ implements OnInit
         // Validation
         //=======================================================
 
-        {{VALIDATION_CODE}}
+        if
+        (
+            !this.entity.name?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Name is required.'
+            );
+
+            return;
+        }
 
 
         //=======================================================
@@ -645,13 +705,32 @@ implements OnInit
         )
         {
             const model:
-                Create{{MODEL_NAME}} =
+                CreateCompany =
             {
-                {{CREATE_PAYLOAD}}
+                menuId:
+                    this.entity.menuId,
+
+                name:
+                    this.entity.name,
+
+                icon:
+                    this.entity.icon,
+
+                routeKey:
+                    this.entity.routeKey,
+
+                displayOrder:
+                    this.entity.displayOrder,
+
+                remarks:
+                    this.entity.remarks,
+
+                isActive:
+                    this.entity.isActive
             };
 
 
-            this.{{SERVICE_PROPERTY}}
+            this.companyservice
                 .create(
                     model
                 )
@@ -672,7 +751,7 @@ implements OnInit
                         this.toast.success(
                             'Success',
 
-                            '{{ENTITY_NAME}} created successfully.'
+                            'Company created successfully.'
                         );
 
 
@@ -683,7 +762,7 @@ implements OnInit
                     error:(error) =>
                     {
                         console.error(
-                            'Create {{ENTITY_NAME}} Error',
+                            'Create Company Error',
                             error
                         );
 
@@ -712,13 +791,35 @@ implements OnInit
         //=======================================================
 
         const model:
-            Update{{MODEL_NAME}} =
+            UpdateCompany =
         {
-            {{UPDATE_PAYLOAD}}
+            id:
+                this.entity.id,
+
+            menuId:
+                this.entity.menuId,
+
+            name:
+                this.entity.name,
+
+            icon:
+                this.entity.icon,
+
+            routeKey:
+                this.entity.routeKey,
+
+            displayOrder:
+                this.entity.displayOrder,
+
+            remarks:
+                this.entity.remarks,
+
+            isActive:
+                this.entity.isActive
         };
 
 
-        this.{{SERVICE_PROPERTY}}
+        this.companyservice
             .update(
                 model
             )
@@ -739,7 +840,7 @@ implements OnInit
                     this.toast.success(
                         'Success',
 
-                        '{{ENTITY_NAME}} updated successfully.'
+                        'Company updated successfully.'
                     );
 
 
@@ -750,7 +851,7 @@ implements OnInit
                 error:(error) =>
                 {
                     console.error(
-                        'Update {{ENTITY_NAME}} Error',
+                        'Update Company Error',
                         error
                     );
 
@@ -788,7 +889,7 @@ implements OnInit
             this.mode === 'edit'
         )
         {
-            {{EDIT_CLEAR_CODE}}
+            this.loadEntity();
 
 
             this.checkForChanges();
@@ -826,7 +927,7 @@ implements OnInit
             [
                 '..',
 
-                '{{LIST_ROUTE}}'
+                'list'
             ],
             {
                 relativeTo:
@@ -851,7 +952,7 @@ implements OnInit
                 [
                     '..',
 
-                    '{{LIST_ROUTE}}'
+                    'list'
                 ],
                 {
                     relativeTo:

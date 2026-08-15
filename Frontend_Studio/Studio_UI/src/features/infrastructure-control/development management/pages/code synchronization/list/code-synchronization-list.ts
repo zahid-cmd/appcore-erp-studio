@@ -7,7 +7,8 @@ import
     Component,
     OnInit,
     inject,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    ViewChild
 }
 from '@angular/core';
 
@@ -122,6 +123,23 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
 
+
+//===============================================================
+// Code Viewer
+//===============================================================
+
+import
+{
+    CodeViewerComponent,
+    CodeViewerFile
+}
+from '../code-viewer/code-viewer';
+
+
+//===============================================================
+// Services
+//===============================================================
+
 import
 {
     CodeSynchronizationService
@@ -197,7 +215,9 @@ from '../../../../navigation-management/models/navigation-menu.model';
 
         ProgressDialogComponent,
 
-        ToastComponent
+        ToastComponent,
+
+        CodeViewerComponent
     ],
 
     templateUrl:'./code-synchronization-list.html',
@@ -213,6 +233,16 @@ from '../../../../navigation-management/models/navigation-menu.model';
 export class CodeSynchronizationListComponent
 implements OnInit
 {
+
+    //===========================================================
+    // Code Viewer Reference
+    //===========================================================
+
+    @ViewChild(CodeViewerComponent)
+    private codeViewer:
+        CodeViewerComponent | undefined;
+
+
 
     //===========================================================
     // Dependency Injection
@@ -421,6 +451,26 @@ implements OnInit
 
 
     //===========================================================
+    // Code Viewer
+    //===========================================================
+
+    codeViewerOpened:
+        boolean =
+        false;
+
+
+    codeViewerFiles:
+        CodeViewerFile[] =
+        [];
+
+
+    selectedCodeSynchronization:
+        CodeSynchronization | null =
+        null;
+
+
+
+    //===========================================================
     // Page Canvas Configuration
     //===========================================================
 
@@ -592,21 +642,6 @@ implements OnInit
         }
 
 
-        console.log('================================');
-
-        console.log(
-            'Selected Tab:',
-            this.selectedTab
-        );
-
-        console.log(
-            'Current URL:',
-            url
-        );
-
-        console.log('================================');
-
-
         //=======================================================
         // Load Modules
         //=======================================================
@@ -637,17 +672,9 @@ implements OnInit
             tabId;
 
 
-        //=======================================================
-        // Reset Module
-        //=======================================================
-
         this.selectedModuleId =
             0;
 
-
-        //=======================================================
-        // Reset Menu
-        //=======================================================
 
         this.selectedMenuId =
             0;
@@ -657,25 +684,13 @@ implements OnInit
         [];
 
 
-        //=======================================================
-        // Reset Status
-        //=======================================================
-
         this.selectedStatus =
             '';
 
 
-        //=======================================================
-        // Reset Pagination
-        //=======================================================
-
         this.currentPage =
             1;
 
-
-        //=======================================================
-        // Backend
-        //=======================================================
 
         if
         (
@@ -697,10 +712,6 @@ implements OnInit
             return;
         }
 
-
-        //=======================================================
-        // Frontend
-        //=======================================================
 
         this.router.navigate(
         [
@@ -739,21 +750,6 @@ implements OnInit
             {
                 next:(response:ModuleSynchronization[]) =>
                 {
-                    console.log('================================');
-
-                    console.log(
-                        'Module Synchronization Type:',
-                        synchronizationType
-                    );
-
-                    console.log(
-                        'Module Response:',
-                        response
-                    );
-
-                    console.log('================================');
-
-
                     const moduleMap =
                         new Map<number,string>();
 
@@ -781,10 +777,6 @@ implements OnInit
                     );
 
 
-                    //===================================================
-                    // Module Dropdown Items
-                    //===================================================
-
                     this.modules =
                     Array.from(
                         moduleMap.entries()
@@ -804,10 +796,6 @@ implements OnInit
                             )
                     );
 
-
-                    //===================================================
-                    // Validate Selected Module
-                    //===================================================
 
                     if
                     (
@@ -881,10 +869,6 @@ implements OnInit
     loadMenus():
         void
     {
-        //=======================================================
-        // No Module Selected
-        //=======================================================
-
         if
         (
             this.selectedModuleId <= 0
@@ -905,16 +889,6 @@ implements OnInit
         }
 
 
-        console.log('================================');
-
-        console.log(
-            'Loading Navigation Menus For Module:',
-            this.selectedModuleId
-        );
-
-        console.log('================================');
-
-
         this.navigationMenuService
 
             .getByModule(
@@ -925,16 +899,6 @@ implements OnInit
             {
                 next:(response:NavigationMenu[]) =>
                 {
-                    console.log('================================');
-
-                    console.log(
-                        'Navigation Menu Response:',
-                        response
-                    );
-
-                    console.log('================================');
-
-
                     const menuMap =
                         new Map<number,string>();
 
@@ -980,10 +944,6 @@ implements OnInit
                             )
                     );
 
-
-                    //===================================================
-                    // Validate Selected Menu
-                    //===================================================
 
                     if
                     (
@@ -1048,10 +1008,6 @@ implements OnInit
             moduleId ?? 0;
 
 
-        //=======================================================
-        // Reset Menu
-        //=======================================================
-
         this.selectedMenuId =
             0;
 
@@ -1060,24 +1016,12 @@ implements OnInit
         [];
 
 
-        //=======================================================
-        // Reset Pagination
-        //=======================================================
-
         this.currentPage =
             1;
 
 
-        //=======================================================
-        // Load Menus For Selected Module
-        //=======================================================
-
         this.loadMenus();
 
-
-        //=======================================================
-        // Apply Filters
-        //=======================================================
 
         this.applyFilters();
     }
@@ -1121,16 +1065,6 @@ implements OnInit
             status ?? '';
 
 
-        console.log('================================');
-
-        console.log(
-            'Selected Status:',
-            this.selectedStatus
-        );
-
-        console.log('================================');
-
-
         this.currentPage =
             1;
 
@@ -1171,26 +1105,6 @@ implements OnInit
             {
                 next:(response:CodeSynchronization[]) =>
                 {
-                    console.log('================================');
-
-                    console.log(
-                        'Synchronization Type:',
-                        synchronizationType
-                    );
-
-                    console.log(
-                        'Code Synchronization Response:',
-                        response
-                    );
-
-                    console.log(
-                        'Total Records:',
-                        response.length
-                    );
-
-                    console.log('================================');
-
-
                     this.synchronizations =
                     [
                         ...response
@@ -1271,10 +1185,6 @@ implements OnInit
             this.synchronizations.filter(
                 item =>
                 {
-                    //===================================================
-                    // Module Filter
-                    //===================================================
-
                     const moduleMatches =
                         this.selectedModuleId <= 0
                         ||
@@ -1290,10 +1200,6 @@ implements OnInit
                     }
 
 
-                    //===================================================
-                    // Menu Filter
-                    //===================================================
-
                     const menuMatches =
                         this.selectedMenuId <= 0
                         ||
@@ -1308,10 +1214,6 @@ implements OnInit
                         return false;
                     }
 
-
-                    //===================================================
-                    // Status Filter
-                    //===================================================
 
                     const statusMatches =
                         !this.selectedStatus
@@ -1331,10 +1233,6 @@ implements OnInit
                         return false;
                     }
 
-
-                    //===================================================
-                    // Search Filter
-                    //===================================================
 
                     if
                     (
@@ -1391,10 +1289,6 @@ implements OnInit
             );
 
 
-        //=======================================================
-        // Sort
-        //=======================================================
-
         this.filteredSynchronizations.sort(
             (a,b) =>
                 a.submenuName.localeCompare(
@@ -1402,10 +1296,6 @@ implements OnInit
                 )
         );
 
-
-        //=======================================================
-        // Pagination
-        //=======================================================
 
         this.currentPage =
             1;
@@ -1673,29 +1563,6 @@ implements OnInit
     ):
         void
     {
-        console.log(
-            'VIEW CODE SYNCHRONIZATION',
-
-            item
-        );
-    }
-
-
-
-    //===========================================================
-    // Synchronize / Rollback Code
-    //===========================================================
-
-    synchronize
-    (
-        item:CodeSynchronization
-    ):
-        void
-    {
-        //=======================================================
-        // Validate Item
-        //=======================================================
-
         if
         (
             !item
@@ -1707,9 +1574,606 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Determine Current Status
-        //=======================================================
+        this.selectedCodeSynchronization =
+            item;
+
+
+        this.codeViewerFiles =
+        [];
+
+
+        this.codeViewerOpened =
+            true;
+
+
+        this.cdr.detectChanges();
+
+
+        this.loadCodeViewerFiles(
+            item.id
+        );
+    }
+
+
+
+    //===========================================================
+    // Load Code Viewer Files
+    //===========================================================
+
+    private loadCodeViewerFiles
+    (
+        id:number
+    ):
+        void
+    {
+        this.codeSynchronizationService
+
+            .getFiles(
+                id
+            )
+
+            .subscribe(
+            {
+                next:(response:any[]) =>
+                {
+                    this.codeViewerFiles =
+                        response.map(
+                            file =>
+                            ({
+                                fileName:
+                                    file.fileName
+                                    ??
+                                    file.name
+                                    ??
+                                    file.path
+                                    ??
+                                    '--',
+
+                                status:
+                                    file.isModified === true
+                                    ||
+                                    (
+                                        (
+                                            file.status
+                                            ??
+                                            ''
+                                        )
+                                        .toString()
+                                        .toLowerCase()
+                                        ===
+                                        'modified'
+                                    )
+                                        ?
+                                        'Modified'
+                                        :
+                                        'Clean',
+
+                                lastModified:
+                                    file.lastModified
+                                    ??
+                                    file.modifiedDate
+                                    ??
+                                    file.lastWriteTime
+                                    ??
+                                    file.lastWriteTimeUtc
+                                    ??
+                                    null
+                            })
+                        );
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:(error) =>
+                {
+                    console.error(
+                        'Generated Code Files Load Failed',
+
+                        error
+                    );
+
+
+                    this.codeViewerFiles =
+                    [];
+
+
+                    this.toast.error(
+                        'Code Viewer',
+
+                        'Unable to load generated code files.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Close Code Viewer
+    //===========================================================
+
+    closeCodeViewer():
+        void
+    {
+        this.codeViewerOpened =
+            false;
+
+
+        this.selectedCodeSynchronization =
+            null;
+
+
+        this.codeViewerFiles =
+        [];
+
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Restore From Code Viewer
+    //===========================================================
+    //
+    // This is FILE RESTORE.
+    //
+    // It does NOT call Code Synchronization Rollback.
+    //
+    //===========================================================
+
+    restoreCodeViewer():
+        void
+    {
+        if
+        (
+            !this.selectedCodeSynchronization
+        )
+        {
+            return;
+        }
+
+
+        const item =
+            this.selectedCodeSynchronization;
+
+
+        if
+        (
+            !this.codeViewerFiles.some(
+                file =>
+                    file.status === 'Modified'
+            )
+        )
+        {
+            return;
+        }
+
+
+        this.confirmDialog.open
+        (
+            'Restore Modified Files',
+
+            `Are you sure you want to restore all modified files for "${item.submenuName}" to their last synchronized state?`,
+
+            () =>
+            {
+                this.startRestoreAllFiles(
+                    item
+                );
+            },
+
+            'Restore',
+
+            'Cancel',
+
+            'primary'
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Restore All Files
+    //===========================================================
+
+    private startRestoreAllFiles
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        this.progressDialog.show
+        (
+            'Code Restore',
+
+            'Starting file restore.'
+        );
+
+
+        this.progressDialog.update
+        (
+            20,
+
+            'Checking modified files.'
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    50,
+
+                    'Restoring modified files to their last synchronized state.'
+                );
+            },
+
+            300
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.codeSynchronizationService
+
+                    .restoreAll(
+                        item.id
+                    )
+
+                    .subscribe(
+                    {
+                        next:() =>
+                        {
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'File restore completed.'
+                            );
+
+
+                            //================================================
+                            // COMPLETE CODE VIEWER RESTORE STATE
+                            //================================================
+
+                            this.codeViewer?.completeRestore();
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.loadCodeViewerFiles(
+                                        item.id
+                                    );
+
+
+                                    this.toast.success
+                                    (
+                                        'Code Restore',
+
+                                        `${item.submenuName} modified files were restored successfully.`
+                                    );
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:(error) =>
+                        {
+                            console.error(
+                                'Code Restore Failed',
+
+                                error
+                            );
+
+
+                            //================================================
+                            // RESET CODE VIEWER RESTORE STATE ON FAILURE
+                            //================================================
+
+                            this.codeViewer?.restoreFailed();
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Code Restore Failed',
+
+                                this.getErrorMessage(
+                                    error,
+
+                                    'Failed to restore modified files.'
+                                )
+                            );
+
+
+                            this.cdr.detectChanges();
+                        }
+                    });
+            },
+
+            700
+        );
+    }
+
+
+
+    //===========================================================
+    // Restore Single File From Code Viewer
+    //===========================================================
+    //
+    // This restores ONLY the selected file.
+    //
+    // It does NOT call Code Synchronization Rollback.
+    //
+    //===========================================================
+
+    restoreCodeViewerFile
+    (
+        file:CodeViewerFile
+    ):
+        void
+    {
+        if
+        (
+            !this.selectedCodeSynchronization
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            file.status !== 'Modified'
+        )
+        {
+            return;
+        }
+
+
+        const item =
+            this.selectedCodeSynchronization;
+
+
+        this.confirmDialog.open
+        (
+            'Restore File',
+
+            `Are you sure you want to restore "${file.fileName}" to its last synchronized state?`,
+
+            () =>
+            {
+                this.startRestoreFile(
+                    item,
+
+                    file
+                );
+            },
+
+            'Restore',
+
+            'Cancel',
+
+            'primary'
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Restore Single File
+    //===========================================================
+
+    private startRestoreFile
+    (
+        item:CodeSynchronization,
+
+        file:CodeViewerFile
+    ):
+        void
+    {
+        this.codeSynchronizationService
+
+            .restoreFile
+            (
+                item.id,
+
+                file.fileName
+            )
+
+            .subscribe(
+            {
+                next:() =>
+                {
+                    //================================================
+                    // COMPLETE SINGLE FILE RESTORE STATE
+                    //================================================
+
+                    this.codeViewer?.completeFileRestore();
+
+
+                    this.loadCodeViewerFiles(
+                        item.id
+                    );
+
+
+                    this.toast.success
+                    (
+                        'Code Restore',
+
+                        `${file.fileName} was restored successfully.`
+                    );
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:(error) =>
+                {
+                    console.error(
+                        'File Restore Failed',
+
+                        error
+                    );
+
+
+                    //================================================
+                    // RESET SINGLE FILE RESTORE STATE ON FAILURE
+                    //================================================
+
+                    this.codeViewer?.fileRestoreFailed();
+
+
+                    this.toast.error
+                    (
+                        'File Restore Failed',
+
+                        this.getErrorMessage(
+                            error,
+
+                            `Failed to restore ${file.fileName}.`
+                        )
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Code Viewer Restore All Event
+    //===========================================================
+
+    onCodeViewerRestoreAll():
+        void
+    {
+        this.restoreCodeViewer();
+    }
+
+
+
+    //===========================================================
+    // Code Viewer Restore File Event
+    //===========================================================
+
+    onCodeViewerRestoreFile
+    (
+        file:CodeViewerFile
+    ):
+        void
+    {
+        this.restoreCodeViewerFile(
+            file
+        );
+    }
+
+
+
+    //===========================================================
+    // Error Message
+    //===========================================================
+
+    private getErrorMessage
+    (
+        error:any,
+
+        fallback:string
+    ):
+        string
+    {
+        if
+        (
+            typeof error === 'string'
+        )
+        {
+            return error;
+        }
+
+
+        if
+        (
+            typeof error?.error === 'string'
+        )
+        {
+            return error.error;
+        }
+
+
+        if
+        (
+            typeof error?.error?.message === 'string'
+        )
+        {
+            return error.error.message;
+        }
+
+
+        if
+        (
+            typeof error?.message === 'string'
+        )
+        {
+            return error.message;
+        }
+
+
+        return fallback;
+    }
+
+
+
+    //===========================================================
+    // Synchronize / Rollback Code
+    //===========================================================
+    //
+    // IMPORTANT:
+    //
+    // This remains the existing synchronization-level
+    // Synchronize / Rollback operation.
+    //
+    // It is completely separate from Code Viewer Restore.
+    //
+    //===========================================================
+
+    synchronize
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !item
+            ||
+            item.id <= 0
+        )
+        {
+            return;
+        }
+
 
         const isSynchronized =
             item.status
@@ -1717,10 +2181,6 @@ implements OnInit
                 ===
             'synchronized';
 
-
-        //=======================================================
-        // Rollback
-        //=======================================================
 
         if
         (
@@ -1735,8 +2195,7 @@ implements OnInit
 
                 () =>
                 {
-                    this.startRollback
-                    (
+                    this.startRollback(
                         item
                     );
                 },
@@ -1753,10 +2212,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Synchronize
-        //=======================================================
-
         this.confirmDialog.open
         (
             'Synchronize Code',
@@ -1765,8 +2220,7 @@ implements OnInit
 
             () =>
             {
-                this.startSynchronization
-                (
+                this.startSynchronization(
                     item
                 );
             },
@@ -1791,10 +2245,6 @@ implements OnInit
     ):
         void
     {
-        //=======================================================
-        // Open Progress Dialog
-        //=======================================================
-
         this.progressDialog.show
         (
             'Code Synchronization',
@@ -1803,10 +2253,6 @@ implements OnInit
         );
 
 
-        //=======================================================
-        // Initial Progress
-        //=======================================================
-
         this.progressDialog.update
         (
             10,
@@ -1814,10 +2260,6 @@ implements OnInit
             'Preparing code synchronization.'
         );
 
-
-        //=======================================================
-        // Progress Stage
-        //=======================================================
 
         setTimeout(
             () =>
@@ -1834,10 +2276,6 @@ implements OnInit
         );
 
 
-        //=======================================================
-        // Progress Stage
-        //=======================================================
-
         setTimeout(
             () =>
             {
@@ -1852,10 +2290,6 @@ implements OnInit
             700
         );
 
-
-        //=======================================================
-        // Execute Synchronization
-        //=======================================================
 
         setTimeout(
             () =>
@@ -1917,9 +2351,11 @@ implements OnInit
                             (
                                 'Code Synchronization Failed',
 
-                                error?.error
-                                ??
-                                'Failed to synchronize code.'
+                                this.getErrorMessage(
+                                    error,
+
+                                    'Failed to synchronize code.'
+                                )
                             );
                         }
                     });
@@ -1934,6 +2370,12 @@ implements OnInit
     //===========================================================
     // Start Rollback
     //===========================================================
+    //
+    // Existing synchronization rollback.
+    //
+    // DO NOT use this for Code Viewer Restore.
+    //
+    //===========================================================
 
     private startRollback
     (
@@ -1941,10 +2383,6 @@ implements OnInit
     ):
         void
     {
-        //=======================================================
-        // Open Progress Dialog
-        //=======================================================
-
         this.progressDialog.show
         (
             'Code Rollback',
@@ -1953,10 +2391,6 @@ implements OnInit
         );
 
 
-        //=======================================================
-        // Initial Progress
-        //=======================================================
-
         this.progressDialog.update
         (
             10,
@@ -1964,10 +2398,6 @@ implements OnInit
             'Preparing code rollback.'
         );
 
-
-        //=======================================================
-        // Progress Stage
-        //=======================================================
 
         setTimeout(
             () =>
@@ -1984,10 +2414,6 @@ implements OnInit
         );
 
 
-        //=======================================================
-        // Progress Stage
-        //=======================================================
-
         setTimeout(
             () =>
             {
@@ -2002,10 +2428,6 @@ implements OnInit
             700
         );
 
-
-        //=======================================================
-        // Execute Rollback
-        //=======================================================
 
         setTimeout(
             () =>
@@ -2067,9 +2489,11 @@ implements OnInit
                             (
                                 'Code Rollback Failed',
 
-                                error?.error
-                                ??
-                                'Failed to roll back code.'
+                                this.getErrorMessage(
+                                    error,
+
+                                    'Failed to roll back code.'
+                                )
                             );
                         }
                     });
@@ -2147,10 +2571,6 @@ implements OnInit
             {
                 next:(response:any[]) =>
                 {
-                    //===================================================
-                    // Map History Records
-                    //===================================================
-
                     this.historyItems =
                         response.map(
                             item =>
@@ -2177,10 +2597,6 @@ implements OnInit
                             })
                         );
 
-
-                    //===================================================
-                    // Open History Drawer
-                    //===================================================
 
                     this.historyTitle =
                         'Code Synchronization History';

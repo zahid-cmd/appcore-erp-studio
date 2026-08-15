@@ -56,4 +56,30 @@ export const settingsRoutes:
 
     // AUTO-END : MNU-005-001
 
+    // AUTO-BEGIN : MNU-005-002
+
+    //===========================================================
+    // Account Settings
+    //===========================================================
+
+    {
+        path:'account-settings',
+
+        data:
+        {
+            breadcrumb:'Account Settings'
+        },
+
+        loadChildren:() =>
+            import(
+                '../account-settings/routes/account-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu005002Routes
+            )
+    },
+
+    // AUTO-END : MNU-005-002
+
 ];

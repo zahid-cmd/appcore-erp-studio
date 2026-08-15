@@ -31,9 +31,9 @@ from '@angular/router';
 
 import
 {
-    {{MODEL_IMPORT}}
+    Company
 }
-from '{{MODEL_PATH}}';
+from '../../../models/company.model';
 
 
 //===============================================================
@@ -134,9 +134,9 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
-    {{SERVICE_CLASS}}
+    CompanyService
 }
-from '{{SERVICE_PATH}}';
+from '../../../services/company.service';
 
 
 //===============================================================
@@ -145,7 +145,7 @@ from '{{SERVICE_PATH}}';
 
 @Component(
 {
-    selector:'{{LIST_SELECTOR}}',
+    selector:'company-list',
 
     standalone:true,
 
@@ -178,17 +178,17 @@ from '{{SERVICE_PATH}}';
         ToastComponent
     ],
 
-    templateUrl:'./{{LIST_HTML_FILE}}',
+    templateUrl:'./company-list.html',
 
-    styleUrl:'./{{LIST_CSS_FILE}}'
+    styleUrl:'./company-list.css'
 })
 
 
 //===============================================================
-// {{ENTITY_NAME}} List Component
+// Company List Component
 //===============================================================
 
-export class {{LIST_COMPONENT_CLASS}}
+export class CompanyList
 implements OnInit
 {
 
@@ -196,8 +196,8 @@ implements OnInit
     // Dependency Injection
     //===========================================================
 
-    private readonly {{SERVICE_PROPERTY}} =
-        inject({{SERVICE_CLASS}});
+    private readonly companyservice =
+        inject(CompanyService);
 
 
     private readonly confirmDialog =
@@ -231,7 +231,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All {{ENTITY_PLURAL}}'
+            label:'All Companies'
         }
     ];
 
@@ -252,7 +252,7 @@ implements OnInit
         {
             value:null,
 
-            text:'All {{FILTER_NAME}}'
+            text:'All Menu'
         }
     ];
 
@@ -267,18 +267,18 @@ implements OnInit
     // Data Source
     //===========================================================
 
-    {{ENTITY_PLURAL_PROPERTY}}:
-        {{ENTITY_CLASS}}[] =
+    companies:
+        Company[] =
     [];
 
 
-    filtered{{ENTITY_PLURAL}}:
-        {{ENTITY_CLASS}}[] =
+    filteredCompanies:
+        Company[] =
     [];
 
 
-    paged{{ENTITY_PLURAL}}:
-        {{ENTITY_CLASS}}[] =
+    pagedCompanies:
+        Company[] =
     [];
 
 
@@ -329,7 +329,7 @@ implements OnInit
 
     historyTitle:
         string =
-        '{{ENTITY_NAME}} History';
+        'Company History';
 
 
     historyItems:
@@ -439,7 +439,7 @@ implements OnInit
     ngOnInit():
         void
     {
-        this.load{{FILTER_NAME}}();
+        this.loadMenu();
 
         this.loadItems();
     }
@@ -450,7 +450,7 @@ implements OnInit
     // Load Parent Filter
     //===========================================================
 
-    load{{FILTER_NAME}}():
+    loadMenu():
         void
     {
         //=======================================================
@@ -464,7 +464,7 @@ implements OnInit
 
 
     //===========================================================
-    // Load {{ENTITY_PLURAL}}
+    // Load Companies
     //===========================================================
 
     loadItems():
@@ -478,17 +478,17 @@ implements OnInit
             false;
 
 
-        this.{{SERVICE_PROPERTY}}
+        this.companyservice
             .getAll()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        {{ENTITY_CLASS}}[]
+                        Company[]
                 ): void =>
                 {
-                    this.{{ENTITY_PLURAL_PROPERTY}} =
+                    this.companies =
                     [
                         ...response
                     ];
@@ -517,21 +517,21 @@ implements OnInit
                 {
                     console.error
                     (
-                        'Load {{ENTITY_PLURAL}} Error',
+                        'Load Companies Error',
 
                         error
                     );
 
 
-                    this.{{ENTITY_PLURAL_PROPERTY}} =
+                    this.companies =
                     [];
 
 
-                    this.filtered{{ENTITY_PLURAL}} =
+                    this.filteredCompanies =
                     [];
 
 
-                    this.paged{{ENTITY_PLURAL}} =
+                    this.pagedCompanies =
                     [];
 
 
@@ -547,7 +547,7 @@ implements OnInit
                     (
                         'Load Failed',
 
-                        'Unable to load {{ENTITY_PLURAL_LOWER}}.'
+                        'Unable to load companies.'
                     );
 
 
@@ -591,20 +591,20 @@ implements OnInit
                 .toLowerCase();
 
 
-        this.filtered{{ENTITY_PLURAL}} =
-            this.{{ENTITY_PLURAL_PROPERTY}}
+        this.filteredCompanies =
+            this.companies
                 .filter
                 (
                     (
                         x:
-                            {{ENTITY_CLASS}}
+                            Company
                     ):
                         boolean =>
                     {
                         const filterMatch =
                             !this.selectedItemId
                             ||
-                            x.{{FILTER_FIELD}}
+                            x.menuId
                             ===
                             this.selectedItemId;
 
@@ -678,34 +678,34 @@ implements OnInit
     ):
         void
     {
-        this.filtered{{ENTITY_PLURAL}} =
+        this.filteredCompanies =
         [
-            ...this.filtered{{ENTITY_PLURAL}}
+            ...this.filteredCompanies
         ];
 
 
-        this.filtered{{ENTITY_PLURAL}}.sort
+        this.filteredCompanies.sort
         (
             (
                 a:
-                    {{ENTITY_CLASS}},
+                    Company,
 
                 b:
-                    {{ENTITY_CLASS}}
+                    Company
             ):
                 number =>
             {
                 const valueA:
                     any =
                     a[
-                        event.field as keyof {{ENTITY_CLASS}}
+                        event.field as keyof Company
                     ];
 
 
                 const valueB:
                     any =
                     b[
-                        event.field as keyof {{ENTITY_CLASS}}
+                        event.field as keyof Company
                     ];
 
 
@@ -808,7 +808,7 @@ implements OnInit
             null;
 
 
-        this.load{{FILTER_NAME}}();
+        this.loadMenu();
 
         this.loadItems();
     }
@@ -831,9 +831,9 @@ implements OnInit
             this.pageSize;
 
 
-        this.paged{{ENTITY_PLURAL}} =
+        this.pagedCompanies =
         [
-            ...this.filtered{{ENTITY_PLURAL}}
+            ...this.filteredCompanies
                 .slice
                 (
                     start,
@@ -899,7 +899,7 @@ implements OnInit
         void this.router.navigate
         (
             [
-                '{{ADD_ROUTE}}'
+                'add'
             ],
 
             {
@@ -918,14 +918,14 @@ implements OnInit
     view
     (
         item:
-            {{ENTITY_CLASS}}
+            Company
     ):
         void
     {
         void this.router.navigate
         (
             [
-                '{{VIEW_ROUTE}}',
+                'view',
 
                 item.id
             ],
@@ -946,14 +946,14 @@ implements OnInit
     edit
     (
         item:
-            {{ENTITY_CLASS}}
+            Company
     ):
         void
     {
         void this.router.navigate
         (
             [
-                '{{EDIT_ROUTE}}',
+                'edit',
 
                 item.id
             ],
@@ -974,19 +974,19 @@ implements OnInit
     delete
     (
         item:
-            {{ENTITY_CLASS}}
+            Company
     ):
         void
     {
         this.confirmDialog.open
         (
-            'Delete {{ENTITY_NAME}}',
+            'Delete Company',
 
             `Are you sure you want to delete "${item.name}" ?`,
 
             (): void =>
             {
-                this.{{SERVICE_PROPERTY}}
+                this.companyservice
                     .delete
                     (
                         item.id
@@ -1016,7 +1016,7 @@ implements OnInit
                         {
                             console.error
                             (
-                                'Delete {{ENTITY_NAME}} Error',
+                                'Delete Company Error',
 
                                 error
                             );
@@ -1026,7 +1026,7 @@ implements OnInit
                             (
                                 'Delete Failed',
 
-                                'Failed to delete {{ENTITY_LOWER}}.'
+                                'Failed to delete company.'
                             );
                         }
                     });
@@ -1045,9 +1045,9 @@ implements OnInit
     {
         this.confirmDialog.open
         (
-            'Restore {{ENTITY_NAME}}',
+            'Restore Company',
 
-            'Are you sure you want to restore the most recently deleted {{ENTITY_LOWER}}?',
+            'Are you sure you want to restore the most recently deleted company?',
 
             (): void =>
             {
@@ -1071,7 +1071,7 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.{{SERVICE_PROPERTY}}
+        this.companyservice
             .restore()
             .subscribe
             ({
@@ -1082,7 +1082,7 @@ implements OnInit
                     (
                         'Restore Successful',
 
-                        'The most recently deleted {{ENTITY_LOWER}} has been restored.'
+                        'The most recently deleted company has been restored.'
                     );
 
 
@@ -1098,7 +1098,7 @@ implements OnInit
                 {
                     console.error
                     (
-                        'Restore {{ENTITY_NAME}} Error',
+                        'Restore Company Error',
 
                         error
                     );
@@ -1108,7 +1108,7 @@ implements OnInit
                     (
                         'Restore Failed',
 
-                        'Failed to restore {{ENTITY_LOWER}}.'
+                        'Failed to restore company.'
                     );
                 }
             });
@@ -1123,7 +1123,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.{{SERVICE_PROPERTY}}
+        this.companyservice
             .getHistory()
             .subscribe
             ({
@@ -1167,7 +1167,7 @@ implements OnInit
 
 
                     this.historyTitle =
-                        '{{ENTITY_NAME}} Management History';
+                        'Company Management History';
 
 
                     this.historyOpened =
@@ -1196,7 +1196,7 @@ implements OnInit
                     (
                         'History',
 
-                        'Failed to load {{ENTITY_LOWER}} history.'
+                        'Failed to load company history.'
                     );
                 }
             });

@@ -6,10 +6,10 @@ from '@angular/router';
 
 
 //===========================================================
-// MNU-007-001 Routes
+// MNU-005-002 Routes
 //===========================================================
 
-export const mnu007001Routes:
+export const mnu005002Routes:
 Routes =
 [
 

@@ -1,0 +1,1946 @@
+/*===============================================================
+  CODE VIEWER OVERLAY
+===============================================================*/
+
+.code-viewer-backdrop
+{
+    position:fixed;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:24px;
+
+    box-sizing:border-box;
+
+    background:rgba(15, 42, 68, .50);
+
+    backdrop-filter:blur(9px);
+
+    -webkit-backdrop-filter:blur(9px);
+
+    z-index:1000;
+
+    overflow:auto;
+}
+
+
+
+/*===============================================================
+  DIALOG
+===============================================================*/
+
+.code-viewer-dialog
+{
+    position:relative;
+
+    width:1080px;
+
+    height:650px;
+
+    max-width:96vw;
+
+    max-height:94vh;
+
+    margin:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    flex-shrink:0;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border:1px solid #dbe3ee;
+
+    border-radius:18px;
+
+    box-shadow:
+        0 30px 80px rgba(15, 42, 68, .22),
+        0 8px 24px rgba(15, 42, 68, .10);
+}
+
+
+
+/*===============================================================
+  HEADER
+===============================================================*/
+
+.code-viewer-header
+{
+    min-height:80px;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:20px;
+
+    padding:10px 24px;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f3f6ff 0%,
+            #eef3ff 55%,
+            #f8faff 100%
+        );
+
+    border-bottom:1px solid #dce5f5;
+}
+
+
+.code-viewer-header-left
+{
+    min-width:0;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+}
+
+
+
+/*===============================================================
+  HEADER ICON
+===============================================================*/
+
+.code-viewer-icon
+{
+    width:56px;
+
+    height:56px;
+
+    flex:0 0 56px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:1px solid #d2ddff;
+
+    border-radius:14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #eaf0ff 100%
+        );
+
+    color:#5567e9;
+
+    font-size:22px;
+
+    box-shadow:
+        0 5px 14px rgba(85, 103, 233, .10);
+}
+
+
+
+/*===============================================================
+  HEADER TITLE
+===============================================================*/
+
+.code-viewer-title-area
+{
+    min-width:0;
+}
+
+
+.code-viewer-title
+{
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    font-size:18px;
+
+    font-weight:650;
+
+    line-height:25px;
+
+    letter-spacing:-.15px;
+
+    color:#0f2a44;
+}
+
+
+.code-viewer-subtitle
+{
+    margin-top:4px;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    font-size:12px;
+
+    line-height:18px;
+
+    color:#64748b;
+}
+
+
+
+/*===============================================================
+  CLOSE
+===============================================================*/
+
+.code-viewer-close
+{
+    width:40px;
+
+    height:40px;
+
+    flex:0 0 40px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:1px solid #dce4f2;
+
+    border-radius:50%;
+
+    background:rgba(255, 255, 255, .78);
+
+    color:#64748b;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        color .15s ease,
+        box-shadow .15s ease;
+}
+
+
+.code-viewer-close:hover:not(:disabled)
+{
+    background:#ffffff;
+
+    border-color:#c7d3eb;
+
+    color:#0f2a44;
+
+    box-shadow:
+        0 2px 8px rgba(15, 42, 68, .08);
+}
+
+
+.code-viewer-close:disabled
+{
+    opacity:.45;
+
+    cursor:not-allowed;
+}
+
+
+
+/*===============================================================
+  SUMMARY COUNTER SECTION
+===============================================================*/
+
+.code-viewer-summary
+{
+    min-height:60px;
+
+    flex-shrink:0;
+
+    display:grid;
+
+    grid-template-columns:
+        1fr
+        1px
+        1fr
+        1px
+        1fr
+        1px
+        1fr;
+
+    align-items:stretch;
+
+    margin:
+        18px
+        24px
+        0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    border:1px solid #b9ccff;
+
+    border-radius:18px;
+
+    background:#ffffff;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 8px 24px rgba(85, 103, 233, .07);
+}
+
+
+
+/*===============================================================
+  SUMMARY ITEM
+===============================================================*/
+
+.summary-item
+{
+    min-width:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    padding:0 18px;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    transition:
+        background .15s ease;
+}
+
+
+.summary-item:hover
+{
+    background:#f8faff;
+}
+
+
+
+/*===============================================================
+  SUMMARY COUNTER
+===============================================================*/
+
+.summary-counter
+{
+    width:42px;
+
+    height:42px;
+
+    flex:0 0 42px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb 0%,
+            #3b72df 50%,
+            #4f7fe3 100%
+        );
+
+    color:#ffffff;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    line-height:1;
+
+    box-shadow:
+        0 5px 12px rgba(37, 99, 235, .20);
+}
+
+
+
+/*===============================================================
+  SUMMARY LABEL
+===============================================================*/
+
+.summary-label
+{
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    font-size:12px;
+
+    font-weight:650;
+
+    letter-spacing:.15px;
+
+    color:#0f172a;
+}
+
+
+
+/*===============================================================
+  SUMMARY DIVIDER
+===============================================================*/
+
+.summary-divider
+{
+    width:1px;
+
+    height:100%;
+
+    margin:0;
+
+    background:#dfe5ee;
+}
+
+
+
+/*===============================================================
+  BODY
+===============================================================*/
+
+.code-viewer-body
+{
+    min-height:0;
+
+    flex:1;
+
+    display:flex;
+
+    flex-direction:column;
+
+    overflow:hidden;
+
+    padding:
+        5px
+        24px
+        0;
+
+    box-sizing:border-box;
+}
+
+
+
+/*===============================================================
+  SECTION HEADER
+===============================================================*/
+
+.code-viewer-section-header
+{
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:flex-end;
+
+    justify-content:space-between;
+
+    gap:10px;
+
+    padding-top:0;
+
+    padding-bottom:6px;
+
+    box-sizing:border-box;
+}
+
+
+
+/*===============================================================
+  SECTION TITLE
+===============================================================*/
+
+.section-title
+{
+    font-size:15px;
+
+    font-weight:700;
+
+    line-height:19px;
+
+    color:#0f2a44;
+}
+
+
+
+/*===============================================================
+  SECTION SUBTITLE
+===============================================================*/
+
+.section-subtitle
+{
+    margin-top:2px;
+
+    font-size:12px;
+
+    line-height:16px;
+
+    color:#64748b;
+}
+
+
+
+/*===============================================================
+  CURRENT STATE
+===============================================================*/
+
+.code-viewer-current-state
+{
+    flex-shrink:0;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:7px;
+
+    height:30px;
+
+    padding:
+        0
+        11px;
+
+    box-sizing:border-box;
+
+    border-radius:16px;
+
+    font-size:10px;
+
+    font-weight:650;
+
+    line-height:1;
+
+    white-space:nowrap;
+}
+
+
+
+/*===============================================================
+  CURRENT STATE ICON
+===============================================================*/
+
+.code-viewer-current-state i
+{
+    font-size:9px;
+
+    line-height:1;
+}
+
+
+
+/*===============================================================
+  CLEAN STATE
+===============================================================*/
+
+.code-viewer-current-state.clean
+{
+    border:1px solid #d1fae5;
+
+    background:#ecfdf3;
+
+    color:#15803d;
+}
+
+
+
+/*===============================================================
+  LOCAL CHANGES STATE
+===============================================================*/
+
+.code-viewer-current-state.modified
+{
+    border:1px solid #d8e2ff;
+
+    background:#eef3ff;
+
+    color:#5567e9;
+}
+
+
+
+/*===============================================================
+  FILE LIST
+===============================================================*/
+
+.code-viewer-file-list
+{
+    min-height:0;
+
+    flex:1;
+
+    margin-top:0;
+
+    overflow:auto;
+
+    box-sizing:border-box;
+
+    border:1px solid #dce4ee;
+
+    border-radius:12px;
+
+    background:#ffffff;
+
+    box-shadow:
+        0 1px 3px rgba(15, 42, 68, .03);
+}
+
+
+
+/*===============================================================
+  FILE ROW
+===============================================================*/
+
+.code-viewer-file-row
+{
+    min-height:54px;
+
+    display:grid;
+
+    grid-template-columns:
+        42px
+        minmax(0, 1fr)
+        190px
+        110px
+        112px;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:0 16px;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border-bottom:1px solid #edf1f6;
+
+    transition:
+        background .15s ease;
+}
+
+
+.code-viewer-file-row:last-child
+{
+    border-bottom:0;
+}
+
+
+.code-viewer-file-row:hover
+{
+    background:#f8faff;
+}
+
+
+
+/*===============================================================
+  SERIAL
+===============================================================*/
+
+.file-serial
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    color:#94a3b8;
+}
+
+
+
+/*===============================================================
+  FILE INFO
+===============================================================*/
+
+.file-info
+{
+    min-width:0;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+}
+
+
+.file-icon
+{
+    width:32px;
+
+    height:32px;
+
+    flex:0 0 32px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:1px solid #dfe6ef;
+
+    border-radius:8px;
+
+    background:#f8fafc;
+
+    color:#64748b;
+
+    font-size:12px;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        color .15s ease;
+}
+
+
+.code-viewer-file-row:hover .file-icon
+{
+    border-color:#d5def8;
+
+    background:#eef3ff;
+
+    color:#5567e9;
+}
+
+
+.file-name
+{
+    min-width:0;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    font-size:12px;
+
+    font-weight:550;
+
+    color:#1e293b;
+}
+
+
+
+/*===============================================================
+  LAST MODIFIED
+===============================================================*/
+
+.file-modified
+{
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    font-size:11px;
+
+    color:#64748b;
+}
+
+
+
+/*===============================================================
+  STATUS
+===============================================================*/
+
+.file-status
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+}
+
+
+.file-status-badge
+{
+    min-width:76px;
+
+    height:28px;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    padding:0 10px;
+
+    box-sizing:border-box;
+
+    border-radius:20px;
+
+    font-size:10px;
+
+    font-weight:650;
+
+    white-space:nowrap;
+}
+
+
+.file-status-badge i
+{
+    font-size:8px;
+}
+
+
+.file-status-badge.clean
+{
+    background:#ecfdf3;
+
+    color:#15803d;
+
+    border:1px solid #d1fae5;
+}
+
+
+.file-status-badge.modified
+{
+    background:#eef3ff;
+
+    color:#5567e9;
+
+    border:1px solid #d8e2ff;
+}
+
+
+
+/*===============================================================
+  FILE ACTION
+===============================================================*/
+
+.file-action
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+}
+
+
+
+/*===============================================================
+  ROW RESTORE BUTTON
+  ENABLED / ACTIVE FILE
+===============================================================*/
+
+.file-restore-button
+{
+    min-width:100px;
+
+    height:36px;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:7px;
+
+    padding:0 14px;
+
+    box-sizing:border-box;
+
+    border:1px solid #b9c8f5;
+
+    border-radius:7px;
+
+    background:#ffffff;
+
+    color:#3854b8;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:550;
+
+    line-height:1;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 1px 3px rgba(37, 99, 235, .06);
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        color .15s ease,
+        box-shadow .15s ease,
+        transform .10s ease,
+        opacity .15s ease;
+}
+
+
+
+/*===============================================================
+  ROW RESTORE BUTTON
+  HOVER
+===============================================================*/
+
+.file-restore-button:hover:not(:disabled)
+{
+    border-color:#5567e9;
+
+    background:#eef3ff;
+
+    color:#3f55c7;
+
+    box-shadow:
+        0 3px 8px rgba(85, 103, 233, .14);
+}
+
+
+
+/*===============================================================
+  ROW RESTORE BUTTON
+  ACTIVE / PRESSED
+===============================================================*/
+
+.file-restore-button:active:not(:disabled)
+{
+    border-color:#4859d4;
+
+    background:#e5ebff;
+
+    color:#3348ad;
+
+    box-shadow:none;
+
+    transform:translateY(1px);
+}
+
+
+
+/*===============================================================
+  ROW RESTORE BUTTON
+  DISABLED
+===============================================================*/
+
+.file-restore-button:disabled
+{
+    border-color:#e5eaf1;
+
+    background:#f8fafc;
+
+    color:#a0aec0;
+
+    opacity:1;
+
+    cursor:not-allowed;
+
+    box-shadow:none;
+
+    transform:none;
+}
+
+
+.file-restore-button i
+{
+    font-size:11px;
+}
+
+
+
+/*===============================================================
+  RESTORING STATE
+===============================================================*/
+
+.file-restore-button.restoring
+{
+    border-color:#cbd5e1;
+
+    background:#f8fafc;
+
+    color:#64748b;
+
+    cursor:wait;
+}
+
+
+.file-restore-button.restoring i
+{
+    animation:
+        code-viewer-spin .8s linear infinite;
+}
+
+
+@keyframes code-viewer-spin
+{
+    from
+    {
+        transform:rotate(0deg);
+    }
+
+    to
+    {
+        transform:rotate(360deg);
+    }
+}
+
+
+
+/*===============================================================
+  EMPTY STATE
+===============================================================*/
+
+.code-viewer-empty
+{
+    min-height:180px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    color:#64748b;
+}
+
+
+.code-viewer-empty > i
+{
+    margin-bottom:5px;
+
+    font-size:25px;
+
+    color:#94a3b8;
+}
+
+
+.empty-title
+{
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#334155;
+}
+
+
+.empty-text
+{
+    font-size:11px;
+
+    color:#64748b;
+}
+
+
+
+/*===============================================================
+  LOCAL CHANGES INFORMATION
+===============================================================*/
+
+.code-viewer-warning
+{
+    min-height:68px;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin:14px 24px 0;
+
+    padding:12px 14px;
+
+    box-sizing:border-box;
+
+    border:1px solid #d7e2ff;
+
+    border-radius:10px;
+
+    background:#f5f8ff;
+}
+
+
+.warning-icon
+{
+    width:34px;
+
+    height:34px;
+
+    flex:0 0 34px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:1px solid #dbe5ff;
+
+    border-radius:8px;
+
+    background:#eaf0ff;
+
+    color:#5567e9;
+
+    font-size:14px;
+}
+
+
+.warning-content
+{
+    min-width:0;
+}
+
+
+.warning-title
+{
+    font-size:12px;
+
+    font-weight:650;
+
+    line-height:17px;
+
+    color:#334155;
+}
+
+
+.warning-text
+{
+    margin-top:2px;
+
+    font-size:11px;
+
+    line-height:17px;
+
+    color:#64748b;
+}
+
+
+
+/*===============================================================
+  FOOTER
+===============================================================*/
+
+.code-viewer-footer
+{
+    min-height:76px;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:18px;
+
+    padding:16px 24px;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border-top:1px solid #e5eaf1;
+}
+
+
+.code-viewer-footer-info
+{
+    min-width:0;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    overflow:hidden;
+
+    font-size:11px;
+
+    color:#64748b;
+}
+
+
+.code-viewer-footer-info > i
+{
+    flex:0 0 auto;
+
+    color:#64748b;
+
+    font-size:11px;
+}
+
+
+.code-viewer-footer-info span
+{
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+
+/*===============================================================
+  FOOTER ACTIONS
+===============================================================*/
+
+.code-viewer-actions
+{
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:10px;
+}
+
+
+
+/*===============================================================
+  COMMON BUTTON
+===============================================================*/
+
+.code-viewer-button
+{
+    min-width:104px;
+
+    height:40px;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    padding:0 17px;
+
+    box-sizing:border-box;
+
+    border-radius:8px;
+
+    font-family:inherit;
+
+    font-size:13px;
+
+    font-weight:550;
+
+    line-height:1;
+
+    cursor:pointer;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        color .15s ease,
+        box-shadow .15s ease,
+        opacity .15s ease;
+}
+
+
+.code-viewer-button i
+{
+    font-size:11px;
+}
+
+
+
+/*===============================================================
+  SECONDARY BUTTON
+===============================================================*/
+
+.code-viewer-button.secondary
+{
+    border:1px solid #d5dce7;
+
+    background:#ffffff;
+
+    color:#475569;
+}
+
+
+.code-viewer-button.secondary:hover:not(:disabled)
+{
+    background:#f8fafc;
+
+    border-color:#aeb9c9;
+
+    color:#334155;
+}
+
+
+.code-viewer-button.secondary:active:not(:disabled)
+{
+    background:#f1f5f9;
+
+    border-color:#94a3b8;
+}
+
+
+
+/*===============================================================
+  PRIMARY / RESTORE ALL BUTTON
+===============================================================*/
+
+.code-viewer-button.primary
+{
+    min-width:126px;
+
+    border:1px solid #2563eb;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    color:#ffffff;
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, .20);
+}
+
+
+.code-viewer-button.primary:hover:not(:disabled)
+{
+    border-color:#2563eb;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b2238 0%,
+            #1e40af 45%,
+            #1d4ed8 100%
+        );
+
+    color:#ffffff;
+
+    box-shadow:
+        0 5px 13px rgba(37, 99, 235, .28);
+}
+
+
+.code-viewer-button.primary:active:not(:disabled)
+{
+    border-color:#1d4ed8;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #172554 45%,
+            #1d4ed8 100%
+        );
+
+    color:#ffffff;
+
+    box-shadow:none;
+}
+
+
+.code-viewer-button:disabled
+{
+    border-color:#e2e8f0;
+
+    background:#f8fafc;
+
+    color:#94a3b8;
+
+    opacity:1;
+
+    cursor:not-allowed;
+
+    box-shadow:none;
+}
+
+
+
+/*===============================================================
+  PRIMARY BUTTON LOADING
+===============================================================*/
+
+.code-viewer-button.loading
+{
+    cursor:wait;
+}
+
+
+.code-viewer-button.loading i
+{
+    animation:
+        code-viewer-spin .8s linear infinite;
+}
+
+
+
+/*===============================================================
+  MODIFIED FILE ROW
+===============================================================*/
+
+.code-viewer-file-row.modified
+{
+    background:#fafbff;
+}
+
+
+.code-viewer-file-row.modified:hover
+{
+    background:#f5f7ff;
+}
+
+
+.code-viewer-file-row.modified .file-icon
+{
+    border-color:#d8e2ff;
+
+    background:#eef3ff;
+
+    color:#5567e9;
+}
+
+
+
+/*===============================================================
+  FOCUS STATES
+===============================================================*/
+
+.code-viewer-close:focus-visible,
+.file-restore-button:focus-visible,
+.code-viewer-button:focus-visible
+{
+    outline:2px solid rgba(85, 103, 233, .35);
+
+    outline-offset:2px;
+}
+
+
+
+/*===============================================================
+  RESPONSIVE
+===============================================================*/
+
+@media
+(
+    max-width:900px
+)
+{
+    .code-viewer-dialog
+    {
+        width:96vw;
+
+        height:620px;
+    }
+
+
+    .code-viewer-summary
+    {
+        margin-left:18px;
+
+        margin-right:18px;
+    }
+
+
+    .code-viewer-body
+    {
+        padding-left:18px;
+
+        padding-right:18px;
+    }
+
+
+    .code-viewer-file-row
+    {
+        grid-template-columns:
+            36px
+            minmax(0, 1fr)
+            155px
+            92px
+            100px;
+
+        gap:10px;
+
+        padding:0 12px;
+    }
+
+
+    .file-restore-button
+    {
+        min-width:92px;
+
+        padding:0 10px;
+    }
+}
+
+
+
+/*===============================================================
+  TABLET / SMALL SCREEN
+===============================================================*/
+
+@media
+(
+    max-width:760px
+)
+{
+    .code-viewer-backdrop
+    {
+        padding:12px;
+    }
+
+
+    .code-viewer-dialog
+    {
+        width:96vw;
+
+        max-width:96vw;
+
+        height:90vh;
+
+        max-height:90vh;
+
+        border-radius:14px;
+    }
+
+
+    .code-viewer-header
+    {
+        min-height:78px;
+
+        padding:14px 16px;
+    }
+
+
+    .code-viewer-icon
+    {
+        width:42px;
+
+        height:42px;
+
+        flex-basis:42px;
+
+        border-radius:11px;
+
+        font-size:17px;
+    }
+
+
+    .code-viewer-header-left
+    {
+        gap:11px;
+    }
+
+
+    .code-viewer-title
+    {
+        font-size:15px;
+
+        line-height:21px;
+    }
+
+
+    .code-viewer-subtitle
+    {
+        font-size:11px;
+    }
+
+
+    .code-viewer-close
+    {
+        width:36px;
+
+        height:36px;
+
+        flex-basis:36px;
+    }
+
+
+    .code-viewer-summary
+    {
+        min-height:76px;
+
+        grid-template-columns:
+            1fr
+            1px
+            1fr
+            1px
+            1fr
+            1px
+            1fr;
+
+        margin:
+            14px
+            16px
+            0;
+    }
+
+
+    .summary-item
+    {
+        gap:6px;
+
+        padding:0 8px;
+
+        flex-direction:column;
+    }
+
+
+    .summary-counter
+    {
+        width:34px;
+
+        height:34px;
+
+        flex-basis:34px;
+
+        font-size:12px;
+    }
+
+
+    .summary-label
+    {
+        font-size:9px;
+
+        text-align:center;
+    }
+
+
+    .code-viewer-body
+    {
+        padding:
+            6px
+            16px
+            0;
+    }
+
+
+    .code-viewer-section-header
+    {
+        align-items:flex-start;
+
+        flex-direction:column;
+
+        gap:6px;
+
+        padding-bottom:6px;
+    }
+
+
+    .code-viewer-file-row
+    {
+        grid-template-columns:
+            28px
+            minmax(0, 1fr)
+            94px;
+
+        min-height:52px;
+
+        gap:8px;
+
+        padding:8px 10px;
+    }
+
+
+    .file-modified
+    {
+        display:none;
+    }
+
+
+    .file-status
+    {
+        display:none;
+    }
+
+
+    .file-action
+    {
+        justify-content:flex-end;
+    }
+
+
+    .file-restore-button
+    {
+        min-width:90px;
+
+        height:36px;
+
+        padding:0 9px;
+    }
+
+
+    .code-viewer-warning
+    {
+        margin:
+            12px
+            16px
+            0;
+    }
+
+
+    .code-viewer-footer
+    {
+        min-height:auto;
+
+        flex-direction:column;
+
+        align-items:stretch;
+
+        padding:
+            12px
+            16px;
+    }
+
+
+    .code-viewer-footer-info
+    {
+        justify-content:center;
+
+        text-align:center;
+    }
+
+
+    .code-viewer-actions
+    {
+        justify-content:flex-end;
+    }
+
+
+    .code-viewer-button
+    {
+        min-width:96px;
+    }
+}
+
+
+
+/*===============================================================
+  MOBILE
+===============================================================*/
+
+@media
+(
+    max-width:520px
+)
+{
+    .code-viewer-backdrop
+    {
+        padding:8px;
+    }
+
+
+    .code-viewer-dialog
+    {
+        width:100%;
+
+        max-width:100%;
+
+        height:94vh;
+
+        max-height:94vh;
+
+        border-radius:12px;
+    }
+
+
+    .code-viewer-header
+    {
+        padding:
+            12px
+            14px;
+    }
+
+
+    .code-viewer-summary
+    {
+        min-height:auto;
+
+        grid-template-columns:
+            1fr
+            1fr;
+
+        gap:0;
+
+        margin:
+            10px
+            12px
+            0;
+
+        border-radius:14px;
+    }
+
+
+    .code-viewer-summary .summary-item
+    {
+        min-height:68px;
+
+        justify-content:center;
+    }
+
+
+    .code-viewer-summary .summary-divider
+    {
+        display:none;
+    }
+
+
+    .summary-counter
+    {
+        width:34px;
+
+        height:34px;
+
+        flex-basis:34px;
+
+        font-size:13px;
+    }
+
+
+    .summary-label
+    {
+        font-size:9px;
+    }
+
+
+    .code-viewer-body
+    {
+        padding:
+            5px
+            12px
+            0;
+    }
+
+
+    .code-viewer-file-row
+    {
+        grid-template-columns:
+            26px
+            minmax(0, 1fr)
+            88px;
+
+        gap:7px;
+
+        padding:
+            7px
+            8px;
+    }
+
+
+    .file-icon
+    {
+        width:28px;
+
+        height:28px;
+
+        flex-basis:28px;
+    }
+
+
+    .file-name
+    {
+        font-size:11px;
+    }
+
+
+    .file-restore-button
+    {
+        min-width:84px;
+
+        height:34px;
+
+        padding:0 8px;
+
+        font-size:11px;
+    }
+
+
+    .code-viewer-warning
+    {
+        margin:
+            10px
+            12px
+            0;
+
+        padding:
+            9px
+            10px;
+    }
+
+
+    .code-viewer-actions
+    {
+        width:100%;
+    }
+
+
+    .code-viewer-button
+    {
+        flex:1;
+
+        min-width:0;
+    }
+}

@@ -240,6 +240,32 @@
 
 
     <!-- =========================================================
+        CODE VIEWER
+    ========================================================= -->
+
+    <app-code-viewer
+
+        [opened]="codeViewerOpened"
+
+        [synchronizationType]="
+            selectedTab === 'backend'
+                ? 'Backend'
+                : 'Frontend'
+        "
+
+        [files]="codeViewerFiles"
+
+        (closed)="closeCodeViewer()"
+
+        (restoreRequested)="onCodeViewerRestoreAll()"
+
+        (restoreFileRequested)="onCodeViewerRestoreFile($event)">
+
+    </app-code-viewer>
+
+
+
+    <!-- =========================================================
         HISTORY DRAWER
     ========================================================= -->
 
@@ -270,9 +296,19 @@
     <!-- =========================================================
         CONFIRM DIALOG
     ========================================================= -->
+
     <app-confirm-dialog>
+
     </app-confirm-dialog>
 
+
+
+    <!-- =========================================================
+        PROGRESS DIALOG
+    ========================================================= -->
+
     <app-progress-dialog>
+
     </app-progress-dialog>
+
 </div>

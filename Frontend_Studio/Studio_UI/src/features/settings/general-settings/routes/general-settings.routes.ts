@@ -31,6 +31,32 @@ Routes =
         children:
         [
 
+// AUTO-BEGIN : SUB-005-001-001
+
+    //===========================================================
+    // Company
+    //===========================================================
+
+    {
+        path:'company',
+
+        data:
+        {
+            breadcrumb:'Company'
+        },
+
+        loadChildren:() =>
+            import(
+                './company.routes'
+            )
+            .then(
+                m =>
+                    m.CompanyRoutes
+            )
+    },
+
+    // AUTO-END : SUB-005-001-001
+
 ]
 
     }

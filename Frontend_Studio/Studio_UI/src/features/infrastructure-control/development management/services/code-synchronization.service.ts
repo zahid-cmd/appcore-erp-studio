@@ -11,7 +11,8 @@ from '@angular/core';
 
 import
 {
-    HttpClient
+    HttpClient,
+    HttpParams
 }
 from '@angular/common/http';
 
@@ -32,6 +33,23 @@ import
     CodeSynchronization
 }
 from '../model/code-synchronization.model';
+
+
+//===============================================================
+// Code Synchronization File
+//===============================================================
+
+export interface CodeSynchronizationFile
+{
+    fileName:
+        string;
+
+    status:
+        'Clean' | 'Modified';
+
+    lastModified:
+        string | Date | null;
+}
 
 
 //===============================================================
@@ -65,7 +83,8 @@ export class CodeSynchronizationService
 
     getAll
     (
-        synchronizationType:string
+        synchronizationType:
+            string
     ):
         Observable<CodeSynchronization[]>
     {
@@ -83,7 +102,8 @@ export class CodeSynchronizationService
 
     getById
     (
-        id:number
+        id:
+            number
     ):
         Observable<CodeSynchronization>
     {
@@ -116,7 +136,8 @@ export class CodeSynchronizationService
 
     synchronize
     (
-        id:number
+        id:
+            number
     ):
         Observable<void>
     {
@@ -133,10 +154,17 @@ export class CodeSynchronizationService
     //===========================================================
     // Rollback Code Synchronization
     //===========================================================
+    //
+    // Existing synchronization-level rollback.
+    //
+    // This remains separate from file Restore.
+    //
+    //===========================================================
 
     rollback
     (
-        id:number
+        id:
+            number
     ):
         Observable<void>
     {
@@ -156,13 +184,88 @@ export class CodeSynchronizationService
 
     getFiles
     (
-        id:number
+        id:
+            number
     ):
-        Observable<any[]>
+        Observable<CodeSynchronizationFile[]>
     {
-        return this.http.get<any[]>
+        return this.http.get<CodeSynchronizationFile[]>
         (
             `${this.apiUrl}/${id}/files`
+        );
+    }
+
+
+
+    //===========================================================
+    // Restore File
+    //===========================================================
+    //
+    // Restores one modified file to the version produced by
+    // the last successful synchronization.
+    //
+    // The API expects fileName as a query parameter.
+    //
+    // This is NOT synchronization rollback.
+    //
+    //===========================================================
+
+    restoreFile
+    (
+        id:
+            number,
+
+        fileName:
+            string
+    ):
+        Observable<void>
+    {
+        const params =
+            new HttpParams()
+                .set(
+                    'fileName',
+
+                    fileName
+                );
+
+
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/restore`,
+
+            {},
+
+            {
+                params
+            }
+        );
+    }
+
+
+
+    //===========================================================
+    // Restore All Modified Files
+    //===========================================================
+    //
+    // Restores only files that have been modified after the
+    // last successful synchronization.
+    //
+    // This is NOT synchronization rollback.
+    //
+    //===========================================================
+
+    restoreAll
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/restore-all`,
+
+            {}
         );
     }
 

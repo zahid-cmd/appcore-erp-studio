@@ -76,15 +76,6 @@ public class CodeSynchronizationRepository
     //===========================================================
     // Get All
     //===========================================================
-    //
-    // Code Synchronization belongs to the corresponding
-    // Submenu Synchronization.
-    //
-    // Therefore SynchronizationType is resolved from the
-    // Submenu Synchronization record instead of trusting a
-    // potentially stale Code Synchronization type value.
-    //
-    //===========================================================
 
     public async Task<List<CodeSynchronizationDto>>
         GetAllAsync
@@ -146,25 +137,11 @@ public class CodeSynchronizationRepository
                 x =>
                     new CodeSynchronizationDto
                     {
-                        //===================================================
-                        // Primary Key
-                        //===================================================
-
                         Id =
                             x.Id,
 
-
-                        //===================================================
-                        // Submenu Synchronization Reference
-                        //===================================================
-
                         SubmenuSynchronizationId =
                             x.SubmenuSynchronizationId,
-
-
-                        //===================================================
-                        // Navigation
-                        //===================================================
 
                         ModuleId =
                             x.ModuleId,
@@ -175,7 +152,6 @@ public class CodeSynchronizationRepository
                         ModuleName =
                             x.ModuleName,
 
-
                         MenuId =
                             x.MenuId,
 
@@ -185,7 +161,6 @@ public class CodeSynchronizationRepository
                         MenuName =
                             x.MenuName,
 
-
                         SubmenuId =
                             x.SubmenuId,
 
@@ -194,16 +169,6 @@ public class CodeSynchronizationRepository
 
                         SubmenuName =
                             x.SubmenuName,
-
-
-                        //===================================================
-                        // Synchronization Type
-                        //===================================================
-                        //
-                        // Resolve the type from the parent Submenu
-                        // Synchronization record.
-                        //
-                        //===================================================
 
                         SynchronizationType =
                             _context.SubmenuSynchronizations
@@ -224,26 +189,11 @@ public class CodeSynchronizationRepository
 
                                 .FirstOrDefault(),
 
-
-                        //===================================================
-                        // Status
-                        //===================================================
-
                         Status =
                             x.Status,
 
-
-                        //===================================================
-                        // Configuration
-                        //===================================================
-
                         Remarks =
                             x.Remarks,
-
-
-                        //===================================================
-                        // Last Synchronization
-                        //===================================================
 
                         LastSynchronizedBy =
                             x.LastSynchronizedBy,
@@ -254,18 +204,8 @@ public class CodeSynchronizationRepository
                         LastSynchronizationResult =
                             x.LastSynchronizationResult,
 
-
-                        //===================================================
-                        // Status
-                        //===================================================
-
                         IsActive =
                             x.IsActive,
-
-
-                        //===================================================
-                        // Audit
-                        //===================================================
 
                         CreatedDate =
                             x.CreatedDate
@@ -306,25 +246,11 @@ public class CodeSynchronizationRepository
                 x =>
                     new CodeSynchronizationDto
                     {
-                        //===================================================
-                        // Primary Key
-                        //===================================================
-
                         Id =
                             x.Id,
 
-
-                        //===================================================
-                        // Submenu Synchronization Reference
-                        //===================================================
-
                         SubmenuSynchronizationId =
                             x.SubmenuSynchronizationId,
-
-
-                        //===================================================
-                        // Navigation
-                        //===================================================
 
                         ModuleId =
                             x.ModuleId,
@@ -335,7 +261,6 @@ public class CodeSynchronizationRepository
                         ModuleName =
                             x.ModuleName,
 
-
                         MenuId =
                             x.MenuId,
 
@@ -345,7 +270,6 @@ public class CodeSynchronizationRepository
                         MenuName =
                             x.MenuName,
 
-
                         SubmenuId =
                             x.SubmenuId,
 
@@ -354,11 +278,6 @@ public class CodeSynchronizationRepository
 
                         SubmenuName =
                             x.SubmenuName,
-
-
-                        //===================================================
-                        // Synchronization Type
-                        //===================================================
 
                         SynchronizationType =
                             _context.SubmenuSynchronizations
@@ -379,21 +298,11 @@ public class CodeSynchronizationRepository
 
                                 .FirstOrDefault(),
 
-
-                        //===================================================
-                        // Synchronization
-                        //===================================================
-
                         Status =
                             x.Status,
 
                         Remarks =
                             x.Remarks,
-
-
-                        //===================================================
-                        // Last Synchronization
-                        //===================================================
 
                         LastSynchronizedBy =
                             x.LastSynchronizedBy,
@@ -404,18 +313,8 @@ public class CodeSynchronizationRepository
                         LastSynchronizationResult =
                             x.LastSynchronizationResult,
 
-
-                        //===================================================
-                        // Status
-                        //===================================================
-
                         IsActive =
                             x.IsActive,
-
-
-                        //===================================================
-                        // Audit
-                        //===================================================
 
                         CreatedDate =
                             x.CreatedDate
@@ -423,6 +322,1049 @@ public class CodeSynchronizationRepository
             )
 
             .FirstOrDefaultAsync();
+    }
+
+
+
+    //===========================================================
+    // Get Generated Files
+    //===========================================================
+
+    public async Task<List<CodeSynchronizationFileDto>>
+        GetFilesAsync
+    (
+        long id
+    )
+    {
+        //=======================================================
+        // Load Code Synchronization
+        //=======================================================
+
+        var codeSynchronization =
+            await _context.CodeSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            codeSynchronization == null
+        )
+        {
+            return [];
+        }
+
+
+        //=======================================================
+        // Load Submenu Synchronization
+        //=======================================================
+
+        var submenuSynchronization =
+            await _context.SubmenuSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        codeSynchronization.SubmenuSynchronizationId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            submenuSynchronization == null
+        )
+        {
+            return [];
+        }
+
+
+        //=======================================================
+        // Frontend Files
+        //=======================================================
+
+        if
+        (
+            string.Equals
+            (
+                codeSynchronization.SynchronizationType,
+
+                "Frontend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return await BuildFrontendFilesAsync
+            (
+                submenuSynchronization,
+
+                codeSynchronization.LastSynchronizedDate
+            );
+        }
+
+
+        //=======================================================
+        // Backend Files
+        //=======================================================
+
+        if
+        (
+            string.Equals
+            (
+                codeSynchronization.SynchronizationType,
+
+                "Backend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return await BuildBackendFilesAsync
+            (
+                submenuSynchronization,
+
+                codeSynchronization.LastSynchronizedDate
+            );
+        }
+
+
+        return [];
+    }
+
+
+
+    //===========================================================
+    // Restore File
+    //===========================================================
+    //
+    // Restores one modified generated file to the state produced
+    // by the last successful Code Synchronization.
+    //
+    // This is NOT the existing synchronization rollback.
+    //
+    //===========================================================
+
+    public async Task<bool>
+        RestoreFileAsync
+    (
+        long id,
+
+        string fileName
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                fileName
+            )
+        )
+        {
+            return false;
+        }
+
+
+        var codeSynchronization =
+            await _context.CodeSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            codeSynchronization == null
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            !codeSynchronization.LastSynchronizedDate.HasValue
+        )
+        {
+            return false;
+        }
+
+
+        var files =
+            await GetSynchronizationFilePathsAsync(
+                id
+            );
+
+
+        var filePath =
+            files.FirstOrDefault
+            (
+                x =>
+                    string.Equals
+                    (
+                        Path.GetFileName(x),
+
+                        fileName,
+
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                filePath
+            )
+        )
+        {
+            return false;
+        }
+
+
+        var baselinePath =
+            GetBaselinePath(
+                filePath
+            );
+
+
+        if
+        (
+            !File.Exists(
+                baselinePath
+            )
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Check Actual File Content
+        //=======================================================
+
+        var modified =
+            await IsFileModifiedAsync
+            (
+                filePath,
+
+                baselinePath
+            );
+
+
+        if
+        (
+            !modified
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Restore Last Synchronized Version
+        //=======================================================
+
+        File.Copy
+        (
+            baselinePath,
+
+            filePath,
+
+            true
+        );
+
+
+        //=======================================================
+        // Restore Baseline Timestamp
+        //=======================================================
+
+        File.SetLastWriteTimeUtc
+        (
+            filePath,
+
+            File.GetLastWriteTimeUtc(
+                baselinePath
+            )
+        );
+
+
+        return true;
+    }
+
+
+
+    //===========================================================
+    // Restore All
+    //===========================================================
+    //
+    // Restores only files that are currently different from
+    // their last successfully synchronized baseline.
+    //
+    // This does NOT perform Code Synchronization Rollback.
+    //
+    //===========================================================
+
+    public async Task<bool>
+        RestoreAllFilesAsync
+    (
+        long id
+    )
+    {
+        var codeSynchronization =
+            await _context.CodeSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            codeSynchronization == null
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            !codeSynchronization.LastSynchronizedDate.HasValue
+        )
+        {
+            return false;
+        }
+
+
+        var files =
+            await GetSynchronizationFilePathsAsync(
+                id
+            );
+
+
+        var restored =
+            false;
+
+
+        foreach
+        (
+            var filePath in files
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    filePath
+                )
+            )
+            {
+                continue;
+            }
+
+
+            var baselinePath =
+                GetBaselinePath(
+                    filePath
+                );
+
+
+            if
+            (
+                !File.Exists(
+                    baselinePath
+                )
+            )
+            {
+                continue;
+            }
+
+
+            //===================================================
+            // Check Actual File Content
+            //===================================================
+
+            var modified =
+                await IsFileModifiedAsync
+                (
+                    filePath,
+
+                    baselinePath
+                );
+
+
+            if
+            (
+                !modified
+            )
+            {
+                continue;
+            }
+
+
+            //===================================================
+            // Restore Last Synchronized Version
+            //===================================================
+
+            File.Copy
+            (
+                baselinePath,
+
+                filePath,
+
+                true
+            );
+
+
+            //===================================================
+            // Restore Baseline Timestamp
+            //===================================================
+
+            File.SetLastWriteTimeUtc
+            (
+                filePath,
+
+                File.GetLastWriteTimeUtc(
+                    baselinePath
+                )
+            );
+
+
+            restored =
+                true;
+        }
+
+
+        return restored;
+    }
+
+
+
+    //===========================================================
+    // Create Synchronization Baseline
+    //===========================================================
+    //
+    // Called after a successful Code Synchronization.
+    //
+    // The generated files are copied to their baseline storage.
+    //
+    //===========================================================
+
+    private async Task
+        CreateSynchronizationBaselineAsync
+    (
+        long id
+    )
+    {
+        var files =
+            await GetSynchronizationFilePathsAsync(
+                id
+            );
+
+
+        foreach
+        (
+            var filePath in files
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    filePath
+                )
+            )
+            {
+                continue;
+            }
+
+
+            if
+            (
+                !File.Exists(
+                    filePath
+                )
+            )
+            {
+                continue;
+            }
+
+
+            var baselinePath =
+                GetBaselinePath(
+                    filePath
+                );
+
+
+            var directory =
+                Path.GetDirectoryName(
+                    baselinePath
+                );
+
+
+            if
+            (
+                !string.IsNullOrWhiteSpace(
+                    directory
+                )
+            )
+            {
+                Directory.CreateDirectory(
+                    directory
+                );
+            }
+
+
+            File.Copy
+            (
+                filePath,
+
+                baselinePath,
+
+                true
+            );
+
+
+            //===================================================
+            // Preserve Synchronized File Timestamp
+            //===================================================
+
+            File.SetLastWriteTimeUtc
+            (
+                baselinePath,
+
+                File.GetLastWriteTimeUtc(
+                    filePath
+                )
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Get Synchronization File Paths
+    //===========================================================
+
+    private async Task<List<string>>
+        GetSynchronizationFilePathsAsync
+    (
+        long id
+    )
+    {
+        var codeSynchronization =
+            await _context.CodeSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            codeSynchronization == null
+        )
+        {
+            return [];
+        }
+
+
+        var submenuSynchronization =
+            await _context.SubmenuSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        codeSynchronization.SubmenuSynchronizationId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            submenuSynchronization == null
+        )
+        {
+            return [];
+        }
+
+
+        //=======================================================
+        // Frontend Files
+        //=======================================================
+
+        if
+        (
+            string.Equals
+            (
+                codeSynchronization.SynchronizationType,
+
+                "Frontend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new List<string>
+            {
+                submenuSynchronization.FrontendSubmenuModelFile,
+
+                submenuSynchronization.FrontendSubmenuServiceFile,
+
+                submenuSynchronization.FrontendSubmenuRouteFile,
+
+                submenuSynchronization.FrontendSubmenuFormTsFile,
+
+                submenuSynchronization.FrontendSubmenuFormHtmlFile,
+
+                submenuSynchronization.FrontendSubmenuFormCssFile,
+
+                submenuSynchronization.FrontendSubmenuListTsFile,
+
+                submenuSynchronization.FrontendSubmenuListHtmlFile,
+
+                submenuSynchronization.FrontendSubmenuListCssFile
+            }
+            .Where(
+                x =>
+                    !string.IsNullOrWhiteSpace(x)
+            )
+            .Select(
+                Path.GetFullPath
+            )
+            .ToList();
+        }
+
+
+        //=======================================================
+        // Backend Files
+        //=======================================================
+
+        if
+        (
+            string.Equals
+            (
+                codeSynchronization.SynchronizationType,
+
+                "Backend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new List<string>
+            {
+                submenuSynchronization.BackendControllerFile,
+
+                submenuSynchronization.BackendSubMenuDtoFile,
+
+                submenuSynchronization.BackendCreateSubMenuDtoFile,
+
+                submenuSynchronization.BackendUpdateSubMenuDtoFile,
+
+                submenuSynchronization.BackendSubMenuDefaultsDtoFile,
+
+                submenuSynchronization.BackendSubMenuRepositoryInterfaceFile,
+
+                submenuSynchronization.BackendSubMenuEntityFile,
+
+                submenuSynchronization.BackendSubMenuConfigurationFile,
+
+                submenuSynchronization.BackendSubMenuRepositoryFile
+            }
+            .Where(
+                x =>
+                    !string.IsNullOrWhiteSpace(x)
+            )
+            .Select(
+                Path.GetFullPath
+            )
+            .ToList();
+        }
+
+
+        return [];
+    }
+
+
+
+    //===========================================================
+    // Get Baseline Path
+    //===========================================================
+
+    private static string
+        GetBaselinePath
+    (
+        string filePath
+    )
+    {
+        return
+            $"{filePath}.appcore-sync-baseline";
+    }
+
+
+
+    //===========================================================
+    // Determine File Modification
+    //===========================================================
+    //
+    // Compares the current file content with the synchronized
+    // baseline.
+    //
+    // This is the actual file-change check used by Code Viewer.
+    //
+    //===========================================================
+
+    private static async Task<bool>
+        IsFileModifiedAsync
+    (
+        string filePath,
+
+        string baselinePath
+    )
+    {
+        if
+        (
+            !File.Exists(
+                baselinePath
+            )
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            !File.Exists(
+                filePath
+            )
+        )
+        {
+            return true;
+        }
+
+
+        var currentBytes =
+            await File.ReadAllBytesAsync(
+                filePath
+            );
+
+
+        var baselineBytes =
+            await File.ReadAllBytesAsync(
+                baselinePath
+            );
+
+
+        return !currentBytes.SequenceEqual(
+            baselineBytes
+        );
+    }
+
+
+
+    //===========================================================
+    // Build Frontend Files
+    //===========================================================
+
+    private static async Task<List<CodeSynchronizationFileDto>>
+        BuildFrontendFilesAsync
+    (
+        AppCore.Domain.Entities.InfrastructureControl
+            .DevelopmentManagement.SubmenuSynchronization synchronization,
+
+        DateTime? lastSynchronizedDate
+    )
+    {
+        var files =
+            new List<string>
+            {
+                synchronization.FrontendSubmenuModelFile,
+
+                synchronization.FrontendSubmenuServiceFile,
+
+                synchronization.FrontendSubmenuRouteFile,
+
+                synchronization.FrontendSubmenuFormTsFile,
+
+                synchronization.FrontendSubmenuFormHtmlFile,
+
+                synchronization.FrontendSubmenuFormCssFile,
+
+                synchronization.FrontendSubmenuListTsFile,
+
+                synchronization.FrontendSubmenuListHtmlFile,
+
+                synchronization.FrontendSubmenuListCssFile
+            };
+
+
+        return await BuildFileListAsync
+        (
+            files,
+
+            lastSynchronizedDate
+        );
+    }
+
+
+
+    //===========================================================
+    // Build Backend Files
+    //===========================================================
+
+    private static async Task<List<CodeSynchronizationFileDto>>
+        BuildBackendFilesAsync
+    (
+        AppCore.Domain.Entities.InfrastructureControl
+            .DevelopmentManagement.SubmenuSynchronization synchronization,
+
+        DateTime? lastSynchronizedDate
+    )
+    {
+        var files =
+            new List<string>
+            {
+                synchronization.BackendControllerFile,
+
+                synchronization.BackendSubMenuDtoFile,
+
+                synchronization.BackendCreateSubMenuDtoFile,
+
+                synchronization.BackendUpdateSubMenuDtoFile,
+
+                synchronization.BackendSubMenuDefaultsDtoFile,
+
+                synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+                synchronization.BackendSubMenuEntityFile,
+
+                synchronization.BackendSubMenuConfigurationFile,
+
+                synchronization.BackendSubMenuRepositoryFile
+            };
+
+
+        return await BuildFileListAsync
+        (
+            files,
+
+            lastSynchronizedDate
+        );
+    }
+
+
+
+    //===========================================================
+    // Build File List
+    //===========================================================
+
+    private static async Task<List<CodeSynchronizationFileDto>>
+        BuildFileListAsync
+    (
+        IEnumerable<string> filePaths,
+
+        DateTime? lastSynchronizedDate
+    )
+    {
+        var result =
+            new List<CodeSynchronizationFileDto>();
+
+
+        foreach
+        (
+            var filePath in filePaths
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    filePath
+                )
+            )
+            {
+                continue;
+            }
+
+
+            var fullPath =
+                Path.GetFullPath(
+                    filePath
+                );
+
+
+            var fileName =
+                Path.GetFileName(
+                    fullPath
+                );
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    fileName
+                )
+            )
+            {
+                continue;
+            }
+
+
+            //===================================================
+            // File Information
+            //===================================================
+
+            DateTime?
+                lastModified =
+                    null;
+
+
+            if
+            (
+                File.Exists(
+                    fullPath
+                )
+            )
+            {
+                lastModified =
+                    File.GetLastWriteTime(
+                        fullPath
+                    );
+            }
+
+
+            //===================================================
+            // Determine Status
+            //===================================================
+
+            var status =
+                "Clean";
+
+
+            if
+            (
+                lastSynchronizedDate.HasValue
+            )
+            {
+                var baselinePath =
+                    GetBaselinePath(
+                        fullPath
+                    );
+
+
+                if
+                (
+                    !File.Exists(
+                        fullPath
+                    )
+                )
+                {
+                    status =
+                        "Modified";
+                }
+
+                else if
+                (
+                    File.Exists(
+                        baselinePath
+                    )
+                )
+                {
+                    var modified =
+                        await IsFileModifiedAsync
+                        (
+                            fullPath,
+
+                            baselinePath
+                        );
+
+
+                    if
+                    (
+                        modified
+                    )
+                    {
+                        status =
+                            "Modified";
+                    }
+                }
+            }
+
+
+            result.Add
+            (
+                new CodeSynchronizationFileDto
+                {
+                    FileName =
+                        fileName,
+
+                    Status =
+                        status,
+
+                    LastModified =
+                        lastModified
+                }
+            );
+        }
+
+
+        return result;
     }
 
 
@@ -457,13 +1399,28 @@ public class CodeSynchronizationRepository
         }
 
 
+        //=======================================================
+        // Store Last Synchronized File Versions
+        //=======================================================
+
+        await CreateSynchronizationBaselineAsync(
+            id
+        );
+
+
         return true;
     }
 
 
 
     //===========================================================
-    // Rollback Code
+    // Rollback Code Synchronization
+    //===========================================================
+    //
+    // Existing Code Synchronization Rollback remains unchanged.
+    //
+    // This is separate from file-level Restore.
+    //
     //===========================================================
 
     public async Task<bool>
@@ -499,14 +1456,6 @@ public class CodeSynchronizationRepository
 
     //===========================================================
     // Create From Submenu Synchronization
-    //===========================================================
-    //
-    // The Code Synchronization record is created only after
-    // the corresponding Submenu Synchronization is synchronized.
-    //
-    // SynchronizationType is taken directly from the source
-    // Submenu Synchronization record.
-    //
     //===========================================================
 
     public async Task<long>
@@ -624,10 +1573,6 @@ public class CodeSynchronizationRepository
             existing != null
         )
         {
-            //===================================================
-            // Keep Existing Record Synchronized With Its Source
-            //===================================================
-
             existing.SynchronizationType =
                 synchronizationType;
 
@@ -680,17 +1625,9 @@ public class CodeSynchronizationRepository
         var synchronization =
             new CodeSynchronizationEntity
             {
-                //===================================================
-                // Submenu Synchronization Reference
-                //===================================================
-
                 SubmenuSynchronizationId =
                     submenuSynchronization.Id,
 
-
-                //===================================================
-                // Navigation
-                //===================================================
 
                 ModuleId =
                     submenuSynchronization.ModuleId,
@@ -722,33 +1659,17 @@ public class CodeSynchronizationRepository
                     submenuSynchronization.SubmenuName,
 
 
-                //===================================================
-                // Synchronization Type
-                //===================================================
-
                 SynchronizationType =
                     synchronizationType,
 
-
-                //===================================================
-                // Code Synchronization Status
-                //===================================================
 
                 Status =
                     "Ready",
 
 
-                //===================================================
-                // Configuration
-                //===================================================
-
                 Remarks =
                     submenuSynchronization.Remarks,
 
-
-                //===================================================
-                // Synchronization Result
-                //===================================================
 
                 LastSynchronizedBy =
                     null,
@@ -759,10 +1680,6 @@ public class CodeSynchronizationRepository
                 LastSynchronizationResult =
                     string.Empty,
 
-
-                //===================================================
-                // Audit
-                //===================================================
 
                 IsActive =
                     true,
