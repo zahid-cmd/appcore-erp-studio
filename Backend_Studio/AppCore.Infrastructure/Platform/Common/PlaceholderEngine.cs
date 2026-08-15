@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using System;
+
 using System.Collections.Generic;
 
 using AppCore.Application.Platform.CommonInterfaces;
@@ -21,6 +23,7 @@ namespace AppCore.Infrastructure.Platform.Common;
 public class PlaceholderEngine
     : IPlaceholderEngine
 {
+
     //===========================================================
     // Replace Placeholders
     //===========================================================
@@ -33,35 +36,114 @@ public class PlaceholderEngine
     )
     {
         //=======================================================
-        // Validate
+        // Validate Template
         //=======================================================
 
-        if (string.IsNullOrWhiteSpace(template))
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                template
+            )
+        )
         {
-            throw new ArgumentException(
+            throw new ArgumentException
+            (
                 "Template is empty.",
-                nameof(template));
+
+                nameof(template)
+            );
         }
 
-        if (replacements == null)
+
+        //=======================================================
+        // Validate Replacements
+        //=======================================================
+
+        if
+        (
+            replacements == null
+            ||
+            replacements.Count == 0
+        )
         {
             return template;
         }
 
+
         //=======================================================
-        // Replace
+        // Replace Placeholders
         //=======================================================
 
-        foreach (var replacement in replacements)
+        foreach
+        (
+            var replacement
+            in replacements
+        )
         {
+            var placeholder =
+                replacement.Key;
+
+
+            //===================================================
+            // Normalize Placeholder
+            //===================================================
+
+            if
+            (
+                !placeholder.StartsWith
+                (
+                    "{{",
+
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                placeholder =
+                    "{{"
+                    +
+                    placeholder;
+            }
+
+
+            if
+            (
+                !placeholder.EndsWith
+                (
+                    "}}",
+
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                placeholder +=
+                    "}}";
+            }
+
+
+            //===================================================
+            // Replace
+            //===================================================
+
             template =
                 template.Replace
                 (
-                    replacement.Key,
-                    replacement.Value ?? string.Empty
+                    placeholder,
+
+                    replacement.Value
+                    ??
+                    string.Empty,
+
+                    StringComparison.Ordinal
                 );
         }
 
+
+        //=======================================================
+        // Return
+        //=======================================================
+
         return template;
     }
+
 }

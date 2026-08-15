@@ -5,7 +5,7 @@ import
 from '@angular/router';
 
 
-export const accountsFiananceRoutes:
+export const accountsFinanceRoutes:
     Routes =
 [
     //===========================================================
@@ -29,5 +29,31 @@ export const accountsFiananceRoutes:
         redirectTo:'',
 
         pathMatch:'full'
-    }
+    },
+    // AUTO-BEGIN : MNU-007-001
+
+    //===========================================================
+    // Voucher Management
+    //===========================================================
+
+    {
+        path:'voucher-management',
+
+        data:
+        {
+            breadcrumb:'Voucher Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../voucher-management/routes/voucher-management.routes'
+            )
+            .then(
+                m =>
+                    m.mnu007001Routes
+            )
+    },
+
+    // AUTO-END : MNU-007-001
+
 ];

@@ -2,7 +2,13 @@
 // Namespaces
 //===============================================================
 
+using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Text;
+
+using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +37,7 @@ namespace AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentM
 public class SubmenuSynchronizationRepository
     : ISubmenuSynchronizationRepository
 {
+
     //===========================================================
     // Fields
     //===========================================================
@@ -38,8 +45,10 @@ public class SubmenuSynchronizationRepository
     private readonly AppDbContext
         _context;
 
+
     private readonly ISubmenuSynchronizationEngine
         _submenuSynchronizationEngine;
+
 
 
     //===========================================================
@@ -57,32 +66,46 @@ public class SubmenuSynchronizationRepository
         _context =
             context;
 
+
         _submenuSynchronizationEngine =
             submenuSynchronizationEngine;
     }
 
 
+
     //===========================================================
-    // Normalize Physical Name
+    // Normalize Frontend Physical Name
     //===========================================================
     //
-    // Used ONLY for physical file/folder names.
-    //
-    // Allowed characters:
-    //
-    // Letters
-    // Numbers
-    // Hyphen (-)
-    //
-    // Spaces are converted to hyphens.
-    //
-    // All other technical/special characters are removed.
+    // Used ONLY for frontend physical file/folder names.
     //
     // Database/display names remain unchanged.
     //
+    // Frontend physical naming rule:
+    //
+    // - lowercase only
+    // - words separated by hyphens
+    // - spaces become hyphens
+    // - special/technical characters become separators
+    // - repeated hyphens are removed
+    //
+    // Examples:
+    //
+    // General Settings
+    //     -> general-settings
+    //
+    // Account & Finance
+    //     -> account-finance
+    //
+    // Human Resource Management
+    //     -> human-resource-management
+    //
+    // Company
+    //     -> company
+    //
     //===========================================================
 
-    private static string NormalizePhysicalName
+    private static string NormalizeFrontendPhysicalName
     (
         string value
     )
@@ -96,71 +119,124 @@ public class SubmenuSynchronizationRepository
         }
 
 
-        var normalized =
-            new string
-            (
-                value
-                    .Trim()
-                    .Select
-                    (
-                        character =>
-                        {
-                            if
-                            (
-                                char.IsLetterOrDigit(character)
-                            )
-                            {
-                                return character;
-                            }
+        var builder =
+            new StringBuilder();
 
 
-                            if
-                            (
-                                character ==
-                                '-'
-                            )
-                            {
-                                return '-';
-                            }
+        var previousWasSeparator =
+            false;
 
 
-                            if
-                            (
-                                char.IsWhiteSpace(character)
-                            )
-                            {
-                                return '-';
-                            }
-
-
-                            return '\0';
-                        }
-                    )
-                    .Where
-                    (
-                        character =>
-                            character != '\0'
-                    )
-                    .ToArray()
-            );
-
-
-        while
+        foreach
         (
-            normalized.Contains("--")
+            var character in value.Trim()
         )
         {
-            normalized =
-                normalized.Replace
+            if
+            (
+                char.IsLetterOrDigit(character)
+            )
+            {
+                builder.Append
                 (
-                    "--",
-                    "-"
+                    char.ToLowerInvariant
+                    (
+                        character
+                    )
                 );
+
+
+                previousWasSeparator =
+                    false;
+
+
+                continue;
+            }
+
+
+            if
+            (
+                builder.Length > 0
+                &&
+                !previousWasSeparator
+            )
+            {
+                builder.Append
+                (
+                    '-'
+                );
+
+
+                previousWasSeparator =
+                    true;
+            }
         }
 
 
-        return normalized.Trim('-');
+        return builder
+            .ToString()
+            .Trim
+            (
+                '-'
+            );
     }
+
+
+
+    //===========================================================
+    // Normalize Backend Physical Name
+    //===========================================================
+    //
+    // Used ONLY for backend physical file/folder names.
+    //
+    // Database/display names remain unchanged.
+    //
+    // Backend naming rule:
+    //
+    // Letters
+    // Numbers
+    //
+    // Spaces and technical/special characters are removed.
+    //
+    // Examples:
+    //
+    // General Settings
+    //     -> GeneralSettings
+    //
+    // Account & Finance
+    //     -> AccountFinance
+    //
+    //===========================================================
+
+    private static string NormalizeBackendPhysicalName
+    (
+        string value
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(value)
+        )
+        {
+            return string.Empty;
+        }
+
+
+        return string.Concat
+        (
+            value
+                .Trim()
+                .Where
+                (
+                    character =>
+                        char.IsLetterOrDigit
+                        (
+                            character
+                        )
+                )
+        );
+    }
+
 
 
     //===========================================================
@@ -233,6 +309,9 @@ public class SubmenuSynchronizationRepository
                     string.Empty,
 
                 FrontendMenuFolder =
+                    string.Empty,
+
+                FrontendMenuRouteFile =
                     string.Empty,
 
 
@@ -401,6 +480,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Get All
     //===========================================================
@@ -494,6 +574,9 @@ public class SubmenuSynchronizationRepository
 
                     FrontendMenuFolder =
                         x.FrontendMenuFolder,
+
+                    FrontendMenuRouteFile =
+                        x.FrontendMenuRouteFile,
 
 
                     //===================================================
@@ -651,6 +734,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Get By Id
     //===========================================================
@@ -724,6 +808,9 @@ public class SubmenuSynchronizationRepository
 
                     FrontendMenuFolder =
                         x.FrontendMenuFolder,
+
+                    FrontendMenuRouteFile =
+                        x.FrontendMenuRouteFile,
 
                     FrontendSubmenuFolder =
                         x.FrontendSubmenuFolder,
@@ -836,6 +923,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Analyze
     //===========================================================
@@ -858,8 +946,10 @@ public class SubmenuSynchronizationRepository
         var currentDirectory =
             Environment.CurrentDirectory;
 
+
         var solutionRoot =
             currentDirectory;
+
 
         while
         (
@@ -884,6 +974,7 @@ public class SubmenuSynchronizationRepository
         }
 
 
+
         //=======================================================
         // Studio Roots
         //=======================================================
@@ -896,12 +987,173 @@ public class SubmenuSynchronizationRepository
                 "Studio_UI"
             );
 
+
         var backendRoot =
             Path.Combine
             (
                 solutionRoot,
                 "Backend_Studio"
             );
+
+
+
+        //=======================================================
+        // Load Module
+        //=======================================================
+
+        var module =
+            await _context.NavigationModules
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id == moduleId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            module == null
+        )
+        {
+            return new SubmenuSynchronizationDto();
+        }
+
+
+
+        //=======================================================
+        // Load Menu
+        //=======================================================
+
+        var menu =
+            await _context.NavigationMenus
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id == menuId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            menu == null
+        )
+        {
+            return new SubmenuSynchronizationDto();
+        }
+
+
+
+        //=======================================================
+        // Load Submenu
+        //=======================================================
+
+        var submenu =
+            await _context.NavigationSubmenus
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id == submenuId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            submenu == null
+        )
+        {
+            return new SubmenuSynchronizationDto();
+        }
+
+
+
+        //=======================================================
+        // Frontend Physical Names
+        //=======================================================
+        //
+        // Frontend physical names are ALWAYS lowercase kebab-case.
+        //
+        // Examples:
+        //
+        // Settings
+        //     -> settings
+        //
+        // General Settings
+        //     -> general-settings
+        //
+        // Company
+        //     -> company
+        //
+        //=======================================================
+
+        var frontendFeatureName =
+            NormalizeFrontendPhysicalName
+            (
+                module.Name
+            );
+
+
+        var frontendMenuName =
+            NormalizeFrontendPhysicalName
+            (
+                menu.Name
+            );
+
+
+        var frontendSubmenuName =
+            NormalizeFrontendPhysicalName
+            (
+                submenu.Name
+            );
+
+
+
+        //=======================================================
+        // Backend Physical Names
+        //=======================================================
+        //
+        // Backend names remain PascalCase because they are used
+        // for C# namespaces, classes, controllers and repositories.
+        //
+        //=======================================================
+
+        var backendModuleName =
+            NormalizeBackendPhysicalName
+            (
+                module.Name
+            );
+
+
+        var backendMenuName =
+            NormalizeBackendPhysicalName
+            (
+                menu.Name
+            );
+
+
+        var backendSubmenuName =
+            NormalizeBackendPhysicalName
+            (
+                submenu.Name
+            );
+
 
 
         //=======================================================
@@ -941,117 +1193,61 @@ public class SubmenuSynchronizationRepository
             existing != null
         )
         {
-            return await GetByIdAsync
+            var existingConfiguration =
+                await GetByIdAsync
+                (
+                    existing.Id
+                );
+
+
+            if
             (
-                existing.Id
+                existingConfiguration == null
             )
-            ??
-            new SubmenuSynchronizationDto();
-        }
+            {
+                return new SubmenuSynchronizationDto();
+            }
 
 
-        //=======================================================
-        // Load Module
-        //=======================================================
-
-        var module =
-            await _context.NavigationModules
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.Id == moduleId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-        if
-        (
-            module == null
-        )
-        {
-            return new SubmenuSynchronizationDto();
-        }
-
-
-        //=======================================================
-        // Load Menu
-        //=======================================================
-
-        var menu =
-            await _context.NavigationMenus
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.Id == menuId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-        if
-        (
-            menu == null
-        )
-        {
-            return new SubmenuSynchronizationDto();
-        }
-
-
-        //=======================================================
-        // Load Submenu
-        //=======================================================
-
-        var submenu =
-            await _context.NavigationSubmenus
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.Id == submenuId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-        if
-        (
-            submenu == null
-        )
-        {
-            return new SubmenuSynchronizationDto();
-        }
-
-
-        //=======================================================
-        // Physical Names
-        //=======================================================
-
-        var featureName =
-            NormalizePhysicalName
+            AnalyzeFrontend
             (
-                module.Name
+                existingConfiguration,
+
+                frontendRoot,
+
+                frontendFeatureName,
+
+                frontendMenuName,
+
+                frontendSubmenuName
             );
 
-        var menuName =
-            NormalizePhysicalName
+
+            AnalyzeBackend
             (
-                menu.Name
+                existingConfiguration,
+
+                backendRoot,
+
+                backendModuleName,
+
+                backendMenuName,
+
+                backendSubmenuName
             );
 
-        var submenuName =
-            NormalizePhysicalName
+
+            await UpdateExistingConfigurationPathsAsync
             (
-                submenu.Name
+                existing,
+
+                existingConfiguration
             );
+
+
+            return existingConfiguration;
+        }
+
 
 
         //=======================================================
@@ -1111,6 +1307,7 @@ public class SubmenuSynchronizationRepository
             };
 
 
+
         //=======================================================
         // Analyze Frontend
         //=======================================================
@@ -1121,12 +1318,13 @@ public class SubmenuSynchronizationRepository
 
             frontendRoot,
 
-            featureName,
+            frontendFeatureName,
 
-            menuName,
+            frontendMenuName,
 
-            submenuName
+            frontendSubmenuName
         );
+
 
 
         //=======================================================
@@ -1139,12 +1337,13 @@ public class SubmenuSynchronizationRepository
 
             backendRoot,
 
-            featureName,
+            backendModuleName,
 
-            menuName,
+            backendMenuName,
 
-            submenuName
+            backendSubmenuName
         );
+
 
 
         //=======================================================
@@ -1153,6 +1352,525 @@ public class SubmenuSynchronizationRepository
 
         return configuration;
     }
+
+
+
+    //===========================================================
+    // Update Existing Configuration Paths
+    //===========================================================
+
+    private async Task UpdateExistingConfigurationPathsAsync
+    (
+        AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization entity,
+
+        SubmenuSynchronizationDto configuration
+    )
+    {
+        var changed =
+            false;
+
+
+        //=======================================================
+        // Frontend Paths
+        //=======================================================
+
+        if
+        (
+            entity.FrontendSolution !=
+            configuration.FrontendSolution
+        )
+        {
+            entity.FrontendSolution =
+                configuration.FrontendSolution;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendProject !=
+            configuration.FrontendProject
+        )
+        {
+            entity.FrontendProject =
+                configuration.FrontendProject;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSourceFolder !=
+            configuration.FrontendSourceFolder
+        )
+        {
+            entity.FrontendSourceFolder =
+                configuration.FrontendSourceFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendFeatureFolder !=
+            configuration.FrontendFeatureFolder
+        )
+        {
+            entity.FrontendFeatureFolder =
+                configuration.FrontendFeatureFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendMenuFolder !=
+            configuration.FrontendMenuFolder
+        )
+        {
+            entity.FrontendMenuFolder =
+                configuration.FrontendMenuFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendMenuRouteFile !=
+            configuration.FrontendMenuRouteFile
+        )
+        {
+            entity.FrontendMenuRouteFile =
+                configuration.FrontendMenuRouteFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuFolder !=
+            configuration.FrontendSubmenuFolder
+        )
+        {
+            entity.FrontendSubmenuFolder =
+                configuration.FrontendSubmenuFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendFormFolder !=
+            configuration.FrontendFormFolder
+        )
+        {
+            entity.FrontendFormFolder =
+                configuration.FrontendFormFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendListFolder !=
+            configuration.FrontendListFolder
+        )
+        {
+            entity.FrontendListFolder =
+                configuration.FrontendListFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuModelFile !=
+            configuration.FrontendSubmenuModelFile
+        )
+        {
+            entity.FrontendSubmenuModelFile =
+                configuration.FrontendSubmenuModelFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuServiceFile !=
+            configuration.FrontendSubmenuServiceFile
+        )
+        {
+            entity.FrontendSubmenuServiceFile =
+                configuration.FrontendSubmenuServiceFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuRouteFile !=
+            configuration.FrontendSubmenuRouteFile
+        )
+        {
+            entity.FrontendSubmenuRouteFile =
+                configuration.FrontendSubmenuRouteFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuFormTsFile !=
+            configuration.FrontendSubmenuFormTsFile
+        )
+        {
+            entity.FrontendSubmenuFormTsFile =
+                configuration.FrontendSubmenuFormTsFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuFormHtmlFile !=
+            configuration.FrontendSubmenuFormHtmlFile
+        )
+        {
+            entity.FrontendSubmenuFormHtmlFile =
+                configuration.FrontendSubmenuFormHtmlFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuFormCssFile !=
+            configuration.FrontendSubmenuFormCssFile
+        )
+        {
+            entity.FrontendSubmenuFormCssFile =
+                configuration.FrontendSubmenuFormCssFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuListTsFile !=
+            configuration.FrontendSubmenuListTsFile
+        )
+        {
+            entity.FrontendSubmenuListTsFile =
+                configuration.FrontendSubmenuListTsFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuListHtmlFile !=
+            configuration.FrontendSubmenuListHtmlFile
+        )
+        {
+            entity.FrontendSubmenuListHtmlFile =
+                configuration.FrontendSubmenuListHtmlFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.FrontendSubmenuListCssFile !=
+            configuration.FrontendSubmenuListCssFile
+        )
+        {
+            entity.FrontendSubmenuListCssFile =
+                configuration.FrontendSubmenuListCssFile;
+
+            changed =
+                true;
+        }
+
+
+
+        //=======================================================
+        // Backend Paths
+        //=======================================================
+
+        if
+        (
+            entity.BackendSolution !=
+            configuration.BackendSolution
+        )
+        {
+            entity.BackendSolution =
+                configuration.BackendSolution;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendApplicationProject !=
+            configuration.BackendApplicationProject
+        )
+        {
+            entity.BackendApplicationProject =
+                configuration.BackendApplicationProject;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendDomainProject !=
+            configuration.BackendDomainProject
+        )
+        {
+            entity.BackendDomainProject =
+                configuration.BackendDomainProject;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendInfrastructureProject !=
+            configuration.BackendInfrastructureProject
+        )
+        {
+            entity.BackendInfrastructureProject =
+                configuration.BackendInfrastructureProject;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendControllerFile !=
+            configuration.BackendControllerFile
+        )
+        {
+            entity.BackendControllerFile =
+                configuration.BackendControllerFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendApplicationSubMenuFolder !=
+            configuration.BackendApplicationSubMenuFolder
+        )
+        {
+            entity.BackendApplicationSubMenuFolder =
+                configuration.BackendApplicationSubMenuFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendApplicationDtosFolder !=
+            configuration.BackendApplicationDtosFolder
+        )
+        {
+            entity.BackendApplicationDtosFolder =
+                configuration.BackendApplicationDtosFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendApplicationInterfacesFolder !=
+            configuration.BackendApplicationInterfacesFolder
+        )
+        {
+            entity.BackendApplicationInterfacesFolder =
+                configuration.BackendApplicationInterfacesFolder;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendSubMenuDtoFile !=
+            configuration.BackendSubMenuDtoFile
+        )
+        {
+            entity.BackendSubMenuDtoFile =
+                configuration.BackendSubMenuDtoFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendCreateSubMenuDtoFile !=
+            configuration.BackendCreateSubMenuDtoFile
+        )
+        {
+            entity.BackendCreateSubMenuDtoFile =
+                configuration.BackendCreateSubMenuDtoFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendUpdateSubMenuDtoFile !=
+            configuration.BackendUpdateSubMenuDtoFile
+        )
+        {
+            entity.BackendUpdateSubMenuDtoFile =
+                configuration.BackendUpdateSubMenuDtoFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendSubMenuDefaultsDtoFile !=
+            configuration.BackendSubMenuDefaultsDtoFile
+        )
+        {
+            entity.BackendSubMenuDefaultsDtoFile =
+                configuration.BackendSubMenuDefaultsDtoFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendSubMenuRepositoryInterfaceFile !=
+            configuration.BackendSubMenuRepositoryInterfaceFile
+        )
+        {
+            entity.BackendSubMenuRepositoryInterfaceFile =
+                configuration.BackendSubMenuRepositoryInterfaceFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendSubMenuEntityFile !=
+            configuration.BackendSubMenuEntityFile
+        )
+        {
+            entity.BackendSubMenuEntityFile =
+                configuration.BackendSubMenuEntityFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendSubMenuConfigurationFile !=
+            configuration.BackendSubMenuConfigurationFile
+        )
+        {
+            entity.BackendSubMenuConfigurationFile =
+                configuration.BackendSubMenuConfigurationFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            entity.BackendSubMenuRepositoryFile !=
+            configuration.BackendSubMenuRepositoryFile
+        )
+        {
+            entity.BackendSubMenuRepositoryFile =
+                configuration.BackendSubMenuRepositoryFile;
+
+            changed =
+                true;
+        }
+
+
+        if
+        (
+            changed
+        )
+        {
+            entity.ModifiedDate =
+                DateTime.UtcNow;
+
+            entity.ModifiedBy =
+                1;
+
+
+            await _context.SaveChangesAsync();
+        }
+    }
+
 
 
     //===========================================================
@@ -1180,12 +1898,14 @@ public class SubmenuSynchronizationRepository
             frontendRoot;
 
 
+
         //=======================================================
         // Frontend Project
         //=======================================================
 
         configuration.FrontendProject =
             "Studio_UI";
+
 
 
         //=======================================================
@@ -1201,12 +1921,14 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Feature
         //=======================================================
 
         configuration.FrontendFeatureFolder =
             featureName;
+
 
 
         //=======================================================
@@ -1222,6 +1944,21 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
+        //=======================================================
+        // Existing Menu Route File
+        //=======================================================
+
+        configuration.FrontendMenuRouteFile =
+            Path.Combine
+            (
+                configuration.FrontendMenuFolder,
+                "routes",
+                $"{menuName}.routes.ts"
+            );
+
+
+
         //=======================================================
         // Existing Menu Pages
         //=======================================================
@@ -1232,6 +1969,7 @@ public class SubmenuSynchronizationRepository
                 configuration.FrontendMenuFolder,
                 "pages"
             );
+
 
 
         //=======================================================
@@ -1246,6 +1984,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Form
         //=======================================================
@@ -1258,6 +1997,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // List
         //=======================================================
@@ -1268,6 +2008,7 @@ public class SubmenuSynchronizationRepository
                 configuration.FrontendSubmenuFolder,
                 "list"
             );
+
 
 
         //=======================================================
@@ -1283,6 +2024,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Submenu Service
         //=======================================================
@@ -1296,6 +2038,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Submenu Route
         //=======================================================
@@ -1307,6 +2050,7 @@ public class SubmenuSynchronizationRepository
                 "routes",
                 $"{submenuName}.routes.ts"
             );
+
 
 
         //=======================================================
@@ -1335,6 +2079,7 @@ public class SubmenuSynchronizationRepository
                 configuration.FrontendFormFolder,
                 $"{submenuName}-form.css"
             );
+
 
 
         //=======================================================
@@ -1366,6 +2111,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Analyze Backend
     //===========================================================
@@ -1391,6 +2137,7 @@ public class SubmenuSynchronizationRepository
             backendRoot;
 
 
+
         //=======================================================
         // Backend Projects
         //=======================================================
@@ -1405,6 +2152,7 @@ public class SubmenuSynchronizationRepository
 
         configuration.BackendInfrastructureProject =
             "AppCore.Infrastructure";
+
 
 
         //=======================================================
@@ -1428,6 +2176,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Application Submenu Folder
         //=======================================================
@@ -1447,6 +2196,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Application DTOs Folder
         //=======================================================
@@ -1458,6 +2208,7 @@ public class SubmenuSynchronizationRepository
 
                 "DTOs"
             );
+
 
 
         //=======================================================
@@ -1473,6 +2224,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Submenu DTO
         //=======================================================
@@ -1484,6 +2236,7 @@ public class SubmenuSynchronizationRepository
 
                 $"{submenuName}Dto.cs"
             );
+
 
 
         //=======================================================
@@ -1499,6 +2252,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Update Submenu DTO
         //=======================================================
@@ -1510,6 +2264,7 @@ public class SubmenuSynchronizationRepository
 
                 $"Update{submenuName}Dto.cs"
             );
+
 
 
         //=======================================================
@@ -1525,6 +2280,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Submenu Repository Interface
         //=======================================================
@@ -1536,6 +2292,7 @@ public class SubmenuSynchronizationRepository
 
                 $"I{submenuName}Repository.cs"
             );
+
 
 
         //=======================================================
@@ -1557,6 +2314,7 @@ public class SubmenuSynchronizationRepository
             );
 
 
+
         //=======================================================
         // Infrastructure Configuration
         //=======================================================
@@ -1576,6 +2334,7 @@ public class SubmenuSynchronizationRepository
 
                 $"{submenuName}Configuration.cs"
             );
+
 
 
         //=======================================================
@@ -1600,35 +2359,9 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Synchronize
-    //===========================================================
-    //
-    // BUSINESS RULE:
-    //
-    // Module
-    //     ↓
-    // Menu
-    //     ↓
-    // Submenu
-    //
-    // A Submenu may only be synchronized when its immediate
-    // parent Menu Synchronization has already completed
-    // successfully.
-    //
-    // Saving / creating / analyzing a Menu Synchronization
-    // configuration does NOT satisfy this requirement.
-    //
-    // Required parent state:
-    //
-    //     MenuSynchronization.Status == "Synchronized"
-    //
-    // Matching:
-    //
-    //     ModuleId
-    //     MenuId
-    //     SynchronizationType
-    //
     //===========================================================
 
     public async Task<bool> SynchronizeAsync
@@ -1636,134 +2369,6 @@ public class SubmenuSynchronizationRepository
         long id
     )
     {
-        //=======================================================
-        // Load Submenu Synchronization
-        //=======================================================
-
-        var synchronization =
-            await _context.SubmenuSynchronizations
-
-                .AsNoTracking()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.Id == id
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-
-        //=======================================================
-        // Synchronization Not Found
-        //=======================================================
-
-        if
-        (
-            synchronization == null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                "Submenu synchronization configuration was not found."
-            );
-        }
-
-
-        //=======================================================
-        // Validate Parent Menu Synchronization
-        //=======================================================
-        //
-        // IMPORTANT:
-        //
-        // A Menu Synchronization record may exist in the database
-        // while still being:
-        //
-        // Pending
-        // Ready
-        // Failed
-        //
-        // Such a record does NOT mean that the Menu has actually
-        // been synchronized.
-        //
-        // Only Status = "Synchronized" is authoritative.
-        //
-        //=======================================================
-
-        var parentMenuSynchronization =
-            await _context.MenuSynchronizations
-
-                .AsNoTracking()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        !x.IsDeleted
-
-                        &&
-
-                        x.ModuleId ==
-                        synchronization.ModuleId
-
-                        &&
-
-                        x.MenuId ==
-                        synchronization.MenuId
-
-                        &&
-
-                        x.SynchronizationType ==
-                        synchronization.SynchronizationType
-                );
-
-
-        //=======================================================
-        // Parent Menu Configuration Not Found
-        //=======================================================
-
-        if
-        (
-            parentMenuSynchronization == null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"The parent menu '{synchronization.MenuName}' has not been synchronized. Synchronize the parent menu before synchronizing the submenu."
-            );
-        }
-
-
-        //=======================================================
-        // Parent Menu Not Successfully Synchronized
-        //=======================================================
-
-        if
-        (
-            !string.Equals
-            (
-                parentMenuSynchronization.Status,
-
-                "Synchronized",
-
-                StringComparison.OrdinalIgnoreCase
-            )
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"The parent menu '{synchronization.MenuName}' is not successfully synchronized. Current status: '{parentMenuSynchronization.Status}'. Synchronize the parent menu successfully before synchronizing the submenu."
-            );
-        }
-
-
-        //=======================================================
-        // Execute Submenu Synchronization
-        //=======================================================
-
         var result =
             await _submenuSynchronizationEngine
                 .SynchronizeAsync
@@ -1772,28 +2377,9 @@ public class SubmenuSynchronizationRepository
                 );
 
 
-        //=======================================================
-        // Validation
-        //=======================================================
-
-        if
-        (
-            !result.Success
-        )
-        {
-            throw new InvalidOperationException
-            (
-                result.Message
-            );
-        }
-
-
-        //=======================================================
-        // Completed
-        //=======================================================
-
-        return true;
+        return result.Success;
     }
+
 
 
     //===========================================================
@@ -1805,10 +2391,6 @@ public class SubmenuSynchronizationRepository
         long id
     )
     {
-        //=======================================================
-        // Execute Rollback
-        //=======================================================
-
         var result =
             await _submenuSynchronizationEngine
                 .RollbackAsync
@@ -1816,10 +2398,6 @@ public class SubmenuSynchronizationRepository
                     id
                 );
 
-
-        //=======================================================
-        // Validation
-        //=======================================================
 
         if
         (
@@ -1833,12 +2411,9 @@ public class SubmenuSynchronizationRepository
         }
 
 
-        //=======================================================
-        // Completed
-        //=======================================================
-
         return true;
     }
+
 
 
     //===========================================================
@@ -1884,6 +2459,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Create
     //===========================================================
@@ -1919,6 +2495,7 @@ public class SubmenuSynchronizationRepository
                 $"A {dto.SynchronizationType} synchronization already exists for '{dto.SubmenuName}'."
             );
         }
+
 
 
         //=======================================================
@@ -1986,6 +2563,9 @@ public class SubmenuSynchronizationRepository
 
                 FrontendMenuFolder =
                     dto.FrontendMenuFolder,
+
+                FrontendMenuRouteFile =
+                    dto.FrontendMenuRouteFile,
 
                 FrontendSubmenuFolder =
                     dto.FrontendSubmenuFolder,
@@ -2129,6 +2709,7 @@ public class SubmenuSynchronizationRepository
         await _context.SaveChangesAsync();
 
 
+
         //=======================================================
         // Activity History
         //=======================================================
@@ -2174,6 +2755,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Update
     //===========================================================
@@ -2213,6 +2795,7 @@ public class SubmenuSynchronizationRepository
         }
 
 
+
         //=======================================================
         // Load Entity
         //=======================================================
@@ -2239,6 +2822,7 @@ public class SubmenuSynchronizationRepository
         {
             return false;
         }
+
 
 
         //=======================================================
@@ -2273,12 +2857,14 @@ public class SubmenuSynchronizationRepository
             dto.SubmenuName;
 
 
+
         //=======================================================
         // Synchronization Type
         //=======================================================
 
         synchronization.SynchronizationType =
             dto.SynchronizationType;
+
 
 
         //=======================================================
@@ -2299,6 +2885,9 @@ public class SubmenuSynchronizationRepository
 
         synchronization.FrontendMenuFolder =
             dto.FrontendMenuFolder;
+
+        synchronization.FrontendMenuRouteFile =
+            dto.FrontendMenuRouteFile;
 
         synchronization.FrontendSubmenuFolder =
             dto.FrontendSubmenuFolder;
@@ -2335,6 +2924,7 @@ public class SubmenuSynchronizationRepository
 
         synchronization.FrontendSubmenuListCssFile =
             dto.FrontendSubmenuListCssFile;
+
 
 
         //=======================================================
@@ -2390,6 +2980,7 @@ public class SubmenuSynchronizationRepository
             dto.BackendSubMenuRepositoryFile;
 
 
+
         //=======================================================
         // Synchronization
         //=======================================================
@@ -2410,12 +3001,14 @@ public class SubmenuSynchronizationRepository
             dto.LastSynchronizationResult;
 
 
+
         //=======================================================
         // Status
         //=======================================================
 
         synchronization.IsActive =
             dto.IsActive;
+
 
 
         //=======================================================
@@ -2430,6 +3023,7 @@ public class SubmenuSynchronizationRepository
 
 
         await _context.SaveChangesAsync();
+
 
 
         //=======================================================
@@ -2477,6 +3071,7 @@ public class SubmenuSynchronizationRepository
     }
 
 
+
     //===========================================================
     // Delete
     //===========================================================
@@ -2513,6 +3108,7 @@ public class SubmenuSynchronizationRepository
         }
 
 
+
         //=======================================================
         // Soft Delete
         //=======================================================
@@ -2528,6 +3124,7 @@ public class SubmenuSynchronizationRepository
 
 
         await _context.SaveChangesAsync();
+
 
 
         //=======================================================
@@ -2573,6 +3170,7 @@ public class SubmenuSynchronizationRepository
 
         return true;
     }
+
 
 
     //===========================================================
@@ -2623,6 +3221,7 @@ public class SubmenuSynchronizationRepository
         }
 
 
+
         //=======================================================
         // Restore
         //=======================================================
@@ -2632,6 +3231,7 @@ public class SubmenuSynchronizationRepository
 
         entity.DeletedDate =
             null;
+
 
 
         //=======================================================
@@ -2646,6 +3246,7 @@ public class SubmenuSynchronizationRepository
 
 
         await _context.SaveChangesAsync();
+
 
 
         //=======================================================
@@ -2691,4 +3292,5 @@ public class SubmenuSynchronizationRepository
 
         return true;
     }
+
 }

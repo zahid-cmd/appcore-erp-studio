@@ -100,6 +100,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
@@ -118,9 +130,9 @@ from '../../../services/code-synchronization.service';
 
 import
 {
-    SubmenuSynchronization
+    CodeSynchronization
 }
-from '../../../model/submenu-synchronization.model';
+from '../../../model/code-synchronization.model';
 
 import
 {
@@ -183,6 +195,8 @@ from '../../../../navigation-management/models/navigation-menu.model';
 
         ConfirmDialogComponent,
 
+        ProgressDialogComponent,
+
         ToastComponent
     ],
 
@@ -220,6 +234,10 @@ implements OnInit
         inject(ConfirmDialogService);
 
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
+
     private readonly toast =
         inject(ToastService);
 
@@ -230,6 +248,7 @@ implements OnInit
 
     private readonly cdr =
         inject(ChangeDetectorRef);
+
 
 
     //===========================================================
@@ -256,6 +275,7 @@ implements OnInit
         'frontend';
 
 
+
     //===========================================================
     // Module Dropdown
     //===========================================================
@@ -274,6 +294,7 @@ implements OnInit
         0;
 
 
+
     //===========================================================
     // Menu Dropdown
     //===========================================================
@@ -290,6 +311,7 @@ implements OnInit
     selectedMenuId:
         number =
         0;
+
 
 
     //===========================================================
@@ -333,20 +355,22 @@ implements OnInit
         '';
 
 
+
     //===========================================================
     // Data Source
     //===========================================================
 
-    synchronizations: SubmenuSynchronization[] =
+    synchronizations: CodeSynchronization[] =
     [];
 
 
-    filteredSynchronizations: SubmenuSynchronization[] =
+    filteredSynchronizations: CodeSynchronization[] =
     [];
 
 
-    pagedSynchronizations: SubmenuSynchronization[] =
+    pagedSynchronizations: CodeSynchronization[] =
     [];
+
 
 
     //===========================================================
@@ -365,6 +389,7 @@ implements OnInit
         false;
 
 
+
     //===========================================================
     // Pagination
     //===========================================================
@@ -375,6 +400,7 @@ implements OnInit
 
     pageSize =
         10;
+
 
 
     //===========================================================
@@ -391,6 +417,7 @@ implements OnInit
 
     historyItems:any[] =
     [];
+
 
 
     //===========================================================
@@ -419,6 +446,7 @@ implements OnInit
 
         footerHeight:56
     };
+
 
 
     //===========================================================
@@ -533,6 +561,7 @@ implements OnInit
     ];
 
 
+
     //===========================================================
     // Component Initialization
     //===========================================================
@@ -591,6 +620,7 @@ implements OnInit
 
         this.loadCodeSynchronizations();
     }
+
 
 
     //===========================================================
@@ -685,6 +715,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Load Modules
     //===========================================================
@@ -750,9 +781,9 @@ implements OnInit
                     );
 
 
-                    //=======================================================
+                    //===================================================
                     // Module Dropdown Items
-                    //=======================================================
+                    //===================================================
 
                     this.modules =
                     Array.from(
@@ -774,9 +805,9 @@ implements OnInit
                     );
 
 
-                    //=======================================================
+                    //===================================================
                     // Validate Selected Module
-                    //=======================================================
+                    //===================================================
 
                     if
                     (
@@ -840,6 +871,7 @@ implements OnInit
                 }
             });
     }
+
 
 
     //===========================================================
@@ -1001,6 +1033,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Module Changed
     //===========================================================
@@ -1050,6 +1083,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Menu Changed
     //===========================================================
@@ -1070,6 +1104,7 @@ implements OnInit
 
         this.applyFilters();
     }
+
 
 
     //===========================================================
@@ -1104,6 +1139,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Load Code Synchronization Data
     //===========================================================
@@ -1133,7 +1169,7 @@ implements OnInit
 
             .subscribe(
             {
-                next:(response) =>
+                next:(response:CodeSynchronization[]) =>
                 {
                     console.log('================================');
 
@@ -1215,6 +1251,7 @@ implements OnInit
                 }
             });
     }
+
 
 
     //===========================================================
@@ -1378,6 +1415,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Search Code Synchronization
     //===========================================================
@@ -1394,6 +1432,7 @@ implements OnInit
 
         this.applyFilters();
     }
+
 
 
     //===========================================================
@@ -1511,6 +1550,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Refresh Code Synchronization
     //===========================================================
@@ -1553,6 +1593,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Update Pagination
     //===========================================================
@@ -1579,6 +1620,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Page Change
     //===========================================================
@@ -1595,6 +1637,7 @@ implements OnInit
 
         this.updatePagination();
     }
+
 
 
     //===========================================================
@@ -1619,30 +1662,24 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // View Code Synchronization
     //===========================================================
 
     view
     (
-        item:SubmenuSynchronization
+        item:CodeSynchronization
     ):
         void
     {
-        //=======================================================
-        // Code Files View Popup
-        //=======================================================
-        //
-        // The reusable Code Files View popup will be opened
-        // from this action.
-        //
-        //=======================================================
-
         console.log(
             'VIEW CODE SYNCHRONIZATION',
+
             item
         );
     }
+
 
 
     //===========================================================
@@ -1651,7 +1688,7 @@ implements OnInit
 
     synchronize
     (
-        item:SubmenuSynchronization
+        item:CodeSynchronization
     ):
         void
     {
@@ -1698,47 +1735,10 @@ implements OnInit
 
                 () =>
                 {
-                    this.codeSynchronizationService
-
-                        .rollback(
-                            item.id
-                        )
-
-                        .subscribe(
-                        {
-                            next:() =>
-                            {
-                                this.toast.success
-                                (
-                                    'Code Rollback',
-
-                                    `${item.submenuName} code rolled back successfully.`
-                                );
-
-
-                                this.loadCodeSynchronizations();
-                            },
-
-
-                            error:(error) =>
-                            {
-                                console.error(
-                                    'Code Rollback Failed',
-
-                                    error
-                                );
-
-
-                                this.toast.error
-                                (
-                                    'Code Rollback Failed',
-
-                                    error?.error
-                                    ??
-                                    'Failed to roll back code.'
-                                );
-                            }
-                        });
+                    this.startRollback
+                    (
+                        item
+                    );
                 },
 
                 'Rollback',
@@ -1765,9 +1765,105 @@ implements OnInit
 
             () =>
             {
+                this.startSynchronization
+                (
+                    item
+                );
+            },
+
+            'Synchronize',
+
+            'Cancel',
+
+            'primary'
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Synchronization
+    //===========================================================
+
+    private startSynchronization
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        //=======================================================
+        // Open Progress Dialog
+        //=======================================================
+
+        this.progressDialog.show
+        (
+            'Code Synchronization',
+
+            'Starting code synchronization.'
+        );
+
+
+        //=======================================================
+        // Initial Progress
+        //=======================================================
+
+        this.progressDialog.update
+        (
+            10,
+
+            'Preparing code synchronization.'
+        );
+
+
+        //=======================================================
+        // Progress Stage
+        //=======================================================
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Generating code.'
+                );
+            },
+
+            300
+        );
+
+
+        //=======================================================
+        // Progress Stage
+        //=======================================================
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Synchronizing generated files.'
+                );
+            },
+
+            700
+        );
+
+
+        //=======================================================
+        // Execute Synchronization
+        //=======================================================
+
+        setTimeout(
+            () =>
+            {
                 this.codeSynchronizationService
 
-                    .synchronize(
+                    .synchronize
+                    (
                         item.id
                     )
 
@@ -1775,15 +1871,33 @@ implements OnInit
                     {
                         next:() =>
                         {
-                            this.toast.success
+                            this.progressDialog.update
                             (
-                                'Code Synchronization',
+                                100,
 
-                                `${item.submenuName} code synchronized successfully.`
+                                'Synchronization completed.'
                             );
 
 
-                            this.loadCodeSynchronizations();
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Code Synchronization',
+
+                                        `${item.submenuName} code synchronized successfully.`
+                                    );
+
+
+                                    this.loadCodeSynchronizations();
+                                },
+
+                                300
+                            );
                         },
 
 
@@ -1794,6 +1908,9 @@ implements OnInit
 
                                 error
                             );
+
+
+                            this.progressDialog.close();
 
 
                             this.toast.error
@@ -1808,13 +1925,160 @@ implements OnInit
                     });
             },
 
-            'Synchronize',
-
-            'Cancel',
-
-            'primary'
+            1000
         );
     }
+
+
+
+    //===========================================================
+    // Start Rollback
+    //===========================================================
+
+    private startRollback
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        //=======================================================
+        // Open Progress Dialog
+        //=======================================================
+
+        this.progressDialog.show
+        (
+            'Code Rollback',
+
+            'Starting code rollback.'
+        );
+
+
+        //=======================================================
+        // Initial Progress
+        //=======================================================
+
+        this.progressDialog.update
+        (
+            10,
+
+            'Preparing code rollback.'
+        );
+
+
+        //=======================================================
+        // Progress Stage
+        //=======================================================
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Preparing generated files for rollback.'
+                );
+            },
+
+            300
+        );
+
+
+        //=======================================================
+        // Progress Stage
+        //=======================================================
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Removing generated files.'
+                );
+            },
+
+            700
+        );
+
+
+        //=======================================================
+        // Execute Rollback
+        //=======================================================
+
+        setTimeout(
+            () =>
+            {
+                this.codeSynchronizationService
+
+                    .rollback
+                    (
+                        item.id
+                    )
+
+                    .subscribe(
+                    {
+                        next:() =>
+                        {
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'Rollback completed.'
+                            );
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Code Rollback',
+
+                                        `${item.submenuName} code rolled back successfully.`
+                                    );
+
+
+                                    this.loadCodeSynchronizations();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:(error) =>
+                        {
+                            console.error(
+                                'Code Rollback Failed',
+
+                                error
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Code Rollback Failed',
+
+                                error?.error
+                                ??
+                                'Failed to roll back code.'
+                            );
+                        }
+                    });
+            },
+
+            1000
+        );
+    }
+
 
 
     //===========================================================
@@ -1824,8 +2088,8 @@ implements OnInit
     restore():
         void
     {
-        this.confirmDialog.open(
-
+        this.confirmDialog.open
+        (
             'Restore Code Synchronization',
 
             'Are you sure you want to restore the most recently deleted code synchronization record?',
@@ -1842,6 +2106,7 @@ implements OnInit
             'primary'
         );
     }
+
 
 
     //===========================================================
@@ -1866,6 +2131,7 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Open History Drawer
     //===========================================================
@@ -1873,13 +2139,79 @@ implements OnInit
     openHistory():
         void
     {
-        this.toast.warning
-        (
-            'Not Available',
+        this.codeSynchronizationService
 
-            'Code Synchronization history is not implemented yet.'
-        );
+            .getHistory()
+
+            .subscribe(
+            {
+                next:(response:any[]) =>
+                {
+                    //===================================================
+                    // Map History Records
+                    //===================================================
+
+                    this.historyItems =
+                        response.map(
+                            item =>
+                            ({
+                                title:
+                                    item.activityTitle,
+
+                                description:
+                                    item.activityDescription,
+
+                                user:
+                                    item.performedByName
+                                    ??
+                                    'System',
+
+                                dateTime:
+                                    new Date(
+                                        item.performedDate
+                                    )
+                                    .toLocaleString(),
+
+                                badge:
+                                    item.activityType
+                            })
+                        );
+
+
+                    //===================================================
+                    // Open History Drawer
+                    //===================================================
+
+                    this.historyTitle =
+                        'Code Synchronization History';
+
+
+                    this.historyOpened =
+                        true;
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:(error:any) =>
+                {
+                    console.error(
+                        'Code Synchronization History Load Failed',
+
+                        error
+                    );
+
+
+                    this.toast.error(
+                        'History',
+
+                        'Failed to load code synchronization history.'
+                    );
+                }
+            });
     }
+
 
 
     //===========================================================

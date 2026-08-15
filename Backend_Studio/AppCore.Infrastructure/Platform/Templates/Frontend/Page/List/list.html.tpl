@@ -1,0 +1,198 @@
+<div class="app-list-page"> 
+ 
+    <!-- ===================================================== 
+         PAGE HEADER 
+    ====================================================== --> 
+ 
+    <app-page-header 
+ 
+        title="{{PAGE_TITLE}}" 
+ 
+        subtitle="{{PAGE_SUBTITLE}}" 
+ 
+        icon="{{PAGE_ICON}}"> 
+ 
+        <div pageHeaderCenter> 
+ 
+            <app-search-box 
+ 
+                [(value)]="searchText" 
+ 
+                placeholder="Search {{ENTITY_PLURAL_LOWER}}..." 
+ 
+                (valueChange)="onSearch($event)"> 
+ 
+            </app-search-box> 
+ 
+        </div> 
+ 
+ 
+        <div pageHeaderRight> 
+ 
+            <app-command-center 
+ 
+                command1Text="Add" 
+ 
+                command1Icon="fas fa-plus" 
+ 
+                (command1Click)="add()" 
+ 
+                command2Text="Refresh" 
+ 
+                command2Icon="fas fa-rotate-right" 
+ 
+                (command2Click)="refresh()" 
+ 
+                command3Text="Restore" 
+ 
+                command3Icon="fas fa-trash-arrow-up" 
+ 
+                (command3Click)="restore()" 
+ 
+                rightCommandIcon="fas fa-clock-rotate-left" 
+ 
+                (rightCommandClick)="openHistory()"> 
+ 
+            </app-command-center> 
+ 
+        </div> 
+ 
+    </app-page-header> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE TOOLBAR 
+    ====================================================== --> 
+ 
+    <app-page-toolbar> 
+ 
+        <app-control-tabs 
+ 
+            pageToolbarLeft 
+ 
+            [tabs]="tabs" 
+ 
+            [(selectedTab)]="selectedTab"> 
+ 
+        </app-control-tabs> 
+ 
+ 
+        <!-- ================================================= 
+             PARENT MENU FILTER 
+        ================================================== --> 
+ 
+        <app-search-dropdown 
+ 
+            pageToolbarRight 
+ 
+            placeholder="{{FILTER_PLACEHOLDER}}" 
+ 
+            [items]="items" 
+ 
+            labelField="text" 
+ 
+            valueField="value" 
+ 
+            [(value)]="selectedItemId" 
+ 
+            (valueChange)="onFilterChange($event)"> 
+ 
+        </app-search-dropdown> 
+ 
+    </app-page-toolbar> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE CANVAS 
+    ====================================================== --> 
+ 
+    <app-page-canvas 
+ 
+        [config]="canvasConfig"> 
+ 
+ 
+        <!-- ================================================= 
+             LIST TABLE 
+        ================================================== --> 
+ 
+        <div canvasBody> 
+ 
+            <app-list-table 
+ 
+                [columns]="columns" 
+ 
+                [rows]="paged{{ENTITY_PLURAL}}" 
+ 
+                [serialOffset]="(currentPage - 1) * pageSize" 
+ 
+                [loading]="loading" 
+ 
+                [error]="loadFailed" 
+ 
+                (view)="view($event)" 
+ 
+                (edit)="edit($event)" 
+ 
+                (delete)="delete($event)" 
+ 
+                (sortChange)="onSort($event)"> 
+ 
+            </app-list-table> 
+ 
+        </div> 
+ 
+ 
+ 
+        <!-- ================================================= 
+             PAGINATION 
+        ================================================== --> 
+ 
+        <app-pagination 
+ 
+            canvasFooter 
+ 
+            [totalRecords]="filtered{{ENTITY_PLURAL}}.length" 
+ 
+            [currentPage]="currentPage" 
+ 
+            [pageSize]="pageSize" 
+ 
+            (pageChange)="onPageChange($event)" 
+ 
+            (pageSizeChange)="onPageSizeChange($event)"> 
+ 
+        </app-pagination> 
+ 
+    </app-page-canvas> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         HISTORY 
+    ====================================================== --> 
+ 
+    <app-history-drawer 
+ 
+        [opened]="historyOpened" 
+ 
+        [title]="historyTitle" 
+ 
+        [items]="historyItems" 
+ 
+        (closed)="closeHistory()"> 
+ 
+    </app-history-drawer> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         UTILITIES 
+    ====================================================== --> 
+ 
+    <app-toast></app-toast> 
+ 
+    <app-confirm-dialog></app-confirm-dialog> 
+ 
+</div>

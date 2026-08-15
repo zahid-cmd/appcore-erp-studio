@@ -7,7 +7,15 @@
     <div class="command-center-left">
 
         <button
-            *ngIf="command1Visible"
+            *ngIf="
+                command1Visible
+                &&
+                (
+                    command1Text
+                    ||
+                    command1Icon
+                )
+            "
             type="button"
             class="command-button"
             (click)="onCommand1Click()">
@@ -18,8 +26,17 @@
 
         </button>
 
+
         <button
-            *ngIf="command2Visible"
+            *ngIf="
+                command2Visible
+                &&
+                (
+                    command2Text
+                    ||
+                    command2Icon
+                )
+            "
             type="button"
             class="command-button"
             (click)="onCommand2Click()">
@@ -30,8 +47,17 @@
 
         </button>
 
+
         <button
-            *ngIf="command3Visible"
+            *ngIf="
+                command3Visible
+                &&
+                (
+                    command3Text
+                    ||
+                    command3Icon
+                )
+            "
             type="button"
             class="command-button"
             (click)="onCommand3Click()">
@@ -44,6 +70,7 @@
 
     </div>
 
+
     <!-- =====================================================
          DIVIDER
     ====================================================== -->
@@ -53,16 +80,41 @@
             rightCommandVisible
             &&
             (
-                command1Visible
+                (
+                    command1Visible
+                    &&
+                    (
+                        command1Text
+                        ||
+                        command1Icon
+                    )
+                )
                 ||
-                command2Visible
+                (
+                    command2Visible
+                    &&
+                    (
+                        command2Text
+                        ||
+                        command2Icon
+                    )
+                )
                 ||
-                command3Visible
+                (
+                    command3Visible
+                    &&
+                    (
+                        command3Text
+                        ||
+                        command3Icon
+                    )
+                )
             )
         "
         class="command-center-divider">
 
     </div>
+
 
     <!-- =====================================================
          RIGHT COMMAND
@@ -71,7 +123,11 @@
     <div class="command-center-right">
 
         <button
-            *ngIf="rightCommandVisible"
+            *ngIf="
+                rightCommandVisible
+                &&
+                rightCommandIcon
+            "
             type="button"
             class="command-icon-button"
             (click)="onRightCommandClick()">

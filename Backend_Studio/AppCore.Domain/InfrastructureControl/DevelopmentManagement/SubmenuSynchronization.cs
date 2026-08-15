@@ -44,11 +44,13 @@ public class SubmenuSynchronization : BaseEntity
     public string SubmenuName { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Synchronization Type
     //===========================================================
 
     public string SynchronizationType { get; set; } = string.Empty;
+
 
 
     //===========================================================
@@ -66,6 +68,15 @@ public class SubmenuSynchronization : BaseEntity
     public string FrontendMenuFolder { get; set; } = string.Empty;
 
 
+
+    //===========================================================
+    // Frontend Menu Route
+    //===========================================================
+
+    public string FrontendMenuRouteFile { get; set; } = string.Empty;
+
+
+
     //===========================================================
     // Frontend Submenu Location
     //===========================================================
@@ -77,6 +88,7 @@ public class SubmenuSynchronization : BaseEntity
     public string FrontendListFolder { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Frontend Submenu Core Files
     //===========================================================
@@ -86,6 +98,7 @@ public class SubmenuSynchronization : BaseEntity
     public string FrontendSubmenuServiceFile { get; set; } = string.Empty;
 
     public string FrontendSubmenuRouteFile { get; set; } = string.Empty;
+
 
 
     //===========================================================
@@ -106,6 +119,7 @@ public class SubmenuSynchronization : BaseEntity
     public string FrontendSubmenuListCssFile { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Backend Target Location
     //===========================================================
@@ -119,11 +133,13 @@ public class SubmenuSynchronization : BaseEntity
     public string BackendInfrastructureProject { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Backend API
     //===========================================================
 
     public string BackendControllerFile { get; set; } = string.Empty;
+
 
 
     //===========================================================
@@ -148,11 +164,13 @@ public class SubmenuSynchronization : BaseEntity
     public string BackendSubMenuRepositoryInterfaceFile { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Backend Domain
     //===========================================================
 
     public string BackendSubMenuEntityFile { get; set; } = string.Empty;
+
 
 
     //===========================================================
@@ -164,6 +182,7 @@ public class SubmenuSynchronization : BaseEntity
     public string BackendSubMenuRepositoryFile { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Synchronization Status
     //===========================================================
@@ -171,11 +190,13 @@ public class SubmenuSynchronization : BaseEntity
     public string Status { get; set; } = "Pending";
 
 
+
     //===========================================================
     // Configuration
     //===========================================================
 
     public string? Remarks { get; set; }
+
 
 
     //===========================================================

@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 using AppCore.Application.Platform.CommonInterfaces;
@@ -83,10 +84,6 @@ public class SubmenuFrontendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Validate Synchronization
-        //=======================================================
-
         if
         (
             synchronization == null
@@ -98,10 +95,6 @@ public class SubmenuFrontendSynchronizationEngine
             );
         }
 
-
-        //=======================================================
-        // Validate Frontend Solution
-        //=======================================================
 
         if
         (
@@ -117,10 +110,6 @@ public class SubmenuFrontendSynchronizationEngine
             );
         }
 
-
-        //=======================================================
-        // Validate Frontend Solution Exists
-        //=======================================================
 
         if
         (
@@ -147,7 +136,7 @@ public class SubmenuFrontendSynchronizationEngine
     //===========================================================
 
     private async Task<SubmenuSynchronizationResultDto>
-    CreateFrontendStructureAsync
+        CreateFrontendStructureAsync
     (
         SubmenuSynchronizationDto synchronization
     )
@@ -166,22 +155,42 @@ public class SubmenuFrontendSynchronizationEngine
 
 
         //=======================================================
-        // Create Submenu Folder
+        // Resolve Canonical Submenu Folder
         //=======================================================
-        //
-        // Existing Menu
-        //     |
-        //     +-- pages
-        //          |
-        //          +-- <submenu>
-        //
-        // The existing pages folder is NEVER created.
-        //
+
+        var submenuFolder =
+            NormalizeSubmenuFolder
+            (
+                synchronization
+            );
+
+
+        var formFolder =
+            Path.Combine
+            (
+                submenuFolder,
+
+                "form"
+            );
+
+
+        var listFolder =
+            Path.Combine
+            (
+                submenuFolder,
+
+                "list"
+            );
+
+
+
+        //=======================================================
+        // Create Submenu Folder
         //=======================================================
 
         await CreateFolderAsync
         (
-            synchronization.FrontendSubmenuFolder
+            submenuFolder
         );
 
 
@@ -192,7 +201,7 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateFolderAsync
         (
-            synchronization.FrontendFormFolder
+            formFolder
         );
 
 
@@ -203,7 +212,7 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateFolderAsync
         (
-            synchronization.FrontendListFolder
+            listFolder
         );
 
 
@@ -211,28 +220,21 @@ public class SubmenuFrontendSynchronizationEngine
         //=======================================================
         // Create Model File
         //=======================================================
-        //
-        // Existing Menu
-        //     |
-        //     +-- models
-        //          |
-        //          +-- <submenu>.model.ts
-        //
-        // IMPORTANT:
-        //
-        // The "models" folder belongs to the existing Menu.
-        //
-        // This engine NEVER creates the models folder.
-        //
-        // The folder must already exist.
-        //
-        // EMPTY FILE ONLY.
-        //
-        //=======================================================
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuModelFile,
+            NormalizeFrontendCoreFile
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder,
+
+                synchronization.FrontendSubmenuModelFile,
+
+                "models",
+
+                ".model.ts"
+            ),
 
             true,
 
@@ -254,28 +256,21 @@ public class SubmenuFrontendSynchronizationEngine
         //=======================================================
         // Create Service File
         //=======================================================
-        //
-        // Existing Menu
-        //     |
-        //     +-- services
-        //          |
-        //          +-- <submenu>.service.ts
-        //
-        // IMPORTANT:
-        //
-        // The "services" folder belongs to the existing Menu.
-        //
-        // This engine NEVER creates the services folder.
-        //
-        // The folder must already exist.
-        //
-        // EMPTY FILE ONLY.
-        //
-        //=======================================================
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuServiceFile,
+            NormalizeFrontendCoreFile
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder,
+
+                synchronization.FrontendSubmenuServiceFile,
+
+                "services",
+
+                ".service.ts"
+            ),
 
             true,
 
@@ -295,32 +290,23 @@ public class SubmenuFrontendSynchronizationEngine
 
 
         //=======================================================
-        // Create Route File
-        //=======================================================
-        //
-        // Existing Menu
-        //     |
-        //     +-- routes
-        //          |
-        //          +-- <submenu>.routes.ts
-        //
-        // IMPORTANT:
-        //
-        // The "routes" folder belongs to the existing Menu.
-        //
-        // This engine NEVER creates the routes folder.
-        //
-        // The folder must already exist.
-        //
-        // EMPTY FILE ONLY.
-        //
-        // This engine does NOT modify the existing Menu route.
-        //
+        // Create Submenu Route File
         //=======================================================
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuRouteFile,
+            NormalizeFrontendCoreFile
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder,
+
+                synchronization.FrontendSubmenuRouteFile,
+
+                "routes",
+
+                ".routes.ts"
+            ),
 
             true,
 
@@ -345,7 +331,14 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuFormTsFile,
+            NormalizeFrontendPageFile
+            (
+                formFolder,
+
+                synchronization.FrontendSubmenuFormTsFile,
+
+                ".ts"
+            ),
 
             false,
 
@@ -370,7 +363,14 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuFormHtmlFile,
+            NormalizeFrontendPageFile
+            (
+                formFolder,
+
+                synchronization.FrontendSubmenuFormHtmlFile,
+
+                ".html"
+            ),
 
             false,
 
@@ -395,7 +395,14 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuFormCssFile,
+            NormalizeFrontendPageFile
+            (
+                formFolder,
+
+                synchronization.FrontendSubmenuFormCssFile,
+
+                ".css"
+            ),
 
             false,
 
@@ -420,7 +427,14 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuListTsFile,
+            NormalizeFrontendPageFile
+            (
+                listFolder,
+
+                synchronization.FrontendSubmenuListTsFile,
+
+                ".ts"
+            ),
 
             false,
 
@@ -445,7 +459,14 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuListHtmlFile,
+            NormalizeFrontendPageFile
+            (
+                listFolder,
+
+                synchronization.FrontendSubmenuListHtmlFile,
+
+                ".html"
+            ),
 
             false,
 
@@ -470,7 +491,14 @@ public class SubmenuFrontendSynchronizationEngine
 
         await CreateEmptyFileAsync
         (
-            synchronization.FrontendSubmenuListCssFile,
+            NormalizeFrontendPageFile
+            (
+                listFolder,
+
+                synchronization.FrontendSubmenuListCssFile,
+
+                ".css"
+            ),
 
             false,
 
@@ -525,6 +553,396 @@ public class SubmenuFrontendSynchronizationEngine
 
 
     //===========================================================
+    // Normalize Frontend Path
+    //===========================================================
+
+    private string NormalizeFrontendPath
+    (
+        string frontendSolution,
+
+        string path
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(frontendSolution)
+        )
+        {
+            return path;
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(path)
+        )
+        {
+            return path;
+        }
+
+
+        var solutionRoot =
+            Path.GetFullPath
+            (
+                frontendSolution
+            );
+
+
+        var fullPath =
+            Path.GetFullPath
+            (
+                path
+            );
+
+
+        var relativePath =
+            Path.GetRelativePath
+            (
+                solutionRoot,
+
+                fullPath
+            );
+
+
+        if
+        (
+            relativePath == "."
+        )
+        {
+            return solutionRoot;
+        }
+
+
+        var segments =
+            relativePath.Split
+            (
+                new char[]
+                {
+                    Path.DirectorySeparatorChar,
+
+                    Path.AltDirectorySeparatorChar
+                },
+
+                StringSplitOptions.RemoveEmptyEntries
+            );
+
+
+        for
+        (
+            var index = 0;
+
+            index < segments.Length;
+
+            index++
+        )
+        {
+            segments[index] =
+                segments[index]
+                    .Trim()
+                    .ToLowerInvariant();
+        }
+
+
+        var normalizedRelativePath =
+            segments.Length == 0
+                ? string.Empty
+                : Path.Combine
+                (
+                    segments
+                );
+
+
+        return Path.Combine
+        (
+            solutionRoot,
+
+            normalizedRelativePath
+        );
+    }
+
+
+
+    //===========================================================
+    // Normalize Submenu Folder
+    //===========================================================
+
+    private string NormalizeSubmenuFolder
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        var menuFolder =
+            NormalizeFrontendPath
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(menuFolder)
+        )
+        {
+            return menuFolder;
+        }
+
+
+        var submenuName =
+            synchronization.SubmenuName;
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(submenuName)
+        )
+        {
+            submenuName =
+                Path.GetFileName
+                (
+                    synchronization.FrontendSubmenuFolder
+                );
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(submenuName)
+        )
+        {
+            submenuName =
+                synchronization.SubmenuCode;
+        }
+
+
+        submenuName =
+            CreateRouteName
+            (
+                submenuName
+            );
+
+
+        return Path.Combine
+        (
+            menuFolder,
+
+            "pages",
+
+            submenuName
+        );
+    }
+
+
+
+    //===========================================================
+    // Normalize Frontend Core File
+    //===========================================================
+
+    private string NormalizeFrontendCoreFile
+    (
+        string frontendSolution,
+
+        string menuFolder,
+
+        string configuredFilePath,
+
+        string requiredFolder,
+
+        string requiredSuffix
+    )
+    {
+        var normalizedMenuFolder =
+            NormalizeFrontendPath
+            (
+                frontendSolution,
+
+                menuFolder
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(normalizedMenuFolder)
+        )
+        {
+            return configuredFilePath;
+        }
+
+
+        var fileName =
+            Path.GetFileName
+            (
+                configuredFilePath
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(fileName)
+        )
+        {
+            return configuredFilePath;
+        }
+
+
+        fileName =
+            fileName
+                .Trim()
+                .ToLowerInvariant();
+
+
+        if
+        (
+            !fileName.EndsWith
+            (
+                requiredSuffix,
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var baseName =
+                Path.GetFileNameWithoutExtension
+                (
+                    Path.GetFileNameWithoutExtension
+                    (
+                        fileName
+                    )
+                );
+
+
+            baseName =
+                baseName
+                    .Replace
+                    (
+                        ".model",
+                        string.Empty,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    .Replace
+                    (
+                        ".service",
+                        string.Empty,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    .Replace
+                    (
+                        ".routes",
+                        string.Empty,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    .Trim()
+                    .ToLowerInvariant();
+
+
+            fileName =
+                baseName
+                +
+                requiredSuffix.ToLowerInvariant();
+        }
+
+
+        return Path.Combine
+        (
+            normalizedMenuFolder,
+
+            requiredFolder,
+
+            fileName
+        );
+    }
+
+
+
+    //===========================================================
+    // Normalize Frontend Page File
+    //===========================================================
+
+    private string NormalizeFrontendPageFile
+    (
+        string folderPath,
+
+        string configuredFilePath,
+
+        string requiredSuffix
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(folderPath)
+        )
+        {
+            return configuredFilePath;
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(configuredFilePath)
+        )
+        {
+            return configuredFilePath;
+        }
+
+
+        var fileName =
+            Path.GetFileName
+            (
+                configuredFilePath
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(fileName)
+        )
+        {
+            return configuredFilePath;
+        }
+
+
+        fileName =
+            fileName
+                .Trim()
+                .ToLowerInvariant();
+
+
+        if
+        (
+            !fileName.EndsWith
+            (
+                requiredSuffix,
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            var baseName =
+                Path.GetFileNameWithoutExtension
+                (
+                    fileName
+                );
+
+
+            fileName =
+                baseName
+                +
+                requiredSuffix.ToLowerInvariant();
+        }
+
+
+        return Path.Combine
+        (
+            folderPath,
+
+            fileName
+        );
+    }
+
+
+
+    //===========================================================
     // Create Empty File
     //===========================================================
 
@@ -539,25 +957,14 @@ public class SubmenuFrontendSynchronizationEngine
         Action onFailure
     )
     {
-        //=======================================================
-        // Validate Path
-        //=======================================================
-
         if
         (
-            string.IsNullOrWhiteSpace
-            (
-                filePath
-            )
+            string.IsNullOrWhiteSpace(filePath)
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         filePath =
             Path.GetFullPath
@@ -566,20 +973,15 @@ public class SubmenuFrontendSynchronizationEngine
             );
 
 
-        //=======================================================
-        // Existing File
-        //=======================================================
-        //
-        // Never overwrite an existing file.
-        //
-        //=======================================================
+        await NormalizeExistingFileCaseAsync
+        (
+            filePath
+        );
+
 
         if
         (
-            File.Exists
-            (
-                filePath
-            )
+            File.Exists(filePath)
         )
         {
             onSuccess();
@@ -592,10 +994,6 @@ public class SubmenuFrontendSynchronizationEngine
 
         try
         {
-            //===================================================
-            // Resolve Parent Directory
-            //===================================================
-
             var parentDirectory =
                 Path.GetDirectoryName
                 (
@@ -603,24 +1001,14 @@ public class SubmenuFrontendSynchronizationEngine
                 );
 
 
-            //===================================================
-            // Validate Parent Directory
-            //===================================================
-
             if
             (
                 parentDirectoryMustExist
                 &&
                 (
-                    string.IsNullOrWhiteSpace
-                    (
-                        parentDirectory
-                    )
+                    string.IsNullOrWhiteSpace(parentDirectory)
                     ||
-                    !Directory.Exists
-                    (
-                        parentDirectory
-                    )
+                    !Directory.Exists(parentDirectory)
                 )
             )
             {
@@ -631,36 +1019,13 @@ public class SubmenuFrontendSynchronizationEngine
             }
 
 
-            //===================================================
-            // Create Parent Directory
-            //===================================================
-            //
-            // Only files belonging to newly-created submenu
-            // folders are allowed to create their parent.
-            //
-            // Existing Menu folders such as:
-            //
-            // models
-            // services
-            // routes
-            //
-            // are NEVER created here.
-            //
-            //===================================================
-
             if
             (
                 !parentDirectoryMustExist
                 &&
-                !string.IsNullOrWhiteSpace
-                (
-                    parentDirectory
-                )
+                !string.IsNullOrWhiteSpace(parentDirectory)
                 &&
-                !Directory.Exists
-                (
-                    parentDirectory
-                )
+                !Directory.Exists(parentDirectory)
             )
             {
                 Directory.CreateDirectory
@@ -670,16 +1035,6 @@ public class SubmenuFrontendSynchronizationEngine
             }
 
 
-            //===================================================
-            // Create EMPTY File
-            //===================================================
-            //
-            // No template.
-            // No code.
-            // No placeholder replacement.
-            //
-            //===================================================
-
             await File.WriteAllTextAsync
             (
                 filePath,
@@ -688,16 +1043,9 @@ public class SubmenuFrontendSynchronizationEngine
             );
 
 
-            //===================================================
-            // Confirm File Created
-            //===================================================
-
             if
             (
-                File.Exists
-                (
-                    filePath
-                )
+                File.Exists(filePath)
             )
             {
                 onSuccess();
@@ -713,6 +1061,156 @@ public class SubmenuFrontendSynchronizationEngine
 
             throw;
         }
+    }
+
+
+
+    //===========================================================
+    // Normalize Existing File Case
+    //===========================================================
+
+    private async Task NormalizeExistingFileCaseAsync
+    (
+        string canonicalFilePath
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(canonicalFilePath)
+        )
+        {
+            return;
+        }
+
+
+        canonicalFilePath =
+            Path.GetFullPath
+            (
+                canonicalFilePath
+            );
+
+
+        var parentDirectory =
+            Path.GetDirectoryName
+            (
+                canonicalFilePath
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(parentDirectory)
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !Directory.Exists(parentDirectory)
+        )
+        {
+            return;
+        }
+
+
+        var canonicalFileName =
+            Path.GetFileName
+            (
+                canonicalFilePath
+            );
+
+
+        var existingFiles =
+            Directory
+                .GetFiles
+                (
+                    parentDirectory
+                );
+
+
+        var matchingFiles =
+            existingFiles
+                .Where
+                (
+                    file =>
+                        string.Equals
+                        (
+                            Path.GetFileName(file),
+
+                            canonicalFileName,
+
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                )
+                .ToList();
+
+
+        if
+        (
+            matchingFiles.Count == 0
+        )
+        {
+            return;
+        }
+
+
+        foreach
+        (
+            var existingFile in matchingFiles
+        )
+        {
+            if
+            (
+                string.Equals
+                (
+                    existingFile,
+
+                    canonicalFilePath,
+
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                continue;
+            }
+
+
+            var temporaryFilePath =
+                Path.Combine
+                (
+                    parentDirectory,
+
+                    "."
+                    +
+                    Guid.NewGuid().ToString("N")
+                    +
+                    ".case-normalization.tmp"
+                );
+
+
+            File.Move
+            (
+                existingFile,
+
+                temporaryFilePath
+            );
+
+
+            File.Move
+            (
+                temporaryFilePath,
+
+                canonicalFilePath
+            );
+
+
+            break;
+        }
+
+
+        await Task.CompletedTask;
     }
 
 
@@ -770,14 +1268,48 @@ public class SubmenuFrontendSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        var submenuFolder =
+            NormalizeSubmenuFolder
+            (
+                synchronization
+            );
+
+
+        var formFolder =
+            Path.Combine
+            (
+                submenuFolder,
+
+                "form"
+            );
+
+
+        var listFolder =
+            Path.Combine
+            (
+                submenuFolder,
+
+                "list"
+            );
+
+
+
         //=======================================================
         // Delete Form TypeScript File
         //=======================================================
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuFormTsFile
+            NormalizeFrontendPageFile
+            (
+                formFolder,
+
+                synchronization.FrontendSubmenuFormTsFile,
+
+                ".ts"
+            )
         );
+
 
 
         //=======================================================
@@ -786,8 +1318,16 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuFormHtmlFile
+            NormalizeFrontendPageFile
+            (
+                formFolder,
+
+                synchronization.FrontendSubmenuFormHtmlFile,
+
+                ".html"
+            )
         );
+
 
 
         //=======================================================
@@ -796,8 +1336,16 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuFormCssFile
+            NormalizeFrontendPageFile
+            (
+                formFolder,
+
+                synchronization.FrontendSubmenuFormCssFile,
+
+                ".css"
+            )
         );
+
 
 
         //=======================================================
@@ -806,8 +1354,16 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuListTsFile
+            NormalizeFrontendPageFile
+            (
+                listFolder,
+
+                synchronization.FrontendSubmenuListTsFile,
+
+                ".ts"
+            )
         );
+
 
 
         //=======================================================
@@ -816,8 +1372,16 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuListHtmlFile
+            NormalizeFrontendPageFile
+            (
+                listFolder,
+
+                synchronization.FrontendSubmenuListHtmlFile,
+
+                ".html"
+            )
         );
+
 
 
         //=======================================================
@@ -826,38 +1390,82 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuListCssFile
+            NormalizeFrontendPageFile
+            (
+                listFolder,
+
+                synchronization.FrontendSubmenuListCssFile,
+
+                ".css"
+            )
         );
 
 
+
         //=======================================================
-        // Delete Model File
+        // Delete Model
         //=======================================================
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuModelFile
+            NormalizeFrontendCoreFile
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder,
+
+                synchronization.FrontendSubmenuModelFile,
+
+                "models",
+
+                ".model.ts"
+            )
         );
 
 
+
         //=======================================================
-        // Delete Service File
+        // Delete Service
         //=======================================================
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuServiceFile
+            NormalizeFrontendCoreFile
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder,
+
+                synchronization.FrontendSubmenuServiceFile,
+
+                "services",
+
+                ".service.ts"
+            )
         );
 
 
+
         //=======================================================
-        // Delete Route File
+        // Delete Submenu Route
         //=======================================================
 
         await DeleteFileAsync
         (
-            synchronization.FrontendSubmenuRouteFile
+            NormalizeFrontendCoreFile
+            (
+                synchronization.FrontendSolution,
+
+                synchronization.FrontendMenuFolder,
+
+                synchronization.FrontendSubmenuRouteFile,
+
+                "routes",
+
+                ".routes.ts"
+            )
         );
+
 
 
         //=======================================================
@@ -866,8 +1474,9 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteEmptyFolderAsync
         (
-            synchronization.FrontendFormFolder
+            formFolder
         );
+
 
 
         //=======================================================
@@ -876,38 +1485,19 @@ public class SubmenuFrontendSynchronizationEngine
 
         await DeleteEmptyFolderAsync
         (
-            synchronization.FrontendListFolder
+            listFolder
         );
+
 
 
         //=======================================================
         // Remove Empty Submenu Folder
         //=======================================================
-        //
-        // Only pages/<submenu> is eligible.
-        //
-        // FrontendPagesFolder is NEVER deleted.
-        //
-        //=======================================================
 
         await DeleteEmptyFolderAsync
         (
-            synchronization.FrontendSubmenuFolder
+            submenuFolder
         );
-
-
-        //=======================================================
-        // IMPORTANT
-        //=======================================================
-        //
-        // These existing folders are NEVER deleted:
-        //
-        // FrontendPagesFolder
-        // Existing Menu/models
-        // Existing Menu/services
-        // Existing Menu/routes
-        //
-        //=======================================================
     }
 
 
@@ -921,25 +1511,14 @@ public class SubmenuFrontendSynchronizationEngine
         string filePath
     )
     {
-        //=======================================================
-        // Validate Path
-        //=======================================================
-
         if
         (
-            string.IsNullOrWhiteSpace
-            (
-                filePath
-            )
+            string.IsNullOrWhiteSpace(filePath)
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         filePath =
             Path.GetFullPath
@@ -948,25 +1527,14 @@ public class SubmenuFrontendSynchronizationEngine
             );
 
 
-        //=======================================================
-        // File Exists
-        //=======================================================
-
         if
         (
-            !File.Exists
-            (
-                filePath
-            )
+            !File.Exists(filePath)
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Delete
-        //=======================================================
 
         await _fileRemover.DeleteFileAsync
         (
@@ -985,25 +1553,14 @@ public class SubmenuFrontendSynchronizationEngine
         string folderPath
     )
     {
-        //=======================================================
-        // Validate Path
-        //=======================================================
-
         if
         (
-            string.IsNullOrWhiteSpace
-            (
-                folderPath
-            )
+            string.IsNullOrWhiteSpace(folderPath)
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         folderPath =
             Path.GetFullPath
@@ -1012,16 +1569,9 @@ public class SubmenuFrontendSynchronizationEngine
             );
 
 
-        //=======================================================
-        // Create Folder
-        //=======================================================
-
         if
         (
-            !Directory.Exists
-            (
-                folderPath
-            )
+            !Directory.Exists(folderPath)
         )
         {
             Directory.CreateDirectory
@@ -1045,25 +1595,14 @@ public class SubmenuFrontendSynchronizationEngine
         string folderPath
     )
     {
-        //=======================================================
-        // Validate Path
-        //=======================================================
-
         if
         (
-            string.IsNullOrWhiteSpace
-            (
-                folderPath
-            )
+            string.IsNullOrWhiteSpace(folderPath)
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         folderPath =
             Path.GetFullPath
@@ -1072,25 +1611,14 @@ public class SubmenuFrontendSynchronizationEngine
             );
 
 
-        //=======================================================
-        // Folder Exists
-        //=======================================================
-
         if
         (
-            !Directory.Exists
-            (
-                folderPath
-            )
+            !Directory.Exists(folderPath)
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Check Contents
-        //=======================================================
 
         var entries =
             Directory.GetFileSystemEntries
@@ -1098,10 +1626,6 @@ public class SubmenuFrontendSynchronizationEngine
                 folderPath
             );
 
-
-        //=======================================================
-        // Delete Only If Empty
-        //=======================================================
 
         if
         (
@@ -1116,6 +1640,69 @@ public class SubmenuFrontendSynchronizationEngine
 
 
         await Task.CompletedTask;
+    }
+
+
+
+    //===========================================================
+    // Create Route Name
+    //===========================================================
+
+    private static string CreateRouteName
+    (
+        string value
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(value)
+        )
+        {
+            return string.Empty;
+        }
+
+
+        var characters =
+            value
+                .Trim()
+                .ToLowerInvariant()
+                .Select
+                (
+                    character =>
+                        char.IsLetterOrDigit(character)
+                            ? character
+                            : '-'
+                )
+                .ToArray();
+
+
+        var route =
+            new string
+            (
+                characters
+            );
+
+
+        while
+        (
+            route.Contains
+            (
+                "--",
+                StringComparison.Ordinal
+            )
+        )
+        {
+            route =
+                route.Replace
+                (
+                    "--",
+                    "-",
+                    StringComparison.Ordinal
+                );
+        }
+
+
+        return route.Trim('-');
     }
 
 }

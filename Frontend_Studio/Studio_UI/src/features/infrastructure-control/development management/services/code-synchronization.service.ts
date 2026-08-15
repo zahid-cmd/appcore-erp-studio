@@ -29,9 +29,9 @@ from '../../../../environments/environment';
 
 import
 {
-    SubmenuSynchronization
+    CodeSynchronization
 }
-from '../model/submenu-synchronization.model';
+from '../model/code-synchronization.model';
 
 
 //===============================================================
@@ -67,9 +67,9 @@ export class CodeSynchronizationService
     (
         synchronizationType:string
     ):
-        Observable<SubmenuSynchronization[]>
+        Observable<CodeSynchronization[]>
     {
-        return this.http.get<SubmenuSynchronization[]>
+        return this.http.get<CodeSynchronization[]>
         (
             `${this.apiUrl}?type=${synchronizationType}`
         );
@@ -85,11 +85,26 @@ export class CodeSynchronizationService
     (
         id:number
     ):
-        Observable<SubmenuSynchronization>
+        Observable<CodeSynchronization>
     {
-        return this.http.get<SubmenuSynchronization>
+        return this.http.get<CodeSynchronization>
         (
             `${this.apiUrl}/${id}`
+        );
+    }
+
+
+
+    //===========================================================
+    // Get History
+    //===========================================================
+
+    getHistory():
+        Observable<any[]>
+    {
+        return this.http.get<any[]>
+        (
+            `${this.apiUrl}/history`
         );
     }
 

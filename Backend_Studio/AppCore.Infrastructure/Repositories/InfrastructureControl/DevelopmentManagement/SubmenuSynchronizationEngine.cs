@@ -34,7 +34,8 @@ public class SubmenuSynchronizationEngine
     // Fields
     //===========================================================
 
-    private readonly AppDbContext _context;
+    private readonly AppDbContext
+        _context;
 
 
     private readonly ISubmenuFrontendSynchronizationEngine
@@ -146,14 +147,6 @@ public class SubmenuSynchronizationEngine
         //=======================================================
         // Create Code Synchronization
         //=======================================================
-        //
-        // A Code Synchronization record is created only after
-        // the Submenu Synchronization has successfully completed.
-        //
-        // If the record already exists, the repository returns
-        // the existing Code Synchronization Id.
-        //
-        //=======================================================
 
         await _codeSynchronizationRepository
             .CreateFromSubmenuSynchronizationAsync
@@ -171,22 +164,17 @@ public class SubmenuSynchronizationEngine
             Success =
                 true,
 
-
             Message =
                 "Submenu synchronization completed successfully.",
-
 
             SynchronizedDate =
                 DateTime.UtcNow,
 
-
             TotalOperations =
                 result.TotalOperations,
 
-
             SuccessfulOperations =
                 result.SuccessfulOperations,
-
 
             FailedOperations =
                 result.FailedOperations
@@ -200,19 +188,18 @@ public class SubmenuSynchronizationEngine
     //===========================================================
 
     private async Task<SubmenuSynchronizationResultDto>
-    ExecuteSynchronizationAsync
+        ExecuteSynchronizationAsync
     (
         SubmenuSynchronizationDto synchronization
     )
     {
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Frontend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
             return await _frontendSynchronizationEngine
@@ -225,12 +212,11 @@ public class SubmenuSynchronizationEngine
 
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Backend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
             return await _backendSynchronizationEngine
@@ -246,7 +232,6 @@ public class SubmenuSynchronizationEngine
             Success =
                 false,
 
-
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
         };
@@ -259,7 +244,7 @@ public class SubmenuSynchronizationEngine
     //===========================================================
 
     private async Task<SubmenuSynchronizationDto>
-    LoadSynchronizationAsync
+        LoadSynchronizationAsync
     (
         long synchronizationId
     )
@@ -306,9 +291,11 @@ public class SubmenuSynchronizationEngine
     // Build Synchronization DTO
     //===========================================================
 
-    private static SubmenuSynchronizationDto BuildSynchronizationDto
+    private static SubmenuSynchronizationDto
+        BuildSynchronizationDto
     (
-        Domain.Entities.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization entity
+        Domain.Entities.InfrastructureControl
+            .DevelopmentManagement.SubmenuSynchronization entity
     )
     {
         return new SubmenuSynchronizationDto
@@ -328,10 +315,8 @@ public class SubmenuSynchronizationEngine
             ModuleId =
                 entity.ModuleId,
 
-
             ModuleCode =
                 entity.ModuleCode,
-
 
             ModuleName =
                 entity.ModuleName,
@@ -344,10 +329,8 @@ public class SubmenuSynchronizationEngine
             MenuId =
                 entity.MenuId,
 
-
             MenuCode =
                 entity.MenuCode,
-
 
             MenuName =
                 entity.MenuName,
@@ -360,10 +343,8 @@ public class SubmenuSynchronizationEngine
             SubmenuId =
                 entity.SubmenuId,
 
-
             SubmenuCode =
                 entity.SubmenuCode,
-
 
             SubmenuName =
                 entity.SubmenuName,
@@ -384,21 +365,25 @@ public class SubmenuSynchronizationEngine
             FrontendSolution =
                 entity.FrontendSolution,
 
-
             FrontendProject =
                 entity.FrontendProject,
-
 
             FrontendSourceFolder =
                 entity.FrontendSourceFolder,
 
-
             FrontendFeatureFolder =
                 entity.FrontendFeatureFolder,
 
-
             FrontendMenuFolder =
                 entity.FrontendMenuFolder,
+
+
+            //===================================================
+            // Frontend Menu Route
+            //===================================================
+
+            FrontendMenuRouteFile =
+                entity.FrontendMenuRouteFile,
 
 
             //===================================================
@@ -408,10 +393,8 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuFolder =
                 entity.FrontendSubmenuFolder,
 
-
             FrontendFormFolder =
                 entity.FrontendFormFolder,
-
 
             FrontendListFolder =
                 entity.FrontendListFolder,
@@ -424,10 +407,8 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuModelFile =
                 entity.FrontendSubmenuModelFile,
 
-
             FrontendSubmenuServiceFile =
                 entity.FrontendSubmenuServiceFile,
-
 
             FrontendSubmenuRouteFile =
                 entity.FrontendSubmenuRouteFile,
@@ -440,10 +421,8 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuFormTsFile =
                 entity.FrontendSubmenuFormTsFile,
 
-
             FrontendSubmenuFormHtmlFile =
                 entity.FrontendSubmenuFormHtmlFile,
-
 
             FrontendSubmenuFormCssFile =
                 entity.FrontendSubmenuFormCssFile,
@@ -452,10 +431,8 @@ public class SubmenuSynchronizationEngine
             FrontendSubmenuListTsFile =
                 entity.FrontendSubmenuListTsFile,
 
-
             FrontendSubmenuListHtmlFile =
                 entity.FrontendSubmenuListHtmlFile,
-
 
             FrontendSubmenuListCssFile =
                 entity.FrontendSubmenuListCssFile,
@@ -468,14 +445,11 @@ public class SubmenuSynchronizationEngine
             BackendSolution =
                 entity.BackendSolution,
 
-
             BackendApplicationProject =
                 entity.BackendApplicationProject,
 
-
             BackendDomainProject =
                 entity.BackendDomainProject,
-
 
             BackendInfrastructureProject =
                 entity.BackendInfrastructureProject,
@@ -496,10 +470,8 @@ public class SubmenuSynchronizationEngine
             BackendApplicationSubMenuFolder =
                 entity.BackendApplicationSubMenuFolder,
 
-
             BackendApplicationDtosFolder =
                 entity.BackendApplicationDtosFolder,
-
 
             BackendApplicationInterfacesFolder =
                 entity.BackendApplicationInterfacesFolder,
@@ -508,18 +480,14 @@ public class SubmenuSynchronizationEngine
             BackendSubMenuDtoFile =
                 entity.BackendSubMenuDtoFile,
 
-
             BackendCreateSubMenuDtoFile =
                 entity.BackendCreateSubMenuDtoFile,
-
 
             BackendUpdateSubMenuDtoFile =
                 entity.BackendUpdateSubMenuDtoFile,
 
-
             BackendSubMenuDefaultsDtoFile =
                 entity.BackendSubMenuDefaultsDtoFile,
-
 
             BackendSubMenuRepositoryInterfaceFile =
                 entity.BackendSubMenuRepositoryInterfaceFile,
@@ -539,7 +507,6 @@ public class SubmenuSynchronizationEngine
 
             BackendSubMenuConfigurationFile =
                 entity.BackendSubMenuConfigurationFile,
-
 
             BackendSubMenuRepositoryFile =
                 entity.BackendSubMenuRepositoryFile,
@@ -568,10 +535,8 @@ public class SubmenuSynchronizationEngine
             LastSynchronizedBy =
                 entity.LastSynchronizedBy,
 
-
             LastSynchronizedDate =
                 entity.LastSynchronizedDate,
-
 
             LastSynchronizationResult =
                 entity.LastSynchronizationResult,
@@ -601,7 +566,7 @@ public class SubmenuSynchronizationEngine
     //===========================================================
 
     private async Task<SubmenuSynchronizationResultDto>
-    ValidateSynchronizationAsync
+        ValidateSynchronizationAsync
     (
         SubmenuSynchronizationDto synchronization
     )
@@ -620,24 +585,14 @@ public class SubmenuSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Module is required."
             };
         }
 
 
-
         //=======================================================
         // Validate Parent Module Synchronization
-        //=======================================================
-        //
-        // A Submenu cannot be synchronized until its parent
-        // Module has been successfully synchronized.
-        //
-        // Saving a Submenu configuration as Pending is allowed.
-        // Only actual synchronization is blocked here.
-        //
         //=======================================================
 
         var moduleSynchronized =
@@ -678,12 +633,10 @@ public class SubmenuSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Submenu synchronization cannot continue because the parent Module has not been synchronized."
             };
         }
-
 
 
         //=======================================================
@@ -700,25 +653,14 @@ public class SubmenuSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Menu is required."
             };
         }
 
 
-
         //=======================================================
         // Validate Parent Menu Synchronization
-        //=======================================================
-        //
-        // A Submenu belongs to a Menu.
-        //
-        // Therefore the Menu must also be successfully
-        // synchronized before the Submenu can be synchronized.
-        //
-        // A saved Pending Menu does NOT satisfy this condition.
-        //
         //=======================================================
 
         var menuSynchronized =
@@ -729,6 +671,11 @@ public class SubmenuSynchronizationEngine
                 .AnyAsync
                 (
                     x =>
+
+                    x.ModuleId ==
+                    synchronization.ModuleId
+
+                    &&
 
                     x.MenuId ==
                     synchronization.MenuId
@@ -759,12 +706,10 @@ public class SubmenuSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Submenu synchronization cannot continue because the parent Menu has not been synchronized."
             };
         }
-
 
 
         //=======================================================
@@ -781,12 +726,10 @@ public class SubmenuSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Submenu is required."
             };
         }
-
 
 
         //=======================================================
@@ -806,12 +749,42 @@ public class SubmenuSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Synchronization type is required."
             };
         }
 
+
+        //=======================================================
+        // Validate Supported Synchronization Type
+        //=======================================================
+
+        if
+        (
+            !synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+
+            &&
+
+            !synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new SubmenuSynchronizationResultDto
+            {
+                Success =
+                    false,
+
+                Message =
+                    $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+            };
+        }
 
 
         //=======================================================
@@ -820,12 +793,11 @@ public class SubmenuSynchronizationEngine
 
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Frontend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
             if
@@ -841,13 +813,30 @@ public class SubmenuSynchronizationEngine
                     Success =
                         false,
 
-
                     Message =
                         "Frontend solution is required."
                 };
             }
-        }
 
+
+            if
+            (
+                string.IsNullOrWhiteSpace
+                (
+                    synchronization.FrontendMenuRouteFile
+                )
+            )
+            {
+                return new SubmenuSynchronizationResultDto
+                {
+                    Success =
+                        false,
+
+                    Message =
+                        "Frontend menu route file is required."
+                };
+            }
+        }
 
 
         //=======================================================
@@ -856,18 +845,13 @@ public class SubmenuSynchronizationEngine
 
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Backend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
-            //===================================================
-            // Validate Backend Solution
-            //===================================================
-
             if
             (
                 string.IsNullOrWhiteSpace
@@ -881,17 +865,11 @@ public class SubmenuSynchronizationEngine
                     Success =
                         false,
 
-
                     Message =
                         "Backend solution is required."
                 };
             }
 
-
-
-            //===================================================
-            // Validate Backend Configuration
-            //===================================================
 
             if
             (
@@ -934,7 +912,6 @@ public class SubmenuSynchronizationEngine
                     Success =
                         false,
 
-
                     Message =
                         "No backend configuration was provided."
                 };
@@ -942,19 +919,14 @@ public class SubmenuSynchronizationEngine
         }
 
 
-
         //=======================================================
         // Validation Passed
         //=======================================================
-
-        await Task.CompletedTask;
-
 
         return new SubmenuSynchronizationResultDto
         {
             Success =
                 true,
-
 
             Message =
                 "Validation completed successfully."
@@ -1002,7 +974,6 @@ public class SubmenuSynchronizationEngine
         }
 
 
-
         entity.Status =
             "Synchronized";
 
@@ -1027,7 +998,6 @@ public class SubmenuSynchronizationEngine
             1;
 
 
-
         await _context.SaveChangesAsync();
     }
 
@@ -1050,7 +1020,7 @@ public class SubmenuSynchronizationEngine
 
 
         var validationResult =
-            await ValidateSynchronizationAsync
+            await ValidateRollbackAsync
             (
                 synchronization
             );
@@ -1063,7 +1033,6 @@ public class SubmenuSynchronizationEngine
         {
             return validationResult;
         }
-
 
 
         var result =
@@ -1082,6 +1051,19 @@ public class SubmenuSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Remove Code Synchronization Record
+        //=======================================================
+
+        await RemoveCodeSynchronizationRecordAsync
+        (
+            synchronization.Id
+        );
+
+
+        //=======================================================
+        // Update Rollback Status
+        //=======================================================
 
         await UpdateRollbackStatusAsync
         (
@@ -1089,31 +1071,178 @@ public class SubmenuSynchronizationEngine
         );
 
 
+        //=======================================================
+        // Result
+        //=======================================================
 
         return new SubmenuSynchronizationResultDto
         {
             Success =
                 true,
 
-
             Message =
                 "Submenu rollback completed successfully.",
-
 
             SynchronizedDate =
                 DateTime.UtcNow,
 
-
             TotalOperations =
                 result.TotalOperations,
-
 
             SuccessfulOperations =
                 result.SuccessfulOperations,
 
-
             FailedOperations =
                 result.FailedOperations
+        };
+    }
+
+
+
+    //===========================================================
+    // Remove Code Synchronization Record
+    //===========================================================
+
+    private async Task RemoveCodeSynchronizationRecordAsync
+    (
+        long submenuSynchronizationId
+    )
+    {
+        const long userId =
+            1;
+
+
+        var codeSynchronizations =
+            await _context.CodeSynchronizations
+
+                .Where
+                (
+                    x =>
+
+                    x.SubmenuSynchronizationId ==
+                    submenuSynchronizationId
+
+                    &&
+
+                    !x.IsDeleted
+                )
+
+                .ToListAsync();
+
+
+        if
+        (
+            codeSynchronizations.Count == 0
+        )
+        {
+            return;
+        }
+
+
+        foreach
+        (
+            var codeSynchronization
+                in codeSynchronizations
+        )
+        {
+            codeSynchronization.IsDeleted =
+                true;
+
+
+            codeSynchronization.DeletedBy =
+                userId;
+
+
+            codeSynchronization.DeletedDate =
+                DateTime.UtcNow;
+        }
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+
+    //===========================================================
+    // Validate Rollback
+    //===========================================================
+
+    private static async Task<SubmenuSynchronizationResultDto>
+        ValidateRollbackAsync
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Validate Status
+        //=======================================================
+
+        if
+        (
+            !synchronization.Status.Equals
+            (
+                "Synchronized",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new SubmenuSynchronizationResultDto
+            {
+                Success =
+                    false,
+
+                Message =
+                    "Submenu synchronization is not currently synchronized."
+            };
+        }
+
+
+        //=======================================================
+        // Validate Synchronization Type
+        //=======================================================
+
+        if
+        (
+            !synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
+
+            &&
+
+            !synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return new SubmenuSynchronizationResultDto
+            {
+                Success =
+                    false,
+
+                Message =
+                    $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+            };
+        }
+
+
+        //=======================================================
+        // Validation Passed
+        //=======================================================
+
+        await Task.CompletedTask;
+
+
+        return new SubmenuSynchronizationResultDto
+        {
+            Success =
+                true,
+
+            Message =
+                "Rollback validation completed successfully."
         };
     }
 
@@ -1124,19 +1253,18 @@ public class SubmenuSynchronizationEngine
     //===========================================================
 
     private async Task<SubmenuSynchronizationResultDto>
-    ExecuteRollbackAsync
+        ExecuteRollbackAsync
     (
         SubmenuSynchronizationDto synchronization
     )
     {
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Frontend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization.SynchronizationType.Equals
+            (
+                "Frontend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
             return await _frontendSynchronizationEngine
@@ -1147,15 +1275,13 @@ public class SubmenuSynchronizationEngine
         }
 
 
-
         if
         (
-            synchronization.SynchronizationType
-                .Equals
-                (
-                    "Backend",
-                    StringComparison.OrdinalIgnoreCase
-                )
+            synchronization.SynchronizationType.Equals
+            (
+                "Backend",
+                StringComparison.OrdinalIgnoreCase
+            )
         )
         {
             return await _backendSynchronizationEngine
@@ -1166,12 +1292,10 @@ public class SubmenuSynchronizationEngine
         }
 
 
-
         return new SubmenuSynchronizationResultDto
         {
             Success =
                 false,
-
 
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
@@ -1217,7 +1341,6 @@ public class SubmenuSynchronizationEngine
         }
 
 
-
         entity.Status =
             "Pending";
 
@@ -1236,7 +1359,6 @@ public class SubmenuSynchronizationEngine
 
         entity.ModifiedBy =
             1;
-
 
 
         await _context.SaveChangesAsync();

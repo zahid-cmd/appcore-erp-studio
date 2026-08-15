@@ -8,10 +8,11 @@ using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchr
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
 
-using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
-using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interfaces;
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.CodeSynchronizationEngine;
 
 using AppCore.Infrastructure.Persistence;
+
+using AppCore.Domain.Common;
 
 
 //===============================================================
@@ -45,12 +46,12 @@ public class CodeSynchronizationEngine
         _context;
 
 
-    private readonly ISubmenuFrontendSynchronizationEngine
-        _frontendSynchronizationEngine;
+    private readonly IFrontendCodeSynchronizationEngine
+        _frontendCodeSynchronizationEngine;
 
 
-    private readonly ISubmenuBackendSynchronizationEngine
-        _backendSynchronizationEngine;
+    private readonly IBackendCodeSynchronizationEngine
+        _backendCodeSynchronizationEngine;
 
 
 
@@ -62,23 +63,23 @@ public class CodeSynchronizationEngine
     (
         AppDbContext context,
 
-        ISubmenuFrontendSynchronizationEngine
-            frontendSynchronizationEngine,
+        IFrontendCodeSynchronizationEngine
+            frontendCodeSynchronizationEngine,
 
-        ISubmenuBackendSynchronizationEngine
-            backendSynchronizationEngine
+        IBackendCodeSynchronizationEngine
+            backendCodeSynchronizationEngine
     )
     {
         _context =
             context;
 
 
-        _frontendSynchronizationEngine =
-            frontendSynchronizationEngine;
+        _frontendCodeSynchronizationEngine =
+            frontendCodeSynchronizationEngine;
 
 
-        _backendSynchronizationEngine =
-            backendSynchronizationEngine;
+        _backendCodeSynchronizationEngine =
+            backendCodeSynchronizationEngine;
     }
 
 
@@ -136,7 +137,7 @@ public class CodeSynchronizationEngine
 
 
         //=======================================================
-        // Execute
+        // Execute Synchronization
         //=======================================================
 
         var result =
@@ -180,6 +181,18 @@ public class CodeSynchronizationEngine
 
 
         //=======================================================
+        // Activity History
+        //=======================================================
+
+        await AddSynchronizationHistoryAsync
+        (
+            codeSynchronization,
+
+            result.Message
+        );
+
+
+        //=======================================================
         // Result
         //=======================================================
 
@@ -187,7 +200,6 @@ public class CodeSynchronizationEngine
         {
             Success =
                 true,
-
 
             Message =
                 result.Message
@@ -283,6 +295,16 @@ public class CodeSynchronizationEngine
 
 
         //=======================================================
+        // Activity History
+        //=======================================================
+
+        await AddRollbackHistoryAsync
+        (
+            codeSynchronization
+        );
+
+
+        //=======================================================
         // Result
         //=======================================================
 
@@ -290,7 +312,6 @@ public class CodeSynchronizationEngine
         {
             Success =
                 true,
-
 
             Message =
                 result.Message
@@ -482,6 +503,14 @@ public class CodeSynchronizationEngine
 
 
             //===================================================
+            // Frontend Menu Route
+            //===================================================
+
+            FrontendMenuRouteFile =
+                entity.FrontendMenuRouteFile,
+
+
+            //===================================================
             // Frontend Submenu
             //===================================================
 
@@ -574,7 +603,6 @@ public class CodeSynchronizationEngine
 
             BackendApplicationInterfacesFolder =
                 entity.BackendApplicationInterfacesFolder,
-
 
             BackendSubMenuDtoFile =
                 entity.BackendSubMenuDtoFile,
@@ -684,7 +712,6 @@ public class CodeSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Code Synchronization does not have a valid Submenu Synchronization reference."
             };
@@ -728,7 +755,6 @@ public class CodeSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Code Synchronization cannot continue because the associated Submenu Synchronization has not been synchronized."
             };
@@ -751,7 +777,6 @@ public class CodeSynchronizationEngine
             {
                 Success =
                     false,
-
 
                 Message =
                     "Synchronization type is required."
@@ -785,7 +810,6 @@ public class CodeSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
             };
@@ -800,7 +824,6 @@ public class CodeSynchronizationEngine
         {
             Success =
                 true,
-
 
             Message =
                 "Validation completed successfully."
@@ -833,7 +856,6 @@ public class CodeSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     "Code Synchronization does not have a valid Submenu Synchronization reference."
             };
@@ -857,7 +879,6 @@ public class CodeSynchronizationEngine
             {
                 Success =
                     false,
-
 
                 Message =
                     "Code Synchronization is not currently synchronized."
@@ -891,18 +912,20 @@ public class CodeSynchronizationEngine
                 Success =
                     false,
 
-
                 Message =
                     $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
             };
         }
 
 
+        //=======================================================
+        // Validation Passed
+        //=======================================================
+
         return new CodeSynchronizationEngineResult
         {
             Success =
                 true,
-
 
             Message =
                 "Rollback validation completed successfully."
@@ -922,7 +945,7 @@ public class CodeSynchronizationEngine
     )
     {
         //=======================================================
-        // Frontend
+        // Frontend Code Synchronization
         //=======================================================
 
         if
@@ -935,7 +958,7 @@ public class CodeSynchronizationEngine
         )
         {
             var result =
-                await _frontendSynchronizationEngine
+                await _frontendCodeSynchronizationEngine
                     .SynchronizeAsync
                     (
                         synchronization
@@ -947,7 +970,6 @@ public class CodeSynchronizationEngine
                 Success =
                     result.Success,
 
-
                 Message =
                     result.Message
             };
@@ -955,7 +977,7 @@ public class CodeSynchronizationEngine
 
 
         //=======================================================
-        // Backend
+        // Backend Code Synchronization
         //=======================================================
 
         if
@@ -968,7 +990,7 @@ public class CodeSynchronizationEngine
         )
         {
             var result =
-                await _backendSynchronizationEngine
+                await _backendCodeSynchronizationEngine
                     .SynchronizeAsync
                     (
                         synchronization
@@ -980,18 +1002,20 @@ public class CodeSynchronizationEngine
                 Success =
                     result.Success,
 
-
                 Message =
                     result.Message
             };
         }
 
 
+        //=======================================================
+        // Unsupported
+        //=======================================================
+
         return new CodeSynchronizationEngineResult
         {
             Success =
                 false,
-
 
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
@@ -1011,7 +1035,7 @@ public class CodeSynchronizationEngine
     )
     {
         //=======================================================
-        // Frontend
+        // Frontend Code Synchronization
         //=======================================================
 
         if
@@ -1024,7 +1048,7 @@ public class CodeSynchronizationEngine
         )
         {
             var result =
-                await _frontendSynchronizationEngine
+                await _frontendCodeSynchronizationEngine
                     .RollbackAsync
                     (
                         synchronization
@@ -1036,7 +1060,6 @@ public class CodeSynchronizationEngine
                 Success =
                     result.Success,
 
-
                 Message =
                     result.Message
             };
@@ -1044,7 +1067,7 @@ public class CodeSynchronizationEngine
 
 
         //=======================================================
-        // Backend
+        // Backend Code Synchronization
         //=======================================================
 
         if
@@ -1057,7 +1080,7 @@ public class CodeSynchronizationEngine
         )
         {
             var result =
-                await _backendSynchronizationEngine
+                await _backendCodeSynchronizationEngine
                     .RollbackAsync
                     (
                         synchronization
@@ -1069,18 +1092,20 @@ public class CodeSynchronizationEngine
                 Success =
                     result.Success,
 
-
                 Message =
                     result.Message
             };
         }
 
 
+        //=======================================================
+        // Unsupported
+        //=======================================================
+
         return new CodeSynchronizationEngineResult
         {
             Success =
                 false,
-
 
             Message =
                 $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
@@ -1128,9 +1153,17 @@ public class CodeSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Status
+        //=======================================================
+
         entity.Status =
             "Synchronized";
 
+
+        //=======================================================
+        // Synchronization Information
+        //=======================================================
 
         entity.LastSynchronizedDate =
             DateTime.UtcNow;
@@ -1144,12 +1177,70 @@ public class CodeSynchronizationEngine
             1;
 
 
+        //=======================================================
+        // Audit
+        //=======================================================
+
         entity.ModifiedDate =
             DateTime.UtcNow;
 
 
         entity.ModifiedBy =
             1;
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+
+    //===========================================================
+    // Add Synchronization History
+    //===========================================================
+
+    private async Task AddSynchronizationHistoryAsync
+    (
+        CodeSynchronizationEntity synchronization,
+
+        string resultMessage
+    )
+    {
+        const long userId =
+            1;
+
+
+        _context.ActivityHistories.Add
+        (
+            new ActivityHistory
+            {
+                Module =
+                    "Infrastructure Control",
+
+                EntityName =
+                    "Code Synchronization",
+
+                EntityId =
+                    synchronization.Id,
+
+                ActivityType =
+                    "Synchronize",
+
+                ActivityTitle =
+                    "Code Synchronization Synchronized",
+
+                ActivityDescription =
+                    $"Code synchronization completed successfully for '{synchronization.SubmenuName}'. {resultMessage}",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
 
 
         await _context.SaveChangesAsync();
@@ -1196,6 +1287,10 @@ public class CodeSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Status
+        //=======================================================
+
         entity.Status =
             "Failed";
 
@@ -1203,6 +1298,10 @@ public class CodeSynchronizationEngine
         entity.LastSynchronizationResult =
             resultMessage;
 
+
+        //=======================================================
+        // Audit
+        //=======================================================
 
         entity.ModifiedDate =
             DateTime.UtcNow;
@@ -1254,9 +1353,17 @@ public class CodeSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Status
+        //=======================================================
+
         entity.Status =
             "Ready";
 
+
+        //=======================================================
+        // Synchronization Information
+        //=======================================================
 
         entity.LastSynchronizedDate =
             null;
@@ -1266,12 +1373,68 @@ public class CodeSynchronizationEngine
             "Rollback completed successfully.";
 
 
+        //=======================================================
+        // Audit
+        //=======================================================
+
         entity.ModifiedDate =
             DateTime.UtcNow;
 
 
         entity.ModifiedBy =
             1;
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+
+    //===========================================================
+    // Add Rollback History
+    //===========================================================
+
+    private async Task AddRollbackHistoryAsync
+    (
+        CodeSynchronizationEntity synchronization
+    )
+    {
+        const long userId =
+            1;
+
+
+        _context.ActivityHistories.Add
+        (
+            new ActivityHistory
+            {
+                Module =
+                    "Infrastructure Control",
+
+                EntityName =
+                    "Code Synchronization",
+
+                EntityId =
+                    synchronization.Id,
+
+                ActivityType =
+                    "Rollback",
+
+                ActivityTitle =
+                    "Code Synchronization Rollbacked",
+
+                ActivityDescription =
+                    $"Code synchronization was rolled back for '{synchronization.SubmenuName}'.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
 
 
         await _context.SaveChangesAsync();

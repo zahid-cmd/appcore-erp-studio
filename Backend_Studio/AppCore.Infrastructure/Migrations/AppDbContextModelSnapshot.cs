@@ -943,6 +943,10 @@ namespace AppCore.Infrastructure.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("FrontendMenuRouteFile")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("FrontendProject")
                         .IsRequired()
                         .HasMaxLength(200)

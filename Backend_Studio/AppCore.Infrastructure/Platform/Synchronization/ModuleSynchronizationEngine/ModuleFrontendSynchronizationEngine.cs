@@ -13,11 +13,13 @@ using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.ModuleSynchronization.DTOs;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Infrastructure.Platform.Synchronization;
+
 
 //===============================================================
 // Module Frontend Synchronization Engine
@@ -26,6 +28,7 @@ namespace AppCore.Infrastructure.Platform.Synchronization;
 public class ModuleFrontendSynchronizationEngine
     : IFrontendSynchronizationEngine
 {
+
     //===========================================================
     // Fields
     //===========================================================
@@ -33,17 +36,23 @@ public class ModuleFrontendSynchronizationEngine
     private readonly ITemplateLoader
         _templateLoader;
 
+
     private readonly IPlaceholderEngine
         _placeholderEngine;
+
 
     private readonly IFileGenerator
         _fileGenerator;
 
+
     private readonly IFileUpdater
         _fileUpdater;
 
+
     private readonly IFileRemover
         _fileRemover;
+
+
 
     //===========================================================
     // Constructor
@@ -65,18 +74,24 @@ public class ModuleFrontendSynchronizationEngine
         _templateLoader =
             templateLoader;
 
+
         _placeholderEngine =
             placeholderEngine;
+
 
         _fileGenerator =
             fileGenerator;
 
+
         _fileUpdater =
             fileUpdater;
+
 
         _fileRemover =
             fileRemover;
     }
+
+
 
     //===========================================================
     // Create Typescript Variable Name
@@ -89,11 +104,15 @@ public class ModuleFrontendSynchronizationEngine
     {
         if
         (
-            string.IsNullOrWhiteSpace(value)
+            string.IsNullOrWhiteSpace
+            (
+                value
+            )
         )
         {
             return string.Empty;
         }
+
 
         var parts =
             value.Split
@@ -102,8 +121,10 @@ public class ModuleFrontendSynchronizationEngine
                 StringSplitOptions.RemoveEmptyEntries
             );
 
+
         var result =
-            "";
+            string.Empty;
+
 
         foreach
         (
@@ -119,13 +140,18 @@ public class ModuleFrontendSynchronizationEngine
                         .ToArray()
                 );
 
+
             if
             (
-                string.IsNullOrWhiteSpace(cleaned)
+                string.IsNullOrWhiteSpace
+                (
+                    cleaned
+                )
             )
             {
                 continue;
             }
+
 
             if
             (
@@ -138,14 +164,22 @@ public class ModuleFrontendSynchronizationEngine
             else
             {
                 result +=
-                    char.ToUpperInvariant(cleaned[0])
+                    char.ToUpperInvariant
+                    (
+                        cleaned[0]
+                    )
                     +
-                    cleaned.Substring(1).ToLowerInvariant();
+                    cleaned
+                        .Substring(1)
+                        .ToLowerInvariant();
             }
         }
 
+
         return result;
     }
+
+
 
     //===========================================================
     // Synchronize
@@ -156,24 +190,42 @@ public class ModuleFrontendSynchronizationEngine
         ModuleSynchronizationDto synchronization
     )
     {
+        if
+        (
+            synchronization == null
+        )
+        {
+            throw new ArgumentNullException
+            (
+                nameof(synchronization)
+            );
+        }
+
+
         await PrepareFrontendTargetAsync
         (
             synchronization
         );
+
 
         await CreateFrontendStructureAsync
         (
             synchronization
         );
 
+
         return new ModuleSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
+
 
             Message =
                 "Frontend synchronization completed successfully."
         };
     }
+
+
 
     //===========================================================
     // Frontend Preparation
@@ -184,10 +236,6 @@ public class ModuleFrontendSynchronizationEngine
         ModuleSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Validate Frontend Solution
-        //=======================================================
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -202,9 +250,6 @@ public class ModuleFrontendSynchronizationEngine
             );
         }
 
-        //=======================================================
-        // Frontend Solution Exists
-        //=======================================================
 
         if
         (
@@ -220,8 +265,11 @@ public class ModuleFrontendSynchronizationEngine
             );
         }
 
+
         await Task.CompletedTask;
     }
+
+
 
     //===========================================================
     // Create Frontend Structure
@@ -241,6 +289,7 @@ public class ModuleFrontendSynchronizationEngine
             synchronization
         );
 
+
         //=======================================================
         // Routes Folder
         //=======================================================
@@ -249,6 +298,7 @@ public class ModuleFrontendSynchronizationEngine
         (
             synchronization
         );
+
 
         //=======================================================
         // Module Route File
@@ -259,6 +309,7 @@ public class ModuleFrontendSynchronizationEngine
             synchronization
         );
 
+
         //=======================================================
         // Application Route Registration
         //=======================================================
@@ -268,6 +319,8 @@ public class ModuleFrontendSynchronizationEngine
             synchronization
         );
     }
+
+
 
     //===========================================================
     // Module Folder
@@ -284,6 +337,8 @@ public class ModuleFrontendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Routes Folder
     //===========================================================
@@ -298,7 +353,9 @@ public class ModuleFrontendSynchronizationEngine
             synchronization.FrontendRoutesFolder
         );
     }
-    
+
+
+
     //===========================================================
     // Generate Module Route File
     //===========================================================
@@ -323,20 +380,6 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // Already Exists
-        //=======================================================
-
-        if
-        (
-            File.Exists
-            (
-                synchronization.FrontendModuleRouteFile
-            )
-        )
-        {
-            return;
-        }
 
         //=======================================================
         // Load Template
@@ -347,6 +390,7 @@ public class ModuleFrontendSynchronizationEngine
             (
                 "Templates/Frontend/Route/ModuleRoute.tpl"
             );
+
 
         //=======================================================
         // Replace Placeholders
@@ -371,6 +415,65 @@ public class ModuleFrontendSynchronizationEngine
                 }
             );
 
+
+        //=======================================================
+        // Validate Placeholder Replacement
+        //=======================================================
+
+        EnsureNoUnresolvedPlaceholders
+        (
+            content,
+
+            synchronization.FrontendModuleRouteFile
+        );
+
+
+        //=======================================================
+        // Existing File
+        //=======================================================
+
+        if
+        (
+            File.Exists
+            (
+                synchronization.FrontendModuleRouteFile
+            )
+        )
+        {
+            var existingContent =
+                await File.ReadAllTextAsync
+                (
+                    synchronization.FrontendModuleRouteFile
+                );
+
+
+            //===================================================
+            // Existing File Is Valid
+            //===================================================
+
+            if
+            (
+                !ContainsUnresolvedPlaceholder
+                (
+                    existingContent
+                )
+            )
+            {
+                return;
+            }
+
+
+            //===================================================
+            // Existing File Is Broken
+            //===================================================
+
+            await _fileRemover.DeleteFileAsync
+            (
+                synchronization.FrontendModuleRouteFile
+            );
+        }
+
+
         //=======================================================
         // Generate File
         //=======================================================
@@ -383,6 +486,8 @@ public class ModuleFrontendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Delete Module Route File
     //===========================================================
@@ -392,10 +497,6 @@ public class ModuleFrontendSynchronizationEngine
         ModuleSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Validate
-        //=======================================================
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -407,9 +508,6 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // File Exists
-        //=======================================================
 
         if
         (
@@ -422,15 +520,14 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // Delete File
-        //=======================================================
 
         await _fileRemover.DeleteFileAsync
         (
             synchronization.FrontendModuleRouteFile
         );
     }
+
+
 
     //===========================================================
     // Register Application Route
@@ -456,6 +553,7 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
+
         //=======================================================
         // Application Route Exists
         //=======================================================
@@ -471,6 +569,17 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
+
+        //=======================================================
+        // Remove Broken Placeholder Registration
+        //=======================================================
+
+        await RemoveBrokenPlaceholderRegistrationAsync
+        (
+            synchronization
+        );
+
+
         //=======================================================
         // Load Registration Template
         //=======================================================
@@ -480,6 +589,7 @@ public class ModuleFrontendSynchronizationEngine
             (
                 "Templates/Frontend/Route/ModuleRegistration.tpl"
             );
+
 
         //=======================================================
         // Replace Placeholders
@@ -498,11 +608,13 @@ public class ModuleFrontendSynchronizationEngine
                         synchronization.ModuleCode
                     },
 
+
                     {
                         "{{ModuleName}}",
 
                         synchronization.ModuleName
                     },
+
 
                     {
                         "{{ModuleVariable}}",
@@ -514,11 +626,13 @@ public class ModuleFrontendSynchronizationEngine
                         )
                     },
 
+
                     {
                         "{{ModuleRoutePath}}",
 
                         synchronization.FrontendFeatureFolder
                     },
+
 
                     {
                         "{{ModuleRouteFile}}",
@@ -527,6 +641,19 @@ public class ModuleFrontendSynchronizationEngine
                     }
                 }
             );
+
+
+        //=======================================================
+        // Validate Placeholder Replacement
+        //=======================================================
+
+        EnsureNoUnresolvedPlaceholders
+        (
+            registration,
+
+            synchronization.FrontendApplicationRouteFile
+        );
+
 
         //=======================================================
         // Register In Children Collection
@@ -541,19 +668,18 @@ public class ModuleFrontendSynchronizationEngine
             registration
         );
     }
+
+
+
     //===========================================================
-    // Unregister Application Route
+    // Remove Broken Placeholder Registration
     //===========================================================
 
-    private async Task UnregisterApplicationRouteAsync
+    private async Task RemoveBrokenPlaceholderRegistrationAsync
     (
         ModuleSynchronizationDto synchronization
     )
     {
-        //=======================================================
-        // Validate
-        //=======================================================
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -565,9 +691,6 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // Application Route Exists
-        //=======================================================
 
         if
         (
@@ -580,19 +703,117 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
+
         //=======================================================
-        // Remove Registration Block
+        // Remove Generic Placeholder Block
         //=======================================================
 
         await _fileRemover.RemoveManagedBlockAsync
         (
             synchronization.FrontendApplicationRouteFile,
 
-            $"// AUTO-BEGIN : {synchronization.ModuleCode}",
+            "// AUTO-BEGIN : {{ModuleCode}}",
 
-            $"// AUTO-END : {synchronization.ModuleCode}"
+            "// AUTO-END : {{ModuleCode}}"
+        );
+
+
+        //=======================================================
+        // Remove Module-Specific Broken Block
+        //=======================================================
+
+        if
+        (
+            !string.IsNullOrWhiteSpace
+            (
+                synchronization.ModuleCode
+            )
+        )
+        {
+            await _fileRemover.RemoveManagedBlockAsync
+            (
+                synchronization.FrontendApplicationRouteFile,
+
+                $"// AUTO-BEGIN : {synchronization.ModuleCode}",
+
+                $"// AUTO-END : {synchronization.ModuleCode}"
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Unregister Application Route
+    //===========================================================
+
+    private async Task UnregisterApplicationRouteAsync
+    (
+        ModuleSynchronizationDto synchronization
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.FrontendApplicationRouteFile
+            )
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !File.Exists
+            (
+                synchronization.FrontendApplicationRouteFile
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Remove Normal Registration
+        //=======================================================
+
+        if
+        (
+            !string.IsNullOrWhiteSpace
+            (
+                synchronization.ModuleCode
+            )
+        )
+        {
+            await _fileRemover.RemoveManagedBlockAsync
+            (
+                synchronization.FrontendApplicationRouteFile,
+
+                $"// AUTO-BEGIN : {synchronization.ModuleCode}",
+
+                $"// AUTO-END : {synchronization.ModuleCode}"
+            );
+        }
+
+
+        //=======================================================
+        // Remove Broken Placeholder Registration
+        //=======================================================
+
+        await _fileRemover.RemoveManagedBlockAsync
+        (
+            synchronization.FrontendApplicationRouteFile,
+
+            "// AUTO-BEGIN : {{ModuleCode}}",
+
+            "// AUTO-END : {{ModuleCode}}"
         );
     }
+
+
 
     //===========================================================
     // Create Folder
@@ -603,10 +824,6 @@ public class ModuleFrontendSynchronizationEngine
         string folderPath
     )
     {
-        //=======================================================
-        // Validate
-        //=======================================================
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -618,9 +835,6 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         folderPath =
             Path.GetFullPath
@@ -628,9 +842,6 @@ public class ModuleFrontendSynchronizationEngine
                 folderPath
             );
 
-        //=======================================================
-        // Create Folder
-        //=======================================================
 
         if
         (
@@ -646,8 +857,11 @@ public class ModuleFrontendSynchronizationEngine
             );
         }
 
+
         await Task.CompletedTask;
     }
+
+
 
     //===========================================================
     // Rollback
@@ -658,19 +872,36 @@ public class ModuleFrontendSynchronizationEngine
         ModuleSynchronizationDto synchronization
     )
     {
+        if
+        (
+            synchronization == null
+        )
+        {
+            throw new ArgumentNullException
+            (
+                nameof(synchronization)
+            );
+        }
+
+
         await DeleteFrontendStructureAsync
         (
             synchronization
         );
 
+
         return new ModuleSynchronizationResultDto
         {
-            Success = true,
+            Success =
+                true,
+
 
             Message =
                 "Frontend rollback completed successfully."
         };
     }
+
+
 
     //===========================================================
     // Delete Frontend Structure
@@ -690,6 +921,7 @@ public class ModuleFrontendSynchronizationEngine
             synchronization
         );
 
+
         //=======================================================
         // Delete Module Route File
         //=======================================================
@@ -698,6 +930,7 @@ public class ModuleFrontendSynchronizationEngine
         (
             synchronization
         );
+
 
         //=======================================================
         // Delete Routes Folder
@@ -708,6 +941,7 @@ public class ModuleFrontendSynchronizationEngine
             synchronization
         );
 
+
         //=======================================================
         // Delete Module Folder
         //=======================================================
@@ -717,6 +951,8 @@ public class ModuleFrontendSynchronizationEngine
             synchronization
         );
     }
+
+
 
     //===========================================================
     // Module Folder
@@ -733,6 +969,8 @@ public class ModuleFrontendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Routes Folder
     //===========================================================
@@ -748,6 +986,8 @@ public class ModuleFrontendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Delete Folder
     //===========================================================
@@ -757,10 +997,6 @@ public class ModuleFrontendSynchronizationEngine
         string folderPath
     )
     {
-        //=======================================================
-        // Validate
-        //=======================================================
-
         if
         (
             string.IsNullOrWhiteSpace
@@ -772,9 +1008,6 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         folderPath =
             Path.GetFullPath
@@ -782,9 +1015,6 @@ public class ModuleFrontendSynchronizationEngine
                 folderPath
             );
 
-        //=======================================================
-        // Folder Exists
-        //=======================================================
 
         if
         (
@@ -797,9 +1027,6 @@ public class ModuleFrontendSynchronizationEngine
             return;
         }
 
-        //=======================================================
-        // Delete Only Empty Folder
-        //=======================================================
 
         if
         (
@@ -815,6 +1042,91 @@ public class ModuleFrontendSynchronizationEngine
             );
         }
 
+
         await Task.CompletedTask;
     }
+
+
+
+    //===========================================================
+    // Contains Unresolved Placeholder
+    //===========================================================
+
+    private static bool ContainsUnresolvedPlaceholder
+    (
+        string content
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                content
+            )
+        )
+        {
+            return false;
+        }
+
+
+        return
+            content.Contains
+            (
+                "{{ModuleCode}}",
+                StringComparison.Ordinal
+            )
+            ||
+            content.Contains
+            (
+                "{{ModuleName}}",
+                StringComparison.Ordinal
+            )
+            ||
+            content.Contains
+            (
+                "{{ModuleVariable}}",
+                StringComparison.Ordinal
+            )
+            ||
+            content.Contains
+            (
+                "{{ModuleRoutePath}}",
+                StringComparison.Ordinal
+            )
+            ||
+            content.Contains
+            (
+                "{{ModuleRouteFile}}",
+                StringComparison.Ordinal
+            );
+    }
+
+
+
+    //===========================================================
+    // Ensure No Unresolved Placeholders
+    //===========================================================
+
+    private static void EnsureNoUnresolvedPlaceholders
+    (
+        string content,
+
+        string targetFile
+    )
+    {
+        if
+        (
+            ContainsUnresolvedPlaceholder
+            (
+                content
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                $"Frontend synchronization generated unresolved module placeholders for: {targetFile}"
+            );
+        }
+    }
+
 }

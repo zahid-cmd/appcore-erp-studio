@@ -76,6 +76,15 @@ public class CodeSynchronizationRepository
     //===========================================================
     // Get All
     //===========================================================
+    //
+    // Code Synchronization belongs to the corresponding
+    // Submenu Synchronization.
+    //
+    // Therefore SynchronizationType is resolved from the
+    // Submenu Synchronization record instead of trusting a
+    // potentially stale Code Synchronization type value.
+    //
+    //===========================================================
 
     public async Task<List<CodeSynchronizationDto>>
         GetAllAsync
@@ -83,6 +92,21 @@ public class CodeSynchronizationRepository
         string synchronizationType
     )
     {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                synchronizationType
+            )
+        )
+        {
+            return [];
+        }
+
+
+        synchronizationType =
+            synchronizationType.Trim();
+
+
         return await _context.CodeSynchronizations
 
             .Where
@@ -93,8 +117,22 @@ public class CodeSynchronizationRepository
 
                     &&
 
-                    x.SynchronizationType ==
-                    synchronizationType
+                    _context.SubmenuSynchronizations.Any
+                    (
+                        submenu =>
+
+                            submenu.Id ==
+                            x.SubmenuSynchronizationId
+
+                            &&
+
+                            !submenu.IsDeleted
+
+                            &&
+
+                            submenu.SynchronizationType ==
+                            synchronizationType
+                    )
             )
 
             .OrderBy
@@ -161,9 +199,30 @@ public class CodeSynchronizationRepository
                         //===================================================
                         // Synchronization Type
                         //===================================================
+                        //
+                        // Resolve the type from the parent Submenu
+                        // Synchronization record.
+                        //
+                        //===================================================
 
                         SynchronizationType =
-                            x.SynchronizationType,
+                            _context.SubmenuSynchronizations
+
+                                .Where
+                                (
+                                    submenu =>
+
+                                        submenu.Id ==
+                                        x.SubmenuSynchronizationId
+                                )
+
+                                .Select
+                                (
+                                    submenu =>
+                                        submenu.SynchronizationType
+                                )
+
+                                .FirstOrDefault(),
 
 
                         //===================================================
@@ -302,7 +361,23 @@ public class CodeSynchronizationRepository
                         //===================================================
 
                         SynchronizationType =
-                            x.SynchronizationType,
+                            _context.SubmenuSynchronizations
+
+                                .Where
+                                (
+                                    submenu =>
+
+                                        submenu.Id ==
+                                        x.SubmenuSynchronizationId
+                                )
+
+                                .Select
+                                (
+                                    submenu =>
+                                        submenu.SynchronizationType
+                                )
+
+                                .FirstOrDefault(),
 
 
                         //===================================================
@@ -426,14 +501,11 @@ public class CodeSynchronizationRepository
     // Create From Submenu Synchronization
     //===========================================================
     //
-    // This record is NOT manually created from the UI.
+    // The Code Synchronization record is created only after
+    // the corresponding Submenu Synchronization is synchronized.
     //
-    // It is created automatically after the corresponding
-    // Submenu Synchronization has successfully completed.
-    //
-    // Initial Code Synchronization status:
-    //
-    // Ready
+    // SynchronizationType is taken directly from the source
+    // Submenu Synchronization record.
     //
     //===========================================================
 
@@ -503,6 +575,31 @@ public class CodeSynchronizationRepository
 
 
         //=======================================================
+        // Validate Synchronization Type
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                submenuSynchronization.SynchronizationType
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                $"Code Synchronization cannot be created because the synchronization type for '{submenuSynchronization.SubmenuName}' is not configured."
+            );
+        }
+
+
+        var synchronizationType =
+            submenuSynchronization
+                .SynchronizationType
+                .Trim();
+
+
+        //=======================================================
         // Check Existing Code Synchronization
         //=======================================================
 
@@ -527,6 +624,51 @@ public class CodeSynchronizationRepository
             existing != null
         )
         {
+            //===================================================
+            // Keep Existing Record Synchronized With Its Source
+            //===================================================
+
+            existing.SynchronizationType =
+                synchronizationType;
+
+
+            existing.ModuleId =
+                submenuSynchronization.ModuleId;
+
+            existing.ModuleCode =
+                submenuSynchronization.ModuleCode;
+
+            existing.ModuleName =
+                submenuSynchronization.ModuleName;
+
+
+            existing.MenuId =
+                submenuSynchronization.MenuId;
+
+            existing.MenuCode =
+                submenuSynchronization.MenuCode;
+
+            existing.MenuName =
+                submenuSynchronization.MenuName;
+
+
+            existing.SubmenuId =
+                submenuSynchronization.SubmenuId;
+
+            existing.SubmenuCode =
+                submenuSynchronization.SubmenuCode;
+
+            existing.SubmenuName =
+                submenuSynchronization.SubmenuName;
+
+
+            existing.Remarks =
+                submenuSynchronization.Remarks;
+
+
+            await _context.SaveChangesAsync();
+
+
             return existing.Id;
         }
 
@@ -585,7 +727,7 @@ public class CodeSynchronizationRepository
                 //===================================================
 
                 SynchronizationType =
-                    submenuSynchronization.SynchronizationType,
+                    synchronizationType,
 
 
                 //===================================================
@@ -694,15 +836,6 @@ public class CodeSynchronizationRepository
     //===========================================================
     // Get History
     //===========================================================
-    //
-    // This method is retained because it exists in the current
-    // ICodeSynchronizationRepository contract.
-    //
-    // Actual activity-history display should use the common
-    // ActivityHistory repository, consistent with the existing
-    // synchronization modules.
-    //
-    //===========================================================
 
     public async Task<List<CodeSynchronizationDto>>
         GetHistoryAsync()
@@ -761,7 +894,23 @@ public class CodeSynchronizationRepository
                             x.SubmenuName,
 
                         SynchronizationType =
-                            x.SynchronizationType,
+                            _context.SubmenuSynchronizations
+
+                                .Where
+                                (
+                                    submenu =>
+
+                                        submenu.Id ==
+                                        x.SubmenuSynchronizationId
+                                )
+
+                                .Select
+                                (
+                                    submenu =>
+                                        submenu.SynchronizationType
+                                )
+
+                                .FirstOrDefault(),
 
                         Status =
                             x.Status,

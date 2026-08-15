@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
 
+
 //===============================================================
 // Namespace
 //===============================================================
 
 namespace AppCore.Infrastructure.Persistence.Configurations.InfrastructureControl.DevelopmentManagement;
+
 
 //===============================================================
 // Submenu Synchronization Configuration
@@ -20,274 +22,284 @@ namespace AppCore.Infrastructure.Persistence.Configurations.InfrastructureContro
 public class SubmenuSynchronizationConfiguration
     : IEntityTypeConfiguration<SubmenuSynchronization>
 {
-//===========================================================
-// Configure
-//===========================================================
 
-public void Configure
-(
-    EntityTypeBuilder<SubmenuSynchronization> builder
-)
-{
-    //=======================================================
-    // Table
-    //=======================================================
+    //===========================================================
+    // Configure
+    //===========================================================
 
-    builder.ToTable
+    public void Configure
     (
-        "INF_SubmenuSynchronization"
-    );
-
-
-    builder.HasKey
-    (
-        x => x.Id
-    );
-
-
-    //=======================================================
-    // Navigation
-    //=======================================================
-
-    builder.Property(x => x.ModuleCode)
-        .HasMaxLength(20)
-        .IsRequired();
-
-
-    builder.Property(x => x.ModuleName)
-        .HasMaxLength(200)
-        .IsRequired();
-
-
-    builder.Property(x => x.MenuCode)
-        .HasMaxLength(20)
-        .IsRequired();
-
-
-    builder.Property(x => x.MenuName)
-        .HasMaxLength(200)
-        .IsRequired();
-
-
-    builder.Property(x => x.SubmenuCode)
-        .HasMaxLength(20)
-        .IsRequired();
-
-
-    builder.Property(x => x.SubmenuName)
-        .HasMaxLength(200)
-        .IsRequired();
-
-
-    builder.Property(x => x.SynchronizationType)
-        .HasMaxLength(20)
-        .IsRequired();
-
-
-    builder.HasIndex
-    (
-        x => new
-        {
-            x.SubmenuId,
-            x.SynchronizationType
-        }
+        EntityTypeBuilder<SubmenuSynchronization> builder
     )
-    .IsUnique();
+    {
 
+        //=======================================================
+        // Table
+        //=======================================================
 
-    //=======================================================
-    // Frontend Target Location
-    //=======================================================
+        builder.ToTable
+        (
+            "INF_SubmenuSynchronization"
+        );
 
-    builder.Property(x => x.FrontendSolution)
-        .HasMaxLength(200);
 
+        builder.HasKey
+        (
+            x => x.Id
+        );
 
-    builder.Property(x => x.FrontendProject)
-        .HasMaxLength(200);
 
+        //=======================================================
+        // Navigation
+        //=======================================================
 
-    builder.Property(x => x.FrontendSourceFolder)
-        .HasMaxLength(300);
+        builder.Property(x => x.ModuleCode)
+            .HasMaxLength(20)
+            .IsRequired();
 
 
-    builder.Property(x => x.FrontendFeatureFolder)
-        .HasMaxLength(300);
+        builder.Property(x => x.ModuleName)
+            .HasMaxLength(200)
+            .IsRequired();
 
 
-    builder.Property(x => x.FrontendMenuFolder)
-        .HasMaxLength(300);
+        builder.Property(x => x.MenuCode)
+            .HasMaxLength(20)
+            .IsRequired();
 
 
-    //=======================================================
-    // Frontend Submenu Location
-    //=======================================================
+        builder.Property(x => x.MenuName)
+            .HasMaxLength(200)
+            .IsRequired();
 
-    builder.Property(x => x.FrontendSubmenuFolder)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.SubmenuCode)
+            .HasMaxLength(20)
+            .IsRequired();
 
-    builder.Property(x => x.FrontendFormFolder)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.SubmenuName)
+            .HasMaxLength(200)
+            .IsRequired();
 
-    builder.Property(x => x.FrontendListFolder)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.SynchronizationType)
+            .HasMaxLength(20)
+            .IsRequired();
 
-    //=======================================================
-    // Frontend Submenu Core Files
-    //=======================================================
 
-    builder.Property(x => x.FrontendSubmenuModelFile)
-        .HasMaxLength(300);
+        builder.HasIndex
+        (
+            x => new
+            {
+                x.SubmenuId,
+                x.SynchronizationType
+            }
+        )
+        .IsUnique();
 
 
-    builder.Property(x => x.FrontendSubmenuServiceFile)
-        .HasMaxLength(300);
+        //=======================================================
+        // Frontend Target Location
+        //=======================================================
 
+        builder.Property(x => x.FrontendSolution)
+            .HasMaxLength(200);
 
-    builder.Property(x => x.FrontendSubmenuRouteFile)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.FrontendProject)
+            .HasMaxLength(200);
 
-    //=======================================================
-    // Frontend Submenu Page Files
-    //=======================================================
 
-    builder.Property(x => x.FrontendSubmenuFormTsFile)
-        .HasMaxLength(300);
+        builder.Property(x => x.FrontendSourceFolder)
+            .HasMaxLength(300);
 
 
-    builder.Property(x => x.FrontendSubmenuFormHtmlFile)
-        .HasMaxLength(300);
+        builder.Property(x => x.FrontendFeatureFolder)
+            .HasMaxLength(300);
 
 
-    builder.Property(x => x.FrontendSubmenuFormCssFile)
-        .HasMaxLength(300);
+        builder.Property(x => x.FrontendMenuFolder)
+            .HasMaxLength(300);
 
 
-    builder.Property(x => x.FrontendSubmenuListTsFile)
-        .HasMaxLength(300);
+        //=======================================================
+        // Frontend Menu Route
+        //=======================================================
 
+        builder.Property(x => x.FrontendMenuRouteFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.FrontendSubmenuListHtmlFile)
-        .HasMaxLength(300);
 
+        //=======================================================
+        // Frontend Submenu Location
+        //=======================================================
 
-    builder.Property(x => x.FrontendSubmenuListCssFile)
-        .HasMaxLength(300);
+        builder.Property(x => x.FrontendSubmenuFolder)
+            .HasMaxLength(300);
 
 
-    //=======================================================
-    // Backend Target Location
-    //=======================================================
+        builder.Property(x => x.FrontendFormFolder)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendSolution)
-        .HasMaxLength(200);
 
+        builder.Property(x => x.FrontendListFolder)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendApplicationProject)
-        .HasMaxLength(200);
 
+        //=======================================================
+        // Frontend Submenu Core Files
+        //=======================================================
 
-    builder.Property(x => x.BackendDomainProject)
-        .HasMaxLength(200);
+        builder.Property(x => x.FrontendSubmenuModelFile)
+            .HasMaxLength(300);
 
 
-    builder.Property(x => x.BackendInfrastructureProject)
-        .HasMaxLength(200);
+        builder.Property(x => x.FrontendSubmenuServiceFile)
+            .HasMaxLength(300);
 
 
-    //=======================================================
-    // Backend API
-    //=======================================================
+        builder.Property(x => x.FrontendSubmenuRouteFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendControllerFile)
-        .HasMaxLength(300);
 
+        //=======================================================
+        // Frontend Submenu Page Files
+        //=======================================================
 
-    //=======================================================
-    // Backend Application
-    //=======================================================
+        builder.Property(x => x.FrontendSubmenuFormTsFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendApplicationSubMenuFolder)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.FrontendSubmenuFormHtmlFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendApplicationDtosFolder)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.FrontendSubmenuFormCssFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendApplicationInterfacesFolder)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.FrontendSubmenuListTsFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendSubMenuDtoFile)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.FrontendSubmenuListHtmlFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendCreateSubMenuDtoFile)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.FrontendSubmenuListCssFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendUpdateSubMenuDtoFile)
-        .HasMaxLength(300);
 
+        //=======================================================
+        // Backend Target Location
+        //=======================================================
 
-    builder.Property(x => x.BackendSubMenuDefaultsDtoFile)
-        .HasMaxLength(300);
+        builder.Property(x => x.BackendSolution)
+            .HasMaxLength(200);
 
 
-    builder.Property(x => x.BackendSubMenuRepositoryInterfaceFile)
-        .HasMaxLength(300);
+        builder.Property(x => x.BackendApplicationProject)
+            .HasMaxLength(200);
 
 
-    //=======================================================
-    // Backend Domain
-    //=======================================================
+        builder.Property(x => x.BackendDomainProject)
+            .HasMaxLength(200);
 
-    builder.Property(x => x.BackendSubMenuEntityFile)
-        .HasMaxLength(300);
 
+        builder.Property(x => x.BackendInfrastructureProject)
+            .HasMaxLength(200);
 
-    //=======================================================
-    // Backend Infrastructure
-    //=======================================================
 
-    builder.Property(x => x.BackendSubMenuConfigurationFile)
-        .HasMaxLength(300);
+        //=======================================================
+        // Backend API
+        //=======================================================
 
+        builder.Property(x => x.BackendControllerFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.BackendSubMenuRepositoryFile)
-        .HasMaxLength(300);
 
+        //=======================================================
+        // Backend Application
+        //=======================================================
 
-    //=======================================================
-    // Synchronization
-    //=======================================================
+        builder.Property(x => x.BackendApplicationSubMenuFolder)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.Status)
-        .HasMaxLength(30)
-        .IsRequired();
 
+        builder.Property(x => x.BackendApplicationDtosFolder)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.LastSynchronizationResult)
-        .HasMaxLength(100);
 
+        builder.Property(x => x.BackendApplicationInterfacesFolder)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.LastSynchronizedBy);
 
+        builder.Property(x => x.BackendSubMenuDtoFile)
+            .HasMaxLength(300);
 
-    builder.Property(x => x.LastSynchronizedDate);
 
+        builder.Property(x => x.BackendCreateSubMenuDtoFile)
+            .HasMaxLength(300);
 
-    //=======================================================
-    // Configuration
-    //=======================================================
 
-    builder.Property(x => x.Remarks)
-        .HasMaxLength(500);
-}
+        builder.Property(x => x.BackendUpdateSubMenuDtoFile)
+            .HasMaxLength(300);
+
+
+        builder.Property(x => x.BackendSubMenuDefaultsDtoFile)
+            .HasMaxLength(300);
+
+
+        builder.Property(x => x.BackendSubMenuRepositoryInterfaceFile)
+            .HasMaxLength(300);
+
+
+        //=======================================================
+        // Backend Domain
+        //=======================================================
+
+        builder.Property(x => x.BackendSubMenuEntityFile)
+            .HasMaxLength(300);
+
+
+        //=======================================================
+        // Backend Infrastructure
+        //=======================================================
+
+        builder.Property(x => x.BackendSubMenuConfigurationFile)
+            .HasMaxLength(300);
+
+
+        builder.Property(x => x.BackendSubMenuRepositoryFile)
+            .HasMaxLength(300);
+
+
+        //=======================================================
+        // Synchronization
+        //=======================================================
+
+        builder.Property(x => x.Status)
+            .HasMaxLength(30)
+            .IsRequired();
+
+
+        builder.Property(x => x.LastSynchronizationResult)
+            .HasMaxLength(100);
+
+
+        builder.Property(x => x.LastSynchronizedBy);
+
+
+        builder.Property(x => x.LastSynchronizedDate);
+
+
+        //=======================================================
+        // Configuration
+        //=======================================================
+
+        builder.Property(x => x.Remarks)
+            .HasMaxLength(500);
+    }
 
 }
