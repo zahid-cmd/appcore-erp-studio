@@ -101,16 +101,16 @@ import
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
+import
+{
+    DropdownComponent
+}
+from '../../../../../../shared/components/controls/dropdown/dropdown';
+
 
 //===============================================================
 // Utilities
 //===============================================================
-
-import
-{
-    CheckboxComponent
-}
-from '../../../../../../shared/components/utilities/checkbox/checkbox';
 
 import
 {
@@ -202,12 +202,12 @@ from '{{SERVICE_PATH}}';
 
         SearchDropdownComponent,
 
+        DropdownComponent,
+
 
         //=======================================================
         // Utilities
         //=======================================================
-
-        CheckboxComponent,
 
         ToastComponent,
 
@@ -352,7 +352,7 @@ implements OnInit
 
 
     //===========================================================
-    // Parent Items
+    // Sample Search Dropdown Items
     //===========================================================
 
     items:
@@ -363,13 +363,50 @@ implements OnInit
 
 
     //===========================================================
+    // Status Items
+    //===========================================================
+
+    statusItems:
+        any[]
+    =
+        [
+            {
+                text:'Active',
+
+                value:'Active'
+            },
+
+            {
+                text:'Inactive',
+
+                value:'Inactive'
+            }
+        ];
+
+
+
+    //===========================================================
     // Entity
     //===========================================================
 
     entity:
         {{MODEL_NAME}}
     =
-        {{ENTITY_INITIALIZER}};
+    {
+        id:0,
+
+        code:'',
+
+        name:'',
+
+        sampleSearchDropdownId:0,
+
+        sampleField:'',
+
+        status:'Active',
+
+        remarks:''
+    };
 
 
 
@@ -493,7 +530,21 @@ implements OnInit
         void
     {
         this.entity =
-            {{ENTITY_INITIALIZER}};
+        {
+            id:0,
+
+            code:'',
+
+            name:'',
+
+            sampleSearchDropdownId:0,
+
+            sampleField:'',
+
+            status:'Active',
+
+            remarks:''
+        };
 
 
         this.originalEntity =
@@ -564,10 +615,10 @@ implements OnInit
 
 
     //===========================================================
-    // Parent Changed
+    // Sample Search Dropdown Changed
     //===========================================================
 
-    onParentChange():
+    onSampleSearchDropdownChange():
         void
     {
         this.checkForChanges();
@@ -598,7 +649,8 @@ implements OnInit
 
     onTabChange
     (
-        tabId:string
+        tabId:
+            string
     ):
         void
     {
@@ -647,7 +699,20 @@ implements OnInit
             const model:
                 Create{{MODEL_NAME}} =
             {
-                {{CREATE_PAYLOAD}}
+                name:
+                    this.entity.name,
+
+                sampleSearchDropdownId:
+                    this.entity.sampleSearchDropdownId,
+
+                sampleField:
+                    this.entity.sampleField,
+
+                status:
+                    this.entity.status,
+
+                remarks:
+                    this.entity.remarks
             };
 
 
@@ -714,7 +779,23 @@ implements OnInit
         const model:
             Update{{MODEL_NAME}} =
         {
-            {{UPDATE_PAYLOAD}}
+            id:
+                this.entity.id,
+
+            name:
+                this.entity.name,
+
+            sampleSearchDropdownId:
+                this.entity.sampleSearchDropdownId,
+
+            sampleField:
+                this.entity.sampleField,
+
+            status:
+                this.entity.status,
+
+            remarks:
+                this.entity.remarks
         };
 
 

@@ -19,11 +19,13 @@ public class CodeSynchronizationDto
     public long Id { get; set; }
 
 
+
     //===========================================================
     // Submenu Synchronization Reference
     //===========================================================
 
     public long SubmenuSynchronizationId { get; set; }
+
 
 
     //===========================================================
@@ -51,11 +53,13 @@ public class CodeSynchronizationDto
     public string SubmenuName { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Synchronization Type
     //===========================================================
 
     public string SynchronizationType { get; set; } = string.Empty;
+
 
 
     //===========================================================
@@ -65,11 +69,53 @@ public class CodeSynchronizationDto
     public string Status { get; set; } = "Ready";
 
 
+
+    //===========================================================
+    // Backend Build Status
+    //===========================================================
+    //
+    // Used by Backend Code Synchronization Engine.
+    //
+    // Possible values:
+    //
+    // Successful
+    // Failed
+    // Pending
+    // N/A
+    //
+    //===========================================================
+
+    public string BuildStatus { get; set; } = "N/A";
+
+
+
+    //===========================================================
+    // Backend Database Registration Status
+    //===========================================================
+    //
+    // Used by Backend Registration Engine.
+    //
+    // Possible values:
+    //
+    // Successful
+    // Failed
+    // Pending
+    // N/A
+    //
+    // Backend records only.
+    //
+    //===========================================================
+
+    public string DbStatus { get; set; } = "N/A";
+
+
+
     //===========================================================
     // Configuration
     //===========================================================
 
     public string? Remarks { get; set; }
+
 
 
     //===========================================================
@@ -83,11 +129,13 @@ public class CodeSynchronizationDto
     public string LastSynchronizationResult { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Status
     //===========================================================
 
     public bool IsActive { get; set; } = true;
+
 
 
     //===========================================================

@@ -74,9 +74,9 @@ from '../../../../../../shared/components/utilities/search-box/search-box';
 
 import
 {
-    SearchDropdownComponent
+    DropdownComponent
 }
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
@@ -161,7 +161,7 @@ from '{{SERVICE_PATH}}';
 
         SearchBoxComponent,
 
-        SearchDropdownComponent,
+        DropdownComponent,
 
         CommandCenterComponent,
 
@@ -243,22 +243,34 @@ implements OnInit
 
 
     //===========================================================
-    // Parent Filter
+    // Status Filter
     //===========================================================
 
-    items:
+    statusItems:
         any[] =
     [
         {
             value:null,
 
-            text:'All {{FILTER_NAME}}'
+            text:'All Status'
+        },
+
+        {
+            value:'Active',
+
+            text:'Active'
+        },
+
+        {
+            value:'Inactive',
+
+            text:'Inactive'
         }
     ];
 
 
-    selectedItemId:
-        number | null =
+    selectedStatus:
+        string | null =
         null;
 
 
@@ -408,7 +420,7 @@ implements OnInit
         {
             header:'Status',
 
-            field:'isActive',
+            field:'status',
 
             type:'status',
 
@@ -439,26 +451,7 @@ implements OnInit
     ngOnInit():
         void
     {
-        this.load{{FILTER_NAME}}();
-
         this.loadItems();
-    }
-
-
-
-    //===========================================================
-    // Load Parent Filter
-    //===========================================================
-
-    load{{FILTER_NAME}}():
-        void
-    {
-        //=======================================================
-        // Parent filter loading remains feature specific.
-        //
-        // The synchronization engine only generates the
-        // standard list structure.
-        //=======================================================
     }
 
 
@@ -559,18 +552,18 @@ implements OnInit
 
 
     //===========================================================
-    // Parent Filter Changed
+    // Status Filter Changed
     //===========================================================
 
-    onFilterChange
+    onStatusFilterChange
     (
-        id:
-            number | null
+        value:
+            string | null
     ):
         void
     {
-        this.selectedItemId =
-            id;
+        this.selectedStatus =
+            value;
 
 
         this.applyFilters();
@@ -601,12 +594,11 @@ implements OnInit
                     ):
                         boolean =>
                     {
-                        const filterMatch =
-                            !this.selectedItemId
+                        const statusMatch =
+                            this.selectedStatus === null
                             ||
-                            x.{{FILTER_FIELD}}
-                            ===
-                            this.selectedItemId;
+                            x.status ===
+                            this.selectedStatus;
 
 
                         const searchMatch =
@@ -620,12 +612,16 @@ implements OnInit
                                 ?.toLowerCase()
                                 .includes(keyword)
                             ||
+                            x.sampleField
+                                ?.toLowerCase()
+                                .includes(keyword)
+                            ||
                             x.remarks
                                 ?.toLowerCase()
                                 .includes(keyword);
 
 
-                        return filterMatch
+                        return statusMatch
                             &&
                             searchMatch;
                     }
@@ -804,11 +800,9 @@ implements OnInit
             '';
 
 
-        this.selectedItemId =
+        this.selectedStatus =
             null;
 
-
-        this.load{{FILTER_NAME}}();
 
         this.loadItems();
     }

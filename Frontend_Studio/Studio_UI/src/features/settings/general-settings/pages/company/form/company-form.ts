@@ -101,16 +101,16 @@ import
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
+import
+{
+    DropdownComponent
+}
+from '../../../../../../shared/components/controls/dropdown/dropdown';
+
 
 //===============================================================
 // Utilities
 //===============================================================
-
-import
-{
-    CheckboxComponent
-}
-from '../../../../../../shared/components/utilities/checkbox/checkbox';
 
 import
 {
@@ -202,12 +202,12 @@ from '../../../services/company.service';
 
         SearchDropdownComponent,
 
+        DropdownComponent,
+
 
         //=======================================================
         // Utilities
         //=======================================================
-
-        CheckboxComponent,
 
         ToastComponent,
 
@@ -352,7 +352,7 @@ implements OnInit
 
 
     //===========================================================
-    // Parent Items
+    // Sample Search Dropdown Items
     //===========================================================
 
     items:
@@ -363,36 +363,49 @@ implements OnInit
 
 
     //===========================================================
+    // Status Items
+    //===========================================================
+
+    statusItems:
+        any[]
+    =
+        [
+            {
+                text:'Active',
+
+                value:'Active'
+            },
+
+            {
+                text:'Inactive',
+
+                value:'Inactive'
+            }
+        ];
+
+
+
+    //===========================================================
     // Entity
     //===========================================================
 
     entity:
         Company
     =
-        {
-        id: 0,
+    {
+        id:0,
 
-        menuId: 0,
+        code:'',
 
-        menuCode: '',
+        name:'',
 
-        menuName: '',
+        sampleSearchDropdownId:0,
 
-        code: '',
+        sampleField:'',
 
-        name: '',
+        status:'Active',
 
-        icon: '',
-
-        routeKey: '',
-
-        route: '',
-
-        displayOrder: 0,
-
-        remarks: '',
-
-        isActive: true
+        remarks:''
     };
 
 
@@ -517,31 +530,21 @@ implements OnInit
         void
     {
         this.entity =
-            {
-        id: 0,
+        {
+            id:0,
 
-        menuId: 0,
+            code:'',
 
-        menuCode: '',
+            name:'',
 
-        menuName: '',
+            sampleSearchDropdownId:0,
 
-        code: '',
+            sampleField:'',
 
-        name: '',
+            status:'Active',
 
-        icon: '',
-
-        routeKey: '',
-
-        route: '',
-
-        displayOrder: 0,
-
-        remarks: '',
-
-        isActive: true
-    };
+            remarks:''
+        };
 
 
         this.originalEntity =
@@ -612,10 +615,10 @@ implements OnInit
 
 
     //===========================================================
-    // Parent Changed
+    // Sample Search Dropdown Changed
     //===========================================================
 
-    onParentChange():
+    onSampleSearchDropdownChange():
         void
     {
         this.checkForChanges();
@@ -646,7 +649,8 @@ implements OnInit
 
     onTabChange
     (
-        tabId:string
+        tabId:
+            string
     ):
         void
     {
@@ -707,26 +711,20 @@ implements OnInit
             const model:
                 CreateCompany =
             {
-                menuId:
-                    this.entity.menuId,
-
                 name:
                     this.entity.name,
 
-                icon:
-                    this.entity.icon,
+                sampleSearchDropdownId:
+                    this.entity.sampleSearchDropdownId,
 
-                routeKey:
-                    this.entity.routeKey,
+                sampleField:
+                    this.entity.sampleField,
 
-                displayOrder:
-                    this.entity.displayOrder,
+                status:
+                    this.entity.status,
 
                 remarks:
-                    this.entity.remarks,
-
-                isActive:
-                    this.entity.isActive
+                    this.entity.remarks
             };
 
 
@@ -796,26 +794,20 @@ implements OnInit
             id:
                 this.entity.id,
 
-            menuId:
-                this.entity.menuId,
-
             name:
                 this.entity.name,
 
-            icon:
-                this.entity.icon,
+            sampleSearchDropdownId:
+                this.entity.sampleSearchDropdownId,
 
-            routeKey:
-                this.entity.routeKey,
+            sampleField:
+                this.entity.sampleField,
 
-            displayOrder:
-                this.entity.displayOrder,
+            status:
+                this.entity.status,
 
             remarks:
-                this.entity.remarks,
-
-            isActive:
-                this.entity.isActive
+                this.entity.remarks
         };
 
 

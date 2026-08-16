@@ -50,9 +50,11 @@ using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfac
 using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interfaces;
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.CodeSynchronizationEngine;
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
 
 using AppCore.Infrastructure.Platform.Synchronization;
 using AppCore.Infrastructure.Platform.Synchronization.CodeSynchronizationEngine;
+using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
 
 
 //===============================================================
@@ -314,6 +316,17 @@ public static class DependencyInjection
         <
             IBackendCodeSynchronizationEngine,
             BackendCodeSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Backend Registration Engine
+        //=======================================================
+
+        services.AddScoped
+        <
+            IBackendRegistrationEngine,
+            BackendRegistrationEngine
         >();
 
 

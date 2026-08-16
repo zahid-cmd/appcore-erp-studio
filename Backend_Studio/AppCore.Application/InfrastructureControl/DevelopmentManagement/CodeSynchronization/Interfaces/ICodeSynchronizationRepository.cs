@@ -4,6 +4,8 @@
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
+using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
+
 
 //===============================================================
 // Namespace
@@ -129,6 +131,25 @@ public interface ICodeSynchronizationRepository
         CreateFromSubmenuSynchronizationAsync
         (
             long submenuSynchronizationId
+        );
+
+
+    //===========================================================
+    // Get Submenu Synchronization For Registration
+    //===========================================================
+    //
+    // Loads the complete Submenu Synchronization record required
+    // by the Backend Registration Engine.
+    //
+    // Registration is a separate operation from Code
+    // Synchronization.
+    //
+    //===========================================================
+
+    Task<SubmenuSynchronizationDto?>
+        GetSubmenuSynchronizationForRegistrationAsync
+        (
+            long id
         );
 
 }

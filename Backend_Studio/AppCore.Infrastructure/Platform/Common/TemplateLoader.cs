@@ -3,7 +3,9 @@
 //===============================================================
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 using AppCore.Application.Platform.CommonInterfaces;
@@ -50,11 +52,101 @@ public class TemplateLoader
         }
 
 
-
         //=======================================================
         // Normalize Template Path
         //=======================================================
 
+        templatePath =
+            NormalizeTemplatePath(
+                templatePath
+            );
+
+
+        //=======================================================
+        // Resolve Infrastructure Root
+        //=======================================================
+
+        var infrastructureRoot =
+            FindInfrastructureRoot();
+
+
+        //=======================================================
+        // Resolve Template
+        //=======================================================
+
+        var fullPath =
+            FindTemplatePath(
+                infrastructureRoot,
+                templatePath
+            );
+
+
+        //=======================================================
+        // Template Not Found
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                fullPath
+            )
+            ||
+            !File.Exists(
+                fullPath
+            )
+        )
+        {
+            throw new FileNotFoundException(
+                $"Template not found: {templatePath}"
+            );
+        }
+
+
+        //=======================================================
+        // Load Template
+        //=======================================================
+
+        var template =
+            await File.ReadAllTextAsync(
+                fullPath
+            );
+
+
+        //=======================================================
+        // Validate Template
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                template
+            )
+        )
+        {
+            throw new InvalidDataException(
+                $"Template is empty: {fullPath}"
+            );
+        }
+
+
+        //=======================================================
+        // Completed
+        //=======================================================
+
+        return template;
+    }
+
+
+
+    //===========================================================
+    // Normalize Template Path
+    //===========================================================
+
+    private static string NormalizeTemplatePath
+    (
+        string templatePath
+    )
+    {
         templatePath =
             templatePath
                 .Trim()
@@ -89,84 +181,7 @@ public class TemplateLoader
         }
 
 
-
-        //=======================================================
-        // Resolve Infrastructure Root
-        //=======================================================
-
-        var infrastructureRoot =
-            FindInfrastructureRoot();
-
-
-
-        //=======================================================
-        // Resolve Template
-        //=======================================================
-
-        var fullPath =
-            FindTemplatePath(
-                infrastructureRoot,
-                templatePath
-            );
-
-
-
-        //=======================================================
-        // Template Not Found
-        //=======================================================
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                fullPath
-            )
-            ||
-            !File.Exists(
-                fullPath
-            )
-        )
-        {
-            throw new FileNotFoundException(
-                $"Template not found: {templatePath}"
-            );
-        }
-
-
-
-        //=======================================================
-        // Load Template
-        //=======================================================
-
-        var template =
-            await File.ReadAllTextAsync(
-                fullPath
-            );
-
-
-
-        //=======================================================
-        // Validate Template
-        //=======================================================
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                template
-            )
-        )
-        {
-            throw new InvalidDataException(
-                $"Template is empty: {fullPath}"
-            );
-        }
-
-
-
-        //=======================================================
-        // Completed
-        //=======================================================
-
-        return template;
+        return templatePath;
     }
 
 
@@ -175,7 +190,8 @@ public class TemplateLoader
     // Find Template Path
     //===========================================================
 
-    private static string? FindTemplatePath
+    private static string?
+        FindTemplatePath
     (
         string infrastructureRoot,
 
@@ -183,131 +199,155 @@ public class TemplateLoader
     )
     {
         //=======================================================
-        // Candidate 1
-        //=======================================================
-        //
-        // AppCore.Infrastructure
-        //     Platform
-        //         Templates
-        //
+        // Candidate Paths
         //=======================================================
 
-        var candidate =
-            Path.Combine(
+        var candidates =
+            new List<string>
+            {
+                //================================================
+                // AppCore.Infrastructure / Platform / Templates
+                //================================================
+
+                Path.Combine(
+                    infrastructureRoot,
+                    "Platform",
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // AppCore.Infrastructure / Templates
+                //================================================
+
+                Path.Combine(
+                    infrastructureRoot,
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // AppCore.Infrastructure / Platform /
+                // Synchronization / Templates
+                //================================================
+
+                Path.Combine(
+                    infrastructureRoot,
+                    "Platform",
+                    "Synchronization",
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // AppCore.Infrastructure / Platform /
+                // SynchronizationEngine / Templates
+                //================================================
+
+                Path.Combine(
+                    infrastructureRoot,
+                    "Platform",
+                    "SynchronizationEngine",
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // AppCore.Infrastructure / Platform /
+                // CodeSynchronization / Templates
+                //================================================
+
+                Path.Combine(
+                    infrastructureRoot,
+                    "Platform",
+                    "CodeSynchronization",
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // Application Base / Platform / Templates
+                //================================================
+
+                Path.Combine(
+                    AppContext.BaseDirectory,
+                    "Platform",
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // Application Base / Templates
+                //================================================
+
+                Path.Combine(
+                    AppContext.BaseDirectory,
+                    "Templates",
+                    templatePath
+                ),
+
+
+                //================================================
+                // Current Working Directory / Templates
+                //================================================
+
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "Templates",
+                    templatePath
+                )
+            };
+
+
+        //=======================================================
+        // Check Candidate Paths
+        //=======================================================
+
+        foreach
+        (
+            var candidate in candidates
+        )
+        {
+            if
+            (
+                File.Exists(
+                    candidate
+                )
+            )
+            {
+                return Path.GetFullPath(
+                    candidate
+                );
+            }
+        }
+
+
+        //=======================================================
+        // Search Infrastructure Project
+        //=======================================================
+
+        var discoveredPath =
+            FindTemplateRecursively(
                 infrastructureRoot,
-                "Platform",
-                "Templates",
                 templatePath
             );
 
 
         if
         (
-            File.Exists(
-                candidate
+            !string.IsNullOrWhiteSpace(
+                discoveredPath
             )
         )
         {
-            return Path.GetFullPath(
-                candidate
-            );
+            return discoveredPath;
         }
-
-
-
-        //=======================================================
-        // Candidate 2
-        //=======================================================
-        //
-        // AppCore.Infrastructure
-        //     Templates
-        //
-        //=======================================================
-
-        candidate =
-            Path.Combine(
-                infrastructureRoot,
-                "Templates",
-                templatePath
-            );
-
-
-        if
-        (
-            File.Exists(
-                candidate
-            )
-        )
-        {
-            return Path.GetFullPath(
-                candidate
-            );
-        }
-
-
-
-        //=======================================================
-        // Candidate 3
-        //=======================================================
-        //
-        // Application Base Directory
-        //     Platform
-        //         Templates
-        //
-        //=======================================================
-
-        candidate =
-            Path.Combine(
-                AppContext.BaseDirectory,
-                "Platform",
-                "Templates",
-                templatePath
-            );
-
-
-        if
-        (
-            File.Exists(
-                candidate
-            )
-        )
-        {
-            return Path.GetFullPath(
-                candidate
-            );
-        }
-
-
-
-        //=======================================================
-        // Candidate 4
-        //=======================================================
-        //
-        // Application Base Directory
-        //     Templates
-        //
-        //=======================================================
-
-        candidate =
-            Path.Combine(
-                AppContext.BaseDirectory,
-                "Templates",
-                templatePath
-            );
-
-
-        if
-        (
-            File.Exists(
-                candidate
-            )
-        )
-        {
-            return Path.GetFullPath(
-                candidate
-            );
-        }
-
 
 
         //=======================================================
@@ -320,10 +360,150 @@ public class TemplateLoader
 
 
     //===========================================================
+    // Find Template Recursively
+    //===========================================================
+
+    private static string?
+        FindTemplateRecursively
+    (
+        string rootDirectory,
+
+        string templatePath
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                rootDirectory
+            )
+        )
+        {
+            return null;
+        }
+
+
+        if
+        (
+            !Directory.Exists(
+                rootDirectory
+            )
+        )
+        {
+            return null;
+        }
+
+
+        var expectedFileName =
+            Path.GetFileName(
+                templatePath
+            );
+
+
+        var expectedDirectory =
+            Path.GetDirectoryName(
+                templatePath
+            )
+            ??
+            string.Empty;
+
+
+        try
+        {
+            var files =
+                Directory.EnumerateFiles(
+                    rootDirectory,
+                    expectedFileName,
+                    SearchOption.AllDirectories
+                );
+
+
+            foreach
+            (
+                var file in files
+            )
+            {
+                var relativePath =
+                    Path.GetRelativePath(
+                        rootDirectory,
+                        file
+                    );
+
+
+                relativePath =
+                    NormalizeTemplatePath(
+                        relativePath
+                    );
+
+
+                if
+                (
+                    string.Equals(
+                        relativePath,
+                        templatePath,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    return Path.GetFullPath(
+                        file
+                    );
+                }
+
+
+                //================================================
+                // Directory + File Fallback
+                //================================================
+
+                var fileDirectory =
+                    Path.GetDirectoryName(
+                        relativePath
+                    )
+                    ??
+                    string.Empty;
+
+
+                if
+                (
+                    string.Equals(
+                        fileDirectory,
+                        expectedDirectory,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    return Path.GetFullPath(
+                        file
+                    );
+                }
+            }
+        }
+        catch
+        (
+            UnauthorizedAccessException
+        )
+        {
+            return null;
+        }
+        catch
+        (
+            DirectoryNotFoundException
+        )
+        {
+            return null;
+        }
+
+
+        return null;
+    }
+
+
+
+    //===========================================================
     // Find Infrastructure Root
     //===========================================================
 
-    private static string FindInfrastructureRoot()
+    private static string
+        FindInfrastructureRoot()
     {
         //=======================================================
         // Start From Application Base Directory
@@ -333,7 +513,6 @@ public class TemplateLoader
             new DirectoryInfo(
                 AppContext.BaseDirectory
             );
-
 
 
         //=======================================================
@@ -362,7 +541,6 @@ public class TemplateLoader
             }
 
 
-
             //===================================================
             // Search Child Infrastructure Directory
             //===================================================
@@ -385,7 +563,6 @@ public class TemplateLoader
             }
 
 
-
             //===================================================
             // Parent
             //===================================================
@@ -394,6 +571,56 @@ public class TemplateLoader
                 currentDirectory.Parent;
         }
 
+
+        //=======================================================
+        // Search From Current Working Directory
+        //=======================================================
+
+        currentDirectory =
+            new DirectoryInfo(
+                Directory.GetCurrentDirectory()
+            );
+
+
+        while
+        (
+            currentDirectory != null
+        )
+        {
+            if
+            (
+                currentDirectory.Name
+                    .Equals(
+                        "AppCore.Infrastructure",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            )
+            {
+                return currentDirectory.FullName;
+            }
+
+
+            var infrastructureDirectory =
+                Path.Combine(
+                    currentDirectory.FullName,
+                    "AppCore.Infrastructure"
+                );
+
+
+            if
+            (
+                Directory.Exists(
+                    infrastructureDirectory
+                )
+            )
+            {
+                return infrastructureDirectory;
+            }
+
+
+            currentDirectory =
+                currentDirectory.Parent;
+        }
 
 
         //=======================================================

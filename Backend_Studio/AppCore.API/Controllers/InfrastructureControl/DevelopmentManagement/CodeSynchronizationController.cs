@@ -11,6 +11,8 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
+
 
 //===============================================================
 // Namespace
@@ -45,6 +47,10 @@ public class CodeSynchronizationController
         _activityHistoryRepository;
 
 
+    private readonly IBackendRegistrationEngine
+        _backendRegistrationEngine;
+
+
 
     //===========================================================
     // Constructor
@@ -54,7 +60,9 @@ public class CodeSynchronizationController
     (
         ICodeSynchronizationRepository repository,
 
-        IActivityHistoryRepository activityHistoryRepository
+        IActivityHistoryRepository activityHistoryRepository,
+
+        IBackendRegistrationEngine backendRegistrationEngine
     )
     {
         _repository =
@@ -63,6 +71,10 @@ public class CodeSynchronizationController
 
         _activityHistoryRepository =
             activityHistoryRepository;
+
+
+        _backendRegistrationEngine =
+            backendRegistrationEngine;
     }
 
 
@@ -152,13 +164,6 @@ public class CodeSynchronizationController
     //===========================================================
     // Restore File
     //===========================================================
-    //
-    // Restores one modified generated file to the state produced
-    // by the last successful synchronization.
-    //
-    // This is separate from Code Synchronization Rollback.
-    //
-    //===========================================================
 
     [HttpPost("{id:long}/restore")]
 
@@ -193,11 +198,6 @@ public class CodeSynchronizationController
             return NoContent();
         }
 
-
-        //=======================================================
-        // Restore Dependency Exception
-        //=======================================================
-
         catch
         (
             InvalidOperationException exception
@@ -214,14 +214,6 @@ public class CodeSynchronizationController
 
     //===========================================================
     // Restore All Modified Files
-    //===========================================================
-    //
-    // Restores all modified generated files belonging to this
-    // Code Synchronization record to their last synchronized
-    // state.
-    //
-    // This does not perform Code Synchronization Rollback.
-    //
     //===========================================================
 
     [HttpPost("{id:long}/restore-all")]
@@ -253,11 +245,6 @@ public class CodeSynchronizationController
             return NoContent();
         }
 
-
-        //=======================================================
-        // Restore All Dependency Exception
-        //=======================================================
-
         catch
         (
             InvalidOperationException exception
@@ -274,14 +261,6 @@ public class CodeSynchronizationController
 
     //===========================================================
     // Synchronize
-    //===========================================================
-    //
-    // Code synchronization generates the code files defined
-    // by the corresponding Submenu Synchronization record.
-    //
-    // The repository remains responsible for enforcing the
-    // synchronization business rules.
-    //
     //===========================================================
 
     [HttpPost("{id:long}/sync")]
@@ -313,10 +292,138 @@ public class CodeSynchronizationController
             return NoContent();
         }
 
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
 
-        //=======================================================
-        // Synchronization Dependency Exception
-        //=======================================================
+
+
+    //===========================================================
+    // Backend Database Registration
+    //===========================================================
+    //
+    // Registration is a separate operation from Code
+    // Synchronization.
+    //
+    // Code Synchronization:
+    //
+    //     Generates and builds backend code.
+    //
+    // Backend Registration:
+    //
+    //     Registers the generated backend structure with the
+    //     database.
+    //
+    //===========================================================
+
+    [HttpPost("{id:long}/register")]
+
+    public async Task<ActionResult>
+        Register
+    (
+        long id
+    )
+    {
+        try
+        {
+            //===================================================
+            // Load Code Synchronization
+            //===================================================
+
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            //===================================================
+            // Validate Synchronization Type
+            //===================================================
+
+            if
+            (
+                !string.Equals
+                (
+                    synchronization.SynchronizationType,
+
+                    "Backend",
+
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest
+                (
+                    "Backend database registration is available only for Backend Code Synchronization."
+                );
+            }
+
+
+            //===================================================
+            // Load Submenu Synchronization
+            //===================================================
+
+            var submenuSynchronization =
+                await _repository
+                    .GetSubmenuSynchronizationForRegistrationAsync
+                    (
+                        id
+                    );
+
+
+            if
+            (
+                submenuSynchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            //===================================================
+            // Execute Backend Registration
+            //===================================================
+
+            var result =
+                await _backendRegistrationEngine
+                    .RegisterAsync
+                    (
+                        submenuSynchronization
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest
+                (
+                    result.Message
+                );
+            }
+
+
+            return NoContent();
+        }
 
         catch
         (
@@ -333,15 +440,138 @@ public class CodeSynchronizationController
 
 
     //===========================================================
-    // Rollback
+    // Backend Database Registration Rollback
     //===========================================================
     //
-    // Rollback removes/reverts the generated code belonging
-    // to the Code Synchronization record.
+    // This is separate from Code Synchronization Rollback.
     //
-    // The repository remains responsible for enforcing all
-    // rollback dependency and business rules.
+    // Code Rollback:
     //
+    //     Reverts/removes generated code.
+    //
+    // Registration Rollback:
+    //
+    //     Reverts database registration.
+    //
+    //===========================================================
+
+    [HttpPost("{id:long}/register/rollback")]
+
+    public async Task<ActionResult>
+        RollbackRegistration
+    (
+        long id
+    )
+    {
+        try
+        {
+            //===================================================
+            // Load Code Synchronization
+            //===================================================
+
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            //===================================================
+            // Validate Synchronization Type
+            //===================================================
+
+            if
+            (
+                !string.Equals
+                (
+                    synchronization.SynchronizationType,
+
+                    "Backend",
+
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest
+                (
+                    "Backend database registration rollback is available only for Backend Code Synchronization."
+                );
+            }
+
+
+            //===================================================
+            // Load Submenu Synchronization
+            //===================================================
+
+            var submenuSynchronization =
+                await _repository
+                    .GetSubmenuSynchronizationForRegistrationAsync
+                    (
+                        id
+                    );
+
+
+            if
+            (
+                submenuSynchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            //===================================================
+            // Execute Registration Rollback
+            //===================================================
+
+            var result =
+                await _backendRegistrationEngine
+                    .RollbackAsync
+                    (
+                        submenuSynchronization
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest
+                (
+                    result.Message
+                );
+            }
+
+
+            return NoContent();
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Rollback Code Synchronization
     //===========================================================
 
     [HttpPost("{id:long}/rollback")]
@@ -372,11 +602,6 @@ public class CodeSynchronizationController
 
             return NoContent();
         }
-
-
-        //=======================================================
-        // Rollback Dependency Exception
-        //=======================================================
 
         catch
         (

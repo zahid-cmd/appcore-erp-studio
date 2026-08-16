@@ -4,30 +4,28 @@
 
 export interface {{ENTITY_CLASS}}
 {
-    id: number;
+    id:
+        number;
 
-    {{PARENT_PROPERTY}}Id: number;
+    code:
+        string;
 
-    {{PARENT_PROPERTY}}Code: string;
+    name:
+        string;
 
-    {{PARENT_PROPERTY}}Name: string;
+    sampleSearchDropdownId:
+        number | null;
 
-    code: string;
+    sampleField:
+        string;
 
-    name: string;
+    status:
+        string;
 
-    icon: string;
-
-    routeKey: string;
-
-    route: string;
-
-    displayOrder: number;
-
-    remarks: string;
-
-    isActive: boolean;
+    remarks:
+        string;
 }
+
 
 
 /* ============================================================
@@ -36,20 +34,22 @@ export interface {{ENTITY_CLASS}}
 
 export interface Create{{ENTITY_CLASS}}
 {
-    {{PARENT_PROPERTY}}Id: number;
+    name:
+        string;
 
-    name: string;
+    sampleSearchDropdownId:
+        number | null;
 
-    icon: string;
+    sampleField:
+        string;
 
-    routeKey: string;
+    status:
+        string;
 
-    displayOrder: number;
-
-    remarks: string;
-
-    isActive: boolean;
+    remarks:
+        string;
 }
+
 
 
 /* ============================================================
@@ -58,22 +58,25 @@ export interface Create{{ENTITY_CLASS}}
 
 export interface Update{{ENTITY_CLASS}}
 {
-    id: number;
+    id:
+        number;
 
-    {{PARENT_PROPERTY}}Id: number;
+    name:
+        string;
 
-    name: string;
+    sampleSearchDropdownId:
+        number | null;
 
-    icon: string;
+    sampleField:
+        string;
 
-    routeKey: string;
+    status:
+        string;
 
-    displayOrder: number;
-
-    remarks: string;
-
-    isActive: boolean;
+    remarks:
+        string;
 }
+
 
 
 /* ============================================================
@@ -82,7 +85,6 @@ export interface Update{{ENTITY_CLASS}}
 
 export interface {{ENTITY_CLASS}}Defaults
 {
-    code: string;
-
-    displayOrder: number;
+    code:
+        string;
 }

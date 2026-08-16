@@ -4,30 +4,28 @@
 
 export interface Company
 {
-    id: number;
+    id:
+        number;
 
-    menuId: number;
+    code:
+        string;
 
-    menuCode: string;
+    name:
+        string;
 
-    menuName: string;
+    sampleSearchDropdownId:
+        number | null;
 
-    code: string;
+    sampleField:
+        string;
 
-    name: string;
+    status:
+        string;
 
-    icon: string;
-
-    routeKey: string;
-
-    route: string;
-
-    displayOrder: number;
-
-    remarks: string;
-
-    isActive: boolean;
+    remarks:
+        string;
 }
+
 
 
 /* ============================================================
@@ -36,20 +34,22 @@ export interface Company
 
 export interface CreateCompany
 {
-    menuId: number;
+    name:
+        string;
 
-    name: string;
+    sampleSearchDropdownId:
+        number | null;
 
-    icon: string;
+    sampleField:
+        string;
 
-    routeKey: string;
+    status:
+        string;
 
-    displayOrder: number;
-
-    remarks: string;
-
-    isActive: boolean;
+    remarks:
+        string;
 }
+
 
 
 /* ============================================================
@@ -58,22 +58,25 @@ export interface CreateCompany
 
 export interface UpdateCompany
 {
-    id: number;
+    id:
+        number;
 
-    menuId: number;
+    name:
+        string;
 
-    name: string;
+    sampleSearchDropdownId:
+        number | null;
 
-    icon: string;
+    sampleField:
+        string;
 
-    routeKey: string;
+    status:
+        string;
 
-    displayOrder: number;
-
-    remarks: string;
-
-    isActive: boolean;
+    remarks:
+        string;
 }
+
 
 
 /* ============================================================
@@ -82,7 +85,6 @@ export interface UpdateCompany
 
 export interface CompanyDefaults
 {
-    code: string;
-
-    displayOrder: number;
+    code:
+        string;
 }

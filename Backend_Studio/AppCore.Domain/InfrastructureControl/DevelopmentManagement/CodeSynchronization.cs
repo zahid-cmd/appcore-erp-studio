@@ -26,6 +26,7 @@ public class CodeSynchronization : BaseEntity
     public long SubmenuSynchronizationId { get; set; }
 
 
+
     //===========================================================
     // Navigation
     //===========================================================
@@ -51,6 +52,7 @@ public class CodeSynchronization : BaseEntity
     public string SubmenuName { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Synchronization Type
     //===========================================================
@@ -58,11 +60,53 @@ public class CodeSynchronization : BaseEntity
     public string SynchronizationType { get; set; } = string.Empty;
 
 
+
     //===========================================================
     // Code Synchronization Status
     //===========================================================
 
     public string Status { get; set; } = "Ready";
+
+
+
+    //===========================================================
+    // Backend Build Status
+    //===========================================================
+    //
+    // Used by Backend Code Synchronization Engine.
+    //
+    // Possible values:
+    //
+    // Successful
+    // Failed
+    // Pending
+    // N/A
+    //
+    //===========================================================
+
+    public string BuildStatus { get; set; } = "N/A";
+
+
+
+    //===========================================================
+    // Backend Database Registration Status
+    //===========================================================
+    //
+    // Used by Backend Registration Engine.
+    //
+    // Possible values:
+    //
+    // Successful
+    // Failed
+    // Pending
+    // N/A
+    //
+    // This applies only to Backend synchronization records.
+    //
+    //===========================================================
+
+    public string DbStatus { get; set; } = "N/A";
+
 
 
     //===========================================================
@@ -74,6 +118,7 @@ public class CodeSynchronization : BaseEntity
     public DateTime? LastSynchronizedDate { get; set; }
 
     public string LastSynchronizationResult { get; set; } = string.Empty;
+
 
 
     //===========================================================

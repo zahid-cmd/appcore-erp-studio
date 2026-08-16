@@ -186,20 +186,12 @@ public class CodeSynchronizationEngine
         long id
     )
     {
-        //=======================================================
-        // Load Code Synchronization
-        //=======================================================
-
         var codeSynchronization =
             await LoadCodeSynchronizationAsync
             (
                 id
             );
 
-
-        //=======================================================
-        // Validate Rollback
-        //=======================================================
 
         var validationResult =
             await ValidateRollbackAsync
@@ -217,10 +209,6 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Load Submenu Synchronization
-        //=======================================================
-
         var submenuSynchronization =
             await LoadSubmenuSynchronizationAsync
             (
@@ -228,20 +216,12 @@ public class CodeSynchronizationEngine
             );
 
 
-        //=======================================================
-        // Execute Rollback
-        //=======================================================
-
         var result =
             await ExecuteRollbackAsync
             (
                 submenuSynchronization
             );
 
-
-        //=======================================================
-        // Rollback Failed
-        //=======================================================
 
         if
         (
@@ -251,18 +231,6 @@ public class CodeSynchronizationEngine
             return result;
         }
 
-
-        //=======================================================
-        // Remove Synchronization Baselines
-        //=======================================================
-        //
-        // Baseline files are temporary Code Synchronization
-        // support files.
-        //
-        // They must be removed when the synchronization itself
-        // is rolled back.
-        //
-        //=======================================================
 
         var baselineResult =
             RemoveSynchronizationBaselines
@@ -280,29 +248,17 @@ public class CodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Update Status
-        //=======================================================
-
         await UpdateRollbackStatusAsync
         (
             codeSynchronization
         );
 
 
-        //=======================================================
-        // Activity History
-        //=======================================================
-
         await AddRollbackHistoryAsync
         (
             codeSynchronization
         );
 
-
-        //=======================================================
-        // Result
-        //=======================================================
 
         return new CodeSynchronizationEngineResult
         {
@@ -424,6 +380,10 @@ public class CodeSynchronizationEngine
                 entity.Id,
 
 
+            //===================================================
+            // Module
+            //===================================================
+
             ModuleId =
                 entity.ModuleId,
 
@@ -433,6 +393,10 @@ public class CodeSynchronizationEngine
             ModuleName =
                 entity.ModuleName,
 
+
+            //===================================================
+            // Menu
+            //===================================================
 
             MenuId =
                 entity.MenuId,
@@ -444,6 +408,10 @@ public class CodeSynchronizationEngine
                 entity.MenuName,
 
 
+            //===================================================
+            // Submenu
+            //===================================================
+
             SubmenuId =
                 entity.SubmenuId,
 
@@ -454,9 +422,17 @@ public class CodeSynchronizationEngine
                 entity.SubmenuName,
 
 
+            //===================================================
+            // Synchronization
+            //===================================================
+
             SynchronizationType =
                 entity.SynchronizationType,
 
+
+            //===================================================
+            // Frontend
+            //===================================================
 
             FrontendSolution =
                 entity.FrontendSolution,
@@ -473,10 +449,8 @@ public class CodeSynchronizationEngine
             FrontendMenuFolder =
                 entity.FrontendMenuFolder,
 
-
             FrontendMenuRouteFile =
                 entity.FrontendMenuRouteFile,
-
 
             FrontendSubmenuFolder =
                 entity.FrontendSubmenuFolder,
@@ -487,7 +461,6 @@ public class CodeSynchronizationEngine
             FrontendListFolder =
                 entity.FrontendListFolder,
 
-
             FrontendSubmenuModelFile =
                 entity.FrontendSubmenuModelFile,
 
@@ -496,7 +469,6 @@ public class CodeSynchronizationEngine
 
             FrontendSubmenuRouteFile =
                 entity.FrontendSubmenuRouteFile,
-
 
             FrontendSubmenuFormTsFile =
                 entity.FrontendSubmenuFormTsFile,
@@ -507,7 +479,6 @@ public class CodeSynchronizationEngine
             FrontendSubmenuFormCssFile =
                 entity.FrontendSubmenuFormCssFile,
 
-
             FrontendSubmenuListTsFile =
                 entity.FrontendSubmenuListTsFile,
 
@@ -517,6 +488,10 @@ public class CodeSynchronizationEngine
             FrontendSubmenuListCssFile =
                 entity.FrontendSubmenuListCssFile,
 
+
+            //===================================================
+            // Backend
+            //===================================================
 
             BackendSolution =
                 entity.BackendSolution,
@@ -530,10 +505,8 @@ public class CodeSynchronizationEngine
             BackendInfrastructureProject =
                 entity.BackendInfrastructureProject,
 
-
             BackendControllerFile =
                 entity.BackendControllerFile,
-
 
             BackendApplicationSubMenuFolder =
                 entity.BackendApplicationSubMenuFolder,
@@ -559,10 +532,8 @@ public class CodeSynchronizationEngine
             BackendSubMenuRepositoryInterfaceFile =
                 entity.BackendSubMenuRepositoryInterfaceFile,
 
-
             BackendSubMenuEntityFile =
                 entity.BackendSubMenuEntityFile,
-
 
             BackendSubMenuConfigurationFile =
                 entity.BackendSubMenuConfigurationFile,
@@ -571,13 +542,15 @@ public class CodeSynchronizationEngine
                 entity.BackendSubMenuRepositoryFile,
 
 
+            //===================================================
+            // Status
+            //===================================================
+
             Status =
                 entity.Status,
 
-
             Remarks =
                 entity.Remarks,
-
 
             LastSynchronizedBy =
                 entity.LastSynchronizedBy,
@@ -588,10 +561,8 @@ public class CodeSynchronizationEngine
             LastSynchronizationResult =
                 entity.LastSynchronizationResult,
 
-
             IsActive =
                 entity.IsActive,
-
 
             CreatedDate =
                 entity.CreatedDate
@@ -615,14 +586,10 @@ public class CodeSynchronizationEngine
             synchronization.SubmenuSynchronizationId <= 0
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    "Code Synchronization does not have a valid Submenu Synchronization reference."
-            };
+            return Failure
+            (
+                "Code Synchronization does not have a valid Submenu Synchronization reference."
+            );
         }
 
 
@@ -654,61 +621,56 @@ public class CodeSynchronizationEngine
             !submenuSynchronized
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    "Code Synchronization cannot continue because the associated Submenu Synchronization has not been synchronized."
-            };
+            return Failure
+            (
+                "Code Synchronization cannot continue because the associated Submenu Synchronization has not been synchronized."
+            );
         }
+
+
+        var synchronizationType =
+            synchronization
+                .SynchronizationType?
+                .Trim();
 
 
         if
         (
-            string.IsNullOrWhiteSpace
-            (
-                synchronization.SynchronizationType
+            string.IsNullOrWhiteSpace(
+                synchronizationType
             )
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    "Synchronization type is required."
-            };
+            return Failure
+            (
+                "Synchronization type is required."
+            );
         }
 
 
         if
         (
-            !synchronization.SynchronizationType.Equals
+            !synchronizationType.Equals
             (
                 "Frontend",
+
                 StringComparison.OrdinalIgnoreCase
             )
 
             &&
 
-            !synchronization.SynchronizationType.Equals
+            !synchronizationType.Equals
             (
                 "Backend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
-            };
+            return Failure
+            (
+                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+            );
         }
 
 
@@ -739,62 +701,75 @@ public class CodeSynchronizationEngine
             synchronization.SubmenuSynchronizationId <= 0
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    "Code Synchronization does not have a valid Submenu Synchronization reference."
-            };
+            return Failure
+            (
+                "Code Synchronization does not have a valid Submenu Synchronization reference."
+            );
         }
 
 
         if
         (
-            !synchronization.Status.Equals
+            !string.Equals
             (
+                synchronization.Status,
+
                 "Synchronized",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
+            return Failure
+            (
+                "Code Synchronization is not currently synchronized."
+            );
+        }
 
-                Message =
-                    "Code Synchronization is not currently synchronized."
-            };
+
+        var synchronizationType =
+            synchronization
+                .SynchronizationType?
+                .Trim();
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                synchronizationType
+            )
+        )
+        {
+            return Failure
+            (
+                "Synchronization type is required."
+            );
         }
 
 
         if
         (
-            !synchronization.SynchronizationType.Equals
+            !synchronizationType.Equals
             (
                 "Frontend",
+
                 StringComparison.OrdinalIgnoreCase
             )
 
             &&
 
-            !synchronization.SynchronizationType.Equals
+            !synchronizationType.Equals
             (
                 "Backend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
-            };
+            return Failure
+            (
+                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+            );
         }
 
 
@@ -820,11 +795,24 @@ public class CodeSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        var synchronizationType =
+            synchronization
+                .SynchronizationType?
+                .Trim();
+
+
+        //=======================================================
+        // Frontend
+        //=======================================================
+
         if
         (
-            synchronization.SynchronizationType.Equals
+            string.Equals
             (
+                synchronizationType,
+
                 "Frontend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
@@ -848,11 +836,18 @@ public class CodeSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Backend
+        //=======================================================
+
         if
         (
-            synchronization.SynchronizationType.Equals
+            string.Equals
             (
+                synchronizationType,
+
                 "Backend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
@@ -876,14 +871,10 @@ public class CodeSynchronizationEngine
         }
 
 
-        return new CodeSynchronizationEngineResult
-        {
-            Success =
-                false,
-
-            Message =
-                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
-        };
+        return Failure
+        (
+            $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+        );
     }
 
 
@@ -898,11 +889,24 @@ public class CodeSynchronizationEngine
         SubmenuSynchronizationDto synchronization
     )
     {
+        var synchronizationType =
+            synchronization
+                .SynchronizationType?
+                .Trim();
+
+
+        //=======================================================
+        // Frontend
+        //=======================================================
+
         if
         (
-            synchronization.SynchronizationType.Equals
+            string.Equals
             (
+                synchronizationType,
+
                 "Frontend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
@@ -926,11 +930,18 @@ public class CodeSynchronizationEngine
         }
 
 
+        //=======================================================
+        // Backend
+        //=======================================================
+
         if
         (
-            synchronization.SynchronizationType.Equals
+            string.Equals
             (
+                synchronizationType,
+
                 "Backend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
@@ -954,29 +965,16 @@ public class CodeSynchronizationEngine
         }
 
 
-        return new CodeSynchronizationEngineResult
-        {
-            Success =
-                false,
-
-            Message =
-                $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
-        };
+        return Failure
+        (
+            $"Unsupported synchronization type '{synchronization.SynchronizationType}'."
+        );
     }
 
 
 
     //===========================================================
     // Remove Synchronization Baselines
-    //===========================================================
-    //
-    // Removes all .appcore-sync-baseline files belonging to
-    // this Code Synchronization record.
-    //
-    // These files are temporary synchronization support files.
-    //
-    // They must not remain after row-level rollback.
-    //
     //===========================================================
 
     private static CodeSynchronizationEngineResult
@@ -989,15 +987,24 @@ public class CodeSynchronizationEngine
             new List<string>();
 
 
+        var synchronizationType =
+            synchronization
+                .SynchronizationType?
+                .Trim();
+
+
         //=======================================================
         // Frontend Files
         //=======================================================
 
         if
         (
-            synchronization.SynchronizationType.Equals
+            string.Equals
             (
+                synchronizationType,
+
                 "Frontend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
@@ -1034,9 +1041,12 @@ public class CodeSynchronizationEngine
 
         if
         (
-            synchronization.SynchronizationType.Equals
+            string.Equals
             (
+                synchronizationType,
+
                 "Backend",
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
@@ -1117,14 +1127,10 @@ public class CodeSynchronizationEngine
             Exception exception
         )
         {
-            return new CodeSynchronizationEngineResult
-            {
-                Success =
-                    false,
-
-                Message =
-                    $"Code Synchronization rollback completed, but synchronization baseline cleanup failed. {exception.Message}"
-            };
+            return Failure
+            (
+                $"Code Synchronization rollback completed, but synchronization baseline cleanup failed. {exception.Message}"
+            );
         }
 
 
@@ -1432,6 +1438,28 @@ public class CodeSynchronizationEngine
 
 
         await _context.SaveChangesAsync();
+    }
+
+
+
+    //===========================================================
+    // Failure
+    //===========================================================
+
+    private static CodeSynchronizationEngineResult
+        Failure
+    (
+        string message
+    )
+    {
+        return new CodeSynchronizationEngineResult
+        {
+            Success =
+                false,
+
+            Message =
+                message
+        };
     }
 
 }

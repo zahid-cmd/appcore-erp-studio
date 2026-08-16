@@ -57,6 +57,32 @@ Routes =
 
     // AUTO-END : SUB-005-001-001
 
+// AUTO-BEGIN : SUB-005-001-002
+
+    //===========================================================
+    // Branch
+    //===========================================================
+
+    {
+        path:'branch',
+
+        data:
+        {
+            breadcrumb:'Branch'
+        },
+
+        loadChildren:() =>
+            import(
+                './branch.routes'
+            )
+            .then(
+                m =>
+                    m.BranchRoutes
+            )
+    },
+
+    // AUTO-END : SUB-005-001-002
+
 ]
 
     }

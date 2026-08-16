@@ -89,7 +89,8 @@ export class CompanyService
 
     getById
     (
-        id:number
+        id:
+            number
     ):
         Observable<Company>
     {
@@ -106,7 +107,8 @@ export class CompanyService
 
     create
     (
-        model:CreateCompany
+        model:
+            CreateCompany
     ):
         Observable<number>
     {
@@ -125,7 +127,8 @@ export class CompanyService
 
     update
     (
-        model:UpdateCompany
+        model:
+            UpdateCompany
     ):
         Observable<void>
     {
@@ -144,7 +147,8 @@ export class CompanyService
 
     delete
     (
-        id:number
+        id:
+            number
     ):
         Observable<void>
     {
@@ -191,7 +195,8 @@ export class CompanyService
 
     getEntityHistory
     (
-        id:number
+        id:
+            number
     ):
         Observable<any[]>
     {

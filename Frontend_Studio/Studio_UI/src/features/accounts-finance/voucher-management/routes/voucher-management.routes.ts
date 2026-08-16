@@ -31,7 +31,59 @@ Routes =
         children:
         [
 
-                ]
+// AUTO-BEGIN : SUB-007-001-001
+
+    //===========================================================
+    // Receipt Voucher
+    //===========================================================
+
+    {
+        path:'receipt-voucher',
+
+        data:
+        {
+            breadcrumb:'Receipt Voucher'
+        },
+
+        loadChildren:() =>
+            import(
+                './receipt-voucher.routes'
+            )
+            .then(
+                m =>
+                    m.ReceiptVoucherRoutes
+            )
+    },
+
+    // AUTO-END : SUB-007-001-001
+
+// AUTO-BEGIN : SUB-007-001-002
+
+    //===========================================================
+    // Payment Voucher
+    //===========================================================
+
+    {
+        path:'payment-voucher',
+
+        data:
+        {
+            breadcrumb:'Payment Voucher'
+        },
+
+        loadChildren:() =>
+            import(
+                './payment-voucher.routes'
+            )
+            .then(
+                m =>
+                    m.PaymentVoucherRoutes
+            )
+    },
+
+    // AUTO-END : SUB-007-001-002
+
+]
 
     }
 

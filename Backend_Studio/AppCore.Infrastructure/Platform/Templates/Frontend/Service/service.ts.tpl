@@ -89,7 +89,8 @@ export class {{SERVICE_CLASS}}
 
     getById
     (
-        id:number
+        id:
+            number
     ):
         Observable<{{MODEL_IMPORT}}>
     {
@@ -106,7 +107,8 @@ export class {{SERVICE_CLASS}}
 
     create
     (
-        model:Create{{MODEL_IMPORT}}
+        model:
+            Create{{MODEL_IMPORT}}
     ):
         Observable<number>
     {
@@ -125,7 +127,8 @@ export class {{SERVICE_CLASS}}
 
     update
     (
-        model:Update{{MODEL_IMPORT}}
+        model:
+            Update{{MODEL_IMPORT}}
     ):
         Observable<void>
     {
@@ -144,7 +147,8 @@ export class {{SERVICE_CLASS}}
 
     delete
     (
-        id:number
+        id:
+            number
     ):
         Observable<void>
     {
@@ -191,7 +195,8 @@ export class {{SERVICE_CLASS}}
 
     getEntityHistory
     (
-        id:number
+        id:
+            number
     ):
         Observable<any[]>
     {
