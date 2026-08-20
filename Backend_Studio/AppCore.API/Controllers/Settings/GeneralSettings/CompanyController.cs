@@ -4,9 +4,9 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.Settings.GeneralSettings.Company;
+using AppCore.Application.Settings.GeneralSettings;
 
-using AppCore.Domain.Settings.GeneralSettings;
+using AppCore.Domain.Entities.Settings.GeneralSettings;
 
 
 //===============================================================
@@ -225,6 +225,22 @@ public class CompanyController
         long id
     )
     {
+        var entity =
+            await _repository
+                .GetByIdAsync(
+                    id
+                );
+
+
+        if
+        (
+            entity is null
+        )
+        {
+            return NotFound();
+        }
+
+
         await _repository
             .DeleteAsync(
                 id
@@ -239,12 +255,17 @@ public class CompanyController
     // Restore
     //===========================================================
 
-    [HttpPut("restore")]
+    [HttpPut("{id:long}/restore")]
 
-    public async Task<IActionResult> Restore()
+    public async Task<IActionResult> Restore
+    (
+        long id
+    )
     {
         await _repository
-            .RestoreAsync();
+            .RestoreAsync(
+                id
+            );
 
 
         return NoContent();

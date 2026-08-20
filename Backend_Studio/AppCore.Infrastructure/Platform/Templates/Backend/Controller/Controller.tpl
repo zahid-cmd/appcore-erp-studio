@@ -225,6 +225,22 @@ public class {{ControllerName}}
         long id
     )
     {
+        var entity =
+            await _repository
+                .GetByIdAsync(
+                    id
+                );
+
+
+        if
+        (
+            entity is null
+        )
+        {
+            return NotFound();
+        }
+
+
         await _repository
             .DeleteAsync(
                 id
@@ -239,12 +255,17 @@ public class {{ControllerName}}
     // Restore
     //===========================================================
 
-    [HttpPut("restore")]
+    [HttpPut("{id:long}/restore")]
 
-    public async Task<IActionResult> Restore()
+    public async Task<IActionResult> Restore
+    (
+        long id
+    )
     {
         await _repository
-            .RestoreAsync();
+            .RestoreAsync(
+                id
+            );
 
 
         return NoContent();

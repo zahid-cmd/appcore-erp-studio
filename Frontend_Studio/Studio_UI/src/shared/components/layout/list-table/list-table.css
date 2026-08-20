@@ -515,6 +515,10 @@
 }
 
 
+/* =====================================================
+   VIEW
+===================================================== */
+
 .action-btn.view
 {
     background: #edf4ff;
@@ -523,6 +527,10 @@
 }
 
 
+/* =====================================================
+   EDIT
+===================================================== */
+
 .action-btn.edit
 {
     background: #fff8e5;
@@ -530,6 +538,10 @@
     color: #c58b00;
 }
 
+
+/* =====================================================
+   DELETE
+===================================================== */
 
 .action-btn.delete
 {
@@ -576,6 +588,180 @@
     background: #ffedd5;
 
     color: #c2410c;
+}
+
+
+/* =====================================================
+   REGISTRATION - REGISTER
+===================================================== */
+
+.action-btn.registration
+{
+    background: #ecfdf5;
+
+    color: #16a34a;
+}
+
+
+.action-btn.registration:hover
+{
+    background: #dcfce7;
+
+    color: #15803d;
+}
+
+
+/* =====================================================
+   REGISTRATION - UNREGISTER
+===================================================== */
+
+.action-btn.registration.unregister
+{
+    background: #ffecec;
+
+    color: #dc2626;
+}
+
+
+.action-btn.registration.unregister:hover
+{
+    background: #fee2e2;
+
+    color: #b91c1c;
+}
+
+
+/* =====================================================
+   DATABASE - CREATE
+===================================================== */
+
+.action-btn.database
+{
+    background: #eff6ff;
+
+    color: #2563eb;
+}
+
+
+/* =====================================================
+   DATABASE - CREATE HOVER
+===================================================== */
+
+.action-btn.database:hover
+{
+    background: #dbeafe;
+
+    color: #1d4ed8;
+}
+
+
+/* =====================================================
+   DATABASE - REMOVE
+===================================================== */
+/*
+    When the physical database table already exists,
+    the database action becomes REMOVE.
+
+    Visual state:
+
+        Blue
+            =
+        Create Database
+
+        Orange
+            =
+        Remove Database
+*/
+
+.action-btn.database.remove-database
+{
+    background: #fff7ed;
+
+    color: #ea580c;
+
+    border: 1px solid #fed7aa;
+}
+
+
+.action-btn.database.remove-database:hover
+{
+    background: #ffedd5;
+
+    color: #c2410c;
+
+    border-color: #fdba74;
+}
+
+
+/* =====================================================
+   DATABASE - REMOVE ACTIVE STATE
+===================================================== */
+
+.action-btn.database.remove-database:active
+{
+    background: #fed7aa;
+
+    color: #9a3412;
+}
+
+
+/* =====================================================
+   DATABASE - DISABLED
+===================================================== */
+
+.action-btn.database:disabled
+{
+    cursor: not-allowed;
+
+    opacity: .45;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+.action-btn.database:disabled:hover
+{
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   REGISTRATION - DISABLED
+===================================================== */
+
+.action-btn.registration:disabled,
+.action-btn.rollback:disabled
+{
+    cursor: not-allowed;
+
+    opacity: .45;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+.action-btn.registration:disabled:hover,
+.action-btn.rollback:disabled:hover
+{
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   DISABLED ACTION - GENERAL
+===================================================== */
+
+.action-btn:disabled
+{
+    pointer-events: none;
 }
 
 

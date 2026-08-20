@@ -1,5 +1,6 @@
 <div class="app-list-page">
 
+
     <!-- =========================================================
         PAGE HEADER
     ========================================================= -->
@@ -45,6 +46,14 @@
                 command1Icon="fas fa-rotate-right"
 
                 (command1Click)="refresh()"
+
+
+                command2Text="Rebuild"
+
+                command2Icon="fas fa-arrows-rotate"
+
+                (command2Click)="rebuild()"
+
 
                 rightCommandIcon="fas fa-clock-rotate-left"
 
@@ -182,32 +191,40 @@
 
         <div canvasBody>
 
-            <app-list-table
-
-                [columns]="columns"
-
-                [rows]="pagedSynchronizations"
-
-                [serialOffset]="
-                    (currentPage - 1) * pageSize
-                "
-
-                [loading]="loading"
-
-                [error]="loadFailed"
-
-                [actions]="{
-                    view: true,
-                    edit: false,
-                    delete: false
-                }"
-
-                (view)="view($event)"
-
-                (operation)="synchronize($event)"
-
-                (sortChange)="onSort($event)">
-
+            <app-list-table 
+ 
+                [columns]="columns" 
+ 
+                [rows]="pagedSynchronizations" 
+ 
+                [serialOffset]=" 
+                    (currentPage - 1) * pageSize 
+                " 
+ 
+                [loading]="loading" 
+ 
+                [error]="loadFailed" 
+ 
+                [showRegistration]=" 
+                    selectedTab === 'backend' 
+                " 
+ 
+                [actions]="{ 
+                    view: true, 
+                    edit: false, 
+                    delete: false 
+                }" 
+ 
+                (view)="view($event)" 
+ 
+                (operation)="synchronize($event)" 
+ 
+                (registration)="register($event)" 
+ 
+                (database)="database($event)"
+ 
+                (sortChange)="onSort($event)"> 
+ 
             </app-list-table>
 
         </div>

@@ -945,7 +945,8 @@ namespace AppCore.Infrastructure.Migrations
 
                     b.Property<string>("FrontendMenuRouteFile")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("FrontendProject")
                         .IsRequired()
@@ -1750,6 +1751,286 @@ namespace AppCore.Infrastructure.Migrations
                     b.ToTable("SEC_RoleProfile", (string)null);
                 });
 
+            modelBuilder.Entity("AppCore.Domain.Entities.Settings.AccountSettings.AccountClass", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<long>("CreatedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("createdBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdDate");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isActive");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<long?>("ModifiedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("modifiedBy");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modifiedDate");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("SampleField")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("sampleField");
+
+                    b.Property<long?>("SampleSearchDropdownId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sampleSearchDropdownId");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccountClass", (string)null);
+                });
+
+            modelBuilder.Entity("AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<long>("CreatedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("createdBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdDate");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isActive");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<long?>("ModifiedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("modifiedBy");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modifiedDate");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("SampleField")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("sampleField");
+
+                    b.Property<long?>("SampleSearchDropdownId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sampleSearchDropdownId");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccountGroup", (string)null);
+                });
+
+            modelBuilder.Entity("AppCore.Domain.Entities.Settings.GeneralSettings.Branch", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<long>("CreatedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("createdBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdDate");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isActive");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<long?>("ModifiedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("modifiedBy");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modifiedDate");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("SampleField")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("sampleField");
+
+                    b.Property<long?>("SampleSearchDropdownId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sampleSearchDropdownId");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Branch", (string)null);
+                });
+
+            modelBuilder.Entity("AppCore.Domain.Entities.Settings.GeneralSettings.Company", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<long>("CreatedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("createdBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdDate");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isActive");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<long?>("ModifiedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("modifiedBy");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modifiedDate");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("SampleField")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("sampleField");
+
+                    b.Property<long?>("SampleSearchDropdownId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sampleSearchDropdownId");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Company", (string)null);
+                });
+
             modelBuilder.Entity("AppCore.Domain.InfrastructureControl.DevelopmentManagement.CodeSynchronization", b =>
                 {
                     b.Property<long>("Id")
@@ -1758,11 +2039,21 @@ namespace AppCore.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("BuildStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<long?>("CreatedBy")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DbStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<long?>("DeletedBy")
                         .HasColumnType("bigint");
@@ -1778,8 +2069,7 @@ namespace AppCore.Infrastructure.Migrations
 
                     b.Property<string>("LastSynchronizationResult")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("text");
 
                     b.Property<long?>("LastSynchronizedBy")
                         .HasColumnType("bigint");

@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.ActivityHistory.DTOs;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -11,68 +18,93 @@ namespace {{ApplicationNamespace}};
 
 public interface {{RepositoryInterfaceName}}
 {
+
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::{{DomainNamespace}}.{{EntityName}}>> GetAllAsync();
+    Task<IReadOnlyList<global::{{DomainNamespace}}.{{EntityName}}>>
+        GetAllAsync();
+
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::{{DomainNamespace}}.{{EntityName}}?> GetByIdAsync(
+    Task<global::{{DomainNamespace}}.{{EntityName}}?>
+        GetByIdAsync
+    (
         long id
     );
+
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long> CreateAsync(
+    Task<long>
+        CreateAsync
+    (
         global::{{DomainNamespace}}.{{EntityName}} entity
     );
+
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task UpdateAsync(
+    Task
+        UpdateAsync
+    (
         global::{{DomainNamespace}}.{{EntityName}} entity
     );
+
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task DeleteAsync(
+    Task
+        DeleteAsync
+    (
         long id
     );
+
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task RestoreAsync();
+    Task
+        RestoreAsync
+    (
+        long id
+    );
+
 
 
     //===========================================================
     // Get History
     //===========================================================
 
-    Task<IReadOnlyList<object>> GetHistoryAsync();
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetHistoryAsync();
+
 
 
     //===========================================================
     // Get Entity History
     //===========================================================
 
-    Task<IReadOnlyList<object>> GetEntityHistoryAsync(
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetEntityHistoryAsync
+    (
         long id
     );
+
 }

@@ -32,6 +32,7 @@ import
 }
 from '../empty-state/empty-state';
 
+
 /* =====================================================
    COLUMN TYPES
 ===================================================== */
@@ -44,6 +45,7 @@ export type ListTableColumnType =
   | 'operation'
   | 'actions';
 
+
 /* =====================================================
    COLUMN ALIGNMENT
 ===================================================== */
@@ -52,6 +54,7 @@ export type ListTableAlign =
   | 'left'
   | 'center'
   | 'right';
+
 
 /* =====================================================
    COLUMN
@@ -72,6 +75,7 @@ export interface ListTableColumn
   sortable?: boolean;
 }
 
+
 /* =====================================================
    ACTIONS
 ===================================================== */
@@ -84,6 +88,7 @@ export interface ListTableActions
 
   delete?: boolean;
 }
+
 
 /* =====================================================
    COMPONENT
@@ -117,97 +122,228 @@ export interface ListTableActions
 export class ListTableComponent
 implements OnChanges
 {
+
   /* =====================================================
-    INPUTS
+     INPUTS
   ===================================================== */
 
   @Input()
   columns: ListTableColumn[] = [];
 
+
   @Input()
   rows: any[] = [];
+
 
   @Input()
   serialOffset = 0;
 
+
   @Input()
   loading = false;
 
+
   @Input()
   error = false;
+
 
   @Input()
   actions: ListTableActions =
   {
       view: true,
+
       edit: true,
+
       delete: true
   };
+
+
+  /* =====================================================
+     REGISTRATION VISIBILITY
+
+     Default:
+     Registration is hidden.
+
+     Code Synchronization Backend page
+     will explicitly enable it.
+  ===================================================== */
+
+  @Input()
+  showRegistration = false;
+
+
+  /* =====================================================
+     REGISTRATION STATE
+
+     The parent list page supplies the registration state
+     on each row.
+
+     Expected row property:
+
+         registrationDisabled
+
+     Rules:
+
+         false
+             Registration / Deregistration control enabled.
+
+         true
+             Registration / Deregistration control disabled.
+
+     This state is intentionally read from the row instead
+     of being inferred from DB status text.
+  ===================================================== */
+
+  isRegistrationDisabled
+  (
+      row: any
+  ):
+      boolean
+  {
+      return row?.registrationDisabled === true;
+  }
+
 
   /* =====================================================
      OUTPUTS
   ===================================================== */
 
   @Output()
-  view = new EventEmitter<any>();
+  view =
+      new EventEmitter<any>();
+
 
   @Output()
-  edit = new EventEmitter<any>();
+  edit =
+      new EventEmitter<any>();
+
 
   @Output()
-  delete = new EventEmitter<any>();
+  delete =
+      new EventEmitter<any>();
+
 
   @Output()
   sortChange =
       new EventEmitter<
       {
           field: string;
-          direction: 'asc' | 'desc';
+
+          direction:
+              'asc'
+              |
+              'desc';
       }>();
 
-  @Output()
-  operation = new EventEmitter<any>();
 
   @Output()
-  commandCenter = new EventEmitter<any>();
+  operation =
+      new EventEmitter<any>();
+
 
   @Output()
-  commandServer = new EventEmitter<any>();
+  registration =
+      new EventEmitter<any>();
+
+
+  @Output()
+  database =
+      new EventEmitter<any>();
+
+
+  @Output()
+  commandCenter =
+      new EventEmitter<any>();
+
+
+  @Output()
+  commandServer =
+      new EventEmitter<any>();
 
 
   /* =====================================================
-    CHANGES
+     CHANGES
   ===================================================== */
 
   ngOnChanges(
       changes: SimpleChanges
-  ): void
+  ):
+      void
   {
-      if (changes['loading'])
+      if
+      (
+          changes['loading']
+      )
       {
-          console.log('==============================');
-          console.log('LIST TABLE LOADING');
-          console.log(this.loading);
-          console.log('==============================');
+          console.log(
+              '=============================='
+          );
+
+          console.log(
+              'LIST TABLE LOADING'
+          );
+
+          console.log(
+              this.loading
+          );
+
+          console.log(
+              '=============================='
+          );
       }
 
-      if (changes['error'])
+
+      if
+      (
+          changes['error']
+      )
       {
-          console.log('==============================');
-          console.log('LIST TABLE ERROR');
-          console.log(this.error);
-          console.log('==============================');
+          console.log(
+              '=============================='
+          );
+
+          console.log(
+              'LIST TABLE ERROR'
+          );
+
+          console.log(
+              this.error
+          );
+
+          console.log(
+              '=============================='
+          );
       }
 
-      if (changes['rows'])
+
+      if
+      (
+          changes['rows']
+      )
       {
-          console.log('==============================');
-          console.log('LIST TABLE RECEIVED ROWS');
-          console.log(this.rows);
-          console.log('Rows Length:', this.rows.length);
-          console.log('==============================');
+          console.log(
+              '=============================='
+          );
+
+          console.log(
+              'LIST TABLE RECEIVED ROWS'
+          );
+
+          console.log(
+              this.rows
+          );
+
+          console.log(
+              'Rows Length:',
+              this.rows.length
+          );
+
+          console.log(
+              '=============================='
+          );
       }
   }
+
 
   /* =====================================================
      SORT STATE
@@ -215,12 +351,17 @@ implements OnChanges
 
   sortField = '';
 
+
   sortDirection:
-    'asc' | 'desc' = 'asc';
+      'asc'
+      |
+      'desc'
+      =
+      'asc';
 
 
   /* =====================================================
-    SORT
+     SORT
   ===================================================== */
 
   sort
@@ -231,17 +372,21 @@ implements OnChanges
   {
       if
       (
-          column.type === 'serial' ||
-          column.type === 'actions' ||
+          column.type === 'serial'
+          ||
+          column.type === 'actions'
+          ||
           column.type === 'operation'
       )
       {
           return;
       }
 
+
       if
       (
-          this.sortField === column.field
+          this.sortField ===
+          column.field
       )
       {
           this.sortDirection =
@@ -258,15 +403,20 @@ implements OnChanges
               'asc';
       }
 
+
       this.sortChange.emit(
       {
-          field: this.sortField,
-          direction: this.sortDirection
+          field:
+              this.sortField,
+
+          direction:
+              this.sortDirection
       });
   }
 
+
   /* =====================================================
-    SERIAL
+     SERIAL
   ===================================================== */
 
   getSerial
@@ -278,8 +428,9 @@ implements OnChanges
       return this.serialOffset + index + 1;
   }
 
+
   /* =====================================================
-    CELL VALUE
+     CELL VALUE
   ===================================================== */
 
   getCellValue
@@ -295,7 +446,7 @@ implements OnChanges
 
 
   /* =====================================================
-    STATUS VALUE
+     STATUS VALUE
   ===================================================== */
 
   getStatusValue
@@ -309,6 +460,7 @@ implements OnChanges
       const value =
           row[column.field];
 
+
       if
       (
           typeof value === 'boolean'
@@ -319,12 +471,13 @@ implements OnChanges
               : 'Inactive';
       }
 
+
       return value ?? '';
   }
 
 
   /* =====================================================
-    STATUS CLASS
+     STATUS CLASS
   ===================================================== */
 
   getStatusClass
@@ -342,7 +495,11 @@ implements OnChanges
           )
           .toLowerCase();
 
-      switch (value)
+
+      switch
+      (
+          value
+      )
       {
           case 'active':
 
@@ -384,7 +541,7 @@ implements OnChanges
 
 
   /* =====================================================
-    BOOLEAN VALUE
+     BOOLEAN VALUE
   ===================================================== */
 
   getBooleanValue
@@ -400,7 +557,7 @@ implements OnChanges
 
 
   /* =====================================================
-    BOOLEAN LABEL
+     BOOLEAN LABEL
   ===================================================== */
 
   getBooleanLabel
@@ -414,91 +571,188 @@ implements OnChanges
           : 'No';
   }
 
+
   /* =====================================================
      ACTION EVENTS
   ===================================================== */
 
-  onViewClick(
-    row:any,
+  onViewClick
+  (
+      row: any,
 
-    event:MouseEvent
+      event: MouseEvent
   ):
-    void
+      void
   {
-    event.stopPropagation();
+      event.stopPropagation();
 
-    console.log(
-      'VIEW CLICK',
-      row
-    );
 
-    this.view.emit(row);
+      console.log(
+          'VIEW CLICK',
+          row
+      );
+
+
+      this.view.emit(
+          row
+      );
   }
+
 
   /* =====================================================
      OPERATION CLICK
   ===================================================== */
 
-  onOperationClick(
-    row: any,
+  onOperationClick
+  (
+      row: any,
 
-    event: MouseEvent
+      event: MouseEvent
   ):
-    void
+      void
   {
-    event.stopPropagation();
+      event.stopPropagation();
 
-    console.log(
-      'OPERATION CLICK',
-      row
-    );
 
-    this.operation.emit(row);
-  }
+      console.log(
+          'OPERATION CLICK',
+          row
+      );
 
-  //===========================================================
-  // EDIT CLICK
-  //===========================================================
 
-  onEditClick(
-    row:any,
-
-    event:MouseEvent
-  ):
-    void
-  {
-    event.stopPropagation();
-
-    console.log(
-      'EDIT CLICK',
-      row
-    );
-
-    this.edit.emit(row);
+      this.operation.emit(
+          row
+      );
   }
 
 
+  /* =====================================================
+     REGISTRATION CLICK
+  ===================================================== */
 
-  //===========================================================
-  // DELETE CLICK
-  //===========================================================
+  onRegistrationClick
+  (
+      row: any,
 
-  onDeleteClick(
-    row:any,
-
-    event:MouseEvent
+      event: MouseEvent
   ):
-    void
+      void
   {
-    event.stopPropagation();
+      event.stopPropagation();
 
-    console.log(
-      'DELETE CLICK',
-      row
-    );
 
-    this.delete.emit(row);
+      //=====================================================
+      // Safety Guard
+      //
+      // Do not emit a registration event when the parent
+      // has marked the registration control as disabled.
+      //
+      // This prevents deregistration after the physical
+      // database table has been created, even if a click
+      // somehow reaches this handler.
+      //=====================================================
+
+      if
+      (
+          this.isRegistrationDisabled(row)
+      )
+      {
+          return;
+      }
+
+
+      console.log(
+          'REGISTRATION CLICK',
+          row
+      );
+
+
+      this.registration.emit(
+          row
+      );
   }
+
+
+  /* =====================================================
+     DATABASE CLICK
+  ===================================================== */
+
+  onDatabaseClick
+  (
+      row: any,
+
+      event: MouseEvent
+  ):
+      void
+  {
+      event.stopPropagation();
+
+
+      console.log(
+          'DATABASE CLICK',
+          row
+      );
+
+
+      this.database.emit(
+          row
+      );
+  }
+
+
+  /* =====================================================
+     EDIT CLICK
+  ===================================================== */
+
+  onEditClick
+  (
+      row: any,
+
+      event: MouseEvent
+  ):
+      void
+  {
+      event.stopPropagation();
+
+
+      console.log(
+          'EDIT CLICK',
+          row
+      );
+
+
+      this.edit.emit(
+          row
+      );
+  }
+
+
+  /* =====================================================
+     DELETE CLICK
+  ===================================================== */
+
+  onDeleteClick
+  (
+      row: any,
+
+      event: MouseEvent
+  ):
+      void
+  {
+      event.stopPropagation();
+
+
+      console.log(
+          'DELETE CLICK',
+          row
+      );
+
+
+      this.delete.emit(
+          row
+      );
+  }
+
 
   /* =====================================================
      TRACK ROW
@@ -506,14 +760,18 @@ implements OnChanges
 
   trackRow
   (
-    index:
-      number,
+      index:
+          number,
 
-    row:
-      any
+      row:
+          any
   ):
-    any
+      any
   {
-    return row?.id ?? index;
+      return
+          row?.id
+          ??
+          index;
   }
+
 }

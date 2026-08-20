@@ -130,6 +130,28 @@ public class CodeSynchronizationConfiguration
 
 
         //=======================================================
+        // Build Status
+        //=======================================================
+
+        builder.Property(
+            x => x.BuildStatus
+        )
+        .HasMaxLength(50)
+        .IsRequired();
+
+
+        //=======================================================
+        // Database Status
+        //=======================================================
+
+        builder.Property(
+            x => x.DbStatus
+        )
+        .HasMaxLength(50)
+        .IsRequired();
+
+
+        //=======================================================
         // Configuration
         //=======================================================
 
@@ -142,11 +164,17 @@ public class CodeSynchronizationConfiguration
         //=======================================================
         // Last Synchronization Result
         //=======================================================
+        //
+        // Build output can be substantially longer than 2000
+        // characters. Use PostgreSQL text so the complete build
+        // result can be stored without truncation.
+        //
+        //=======================================================
 
         builder.Property(
             x => x.LastSynchronizationResult
         )
-        .HasMaxLength(2000)
+        .HasColumnType("text")
         .IsRequired();
 
 

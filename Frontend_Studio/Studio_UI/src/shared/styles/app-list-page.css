@@ -146,6 +146,74 @@ app-orbit-loader
     min-height: 100%;
 }
 
+
+/* =====================================================
+   CODE SYNCHRONIZATION STATUS COLUMNS
+   BUILD STATUS / DB STATUS / STATUS
+===================================================== */
+
+:host ::ng-deep .list-table th:nth-child(7),
+:host ::ng-deep .list-table th:nth-child(8),
+:host ::ng-deep .list-table th:nth-child(9)
+{
+    text-align: center;
+}
+
+
+/* =====================================================
+   STATUS CELL ALIGNMENT
+===================================================== */
+
+:host ::ng-deep .list-table td:nth-child(7),
+:host ::ng-deep .list-table td:nth-child(8),
+:host ::ng-deep .list-table td:nth-child(9)
+{
+    text-align: center;
+}
+
+
+/* =====================================================
+   STATUS PILL POSITION
+===================================================== */
+
+:host ::ng-deep .list-table td:nth-child(7) .status,
+:host ::ng-deep .list-table td:nth-child(8) .status,
+:host ::ng-deep .list-table td:nth-child(9) .status
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 90px;
+
+    margin-left: auto;
+
+    margin-right: auto;
+}
+
+
+/* =====================================================
+   REGISTRATION BUTTON
+===================================================== */
+
+:host ::ng-deep .list-table .action-btn.registration
+{
+    color: #16a34a;
+
+    background: #f0fdf4;
+}
+
+
+:host ::ng-deep .list-table .action-btn.registration:hover
+{
+    color: #15803d;
+
+    background: #dcfce7;
+}
+
+
 /* =====================================================
    RESPONSIVE
 ===================================================== */

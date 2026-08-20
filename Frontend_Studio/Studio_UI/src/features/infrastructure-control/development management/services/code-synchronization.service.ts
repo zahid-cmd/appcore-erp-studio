@@ -53,12 +53,45 @@ export interface CodeSynchronizationFile
 
 
 //===============================================================
+// Backend Database Result
+//===============================================================
+
+export interface BackendDatabaseResult
+{
+    success:
+        boolean;
+
+    message:
+        string;
+
+    totalOperations?:
+        number;
+
+    successfulOperations?:
+        number;
+
+    failedOperations?:
+        number;
+
+    created?:
+        boolean;
+
+    removed?:
+        boolean;
+
+    migrationName?:
+        string;
+}
+
+
+//===============================================================
 // Service
 //===============================================================
 
 @Injectable(
 {
-    providedIn:'root'
+    providedIn:
+        'root'
 })
 
 export class CodeSynchronizationService
@@ -76,6 +109,13 @@ export class CodeSynchronizationService
         `${environment.apiUrl}/infrastructure-control/development-management/code-synchronization`;
 
 
+    private readonly frontendRebuildUrl =
+        `${environment.apiUrl}/infrastructure-control/rebuild-engine/frontend`;
+
+
+    private readonly backendRebuildUrl =
+        `${environment.apiUrl}/infrastructure-control/development-management/backend-rebuild`;
+
 
     //===========================================================
     // Get All
@@ -88,12 +128,24 @@ export class CodeSynchronizationService
     ):
         Observable<CodeSynchronization[]>
     {
+        const params =
+            new HttpParams()
+                .set(
+                    'type',
+
+                    synchronizationType
+                );
+
+
         return this.http.get<CodeSynchronization[]>
         (
-            `${this.apiUrl}?type=${synchronizationType}`
+            this.apiUrl,
+
+            {
+                params
+            }
         );
     }
-
 
 
     //===========================================================
@@ -114,7 +166,6 @@ export class CodeSynchronizationService
     }
 
 
-
     //===========================================================
     // Get History
     //===========================================================
@@ -127,7 +178,6 @@ export class CodeSynchronizationService
             `${this.apiUrl}/history`
         );
     }
-
 
 
     //===========================================================
@@ -150,15 +200,8 @@ export class CodeSynchronizationService
     }
 
 
-
     //===========================================================
     // Rollback Code Synchronization
-    //===========================================================
-    //
-    // Existing synchronization-level rollback.
-    //
-    // This remains separate from file Restore.
-    //
     //===========================================================
 
     rollback
@@ -176,6 +219,85 @@ export class CodeSynchronizationService
         );
     }
 
+
+    //===========================================================
+    // Backend Registration
+    //===========================================================
+
+    register
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/register`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
+    // Backend Registration Rollback
+    //===========================================================
+
+    rollbackRegistration
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/register/rollback`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
+    // Backend Database Create
+    //===========================================================
+
+    createDatabase
+    (
+        id:
+            number
+    ):
+        Observable<BackendDatabaseResult>
+    {
+        return this.http.post<BackendDatabaseResult>
+        (
+            `${this.apiUrl}/${id}/database`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
+    // Backend Database Remove
+    //===========================================================
+
+    removeDatabase
+    (
+        id:
+            number
+    ):
+        Observable<BackendDatabaseResult>
+    {
+        return this.http.post<BackendDatabaseResult>
+        (
+            `${this.apiUrl}/${id}/database/rollback`,
+
+            {}
+        );
+    }
 
 
     //===========================================================
@@ -196,18 +318,8 @@ export class CodeSynchronizationService
     }
 
 
-
     //===========================================================
     // Restore File
-    //===========================================================
-    //
-    // Restores one modified file to the version produced by
-    // the last successful synchronization.
-    //
-    // The API expects fileName as a query parameter.
-    //
-    // This is NOT synchronization rollback.
-    //
     //===========================================================
 
     restoreFile
@@ -242,16 +354,8 @@ export class CodeSynchronizationService
     }
 
 
-
     //===========================================================
     // Restore All Modified Files
-    //===========================================================
-    //
-    // Restores only files that have been modified after the
-    // last successful synchronization.
-    //
-    // This is NOT synchronization rollback.
-    //
     //===========================================================
 
     restoreAll
@@ -264,6 +368,38 @@ export class CodeSynchronizationService
         return this.http.post<void>
         (
             `${this.apiUrl}/${id}/restore-all`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
+    // Frontend Rebuild
+    //===========================================================
+
+    rebuildFrontend():
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.frontendRebuildUrl}/rebuild`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
+    // Backend Rebuild
+    //===========================================================
+
+    rebuildBackend():
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.backendRebuildUrl}/rebuild`,
 
             {}
         );

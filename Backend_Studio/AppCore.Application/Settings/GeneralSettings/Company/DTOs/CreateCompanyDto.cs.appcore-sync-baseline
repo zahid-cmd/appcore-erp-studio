@@ -2,7 +2,7 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings.Company;
+namespace AppCore.Application.Settings.GeneralSettings;
 
 
 //===============================================================

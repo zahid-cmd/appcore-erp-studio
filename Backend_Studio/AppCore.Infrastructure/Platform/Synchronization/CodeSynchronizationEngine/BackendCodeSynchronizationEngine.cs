@@ -364,17 +364,6 @@ public class BackendCodeSynchronizationEngine
     //===========================================================
     // Rollback
     //===========================================================
-    //
-    // IMPORTANT:
-    //
-    // Rollback does not delete generated folders or files.
-    //
-    // The nine backend target files already exist because they
-    // were created by Submenu Synchronization.
-    //
-    // Rollback only clears their generated code.
-    //
-    //===========================================================
 
     public async Task<BackendCodeSynchronizationResultDto>
         RollbackAsync
@@ -614,7 +603,7 @@ public class BackendCodeSynchronizationEngine
 
 
         //=======================================================
-        // Write Into Existing File
+        // Write Generated Code
         //=======================================================
 
         await File.WriteAllTextAsync(
@@ -689,20 +678,14 @@ public class BackendCodeSynchronizationEngine
         //=======================================================
 
         var apiProject =
-            Path.Combine(
-                backendStudioRoot,
-
-                "AppCore.API",
-
-                "AppCore.API.csproj"
+            FindApiProject(
+                backendStudioRoot
             );
 
 
         if
         (
-            !File.Exists(
-                apiProject
-            )
+            apiProject is null
         )
         {
             return new BackendBuildResult
@@ -711,16 +694,31 @@ public class BackendCodeSynchronizationEngine
                     false,
 
                 Message =
-                    $"Backend build failed: API project was not found: {apiProject}"
+                    "Backend build failed: AppCore API project could not be located."
             };
         }
 
 
         //=======================================================
-        // Temporary Build Directory
+        // Temporary Artifacts Directory
+        //
+        // IMPORTANT:
+        //
+        // We intentionally do NOT override:
+        //
+        // BaseIntermediateOutputPath
+        // BaseOutputPath
+        // MSBuildProjectExtensionsPath
+        //
+        // .NET 10 provides --artifacts-path specifically for
+        // this purpose.
+        //
+        // MSBuild automatically separates every project under
+        // the artifacts directory.
+        //
         //=======================================================
 
-        var buildDirectory =
+        var artifactsDirectory =
             Path.Combine(
                 Path.GetTempPath(),
 
@@ -731,110 +729,38 @@ public class BackendCodeSynchronizationEngine
 
 
         Directory.CreateDirectory(
-            buildDirectory
+            artifactsDirectory
         );
 
 
         try
         {
             //===================================================
-            // Process Start Information
+            // Build
+            //
+            // --artifacts-path
+            //
+            // Keeps generated bin/obj files completely outside
+            // the real project directories.
+            //
+            // --disable-build-servers
+            //
+            // Prevents persistent build servers from holding
+            // generated assemblies or intermediate files.
+            //
             //===================================================
 
-            var processStartInfo =
-                new ProcessStartInfo
-                {
-                    FileName =
-                        "dotnet",
+            var buildResult =
+                await RunDotnetBuildAsync
+                (
+                    apiProject,
 
-                    WorkingDirectory =
-                        Path.GetDirectoryName(
-                            apiProject
-                        )!,
+                    Path.GetDirectoryName(
+                        apiProject
+                    )!,
 
-                    UseShellExecute =
-                        false,
-
-                    RedirectStandardOutput =
-                        true,
-
-                    RedirectStandardError =
-                        true,
-
-                    CreateNoWindow =
-                        true
-                };
-
-
-            //===================================================
-            // Build Arguments
-            //===================================================
-
-            processStartInfo.ArgumentList.Add(
-                "build"
-            );
-
-
-            processStartInfo.ArgumentList.Add(
-                apiProject
-            );
-
-
-            processStartInfo.ArgumentList.Add(
-                "--no-restore"
-            );
-
-
-            processStartInfo.ArgumentList.Add(
-                "-p:BaseOutputPath=" +
-                Path.Combine(
-                    buildDirectory,
-                    "bin"
-                ) +
-                Path.DirectorySeparatorChar
-            );
-
-
-            //===================================================
-            // Start Process
-            //===================================================
-
-            using var process =
-                new Process
-                {
-                    StartInfo =
-                        processStartInfo
-                };
-
-
-            process.Start();
-
-
-            //===================================================
-            // Read Output
-            //===================================================
-
-            var standardOutputTask =
-                process.StandardOutput.ReadToEndAsync();
-
-
-            var standardErrorTask =
-                process.StandardError.ReadToEndAsync();
-
-
-            //===================================================
-            // Wait
-            //===================================================
-
-            await process.WaitForExitAsync();
-
-
-            var standardOutput =
-                await standardOutputTask;
-
-
-            var standardError =
-                await standardErrorTask;
+                    artifactsDirectory
+                );
 
 
             //===================================================
@@ -843,7 +769,7 @@ public class BackendCodeSynchronizationEngine
 
             if
             (
-                process.ExitCode == 0
+                buildResult.ExitCode == 0
             )
             {
                 return new BackendBuildResult
@@ -862,11 +788,9 @@ public class BackendCodeSynchronizationEngine
             //===================================================
 
             var buildOutput =
-                string.IsNullOrWhiteSpace(
-                    standardError
-                )
-                    ? standardOutput
-                    : standardError;
+                GetProcessOutput(
+                    buildResult
+                );
 
 
             return new BackendBuildResult
@@ -895,7 +819,7 @@ public class BackendCodeSynchronizationEngine
         finally
         {
             //===================================================
-            // Remove Temporary Build Directory
+            // Remove Temporary Artifacts
             //===================================================
 
             try
@@ -903,12 +827,12 @@ public class BackendCodeSynchronizationEngine
                 if
                 (
                     Directory.Exists(
-                        buildDirectory
+                        artifactsDirectory
                     )
                 )
                 {
                     Directory.Delete(
-                        buildDirectory,
+                        artifactsDirectory,
 
                         true
                     );
@@ -917,11 +841,167 @@ public class BackendCodeSynchronizationEngine
             catch
             {
                 //===============================================
-                // Temporary cleanup failure must not change
+                // Temporary cleanup failure does not change
                 // the actual build result.
                 //===============================================
             }
         }
+    }
+
+
+
+    //===========================================================
+    // Run Dotnet Build
+    //===========================================================
+
+    private static async Task<DotnetProcessResult>
+        RunDotnetBuildAsync
+    (
+        string apiProject,
+
+        string workingDirectory,
+
+        string artifactsDirectory
+    )
+    {
+        //=======================================================
+        // Process Start Information
+        //=======================================================
+
+        var processStartInfo =
+            new ProcessStartInfo
+            {
+                FileName =
+                    "dotnet",
+
+                WorkingDirectory =
+                    workingDirectory,
+
+                UseShellExecute =
+                    false,
+
+                RedirectStandardOutput =
+                    true,
+
+                RedirectStandardError =
+                    true,
+
+                CreateNoWindow =
+                    true
+            };
+
+
+        //=======================================================
+        // Command
+        //=======================================================
+
+        processStartInfo.ArgumentList.Add(
+            "build"
+        );
+
+
+        //=======================================================
+        // API Project
+        //=======================================================
+
+        processStartInfo.ArgumentList.Add(
+            apiProject
+        );
+
+
+        //=======================================================
+        // Temporary Artifacts
+        //=======================================================
+
+        processStartInfo.ArgumentList.Add(
+            "--artifacts-path"
+        );
+
+
+        processStartInfo.ArgumentList.Add(
+            artifactsDirectory
+        );
+
+
+        //=======================================================
+        // Disable Persistent Build Servers
+        //=======================================================
+
+        processStartInfo.ArgumentList.Add(
+            "--disable-build-servers"
+        );
+
+
+        //=======================================================
+        // Start Process
+        //=======================================================
+
+        using var process =
+            new Process
+            {
+                StartInfo =
+                    processStartInfo
+            };
+
+
+        process.Start();
+
+
+        //=======================================================
+        // Read Output
+        //=======================================================
+
+        var standardOutputTask =
+            process.StandardOutput.ReadToEndAsync();
+
+
+        var standardErrorTask =
+            process.StandardError.ReadToEndAsync();
+
+
+        //=======================================================
+        // Wait
+        //=======================================================
+
+        await process.WaitForExitAsync();
+
+
+        return new DotnetProcessResult
+        {
+            ExitCode =
+                process.ExitCode,
+
+            StandardOutput =
+                await standardOutputTask,
+
+            StandardError =
+                await standardErrorTask
+        };
+    }
+
+
+
+    //===========================================================
+    // Get Process Output
+    //===========================================================
+
+    private static string GetProcessOutput
+    (
+        DotnetProcessResult result
+    )
+    {
+        if
+        (
+            !string.IsNullOrWhiteSpace(
+                result.StandardError
+            )
+        )
+        {
+            return result.StandardError;
+        }
+
+
+        return result.StandardOutput;
     }
 
 
@@ -951,21 +1031,11 @@ public class BackendCodeSynchronizationEngine
             directory is not null
         )
         {
-            var apiProject =
-                Path.Combine(
-                    directory.FullName,
-
-                    "AppCore.API",
-
-                    "AppCore.API.csproj"
-                );
-
-
             if
             (
-                File.Exists(
-                    apiProject
-                )
+                FindApiProject(
+                    directory.FullName
+                ) is not null
             )
             {
                 return directory.FullName;
@@ -974,6 +1044,151 @@ public class BackendCodeSynchronizationEngine
 
             directory =
                 directory.Parent;
+        }
+
+
+        return null;
+    }
+
+
+
+    //===========================================================
+    // Find API Project
+    //===========================================================
+
+    private static string?
+        FindApiProject
+    (
+        string rootDirectory
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                rootDirectory
+            )
+        )
+        {
+            return null;
+        }
+
+
+        //=======================================================
+        // Direct API Projects
+        //=======================================================
+
+        var directApiProjects =
+            Directory
+                .GetFiles(
+                    rootDirectory,
+
+                    "*.csproj",
+
+                    SearchOption.TopDirectoryOnly
+                )
+                .Where
+                (
+                    x =>
+                        string.Equals
+                        (
+                            Path.GetFileNameWithoutExtension(x),
+
+                            "AppCore.API",
+
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                        ||
+                        string.Equals
+                        (
+                            Path.GetFileNameWithoutExtension(x),
+
+                            "AppCore.Api",
+
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                )
+                .ToList();
+
+
+        if
+        (
+            directApiProjects.Count > 0
+        )
+        {
+            return directApiProjects[0];
+        }
+
+
+        //=======================================================
+        // API Directory
+        //=======================================================
+
+        var apiDirectories =
+            Directory
+                .GetDirectories(
+                    rootDirectory,
+
+                    "AppCore.API",
+
+                    SearchOption.TopDirectoryOnly
+                )
+                .Concat
+                (
+                    Directory.GetDirectories(
+                        rootDirectory,
+
+                        "AppCore.Api",
+
+                        SearchOption.TopDirectoryOnly
+                    )
+                )
+                .ToList();
+
+
+        foreach
+        (
+            var apiDirectory in apiDirectories
+        )
+        {
+            var project =
+                Directory
+                    .GetFiles(
+                        apiDirectory,
+
+                        "*.csproj",
+
+                        SearchOption.TopDirectoryOnly
+                    )
+                    .FirstOrDefault
+                    (
+                        x =>
+                            string.Equals
+                            (
+                                Path.GetFileNameWithoutExtension(x),
+
+                                "AppCore.API",
+
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                            ||
+                            string.Equals
+                            (
+                                Path.GetFileNameWithoutExtension(x),
+
+                                "AppCore.Api",
+
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                    );
+
+
+            if
+            (
+                project is not null
+            )
+            {
+                return project;
+            }
         }
 
 
@@ -1083,13 +1298,33 @@ public class BackendCodeSynchronizationEngine
 
 
         //=======================================================
+        // Namespace Values
+        //=======================================================
+
+        var moduleNamespace =
+            ToPascalCase(
+                moduleName
+            );
+
+
+        var menuNamespace =
+            ToPascalCase(
+                menuName
+            );
+
+
+        var entityNamespace =
+            ToPascalCase(
+                submenuName
+            );
+
+
+        //=======================================================
         // Entity Naming
         //=======================================================
 
         var entityClass =
-            ToPascalCase(
-                submenuName
-            );
+            entityNamespace;
 
 
         var entityName =
@@ -1148,34 +1383,20 @@ public class BackendCodeSynchronizationEngine
         // Namespace Names
         //=======================================================
 
-        var moduleNamespace =
-            ToPascalCase(
-                moduleName
-            );
-
-
-        var menuNamespace =
-            ToPascalCase(
-                menuName
-            );
-
-
-        var entityNamespace =
-            ToPascalCase(
-                submenuName
-            );
-
-
         var domainNamespace =
-            $"AppCore.Domain.{moduleNamespace}.{menuNamespace}";
+            $"AppCore.Domain.Entities.{moduleNamespace}.{menuNamespace}";
 
 
         var applicationNamespace =
-            $"AppCore.Application.{moduleNamespace}.{menuNamespace}.{entityNamespace}";
+            $"AppCore.Application.{moduleNamespace}.{menuNamespace}";
 
 
         var infrastructureNamespace =
-            $"AppCore.Infrastructure.{moduleNamespace}.{menuNamespace}";
+            $"AppCore.Infrastructure.Configurations.{moduleNamespace}.{menuNamespace}";
+
+
+        var repositoryNamespace =
+            $"AppCore.Infrastructure.Repositories.{moduleNamespace}.{menuNamespace}";
 
 
         var apiNamespace =
@@ -1198,12 +1419,24 @@ public class BackendCodeSynchronizationEngine
 
         //=======================================================
         // Replacements
-        //
-        // These names MUST match the backend .tpl files.
         //=======================================================
 
         return new Dictionary<string, string>
         {
+            //===================================================
+            // Common
+            //===================================================
+
+            ["ModuleName"] =
+                moduleNamespace,
+
+            ["MenuName"] =
+                menuNamespace,
+
+            ["SubmenuName"] =
+                entityName,
+
+
             //===================================================
             // Entity Template
             //===================================================
@@ -1276,6 +1509,9 @@ public class BackendCodeSynchronizationEngine
             ["RepositoryName"] =
                 repositoryName,
 
+            ["RepositoryNamespace"] =
+                repositoryNamespace,
+
 
             //===================================================
             // Controller Template
@@ -1288,7 +1524,15 @@ public class BackendCodeSynchronizationEngine
                 controllerName,
 
             ["ControllerRoute"] =
-                controllerRoute
+                controllerRoute,
+
+
+            //===================================================
+            // Synchronization Values
+            //===================================================
+
+            ["SubmenuCode"] =
+                submenuCode
         };
     }
 
@@ -1508,6 +1752,37 @@ public class BackendCodeSynchronizationEngine
 
 
     //===========================================================
+    // Dotnet Process Result
+    //===========================================================
+
+    private sealed class DotnetProcessResult
+    {
+        //=======================================================
+        // Exit Code
+        //=======================================================
+
+        public int ExitCode { get; init; }
+
+
+        //=======================================================
+        // Standard Output
+        //=======================================================
+
+        public string StandardOutput { get; init; } =
+            string.Empty;
+
+
+        //=======================================================
+        // Standard Error
+        //=======================================================
+
+        public string StandardError { get; init; } =
+            string.Empty;
+    }
+
+
+
+    //===========================================================
     // Backend Build Result
     //===========================================================
 
@@ -1524,7 +1799,8 @@ public class BackendCodeSynchronizationEngine
         // Message
         //=======================================================
 
-        public string Message { get; init; } = string.Empty;
+        public string Message { get; init; } =
+            string.Empty;
     }
 
 }

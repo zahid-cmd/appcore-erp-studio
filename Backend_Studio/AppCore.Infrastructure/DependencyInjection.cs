@@ -51,10 +51,26 @@ using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interface
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.CodeSynchronizationEngine;
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendDatabaseEngine;
 
 using AppCore.Infrastructure.Platform.Synchronization;
 using AppCore.Infrastructure.Platform.Synchronization.CodeSynchronizationEngine;
 using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
+using AppCore.Infrastructure.Platform.Synchronization.BackendDatabaseEngine;
+
+
+//===============================================================
+// Frontend Rebuild Engine
+//===============================================================
+
+using AppCore.Infrastructure.Platform.FrontendRebuildEngine;
+
+
+//===============================================================
+// Backend Rebuild Engine
+//===============================================================
+
+using AppCore.Infrastructure.Platform.BackendRebuildEngine;
 
 
 //===============================================================
@@ -331,6 +347,29 @@ public static class DependencyInjection
 
 
         //=======================================================
+        // Backend Database Engine
+        //=======================================================
+        //
+        // Responsible only for database structure operations.
+        //
+        // It does NOT register:
+        //
+        //     - DbSet
+        //     - Dependency Injection services
+        //
+        // Those responsibilities remain with the
+        // Backend Registration Engine.
+        //
+        //=======================================================
+
+        services.AddScoped
+        <
+            IBackendDatabaseEngine,
+            BackendDatabaseEngine
+        >();
+
+
+        //=======================================================
         // Module Synchronization Engine
         //=======================================================
 
@@ -382,15 +421,59 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // AUTO REGISTER REPOSITORIES
+        // Frontend Rebuild Engine
         //=======================================================
 
-        // services.AddScoped<ISettingsRepository, SettingsRepository>();
+        services.AddSingleton
+        (
+            new FrontendRebuildOptions
+            {
+                ProjectPath = @"Frontend_Studio\Studio_UI",
+
+                Port = 4100,
+
+                StartupTimeoutSeconds = 60
+            }
+        );
+
+        services.AddSingleton
+        <
+            IFrontendRebuildEngine,
+            FrontendRebuildEngine
+        >();
 
 
         //=======================================================
-        // AUTO REGISTER SERVICES
+        // Backend Rebuild Engine
         //=======================================================
+
+        services.AddSingleton
+        (
+            new BackendRebuildOptions
+            {
+                ProjectPath =
+                    Path.GetFullPath(
+                        Path.Combine(
+                            AppContext.BaseDirectory,
+                            "..",
+                            "..",
+                            ".."
+                        )
+                    ),
+
+                Port = 5100,
+
+                BuildTimeoutSeconds = 120,
+
+                StartupTimeoutSeconds = 60
+            }
+        );
+
+        services.AddSingleton
+        <
+            IBackendRebuildEngine,
+            BackendRebuildEngine
+        >();
 
 
         //=======================================================
@@ -431,6 +514,98 @@ public static class DependencyInjection
             IActivityAssignmentDetailRepository,
             ActivityAssignmentDetailRepository
         >();
+
+
+        //=======================================================
+        // AUTO REGISTER REPOSITORIES
+
+        // AUTO-BEGIN : AccountGroup
+
+        //=======================================================
+        // AccountGroup
+        //=======================================================
+
+        services.AddScoped
+        <
+        AppCore.Application.Settings.AccountSettings.IAccountGroupRepository,
+        AppCore.Infrastructure.Configurations.Settings.AccountSettings.AccountGroupRepository
+        >();
+
+
+        // AUTO-END : AccountGroup
+
+
+        // AUTO-BEGIN : Company
+
+        //=======================================================
+        // Company
+        //=======================================================
+
+        services.AddScoped
+        <
+        AppCore.Application.Settings.GeneralSettings.ICompanyRepository,
+        AppCore.Infrastructure.Configurations.Settings.GeneralSettings.CompanyRepository
+        >();
+
+
+        // AUTO-END : Company
+
+
+        // AUTO-BEGIN : Branch
+
+        //=======================================================
+        // Branch
+        //=======================================================
+
+        services.AddScoped
+        <
+        AppCore.Application.Settings.GeneralSettings.IBranchRepository,
+        AppCore.Infrastructure.Configurations.Settings.GeneralSettings.BranchRepository
+        >();
+
+
+        // AUTO-END : Branch
+
+
+        
+
+        // AUTO-BEGIN : AccountClass
+
+        //=======================================================
+        // AccountClass
+        //=======================================================
+
+        services.AddScoped
+        <
+        AppCore.Application.Settings.AccountSettings.IAccountClassRepository,
+        AppCore.Infrastructure.Configurations.Settings.AccountSettings.AccountClassRepository
+        >();
+
+
+        // AUTO-END : AccountClass
+
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+        //=======================================================
+
+
+
+        //=======================================================
+        // AUTO REGISTER SERVICES
+        //=======================================================
+
+        // Registration Engine adds generated service
+        // registrations here.
 
 
         //=======================================================

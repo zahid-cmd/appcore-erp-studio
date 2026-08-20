@@ -152,4 +152,58 @@ public interface ICodeSynchronizationRepository
             long id
         );
 
+
+    //===========================================================
+    // Update Backend Registration Status
+    //===========================================================
+    //
+    // Updates the Code Synchronization database status after
+    // Backend Database Registration has completed.
+    //
+    // Registration failure is represented by "Failed".
+    //
+    //===========================================================
+
+    Task<bool>
+        UpdateBackendRegistrationStatusAsync
+        (
+            long id,
+
+            bool successful,
+
+            string message
+        );
+
+
+    //===========================================================
+    // Update Backend Deregistration Status
+    //===========================================================
+    //
+    // Updates the Code Synchronization database status after
+    // successful Backend Database Deregistration.
+    //
+    // Deregistration does NOT mean registration failed.
+    //
+    // The generated backend code remains synchronized.
+    //
+    // Therefore:
+    //
+    //     Code Status:
+    //         Synchronized
+    //
+    //     Database Status:
+    //         Pending
+    //
+    // This makes the Register action available again.
+    //
+    //===========================================================
+
+    Task<bool>
+        UpdateBackendDeregistrationStatusAsync
+        (
+            long id,
+
+            string message
+        );
+
 }

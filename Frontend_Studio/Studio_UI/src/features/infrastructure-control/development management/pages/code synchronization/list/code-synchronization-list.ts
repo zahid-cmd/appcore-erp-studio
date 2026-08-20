@@ -7,8 +7,7 @@ import
     Component,
     OnInit,
     inject,
-    ChangeDetectorRef,
-    ViewChild
+    ChangeDetectorRef
 }
 from '@angular/core';
 
@@ -235,16 +234,6 @@ implements OnInit
 {
 
     //===========================================================
-    // Code Viewer Reference
-    //===========================================================
-
-    @ViewChild(CodeViewerComponent)
-    private codeViewer:
-        CodeViewerComponent | undefined;
-
-
-
-    //===========================================================
     // Dependency Injection
     //===========================================================
 
@@ -390,16 +379,19 @@ implements OnInit
     // Data Source
     //===========================================================
 
-    synchronizations: CodeSynchronization[] =
-    [];
+    synchronizations:
+        CodeSynchronization[] =
+        [];
 
 
-    filteredSynchronizations: CodeSynchronization[] =
-    [];
+    filteredSynchronizations:
+        CodeSynchronization[] =
+        [];
 
 
-    pagedSynchronizations: CodeSynchronization[] =
-    [];
+    pagedSynchronizations:
+        CodeSynchronization[] =
+        [];
 
 
 
@@ -445,8 +437,9 @@ implements OnInit
         'Code Synchronization History';
 
 
-    historyItems:any[] =
-    [];
+    historyItems:
+        any[] =
+        [];
 
 
 
@@ -471,10 +464,42 @@ implements OnInit
 
 
     //===========================================================
+    // DATABASE STATE STORAGE
+    //
+    // IMPORTANT:
+    //
+    // databaseCreatedState is runtime state.
+    //
+    // databaseCreatedStorage is persistent browser state.
+    //
+    // This prevents the database button from returning to its
+    // default CREATE state after a browser/page reload.
+    //
+    // The physical database state is stored separately from
+    // dbStatus because:
+    //
+    //     dbStatus
+    //         = backend registration state
+    //
+    //     databaseCreated
+    //         = physical database-table state
+    //===========================================================
+
+    private readonly databaseCreatedState =
+        new Map<number, boolean>();
+
+
+    private readonly databaseCreatedStorageKey =
+        'appcore.code-synchronization.database-created';
+
+
+
+    //===========================================================
     // Page Canvas Configuration
     //===========================================================
 
-    readonly canvasConfig: PageCanvasConfig =
+    readonly canvasConfig:
+        PageCanvasConfig =
     {
         mode:'list',
 
@@ -503,87 +528,128 @@ implements OnInit
     // Table Columns
     //===========================================================
 
-    readonly columns: ListTableColumn[] =
-    [
+    get columns():
+        ListTableColumn[]
+    {
+        const commonColumns:
+            ListTableColumn[] =
+        [
+            {
+                header:'#',
+
+                field:'serial',
+
+                type:'serial',
+
+                width:'5%',
+
+                align:'center'
+            },
+
+            {
+                header:'Module',
+
+                field:'moduleName',
+
+                width:'11%',
+
+                align:'left'
+            },
+
+            {
+                header:'Menu',
+
+                field:'menuName',
+
+                width:'13%',
+
+                align:'left'
+            },
+
+            {
+                header:'Submenu',
+
+                field:'submenuName',
+
+                width:
+                    this.selectedTab === 'backend'
+                        ? '13%'
+                        : '15%',
+
+                align:'left'
+            },
+
+            {
+                header:'Last Code Sync',
+
+                field:'lastSynchronizedDate',
+
+                width:
+                    this.selectedTab === 'backend'
+                        ? '14%'
+                        : '15%',
+
+                align:'center'
+            },
+
+            {
+                header:'Operation',
+
+                field:'codeOperation',
+
+                type:'operation',
+
+                width:'9%',
+
+                align:'center'
+            },
+
+            {
+                header:'Build Status',
+
+                field:'buildStatus',
+
+                type:'status',
+
+                width:
+                    this.selectedTab === 'backend'
+                        ? '10%'
+                        : '11%',
+
+                align:'center'
+            }
+        ];
+
+
+        //=======================================================
+        // Backend Only
+        //=======================================================
+
+        if
+        (
+            this.selectedTab === 'backend'
+        )
         {
-            header:'#',
+            commonColumns.push(
+            {
+                header:'DB Status',
 
-            field:'serial',
+                field:'dbStatus',
 
-            type:'serial',
+                type:'status',
 
-            width:'60px',
+                width:'15%',
 
-            align:'center'
-        },
-
-
-        {
-            header:'Module',
-
-            field:'moduleName',
-
-            width:'200px',
-
-            align:'left'
-        },
+                align:'center'
+            });
+        }
 
 
-        {
-            header:'Menu',
+        //=======================================================
+        // Common Status
+        //=======================================================
 
-            field:'menuName',
-
-            width:'200px',
-
-            align:'left'
-        },
-
-
-        {
-            header:'Submenu',
-
-            field:'submenuName',
-
-            align:'left'
-        },
-
-
-        {
-            header:'Created',
-
-            field:'createdDate',
-
-            width:'250px',
-
-            align:'center'
-        },
-
-
-        {
-            header:'Last Code Sync',
-
-            field:'lastSynchronizedDate',
-
-            width:'250px',
-
-            align:'center'
-        },
-
-
-        {
-            header:'Operation',
-
-            field:'codeOperation',
-
-            type:'operation',
-
-            width:'110px',
-
-            align:'center'
-        },
-
-
+        commonColumns.push(
         {
             header:'Status',
 
@@ -591,7 +657,10 @@ implements OnInit
 
             type:'status',
 
-            width:'150px',
+            width:
+                this.selectedTab === 'backend'
+                    ? '8%'
+                    : '15%',
 
             align:'center'
         },
@@ -604,11 +673,610 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:
+                this.selectedTab === 'backend'
+                    ? '6%'
+                    : '8%',
 
             align:'center'
+        });
+
+
+        return commonColumns;
+    }
+
+
+
+    //===========================================================
+    // Synchronization State Helpers
+    //===========================================================
+
+    isSynchronized
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return (
+            item?.status
+                ?.trim()
+                .toLowerCase()
+            ===
+            'synchronized'
+        );
+    }
+
+
+
+    //===========================================================
+    // Registration State
+    //===========================================================
+
+    isRegistered
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return (
+            item?.dbStatus
+                ?.trim()
+                .toLowerCase()
+            ===
+            'registered'
+        );
+    }
+
+
+
+    //===========================================================
+    // DATABASE STORAGE HELPERS
+    //===========================================================
+
+    private readDatabaseCreatedStorage():
+        Record<string, boolean>
+    {
+        try
+        {
+            const value =
+                localStorage.getItem(
+                    this.databaseCreatedStorageKey
+                );
+
+
+            if
+            (
+                !value
+            )
+            {
+                return {};
+            }
+
+
+            const parsed =
+                JSON.parse(
+                    value
+                );
+
+
+            if
+            (
+                !parsed
+                ||
+                typeof parsed !== 'object'
+                ||
+                Array.isArray(parsed)
+            )
+            {
+                return {};
+            }
+
+
+            return parsed;
         }
-    ];
+        catch
+        {
+            return {};
+        }
+    }
+
+
+
+    //===========================================================
+    // Save Database Created Storage
+    //===========================================================
+
+    private saveDatabaseCreatedStorage():
+        void
+    {
+        try
+        {
+            const storage:
+                Record<string, boolean> =
+                {};
+
+
+            this.databaseCreatedState.forEach(
+                (
+                    created,
+                    id
+                ) =>
+                {
+                    storage[
+                        id.toString()
+                    ] =
+                        created;
+                }
+            );
+
+
+            localStorage.setItem(
+                this.databaseCreatedStorageKey,
+
+                JSON.stringify(
+                    storage
+                )
+            );
+        }
+        catch
+        {
+            console.warn(
+                'Unable to persist database-created state.'
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Restore Database Created State
+    //
+    // This runs whenever synchronization data is loaded.
+    //
+    // Therefore:
+    //
+    // Browser reload
+    //      ↓
+    // API loads synchronization rows
+    //      ↓
+    // persistent DB state is restored
+    //      ↓
+    // table rows are rebuilt
+    //      ↓
+    // database button remains in correct state
+    //===========================================================
+
+    private restoreDatabaseCreatedState
+    (
+        response:
+            CodeSynchronization[]
+    ):
+        void
+    {
+        const storage =
+            this.readDatabaseCreatedStorage();
+
+
+        response.forEach(
+            item =>
+            {
+                if
+                (
+                    !item
+                    ||
+                    item.id <= 0
+                )
+                {
+                    return;
+                }
+
+
+                const storedValue =
+                    storage[
+                        item.id.toString()
+                    ];
+
+
+                if
+                (
+                    typeof storedValue === 'boolean'
+                )
+                {
+                    this.databaseCreatedState.set(
+                        item.id,
+
+                        storedValue
+                    );
+                }
+            }
+        );
+    }
+
+
+
+    //===========================================================
+    // Database Created State
+    //===========================================================
+
+    isDatabaseCreated
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            !item
+            ||
+            item.id <= 0
+        )
+        {
+            return false;
+        }
+
+
+        return (
+            this.databaseCreatedState.get(
+                item.id
+            )
+            ??
+            false
+        );
+    }
+
+
+
+    //===========================================================
+    // Set Database Created State
+    //===========================================================
+
+    private setDatabaseCreated
+    (
+        item:CodeSynchronization,
+
+        created:boolean
+    ):
+        void
+    {
+        if
+        (
+            !item
+            ||
+            item.id <= 0
+        )
+        {
+            return;
+        }
+
+
+        this.databaseCreatedState.set(
+            item.id,
+
+            created
+        );
+
+
+        this.saveDatabaseCreatedStorage();
+    }
+
+
+
+    //===========================================================
+    // Registration Enabled
+    //===========================================================
+
+    canRegister
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return false;
+        }
+
+
+        return (
+            this.isSynchronized(item)
+            &&
+            !this.isRegistered(item)
+            &&
+            !this.isDatabaseCreated(item)
+        );
+    }
+
+
+
+    //===========================================================
+    // Deregistration Enabled
+    //===========================================================
+
+    canDeregister
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return false;
+        }
+
+
+        return (
+            this.isSynchronized(item)
+            &&
+            this.isRegistered(item)
+            &&
+            !this.isDatabaseCreated(item)
+        );
+    }
+
+
+
+    //===========================================================
+    // Registration Control Enabled
+    //===========================================================
+
+    canRegistrationAction
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return false;
+        }
+
+
+        return (
+            this.isSynchronized(item)
+            &&
+            !this.isDatabaseCreated(item)
+        );
+    }
+
+
+
+    //===========================================================
+    // Database Control Enabled
+    //===========================================================
+
+    canDatabaseAction
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return false;
+        }
+
+
+        return (
+            this.isSynchronized(item)
+            &&
+            this.isRegistered(item)
+        );
+    }
+
+
+
+    //===========================================================
+    // Database Action Disabled
+    //===========================================================
+
+    isDatabaseDisabled
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return !this.canDatabaseAction(item);
+    }
+
+
+
+    //===========================================================
+    // Database Create Enabled
+    //===========================================================
+
+    canCreateDatabase
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return (
+            this.canDatabaseAction(item)
+            &&
+            !this.isDatabaseCreated(item)
+        );
+    }
+
+
+
+    //===========================================================
+    // Database Remove Enabled
+    //===========================================================
+
+    canRemoveDatabase
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return (
+            this.canDatabaseAction(item)
+            &&
+            this.isDatabaseCreated(item)
+        );
+    }
+
+
+
+    //===========================================================
+    // Rollback Enabled
+    //===========================================================
+
+    canRollback
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            !this.isSynchronized(item)
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            this.selectedTab === 'backend'
+            &&
+            this.isRegistered(item)
+        )
+        {
+            return false;
+        }
+
+
+        return true;
+    }
+
+
+
+    //===========================================================
+    // Operation Enabled
+    //===========================================================
+
+    canOperate
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        if
+        (
+            !item
+            ||
+            item.id <= 0
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            this.isSynchronized(item)
+        )
+        {
+            return this.canRollback(item);
+        }
+
+
+        return true;
+    }
+
+
+
+    //===========================================================
+    // Operation Disabled
+    //===========================================================
+
+    isOperationDisabled
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return !this.canOperate(item);
+    }
+
+
+
+    //===========================================================
+    // Registration Disabled
+    //===========================================================
+
+    isRegistrationDisabled
+    (
+        item:CodeSynchronization
+    ):
+        boolean
+    {
+        return !this.canRegistrationAction(item);
+    }
+
+
+
+    //===========================================================
+    // Prepare Table Rows
+    //===========================================================
+
+    private prepareTableRows
+    (
+        rows:CodeSynchronization[]
+    ):
+        CodeSynchronization[]
+    {
+        return rows.map(
+            item =>
+            ({
+                ...item,
+
+                operationDisabled:
+                    this.isOperationDisabled(item),
+
+                registrationDisabled:
+                    this.isRegistrationDisabled(item),
+
+                registrationRegistered:
+                    this.isRegistered(item),
+
+                databaseDisabled:
+                    this.isDatabaseDisabled(item),
+
+                databaseRegistered:
+                    this.isDatabaseCreated(item),
+
+                databaseCreated:
+                    this.isDatabaseCreated(item),
+
+                databaseCreateAllowed:
+                    this.canCreateDatabase(item),
+
+                databaseRemoveAllowed:
+                    this.canRemoveDatabase(item),
+
+                rollbackAllowed:
+                    this.canRollback(item),
+
+                synchronizationAllowed:
+                    !this.isSynchronized(item)
+            })
+        );
+    }
 
 
 
@@ -623,13 +1291,11 @@ implements OnInit
             this.router.url.toLowerCase();
 
 
-        //=======================================================
-        // Determine Synchronization Type From URL
-        //=======================================================
-
         if
         (
-            url.includes('/code-synchronization/backend')
+            url.includes(
+                '/code-synchronization/backend'
+            )
         )
         {
             this.selectedTab =
@@ -642,16 +1308,7 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Load Modules
-        //=======================================================
-
         this.loadModules();
-
-
-        //=======================================================
-        // Load Code Synchronization
-        //=======================================================
 
         this.loadCodeSynchronizations();
     }
@@ -701,12 +1358,14 @@ implements OnInit
             [
                 '/infrastructure-control/development-management/code-synchronization/backend'
             ])
-            .then(() =>
-            {
-                this.loadModules();
+            .then(
+                () =>
+                {
+                    this.loadModules();
 
-                this.loadCodeSynchronizations();
-            });
+                    this.loadCodeSynchronizations();
+                }
+            );
 
 
             return;
@@ -717,12 +1376,14 @@ implements OnInit
         [
             '/infrastructure-control/development-management/code-synchronization/frontend'
         ])
-        .then(() =>
-        {
-            this.loadModules();
+        .then(
+            () =>
+            {
+                this.loadModules();
 
-            this.loadCodeSynchronizations();
-        });
+                this.loadCodeSynchronizations();
+            }
+        );
     }
 
 
@@ -748,7 +1409,11 @@ implements OnInit
 
             .subscribe(
             {
-                next:(response:ModuleSynchronization[]) =>
+                next:
+                (
+                    response:
+                        ModuleSynchronization[]
+                ) =>
                 {
                     const moduleMap =
                         new Map<number,string>();
@@ -766,8 +1431,7 @@ implements OnInit
                                 )
                             )
                             {
-                                moduleMap.set
-                                (
+                                moduleMap.set(
                                     item.moduleId,
 
                                     item.moduleName
@@ -782,7 +1446,9 @@ implements OnInit
                         moduleMap.entries()
                     )
                     .map(
-                        ([value,text]) =>
+                        (
+                            [value,text]
+                        ) =>
                         ({
                             value,
 
@@ -790,7 +1456,10 @@ implements OnInit
                         })
                     )
                     .sort(
-                        (a,b) =>
+                        (
+                            a,
+                            b
+                        ) =>
                             a.text.localeCompare(
                                 b.text
                             )
@@ -823,7 +1492,10 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error
+                ) =>
                 {
                     console.error(
                         'Module Load Failed',
@@ -897,7 +1569,11 @@ implements OnInit
 
             .subscribe(
             {
-                next:(response:NavigationMenu[]) =>
+                next:
+                (
+                    response:
+                        NavigationMenu[]
+                ) =>
                 {
                     const menuMap =
                         new Map<number,string>();
@@ -930,7 +1606,9 @@ implements OnInit
                         menuMap.entries()
                     )
                     .map(
-                        ([value,text]) =>
+                        (
+                            [value,text]
+                        ) =>
                         ({
                             value,
 
@@ -938,7 +1616,10 @@ implements OnInit
                         })
                     )
                     .sort(
-                        (a,b) =>
+                        (
+                            a,
+                            b
+                        ) =>
                             a.text.localeCompare(
                                 b.text
                             )
@@ -963,7 +1644,10 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error
+                ) =>
                 {
                     console.error(
                         'Menu Load Failed',
@@ -1021,7 +1705,6 @@ implements OnInit
 
 
         this.loadMenus();
-
 
         this.applyFilters();
     }
@@ -1103,12 +1786,63 @@ implements OnInit
 
             .subscribe(
             {
-                next:(response:CodeSynchronization[]) =>
+                next:
+                (
+                    response:
+                        CodeSynchronization[]
+                ) =>
                 {
+                    //=======================================================
+                    // IMPORTANT:
+                    //
+                    // Restore physical database state BEFORE rebuilding
+                    // synchronization rows.
+                    //
+                    // This is what fixes the browser reload problem.
+                    //=======================================================
+
+                    this.restoreDatabaseCreatedState(
+                        response
+                    );
+
+
                     this.synchronizations =
-                    [
-                        ...response
-                    ];
+                        response.map(
+                            item =>
+                            ({
+                                ...item,
+
+                                buildStatus:
+                                item.status?.toLowerCase()
+                                ===
+                                'synchronized'
+
+                                    ? 'Successful'
+
+                                    :
+                                    !item.buildStatus
+                                    ||
+                                    item.buildStatus
+                                        .toString()
+                                        .trim()
+                                        .toLowerCase()
+                                    ===
+                                    'n/a'
+
+                                        ? 'Pending'
+
+                                        :
+                                        item.buildStatus,
+
+                                dbStatus:
+                                    item.dbStatus,
+
+                                databaseCreated:
+                                    this.isDatabaseCreated(
+                                        item
+                                    )
+                            })
+                        );
 
 
                     this.applyFilters();
@@ -1126,7 +1860,10 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error
+                ) =>
                 {
                     console.error(
                         'Code Synchronization Load Failed:',
@@ -1188,7 +1925,8 @@ implements OnInit
                     const moduleMatches =
                         this.selectedModuleId <= 0
                         ||
-                        item.moduleId === this.selectedModuleId;
+                        item.moduleId ===
+                            this.selectedModuleId;
 
 
                     if
@@ -1203,7 +1941,8 @@ implements OnInit
                     const menuMatches =
                         this.selectedMenuId <= 0
                         ||
-                        item.menuId === this.selectedMenuId;
+                        item.menuId ===
+                            this.selectedMenuId;
 
 
                     if
@@ -1247,50 +1986,67 @@ implements OnInit
 
                         item.moduleCode
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
 
                         ||
 
                         item.moduleName
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
 
                         ||
 
                         item.menuCode
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
 
                         ||
 
                         item.menuName
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
 
                         ||
 
                         item.submenuCode
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
 
                         ||
 
                         item.submenuName
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
 
                         ||
 
                         item.remarks
                             ?.toLowerCase()
-                            .includes(keyword)
+                            .includes(
+                                keyword
+                            )
                     );
                 }
             );
 
 
         this.filteredSynchronizations.sort(
-            (a,b) =>
+            (
+                a,
+                b
+            ) =>
                 a.submenuName.localeCompare(
                     b.submenuName
                 )
@@ -1335,7 +2091,10 @@ implements OnInit
         {
             field:string;
 
-            direction:'asc' | 'desc';
+            direction:
+                'asc'
+                |
+                'desc';
         }
     ):
         void
@@ -1347,7 +2106,10 @@ implements OnInit
 
 
         this.filteredSynchronizations.sort(
-            (a:any,b:any) =>
+            (
+                a:any,
+                b:any
+            ) =>
             {
                 const valueA =
                     a[event.field];
@@ -1478,8 +2240,220 @@ implements OnInit
 
         this.loadModules();
 
-
         this.loadCodeSynchronizations();
+    }
+
+
+
+    //===========================================================
+    // Rebuild
+    //===========================================================
+
+    rebuild():
+        void
+    {
+        if
+        (
+            this.selectedTab === 'backend'
+        )
+        {
+            this.rebuildBackend();
+
+            return;
+        }
+
+
+        this.rebuildFrontend();
+    }
+
+
+
+    //===========================================================
+    // Frontend Rebuild
+    //===========================================================
+
+    rebuildFrontend():
+        void
+    {
+        this.progressDialog.show
+        (
+            'Frontend Rebuild',
+
+            'Restarting Angular development server.'
+        );
+
+
+        this.progressDialog.update
+        (
+            20,
+
+            'Stopping Angular development server.'
+        );
+
+
+        this.codeSynchronizationService
+
+            .rebuildFrontend()
+
+            .subscribe(
+            {
+                next:() =>
+                {
+                    this.progressDialog.update
+                    (
+                        100,
+
+                        'Frontend rebuild completed.'
+                    );
+
+
+                    setTimeout(
+                        () =>
+                        {
+                            this.progressDialog.close();
+
+
+                            this.toast.success
+                            (
+                                'Frontend Rebuild',
+
+                                'Angular development server restarted successfully.'
+                            );
+
+
+                            this.cdr.detectChanges();
+                        },
+
+                        300
+                    );
+                },
+
+
+                error:
+                (
+                    error
+                ) =>
+                {
+                    console.error(
+                        'Frontend Rebuild Failed',
+
+                        error
+                    );
+
+
+                    this.progressDialog.close();
+
+
+                    this.toast.error
+                    (
+                        'Frontend Rebuild Failed',
+
+                        error?.error?.message
+                        ??
+                        error?.error
+                        ??
+                        'Failed to rebuild the frontend.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Backend Rebuild
+    //===========================================================
+
+    rebuildBackend():
+        void
+    {
+        this.progressDialog.show
+        (
+            'Backend Rebuild',
+
+            'Rebuilding backend project.'
+        );
+
+
+        this.progressDialog.update
+        (
+            20,
+
+            'Starting backend rebuild.'
+        );
+
+
+        this.codeSynchronizationService
+
+            .rebuildBackend()
+
+            .subscribe(
+            {
+                next:() =>
+                {
+                    this.progressDialog.update
+                    (
+                        100,
+
+                        'Backend rebuild completed.'
+                    );
+
+
+                    setTimeout(
+                        () =>
+                        {
+                            this.progressDialog.close();
+
+
+                            this.toast.success
+                            (
+                                'Backend Rebuild',
+
+                                'Backend project rebuilt successfully.'
+                            );
+
+
+                            this.cdr.detectChanges();
+                        },
+
+                        300
+                    );
+                },
+
+
+                error:
+                (
+                    error
+                ) =>
+                {
+                    console.error(
+                        'Backend Rebuild Failed',
+
+                        error
+                    );
+
+
+                    this.progressDialog.close();
+
+
+                    this.toast.error
+                    (
+                        'Backend Rebuild Failed',
+
+                        error?.error?.message
+                        ??
+                        error?.error
+                        ??
+                        'Failed to rebuild the backend.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
     }
 
 
@@ -1500,13 +2474,13 @@ implements OnInit
 
 
         this.pagedSynchronizations =
-        [
-            ...this.filteredSynchronizations.slice(
-                start,
+            this.prepareTableRows(
+                this.filteredSynchronizations.slice(
+                    start,
 
-                start + this.pageSize
-            )
-        ];
+                    start + this.pageSize
+                )
+            );
     }
 
 
@@ -1589,32 +2563,18 @@ implements OnInit
         this.cdr.detectChanges();
 
 
-        this.loadCodeViewerFiles(
-            item.id
-        );
-    }
-
-
-
-    //===========================================================
-    // Load Code Viewer Files
-    //===========================================================
-
-    private loadCodeViewerFiles
-    (
-        id:number
-    ):
-        void
-    {
         this.codeSynchronizationService
 
             .getFiles(
-                id
+                item.id
             )
 
             .subscribe(
             {
-                next:(response:any[]) =>
+                next:
+                (
+                    response:any[]
+                ) =>
                 {
                     this.codeViewerFiles =
                         response.map(
@@ -1657,7 +2617,7 @@ implements OnInit
                                     ??
                                     file.lastWriteTimeUtc
                                     ??
-                                    null
+                                    ''
                             })
                         );
 
@@ -1666,11 +2626,13 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error
+                ) =>
                 {
                     console.error(
                         'Generated Code Files Load Failed',
-
                         error
                     );
 
@@ -1689,6 +2651,157 @@ implements OnInit
                     this.cdr.detectChanges();
                 }
             });
+    }
+
+
+
+    //===========================================================
+    // Restore All From Code Viewer
+    //===========================================================
+
+    onCodeViewerRestoreAll():
+        void
+    {
+        this.restoreCodeViewer();
+    }
+
+
+
+    //===========================================================
+    // Restore File From Code Viewer
+    //===========================================================
+
+    onCodeViewerRestoreFile
+    (
+        file:CodeViewerFile
+    ):
+        void
+    {
+        if
+        (
+            !this.selectedCodeSynchronization
+            ||
+            !file
+            ||
+            !file.fileName
+        )
+        {
+            return;
+        }
+
+
+        const item =
+            this.selectedCodeSynchronization;
+
+
+        this.confirmDialog.open
+        (
+            'Restore Code File',
+
+            `Are you sure you want to restore "${file.fileName}" ?`,
+
+            () =>
+            {
+                this.progressDialog.show
+                (
+                    'Code File Restore',
+
+                    'Restoring selected generated file.'
+                );
+
+
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Preparing file restore.'
+                );
+
+
+                this.codeSynchronizationService
+
+                    .restoreFile
+                    (
+                        item.id,
+
+                        file.fileName
+                    )
+
+                    .subscribe(
+                    {
+                        next:() =>
+                        {
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'File restore completed.'
+                            );
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Code File Restore',
+
+                                        `${file.fileName} restored successfully.`
+                                    );
+
+
+                                    this.view(
+                                        item
+                                    );
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:
+                        (
+                            error
+                        ) =>
+                        {
+                            console.error(
+                                'Code File Restore Failed',
+
+                                error
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Code File Restore Failed',
+
+                                error?.error
+                                ??
+                                'Failed to restore the selected code file.'
+                            );
+
+
+                            this.cdr.detectChanges();
+                        }
+                    });
+            },
+
+            'Restore',
+
+            'Cancel',
+
+            'primary'
+        );
     }
 
 
@@ -1720,12 +2833,6 @@ implements OnInit
     //===========================================================
     // Restore From Code Viewer
     //===========================================================
-    //
-    // This is FILE RESTORE.
-    //
-    // It does NOT call Code Synchronization Rollback.
-    //
-    //===========================================================
 
     restoreCodeViewer():
         void
@@ -1743,27 +2850,15 @@ implements OnInit
             this.selectedCodeSynchronization;
 
 
-        if
-        (
-            !this.codeViewerFiles.some(
-                file =>
-                    file.status === 'Modified'
-            )
-        )
-        {
-            return;
-        }
-
-
         this.confirmDialog.open
         (
-            'Restore Modified Files',
+            'Restore Modified Code',
 
-            `Are you sure you want to restore all modified files for "${item.submenuName}" to their last synchronized state?`,
+            `Are you sure you want to restore all modified generated files for "${item.submenuName}" ?`,
 
             () =>
             {
-                this.startRestoreAllFiles(
+                this.startRestoreAllFromCodeViewer(
                     item
                 );
             },
@@ -1779,10 +2874,10 @@ implements OnInit
 
 
     //===========================================================
-    // Start Restore All Files
+    // Start Restore All From Code Viewer
     //===========================================================
 
-    private startRestoreAllFiles
+    private startRestoreAllFromCodeViewer
     (
         item:CodeSynchronization
     ):
@@ -1790,17 +2885,17 @@ implements OnInit
     {
         this.progressDialog.show
         (
-            'Code Restore',
+            'Code File Restore',
 
-            'Starting file restore.'
+            'Starting restore of modified generated files.'
         );
 
 
         this.progressDialog.update
         (
-            20,
+            10,
 
-            'Checking modified files.'
+            'Preparing modified generated files.'
         );
 
 
@@ -1809,13 +2904,28 @@ implements OnInit
             {
                 this.progressDialog.update
                 (
-                    50,
+                    30,
 
-                    'Restoring modified files to their last synchronized state.'
+                    'Checking generated files.'
                 );
             },
 
             300
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Restoring modified generated files.'
+                );
+            },
+
+            700
         );
 
 
@@ -1840,29 +2950,22 @@ implements OnInit
                             );
 
 
-                            //================================================
-                            // COMPLETE CODE VIEWER RESTORE STATE
-                            //================================================
-
-                            this.codeViewer?.completeRestore();
-
-
                             setTimeout(
                                 () =>
                                 {
                                     this.progressDialog.close();
 
 
-                                    this.loadCodeViewerFiles(
-                                        item.id
+                                    this.toast.success
+                                    (
+                                        'Code File Restore',
+
+                                        `${item.submenuName} modified generated files restored successfully.`
                                     );
 
 
-                                    this.toast.success
-                                    (
-                                        'Code Restore',
-
-                                        `${item.submenuName} modified files were restored successfully.`
+                                    this.view(
+                                        item
                                     );
 
 
@@ -1874,20 +2977,16 @@ implements OnInit
                         },
 
 
-                        error:(error) =>
+                        error:
+                        (
+                            error
+                        ) =>
                         {
                             console.error(
-                                'Code Restore Failed',
+                                'Code File Restore Failed',
 
                                 error
                             );
-
-
-                            //================================================
-                            // RESET CODE VIEWER RESTORE STATE ON FAILURE
-                            //================================================
-
-                            this.codeViewer?.restoreFailed();
 
 
                             this.progressDialog.close();
@@ -1895,13 +2994,11 @@ implements OnInit
 
                             this.toast.error
                             (
-                                'Code Restore Failed',
+                                'Code File Restore Failed',
 
-                                this.getErrorMessage(
-                                    error,
-
-                                    'Failed to restore modified files.'
-                                )
+                                error?.error
+                                ??
+                                'Failed to restore modified generated files.'
                             );
 
 
@@ -1910,252 +3007,14 @@ implements OnInit
                     });
             },
 
-            700
+            1000
         );
-    }
-
-
-
-    //===========================================================
-    // Restore Single File From Code Viewer
-    //===========================================================
-    //
-    // This restores ONLY the selected file.
-    //
-    // It does NOT call Code Synchronization Rollback.
-    //
-    //===========================================================
-
-    restoreCodeViewerFile
-    (
-        file:CodeViewerFile
-    ):
-        void
-    {
-        if
-        (
-            !this.selectedCodeSynchronization
-        )
-        {
-            return;
-        }
-
-
-        if
-        (
-            file.status !== 'Modified'
-        )
-        {
-            return;
-        }
-
-
-        const item =
-            this.selectedCodeSynchronization;
-
-
-        this.confirmDialog.open
-        (
-            'Restore File',
-
-            `Are you sure you want to restore "${file.fileName}" to its last synchronized state?`,
-
-            () =>
-            {
-                this.startRestoreFile(
-                    item,
-
-                    file
-                );
-            },
-
-            'Restore',
-
-            'Cancel',
-
-            'primary'
-        );
-    }
-
-
-
-    //===========================================================
-    // Start Restore Single File
-    //===========================================================
-
-    private startRestoreFile
-    (
-        item:CodeSynchronization,
-
-        file:CodeViewerFile
-    ):
-        void
-    {
-        this.codeSynchronizationService
-
-            .restoreFile
-            (
-                item.id,
-
-                file.fileName
-            )
-
-            .subscribe(
-            {
-                next:() =>
-                {
-                    //================================================
-                    // COMPLETE SINGLE FILE RESTORE STATE
-                    //================================================
-
-                    this.codeViewer?.completeFileRestore();
-
-
-                    this.loadCodeViewerFiles(
-                        item.id
-                    );
-
-
-                    this.toast.success
-                    (
-                        'Code Restore',
-
-                        `${file.fileName} was restored successfully.`
-                    );
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'File Restore Failed',
-
-                        error
-                    );
-
-
-                    //================================================
-                    // RESET SINGLE FILE RESTORE STATE ON FAILURE
-                    //================================================
-
-                    this.codeViewer?.fileRestoreFailed();
-
-
-                    this.toast.error
-                    (
-                        'File Restore Failed',
-
-                        this.getErrorMessage(
-                            error,
-
-                            `Failed to restore ${file.fileName}.`
-                        )
-                    );
-
-
-                    this.cdr.detectChanges();
-                }
-            });
-    }
-
-
-
-    //===========================================================
-    // Code Viewer Restore All Event
-    //===========================================================
-
-    onCodeViewerRestoreAll():
-        void
-    {
-        this.restoreCodeViewer();
-    }
-
-
-
-    //===========================================================
-    // Code Viewer Restore File Event
-    //===========================================================
-
-    onCodeViewerRestoreFile
-    (
-        file:CodeViewerFile
-    ):
-        void
-    {
-        this.restoreCodeViewerFile(
-            file
-        );
-    }
-
-
-
-    //===========================================================
-    // Error Message
-    //===========================================================
-
-    private getErrorMessage
-    (
-        error:any,
-
-        fallback:string
-    ):
-        string
-    {
-        if
-        (
-            typeof error === 'string'
-        )
-        {
-            return error;
-        }
-
-
-        if
-        (
-            typeof error?.error === 'string'
-        )
-        {
-            return error.error;
-        }
-
-
-        if
-        (
-            typeof error?.error?.message === 'string'
-        )
-        {
-            return error.error.message;
-        }
-
-
-        if
-        (
-            typeof error?.message === 'string'
-        )
-        {
-            return error.message;
-        }
-
-
-        return fallback;
     }
 
 
 
     //===========================================================
     // Synchronize / Rollback Code
-    //===========================================================
-    //
-    // IMPORTANT:
-    //
-    // This remains the existing synchronization-level
-    // Synchronize / Rollback operation.
-    //
-    // It is completely separate from Code Viewer Restore.
-    //
     //===========================================================
 
     synchronize
@@ -2176,17 +3035,38 @@ implements OnInit
 
 
         const isSynchronized =
-            item.status
-                ?.toLowerCase()
-                ===
-            'synchronized';
+            this.isSynchronized(item);
 
+
+        //=======================================================
+        // Rollback
+        //=======================================================
 
         if
         (
             isSynchronized
         )
         {
+            if
+            (
+                this.selectedTab === 'backend'
+                &&
+                this.isRegistered(item)
+            )
+            {
+                return;
+            }
+
+
+            if
+            (
+                !this.canRollback(item)
+            )
+            {
+                return;
+            }
+
+
             this.confirmDialog.open
             (
                 'Rollback Code',
@@ -2211,6 +3091,10 @@ implements OnInit
             return;
         }
 
+
+        //=======================================================
+        // Synchronize
+        //=======================================================
 
         this.confirmDialog.open
         (
@@ -2296,8 +3180,7 @@ implements OnInit
             {
                 this.codeSynchronizationService
 
-                    .synchronize
-                    (
+                    .synchronize(
                         item.id
                     )
 
@@ -2328,6 +3211,9 @@ implements OnInit
 
 
                                     this.loadCodeSynchronizations();
+
+
+                                    this.cdr.detectChanges();
                                 },
 
                                 300
@@ -2335,11 +3221,13 @@ implements OnInit
                         },
 
 
-                        error:(error) =>
+                        error:
+                        (
+                            error
+                        ) =>
                         {
                             console.error(
                                 'Code Synchronization Failed',
-
                                 error
                             );
 
@@ -2347,16 +3235,16 @@ implements OnInit
                             this.progressDialog.close();
 
 
-                            this.toast.error
-                            (
+                            this.toast.error(
                                 'Code Synchronization Failed',
 
-                                this.getErrorMessage(
-                                    error,
-
-                                    'Failed to synchronize code.'
-                                )
+                                error?.error
+                                ??
+                                'Failed to synchronize code.'
                             );
+
+
+                            this.cdr.detectChanges();
                         }
                     });
             },
@@ -2370,12 +3258,6 @@ implements OnInit
     //===========================================================
     // Start Rollback
     //===========================================================
-    //
-    // Existing synchronization rollback.
-    //
-    // DO NOT use this for Code Viewer Restore.
-    //
-    //===========================================================
 
     private startRollback
     (
@@ -2383,6 +3265,15 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            !this.canRollback(item)
+        )
+        {
+            return;
+        }
+
+
         this.progressDialog.show
         (
             'Code Rollback',
@@ -2434,8 +3325,7 @@ implements OnInit
             {
                 this.codeSynchronizationService
 
-                    .rollback
-                    (
+                    .rollback(
                         item.id
                     )
 
@@ -2465,7 +3355,27 @@ implements OnInit
                                     );
 
 
+                                    //===================================================
+                                    // IMPORTANT:
+                                    //
+                                    // Rollback removes generated backend code.
+                                    //
+                                    // The physical database state must therefore
+                                    // no longer be trusted for this synchronization.
+                                    //===================================================
+
+                                    this.databaseCreatedState.delete(
+                                        item.id
+                                    );
+
+
+                                    this.saveDatabaseCreatedStorage();
+
+
                                     this.loadCodeSynchronizations();
+
+
+                                    this.cdr.detectChanges();
                                 },
 
                                 300
@@ -2473,7 +3383,10 @@ implements OnInit
                         },
 
 
-                        error:(error) =>
+                        error:
+                        (
+                            error
+                        ) =>
                         {
                             console.error(
                                 'Code Rollback Failed',
@@ -2489,12 +3402,929 @@ implements OnInit
                             (
                                 'Code Rollback Failed',
 
-                                this.getErrorMessage(
-                                    error,
-
-                                    'Failed to roll back code.'
-                                )
+                                error?.error
+                                ??
+                                'Failed to roll back code.'
                             );
+
+
+                            this.cdr.detectChanges();
+                        }
+                    });
+            },
+
+            1000
+        );
+    }
+
+
+
+    //===========================================================
+    // Registration / Unregistration
+    //===========================================================
+
+    register
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !item
+            ||
+            item.id <= 0
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.isSynchronized(item)
+        )
+        {
+            return;
+        }
+
+
+        const isRegistered =
+            this.isRegistered(item);
+
+
+        //=======================================================
+        // Unregister
+        //=======================================================
+
+        if
+        (
+            isRegistered
+        )
+        {
+            if
+            (
+                !this.canDeregister(item)
+            )
+            {
+                return;
+            }
+
+
+            this.confirmDialog.open
+            (
+                'Backend Unregistration',
+
+                `Are you sure you want to unregister the backend for "${item.submenuName}" ?`,
+
+                () =>
+                {
+                    this.startUnregistration(
+                        item
+                    );
+                },
+
+                'Unregister',
+
+                'Cancel',
+
+                'danger'
+            );
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Register
+        //=======================================================
+
+        if
+        (
+            !this.canRegister(item)
+        )
+        {
+            return;
+        }
+
+
+        this.confirmDialog.open
+        (
+            'Backend Registration',
+
+            `Are you sure you want to register the backend for "${item.submenuName}" ?`,
+
+            () =>
+            {
+                this.startRegistration(
+                    item
+                );
+            },
+
+            'Register',
+
+            'Cancel',
+
+            'primary'
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Backend Registration
+    //===========================================================
+
+    private startRegistration
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !this.canRegister(item)
+        )
+        {
+            return;
+        }
+
+
+        this.progressDialog.show
+        (
+            'Backend Registration',
+
+            'Starting backend registration.'
+        );
+
+
+        this.progressDialog.update
+        (
+            10,
+
+            'Preparing backend registration.'
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Registering generated backend structure.'
+                );
+            },
+
+            300
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Updating database registration.'
+                );
+            },
+
+            700
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.codeSynchronizationService
+
+                    .register(
+                        item.id
+                    )
+
+                    .subscribe(
+                    {
+                        next:() =>
+                        {
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'Backend registration completed.'
+                            );
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Backend Registration',
+
+                                        `${item.submenuName} backend registered successfully.`
+                                    );
+
+
+                                    this.loadCodeSynchronizations();
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:
+                        (
+                            error
+                        ) =>
+                        {
+                            console.error(
+                                'Backend Registration Failed',
+
+                                error
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Backend Registration Failed',
+
+                                error?.error
+                                ??
+                                'Failed to register backend.'
+                            );
+
+
+                            this.cdr.detectChanges();
+                        }
+                    });
+            },
+
+            1000
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Backend Unregistration
+    //===========================================================
+
+    private startUnregistration
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !this.canDeregister(item)
+        )
+        {
+            return;
+        }
+
+
+        this.progressDialog.show
+        (
+            'Backend Unregistration',
+
+            'Starting backend unregistration.'
+        );
+
+
+        this.progressDialog.update
+        (
+            10,
+
+            'Preparing backend unregistration.'
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Preparing database rollback.'
+                );
+            },
+
+            300
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Removing backend database registration.'
+                );
+            },
+
+            700
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.codeSynchronizationService
+
+                    .rollbackRegistration(
+                        item.id
+                    )
+
+                    .subscribe(
+                    {
+                        next:() =>
+                        {
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'Backend unregistration completed.'
+                            );
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Backend Unregistration',
+
+                                        `${item.submenuName} backend unregistered successfully.`
+                                    );
+
+
+                                    this.setDatabaseCreated(
+                                        item,
+
+                                        false
+                                    );
+
+
+                                    this.loadCodeSynchronizations();
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:
+                        (
+                            error
+                        ) =>
+                        {
+                            console.error(
+                                'Backend Unregistration Failed',
+
+                                error
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Backend Unregistration Failed',
+
+                                error?.error
+                                ??
+                                'Failed to unregister backend.'
+                            );
+
+
+                            this.cdr.detectChanges();
+                        }
+                    });
+            },
+
+            1000
+        );
+    }
+
+
+
+    //===========================================================
+    // Database Create / Remove
+    //===========================================================
+
+    database
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !item
+            ||
+            item.id <= 0
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.canDatabaseAction(item)
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // REMOVE DATABASE
+        //=======================================================
+
+        if
+        (
+            this.isDatabaseCreated(item)
+        )
+        {
+            this.confirmDialog.open
+            (
+                'Remove Database Table',
+
+                `Are you sure you want to remove the database table for "${item.submenuName}" ?`,
+
+                () =>
+                {
+                    this.startDatabaseRemove(
+                        item
+                    );
+                },
+
+                'Remove',
+
+                'Cancel',
+
+                'danger'
+            );
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // CREATE DATABASE
+        //=======================================================
+
+        this.confirmDialog.open
+        (
+            'Create Database Table',
+
+            `Are you sure you want to create the database table for "${item.submenuName}" ?`,
+
+            () =>
+            {
+                this.startDatabaseCreate(
+                    item
+                );
+            },
+
+            'Create',
+
+            'Cancel',
+
+            'primary'
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Database Create
+    //===========================================================
+
+    private startDatabaseCreate
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !this.canDatabaseAction(item)
+        )
+        {
+            return;
+        }
+
+
+        this.progressDialog.show
+        (
+            'Create Database Table',
+
+            'Starting database table creation.'
+        );
+
+
+        this.progressDialog.update
+        (
+            10,
+
+            'Preparing database creation.'
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Generating EF Core migration.'
+                );
+            },
+
+            300
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Applying database migration.'
+                );
+            },
+
+            700
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.codeSynchronizationService
+
+                    .createDatabase(
+                        item.id
+                    )
+
+                    .subscribe(
+                    {
+                        next:
+                        (
+                            response
+                        ) =>
+                        {
+                            if
+                            (
+                                !response?.success
+                            )
+                            {
+                                this.progressDialog.close();
+
+
+                                this.toast.error
+                                (
+                                    'Database Creation Failed',
+
+                                    response?.message
+                                    ??
+                                    'Failed to create the database table.'
+                                );
+
+
+                                this.cdr.detectChanges();
+
+
+                                return;
+                            }
+
+
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'Database table created successfully.'
+                            );
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Database Table',
+
+                                        `${item.submenuName} database table created successfully.`
+                                    );
+
+
+                                    //===================================================
+                                    // CRITICAL:
+                                    //
+                                    // Persist the physical database-created state.
+                                    //
+                                    // Previously this was only stored in the Map,
+                                    // which disappeared after browser reload.
+                                    //===================================================
+
+                                    this.setDatabaseCreated(
+                                        item,
+
+                                        true
+                                    );
+
+
+                                    this.updatePagination();
+
+
+                                    this.loadCodeSynchronizations();
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:
+                        (
+                            error
+                        ) =>
+                        {
+                            console.error(
+                                'Database Creation Failed',
+
+                                error
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Database Creation Failed',
+
+                                error?.error?.message
+                                ??
+                                error?.error
+                                ??
+                                'Failed to create the database table.'
+                            );
+
+
+                            this.cdr.detectChanges();
+                        }
+                    });
+            },
+
+            1000
+        );
+    }
+
+
+
+    //===========================================================
+    // Start Database Remove
+    //===========================================================
+
+    private startDatabaseRemove
+    (
+        item:CodeSynchronization
+    ):
+        void
+    {
+        if
+        (
+            !this.canDatabaseAction(item)
+        )
+        {
+            return;
+        }
+
+
+        this.progressDialog.show
+        (
+            'Remove Database Table',
+
+            'Starting database table removal.'
+        );
+
+
+        this.progressDialog.update
+        (
+            10,
+
+            'Preparing database removal.'
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    30,
+
+                    'Preparing database rollback.'
+                );
+            },
+
+            300
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.update
+                (
+                    60,
+
+                    'Removing database table.'
+                );
+            },
+
+            700
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.codeSynchronizationService
+
+                    .removeDatabase(
+                        item.id
+                    )
+
+                    .subscribe(
+                    {
+                        next:
+                        (
+                            response
+                        ) =>
+                        {
+                            if
+                            (
+                                !response?.success
+                            )
+                            {
+                                this.progressDialog.close();
+
+
+                                this.toast.error
+                                (
+                                    'Database Removal Failed',
+
+                                    response?.message
+                                    ??
+                                    'Failed to remove the database table.'
+                                );
+
+
+                                this.cdr.detectChanges();
+
+
+                                return;
+                            }
+
+
+                            this.progressDialog.update
+                            (
+                                100,
+
+                                'Database table removed successfully.'
+                            );
+
+
+                            setTimeout(
+                                () =>
+                                {
+                                    this.progressDialog.close();
+
+
+                                    this.toast.success
+                                    (
+                                        'Database Table',
+
+                                        `${item.submenuName} database table removed successfully.`
+                                    );
+
+
+                                    //===================================================
+                                    // Persist database removal.
+                                    //
+                                    // After this:
+                                    //
+                                    //     Database button -> CREATE
+                                    //
+                                    //     Registration button -> enabled
+                                    //===================================================
+
+                                    this.setDatabaseCreated(
+                                        item,
+
+                                        false
+                                    );
+
+
+                                    this.updatePagination();
+
+
+                                    this.loadCodeSynchronizations();
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+                                300
+                            );
+                        },
+
+
+                        error:
+                        (
+                            error
+                        ) =>
+                        {
+                            console.error(
+                                'Database Removal Failed',
+
+                                error
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.toast.error
+                            (
+                                'Database Removal Failed',
+
+                                error?.error?.message
+                                ??
+                                error?.error
+                                ??
+                                'Failed to remove the database table.'
+                            );
+
+
+                            this.cdr.detectChanges();
                         }
                     });
             },
@@ -2569,7 +4399,10 @@ implements OnInit
 
             .subscribe(
             {
-                next:(response:any[]) =>
+                next:
+                (
+                    response:any[]
+                ) =>
                 {
                     this.historyItems =
                         response.map(
@@ -2610,7 +4443,10 @@ implements OnInit
                 },
 
 
-                error:(error:any) =>
+                error:
+                (
+                    error:any
+                ) =>
                 {
                     console.error(
                         'Code Synchronization History Load Failed',

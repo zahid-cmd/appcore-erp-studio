@@ -1,8 +1,15 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.ActivityHistory.DTOs;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings.Branch;
+namespace AppCore.Application.Settings.GeneralSettings;
 
 
 //===============================================================
@@ -11,68 +18,93 @@ namespace AppCore.Application.Settings.GeneralSettings.Branch;
 
 public interface IBranchRepository
 {
+
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Settings.GeneralSettings.Branch>> GetAllAsync();
+    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.GeneralSettings.Branch>>
+        GetAllAsync();
+
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Settings.GeneralSettings.Branch?> GetByIdAsync(
+    Task<global::AppCore.Domain.Entities.Settings.GeneralSettings.Branch?>
+        GetByIdAsync
+    (
         long id
     );
+
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long> CreateAsync(
-        global::AppCore.Domain.Settings.GeneralSettings.Branch entity
+    Task<long>
+        CreateAsync
+    (
+        global::AppCore.Domain.Entities.Settings.GeneralSettings.Branch entity
     );
+
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task UpdateAsync(
-        global::AppCore.Domain.Settings.GeneralSettings.Branch entity
+    Task
+        UpdateAsync
+    (
+        global::AppCore.Domain.Entities.Settings.GeneralSettings.Branch entity
     );
+
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task DeleteAsync(
+    Task
+        DeleteAsync
+    (
         long id
     );
+
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task RestoreAsync();
+    Task
+        RestoreAsync
+    (
+        long id
+    );
+
 
 
     //===========================================================
     // Get History
     //===========================================================
 
-    Task<IReadOnlyList<object>> GetHistoryAsync();
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetHistoryAsync();
+
 
 
     //===========================================================
     // Get Entity History
     //===========================================================
 
-    Task<IReadOnlyList<object>> GetEntityHistoryAsync(
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetEntityHistoryAsync
+    (
         long id
     );
+
 }

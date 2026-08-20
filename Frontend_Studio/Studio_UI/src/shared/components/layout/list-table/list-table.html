@@ -251,69 +251,316 @@
                                     else standardOperation
                                 ">
 
-                                <button
-                                    type="button"
-
-                                    class="action-btn"
-
-                                    [class.sync]="
-                                        row.status?.toLowerCase()
-                                        !==
-                                        'synchronized'
-                                    "
-
-                                    [class.rollback]="
-                                        row.status?.toLowerCase()
-                                        ===
-                                        'synchronized'
-                                    "
-
-                                    [title]="
-                                        row.status?.toLowerCase()
-                                        ===
-                                        'synchronized'
-                                            ? 'Rollback'
-                                            : 'Synchronize'
-                                    "
-
-                                    (click)="
-                                        operation.emit(row);
-                                        $event.stopPropagation()
-                                    ">
+                                <div class="action-buttons">
 
 
                                     <!-- =====================================
-                                        ROLLBACK
+                                        SYNCHRONIZE / ROLLBACK
                                     ====================================== -->
 
-                                    <i
-                                        *ngIf="
-                                            row.status?.toLowerCase()
-                                            ===
-                                            'synchronized'
-                                        "
+                                    <button
+                                        type="button"
 
-                                        class="fas fa-rotate-left">
+                                        class="action-btn"
 
-                                    </i>
-
-
-                                    <!-- =====================================
-                                        SYNCHRONIZE
-                                    ====================================== -->
-
-                                    <i
-                                        *ngIf="
+                                        [class.sync]="
                                             row.status?.toLowerCase()
                                             !==
                                             'synchronized'
                                         "
 
-                                        class="fas fa-arrows-rotate">
+                                        [class.rollback]="
+                                            row.status?.toLowerCase()
+                                            ===
+                                            'synchronized'
+                                        "
 
-                                    </i>
+                                        [disabled]="
+                                            row.status?.toLowerCase()
+                                            ===
+                                            'synchronized'
+                                            &&
+                                            row.dbStatus?.toLowerCase()
+                                            ===
+                                            'registered'
+                                        "
 
-                                </button>
+                                        [title]="
+                                            row.status?.toLowerCase()
+                                            ===
+                                            'synchronized'
+                                                ?
+                                                (
+                                                    row.dbStatus?.toLowerCase()
+                                                    ===
+                                                    'registered'
+                                                        ?
+                                                        'Rollback disabled while registered'
+                                                        :
+                                                        'Rollback'
+                                                )
+                                                :
+                                                'Synchronize'
+                                        "
+
+                                        (click)="
+                                            onOperationClick(
+                                                row,
+                                                $event
+                                            )
+                                        ">
+
+
+                                        <!-- =================================
+                                            ROLLBACK
+                                        ================================== -->
+
+                                        <i
+                                            *ngIf="
+                                                row.status?.toLowerCase()
+                                                ===
+                                                'synchronized'
+                                            "
+
+                                            class="fas fa-rotate-left">
+
+                                        </i>
+
+
+                                        <!-- =================================
+                                            SYNCHRONIZE
+                                        ================================== -->
+
+                                        <i
+                                            *ngIf="
+                                                row.status?.toLowerCase()
+                                                !==
+                                                'synchronized'
+                                            "
+
+                                            class="fas fa-arrows-rotate">
+
+                                        </i>
+
+                                    </button>
+
+
+                                    <!-- =====================================
+                                        REGISTER / DEREGISTER
+                                    ====================================== -->
+                                    <!--
+                                        REGISTRATION RULE:
+
+                                            Not Synchronized
+                                                -> Disabled
+
+                                            Synchronized +
+                                            Database Not Created
+                                                -> Register /
+                                                   Deregister Enabled
+
+                                            Synchronized +
+                                            Database Created
+                                                -> Deregister Disabled
+
+                                        databaseCreated represents the
+                                        physical database-table state.
+
+                                        registrationDisabled remains
+                                        supported so the parent page
+                                        may also explicitly control the
+                                        registration state.
+                                    ====================================== -->
+
+                                    <button
+                                        *ngIf="
+                                            showRegistration
+                                        "
+
+                                        type="button"
+
+                                        class="action-btn registration"
+
+                                        [class.unregister]="
+                                            row.dbStatus?.toLowerCase()
+                                            ===
+                                            'registered'
+                                        "
+
+                                        [disabled]="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                            ||
+                                            row.registrationDisabled === true
+                                            ||
+                                            row.databaseCreated === true
+                                        "
+
+                                        [title]="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                                ?
+                                                'Registration unavailable until code synchronization is completed'
+                                                :
+                                                (
+                                                    row.registrationDisabled === true
+                                                    ||
+                                                    row.databaseCreated === true
+                                                        ?
+                                                        'Deregister disabled while database table exists'
+                                                        :
+                                                        (
+                                                            row.dbStatus?.toLowerCase()
+                                                            ===
+                                                            'registered'
+                                                                ?
+                                                                'Deregister'
+                                                                :
+                                                                'Register'
+                                                        )
+                                                )
+                                        "
+
+                                        (click)="
+                                            onRegistrationClick(
+                                                row,
+                                                $event
+                                            )
+                                        ">
+
+
+                                        <!-- =================================
+                                            DEREGISTER
+                                        ================================== -->
+
+                                        <i
+                                            *ngIf="
+                                                row.dbStatus?.toLowerCase()
+                                                ===
+                                                'registered'
+                                            "
+
+                                            class="fas fa-clipboard">
+
+                                        </i>
+
+
+                                        <!-- =================================
+                                            REGISTER
+                                        ================================== -->
+
+                                        <i
+                                            *ngIf="
+                                                row.dbStatus?.toLowerCase()
+                                                !==
+                                                'registered'
+                                            "
+
+                                            class="fas fa-clipboard-check">
+
+                                        </i>
+
+                                    </button>
+
+
+                                    <!-- =====================================
+                                        DATABASE CREATE / REMOVE
+                                    ====================================== -->
+                                    <!--
+                                        DATABASE RULE:
+
+                                            Not Synchronized
+                                                -> Disabled
+
+                                            Synchronized +
+                                            Not Registered
+                                                -> Disabled
+
+                                            Registered +
+                                            Database Not Created
+                                                -> BLUE / CREATE
+
+                                            Registered +
+                                            Database Created
+                                                -> ORANGE / REMOVE
+
+                                        The database button remains enabled
+                                        after creation so the physical
+                                        table can be removed.
+
+                                        databaseCreated is the physical
+                                        database-table state.
+                                    ====================================== -->
+
+                                    <button
+                                        *ngIf="
+                                            showRegistration
+                                        "
+
+                                        type="button"
+
+                                        class="action-btn database"
+
+                                        [class.remove-database]="
+                                            row.databaseCreated === true
+                                        "
+
+                                        [disabled]="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                            ||
+                                            row.dbStatus?.toLowerCase()
+                                            !==
+                                            'registered'
+                                        "
+
+                                        [title]="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                                ?
+                                                'Database operation unavailable until code synchronization is completed'
+                                                :
+                                                (
+                                                    row.dbStatus?.toLowerCase()
+                                                    !==
+                                                    'registered'
+                                                        ?
+                                                        'Register backend code before creating the database'
+                                                        :
+                                                        (
+                                                            row.databaseCreated === true
+                                                                ?
+                                                                'Remove Database Table'
+                                                                :
+                                                                'Create Database Table'
+                                                        )
+                                                )
+                                        "
+
+                                        (click)="
+                                            onDatabaseClick(
+                                                row,
+                                                $event
+                                            )
+                                        ">
+
+
+                                        <!-- =================================
+                                            DATABASE
+                                        ================================== -->
+
+                                        <i
+                                            class="fas fa-database">
+
+                                        </i>
+
+                                    </button>
+
+                                </div>
 
                             </ng-container>
 
@@ -333,8 +580,10 @@
                                     title="Synchronize"
 
                                     (click)="
-                                        operation.emit(row);
-                                        $event.stopPropagation()
+                                        onOperationClick(
+                                            row,
+                                            $event
+                                        )
                                     ">
 
                                     <i

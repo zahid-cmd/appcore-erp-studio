@@ -4,16 +4,20 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Common.ActivityHistory.DTOs;
+
+using AppCore.Domain.Common;
+
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.GeneralSettings.Company;
+using global::AppCore.Application.Settings.GeneralSettings;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Infrastructure.Settings.GeneralSettings;
+namespace AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
 
 
 //===============================================================
@@ -32,6 +36,7 @@ public class CompanyRepository
         _context;
 
 
+
     //===========================================================
     // Constructor
     //===========================================================
@@ -46,37 +51,51 @@ public class CompanyRepository
     }
 
 
+
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Settings.GeneralSettings.Company>>
+    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>>
         GetAllAsync()
     {
         return await _context
-            .Set<global::AppCore.Domain.Settings.GeneralSettings.Company>()
+            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
             .AsNoTracking()
+            .Where(
+                x =>
+                    !x.IsDeleted
+            )
+            .OrderBy(
+                x =>
+                    x.Name
+            )
             .ToListAsync();
     }
+
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Settings.GeneralSettings.Company?>
+    public async Task<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company?>
         GetByIdAsync
     (
         long id
     )
     {
         return await _context
-            .Set<global::AppCore.Domain.Settings.GeneralSettings.Company>()
+            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                x => x.Id == id
+                x =>
+                    x.Id == id
+                    &&
+                    !x.IsDeleted
             );
     }
+
 
 
     //===========================================================
@@ -86,14 +105,78 @@ public class CompanyRepository
     public async Task<long>
         CreateAsync
     (
-        global::AppCore.Domain.Settings.GeneralSettings.Company entity
+        global::AppCore.Domain.Entities.Settings.GeneralSettings.Company entity
     )
     {
+        const long userId =
+            1;
+
+
+        entity.IsActive =
+            true;
+
+
+        entity.IsDeleted =
+            false;
+
+
+        entity.CreatedBy =
+            userId;
+
+
+        entity.CreatedDate =
+            DateTime.UtcNow;
+
+
+        entity.ModifiedBy =
+            null;
+
+
+        entity.ModifiedDate =
+            null;
+
+
         await _context
-            .Set<global::AppCore.Domain.Settings.GeneralSettings.Company>()
+            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
             .AddAsync(
                 entity
             );
+
+
+        await _context.SaveChangesAsync();
+
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module =
+                    "Settings",
+
+                EntityName =
+                    "Company",
+
+                EntityId =
+                    entity.Id,
+
+                ActivityType =
+                    "Create",
+
+                ActivityTitle =
+                    "Company Created",
+
+                ActivityDescription =
+                    $"Company '{entity.Name}' was created.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
 
 
         await _context.SaveChangesAsync();
@@ -103,6 +186,7 @@ public class CompanyRepository
     }
 
 
+
     //===========================================================
     // Update
     //===========================================================
@@ -110,18 +194,103 @@ public class CompanyRepository
     public async Task
         UpdateAsync
     (
-        global::AppCore.Domain.Settings.GeneralSettings.Company entity
+        global::AppCore.Domain.Entities.Settings.GeneralSettings.Company entity
     )
     {
-        _context
-            .Set<global::AppCore.Domain.Settings.GeneralSettings.Company>()
-            .Update(
-                entity
+        const long userId =
+            1;
+
+
+        var existing =
+            await _context
+                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.Id == entity.Id
+                        &&
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            existing is null
+        )
+        {
+            throw new InvalidOperationException(
+                "Company record was not found."
             );
+        }
+
+
+        existing.Code =
+            entity.Code;
+
+
+        existing.Name =
+            entity.Name;
+
+
+        existing.SampleSearchDropdownId =
+            entity.SampleSearchDropdownId;
+
+
+        existing.SampleField =
+            entity.SampleField;
+
+
+        existing.Status =
+            entity.Status;
+
+
+        existing.Remarks =
+            entity.Remarks;
+
+
+        existing.ModifiedBy =
+            userId;
+
+
+        existing.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module =
+                    "Settings",
+
+                EntityName =
+                    "Company",
+
+                EntityId =
+                    existing.Id,
+
+                ActivityType =
+                    "Update",
+
+                ActivityTitle =
+                    "Company Updated",
+
+                ActivityDescription =
+                    $"Company '{existing.Name}' was updated.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
 
 
         await _context.SaveChangesAsync();
     }
+
 
 
     //===========================================================
@@ -134,11 +303,18 @@ public class CompanyRepository
         long id
     )
     {
+        const long userId =
+            1;
+
+
         var entity =
             await _context
-                .Set<global::AppCore.Domain.Settings.GeneralSettings.Company>()
+                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
                 .FirstOrDefaultAsync(
-                    x => x.Id == id
+                    x =>
+                        x.Id == id
+                        &&
+                        !x.IsDeleted
                 );
 
 
@@ -151,15 +327,58 @@ public class CompanyRepository
         }
 
 
-        _context
-            .Set<global::AppCore.Domain.Settings.GeneralSettings.Company>()
-            .Remove(
-                entity
-            );
+        entity.IsDeleted =
+            true;
+
+
+        entity.IsActive =
+            false;
+
+
+        entity.ModifiedBy =
+            userId;
+
+
+        entity.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module =
+                    "Settings",
+
+                EntityName =
+                    "Company",
+
+                EntityId =
+                    entity.Id,
+
+                ActivityType =
+                    "Delete",
+
+                ActivityTitle =
+                    "Company Deleted",
+
+                ActivityDescription =
+                    $"Company '{entity.Name}' was deleted.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
 
 
         await _context.SaveChangesAsync();
     }
+
 
 
     //===========================================================
@@ -167,36 +386,229 @@ public class CompanyRepository
     //===========================================================
 
     public async Task
-        RestoreAsync()
+        RestoreAsync
+    (
+        long id
+    )
     {
-        throw new NotImplementedException();
+        const long userId =
+            1;
+
+
+        var entity =
+            await _context
+                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.Id == id
+                        &&
+                        x.IsDeleted
+                );
+
+
+        if
+        (
+            entity is null
+        )
+        {
+            return;
+        }
+
+
+        entity.IsDeleted =
+            false;
+
+
+        entity.IsActive =
+            true;
+
+
+        entity.ModifiedBy =
+            userId;
+
+
+        entity.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module =
+                    "Settings",
+
+                EntityName =
+                    "Company",
+
+                EntityId =
+                    entity.Id,
+
+                ActivityType =
+                    "Restore",
+
+                ActivityTitle =
+                    "Company Restored",
+
+                ActivityDescription =
+                    $"Company '{entity.Name}' was restored.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
+
+
+        await _context.SaveChangesAsync();
     }
+
 
 
     //===========================================================
     // Get History
     //===========================================================
 
-    public async Task
-        <IReadOnlyList<object>>
+    public async Task<IReadOnlyList<ActivityHistoryDto>>
         GetHistoryAsync()
     {
-        throw new NotImplementedException();
+        return await _context.ActivityHistories
+
+            .AsNoTracking()
+
+            .Where(
+                x =>
+                    x.Module ==
+                    "Settings"
+
+                    &&
+
+                    x.EntityName ==
+                    "Company"
+            )
+
+            .OrderByDescending(
+                x =>
+                    x.PerformedDate
+            )
+
+            .Select(
+                x =>
+                    new ActivityHistoryDto
+                    {
+                        Id =
+                            x.Id,
+
+                        Module =
+                            x.Module,
+
+                        EntityName =
+                            x.EntityName,
+
+                        EntityId =
+                            x.EntityId,
+
+                        ActivityType =
+                            x.ActivityType,
+
+                        ActivityTitle =
+                            x.ActivityTitle,
+
+                        ActivityDescription =
+                            x.ActivityDescription,
+
+                        PerformedBy =
+                            x.PerformedBy,
+
+                        PerformedByName =
+                            x.PerformedByName,
+
+                        PerformedDate =
+                            x.PerformedDate
+                    }
+            )
+
+            .ToListAsync();
     }
+
 
 
     //===========================================================
     // Get Entity History
     //===========================================================
 
-    public async Task
-        <IReadOnlyList<object>>
+    public async Task<IReadOnlyList<ActivityHistoryDto>>
         GetEntityHistoryAsync
     (
         long id
     )
     {
-        throw new NotImplementedException();
+        return await _context.ActivityHistories
+
+            .AsNoTracking()
+
+            .Where(
+                x =>
+                    x.Module ==
+                    "Settings"
+
+                    &&
+
+                    x.EntityName ==
+                    "Company"
+
+                    &&
+
+                    x.EntityId ==
+                    id
+            )
+
+            .OrderByDescending(
+                x =>
+                    x.PerformedDate
+            )
+
+            .Select(
+                x =>
+                    new ActivityHistoryDto
+                    {
+                        Id =
+                            x.Id,
+
+                        Module =
+                            x.Module,
+
+                        EntityName =
+                            x.EntityName,
+
+                        EntityId =
+                            x.EntityId,
+
+                        ActivityType =
+                            x.ActivityType,
+
+                        ActivityTitle =
+                            x.ActivityTitle,
+
+                        ActivityDescription =
+                            x.ActivityDescription,
+
+                        PerformedBy =
+                            x.PerformedBy,
+
+                        PerformedByName =
+                            x.PerformedByName,
+
+                        PerformedDate =
+                            x.PerformedDate
+                    }
+            )
+
+            .ToListAsync();
     }
 
 }
