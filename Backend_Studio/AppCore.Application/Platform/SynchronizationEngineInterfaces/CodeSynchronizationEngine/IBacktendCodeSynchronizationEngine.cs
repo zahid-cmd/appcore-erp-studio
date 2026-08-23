@@ -21,6 +21,7 @@ namespace AppCore.Application.Platform.SynchronizationEngineInterfaces.CodeSynch
 public interface IBackendCodeSynchronizationEngine
 {
 
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -28,9 +29,10 @@ public interface IBackendCodeSynchronizationEngine
     Task<BackendCodeSynchronizationResultDto>
         SynchronizeAsync
     (
-        SubmenuSynchronizationDto synchronization
-    );
+        SubmenuSynchronizationDto synchronization,
 
+        long synchronizationId
+    );
 
 
     //===========================================================
@@ -40,7 +42,9 @@ public interface IBackendCodeSynchronizationEngine
     Task<BackendCodeSynchronizationResultDto>
         RollbackAsync
     (
-        SubmenuSynchronizationDto synchronization
+        SubmenuSynchronizationDto synchronization,
+
+        long synchronizationId
     );
 
 }

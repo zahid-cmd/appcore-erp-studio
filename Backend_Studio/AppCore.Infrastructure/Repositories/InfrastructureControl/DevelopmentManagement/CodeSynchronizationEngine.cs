@@ -38,6 +38,7 @@ public class CodeSynchronizationEngine
     : ICodeSynchronizationEngine
 {
 
+
     //===========================================================
     // Fields
     //===========================================================
@@ -127,6 +128,8 @@ public class CodeSynchronizationEngine
         var result =
             await ExecuteSynchronizationAsync
             (
+                codeSynchronization,
+
                 submenuSynchronization
             );
 
@@ -219,6 +222,8 @@ public class CodeSynchronizationEngine
         var result =
             await ExecuteRollbackAsync
             (
+                codeSynchronization,
+
                 submenuSynchronization
             );
 
@@ -544,7 +549,7 @@ public class CodeSynchronizationEngine
 
             //===================================================
             // Status
-            //===================================================
+            //===========================================================
 
             Status =
                 entity.Status,
@@ -636,7 +641,8 @@ public class CodeSynchronizationEngine
 
         if
         (
-            string.IsNullOrWhiteSpace(
+            string.IsNullOrWhiteSpace
+            (
                 synchronizationType
             )
         )
@@ -735,7 +741,8 @@ public class CodeSynchronizationEngine
 
         if
         (
-            string.IsNullOrWhiteSpace(
+            string.IsNullOrWhiteSpace
+            (
                 synchronizationType
             )
         )
@@ -792,6 +799,8 @@ public class CodeSynchronizationEngine
     private async Task<CodeSynchronizationEngineResult>
         ExecuteSynchronizationAsync
     (
+        CodeSynchronizationEntity codeSynchronization,
+
         SubmenuSynchronizationDto synchronization
     )
     {
@@ -856,7 +865,9 @@ public class CodeSynchronizationEngine
                 await _backendCodeSynchronizationEngine
                     .SynchronizeAsync
                     (
-                        synchronization
+                        synchronization,
+
+                        codeSynchronization.Id
                     );
 
 
@@ -886,6 +897,8 @@ public class CodeSynchronizationEngine
     private async Task<CodeSynchronizationEngineResult>
         ExecuteRollbackAsync
     (
+        CodeSynchronizationEntity codeSynchronization,
+
         SubmenuSynchronizationDto synchronization
     )
     {
@@ -950,7 +963,9 @@ public class CodeSynchronizationEngine
                 await _backendCodeSynchronizationEngine
                     .RollbackAsync
                     (
-                        synchronization
+                        synchronization,
+
+                        codeSynchronization.Id
                     );
 
 
@@ -1090,7 +1105,8 @@ public class CodeSynchronizationEngine
             {
                 if
                 (
-                    string.IsNullOrWhiteSpace(
+                    string.IsNullOrWhiteSpace
+                    (
                         filePath
                     )
                 )
@@ -1100,7 +1116,8 @@ public class CodeSynchronizationEngine
 
 
                 var fullPath =
-                    Path.GetFullPath(
+                    Path.GetFullPath
+                    (
                         filePath
                     );
 
@@ -1111,12 +1128,14 @@ public class CodeSynchronizationEngine
 
                 if
                 (
-                    File.Exists(
+                    File.Exists
+                    (
                         baselinePath
                     )
                 )
                 {
-                    File.Delete(
+                    File.Delete
+                    (
                         baselinePath
                     );
                 }
@@ -1461,5 +1480,4 @@ public class CodeSynchronizationEngine
                 message
         };
     }
-
 }

@@ -28,6 +28,36 @@ namespace AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEng
 //===============================================================
 // Backend Registration Engine
 //===============================================================
+//
+// Responsibility:
+//
+//     RegisterAsync
+//
+//         1. Register generated DbSet in AppDbContext.cs
+//
+//         2. Register generated repository namespaces in
+//            DependencyInjection.cs
+//
+//         3. Register generated repository service in
+//            DependencyInjection.cs
+//
+//     RollbackAsync
+//
+//         1. Remove generated DbSet from AppDbContext.cs
+//
+//         2. Remove generated repository namespaces from
+//            DependencyInjection.cs
+//
+//         3. Remove generated repository service from
+//            DependencyInjection.cs
+//
+// Default Registration Mode:
+//
+//     If no generated registration blocks exist,
+//     registration uses the default empty AUTO-BEGIN /
+//     AUTO-END registration regions.
+//
+//===============================================================
 
 public class BackendRegistrationEngine
     : IBackendRegistrationEngine
@@ -70,27 +100,6 @@ public class BackendRegistrationEngine
     //===========================================================
     // Register
     //===========================================================
-    //
-    // Responsibility:
-    //
-    //     1. Register generated DbSet in AppDbContext.cs
-    //     2. Register generated repository in
-    //        DependencyInjection.cs
-    //
-    // This engine does NOT:
-    //
-    //     - Create EF migrations
-    //     - Remove EF migrations
-    //     - Update database
-    //     - Roll back database
-    //     - Create database tables
-    //     - Drop database tables
-    //     - Execute dotnet ef
-    //
-    // Database synchronization is owned by the separate
-    // Backend Database Synchronization Engine.
-    //
-    //===========================================================
 
     public async Task<BackendRegistrationResultDto>
         RegisterAsync
@@ -110,7 +119,19 @@ public class BackendRegistrationEngine
             string.Empty;
 
 
+        string repositoryInterfaceNamespace =
+            string.Empty;
+
+
         string repositoryInterfaceName =
+            string.Empty;
+
+
+        string repositoryNamespace =
+            string.Empty;
+
+
+        string repositoryClassName =
             string.Empty;
 
 
@@ -140,18 +161,100 @@ public class BackendRegistrationEngine
 
 
             //===================================================
-            // Find Backend Studio Root
+            // Validate Generated Entity File
             //===================================================
 
-            var backendStudioRoot =
-                FindBackendStudioRoot(
-                    synchronization.BackendSubMenuEntityFile
+            var entityFile =
+                synchronization.BackendSubMenuEntityFile;
+
+
+            var validationResult =
+                ValidateRequiredFile(
+                    entityFile,
+                    "Generated entity file"
                 );
 
 
             if
             (
-                backendStudioRoot is null
+                validationResult != null
+            )
+            {
+                return Failure(
+                    validationResult
+                );
+            }
+
+
+            //===================================================
+            // Validate Repository Interface File
+            //===================================================
+
+            var repositoryInterfaceFile =
+                synchronization
+                    .BackendSubMenuRepositoryInterfaceFile;
+
+
+            validationResult =
+                ValidateRequiredFile(
+                    repositoryInterfaceFile,
+                    "Generated repository interface file"
+                );
+
+
+            if
+            (
+                validationResult != null
+            )
+            {
+                return Failure(
+                    validationResult
+                );
+            }
+
+
+            //===================================================
+            // Validate Repository File
+            //===================================================
+
+            var repositoryFile =
+                synchronization
+                    .BackendSubMenuRepositoryFile;
+
+
+            validationResult =
+                ValidateRequiredFile(
+                    repositoryFile,
+                    "Generated repository file"
+                );
+
+
+            if
+            (
+                validationResult != null
+            )
+            {
+                return Failure(
+                    validationResult
+                );
+            }
+
+
+            //===================================================
+            // Find Backend Studio Root
+            //===================================================
+
+            var backendStudioRoot =
+                FindBackendStudioRoot(
+                    entityFile
+                );
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    backendStudioRoot
+                )
             )
             {
                 return Failure(
@@ -161,139 +264,49 @@ public class BackendRegistrationEngine
 
 
             //===================================================
-            // Validate Generated Backend Files
-            //===================================================
-
-            var entityFile =
-                synchronization.BackendSubMenuEntityFile;
-
-
-            var configurationFile =
-                synchronization.BackendSubMenuConfigurationFile;
-
-
-            var repositoryInterfaceFile =
-                synchronization.BackendSubMenuRepositoryInterfaceFile;
-
-
-            var repositoryFile =
-                synchronization.BackendSubMenuRepositoryFile;
-
-
-            var generatedFiles =
-                new Dictionary<string, string>
-                {
-                    {
-                        entityFile,
-                        "Generated entity file"
-                    },
-
-                    {
-                        configurationFile,
-                        "Generated configuration file"
-                    },
-
-                    {
-                        repositoryInterfaceFile,
-                        "Generated repository interface file"
-                    },
-
-                    {
-                        repositoryFile,
-                        "Generated repository file"
-                    }
-                };
-
-
-            foreach
-            (
-                var generatedFile in generatedFiles
-            )
-            {
-                if
-                (
-                    string.IsNullOrWhiteSpace(
-                        generatedFile.Key
-                    )
-                )
-                {
-                    return Failure(
-                        $"Backend registration failed: {generatedFile.Value} path is not configured."
-                    );
-                }
-
-
-                if
-                (
-                    !File.Exists(
-                        generatedFile.Key
-                    )
-                )
-                {
-                    return Failure(
-                        $"Backend registration failed: {generatedFile.Value} was not found: {generatedFile.Key}"
-                    );
-                }
-            }
-
-
-            //===================================================
-            // Infrastructure Files
+            // Locate AppDbContext
             //===================================================
 
             dbContextFile =
-                Path.Combine(
-                    backendStudioRoot,
-                    "AppCore.Infrastructure",
-                    "Persistence",
-                    "AppDbContext.cs"
-                );
-
-
-            dependencyInjectionFile =
-                Path.Combine(
-                    backendStudioRoot,
-                    "AppCore.Infrastructure",
-                    "DependencyInjection.cs"
-                );
-
-
-            //===================================================
-            // Validate Infrastructure Files
-            //===================================================
-
-            var validation =
-                ValidateRequiredFile(
-                    dbContextFile,
-                    "AppDbContext.cs"
-                );
+                FindAppDbContextFile(
+                    backendStudioRoot
+                )
+                ?? string.Empty;
 
 
             if
             (
-                validation is not null
+                string.IsNullOrWhiteSpace(
+                    dbContextFile
+                )
             )
             {
                 return Failure(
-                    validation
+                    "Backend registration failed: AppDbContext.cs could not be located."
                 );
             }
 
 
-            validation =
-                ValidateRequiredFile(
-                    dependencyInjectionFile,
-                    "DependencyInjection.cs"
-                );
+            //===================================================
+            // Locate DependencyInjection
+            //===================================================
+
+            dependencyInjectionFile =
+                FindDependencyInjectionFile(
+                    backendStudioRoot
+                )
+                ?? string.Empty;
 
 
             if
             (
-                validation is not null
+                string.IsNullOrWhiteSpace(
+                    dependencyInjectionFile
+                )
             )
             {
                 return Failure(
-                    validation
+                    "Backend registration failed: DependencyInjection.cs could not be located."
                 );
             }
 
@@ -311,15 +324,13 @@ public class BackendRegistrationEngine
             entityNamespace =
                 ExtractNamespace(
                     entityContent
-                )
-                ?? string.Empty;
+                );
 
 
             entityClassName =
                 ExtractClassName(
                     entityContent
-                )
-                ?? string.Empty;
+                );
 
 
             if
@@ -330,7 +341,7 @@ public class BackendRegistrationEngine
             )
             {
                 return Failure(
-                    "Backend registration failed: Entity namespace could not be determined from the generated entity file."
+                    "Backend registration failed: Entity namespace could not be determined."
                 );
             }
 
@@ -343,7 +354,7 @@ public class BackendRegistrationEngine
             )
             {
                 return Failure(
-                    "Backend registration failed: Entity class could not be determined from the generated entity file."
+                    "Backend registration failed: Entity class could not be determined."
                 );
             }
 
@@ -358,7 +369,7 @@ public class BackendRegistrationEngine
                 );
 
 
-            var repositoryInterfaceNamespace =
+            repositoryInterfaceNamespace =
                 ExtractNamespace(
                     repositoryInterfaceContent
                 );
@@ -367,8 +378,7 @@ public class BackendRegistrationEngine
             repositoryInterfaceName =
                 ExtractInterfaceName(
                     repositoryInterfaceContent
-                )
-                ?? string.Empty;
+                );
 
 
             if
@@ -407,13 +417,13 @@ public class BackendRegistrationEngine
                 );
 
 
-            var repositoryNamespace =
+            repositoryNamespace =
                 ExtractNamespace(
                     repositoryContent
                 );
 
 
-            var repositoryClassName =
+            repositoryClassName =
                 ExtractClassName(
                     repositoryContent
                 );
@@ -446,11 +456,12 @@ public class BackendRegistrationEngine
 
 
             //===================================================
-            // Register DbSet In AppDbContext
+            // Register DbSet
             //===================================================
 
-            registrationState.DbSet =
-                await RegisterDbSetAsync(
+            var dbSetResult =
+                await RegisterDbSetAsync
+                (
                     dbContextFile,
                     entityNamespace,
                     entityClassName
@@ -459,30 +470,34 @@ public class BackendRegistrationEngine
 
             if
             (
-                !registrationState.DbSet.Result.Success
+                !dbSetResult.Result.Success
             )
             {
-                return registrationState.DbSet.Result;
+                return dbSetResult.Result;
             }
 
 
+            registrationState.DbSet =
+                dbSetResult;
+
+
             //===================================================
-            // Register Repository In DependencyInjection
+            // Register Repository Namespaces
             //===================================================
 
-            registrationState.Repository =
-                await RegisterRepositoryAsync(
+            var namespaceResult =
+                await RegisterRepositoryNamespacesAsync
+                (
                     dependencyInjectionFile,
+                    entityClassName,
                     repositoryInterfaceNamespace,
-                    repositoryInterfaceName,
-                    repositoryNamespace,
-                    repositoryClassName
+                    repositoryNamespace
                 );
 
 
             if
             (
-                !registrationState.Repository.Result.Success
+                !namespaceResult.Result.Success
             )
             {
                 await CleanupRegistrationAsync(
@@ -493,9 +508,47 @@ public class BackendRegistrationEngine
                     repositoryInterfaceName
                 );
 
-
-                return registrationState.Repository.Result;
+                return namespaceResult.Result;
             }
+
+
+            registrationState.RepositoryNamespaces =
+                namespaceResult;
+
+
+            //===================================================
+            // Register Repository Service
+            //===================================================
+
+            var repositoryResult =
+                await RegisterRepositoryAsync
+                (
+                    dependencyInjectionFile,
+                    entityClassName,
+                    repositoryInterfaceName,
+                    repositoryClassName
+                );
+
+
+            if
+            (
+                !repositoryResult.Result.Success
+            )
+            {
+                await CleanupRegistrationAsync(
+                    registrationState,
+                    dbContextFile,
+                    dependencyInjectionFile,
+                    entityClassName,
+                    repositoryInterfaceName
+                );
+
+                return repositoryResult.Result;
+            }
+
+
+            registrationState.Repository =
+                repositoryResult;
 
 
             //===================================================
@@ -508,19 +561,13 @@ public class BackendRegistrationEngine
                     true,
 
                 Message =
-                    $"Backend registration completed successfully for '{entityClassName}'."
-                    + Environment.NewLine
-                    + $"DbSet '{entityClassName}s' was registered in AppDbContext."
-                    + Environment.NewLine
-                    + $"Repository '{repositoryInterfaceName}' was registered in DependencyInjection."
-                    + Environment.NewLine
-                    + "Database migration and database synchronization are handled by the separate Backend Database Synchronization Engine.",
+                    $"Backend registration completed successfully for '{entityClassName}'.",
 
                 TotalOperations =
-                    2,
+                    3,
 
                 SuccessfulOperations =
-                    2,
+                    3,
 
                 FailedOperations =
                     0
@@ -555,21 +602,7 @@ public class BackendRegistrationEngine
 
 
     //===========================================================
-    // Rollback / Deregistration
-    //===========================================================
-    //
-    // This method now ONLY removes backend registrations.
-    //
-    // It does NOT:
-    //
-    //     - Roll back EF migrations
-    //     - Remove EF migrations
-    //     - Drop database tables
-    //     - Update database
-    //
-    // Database table removal is the responsibility of the
-    // separate Backend Database Synchronization Engine.
-    //
+    // Rollback
     //===========================================================
 
     public async Task<BackendRegistrationResultDto>
@@ -596,83 +629,92 @@ public class BackendRegistrationEngine
 
 
             //===================================================
+            // Validate Entity File
+            //===================================================
+
+            var entityFile =
+                synchronization.BackendSubMenuEntityFile;
+
+
+            var validationResult =
+                ValidateRequiredFile(
+                    entityFile,
+                    "Generated entity file"
+                );
+
+
+            if
+            (
+                validationResult != null
+            )
+            {
+                return Failure(
+                    validationResult
+                );
+            }
+
+
+            //===================================================
             // Find Backend Studio Root
             //===================================================
 
             var backendStudioRoot =
                 FindBackendStudioRoot(
-                    synchronization.BackendSubMenuEntityFile
+                    entityFile
                 );
 
 
             if
             (
-                backendStudioRoot is null
+                string.IsNullOrWhiteSpace(
+                    backendStudioRoot
+                )
             )
             {
                 return Failure(
-                    "Backend deregistration failed: Backend_Studio root could not be located."
+                    "Backend rollback failed: Backend_Studio root could not be located."
                 );
             }
 
 
             //===================================================
-            // Infrastructure Files
+            // Locate Files
             //===================================================
 
             var dbContextFile =
-                Path.Combine(
-                    backendStudioRoot,
-                    "AppCore.Infrastructure",
-                    "Persistence",
-                    "AppDbContext.cs"
-                );
-
-
-            var dependencyInjectionFile =
-                Path.Combine(
-                    backendStudioRoot,
-                    "AppCore.Infrastructure",
-                    "DependencyInjection.cs"
-                );
-
-
-            //===================================================
-            // Validate Infrastructure Files
-            //===================================================
-
-            var validation =
-                ValidateRequiredFile(
-                    dbContextFile,
-                    "AppDbContext.cs"
+                FindAppDbContextFile(
+                    backendStudioRoot
                 );
 
 
             if
             (
-                validation is not null
+                string.IsNullOrWhiteSpace(
+                    dbContextFile
+                )
             )
             {
                 return Failure(
-                    validation
+                    "Backend rollback failed: AppDbContext.cs could not be located."
                 );
             }
 
 
-            validation =
-                ValidateRequiredFile(
-                    dependencyInjectionFile,
-                    "DependencyInjection.cs"
+            var dependencyInjectionFile =
+                FindDependencyInjectionFile(
+                    backendStudioRoot
                 );
 
 
             if
             (
-                validation is not null
+                string.IsNullOrWhiteSpace(
+                    dependencyInjectionFile
+                )
             )
             {
                 return Failure(
-                    validation
+                    "Backend rollback failed: DependencyInjection.cs could not be located."
                 );
             }
 
@@ -680,27 +722,6 @@ public class BackendRegistrationEngine
             //===================================================
             // Read Entity
             //===================================================
-
-            var entityFile =
-                synchronization.BackendSubMenuEntityFile;
-
-
-            if
-            (
-                string.IsNullOrWhiteSpace(
-                    entityFile
-                )
-                ||
-                !File.Exists(
-                    entityFile
-                )
-            )
-            {
-                return Failure(
-                    $"Backend deregistration failed: Generated entity file was not found: {entityFile}"
-                );
-            }
-
 
             var entityContent =
                 await File.ReadAllTextAsync(
@@ -711,8 +732,7 @@ public class BackendRegistrationEngine
             var entityClassName =
                 ExtractClassName(
                     entityContent
-                )
-                ?? string.Empty;
+                );
 
 
             if
@@ -723,7 +743,7 @@ public class BackendRegistrationEngine
             )
             {
                 return Failure(
-                    "Backend deregistration failed: Entity class could not be determined from the generated entity file."
+                    "Backend rollback failed: Entity class could not be determined."
                 );
             }
 
@@ -733,7 +753,7 @@ public class BackendRegistrationEngine
             //===================================================
 
             var repositoryInterfaceName =
-                string.Empty;
+                $"I{entityClassName}Repository";
 
 
             var repositoryInterfaceFile =
@@ -758,23 +778,65 @@ public class BackendRegistrationEngine
                     );
 
 
-                repositoryInterfaceName =
+                var extractedInterfaceName =
                     ExtractInterfaceName(
                         repositoryInterfaceContent
+                    );
+
+
+                if
+                (
+                    !string.IsNullOrWhiteSpace(
+                        extractedInterfaceName
                     )
-                    ?? string.Empty;
+                )
+                {
+                    repositoryInterfaceName =
+                        extractedInterfaceName;
+                }
             }
+
+
+            //===================================================
+            // Remove Repository Service
+            //===================================================
+
+            var repositoryResult =
+                await RemoveRepositoryAsync
+                (
+                    dependencyInjectionFile,
+                    entityClassName,
+                    repositoryInterfaceName
+                );
 
 
             if
             (
-                string.IsNullOrWhiteSpace(
-                    repositoryInterfaceName
-                )
+                !repositoryResult.Success
             )
             {
-                repositoryInterfaceName =
-                    $"I{entityClassName}Repository";
+                return repositoryResult;
+            }
+
+
+            //===================================================
+            // Remove Repository Namespaces
+            //===================================================
+
+            var namespaceResult =
+                await RemoveRepositoryNamespacesAsync
+                (
+                    dependencyInjectionFile,
+                    entityClassName
+                );
+
+
+            if
+            (
+                !namespaceResult.Success
+            )
+            {
+                return namespaceResult;
             }
 
 
@@ -783,7 +845,8 @@ public class BackendRegistrationEngine
             //===================================================
 
             var dbSetResult =
-                await RemoveDbSetAsync(
+                await RemoveDbSetAsync
+                (
                     dbContextFile,
                     entityClassName
                 );
@@ -799,26 +862,6 @@ public class BackendRegistrationEngine
 
 
             //===================================================
-            // Remove Repository Registration
-            //===================================================
-
-            var repositoryResult =
-                await RemoveRepositoryAsync(
-                    dependencyInjectionFile,
-                    repositoryInterfaceName
-                );
-
-
-            if
-            (
-                !repositoryResult.Success
-            )
-            {
-                return repositoryResult;
-            }
-
-
-            //===================================================
             // Success
             //===================================================
 
@@ -828,19 +871,13 @@ public class BackendRegistrationEngine
                     true,
 
                 Message =
-                    $"Backend deregistration completed successfully for '{entityClassName}'."
-                    + Environment.NewLine
-                    + $"DbSet '{entityClassName}s' was removed from AppDbContext."
-                    + Environment.NewLine
-                    + $"Repository '{repositoryInterfaceName}' was removed from DependencyInjection."
-                    + Environment.NewLine
-                    + "Database table and migration changes are handled by the separate Backend Database Synchronization Engine.",
+                    $"Backend registration rollback completed successfully for '{entityClassName}'.",
 
                 TotalOperations =
-                    2,
+                    3,
 
                 SuccessfulOperations =
-                    2,
+                    3,
 
                 FailedOperations =
                     0
@@ -852,18 +889,23 @@ public class BackendRegistrationEngine
         )
         {
             return Failure(
-                $"Backend deregistration failed: {exception.Message}"
+                $"Backend registration rollback failed: {exception.Message}"
             );
         }
     }
-
 
 
     //===========================================================
     // Register DbSet
     //===========================================================
 
-    private async Task<(BackendRegistrationResultDto Result, bool Added)>
+    private async Task
+        <
+            (
+                BackendRegistrationResultDto Result,
+                bool Added
+            )
+        >
         RegisterDbSetAsync
     (
         string dbContextFile,
@@ -874,7 +916,8 @@ public class BackendRegistrationEngine
     )
     {
         var text =
-            await File.ReadAllTextAsync(
+            await File.ReadAllTextAsync
+            (
                 dbContextFile
             );
 
@@ -887,6 +930,10 @@ public class BackendRegistrationEngine
             $"{entityClassName}s";
 
 
+        //=======================================================
+        // Registration Block
+        //=======================================================
+
         var beginMarker =
             $"// AUTO-BEGIN : {entityClassName}";
 
@@ -895,31 +942,41 @@ public class BackendRegistrationEngine
             $"// AUTO-END : {entityClassName}";
 
 
+        //=======================================================
+        // Check Existing Registration
+        //=======================================================
+
         if
         (
-            ContainsManagedBlock(
+            ContainsManagedBlock
+            (
                 text,
+
                 beginMarker,
+
                 endMarker
             )
         )
         {
             return
             (
-                Success(
+                Success
+                (
                     $"DbSet already registered: {dbSetName}."
                 ),
+
                 false
             );
         }
 
 
         //=======================================================
-        // Load Template
+        // Load Registration Template
         //=======================================================
 
         var template =
-            await _templateLoader.LoadTemplateAsync(
+            await _templateLoader.LoadTemplateAsync
+            (
                 "Templates/Backend/AppDbContextRegistration/AppDbContextRegistration.tpl"
             );
 
@@ -929,7 +986,8 @@ public class BackendRegistrationEngine
         //=======================================================
 
         var registration =
-            _placeholderEngine.Replace(
+            _placeholderEngine.Replace
+            (
                 template,
 
                 new Dictionary<string, string>
@@ -956,297 +1014,235 @@ public class BackendRegistrationEngine
         // Normalize Registration
         //=======================================================
 
-        registration =
-            NormalizeDbSetRegistration(
-                registration
+        var normalizedLines =
+            registration
+                .Trim()
+                .Replace
+                (
+                    "\r\n",
+                    "\n"
+                )
+                .Replace
+                (
+                    "\r",
+                    "\n"
+                )
+                .Split
+                (
+                    '\n'
+                );
+
+
+        var formattedRegistration =
+            string.Join
+            (
+                Environment.NewLine,
+
+                normalizedLines
+                    .Select
+                    (
+                        line =>
+                            string.IsNullOrWhiteSpace
+                            (
+                                line
+                            )
+                                ? string.Empty
+                                : "    "
+                                + line.TrimStart()
+                    )
             );
 
 
         //=======================================================
-        // Locate AUTO REGISTER DBSETS
+        // Locate Primary Auto Registration Markers
         //=======================================================
 
-        var autoRegisterMarker =
+        const string autoBeginMarker =
+            "// AUTO-BEGIN : AUTO REGISTER DBSETS";
+
+
+        const string autoEndMarker =
+            "// AUTO-END : AUTO REGISTER DBSETS";
+
+
+        var beginIndex =
+            text.IndexOf
+            (
+                autoBeginMarker,
+
+                StringComparison.Ordinal
+            );
+
+
+        var endIndex =
+            beginIndex >= 0
+                ? text.IndexOf
+                (
+                    autoEndMarker,
+
+                    beginIndex
+                    + autoBeginMarker.Length,
+
+                    StringComparison.Ordinal
+                )
+                : -1;
+
+
+        //=======================================================
+        // Primary Registration Mode
+        //=======================================================
+
+        if
+        (
+            beginIndex >= 0
+            &&
+            endIndex >= 0
+        )
+        {
+            var insertionIndex =
+                FindLineStart
+                (
+                    text,
+
+                    endIndex
+                );
+
+
+            text =
+                text.Insert
+                (
+                    insertionIndex,
+
+                    formattedRegistration
+                    + Environment.NewLine
+                    + Environment.NewLine
+                );
+
+
+            await File.WriteAllTextAsync
+            (
+                dbContextFile,
+
+                text
+            );
+
+
+            return
+            (
+                Success
+                (
+                    $"DbSet registered: {dbSetName}."
+                ),
+
+                true
+            );
+        }
+
+
+        //=======================================================
+        // Default Registration Mode
+        //
+        // Used only when AUTO-BEGIN/AUTO-END markers
+        // are not available.
+        //=======================================================
+
+        const string autoRegisterSectionMarker =
             "// AUTO REGISTER DBSETS";
 
 
-        var markerIndex =
-            text.IndexOf(
-                autoRegisterMarker,
+        var sectionMarkerIndex =
+            text.IndexOf
+            (
+                autoRegisterSectionMarker,
+
                 StringComparison.Ordinal
             );
 
 
         if
         (
-            markerIndex < 0
+            sectionMarkerIndex < 0
         )
         {
             return
             (
-                Failure(
-                    "AUTO REGISTER DBSETS marker was not found in AppDbContext.cs."
+                Failure
+                (
+                    "No valid DbSet registration section was found in AppDbContext.cs."
                 ),
+
                 false
             );
         }
 
 
-        //=======================================================
-        // Locate OnModelCreating
-        //=======================================================
+        var onModelCreatingIndex =
+            text.IndexOf
+            (
+                "protected override void OnModelCreating",
 
-        var sectionEndMarker =
-            "protected override void OnModelCreating";
+                sectionMarkerIndex
+                + autoRegisterSectionMarker.Length,
 
-
-        var sectionEndIndex =
-            text.IndexOf(
-                sectionEndMarker,
-                markerIndex +
-                autoRegisterMarker.Length,
                 StringComparison.Ordinal
             );
 
 
         if
         (
-            sectionEndIndex < 0
+            onModelCreatingIndex < 0
         )
         {
             return
             (
-                Failure(
+                Failure
+                (
                     "OnModelCreating boundary was not found after AUTO REGISTER DBSETS in AppDbContext.cs."
                 ),
+
                 false
             );
         }
 
 
-        //=======================================================
-        // Remove Old Placeholder
-        //=======================================================
-
-        text =
-            RemoveDbSetRegistrationPlaceholder(
+        var defaultInsertionIndex =
+            FindLineStart
+            (
                 text,
-                markerIndex,
-                sectionEndIndex
-            );
 
-
-        //=======================================================
-        // Recalculate Marker
-        //=======================================================
-
-        markerIndex =
-            text.IndexOf(
-                autoRegisterMarker,
-                StringComparison.Ordinal
-            );
-
-
-        //=======================================================
-        // Insert Immediately Under Marker
-        //=======================================================
-
-        var insertionIndex =
-            FindLineEnd(
-                text,
-                markerIndex
+                onModelCreatingIndex
             );
 
 
         text =
-            text.Insert(
-                insertionIndex,
-                Environment.NewLine
-                + registration
+            text.Insert
+            (
+                defaultInsertionIndex,
+
+                formattedRegistration
+                + Environment.NewLine
+                + Environment.NewLine
             );
 
 
-        await File.WriteAllTextAsync(
+        await File.WriteAllTextAsync
+        (
             dbContextFile,
+
             text
         );
 
 
         return
         (
-            Success(
+            Success
+            (
                 $"DbSet registered: {dbSetName}."
             ),
+
             true
         );
     }
-
-
-
-    //===========================================================
-    // Normalize DbSet Registration
-    //===========================================================
-
-    private static string
-        NormalizeDbSetRegistration
-    (
-        string registration
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                registration
-            )
-        )
-        {
-            return string.Empty;
-        }
-
-
-        var normalized =
-            registration
-                .Replace(
-                    "\r\n",
-                    "\n"
-                )
-                .Replace(
-                    "\r",
-                    "\n"
-                )
-                .Trim();
-
-
-        normalized =
-            Regex.Replace(
-                normalized,
-                @"(=\s*null!)\s*(?=\n|$)",
-                "$1;",
-                RegexOptions.Multiline
-            );
-
-
-        normalized =
-            IndentRegistrationBlock(
-                normalized,
-                4
-            );
-
-
-        return
-            normalized
-            + Environment.NewLine
-            + Environment.NewLine;
-    }
-
-
-
-    //===========================================================
-    // Remove DbSet Registration Placeholder
-    //===========================================================
-
-    private static string
-        RemoveDbSetRegistrationPlaceholder
-    (
-        string text,
-
-        int markerIndex,
-
-        int sectionEndIndex
-    )
-    {
-        const string placeholder =
-            "// Registration Engine adds generated DbSets here.";
-
-
-        var placeholderIndex =
-            text.IndexOf(
-                placeholder,
-                markerIndex +
-                "// AUTO REGISTER DBSETS".Length,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            placeholderIndex < 0
-            ||
-            placeholderIndex >= sectionEndIndex
-        )
-        {
-            return text;
-        }
-
-
-        var lineStart =
-            FindLineStart(
-                text,
-                placeholderIndex
-            );
-
-
-        var lineEnd =
-            FindLineEnd(
-                text,
-                placeholderIndex
-            );
-
-
-        return
-            text.Remove(
-                lineStart,
-                lineEnd -
-                lineStart
-            );
-    }
-
-
-
-    //===========================================================
-    // Indent Registration Block
-    //===========================================================
-
-    private static string
-        IndentRegistrationBlock
-    (
-        string registration,
-
-        int spaces
-    )
-    {
-        var indentation =
-            new string(
-                ' ',
-                spaces
-            );
-
-
-        return string.Join(
-            Environment.NewLine,
-            registration
-                .Replace(
-                    "\r\n",
-                    "\n"
-                )
-                .Replace(
-                    "\r",
-                    "\n"
-                )
-                .Split(
-                    '\n'
-                )
-                .Select(
-                    line =>
-                        string.IsNullOrWhiteSpace(line)
-                            ? string.Empty
-                            : indentation
-                              + line.Trim()
-                )
-        );
-    }
-
-
 
     //===========================================================
     // Remove DbSet
@@ -1274,57 +1270,9 @@ public class BackendRegistrationEngine
             $"// AUTO-END : {entityClassName}";
 
 
-        var autoRegisterMarker =
-            "// AUTO REGISTER DBSETS";
-
-
-        var markerIndex =
-            text.IndexOf(
-                autoRegisterMarker,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            markerIndex < 0
-        )
-        {
-            return Failure(
-                "AUTO REGISTER DBSETS marker was not found in AppDbContext.cs."
-            );
-        }
-
-
-        var onModelCreatingMarker =
-            "protected override void OnModelCreating";
-
-
-        var onModelCreatingIndex =
-            text.IndexOf(
-                onModelCreatingMarker,
-                markerIndex +
-                autoRegisterMarker.Length,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            onModelCreatingIndex < 0
-        )
-        {
-            return Failure(
-                "OnModelCreating boundary was not found after AUTO REGISTER DBSETS in AppDbContext.cs."
-            );
-        }
-
-
         var blockStart =
             text.IndexOf(
                 beginMarker,
-                markerIndex +
-                autoRegisterMarker.Length,
                 StringComparison.Ordinal
             );
 
@@ -1332,8 +1280,6 @@ public class BackendRegistrationEngine
         if
         (
             blockStart < 0
-            ||
-            blockStart >= onModelCreatingIndex
         )
         {
             return Success(
@@ -1342,20 +1288,18 @@ public class BackendRegistrationEngine
         }
 
 
-        var blockEndMarkerIndex =
+        var blockEndMarker =
             text.IndexOf(
                 endMarker,
-                blockStart +
-                beginMarker.Length,
+                blockStart
+                + beginMarker.Length,
                 StringComparison.Ordinal
             );
 
 
         if
         (
-            blockEndMarkerIndex < 0
-            ||
-            blockEndMarkerIndex >= onModelCreatingIndex
+            blockEndMarker < 0
         )
         {
             return Failure(
@@ -1364,18 +1308,25 @@ public class BackendRegistrationEngine
         }
 
 
-        var blockEnd =
+        var removeStart =
+            FindLineStart(
+                text,
+                blockStart
+            );
+
+
+        var removeEnd =
             FindLineEnd(
                 text,
-                blockEndMarkerIndex
+                blockEndMarker
             );
 
 
         text =
             text.Remove(
-                blockStart,
-                blockEnd -
-                blockStart
+                removeStart,
+                removeEnd
+                - removeStart
             );
 
 
@@ -1393,34 +1344,30 @@ public class BackendRegistrationEngine
 
 
     //===========================================================
-    // Register Repository
+    // Register Repository Namespaces
     //===========================================================
 
-    private async Task<(BackendRegistrationResultDto Result, bool Added)>
-        RegisterRepositoryAsync
+    private async Task
+    <
+        (
+            BackendRegistrationResultDto Result,
+            bool Added
+        )
+    >
+        RegisterRepositoryNamespacesAsync
     (
         string dependencyInjectionFile,
 
+        string entityClassName,
+
         string repositoryInterfaceNamespace,
 
-        string repositoryInterfaceName,
-
-        string repositoryNamespace,
-
-        string repositoryClassName
+        string repositoryNamespace
     )
     {
         var text =
             await File.ReadAllTextAsync(
                 dependencyInjectionFile
-            );
-
-
-        var entityClassName =
-            RemoveRepositorySuffix(
-                RemoveInterfacePrefix(
-                    repositoryInterfaceName
-                )
             );
 
 
@@ -1432,13 +1379,393 @@ public class BackendRegistrationEngine
             $"// AUTO-END : {entityClassName}";
 
 
+        var namespaceBeginRegion =
+            "// AUTO-BEGIN : AUTO REGISTER NAMESPACES";
+
+
+        var namespaceEndRegion =
+            "// AUTO-END : AUTO REGISTER NAMESPACES";
+
+
+        var regionStart =
+            text.IndexOf(
+                namespaceBeginRegion,
+                StringComparison.Ordinal
+            );
+
+
         if
         (
-            ContainsManagedBlock(
-                text,
+            regionStart < 0
+        )
+        {
+            return
+            (
+                Failure(
+                    "AUTO-BEGIN : AUTO REGISTER NAMESPACES marker was not found in DependencyInjection.cs."
+                ),
+                false
+            );
+        }
+
+
+        var regionEnd =
+            text.IndexOf(
+                namespaceEndRegion,
+                regionStart
+                + namespaceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            regionEnd < 0
+        )
+        {
+            return
+            (
+                Failure(
+                    "AUTO-END : AUTO REGISTER NAMESPACES marker was not found in DependencyInjection.cs."
+                ),
+                false
+            );
+        }
+
+
+        var blockStart =
+            text.IndexOf(
                 beginMarker,
-                endMarker
-            )
+                regionStart,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            blockStart >= 0
+            &&
+            blockStart < regionEnd
+        )
+        {
+            return
+            (
+                Success(
+                    $"Repository namespaces already registered: {entityClassName}."
+                ),
+                false
+            );
+        }
+
+
+        var registration =
+            string.Join
+            (
+                Environment.NewLine,
+
+                $"// AUTO-BEGIN : {entityClassName}",
+
+                string.Empty,
+
+                $"using {repositoryInterfaceNamespace};",
+
+                $"using {repositoryNamespace};",
+
+                string.Empty,
+
+                $"// AUTO-END : {entityClassName}",
+
+                string.Empty
+            );
+
+
+        var insertionIndex =
+            FindLineEnd(
+                text,
+                regionStart
+            );
+
+
+        text =
+            text.Insert(
+                insertionIndex,
+                Environment.NewLine
+                + registration
+            );
+
+
+        await File.WriteAllTextAsync(
+            dependencyInjectionFile,
+            text
+        );
+
+
+        return
+        (
+            Success(
+                $"Repository namespaces registered: {entityClassName}."
+            ),
+            true
+        );
+    }
+
+
+
+    //===========================================================
+    // Remove Repository Namespaces
+    //===========================================================
+
+    private async Task<BackendRegistrationResultDto>
+        RemoveRepositoryNamespacesAsync
+    (
+        string dependencyInjectionFile,
+
+        string entityClassName
+    )
+    {
+        var text =
+            await File.ReadAllTextAsync(
+                dependencyInjectionFile
+            );
+
+
+        var namespaceBeginRegion =
+            "// AUTO-BEGIN : AUTO REGISTER NAMESPACES";
+
+
+        var namespaceEndRegion =
+            "// AUTO-END : AUTO REGISTER NAMESPACES";
+
+
+        var regionStart =
+            text.IndexOf(
+                namespaceBeginRegion,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            regionStart < 0
+        )
+        {
+            return Failure(
+                "AUTO-BEGIN : AUTO REGISTER NAMESPACES marker was not found in DependencyInjection.cs."
+            );
+        }
+
+
+        var regionEnd =
+            text.IndexOf(
+                namespaceEndRegion,
+                regionStart
+                + namespaceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            regionEnd < 0
+        )
+        {
+            return Failure(
+                "AUTO-END : AUTO REGISTER NAMESPACES marker was not found in DependencyInjection.cs."
+            );
+        }
+
+
+        var beginMarker =
+            $"// AUTO-BEGIN : {entityClassName}";
+
+
+        var endMarker =
+            $"// AUTO-END : {entityClassName}";
+
+
+        var blockStart =
+            text.IndexOf(
+                beginMarker,
+                regionStart
+                + namespaceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            blockStart < 0
+            ||
+            blockStart >= regionEnd
+        )
+        {
+            return Success(
+                $"Repository namespaces were already removed: {entityClassName}."
+            );
+        }
+
+
+        var blockEndMarker =
+            text.IndexOf(
+                endMarker,
+                blockStart
+                + beginMarker.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            blockEndMarker < 0
+            ||
+            blockEndMarker >= regionEnd
+        )
+        {
+            return Failure(
+                $"Repository namespace registration block is incomplete: {entityClassName}."
+            );
+        }
+
+
+        var removeStart =
+            FindLineStart(
+                text,
+                blockStart
+            );
+
+
+        var removeEnd =
+            FindLineEnd(
+                text,
+                blockEndMarker
+            );
+
+
+        text =
+            text.Remove(
+                removeStart,
+                removeEnd
+                - removeStart
+            );
+
+
+        await File.WriteAllTextAsync(
+            dependencyInjectionFile,
+            text
+        );
+
+
+        return Success(
+            $"Repository namespaces removed: {entityClassName}."
+        );
+    }
+
+
+
+    //===========================================================
+    // Register Repository
+    //===========================================================
+
+    private async Task
+    <
+        (
+            BackendRegistrationResultDto Result,
+            bool Added
+        )
+    >
+        RegisterRepositoryAsync
+    (
+        string dependencyInjectionFile,
+
+        string entityClassName,
+
+        string repositoryInterfaceName,
+
+        string repositoryClassName
+    )
+    {
+        var text =
+            await File.ReadAllTextAsync(
+                dependencyInjectionFile
+            );
+
+
+        var beginMarker =
+            $"// AUTO-BEGIN : {entityClassName}";
+
+
+        var endMarker =
+            $"// AUTO-END : {entityClassName}";
+
+
+        var serviceBeginRegion =
+            "// AUTO-BEGIN : AUTO REGISTER SERVICES";
+
+
+        var serviceEndRegion =
+            "// AUTO-END : AUTO REGISTER SERVICES";
+
+
+        var regionStart =
+            text.IndexOf(
+                serviceBeginRegion,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            regionStart < 0
+        )
+        {
+            return
+            (
+                Failure(
+                    "AUTO-BEGIN : AUTO REGISTER SERVICES marker was not found in DependencyInjection.cs."
+                ),
+                false
+            );
+        }
+
+
+        var regionEnd =
+            text.IndexOf(
+                serviceEndRegion,
+                regionStart
+                + serviceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            regionEnd < 0
+        )
+        {
+            return
+            (
+                Failure(
+                    "AUTO-END : AUTO REGISTER SERVICES marker was not found in DependencyInjection.cs."
+                ),
+                false
+            );
+        }
+
+
+        var blockStart =
+            text.IndexOf(
+                beginMarker,
+                regionStart
+                + serviceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            blockStart >= 0
+            &&
+            blockStart < regionEnd
         )
         {
             return
@@ -1451,155 +1778,37 @@ public class BackendRegistrationEngine
         }
 
 
-        var interfaceType =
-            $"{repositoryInterfaceNamespace}.{repositoryInterfaceName}";
-
-
-        var repositoryType =
-            $"{repositoryNamespace}.{repositoryClassName}";
-
-
-        //=======================================================
-        // Load Template
-        //=======================================================
-
-        var template =
-            await _templateLoader.LoadTemplateAsync(
-                "Templates/Backend/DependencyInjectionRegistration/DependencyInjectionRegistration.tpl"
-            );
-
-
-        //=======================================================
-        // Replace Placeholders
-        //=======================================================
-
         var registration =
-            _placeholderEngine.Replace(
-                template,
-
-                new Dictionary<string, string>
-                {
-                    {
-                        "{{ENTITY_CLASS_NAME}}",
-                        entityClassName
-                    },
-
-                    {
-                        "{{REPOSITORY_INTERFACE_TYPE}}",
-                        interfaceType
-                    },
-
-                    {
-                        "{{REPOSITORY_TYPE}}",
-                        repositoryType
-                    }
-                }
-            );
-
-
-        //=======================================================
-        // Normalize Registration
-        //=======================================================
-
-        registration =
-            NormalizeRegistrationBlock(
-                registration
-            );
-
-
-        //=======================================================
-        // Locate AUTO REGISTER REPOSITORIES
-        //=======================================================
-
-        var autoRegisterMarker =
-            "// AUTO REGISTER REPOSITORIES";
-
-
-        var markerIndex =
-            text.IndexOf(
-                autoRegisterMarker,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            markerIndex < 0
-        )
-        {
-            return
+            string.Join
             (
-                Failure(
-                    "AUTO REGISTER REPOSITORIES marker was not found in DependencyInjection.cs."
-                ),
-                false
-            );
-        }
+                Environment.NewLine,
 
+                $"        // AUTO-BEGIN : {entityClassName}",
 
-        //=======================================================
-        // Locate AUTO REGISTER SERVICES
-        //=======================================================
+                string.Empty,
 
-        var servicesRegistrationMarker =
-            "// AUTO REGISTER SERVICES";
+                "        services.AddScoped",
 
+                "        <",
 
-        var servicesRegistrationIndex =
-            text.IndexOf(
-                servicesRegistrationMarker,
-                markerIndex +
-                autoRegisterMarker.Length,
-                StringComparison.Ordinal
-            );
+                $"            {repositoryInterfaceName},",
 
+                $"            {repositoryClassName}",
 
-        if
-        (
-            servicesRegistrationIndex < 0
-        )
-        {
-            return
-            (
-                Failure(
-                    "AUTO REGISTER SERVICES marker was not found after AUTO REGISTER REPOSITORIES in DependencyInjection.cs."
-                ),
-                false
-            );
-        }
+                "        >();",
 
+                string.Empty,
 
-        //=======================================================
-        // Remove Old Repository Placeholder
-        //=======================================================
+                $"        // AUTO-END : {entityClassName}",
 
-        text =
-            RemoveRepositoryRegistrationPlaceholder(
-                text,
-                markerIndex,
-                servicesRegistrationIndex
+                string.Empty
             );
 
-
-        //=======================================================
-        // Recalculate Repository Marker
-        //=======================================================
-
-        markerIndex =
-            text.IndexOf(
-                autoRegisterMarker,
-                StringComparison.Ordinal
-            );
-
-
-        //=======================================================
-        // Insert Immediately Under Repository Marker
-        //=======================================================
 
         var insertionIndex =
             FindLineEnd(
                 text,
-                markerIndex
+                regionStart
             );
 
 
@@ -1629,134 +1838,6 @@ public class BackendRegistrationEngine
 
 
     //===========================================================
-    // Normalize Registration Block
-    //===========================================================
-
-    private static string
-        NormalizeRegistrationBlock
-    (
-        string registration
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                registration
-            )
-        )
-        {
-            return string.Empty;
-        }
-
-
-        var normalized =
-            registration
-                .Replace(
-                    "\r\n",
-                    "\n"
-                )
-                .Replace(
-                    "\r",
-                    "\n"
-                )
-                .Trim();
-
-
-        normalized =
-            IndentRegistrationBlock(
-                normalized,
-                8
-            );
-
-
-        return
-            normalized
-            + Environment.NewLine
-            + Environment.NewLine;
-    }
-
-
-
-    //===========================================================
-    // Remove Repository Registration Placeholder
-    //===========================================================
-
-    private static string
-        RemoveRepositoryRegistrationPlaceholder
-    (
-        string text,
-
-        int markerIndex,
-
-        int servicesRegistrationIndex
-    )
-    {
-        const string placeholderStart =
-            "// Registration Engine adds generated repository";
-
-
-        var placeholderIndex =
-            text.IndexOf(
-                placeholderStart,
-                markerIndex +
-                "// AUTO REGISTER REPOSITORIES".Length,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            placeholderIndex < 0
-            ||
-            placeholderIndex >= servicesRegistrationIndex
-        )
-        {
-            return text;
-        }
-
-
-        var lineStart =
-            FindLineStart(
-                text,
-                placeholderIndex
-            );
-
-
-        var continuation =
-            "// registrations here.";
-
-
-        var continuationIndex =
-            text.IndexOf(
-                continuation,
-                placeholderIndex,
-                StringComparison.Ordinal
-            );
-
-
-        var lineEnd =
-            continuationIndex >= 0
-                ? FindLineEnd(
-                    text,
-                    continuationIndex
-                )
-                : FindLineEnd(
-                    text,
-                    placeholderIndex
-                );
-
-
-        return
-            text.Remove(
-                lineStart,
-                lineEnd -
-                lineStart
-            );
-    }
-
-
-
-    //===========================================================
     // Remove Repository
     //===========================================================
 
@@ -1764,6 +1845,8 @@ public class BackendRegistrationEngine
         RemoveRepositoryAsync
     (
         string dependencyInjectionFile,
+
+        string entityClassName,
 
         string repositoryInterfaceName
     )
@@ -1774,12 +1857,50 @@ public class BackendRegistrationEngine
             );
 
 
-        var entityClassName =
-            RemoveRepositorySuffix(
-                RemoveInterfacePrefix(
-                    repositoryInterfaceName
-                )
+        var serviceBeginRegion =
+            "// AUTO-BEGIN : AUTO REGISTER SERVICES";
+
+
+        var serviceEndRegion =
+            "// AUTO-END : AUTO REGISTER SERVICES";
+
+
+        var regionStart =
+            text.IndexOf(
+                serviceBeginRegion,
+                StringComparison.Ordinal
             );
+
+
+        if
+        (
+            regionStart < 0
+        )
+        {
+            return Failure(
+                "AUTO-BEGIN : AUTO REGISTER SERVICES marker was not found in DependencyInjection.cs."
+            );
+        }
+
+
+        var regionEnd =
+            text.IndexOf(
+                serviceEndRegion,
+                regionStart
+                + serviceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            regionEnd < 0
+        )
+        {
+            return Failure(
+                "AUTO-END : AUTO REGISTER SERVICES marker was not found in DependencyInjection.cs."
+            );
+        }
 
 
         var beginMarker =
@@ -1790,57 +1911,11 @@ public class BackendRegistrationEngine
             $"// AUTO-END : {entityClassName}";
 
 
-        var autoRegisterMarker =
-            "// AUTO REGISTER REPOSITORIES";
-
-
-        var markerIndex =
-            text.IndexOf(
-                autoRegisterMarker,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            markerIndex < 0
-        )
-        {
-            return Failure(
-                "AUTO REGISTER REPOSITORIES marker was not found in DependencyInjection.cs."
-            );
-        }
-
-
-        var servicesRegistrationMarker =
-            "// AUTO REGISTER SERVICES";
-
-
-        var servicesRegistrationIndex =
-            text.IndexOf(
-                servicesRegistrationMarker,
-                markerIndex +
-                autoRegisterMarker.Length,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            servicesRegistrationIndex < 0
-        )
-        {
-            return Failure(
-                "AUTO REGISTER SERVICES marker was not found after AUTO REGISTER REPOSITORIES in DependencyInjection.cs."
-            );
-        }
-
-
         var blockStart =
             text.IndexOf(
                 beginMarker,
-                markerIndex +
-                autoRegisterMarker.Length,
+                regionStart
+                + serviceBeginRegion.Length,
                 StringComparison.Ordinal
             );
 
@@ -1849,7 +1924,7 @@ public class BackendRegistrationEngine
         (
             blockStart < 0
             ||
-            blockStart >= servicesRegistrationIndex
+            blockStart >= regionEnd
         )
         {
             return Success(
@@ -1858,40 +1933,47 @@ public class BackendRegistrationEngine
         }
 
 
-        var blockEndMarkerIndex =
+        var blockEndMarker =
             text.IndexOf(
                 endMarker,
-                blockStart +
-                beginMarker.Length,
+                blockStart
+                + beginMarker.Length,
                 StringComparison.Ordinal
             );
 
 
         if
         (
-            blockEndMarkerIndex < 0
+            blockEndMarker < 0
             ||
-            blockEndMarkerIndex >= servicesRegistrationIndex
+            blockEndMarker >= regionEnd
         )
         {
             return Failure(
-                $"Generated repository registration block is incomplete: {entityClassName}."
+                $"Repository registration block is incomplete: {entityClassName}."
             );
         }
 
 
-        var blockEnd =
+        var removeStart =
+            FindLineStart(
+                text,
+                blockStart
+            );
+
+
+        var removeEnd =
             FindLineEnd(
                 text,
-                blockEndMarkerIndex
+                blockEndMarker
             );
 
 
         text =
             text.Remove(
-                blockStart,
-                blockEnd -
-                blockStart
+                removeStart,
+                removeEnd
+                - removeStart
             );
 
 
@@ -1928,19 +2010,44 @@ public class BackendRegistrationEngine
     {
         if
         (
-            registrationState.Repository.Added
+            !string.IsNullOrWhiteSpace(
+                dependencyInjectionFile
+            )
         )
         {
-            await RemoveRepositoryAsync(
-                dependencyInjectionFile,
-                repositoryInterfaceName
-            );
+            if
+            (
+                registrationState.Repository.Added
+            )
+            {
+                await RemoveRepositoryAsync(
+                    dependencyInjectionFile,
+                    entityClassName,
+                    repositoryInterfaceName
+                );
+            }
+
+
+            if
+            (
+                registrationState.RepositoryNamespaces.Added
+            )
+            {
+                await RemoveRepositoryNamespacesAsync(
+                    dependencyInjectionFile,
+                    entityClassName
+                );
+            }
         }
 
 
         if
         (
             registrationState.DbSet.Added
+            &&
+            !string.IsNullOrWhiteSpace(
+                dbContextFile
+            )
         )
         {
             await RemoveDbSetAsync(
@@ -1985,13 +2092,317 @@ public class BackendRegistrationEngine
         var endIndex =
             text.IndexOf(
                 endMarker,
-                beginIndex +
-                beginMarker.Length,
+                beginIndex
+                + beginMarker.Length,
                 StringComparison.Ordinal
             );
 
 
-        return endIndex >= 0;
+        return
+            endIndex >= 0;
+    }
+
+
+
+    //===========================================================
+    // Find Backend Studio Root
+    //===========================================================
+
+    private static string?
+        FindBackendStudioRoot
+    (
+        string startingFile
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                startingFile
+            )
+            ||
+            !File.Exists(
+                startingFile
+            )
+        )
+        {
+            return null;
+        }
+
+
+        var currentDirectory =
+            new DirectoryInfo(
+                Path.GetDirectoryName(
+                    Path.GetFullPath(
+                        startingFile
+                    )
+                )!
+            );
+
+
+        while
+        (
+            currentDirectory != null
+        )
+        {
+            var infrastructureProject =
+                Directory.GetFiles(
+                    currentDirectory.FullName,
+                    "AppCore.Infrastructure.csproj",
+                    SearchOption.AllDirectories
+                )
+                .FirstOrDefault();
+
+
+            if
+            (
+                !string.IsNullOrWhiteSpace(
+                    infrastructureProject
+                )
+            )
+            {
+                return
+                    currentDirectory.FullName;
+            }
+
+
+            currentDirectory =
+                currentDirectory.Parent;
+        }
+
+
+        return null;
+    }
+
+
+
+    //===========================================================
+    // Find AppDbContext
+    //===========================================================
+
+    private static string?
+        FindAppDbContextFile
+    (
+        string backendStudioRoot
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                backendStudioRoot
+            )
+            ||
+            !Directory.Exists(
+                backendStudioRoot
+            )
+        )
+        {
+            return null;
+        }
+
+
+        return
+            Directory
+                .GetFiles(
+                    backendStudioRoot,
+                    "AppDbContext.cs",
+                    SearchOption.AllDirectories
+                )
+                .FirstOrDefault();
+    }
+
+
+
+    //===========================================================
+    // Find DependencyInjection
+    //===========================================================
+
+    private static string?
+        FindDependencyInjectionFile
+    (
+        string backendStudioRoot
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                backendStudioRoot
+            )
+            ||
+            !Directory.Exists(
+                backendStudioRoot
+            )
+        )
+        {
+            return null;
+        }
+
+
+        var files =
+            Directory
+                .GetFiles(
+                    backendStudioRoot,
+                    "DependencyInjection.cs",
+                    SearchOption.AllDirectories
+                );
+
+
+        foreach
+        (
+            var file
+            in files
+        )
+        {
+            var content =
+                File.ReadAllText(
+                    file
+                );
+
+
+            if
+            (
+                content.Contains(
+                    "public static class DependencyInjection",
+                    StringComparison.Ordinal
+                )
+                &&
+                content.Contains(
+                    "// AUTO REGISTER",
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                return file;
+            }
+        }
+
+
+        return
+            files.FirstOrDefault();
+    }
+
+
+
+    //===========================================================
+    // Extract Namespace
+    //===========================================================
+
+    private static string
+        ExtractNamespace
+    (
+        string content
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                content
+            )
+        )
+        {
+            return string.Empty;
+        }
+
+
+        var match =
+            Regex.Match(
+                content,
+                @"namespace\s+([A-Za-z_][A-Za-z0-9_\.]*)\s*;"
+            );
+
+
+        if
+        (
+            match.Success
+        )
+        {
+            return
+                match.Groups[1].Value.Trim();
+        }
+
+
+        match =
+            Regex.Match(
+                content,
+                @"namespace\s+([A-Za-z_][A-Za-z0-9_\.]*)\s*\{"
+            );
+
+
+        return
+            match.Success
+                ? match.Groups[1].Value.Trim()
+                : string.Empty;
+    }
+
+
+
+    //===========================================================
+    // Extract Class Name
+    //===========================================================
+
+    private static string
+        ExtractClassName
+    (
+        string content
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                content
+            )
+        )
+        {
+            return string.Empty;
+        }
+
+
+        var match =
+            Regex.Match(
+                content,
+                @"public\s+(?:sealed\s+|abstract\s+|partial\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)"
+            );
+
+
+        return
+            match.Success
+                ? match.Groups[1].Value.Trim()
+                : string.Empty;
+    }
+
+
+
+    //===========================================================
+    // Extract Interface Name
+    //===========================================================
+
+    private static string
+        ExtractInterfaceName
+    (
+        string content
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                content
+            )
+        )
+        {
+            return string.Empty;
+        }
+
+
+        var match =
+            Regex.Match(
+                content,
+                @"public\s+interface\s+([A-Za-z_][A-Za-z0-9_]*)"
+            );
+
+
+        return
+            match.Success
+                ? match.Groups[1].Value.Trim()
+                : string.Empty;
     }
 
 
@@ -2008,13 +2419,19 @@ public class BackendRegistrationEngine
         int index
     )
     {
+        if
+        (
+            index <= 0
+        )
+        {
+            return 0;
+        }
+
+
         var lineStart =
             text.LastIndexOf(
                 '\n',
-                Math.Max(
-                    0,
-                    index - 1
-                )
+                index
             );
 
 
@@ -2045,398 +2462,10 @@ public class BackendRegistrationEngine
             );
 
 
-        if
-        (
+        return
             lineEnd < 0
-        )
-        {
-            return text.Length;
-        }
-
-
-        return lineEnd + 1;
-    }
-
-
-
-    //===========================================================
-    // Remove Interface Prefix
-    //===========================================================
-
-    private static string
-        RemoveInterfacePrefix
-    (
-        string interfaceName
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                interfaceName
-            )
-        )
-        {
-            return interfaceName;
-        }
-
-
-        if
-        (
-            interfaceName.StartsWith(
-                "I",
-                StringComparison.Ordinal
-            )
-            &&
-            interfaceName.Length > 1
-        )
-        {
-            return interfaceName[1..];
-        }
-
-
-        return interfaceName;
-    }
-
-
-
-    //===========================================================
-    // Remove Repository Suffix
-    //===========================================================
-
-    private static string
-        RemoveRepositorySuffix
-    (
-        string name
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                name
-            )
-        )
-        {
-            return name;
-        }
-
-
-        const string suffix =
-            "Repository";
-
-
-        if
-        (
-            name.EndsWith(
-                suffix,
-                StringComparison.Ordinal
-            )
-        )
-        {
-            return name[
-                ..^suffix.Length
-            ];
-        }
-
-
-        return name;
-    }
-
-
-
-    //===========================================================
-    // Extract Namespace
-    //===========================================================
-
-    private static string?
-        ExtractNamespace
-    (
-        string content
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                content
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var match =
-            Regex.Match(
-                content,
-                @"\bnamespace\s+([A-Za-z_][A-Za-z0-9_.]*)",
-                RegexOptions.Multiline
-            );
-
-
-        if
-        (
-            !match.Success
-        )
-        {
-            return null;
-        }
-
-
-        return match.Groups[1].Value.Trim();
-    }
-
-
-
-    //===========================================================
-    // Extract Class Name
-    //===========================================================
-
-    private static string?
-        ExtractClassName
-    (
-        string content
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                content
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var match =
-            Regex.Match(
-                content,
-                @"\b(?:public|internal|private|protected)?\s*(?:sealed\s+|abstract\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)",
-                RegexOptions.Multiline
-            );
-
-
-        if
-        (
-            !match.Success
-        )
-        {
-            return null;
-        }
-
-
-        return match.Groups[1].Value.Trim();
-    }
-
-
-
-    //===========================================================
-    // Extract Interface Name
-    //===========================================================
-
-    private static string?
-        ExtractInterfaceName
-    (
-        string content
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                content
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var match =
-            Regex.Match(
-                content,
-                @"\binterface\s+([A-Za-z_][A-Za-z0-9_]*)",
-                RegexOptions.Multiline
-            );
-
-
-        if
-        (
-            !match.Success
-        )
-        {
-            return null;
-        }
-
-
-        return match.Groups[1].Value.Trim();
-    }
-
-
-
-    //===========================================================
-    // Find Backend Studio Root
-    //===========================================================
-
-    private static string?
-        FindBackendStudioRoot
-    (
-        string startingFile
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                startingFile
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var fullStartingFile =
-            Path.GetFullPath(
-                startingFile
-            );
-
-
-        var startingDirectory =
-            Path.GetDirectoryName(
-                fullStartingFile
-            );
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                startingDirectory
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var directory =
-            new DirectoryInfo(
-                startingDirectory
-            );
-
-
-        while
-        (
-            directory is not null
-        )
-        {
-            var infrastructureProject =
-                FindProjectFile(
-                    directory.FullName,
-                    "AppCore.Infrastructure"
-                );
-
-
-            var apiProject =
-                FindProjectFile(
-                    directory.FullName,
-                    "AppCore.Api"
-                );
-
-
-            if
-            (
-                infrastructureProject is not null
-                &&
-                apiProject is not null
-            )
-            {
-                return directory.FullName;
-            }
-
-
-            directory =
-                directory.Parent;
-        }
-
-
-        return null;
-    }
-
-
-
-    //===========================================================
-    // Find Project File
-    //===========================================================
-
-    private static string?
-        FindProjectFile
-    (
-        string rootDirectory,
-
-        string projectName
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                rootDirectory
-            )
-            ||
-            string.IsNullOrWhiteSpace(
-                projectName
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var directProject =
-            Path.Combine(
-                rootDirectory,
-                projectName,
-                $"{projectName}.csproj"
-            );
-
-
-        if
-        (
-            File.Exists(
-                directProject
-            )
-        )
-        {
-            return directProject;
-        }
-
-
-        if
-        (
-            !Directory.Exists(
-                rootDirectory
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var projectFiles =
-            Directory.GetFiles(
-                rootDirectory,
-                "*.csproj",
-                SearchOption.AllDirectories
-            );
-
-
-        return projectFiles.FirstOrDefault(
-            x =>
-                string.Equals(
-                    Path.GetFileNameWithoutExtension(
-                        x
-                    ),
-                    projectName,
-                    StringComparison.OrdinalIgnoreCase
-                )
-        );
+                ? text.Length
+                : lineEnd + 1;
     }
 
 
@@ -2551,20 +2580,31 @@ public class BackendRegistrationEngine
     private sealed class BackendRegistrationState
     {
 
-        //=======================================================
-        // DbSet Registration
-        //=======================================================
+        public
+        (
+            BackendRegistrationResultDto Result,
+            bool Added
+        )
+            DbSet
+            { get; set; }
 
-        public (BackendRegistrationResultDto Result, bool Added)
-            DbSet { get; set; }
+
+        public
+        (
+            BackendRegistrationResultDto Result,
+            bool Added
+        )
+            RepositoryNamespaces
+            { get; set; }
 
 
-        //=======================================================
-        // Repository Registration
-        //=======================================================
-
-        public (BackendRegistrationResultDto Result, bool Added)
-            Repository { get; set; }
+        public
+        (
+            BackendRegistrationResultDto Result,
+            bool Added
+        )
+            Repository
+            { get; set; }
 
     }
 

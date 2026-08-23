@@ -15,6 +15,8 @@ using AppCore.Infrastructure.Persistence;
 
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
+using AppCore.Infrastructure.Repositories.Common;
+
 
 //===============================================================
 // Navigation Management
@@ -26,6 +28,14 @@ using AppCore.Application.InfrastructureControl.NavigationManagement.Submenu.Int
 using AppCore.Application.InfrastructureControl.NavigationManagement.Activity.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.MasterActivity.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.Sidebar.Interfaces;
+
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Module;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Menu;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Submenu;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Activity;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.MasterActivity;
+
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
 
 
 //===============================================================
@@ -40,37 +50,11 @@ using AppCore.Application.InfrastructureControl.DevelopmentManagement.MenuSynchr
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.Interfaces;
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.Interfaces;
 
-using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
-using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
-
-using AppCore.Application.Platform.MenuFrontendSynchronizationEngine.Interfaces;
-using AppCore.Application.Platform.MenuBackendSynchronizationEngine.Interfaces;
-
-using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
-using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interfaces;
-
-using AppCore.Application.Platform.SynchronizationEngineInterfaces.CodeSynchronizationEngine;
-using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
-using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendDatabaseEngine;
-
-using AppCore.Infrastructure.Platform.Synchronization;
-using AppCore.Infrastructure.Platform.Synchronization.CodeSynchronizationEngine;
-using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
-using AppCore.Infrastructure.Platform.Synchronization.BackendDatabaseEngine;
-
-
-//===============================================================
-// Frontend Rebuild Engine
-//===============================================================
-
-using AppCore.Infrastructure.Platform.FrontendRebuildEngine;
-
-
-//===============================================================
-// Backend Rebuild Engine
-//===============================================================
-
-using AppCore.Infrastructure.Platform.BackendRebuildEngine;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.ProjectSynchronization;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.MenuSynchronization;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.CodeSynchronization;
 
 
 //===============================================================
@@ -78,47 +62,99 @@ using AppCore.Infrastructure.Platform.BackendRebuildEngine;
 //===============================================================
 
 using AppCore.Application.Platform.CommonInterfaces;
+
 using AppCore.Infrastructure.Platform.Common;
 
 
 //===============================================================
-// Human Resource Setup
+// Module Synchronization Engines
 //===============================================================
 
-using AppCore.Application.Contracts.Persistence.HumanResource.HumanResourceSetup;
-using AppCore.Application.HumanResource.HumanResourceSetup.Designation.Interfaces;
-
-
-//===============================================================
-// Security & Permission
-//===============================================================
-
-using AppCore.Application.SecurityPermission.RoleManagement.RoleProfiles.Interfaces;
-using AppCore.Application.SecurityPermission.RoleManagement.ActivityAssignment.Interfaces;
+using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
+using AppCore.Application.Platform.FrontendSynchronizationEngine.Interfaces;
 
 
 //===============================================================
-// Repositories
+// Menu Synchronization Engines
 //===============================================================
 
-using AppCore.Infrastructure.Repositories.Common;
+using AppCore.Application.Platform.MenuBackendSynchronizationEngine.Interfaces;
+using AppCore.Application.Platform.MenuFrontendSynchronizationEngine.Interfaces;
 
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Module;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Menu;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Submenu;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Activity;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.MasterActivity;
 
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
+//===============================================================
+// Submenu Synchronization Engines
+//===============================================================
 
-using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.ProjectSynchronization;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.MenuSynchronization;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.DevelopmentManagement.CodeSynchronization;
+using AppCore.Application.Platform.SubmenuFrontendSynchronizationEngine.Interfaces;
+using AppCore.Application.Platform.SubmenuBackendSynchronizationEngine.Interfaces;
 
-using AppCore.Infrastructure.Repositories.HumanResource.HumanResourceSetup;
-using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
+
+//===============================================================
+// Code Synchronization Engines
+//===============================================================
+
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.CodeSynchronizationEngine;
+
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
+
+
+//===============================================================
+// Database Engines
+//===============================================================
+
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
+
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine;
+
+
+//===============================================================
+// Platform Synchronization Implementations
+//===============================================================
+
+using AppCore.Infrastructure.Platform.Synchronization;
+
+using AppCore.Infrastructure.Platform.Synchronization.CodeSynchronizationEngine;
+
+using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
+
+
+//===============================================================
+// AUTO REGISTER NAMESPACES
+//===============================================================
+
+// AUTO-BEGIN : AUTO REGISTER NAMESPACES
+
+// AUTO-BEGIN : PaymentVoucher
+
+using AppCore.Application.AccountsFinance.VoucherManagement;
+using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
+
+// AUTO-END : PaymentVoucher
+
+// AUTO-BEGIN : Branch
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+
+// AUTO-END : Branch
+
+// AUTO-BEGIN : Company
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+
+// AUTO-END : Company
+
+
+
+
+
+
+
+
+
+// AUTO-END : AUTO REGISTER NAMESPACES
 
 
 //===============================================================
@@ -158,7 +194,7 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Common Repository
+        // Activity History Repository
         //=======================================================
 
         services.AddScoped
@@ -169,7 +205,7 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Navigation Management Repository
+        // Navigation Management Repositories
         //=======================================================
 
         services.AddScoped
@@ -210,7 +246,7 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Development Management Repository
+        // Development Management Repositories
         //=======================================================
 
         services.AddScoped
@@ -245,7 +281,54 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Platform Common
+        // AUTO REGISTER SERVICES
+        //=======================================================
+
+        // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : PaymentVoucher
+
+        services.AddScoped
+        <
+            IPaymentVoucherRepository,
+            PaymentVoucherRepository
+        >();
+
+        // AUTO-END : PaymentVoucher
+
+        // AUTO-BEGIN : Branch
+
+        services.AddScoped
+        <
+            IBranchRepository,
+            BranchRepository
+        >();
+
+        // AUTO-END : Branch
+
+        // AUTO-BEGIN : Company
+
+        services.AddScoped
+        <
+            ICompanyRepository,
+            CompanyRepository
+        >();
+
+        // AUTO-END : Company
+
+
+
+
+
+
+
+
+
+        // AUTO-END : AUTO REGISTER SERVICES
+
+
+        //=======================================================
+        // Platform Common Services
         //=======================================================
 
         services.AddScoped
@@ -280,7 +363,124 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Development Management Engine
+        // Module Synchronization Engines
+        //=======================================================
+
+        services.AddScoped
+        <
+            IBackendSynchronizationEngine,
+            ModuleBackendSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            IFrontendSynchronizationEngine,
+            ModuleFrontendSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Menu Synchronization Engines
+        //=======================================================
+
+        services.AddScoped
+        <
+            IMenuBackendSynchronizationEngine,
+            MenuBackendSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            IMenuFrontendSynchronizationEngine,
+            MenuFrontendSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Submenu Synchronization Engines
+        //=======================================================
+
+        services.AddScoped
+        <
+            ISubmenuFrontendSynchronizationEngine,
+            SubmenuFrontendSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            ISubmenuBackendSynchronizationEngine,
+            SubmenuBackendSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Code Synchronization Engines
+        //=======================================================
+
+        services.AddScoped
+        <
+            IFrontendCodeSynchronizationEngine,
+            FrontendCodeSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            IBackendCodeSynchronizationEngine,
+            BackendCodeSynchronizationEngine
+        >();
+
+        services.AddScoped
+        <
+            IBackendRegistrationEngine,
+            BackendRegistrationEngine
+        >();
+
+        services.AddScoped
+        <
+            ICodeSynchronizationEngine,
+            CodeSynchronizationEngine
+        >();
+
+
+        //=======================================================
+        // Database Engines
+        //=======================================================
+
+        services.AddScoped
+        <
+            IDatabaseCreationEngine,
+            DatabaseCreationEngine
+        >();
+
+        services.AddScoped
+        <
+            IDatabaseRemovalEngine,
+            DatabaseRemovalEngine
+        >();
+
+
+        //=======================================================
+        // Database Engine Helpers
+        //=======================================================
+
+        services.AddScoped
+        <
+            DatabaseArtifactHelper
+        >();
+
+        services.AddScoped
+        <
+            DatabaseMigrationHelper
+        >();
+
+        services.AddScoped
+        <
+            DatabaseSnapshotHelper
+        >();
+
+
+        //=======================================================
+        // Development Management Engines
         //=======================================================
 
         services.AddScoped
@@ -303,316 +503,9 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Code Synchronization Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            ICodeSynchronizationEngine,
-            CodeSynchronizationEngine
-        >();
-
-
-        //=======================================================
-        // Frontend Code Synchronization Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            IFrontendCodeSynchronizationEngine,
-            FrontendCodeSynchronizationEngine
-        >();
-
-
-        //=======================================================
-        // Backend Code Synchronization Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            IBackendCodeSynchronizationEngine,
-            BackendCodeSynchronizationEngine
-        >();
-
-
-        //=======================================================
-        // Backend Registration Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            IBackendRegistrationEngine,
-            BackendRegistrationEngine
-        >();
-
-
-        //=======================================================
-        // Backend Database Engine
-        //=======================================================
-        //
-        // Responsible only for database structure operations.
-        //
-        // It does NOT register:
-        //
-        //     - DbSet
-        //     - Dependency Injection services
-        //
-        // Those responsibilities remain with the
-        // Backend Registration Engine.
-        //
-        //=======================================================
-
-        services.AddScoped
-        <
-            IBackendDatabaseEngine,
-            BackendDatabaseEngine
-        >();
-
-
-        //=======================================================
-        // Module Synchronization Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            IBackendSynchronizationEngine,
-            ModuleBackendSynchronizationEngine
-        >();
-
-        services.AddScoped
-        <
-            IFrontendSynchronizationEngine,
-            ModuleFrontendSynchronizationEngine
-        >();
-
-
-        //=======================================================
-        // Menu Synchronization Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            IMenuBackendSynchronizationEngine,
-            MenuBackendSynchronizationEngine
-        >();
-
-        services.AddScoped
-        <
-            IMenuFrontendSynchronizationEngine,
-            MenuFrontendSynchronizationEngine
-        >();
-
-
-        //=======================================================
-        // Submenu Synchronization Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            ISubmenuBackendSynchronizationEngine,
-            SubmenuBackendSynchronizationEngine
-        >();
-
-        services.AddScoped
-        <
-            ISubmenuFrontendSynchronizationEngine,
-            SubmenuFrontendSynchronizationEngine
-        >();
-
-
-        //=======================================================
-        // Frontend Rebuild Engine
-        //=======================================================
-
-        services.AddSingleton
-        (
-            new FrontendRebuildOptions
-            {
-                ProjectPath = @"Frontend_Studio\Studio_UI",
-
-                Port = 4100,
-
-                StartupTimeoutSeconds = 60
-            }
-        );
-
-        services.AddSingleton
-        <
-            IFrontendRebuildEngine,
-            FrontendRebuildEngine
-        >();
-
-
-        //=======================================================
-        // Backend Rebuild Engine
-        //=======================================================
-
-        services.AddSingleton
-        (
-            new BackendRebuildOptions
-            {
-                ProjectPath =
-                    Path.GetFullPath(
-                        Path.Combine(
-                            AppContext.BaseDirectory,
-                            "..",
-                            "..",
-                            ".."
-                        )
-                    ),
-
-                Port = 5100,
-
-                BuildTimeoutSeconds = 120,
-
-                StartupTimeoutSeconds = 60
-            }
-        );
-
-        services.AddSingleton
-        <
-            IBackendRebuildEngine,
-            BackendRebuildEngine
-        >();
-
-
-        //=======================================================
-        // Human Resource Setup Repository
-        //=======================================================
-
-        services.AddScoped
-        <
-            IDepartmentRepository,
-            DepartmentRepository
-        >();
-
-        services.AddScoped
-        <
-            IDesignationRepository,
-            DesignationRepository
-        >();
-
-
-        //=======================================================
-        // Security & Permission Repository
-        //=======================================================
-
-        services.AddScoped
-        <
-            IRoleProfileRepository,
-            RoleProfileRepository
-        >();
-
-        services.AddScoped
-        <
-            IActivityAssignmentRepository,
-            ActivityAssignmentRepository
-        >();
-
-        services.AddScoped
-        <
-            IActivityAssignmentDetailRepository,
-            ActivityAssignmentDetailRepository
-        >();
-
-
-        //=======================================================
-        // AUTO REGISTER REPOSITORIES
-
-        // AUTO-BEGIN : AccountGroup
-
-        //=======================================================
-        // AccountGroup
-        //=======================================================
-
-        services.AddScoped
-        <
-        AppCore.Application.Settings.AccountSettings.IAccountGroupRepository,
-        AppCore.Infrastructure.Configurations.Settings.AccountSettings.AccountGroupRepository
-        >();
-
-
-        // AUTO-END : AccountGroup
-
-
-        // AUTO-BEGIN : Company
-
-        //=======================================================
-        // Company
-        //=======================================================
-
-        services.AddScoped
-        <
-        AppCore.Application.Settings.GeneralSettings.ICompanyRepository,
-        AppCore.Infrastructure.Configurations.Settings.GeneralSettings.CompanyRepository
-        >();
-
-
-        // AUTO-END : Company
-
-
-        // AUTO-BEGIN : Branch
-
-        //=======================================================
-        // Branch
-        //=======================================================
-
-        services.AddScoped
-        <
-        AppCore.Application.Settings.GeneralSettings.IBranchRepository,
-        AppCore.Infrastructure.Configurations.Settings.GeneralSettings.BranchRepository
-        >();
-
-
-        // AUTO-END : Branch
-
-
-        
-
-        // AUTO-BEGIN : AccountClass
-
-        //=======================================================
-        // AccountClass
-        //=======================================================
-
-        services.AddScoped
-        <
-        AppCore.Application.Settings.AccountSettings.IAccountClassRepository,
-        AppCore.Infrastructure.Configurations.Settings.AccountSettings.AccountClassRepository
-        >();
-
-
-        // AUTO-END : AccountClass
-
-
-        
-
-        
-
-        
-
-        
-
-        
-
-        
-        //=======================================================
-
-
-
-        //=======================================================
-        // AUTO REGISTER SERVICES
-        //=======================================================
-
-        // Registration Engine adds generated service
-        // registrations here.
-
-
-        //=======================================================
         // Return Services
         //=======================================================
 
         return services;
     }
-
 }

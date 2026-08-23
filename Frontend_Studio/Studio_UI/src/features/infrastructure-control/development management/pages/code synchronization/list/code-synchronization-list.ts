@@ -1755,8 +1755,6 @@ implements OnInit
         this.applyFilters();
     }
 
-
-
     //===========================================================
     // Load Code Synchronization Data
     //===========================================================
@@ -1792,19 +1790,18 @@ implements OnInit
                         CodeSynchronization[]
                 ) =>
                 {
-                    //=======================================================
-                    // IMPORTANT:
-                    //
-                    // Restore physical database state BEFORE rebuilding
-                    // synchronization rows.
-                    //
-                    // This is what fixes the browser reload problem.
-                    //=======================================================
+                    //===================================================
+                    // Restore Database Created State
+                    //===================================================
 
                     this.restoreDatabaseCreatedState(
                         response
                     );
 
+
+                    //===================================================
+                    // Build Synchronization Rows
+                    //===================================================
 
                     this.synchronizations =
                         response.map(
@@ -1813,31 +1810,33 @@ implements OnInit
                                 ...item,
 
                                 buildStatus:
-                                item.status?.toLowerCase()
-                                ===
-                                'synchronized'
-
-                                    ? 'Successful'
-
-                                    :
-                                    !item.buildStatus
-                                    ||
-                                    item.buildStatus
-                                        .toString()
-                                        .trim()
-                                        .toLowerCase()
+                                    item.status?.toLowerCase()
                                     ===
-                                    'n/a'
+                                    'synchronized'
 
-                                        ? 'Pending'
+                                        ? 'Successful'
 
                                         :
-                                        item.buildStatus,
+                                        !item.buildStatus
+                                        ||
+                                        item.buildStatus
+                                            .toString()
+                                            .trim()
+                                            .toLowerCase()
+                                        ===
+                                        'n/a'
+
+                                            ? 'Pending'
+
+                                            :
+                                            item.buildStatus,
 
                                 dbStatus:
                                     item.dbStatus,
 
                                 databaseCreated:
+                                    item.databaseCreated === true
+                                    ||
                                     this.isDatabaseCreated(
                                         item
                                     )
@@ -1902,8 +1901,6 @@ implements OnInit
                 }
             });
     }
-
-
 
     //===========================================================
     // Apply Filters
@@ -3848,7 +3845,8 @@ implements OnInit
 
     database
     (
-        item:CodeSynchronization
+        item:
+            CodeSynchronization
     ):
         void
     {
@@ -3874,7 +3872,10 @@ implements OnInit
 
         if
         (
-            !this.canDatabaseAction(item)
+            !this.canDatabaseAction
+            (
+                item
+            )
         )
         {
             return;
@@ -3882,23 +3883,27 @@ implements OnInit
 
 
         //=======================================================
-        // REMOVE DATABASE
+        // Remove Database
         //=======================================================
 
         if
         (
-            this.isDatabaseCreated(item)
+            this.isDatabaseCreated
+            (
+                item
+            )
         )
         {
             this.confirmDialog.open
             (
                 'Remove Database Table',
 
-                `Are you sure you want to remove the database table for "${item.submenuName}" ?`,
+                `Are you sure you want to remove the database table for "${item.submenuName}"?`,
 
                 () =>
                 {
-                    this.startDatabaseRemove(
+                    this.startDatabaseRemove
+                    (
                         item
                     );
                 },
@@ -3916,18 +3921,19 @@ implements OnInit
 
 
         //=======================================================
-        // CREATE DATABASE
+        // Create Database
         //=======================================================
 
         this.confirmDialog.open
         (
             'Create Database Table',
 
-            `Are you sure you want to create the database table for "${item.submenuName}" ?`,
+            `Are you sure you want to create the database table for "${item.submenuName}"?`,
 
             () =>
             {
-                this.startDatabaseCreate(
+                this.startDatabaseCreate
+                (
                     item
                 );
             },
@@ -4023,31 +4029,6 @@ implements OnInit
                             response
                         ) =>
                         {
-                            if
-                            (
-                                !response?.success
-                            )
-                            {
-                                this.progressDialog.close();
-
-
-                                this.toast.error
-                                (
-                                    'Database Creation Failed',
-
-                                    response?.message
-                                    ??
-                                    'Failed to create the database table.'
-                                );
-
-
-                                this.cdr.detectChanges();
-
-
-                                return;
-                            }
-
-
                             this.progressDialog.update
                             (
                                 100,
@@ -4062,27 +4043,21 @@ implements OnInit
                                     this.progressDialog.close();
 
 
+                                    this.setDatabaseCreated
+                                    (
+                                        item,
+
+                                        true
+                                    );
+
+
                                     this.toast.success
                                     (
                                         'Database Table',
 
+                                        response?.message
+                                        ??
                                         `${item.submenuName} database table created successfully.`
-                                    );
-
-
-                                    //===================================================
-                                    // CRITICAL:
-                                    //
-                                    // Persist the physical database-created state.
-                                    //
-                                    // Previously this was only stored in the Map,
-                                    // which disappeared after browser reload.
-                                    //===================================================
-
-                                    this.setDatabaseCreated(
-                                        item,
-
-                                        true
                                     );
 
 
@@ -4239,7 +4214,6 @@ implements OnInit
 
                                 this.cdr.detectChanges();
 
-
                                 return;
                             }
 
@@ -4258,28 +4232,21 @@ implements OnInit
                                     this.progressDialog.close();
 
 
+                                    this.setDatabaseCreated
+                                    (
+                                        item,
+
+                                        false
+                                    );
+
+
                                     this.toast.success
                                     (
                                         'Database Table',
 
+                                        response.message
+                                        ??
                                         `${item.submenuName} database table removed successfully.`
-                                    );
-
-
-                                    //===================================================
-                                    // Persist database removal.
-                                    //
-                                    // After this:
-                                    //
-                                    //     Database button -> CREATE
-                                    //
-                                    //     Registration button -> enabled
-                                    //===================================================
-
-                                    this.setDatabaseCreated(
-                                        item,
-
-                                        false
                                     );
 
 
@@ -4302,7 +4269,8 @@ implements OnInit
                             error
                         ) =>
                         {
-                            console.error(
+                            console.error
+                            (
                                 'Database Removal Failed',
 
                                 error
@@ -4332,7 +4300,6 @@ implements OnInit
             1000
         );
     }
-
 
 
     //===========================================================

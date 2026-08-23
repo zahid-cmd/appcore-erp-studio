@@ -12,7 +12,7 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
-using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendDatabaseEngine;
+using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
 
 //===============================================================
@@ -36,6 +36,7 @@ public class CodeSynchronizationController
     : ControllerBase
 {
 
+
     //===========================================================
     // Fields
     //===========================================================
@@ -52,8 +53,12 @@ public class CodeSynchronizationController
         _backendRegistrationEngine;
 
 
-    private readonly IBackendDatabaseEngine
-        _backendDatabaseEngine;
+    private readonly IDatabaseCreationEngine
+        _databaseCreationEngine;
+
+
+    private readonly IDatabaseRemovalEngine
+        _databaseRemovalEngine;
 
 
 
@@ -69,7 +74,9 @@ public class CodeSynchronizationController
 
         IBackendRegistrationEngine backendRegistrationEngine,
 
-        IBackendDatabaseEngine backendDatabaseEngine
+        IDatabaseCreationEngine databaseCreationEngine,
+
+        IDatabaseRemovalEngine databaseRemovalEngine
     )
     {
         _repository =
@@ -84,8 +91,12 @@ public class CodeSynchronizationController
             backendRegistrationEngine;
 
 
-        _backendDatabaseEngine =
-            backendDatabaseEngine;
+        _databaseCreationEngine =
+            databaseCreationEngine;
+
+
+        _databaseRemovalEngine =
+            databaseRemovalEngine;
     }
 
 
@@ -318,17 +329,7 @@ public class CodeSynchronizationController
 
 
     //===========================================================
-    // Backend Database Registration
-    //===========================================================
-    //
-    // Registration is responsible only for generated backend
-    // code registration:
-    //
-    //     - AppDbContext DbSet registration
-    //     - Dependency Injection registration
-    //
-    // It does NOT create the physical database table.
-    //
+    // Backend Registration
     //===========================================================
 
     [HttpPost("{id:long}/register")]
@@ -341,10 +342,6 @@ public class CodeSynchronizationController
     {
         try
         {
-            //===================================================
-            // Load Code Synchronization
-            //===================================================
-
             var synchronization =
                 await _repository.GetByIdAsync
                 (
@@ -385,7 +382,7 @@ public class CodeSynchronizationController
 
 
             //===================================================
-            // Validate Code Synchronization State
+            // Validate Synchronization State
             //===================================================
 
             if
@@ -430,10 +427,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Load Submenu Synchronization
-            //===================================================
-
             var submenuSynchronization =
                 await _repository
                     .GetSubmenuSynchronizationForRegistrationAsync
@@ -451,10 +444,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Execute Backend Registration
-            //===================================================
-
             var result =
                 await _backendRegistrationEngine
                     .RegisterAsync
@@ -462,10 +451,6 @@ public class CodeSynchronizationController
                         submenuSynchronization
                     );
 
-
-            //===================================================
-            // Registration Failed
-            //===================================================
 
             if
             (
@@ -489,10 +474,6 @@ public class CodeSynchronizationController
                 );
             }
 
-
-            //===================================================
-            // Registration Successful
-            //===================================================
 
             await _repository
                 .UpdateBackendRegistrationStatusAsync
@@ -534,19 +515,304 @@ public class CodeSynchronizationController
 
 
     //===========================================================
-    // Backend Database Deregistration
+    // Database Creation
     //===========================================================
-    //
-    // This removes the generated backend code registration from:
-    //
-    //     - AppDbContext
-    //     - Dependency Injection
-    //
-    // It does NOT remove the physical database table.
-    //
-    // Physical database structure is controlled separately by
-    // Backend Database Engine.
-    //
+
+    [HttpPost("{id:long}/database")]
+
+    public async Task<ActionResult>
+        CreateDatabase
+    (
+        long id,
+
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            //===================================================
+            // Validate Synchronization Type
+            //===================================================
+
+            if
+            (
+                !string.Equals
+                (
+                    synchronization.SynchronizationType,
+
+                    "Backend",
+
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest
+                (
+                    "Database creation is available only for Backend Code Synchronization."
+                );
+            }
+
+
+            //===================================================
+            // Validate Synchronization State
+            //===================================================
+
+            if
+            (
+                !string.Equals
+                (
+                    synchronization.Status,
+
+                    "Synchronized",
+
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest
+                (
+                    "Database creation is available only after Code Synchronization has completed successfully."
+                );
+            }
+
+
+            //===================================================
+            // Validate Backend Registration
+            //===================================================
+
+            if
+            (
+                !string.Equals
+                (
+                    synchronization.DbStatus,
+
+                    "Registered",
+
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest
+                (
+                    "Database creation is available only after the backend code has been registered."
+                );
+            }
+
+
+            //===================================================
+            // Create Database
+            //===================================================
+
+            await _databaseCreationEngine
+                .CreateDatabaseAsync
+                (
+                    id
+                );
+
+
+            //===================================================
+            // Database Creation Successful
+            //===================================================
+
+            return Ok
+            (
+                new
+                {
+                    success =
+                        true,
+
+                    message =
+                        "Database created successfully."
+                }
+            );
+        }
+
+        catch
+        (
+            OperationCanceledException
+        )
+        {
+            return BadRequest
+            (
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Database creation was cancelled."
+                }
+            );
+        }
+
+        catch
+        (
+            Exception exception
+        )
+        {
+            return BadRequest
+            (
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        exception.Message
+                }
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Database Removal
+    //===========================================================
+
+    [HttpPost("{id:long}/database/remove")]
+
+    public async Task<ActionResult>
+        RemoveDatabase
+    (
+        long id,
+
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            //===================================================
+            // Validate Synchronization Type
+            //===================================================
+
+            if
+            (
+                !string.Equals
+                (
+                    synchronization.SynchronizationType,
+
+                    "Backend",
+
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest
+                (
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Database removal is available only for Backend Code Synchronization."
+                    }
+                );
+            }
+
+
+            //===================================================
+            // Remove Database
+            //===================================================
+
+            await _databaseRemovalEngine
+                .RemoveDatabaseAsync
+                (
+                    id
+                );
+
+
+            //===================================================
+            // Database Removal Successful
+            //===================================================
+
+            return Ok
+            (
+                new
+                {
+                    success =
+                        true,
+
+                    message =
+                        "Database removed successfully."
+                }
+            );
+        }
+
+        catch
+        (
+            OperationCanceledException
+        )
+        {
+            return BadRequest
+            (
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Database removal was cancelled."
+                }
+            );
+        }
+
+        catch
+        (
+            Exception exception
+        )
+        {
+            return BadRequest
+            (
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        exception.Message
+                }
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Backend Deregistration
     //===========================================================
 
     [HttpPost("{id:long}/register/rollback")]
@@ -559,10 +825,6 @@ public class CodeSynchronizationController
     {
         try
         {
-            //===================================================
-            // Load Code Synchronization
-            //===================================================
-
             var synchronization =
                 await _repository.GetByIdAsync
                 (
@@ -603,7 +865,7 @@ public class CodeSynchronizationController
 
 
             //===================================================
-            // Validate Code Synchronization State
+            // Validate Synchronization State
             //===================================================
 
             if
@@ -648,10 +910,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Load Submenu Synchronization
-            //===================================================
-
             var submenuSynchronization =
                 await _repository
                     .GetSubmenuSynchronizationForRegistrationAsync
@@ -669,10 +927,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Execute Backend Deregistration
-            //===================================================
-
             var result =
                 await _backendRegistrationEngine
                     .RollbackAsync
@@ -680,10 +934,6 @@ public class CodeSynchronizationController
                         submenuSynchronization
                     );
 
-
-            //===================================================
-            // Deregistration Failed
-            //===================================================
 
             if
             (
@@ -696,20 +946,6 @@ public class CodeSynchronizationController
                 );
             }
 
-
-            //===================================================
-            // Deregistration Successful
-            //===================================================
-            //
-            // DbStatus:
-            //
-            //     Registered -> Pending
-            //
-            // Code remains synchronized.
-            //
-            // Physical database table is NOT removed here.
-            //
-            //===================================================
 
             await _repository
                 .UpdateBackendDeregistrationStatusAsync
@@ -738,374 +974,7 @@ public class CodeSynchronizationController
 
 
     //===========================================================
-    // Backend Database Create
-    //===========================================================
-    //
-    // Creates the physical database structure using the
-    // Backend Database Engine.
-    //
-    // This is independent from Backend Registration.
-    //
-    // Required state:
-    //
-    //     SynchronizationType = Backend
-    //     Status = Synchronized
-    //
-    // The Backend Registration Engine must already have
-    // registered the generated DbContext/entity code before the
-    // migration can detect the new model.
-    //
-    //===========================================================
-
-    [HttpPost("{id:long}/database")]
-
-    public async Task<ActionResult>
-        CreateDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            //===================================================
-            // Load Code Synchronization
-            //===================================================
-
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            //===================================================
-            // Validate Synchronization Type
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.SynchronizationType,
-
-                    "Backend",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Backend database creation is available only for Backend Code Synchronization."
-                );
-            }
-
-
-            //===================================================
-            // Validate Code Synchronization State
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.Status,
-
-                    "Synchronized",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Backend database creation is available only after Code Synchronization has completed successfully."
-                );
-            }
-
-
-            //===================================================
-            // Validate Backend Registration
-            //===================================================
-            //
-            // The database engine requires the generated backend
-            // entity/DbSet registration to already exist.
-            //
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.DbStatus,
-
-                    "Registered",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Backend registration must be completed before creating the database structure."
-                );
-            }
-
-
-            //===================================================
-            // Execute Backend Database Creation
-            //===================================================
-
-            var result =
-                await _backendDatabaseEngine
-                    .CreateAsync
-                    (
-                        id
-                    );
-
-
-            //===================================================
-            // Database Creation Failed
-            //===================================================
-
-            if
-            (
-                !result.Success
-            )
-            {
-                return BadRequest
-                (
-                    result.Message
-                );
-            }
-
-
-            //===================================================
-            // Database Creation Successful
-            //===================================================
-
-            return Ok
-            (
-                result
-            );
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
-    // Backend Database Remove
-    //===========================================================
-    //
-    // Removes the physical database structure using the
-    // Backend Database Engine.
-    //
-    // This operation is independent from Backend Registration.
-    //
-    // The migration history itself is preserved.
-    //
-    //===========================================================
-
-    [HttpPost("{id:long}/database/rollback")]
-
-    public async Task<ActionResult>
-        RemoveDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            //===================================================
-            // Load Code Synchronization
-            //===================================================
-
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            //===================================================
-            // Validate Synchronization Type
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.SynchronizationType,
-
-                    "Backend",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Backend database removal is available only for Backend Code Synchronization."
-                );
-            }
-
-
-            //===================================================
-            // Validate Code Synchronization State
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.Status,
-
-                    "Synchronized",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Backend database removal is available only while Code Synchronization is synchronized."
-                );
-            }
-
-
-            //===================================================
-            // Validate Backend Registration
-            //===================================================
-            //
-            // The generated entity model must remain registered
-            // while the database migration is being generated.
-            //
-            // Therefore the database structure is removed first.
-            //
-            // Backend deregistration can then be performed
-            // separately.
-            //
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.DbStatus,
-
-                    "Registered",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Backend database structure is not currently registered."
-                );
-            }
-
-
-            //===================================================
-            // Execute Backend Database Removal
-            //===================================================
-
-            var result =
-                await _backendDatabaseEngine
-                    .RemoveAsync
-                    (
-                        id
-                    );
-
-
-            //===================================================
-            // Database Removal Failed
-            //===================================================
-
-            if
-            (
-                !result.Success
-            )
-            {
-                return BadRequest
-                (
-                    result.Message
-                );
-            }
-
-
-            //===================================================
-            // Database Removal Successful
-            //
-            // IMPORTANT:
-            //
-            // DbStatus remains Registered because the generated
-            // backend code is still registered in DbContext and
-            // Dependency Injection.
-            //
-            // Backend deregistration remains a separate action.
-            //
-            //===================================================
-
-            return Ok
-            (
-                result
-            );
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
     // Rollback Code Synchronization
-    //===========================================================
-    //
-    // Code rollback is not allowed while backend registration
-    // remains active.
-    //
-    // Physical database removal and code deregistration are
-    // separate operations.
-    //
     //===========================================================
 
     [HttpPost("{id:long}/rollback")]
@@ -1161,14 +1030,10 @@ public class CodeSynchronizationController
             {
                 return BadRequest
                 (
-                    "Code Synchronization rollback is not allowed while the backend registration is active. Remove the database structure and deregister the backend code first."
+                    "Code Synchronization rollback is not allowed while the backend registration is active. Deregister the backend code first."
                 );
             }
 
-
-            //===================================================
-            // Execute Code Rollback
-            //===================================================
 
             var rolledBack =
                 await _repository.RollbackAsync

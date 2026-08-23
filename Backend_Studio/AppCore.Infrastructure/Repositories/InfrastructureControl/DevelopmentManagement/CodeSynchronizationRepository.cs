@@ -87,7 +87,8 @@ public class CodeSynchronizationRepository
     {
         if
         (
-            string.IsNullOrWhiteSpace(
+            string.IsNullOrWhiteSpace
+            (
                 synchronizationType
             )
         )
@@ -145,6 +146,11 @@ public class CodeSynchronizationRepository
                         SubmenuSynchronizationId =
                             x.SubmenuSynchronizationId,
 
+
+                        //===================================================
+                        // Module
+                        //===================================================
+
                         ModuleId =
                             x.ModuleId,
 
@@ -153,6 +159,11 @@ public class CodeSynchronizationRepository
 
                         ModuleName =
                             x.ModuleName,
+
+
+                        //===================================================
+                        // Menu
+                        //===================================================
 
                         MenuId =
                             x.MenuId,
@@ -163,6 +174,11 @@ public class CodeSynchronizationRepository
                         MenuName =
                             x.MenuName,
 
+
+                        //===================================================
+                        // Submenu
+                        //===================================================
+
                         SubmenuId =
                             x.SubmenuId,
 
@@ -171,6 +187,11 @@ public class CodeSynchronizationRepository
 
                         SubmenuName =
                             x.SubmenuName,
+
+
+                        //===================================================
+                        // Synchronization Type
+                        //===================================================
 
                         SynchronizationType =
                             _context.SubmenuSynchronizations
@@ -181,6 +202,10 @@ public class CodeSynchronizationRepository
 
                                         submenu.Id ==
                                         x.SubmenuSynchronizationId
+
+                                        &&
+
+                                        !submenu.IsDeleted
                                 )
 
                                 .Select
@@ -190,6 +215,11 @@ public class CodeSynchronizationRepository
                                 )
 
                                 .FirstOrDefault(),
+
+
+                        //===================================================
+                        // Synchronization Status
+                        //===================================================
 
                         Status =
                             x.Status,
@@ -203,6 +233,11 @@ public class CodeSynchronizationRepository
                         Remarks =
                             x.Remarks,
 
+
+                        //===================================================
+                        // Last Synchronization
+                        //===================================================
+
                         LastSynchronizedBy =
                             x.LastSynchronizedBy,
 
@@ -211,6 +246,11 @@ public class CodeSynchronizationRepository
 
                         LastSynchronizationResult =
                             x.LastSynchronizationResult,
+
+
+                        //===================================================
+                        // General
+                        //===================================================
 
                         IsActive =
                             x.IsActive,

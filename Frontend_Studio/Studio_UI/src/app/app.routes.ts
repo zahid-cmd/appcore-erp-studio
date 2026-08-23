@@ -50,48 +50,34 @@ export const routes:
                             m.infrastructureControlRoutes
                     )
             },
+
+            // AUTO-BEGIN : MOD-004
+
             //===========================================================
-            // Security & Permission
+            // Accounts & Finance
             //===========================================================
+
             {
-                path:'security-permission',
+                path:'accounts-finance',
 
                 data:
                 {
-                    breadcrumb:'Security & Permission'
+                    breadcrumb:'Accounts & Finance'
                 },
 
                 loadChildren:() =>
                     import(
-                        '../features/security-permission/role-management/route/security-permission.route'
+                        '../features/accounts-finance/routes/accounts-finance.routes'
                     )
                     .then(
                         m =>
-                            m.SECURITY_PERMISSION_ROUTES
-                    )
-            },
-            //===========================================================
-            // Human Resource
-            //===========================================================
-            {
-                path:'human-resource',
-
-                data:
-                {
-                    breadcrumb:'Human Resource'
-                },
-
-                loadChildren:() =>
-                    import(
-                        '../features/human-resource/routes/human-resource.routes'
-                    )
-                    .then(
-                        m =>
-                            m.humanResourceRoutes
+                            m.accountsFinanceRoutes
                     )
             },
 
-            // AUTO-BEGIN : MOD-005
+            // AUTO-END : MOD-004
+
+            // AUTO-BEGIN : MOD-003
 
             //===========================================================
             // Settings
@@ -115,7 +101,7 @@ export const routes:
                     )
             },
 
-            // AUTO-END : MOD-005
+            // AUTO-END : MOD-003
 
         ]
     },

@@ -77,143 +77,74 @@ namespace AppCore.Infrastructure.Migrations
                     b.ToTable("ActivityHistories", (string)null);
                 });
 
-            modelBuilder.Entity("AppCore.Domain.Entities.HumanResource.HumanResourceSetup.Department", b =>
+            modelBuilder.Entity("AppCore.Domain.Entities.AccountsFinance.VoucherManagement.PaymentVoucher", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
 
-                    b.Property<long>("CompanyId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("CreatedBy")
-                        .HasColumnType("bigint");
+                    b.Property<long>("CreatedBy")
+                        .HasColumnType("bigint")
+                        .HasColumnName("createdBy");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DepartmentHead")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("createdDate");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("isActive");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
 
                     b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("modifiedBy");
 
                     b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modifiedDate");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
 
                     b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("SampleField")
+                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("sampleField");
 
-                    b.Property<int>("SequenceNo")
-                        .HasColumnType("integer");
+                    b.Property<long?>("SampleSearchDropdownId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sampleSearchDropdownId");
 
-                    b.Property<string>("ShortName")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("CompanyId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("HR_Department", (string)null);
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.HumanResource.HumanResourceSetup.Designation", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<long?>("CreatedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("SequenceNo")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("HR_Designation", (string)null);
+                    b.ToTable("PaymentVoucher", (string)null);
                 });
 
             modelBuilder.Entity("AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement.MenuSynchronization", b =>
@@ -1476,421 +1407,6 @@ namespace AppCore.Infrastructure.Migrations
                     b.ToTable("NavigationSubmenus", (string)null);
                 });
 
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment", b =>
-                {
-                    b.Property<long>("ActivityAssignmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ActivityAssignmentId"));
-
-                    b.Property<long>("CreatedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("RoleProfileId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("ActivityAssignmentId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("RoleProfileId")
-                        .IsUnique();
-
-                    b.ToTable("ActivityAssignments", (string)null);
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignmentDetail", b =>
-                {
-                    b.Property<long>("ActivityAssignmentDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ActivityAssignmentDetailId"));
-
-                    b.Property<long>("ActivityAssignmentId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("CreatedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<long>("MenuId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("ModuleId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("SubMenuId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("ActivityAssignmentDetailId");
-
-                    b.HasIndex("ActivityAssignmentId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("MenuId");
-
-                    b.HasIndex("ModuleId");
-
-                    b.HasIndex("SubMenuId");
-
-                    b.HasIndex("ActivityAssignmentId", "ModuleId", "MenuId", "SubMenuId")
-                        .IsUnique();
-
-                    b.ToTable("ActivityAssignmentDetails", (string)null);
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignmentPermission", b =>
-                {
-                    b.Property<long>("ActivityAssignmentPermissionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ActivityAssignmentPermissionId"));
-
-                    b.Property<long>("ActivityAssignmentDetailId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("CreatedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<long?>("MasterActivityId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("NavigationActivityId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("ActivityAssignmentPermissionId");
-
-                    b.HasIndex("ActivityAssignmentDetailId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("MasterActivityId");
-
-                    b.HasIndex("NavigationActivityId");
-
-                    b.ToTable("ActivityAssignmentPermissions", (string)null);
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.RoleProfile", b =>
-                {
-                    b.Property<long>("RoleProfileId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RoleProfileId"));
-
-                    b.Property<long>("CreatedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long?>("DeletedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("DisplayOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDefaultRole")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsSystemRole")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ProfileCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("ProfileName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<long>("ProfileTypeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.HasKey("RoleProfileId");
-
-                    b.HasIndex("DisplayName")
-                        .IsUnique();
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("ProfileCode")
-                        .IsUnique();
-
-                    b.HasIndex("ProfileName")
-                        .IsUnique();
-
-                    b.HasIndex("ProfileTypeId");
-
-                    b.ToTable("SEC_RoleProfile", (string)null);
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.Settings.AccountSettings.AccountClass", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
-
-                    b.Property<long>("CreatedBy")
-                        .HasColumnType("bigint")
-                        .HasColumnName("createdBy");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("createdDate");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isActive");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isDeleted");
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint")
-                        .HasColumnName("modifiedBy");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modifiedDate");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("remarks");
-
-                    b.Property<string>("SampleField")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("sampleField");
-
-                    b.Property<long?>("SampleSearchDropdownId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("sampleSearchDropdownId");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("boolean")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AccountClass", (string)null);
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
-
-                    b.Property<long>("CreatedBy")
-                        .HasColumnType("bigint")
-                        .HasColumnName("createdBy");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("createdDate");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isActive");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isDeleted");
-
-                    b.Property<long?>("ModifiedBy")
-                        .HasColumnType("bigint")
-                        .HasColumnName("modifiedBy");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modifiedDate");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("remarks");
-
-                    b.Property<string>("SampleField")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("sampleField");
-
-                    b.Property<long?>("SampleSearchDropdownId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("sampleSearchDropdownId");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("boolean")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AccountGroup", (string)null);
-                });
-
             modelBuilder.Entity("AppCore.Domain.Entities.Settings.GeneralSettings.Branch", b =>
                 {
                     b.Property<long>("Id")
@@ -2183,28 +1699,6 @@ namespace AppCore.Infrastructure.Migrations
                     b.Navigation("Menu");
                 });
 
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignmentDetail", b =>
-                {
-                    b.HasOne("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment", "ActivityAssignment")
-                        .WithMany("Details")
-                        .HasForeignKey("ActivityAssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ActivityAssignment");
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignmentPermission", b =>
-                {
-                    b.HasOne("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignmentDetail", "ActivityAssignmentDetail")
-                        .WithMany("ActivityAssignmentPermissions")
-                        .HasForeignKey("ActivityAssignmentDetailId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ActivityAssignmentDetail");
-                });
-
             modelBuilder.Entity("AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationMenu", b =>
                 {
                     b.Navigation("Submenus");
@@ -2215,16 +1709,6 @@ namespace AppCore.Infrastructure.Migrations
                     b.Navigation("Activities");
 
                     b.Navigation("Menus");
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment", b =>
-                {
-                    b.Navigation("Details");
-                });
-
-            modelBuilder.Entity("AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignmentDetail", b =>
-                {
-                    b.Navigation("ActivityAssignmentPermissions");
                 });
 #pragma warning restore 612, 618
         }

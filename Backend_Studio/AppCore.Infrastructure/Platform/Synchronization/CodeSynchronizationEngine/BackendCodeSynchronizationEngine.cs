@@ -69,7 +69,9 @@ public class BackendCodeSynchronizationEngine
     public async Task<BackendCodeSynchronizationResultDto>
         SynchronizeAsync
     (
-        SubmenuSynchronizationDto synchronization
+        SubmenuSynchronizationDto synchronization,
+
+        long synchronizationId
     )
     {
         try
@@ -368,7 +370,9 @@ public class BackendCodeSynchronizationEngine
     public async Task<BackendCodeSynchronizationResultDto>
         RollbackAsync
     (
-        SubmenuSynchronizationDto synchronization
+        SubmenuSynchronizationDto synchronization,
+
+        long synchronizationId
     )
     {
         try
