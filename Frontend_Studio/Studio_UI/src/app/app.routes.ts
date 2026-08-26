@@ -51,32 +51,6 @@ export const routes:
                     )
             },
 
-            // AUTO-BEGIN : MOD-004
-
-            //===========================================================
-            // Accounts & Finance
-            //===========================================================
-
-            {
-                path:'accounts-finance',
-
-                data:
-                {
-                    breadcrumb:'Accounts & Finance'
-                },
-
-                loadChildren:() =>
-                    import(
-                        '../features/accounts-finance/routes/accounts-finance.routes'
-                    )
-                    .then(
-                        m =>
-                            m.accountsFinanceRoutes
-                    )
-            },
-
-            // AUTO-END : MOD-004
-
             // AUTO-BEGIN : MOD-003
 
             //===========================================================

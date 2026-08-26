@@ -1,16 +1,17 @@
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
 namespace AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
 
 //===============================================================
-// Database Removal Engine Interface
+// Database Removal Engine
 //===============================================================
 
 public interface IDatabaseRemovalEngine
 {
+
     //===========================================================
     // Remove Database
     //===========================================================
@@ -19,4 +20,5 @@ public interface IDatabaseRemovalEngine
     (
         long codeSynchronizationId
     );
+
 }

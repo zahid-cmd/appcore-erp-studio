@@ -1,96 +1,72 @@
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
-namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Shared.Models;
+namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Models;
 
 
 //===============================================================
-// Database Migration Information
+// Database Migration Info
 //===============================================================
 
 public class DatabaseMigrationInfo
 {
 
     //===========================================================
-    // Migration Name
+    // Migration
     //===========================================================
 
-    public string
-        MigrationName
+    public string MigrationKey
     {
         get;
         set;
-    }
-    =
-        null!;
+    } = string.Empty;
 
 
-
-    //===========================================================
-    // Migration Id
-    //===========================================================
-
-    public string
-        MigrationId
+    public string MigrationName
     {
         get;
         set;
-    }
-    =
-        null!;
+    } = string.Empty;
 
 
-
-    //===========================================================
-    // Migration File Path
-    //===========================================================
-
-    public string
-        MigrationFilePath
-    {
-        get;
-        set;
-    }
-    =
-        null!;
-
-
-
-    //===========================================================
-    // Designer File Path
-    //===========================================================
-
-    public string
-        DesignerFilePath
-    {
-        get;
-        set;
-    }
-    =
-        null!;
-
-
-
-    //===========================================================
-    // Migration Exists
-    //===========================================================
-
-    public bool
-        MigrationExists
+    public string? MigrationId
     {
         get;
         set;
     }
 
 
+    //===========================================================
+    // Migration Files
+    //===========================================================
+
+    public bool MigrationExists
+    {
+        get;
+        set;
+    }
+
+
+    public bool DesignerExists
+    {
+        get;
+        set;
+    }
+
 
     //===========================================================
-    // Designer Exists
+    // Migration State
     //===========================================================
 
-    public bool
-        DesignerExists
+    public bool IsRegistered
+    {
+        get;
+        set;
+    }
+
+
+    public bool IsApplied
     {
         get;
         set;

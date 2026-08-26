@@ -524,165 +524,199 @@ implements OnInit
 
 
 
-    //===========================================================
-    // Table Columns
-    //===========================================================
-
-    get columns():
-        ListTableColumn[]
-    {
-        const commonColumns:
-            ListTableColumn[] =
-        [
-            {
-                header:'#',
-
-                field:'serial',
-
-                type:'serial',
-
-                width:'5%',
-
-                align:'center'
-            },
-
-            {
-                header:'Module',
-
-                field:'moduleName',
-
-                width:'11%',
-
-                align:'left'
-            },
-
-            {
-                header:'Menu',
-
-                field:'menuName',
-
-                width:'13%',
-
-                align:'left'
-            },
-
-            {
-                header:'Submenu',
-
-                field:'submenuName',
-
-                width:
-                    this.selectedTab === 'backend'
-                        ? '13%'
-                        : '15%',
-
-                align:'left'
-            },
-
-            {
-                header:'Last Code Sync',
-
-                field:'lastSynchronizedDate',
-
-                width:
-                    this.selectedTab === 'backend'
-                        ? '14%'
-                        : '15%',
-
-                align:'center'
-            },
-
-            {
-                header:'Operation',
-
-                field:'codeOperation',
-
-                type:'operation',
-
-                width:'9%',
-
-                align:'center'
-            },
-
-            {
-                header:'Build Status',
-
-                field:'buildStatus',
-
-                type:'status',
-
-                width:
-                    this.selectedTab === 'backend'
-                        ? '10%'
-                        : '11%',
-
-                align:'center'
-            }
-        ];
-
-
-        //=======================================================
-        // Backend Only
-        //=======================================================
-
-        if
-        (
-            this.selectedTab === 'backend'
-        )
-        {
-            commonColumns.push(
-            {
-                header:'DB Status',
-
-                field:'dbStatus',
-
-                type:'status',
-
-                width:'15%',
-
-                align:'center'
-            });
-        }
-
-
-        //=======================================================
-        // Common Status
-        //=======================================================
-
-        commonColumns.push(
-        {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:
-                this.selectedTab === 'backend'
-                    ? '8%'
-                    : '15%',
-
-            align:'center'
-        },
-
-
-        {
-            header:'Actions',
-
-            field:'actions',
-
-            type:'actions',
-
-            width:
-                this.selectedTab === 'backend'
-                    ? '6%'
-                    : '8%',
-
-            align:'center'
-        });
-
-
-        return commonColumns;
+    //=========================================================== 
+    // Table Columns 
+    //=========================================================== 
+ 
+    get columns(): 
+        ListTableColumn[] 
+    { 
+        const commonColumns: 
+            ListTableColumn[] = 
+        [ 
+            { 
+                header:'#', 
+ 
+                field:'serial', 
+ 
+                type:'serial', 
+ 
+                width:'5%', 
+ 
+                align:'center' 
+            } 
+        ]; 
+ 
+ 
+        //======================================================= 
+        // Backend Code Synchronization ID 
+        //======================================================= 
+ 
+        if 
+        ( 
+            this.selectedTab === 'backend' 
+        ) 
+        { 
+            commonColumns.push( 
+            { 
+                header:'ID', 
+ 
+                field:'id', 
+ 
+                width:'5%', 
+ 
+                align:'center' 
+            }); 
+        } 
+ 
+ 
+        //======================================================= 
+        // Navigation Columns 
+        //======================================================= 
+ 
+        commonColumns.push( 
+        { 
+            header:'Module', 
+ 
+            field:'moduleName', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '10%' 
+                    : '11%', 
+ 
+            align:'left' 
+        }, 
+ 
+        { 
+            header:'Menu', 
+ 
+            field:'menuName', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '12%' 
+                    : '13%', 
+ 
+            align:'left' 
+        }, 
+ 
+        { 
+            header:'Submenu', 
+ 
+            field:'submenuName', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '12%' 
+                    : '15%', 
+ 
+            align:'left' 
+        }, 
+ 
+        { 
+            header:'Last Code Sync', 
+ 
+            field:'lastSynchronizedDate', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '13%' 
+                    : '15%', 
+ 
+            align:'center' 
+        }, 
+ 
+        { 
+            header:'Operation', 
+ 
+            field:'codeOperation', 
+ 
+            type:'operation', 
+ 
+            width:'9%', 
+ 
+            align:'center' 
+        }, 
+ 
+        { 
+            header:'Build Status', 
+ 
+            field:'buildStatus', 
+ 
+            type:'status', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '9%' 
+                    : '11%', 
+ 
+            align:'center' 
+        }); 
+ 
+ 
+        //======================================================= 
+        // Backend Only 
+        //======================================================= 
+ 
+        if 
+        ( 
+            this.selectedTab === 'backend' 
+        ) 
+        { 
+            commonColumns.push( 
+            { 
+                header:'DB Status', 
+ 
+                field:'dbStatus', 
+ 
+                type:'status', 
+ 
+                width:'14%', 
+ 
+                align:'center' 
+            }); 
+        } 
+ 
+ 
+        //======================================================= 
+        // Common Status 
+        //======================================================= 
+ 
+        commonColumns.push( 
+        { 
+            header:'Status', 
+ 
+            field:'status', 
+ 
+            type:'status', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '7%' 
+                    : '15%', 
+ 
+            align:'center' 
+        }, 
+ 
+ 
+        { 
+            header:'Actions', 
+ 
+            field:'actions', 
+ 
+            type:'actions', 
+ 
+            width: 
+                this.selectedTab === 'backend' 
+                    ? '6%' 
+                    : '8%', 
+ 
+            align:'center' 
+        }); 
+ 
+ 
+        return commonColumns; 
     }
 
 
@@ -980,13 +1014,40 @@ implements OnInit
         }
 
 
-        return (
-            this.isSynchronized(item)
-            &&
-            !this.isRegistered(item)
-            &&
-            !this.isDatabaseCreated(item)
-        );
+        //=======================================================
+        // Item Must Be Eligible
+        //=======================================================
+
+        if
+        (
+            !this.isSynchronized(item)
+            ||
+            this.isRegistered(item)
+            ||
+            this.isDatabaseCreated(item)
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Registration Lock
+        //
+        // Only one backend item may remain registered while its
+        // physical database table has not yet been created.
+        //=======================================================
+
+        if
+        (
+            this.hasPendingDatabaseCreation()
+        )
+        {
+            return false;
+        }
+
+
+        return true;
     }
 
 
@@ -1040,14 +1101,69 @@ implements OnInit
         }
 
 
-        return (
-            this.isSynchronized(item)
-            &&
-            !this.isDatabaseCreated(item)
-        );
+        //=======================================================
+        // Current Item Must Be Synchronized
+        //=======================================================
+
+        if
+        (
+            !this.isSynchronized(item)
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Current Item With Created Database
+        //
+        // Once the physical database has been created,
+        // this item's registration operation remains locked
+        // and the database control stays in remove mode.
+        //=======================================================
+
+        if
+        (
+            this.isDatabaseCreated(item)
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Check For Another Pending Database Creation
+        //
+        // Registration must be locked only while another backend
+        // item is registered AND its physical database has not yet
+        // been created.
+        //
+        // A registered item whose database is already created must
+        // not keep the other registration controls disabled.
+        //=======================================================
+
+        const anotherItemPendingDatabaseCreation =
+            this.filteredSynchronizations.some(
+                x =>
+                    x.id !== item.id
+                    &&
+                    this.isRegistered(x)
+                    &&
+                    !this.isDatabaseCreated(x)
+            );
+
+
+        if
+        (
+            anotherItemPendingDatabaseCreation
+        )
+        {
+            return false;
+        }
+
+
+        return true;
     }
-
-
 
     //===========================================================
     // Database Control Enabled
@@ -4431,7 +4547,31 @@ implements OnInit
             });
     }
 
+    //===========================================================
+    // Pending Database Creation
+    //===========================================================
 
+    private hasPendingDatabaseCreation():
+        boolean
+    {
+        if
+        (
+            this.selectedTab !== 'backend'
+        )
+        {
+            return false;
+        }
+
+
+        return this.synchronizations.some(
+            item =>
+                this.isSynchronized(item)
+                &&
+                this.isRegistered(item)
+                &&
+                !this.isDatabaseCreated(item)
+        );
+    }
 
     //===========================================================
     // Close History Drawer

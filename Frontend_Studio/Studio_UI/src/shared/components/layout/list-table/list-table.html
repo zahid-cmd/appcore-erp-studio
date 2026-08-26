@@ -363,13 +363,16 @@
                                             Database Created
                                                 -> Deregister Disabled
 
+                                            Another Registered Item
+                                            Has Pending Database Creation
+                                                -> Registration Locked
+
                                         databaseCreated represents the
                                         physical database-table state.
 
-                                        registrationDisabled remains
-                                        supported so the parent page
-                                        may also explicitly control the
-                                        registration state.
+                                        registrationDisabled is supplied
+                                        by the parent page and represents
+                                        the global registration lock.
                                     ====================================== -->
 
                                     <button
@@ -405,20 +408,24 @@
                                                 'Registration unavailable until code synchronization is completed'
                                                 :
                                                 (
-                                                    row.registrationDisabled === true
-                                                    ||
                                                     row.databaseCreated === true
                                                         ?
                                                         'Deregister disabled while database table exists'
                                                         :
                                                         (
-                                                            row.dbStatus?.toLowerCase()
-                                                            ===
-                                                            'registered'
+                                                            row.registrationDisabled === true
                                                                 ?
-                                                                'Deregister'
+                                                                'Registration locked until the pending database creation is completed'
                                                                 :
-                                                                'Register'
+                                                                (
+                                                                    row.dbStatus?.toLowerCase()
+                                                                    ===
+                                                                    'registered'
+                                                                        ?
+                                                                        'Deregister'
+                                                                        :
+                                                                        'Register'
+                                                                )
                                                         )
                                                 )
                                         "

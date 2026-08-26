@@ -1,22 +1,24 @@
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
 namespace AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
 
 //===============================================================
-// Database Creation Engine Interface
+// Database Creation Engine
 //===============================================================
 
 public interface IDatabaseCreationEngine
 {
+
     //===========================================================
     // Create Database
     //===========================================================
 
-    Task CreateDatabaseAsync
+    Task CreateAsync
     (
         long codeSynchronizationId
     );
+
 }

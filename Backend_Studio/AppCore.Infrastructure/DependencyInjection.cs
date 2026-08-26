@@ -105,7 +105,9 @@ using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegist
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
-using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine;
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseCreationEngine;
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseRemovalEngine;
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Shared;
 
 
 //===============================================================
@@ -125,26 +127,14 @@ using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
-// AUTO-BEGIN : PaymentVoucher
-
-using AppCore.Application.AccountsFinance.VoucherManagement;
-using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
-
-// AUTO-END : PaymentVoucher
-
-// AUTO-BEGIN : Branch
-
-using AppCore.Application.Settings.GeneralSettings;
-using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
-
-// AUTO-END : Branch
-
 // AUTO-BEGIN : Company
 
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
 
 // AUTO-END : Company
+
+
 
 
 
@@ -286,26 +276,6 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
-        // AUTO-BEGIN : PaymentVoucher
-
-        services.AddScoped
-        <
-            IPaymentVoucherRepository,
-            PaymentVoucherRepository
-        >();
-
-        // AUTO-END : PaymentVoucher
-
-        // AUTO-BEGIN : Branch
-
-        services.AddScoped
-        <
-            IBranchRepository,
-            BranchRepository
-        >();
-
-        // AUTO-END : Branch
-
         // AUTO-BEGIN : Company
 
         services.AddScoped
@@ -315,6 +285,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : Company
+
+
 
 
 
@@ -448,6 +420,36 @@ public static class DependencyInjection
 
         services.AddScoped
         <
+            DatabaseInitializationContextResolver
+        >();
+
+        services.AddScoped
+        <
+            DatabaseArtifactIdentityBuilder
+        >();
+
+        services.AddScoped
+        <
+            DatabaseMigrationTracker
+        >();
+
+        services.AddScoped
+        <
+            DatabaseTableInspector
+        >();
+
+        services.AddScoped
+        <
+            DatabaseInitializationStateEvaluator
+        >();
+
+        services.AddScoped
+        <
+            EfCoreMigrationExecutor
+        >();
+
+        services.AddScoped
+        <
             IDatabaseCreationEngine,
             DatabaseCreationEngine
         >();
@@ -456,26 +458,6 @@ public static class DependencyInjection
         <
             IDatabaseRemovalEngine,
             DatabaseRemovalEngine
-        >();
-
-
-        //=======================================================
-        // Database Engine Helpers
-        //=======================================================
-
-        services.AddScoped
-        <
-            DatabaseArtifactHelper
-        >();
-
-        services.AddScoped
-        <
-            DatabaseMigrationHelper
-        >();
-
-        services.AddScoped
-        <
-            DatabaseSnapshotHelper
         >();
 
 

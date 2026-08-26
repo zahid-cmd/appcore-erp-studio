@@ -2,26 +2,17 @@
 // Namespaces
 //===============================================================
 
-using System.Diagnostics;
-
-using System.Text.RegularExpressions;
-
-using Microsoft.EntityFrameworkCore;
-
-using AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
-
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
-using AppCore.Infrastructure.Persistence;
-
-using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Shared.Models;
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Models;
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Shared;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine;
+namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseCreationEngine;
 
 
 //===============================================================
@@ -33,24 +24,51 @@ public class DatabaseCreationEngine
 {
 
     //===========================================================
-    // Fields
+    // Database Initialization Context Resolver
     //===========================================================
 
-    private readonly AppDbContext
-        _dbContext;
+    private readonly DatabaseInitializationContextResolver
+        _databaseInitializationContextResolver;
 
 
-    private readonly ICodeSynchronizationRepository
-        _codeSynchronizationRepository;
+    //===========================================================
+    // Database Artifact Identity Builder
+    //===========================================================
+
+    private readonly DatabaseArtifactIdentityBuilder
+        _databaseArtifactIdentityBuilder;
 
 
-    private readonly DatabaseArtifactHelper
-        _databaseArtifactHelper;
+    //===========================================================
+    // Database Migration Tracker
+    //===========================================================
+
+    private readonly DatabaseMigrationTracker
+        _databaseMigrationTracker;
 
 
-    private readonly DatabaseMigrationHelper
-        _databaseMigrationHelper;
+    //===========================================================
+    // Database Table Inspector
+    //===========================================================
 
+    private readonly DatabaseTableInspector
+        _databaseTableInspector;
+
+
+    //===========================================================
+    // Database Initialization State Evaluator
+    //===========================================================
+
+    private readonly DatabaseInitializationStateEvaluator
+        _databaseInitializationStateEvaluator;
+
+
+    //===========================================================
+    // EF Core Migration Executor
+    //===========================================================
+
+    private readonly EfCoreMigrationExecutor
+        _efCoreMigrationExecutor;
 
 
     //===========================================================
@@ -59,1332 +77,470 @@ public class DatabaseCreationEngine
 
     public DatabaseCreationEngine
     (
-        AppDbContext dbContext,
+        DatabaseInitializationContextResolver
+            databaseInitializationContextResolver,
 
-        ICodeSynchronizationRepository
-            codeSynchronizationRepository,
+        DatabaseArtifactIdentityBuilder
+            databaseArtifactIdentityBuilder,
 
-        DatabaseArtifactHelper
-            databaseArtifactHelper,
+        DatabaseMigrationTracker
+            databaseMigrationTracker,
 
-        DatabaseMigrationHelper
-            databaseMigrationHelper
+        DatabaseTableInspector
+            databaseTableInspector,
+
+        DatabaseInitializationStateEvaluator
+            databaseInitializationStateEvaluator,
+
+        EfCoreMigrationExecutor
+            efCoreMigrationExecutor
     )
     {
-        _dbContext =
-            dbContext;
+        _databaseInitializationContextResolver =
+            databaseInitializationContextResolver;
 
 
-        _codeSynchronizationRepository =
-            codeSynchronizationRepository;
+        _databaseArtifactIdentityBuilder =
+            databaseArtifactIdentityBuilder;
 
 
-        _databaseArtifactHelper =
-            databaseArtifactHelper;
+        _databaseMigrationTracker =
+            databaseMigrationTracker;
 
 
-        _databaseMigrationHelper =
-            databaseMigrationHelper;
+        _databaseTableInspector =
+            databaseTableInspector;
+
+
+        _databaseInitializationStateEvaluator =
+            databaseInitializationStateEvaluator;
+
+
+        _efCoreMigrationExecutor =
+            efCoreMigrationExecutor;
     }
 
+
+    //===========================================================
+    // Resolve Initialization Context
+    //===========================================================
+
+    public async Task<DatabaseInitializationContext>
+        ResolveInitializationContextAsync
+        (
+            long codeSynchronizationId
+        )
+    {
+        return
+            await _databaseInitializationContextResolver
+                .ResolveAsync
+                (
+                    codeSynchronizationId
+                );
+    }
 
 
     //===========================================================
     // Create Database
     //===========================================================
 
-    public async Task CreateDatabaseAsync
-    (
-        long codeSynchronizationId
-    )
+    public async Task
+        CreateAsync
+        (
+            long codeSynchronizationId
+        )
     {
-        //=======================================================
-        // Validate Code Synchronization Id
-        //=======================================================
-
-        if
-        (
-            codeSynchronizationId <= 0
-        )
-        {
-            throw new ArgumentException
-            (
-                "A valid Code Synchronization Id is required.",
-
-                nameof(
-                    codeSynchronizationId
-                )
-            );
-        }
-
 
         //=======================================================
-        // Load Code Synchronization
+        // Resolve Database Initialization Context
         //=======================================================
 
-        var codeSynchronization =
-            await _codeSynchronizationRepository
-                .GetByIdAsync
+        DatabaseInitializationContext
+            initializationContext =
+                await ResolveInitializationContextAsync
                 (
                     codeSynchronizationId
                 );
 
 
+        //=======================================================
+        // Build Database Artifact Identity
+        //=======================================================
+
+        DatabaseArtifactIdentity
+            artifactIdentity =
+                _databaseArtifactIdentityBuilder
+                    .Build
+                    (
+                        initializationContext
+                    );
+
+
+        //=======================================================
+        // Inspect Migration
+        //=======================================================
+
+        DatabaseMigrationInfo
+            migrationInfo =
+                await _databaseMigrationTracker
+                    .TrackAsync
+                    (
+                        initializationContext,
+
+                        artifactIdentity
+                    );
+
+
+        //=======================================================
+        // Inspect Database Connection
+        //=======================================================
+
+        bool
+            canConnect =
+                await _databaseTableInspector
+                    .CanConnectAsync();
+
+
+        //=======================================================
+        // Inspect Schema
+        //=======================================================
+
+        bool
+            schemaExists =
+                false;
+
+
         if
         (
-            codeSynchronization is null
+            canConnect
         )
         {
-            throw new InvalidOperationException
-            (
-                $"Code Synchronization record '{codeSynchronizationId}' could not be located."
-            );
+            schemaExists =
+                await _databaseTableInspector
+                    .SchemaExistsAsync
+                    (
+                        initializationContext
+                    );
         }
 
 
         //=======================================================
-        // Validate Submenu Code
+        // Inspect Table
         //=======================================================
 
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                codeSynchronization.SubmenuCode
-            )
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"Code Synchronization record '{codeSynchronizationId}' does not contain a valid Submenu Code."
-            );
-        }
-
-
-        //=======================================================
-        // Load Submenu Synchronization
-        //=======================================================
-
-        var submenuSynchronization =
-            await _codeSynchronizationRepository
-                .GetSubmenuSynchronizationForRegistrationAsync
-                (
-                    codeSynchronization
-                        .SubmenuSynchronizationId
-                );
+        bool
+            tableExists =
+                false;
 
 
         if
         (
-            submenuSynchronization is null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"Submenu Synchronization record '{codeSynchronization.SubmenuSynchronizationId}' could not be located."
-            );
-        }
-
-
-        //=======================================================
-        // Validate Submenu Name
-        //=======================================================
-
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                submenuSynchronization.SubmenuName
-            )
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"Submenu Synchronization record '{codeSynchronization.SubmenuSynchronizationId}' does not contain a valid Submenu Name."
-            );
-        }
-
-
-        //=======================================================
-        // Find Backend Studio Root
-        //=======================================================
-
-        var backendStudioRoot =
-            FindBackendStudioRoot();
-
-
-        if
-        (
-            backendStudioRoot is null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                "Backend Studio root could not be located."
-            );
-        }
-
-
-        //=======================================================
-        // Find Infrastructure Project
-        //=======================================================
-
-        var infrastructureProject =
-            FindProject
-            (
-                backendStudioRoot,
-
-                "AppCore.Infrastructure"
-            );
-
-
-        if
-        (
-            infrastructureProject is null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                "AppCore.Infrastructure project could not be located."
-            );
-        }
-
-
-        //=======================================================
-        // Find API Project
-        //=======================================================
-
-        var apiProject =
-            FindProject
-            (
-                backendStudioRoot,
-
-                "AppCore.API"
-            );
-
-
-        if
-        (
-            apiProject is null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                "AppCore.API project could not be located."
-            );
-        }
-
-
-        //=======================================================
-        // Find Migrations Directory
-        //=======================================================
-
-        var migrationsDirectory =
-            FindMigrationsDirectory
-            (
-                infrastructureProject
-            );
-
-
-        if
-        (
-            migrationsDirectory is null
-        )
-        {
-            throw new InvalidOperationException
-            (
-                "Database migrations directory could not be located."
-            );
-        }
-
-
-        //=======================================================
-        // Build Backend Projects
-        //=======================================================
-
-        var buildResult =
-            await RunDotnetProcessAsync
-            (
-                new[]
-                {
-                    "build",
-
-                    apiProject
-                },
-
-                backendStudioRoot
-            );
-
-
-        //=======================================================
-        // Backend Build Failed
-        //=======================================================
-
-        if
-        (
-            buildResult.ExitCode != 0
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"Backend build failed.{Environment.NewLine}{GetProcessOutput(buildResult)}"
-            );
-        }
-
-
-        //=======================================================
-        // Build Database Artifact Information
-        //=======================================================
-
-        var artifact =
-            _databaseArtifactHelper
-                .BuildArtifactInfo
-                (
-                    codeSynchronization
-                        .SubmenuCode,
-
-                    "public",
-
-                    submenuSynchronization
-                        .SubmenuName
-                );
-
-
-        //=======================================================
-        // Find Existing Migration
-        //=======================================================
-
-        var migration =
-            _databaseMigrationHelper
-                .FindMigrationInfo
-                (
-                    migrationsDirectory,
-
-                    artifact
-                        .Migration
-                        .MigrationName
-                );
-
-
-        artifact.Migration =
-            migration;
-
-
-        //=======================================================
-        // Validate Existing Migration Artifacts
-        //=======================================================
-
-        var migrationAlreadyExists =
-            _databaseMigrationHelper
-                .MigrationExists
-                (
-                    migration
-                );
-
-
-        if
-        (
-            migrationAlreadyExists
+            canConnect
             &&
-            !_databaseMigrationHelper
-                .CompleteMigrationArtifactsExist
-                (
-                    migration
-                )
+            schemaExists
+        )
+        {
+            tableExists =
+                await _databaseTableInspector
+                    .TableExistsAsync
+                    (
+                        initializationContext
+                    );
+        }
+
+
+        //=======================================================
+        // Evaluate Database Initialization State
+        //=======================================================
+
+        DatabaseInitializationState
+            initializationState =
+                _databaseInitializationStateEvaluator
+                    .Evaluate
+                    (
+                        initializationContext,
+
+                        artifactIdentity,
+
+                        migrationInfo,
+
+                        canConnect,
+
+                        schemaExists,
+
+                        tableExists
+                    );
+
+
+        //=======================================================
+        // Validate Database Initialization State
+        //=======================================================
+
+        if
+        (
+            !initializationState.IsReady
         )
         {
             throw new InvalidOperationException
             (
-                $"Database migration '{migration.MigrationName}' exists but its generated artifacts are incomplete."
+                initializationState.Message
             );
         }
 
 
         //=======================================================
-        // Validate Existing Migration Ownership
+        // Database Already Initialized
         //=======================================================
 
         if
         (
-            migrationAlreadyExists
+            migrationInfo.MigrationExists
             &&
-            !MigrationCreatesOnlyExpectedTable
-            (
-                migration,
-
-                artifact.Table.TableName
-            )
+            migrationInfo.DesignerExists
+            &&
+            migrationInfo.IsRegistered
+            &&
+            migrationInfo.IsApplied
+            &&
+            canConnect
+            &&
+            schemaExists
+            &&
+            tableExists
         )
         {
-            throw new InvalidOperationException
-            (
-                BuildMigrationOwnershipErrorMessage
-                (
-                    migration,
-
-                    artifact.Table.Schema,
-
-                    artifact.Table.TableName
-                )
-            );
-        }
-
-
-        //=======================================================
-        // Verify Database Table
-        //=======================================================
-
-        var tableExists =
-            await DatabaseTableExistsAsync
-            (
-                artifact.Table.Schema,
-
-                artifact.Table.TableName
-            );
-
-
-        artifact.Table.TableExists =
-            tableExists;
-
-
-        //=======================================================
-        // Existing Table Without Migration
-        //=======================================================
-
-        if
-        (
-            artifact.Table.TableExists
-            &&
-            !migrationAlreadyExists
-        )
-        {
-            throw new InvalidOperationException
-            (
-                $"Database table '{artifact.Table.Schema}.{artifact.Table.TableName}' already exists, but no owned migration artifact was found."
-            );
-        }
-
-
-        //=======================================================
-        // Existing Migration And Existing Table
-        //=======================================================
-
-        if
-        (
-            migrationAlreadyExists
-            &&
-            artifact.Table.TableExists
-        )
-        {
-            await _codeSynchronizationRepository
-                .UpdateBackendRegistrationStatusAsync
-                (
-                    codeSynchronizationId,
-
-                    true,
-
-                    $"Database table '{artifact.Table.Schema}.{artifact.Table.TableName}' already exists and migration '{migration.MigrationName}' is already available."
-                );
-
-
             return;
         }
 
 
         //=======================================================
-        // Create Migration
+        // Segment 4
+        // Create Physical EF Core Migration
         //=======================================================
 
         if
         (
-            !migrationAlreadyExists
+            !migrationInfo.MigrationExists
+            &&
+            !migrationInfo.DesignerExists
+            &&
+            !migrationInfo.IsRegistered
+            &&
+            !migrationInfo.IsApplied
+            &&
+            !tableExists
         )
         {
-            var migrationResult =
-                await RunDotnetProcessAsync
+
+            //===================================================
+            // Create Migration
+            //===================================================
+
+            await _efCoreMigrationExecutor
+                .CreateMigrationAsync
                 (
-                    new[]
-                    {
-                        "ef",
+                    initializationContext.BackendSolutionPath,
 
-                        "migrations",
+                    initializationContext
+                        .BackendInfrastructureProjectPath,
 
-                        "add",
+                    initializationContext
+                        .BackendStartupProjectPath,
 
-                        artifact
-                            .Migration
-                            .MigrationName,
-
-                        "--project",
-
-                        infrastructureProject,
-
-                        "--startup-project",
-
-                        apiProject
-                    },
-
-                    backendStudioRoot
+                    artifactIdentity
                 );
 
 
             //===================================================
-            // Migration Creation Failed
+            // Apply Newly Created Migration Immediately
             //===================================================
 
-            if
-            (
-                migrationResult.ExitCode != 0
-            )
-            {
-                throw new InvalidOperationException
+            await _efCoreMigrationExecutor
+                .ApplyMigrationAsync
                 (
-                    $"Database migration creation failed.{Environment.NewLine}{GetProcessOutput(migrationResult)}"
+                    initializationContext.BackendSolutionPath,
+
+                    initializationContext
+                        .BackendInfrastructureProjectPath,
+
+                    initializationContext
+                        .BackendStartupProjectPath
                 );
-            }
-
-
-            //===================================================
-            // Verify Migration Artifacts
-            //===================================================
-
-            migration =
-                _databaseMigrationHelper
-                    .FindMigrationInfo
-                    (
-                        migrationsDirectory,
-
-                        artifact
-                            .Migration
-                            .MigrationName
-                    );
-
-
-            artifact.Migration =
-                migration;
-
-
-            if
-            (
-                !_databaseMigrationHelper
-                    .CompleteMigrationArtifactsExist
-                    (
-                        migration
-                    )
-            )
-            {
-                throw new InvalidOperationException
-                (
-                    $"Database migration '{migration.MigrationName}' was created, but its generated artifacts could not be verified."
-                );
-            }
-
-
-            //===================================================
-            // Verify Migration Ownership
-            //===================================================
-
-            if
-            (
-                !MigrationCreatesOnlyExpectedTable
-                (
-                    migration,
-
-                    artifact.Table.TableName
-                )
-            )
-            {
-                var ownershipErrorMessage =
-                    BuildMigrationOwnershipErrorMessage
-                    (
-                        migration,
-
-                        artifact.Table.Schema,
-
-                        artifact.Table.TableName
-                    );
-
-
-                var migrationRemovalResult =
-                    await RunDotnetProcessAsync
-                    (
-                        new[]
-                        {
-                            "ef",
-
-                            "migrations",
-
-                            "remove",
-
-                            "--force",
-
-                            "--project",
-
-                            infrastructureProject,
-
-                            "--startup-project",
-
-                            apiProject
-                        },
-
-                        backendStudioRoot
-                    );
-
-
-                if
-                (
-                    migrationRemovalResult.ExitCode != 0
-                )
-                {
-                    throw new InvalidOperationException
-                    (
-                        $"{ownershipErrorMessage}{Environment.NewLine}{Environment.NewLine}The invalid generated migration could not be removed automatically.{Environment.NewLine}{GetProcessOutput(migrationRemovalResult)}"
-                    );
-                }
-
-
-                throw new InvalidOperationException
-                (
-                    $"{ownershipErrorMessage}{Environment.NewLine}{Environment.NewLine}The invalid generated migration was removed automatically."
-                );
-            }
         }
 
 
         //=======================================================
-        // Update Database
+        // Apply Existing Pending Migration
         //=======================================================
 
-        var databaseUpdateResult =
-            await RunDotnetProcessAsync
-            (
-                new[]
-                {
-                    "ef",
+        else if
+        (
+            migrationInfo.MigrationExists
+            &&
+            migrationInfo.DesignerExists
+            &&
+            migrationInfo.IsRegistered
+            &&
+            !migrationInfo.IsApplied
+        )
+        {
 
-                    "database",
+            //===================================================
+            // Apply EF Core Migration
+            //===================================================
 
-                    "update",
+            await _efCoreMigrationExecutor
+                .ApplyMigrationAsync
+                (
+                    initializationContext.BackendSolutionPath,
 
-                    "--project",
+                    initializationContext
+                        .BackendInfrastructureProjectPath,
 
-                    infrastructureProject,
-
-                    "--startup-project",
-
-                    apiProject
-                },
-
-                backendStudioRoot
-            );
+                    initializationContext
+                        .BackendStartupProjectPath
+                );
+        }
 
 
         //=======================================================
-        // Database Update Failed
+        // Reinspect Migration
+        //=======================================================
+
+        migrationInfo =
+            await _databaseMigrationTracker
+                .TrackAsync
+                (
+                    initializationContext,
+
+                    artifactIdentity
+                );
+
+
+        //=======================================================
+        // Reinspect Database Connection
+        //=======================================================
+
+        canConnect =
+            await _databaseTableInspector
+                .CanConnectAsync();
+
+
+        //=======================================================
+        // Reinspect Schema
+        //=======================================================
+
+        schemaExists =
+            false;
+
+
+        if
+        (
+            canConnect
+        )
+        {
+            schemaExists =
+                await _databaseTableInspector
+                    .SchemaExistsAsync
+                    (
+                        initializationContext
+                    );
+        }
+
+
+        //=======================================================
+        // Reinspect Table
+        //=======================================================
+
+        tableExists =
+            false;
+
+
+        if
+        (
+            canConnect
+            &&
+            schemaExists
+        )
+        {
+            tableExists =
+                await _databaseTableInspector
+                    .TableExistsAsync
+                    (
+                        initializationContext
+                    );
+        }
+
+
+        //=======================================================
+        // Verify Database Initialization State
+        //=======================================================
+
+        initializationState =
+            _databaseInitializationStateEvaluator
+                .Evaluate
+                (
+                    initializationContext,
+
+                    artifactIdentity,
+
+                    migrationInfo,
+
+                    canConnect,
+
+                    schemaExists,
+
+                    tableExists
+                );
+
+
+        //=======================================================
+        // Validate Final Initialization State
         //=======================================================
 
         if
         (
-            databaseUpdateResult.ExitCode != 0
+            !initializationState.IsReady
         )
         {
             throw new InvalidOperationException
             (
-                $"Database update failed.{Environment.NewLine}{GetProcessOutput(databaseUpdateResult)}"
+                initializationState.Message
             );
         }
 
 
         //=======================================================
-        // Verify Database Table
+        // Verify Final Database Initialization
         //=======================================================
-
-        tableExists =
-            await DatabaseTableExistsAsync
-            (
-                artifact.Table.Schema,
-
-                artifact.Table.TableName
-            );
-
 
         if
         (
+            !migrationInfo.MigrationExists
+            ||
+            !migrationInfo.DesignerExists
+            ||
+            !migrationInfo.IsRegistered
+            ||
+            !migrationInfo.IsApplied
+            ||
+            !canConnect
+            ||
+            !schemaExists
+            ||
             !tableExists
         )
         {
             throw new InvalidOperationException
             (
-                $"Database update completed, but table '{artifact.Table.Schema}.{artifact.Table.TableName}' could not be verified."
+                "Database initialization completed without reaching the required final database state."
             );
         }
 
 
         //=======================================================
-        // Update Registration Status
+        // Segment 4 Complete
         //=======================================================
-
-        await _codeSynchronizationRepository
-            .UpdateBackendRegistrationStatusAsync
-            (
-                codeSynchronizationId,
-
-                true,
-
-                $"Database table '{artifact.Table.Schema}.{artifact.Table.TableName}' was created successfully."
-            );
-    }
-
-
-
-    //===========================================================
-    // Migration Creates Only Expected Table
-    //===========================================================
-
-    private static bool
-        MigrationCreatesOnlyExpectedTable
-    (
-        DatabaseMigrationInfo migration,
-
-        string expectedTableName
-    )
-    {
-        var createdTables =
-            GetMigrationCreatedTables
-            (
-                migration
-            );
-
-
-        return
-            createdTables.Count
-            ==
-            1
-            &&
-            string.Equals
-            (
-                createdTables[0],
-
-                expectedTableName,
-
-                StringComparison.OrdinalIgnoreCase
-            );
-    }
-
-
-
-    //===========================================================
-    // Get Migration Created Tables
-    //===========================================================
-
-    private static List<string>
-        GetMigrationCreatedTables
-    (
-        DatabaseMigrationInfo migration
-    )
-    {
-        var createdTables =
-            new List<string>();
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                migration.MigrationFilePath
-            )
-            ||
-            !File.Exists
-            (
-                migration.MigrationFilePath
-            )
-        )
-        {
-            return
-                createdTables;
-        }
-
-
-        var migrationContent =
-            File.ReadAllText
-            (
-                migration.MigrationFilePath
-            );
-
-
-        var createTableMatches =
-            Regex.Matches
-            (
-                migrationContent,
-
-                """
-                migrationBuilder
-                \s*
-                \.
-                \s*
-                CreateTable
-                \s*
-                \(
-                \s*
-                name:
-                \s*
-                "
-                (?<tableName>[^"]+)
-                "
-                """,
-
-                RegexOptions.IgnorePatternWhitespace
-                |
-                RegexOptions.CultureInvariant
-            );
-
-
-        foreach
-        (
-            Match createTableMatch in createTableMatches
-        )
-        {
-            var tableName =
-                createTableMatch
-                    .Groups
-                    ["tableName"]
-                    .Value;
-
-
-            if
-            (
-                !string.IsNullOrWhiteSpace
-                (
-                    tableName
-                )
-            )
-            {
-                createdTables.Add
-                (
-                    tableName
-                );
-            }
-        }
-
-
-        return
-            createdTables;
-    }
-
-
-
-    //===========================================================
-    // Build Migration Ownership Error Message
-    //===========================================================
-
-    private static string
-        BuildMigrationOwnershipErrorMessage
-    (
-        DatabaseMigrationInfo migration,
-
-        string schema,
-
-        string expectedTableName
-    )
-    {
-        var createdTables =
-            GetMigrationCreatedTables
-            (
-                migration
-            );
-
-
-        var createdTableNames =
-            createdTables.Count
-            ==
-            0
-                ?
-                "None"
-                :
-                string.Join
-                (
-                    ", ",
-
-                    createdTables
-                );
-
-
-        return
-            $"Database migration '{migration.MigrationName}' does not exclusively belong to table '{schema}.{expectedTableName}'. Expected exactly one created table: '{expectedTableName}'. Generated tables: {createdTableNames}.";
-    }
-
-
-
-    //===========================================================
-    // Database Table Exists
-    //===========================================================
-
-    private async Task<bool>
-        DatabaseTableExistsAsync
-    (
-        string schema,
-
-        string tableName
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                schema
-            )
-        )
-        {
-            throw new ArgumentException
-            (
-                "Database schema is required.",
-
-                nameof(
-                    schema
-                )
-            );
-        }
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                tableName
-            )
-        )
-        {
-            throw new ArgumentException
-            (
-                "Database table name is required.",
-
-                nameof(
-                    tableName
-                )
-            );
-        }
-
-
-        var connection =
-            _dbContext.Database
-                .GetDbConnection();
-
-
-        var connectionWasClosed =
-            connection.State
-            ==
-            System.Data.ConnectionState.Closed;
-
-
-        if
-        (
-            connectionWasClosed
-        )
-        {
-            await connection.OpenAsync();
-        }
-
-
-        try
-        {
-            await using var command =
-                connection.CreateCommand();
-
-
-            command.CommandText =
-                """
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = @schema
-                  AND TABLE_NAME = @tableName
-                """;
-
-
-            var schemaParameter =
-                command.CreateParameter();
-
-
-            schemaParameter.ParameterName =
-                "@schema";
-
-
-            schemaParameter.Value =
-                schema;
-
-
-            command.Parameters.Add(
-                schemaParameter
-            );
-
-
-            var tableParameter =
-                command.CreateParameter();
-
-
-            tableParameter.ParameterName =
-                "@tableName";
-
-
-            tableParameter.Value =
-                tableName;
-
-
-            command.Parameters.Add(
-                tableParameter
-            );
-
-
-            var result =
-                await command.ExecuteScalarAsync();
-
-
-            return
-                Convert.ToInt32(
-                    result
-                )
-                >
-                0;
-        }
-        finally
-        {
-            if
-            (
-                connectionWasClosed
-            )
-            {
-                await connection.CloseAsync();
-            }
-        }
-    }
-
-
-
-    //===========================================================
-    // Find Backend Studio Root
-    //===========================================================
-
-    private static string?
-        FindBackendStudioRoot()
-    {
-        var directory =
-            new DirectoryInfo
-            (
-                AppContext.BaseDirectory
-            );
-
-
-        while
-        (
-            directory is not null
-        )
-        {
-            var infrastructureDirectory =
-                Path.Combine
-                (
-                    directory.FullName,
-
-                    "AppCore.Infrastructure"
-                );
-
-
-            if
-            (
-                Directory.Exists
-                (
-                    infrastructureDirectory
-                )
-            )
-            {
-                return
-                    directory.FullName;
-            }
-
-
-            directory =
-                directory.Parent;
-        }
-
-
-        return null;
-    }
-
-
-
-    //===========================================================
-    // Find Project
-    //===========================================================
-
-    private static string?
-        FindProject
-    (
-        string rootDirectory,
-
-        string projectName
-    )
-    {
-        var projectDirectory =
-            Path.Combine
-            (
-                rootDirectory,
-
-                projectName
-            );
-
-
-        if
-        (
-            !Directory.Exists
-            (
-                projectDirectory
-            )
-        )
-        {
-            return null;
-        }
-
-
-        return
-            Directory
-                .GetFiles
-                (
-                    projectDirectory,
-
-                    $"{projectName}.csproj",
-
-                    SearchOption.TopDirectoryOnly
-                )
-                .FirstOrDefault();
-    }
-
-
-
-    //===========================================================
-    // Find Migrations Directory
-    //===========================================================
-
-    private static string?
-        FindMigrationsDirectory
-    (
-        string infrastructureProject
-    )
-    {
-        var projectDirectory =
-            Path.GetDirectoryName
-            (
-                infrastructureProject
-            );
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace
-            (
-                projectDirectory
-            )
-            ||
-            !Directory.Exists
-            (
-                projectDirectory
-            )
-        )
-        {
-            return null;
-        }
-
-
-        var migrationsDirectory =
-            Directory
-                .GetDirectories
-                (
-                    projectDirectory,
-
-                    "Migrations",
-
-                    SearchOption.AllDirectories
-                )
-                .FirstOrDefault();
-
-
-        return
-            migrationsDirectory;
-    }
-
-
-
-    //===========================================================
-    // Run Dotnet Process
-    //===========================================================
-
-    private static async Task<DotnetProcessResult>
-        RunDotnetProcessAsync
-    (
-        IEnumerable<string> arguments,
-
-        string workingDirectory
-    )
-    {
-        var processStartInfo =
-            new ProcessStartInfo
-            {
-                FileName =
-                    "dotnet",
-
-                WorkingDirectory =
-                    workingDirectory,
-
-                UseShellExecute =
-                    false,
-
-                RedirectStandardOutput =
-                    true,
-
-                RedirectStandardError =
-                    true,
-
-                CreateNoWindow =
-                    true
-            };
-
-
-        foreach
-        (
-            var argument in arguments
-        )
-        {
-            processStartInfo.ArgumentList.Add
-            (
-                argument
-            );
-        }
-
-
-        using var process =
-            new Process
-            {
-                StartInfo =
-                    processStartInfo
-            };
-
-
-        process.Start();
-
-
-        var standardOutputTask =
-            process.StandardOutput
-                .ReadToEndAsync();
-
-
-        var standardErrorTask =
-            process.StandardError
-                .ReadToEndAsync();
-
-
-        await process.WaitForExitAsync();
-
-
-        return new DotnetProcessResult
-        {
-            ExitCode =
-                process.ExitCode,
-
-            StandardOutput =
-                await standardOutputTask,
-
-            StandardError =
-                await standardErrorTask
-        };
-    }
-
-
-
-    //===========================================================
-    // Get Process Output
-    //===========================================================
-
-    private static string
-        GetProcessOutput
-    (
-        DotnetProcessResult result
-    )
-    {
-        var output =
-            string.Empty;
-
-
-        if
-        (
-            !string.IsNullOrWhiteSpace
-            (
-                result.StandardOutput
-            )
-        )
-        {
-            output +=
-                result.StandardOutput;
-        }
-
-
-        if
-        (
-            !string.IsNullOrWhiteSpace
-            (
-                result.StandardError
-            )
-        )
-        {
-            if
-            (
-                !string.IsNullOrWhiteSpace
-                (
-                    output
-                )
-            )
-            {
-                output +=
-                    Environment.NewLine;
-            }
-
-
-            output +=
-                result.StandardError;
-        }
-
-
-        return output;
-    }
-
-
-
-    //===========================================================
-    // Dotnet Process Result
-    //===========================================================
-
-    private sealed class DotnetProcessResult
-    {
-
-        public int ExitCode
-        {
-            get;
-            init;
-        }
-
-
-        public string StandardOutput
-        {
-            get;
-            init;
-        }
-        =
-            string.Empty;
-
-
-        public string StandardError
-        {
-            get;
-            init;
-        }
-        =
-            string.Empty;
 
     }
 

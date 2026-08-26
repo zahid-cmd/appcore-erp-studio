@@ -523,9 +523,7 @@ public class CodeSynchronizationController
     public async Task<ActionResult>
         CreateDatabase
     (
-        long id,
-
-        CancellationToken cancellationToken
+        long id
     )
     {
         try
@@ -620,7 +618,7 @@ public class CodeSynchronizationController
             //===================================================
 
             await _databaseCreationEngine
-                .CreateDatabaseAsync
+                .CreateAsync
                 (
                     id
                 );
@@ -639,24 +637,6 @@ public class CodeSynchronizationController
 
                     message =
                         "Database created successfully."
-                }
-            );
-        }
-
-        catch
-        (
-            OperationCanceledException
-        )
-        {
-            return BadRequest
-            (
-                new
-                {
-                    success =
-                        false,
-
-                    message =
-                        "Database creation was cancelled."
                 }
             );
         }
@@ -691,9 +671,7 @@ public class CodeSynchronizationController
     public async Task<ActionResult>
         RemoveDatabase
     (
-        long id,
-
-        CancellationToken cancellationToken
+        long id
     )
     {
         try
@@ -768,24 +746,6 @@ public class CodeSynchronizationController
 
                     message =
                         "Database removed successfully."
-                }
-            );
-        }
-
-        catch
-        (
-            OperationCanceledException
-        )
-        {
-            return BadRequest
-            (
-                new
-                {
-                    success =
-                        false,
-
-                    message =
-                        "Database removal was cancelled."
                 }
             );
         }

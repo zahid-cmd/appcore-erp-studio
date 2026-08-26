@@ -30,6 +30,32 @@ export const settingsRoutes:
 
         pathMatch:'full'
     },
+    // AUTO-BEGIN : MNU-003-002
+
+    //===========================================================
+    // Account Settings
+    //===========================================================
+
+    {
+        path:'account-settings',
+
+        data:
+        {
+            breadcrumb:'Account Settings'
+        },
+
+        loadChildren:() =>
+            import(
+                '../account-settings/routes/account-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu003002Routes
+            )
+    },
+
+    // AUTO-END : MNU-003-002
+
     // AUTO-BEGIN : MNU-003-001
 
     //===========================================================

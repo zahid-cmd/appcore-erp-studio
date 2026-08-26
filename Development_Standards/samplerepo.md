@@ -37,3 +37,9 @@
 //===============================================================
 // Get Next Code
 //===============================================================
+
+
+
+dotnet ef migrations list --context AppDbContext --project "..\AppCore.Infrastructure\AppCore.Infrastructure.csproj" --startup-project ".\AppCore.API.csproj"
+
+dotnet ef migrations remove --force --context AppDbContext --project "..\AppCore.Infrastructure\AppCore.Infrastructure.csproj" --startup-project ".\AppCore.API.csproj"

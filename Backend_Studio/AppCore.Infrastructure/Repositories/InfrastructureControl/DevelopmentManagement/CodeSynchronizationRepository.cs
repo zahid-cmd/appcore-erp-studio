@@ -491,134 +491,170 @@ public class CodeSynchronizationRepository
 
 
 
-    //===========================================================
-    // Get Submenu Synchronization For Registration
-    //===========================================================
-
-    public async Task<SubmenuSynchronizationDto?>
-        GetSubmenuSynchronizationForRegistrationAsync
-    (
-        long id
-    )
-    {
-        var codeSynchronization =
-            await _context.CodeSynchronizations
-
-                .AsNoTracking()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.Id ==
-                        id
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            codeSynchronization == null
-        )
-        {
-            return null;
-        }
-
-
-        var synchronization =
-            await _context.SubmenuSynchronizations
-
-                .AsNoTracking()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.Id ==
-                        codeSynchronization.SubmenuSynchronizationId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            synchronization == null
-        )
-        {
-            return null;
-        }
-
-
-        return new SubmenuSynchronizationDto
-        {
-            Id =
-                synchronization.Id,
-
-            ModuleId =
-                synchronization.ModuleId,
-
-            ModuleCode =
-                synchronization.ModuleCode,
-
-            ModuleName =
-                synchronization.ModuleName,
-
-            MenuId =
-                synchronization.MenuId,
-
-            MenuCode =
-                synchronization.MenuCode,
-
-            MenuName =
-                synchronization.MenuName,
-
-            SubmenuId =
-                synchronization.SubmenuId,
-
-            SubmenuCode =
-                synchronization.SubmenuCode,
-
-            SubmenuName =
-                synchronization.SubmenuName,
-
-            SynchronizationType =
-                synchronization.SynchronizationType,
-
-            BackendControllerFile =
-                synchronization.BackendControllerFile,
-
-            BackendSubMenuDtoFile =
-                synchronization.BackendSubMenuDtoFile,
-
-            BackendCreateSubMenuDtoFile =
-                synchronization.BackendCreateSubMenuDtoFile,
-
-            BackendUpdateSubMenuDtoFile =
-                synchronization.BackendUpdateSubMenuDtoFile,
-
-            BackendSubMenuDefaultsDtoFile =
-                synchronization.BackendSubMenuDefaultsDtoFile,
-
-            BackendSubMenuRepositoryInterfaceFile =
-                synchronization.BackendSubMenuRepositoryInterfaceFile,
-
-            BackendSubMenuEntityFile =
-                synchronization.BackendSubMenuEntityFile,
-
-            BackendSubMenuConfigurationFile =
-                synchronization.BackendSubMenuConfigurationFile,
-
-            BackendSubMenuRepositoryFile =
-                synchronization.BackendSubMenuRepositoryFile
-        };
-    }
-
+    //=========================================================== 
+    // Get Submenu Synchronization For Registration 
+    //=========================================================== 
+ 
+    public async Task<SubmenuSynchronizationDto?> 
+        GetSubmenuSynchronizationForRegistrationAsync 
+    ( 
+        long id 
+    ) 
+    { 
+        var codeSynchronization = 
+            await _context.CodeSynchronizations 
+ 
+                .AsNoTracking() 
+ 
+                .FirstOrDefaultAsync 
+                ( 
+                    x => 
+ 
+                        x.Id == 
+                        id 
+ 
+                        && 
+ 
+                        !x.IsDeleted 
+                ); 
+ 
+ 
+        if 
+        ( 
+            codeSynchronization == null 
+        ) 
+        { 
+            return null; 
+        } 
+ 
+ 
+        var synchronization = 
+            await _context.SubmenuSynchronizations 
+ 
+                .AsNoTracking() 
+ 
+                .FirstOrDefaultAsync 
+                ( 
+                    x => 
+ 
+                        x.Id == 
+                        codeSynchronization.SubmenuSynchronizationId 
+ 
+                        && 
+ 
+                        !x.IsDeleted 
+                ); 
+ 
+ 
+        if 
+        ( 
+            synchronization == null 
+        ) 
+        { 
+            return null; 
+        } 
+ 
+ 
+        return new SubmenuSynchronizationDto 
+        { 
+            Id = 
+                synchronization.Id, 
+ 
+            ModuleId = 
+                synchronization.ModuleId, 
+ 
+            ModuleCode = 
+                synchronization.ModuleCode, 
+ 
+            ModuleName = 
+                synchronization.ModuleName, 
+ 
+            MenuId = 
+                synchronization.MenuId, 
+ 
+            MenuCode = 
+                synchronization.MenuCode, 
+ 
+            MenuName = 
+                synchronization.MenuName, 
+ 
+            SubmenuId = 
+                synchronization.SubmenuId, 
+ 
+            SubmenuCode = 
+                synchronization.SubmenuCode, 
+ 
+            SubmenuName = 
+                synchronization.SubmenuName, 
+ 
+            SynchronizationType = 
+                synchronization.SynchronizationType, 
+ 
+ 
+            //=================================================== 
+            // Backend Target Location 
+            //=================================================== 
+ 
+            BackendSolution = 
+                synchronization.BackendSolution, 
+ 
+            BackendApplicationProject = 
+                synchronization.BackendApplicationProject, 
+ 
+            BackendDomainProject = 
+                synchronization.BackendDomainProject, 
+ 
+            BackendInfrastructureProject = 
+                synchronization.BackendInfrastructureProject, 
+ 
+ 
+            //=================================================== 
+            // Backend API 
+            //=================================================== 
+ 
+            BackendControllerFile = 
+                synchronization.BackendControllerFile, 
+ 
+ 
+            //=================================================== 
+            // Backend Application 
+            //=================================================== 
+ 
+            BackendSubMenuDtoFile = 
+                synchronization.BackendSubMenuDtoFile, 
+ 
+            BackendCreateSubMenuDtoFile = 
+                synchronization.BackendCreateSubMenuDtoFile, 
+ 
+            BackendUpdateSubMenuDtoFile = 
+                synchronization.BackendUpdateSubMenuDtoFile, 
+ 
+            BackendSubMenuDefaultsDtoFile = 
+                synchronization.BackendSubMenuDefaultsDtoFile, 
+ 
+            BackendSubMenuRepositoryInterfaceFile = 
+                synchronization.BackendSubMenuRepositoryInterfaceFile, 
+ 
+ 
+            //=================================================== 
+            // Backend Domain 
+            //=================================================== 
+ 
+            BackendSubMenuEntityFile = 
+                synchronization.BackendSubMenuEntityFile, 
+ 
+ 
+            //=================================================== 
+            // Backend Infrastructure 
+            //=================================================== 
+ 
+            BackendSubMenuConfigurationFile = 
+                synchronization.BackendSubMenuConfigurationFile, 
+ 
+            BackendSubMenuRepositoryFile = 
+                synchronization.BackendSubMenuRepositoryFile 
+        }; 
+    } 
 
 
     //===========================================================
