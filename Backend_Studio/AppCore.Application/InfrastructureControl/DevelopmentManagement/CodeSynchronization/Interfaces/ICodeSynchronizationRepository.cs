@@ -206,4 +206,105 @@ public interface ICodeSynchronizationRepository
             string message
         );
 
+
+    //===========================================================
+    // Update Migration Status
+    //===========================================================
+    //
+    // Updates the Code Synchronization migration status after
+    // Migration Creation has completed.
+    //
+    // Successful creation:
+    //
+    //     Migration Status:
+    //         Created
+    //
+    // Failed creation:
+    //
+    //     Migration Status:
+    //         Failed
+    //
+    // The frontend derives MigrationCreated from MigrationStatus.
+    //
+    // Migration state does NOT modify DatabaseCreated.
+    //
+    //===========================================================
+
+    Task<bool>
+        UpdateMigrationStatusAsync
+        (
+            long id,
+
+            bool successful,
+
+            string message
+        );
+
+
+    //===========================================================
+    // Update Migration Removal Status
+    //===========================================================
+    //
+    // Updates the Code Synchronization migration status after
+    // successful Migration Removal.
+    //
+    // Removal does NOT affect:
+    //
+    //     Code Synchronization Status
+    //
+    //     Backend Registration Status
+    //
+    // After successful removal:
+    //
+    //     Migration Status:
+    //         Ready
+    //
+    // This makes the Create Migration action available again.
+    //
+    //===========================================================
+
+    Task<bool>
+        UpdateMigrationRemovalStatusAsync
+        (
+            long id,
+
+            string message
+        );
+
+
+    //===========================================================
+    // Update Database Status
+    //===========================================================
+    //
+    // Updates the Code Synchronization database state after
+    // the actual database creation or removal operation has
+    // completed successfully.
+    //
+    // Database state is completely independent from Migration
+    // state.
+    //
+    // Successful database creation:
+    //
+    //     DatabaseCreated:
+    //         true
+    //
+    // Successful database removal:
+    //
+    //     DatabaseCreated:
+    //         false
+    //
+    // Migration creation/removal must never update this state.
+    //
+    //===========================================================
+
+    Task<bool>
+        UpdateDatabaseStatusAsync
+        (
+            long id,
+
+            bool successful,
+
+            string message
+        );
+
 }

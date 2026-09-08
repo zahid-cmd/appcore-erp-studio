@@ -47,14 +47,14 @@
 
     <!-- =========================================================
         BODY
-    ========================================================= -->
+    ====================================================== -->
 
     <div class="list-table-body">
 
 
         <!-- =====================================================
             LOADING
-        ====================================================== -->
+        ===================================================== -->
 
         <div
             *ngIf="loading"
@@ -348,32 +348,6 @@
                                     <!-- =====================================
                                         REGISTER / DEREGISTER
                                     ====================================== -->
-                                    <!--
-                                        REGISTRATION RULE:
-
-                                            Not Synchronized
-                                                -> Disabled
-
-                                            Synchronized +
-                                            Database Not Created
-                                                -> Register /
-                                                   Deregister Enabled
-
-                                            Synchronized +
-                                            Database Created
-                                                -> Deregister Disabled
-
-                                            Another Registered Item
-                                            Has Pending Database Creation
-                                                -> Registration Locked
-
-                                        databaseCreated represents the
-                                        physical database-table state.
-
-                                        registrationDisabled is supplied
-                                        by the parent page and represents
-                                        the global registration lock.
-                                    ====================================== -->
 
                                     <button
                                         *ngIf="
@@ -397,7 +371,9 @@
                                             ||
                                             row.registrationDisabled === true
                                             ||
-                                            row.databaseCreated === true
+                                            isRegistrationDisabled(
+                                                row
+                                            )
                                         "
 
                                         [title]="
@@ -413,18 +389,26 @@
                                                         'Deregister disabled while database table exists'
                                                         :
                                                         (
-                                                            row.registrationDisabled === true
+                                                            row.dbStatus?.toLowerCase()
+                                                            ===
+                                                            'registered'
                                                                 ?
-                                                                'Registration locked until the pending database creation is completed'
+                                                                'Deregister'
                                                                 :
                                                                 (
-                                                                    row.dbStatus?.toLowerCase()
-                                                                    ===
-                                                                    'registered'
+                                                                    row.registrationDisabled === true
                                                                         ?
-                                                                        'Deregister'
+                                                                        'Registration locked until the pending database creation is completed'
                                                                         :
-                                                                        'Register'
+                                                                        (
+                                                                            isRegistrationDisabled(
+                                                                                row
+                                                                            )
+                                                                                ?
+                                                                                'Another record is currently registered. Complete database creation first.'
+                                                                                :
+                                                                                'Register'
+                                                                        )
                                                                 )
                                                         )
                                                 )
@@ -437,11 +421,6 @@
                                             )
                                         ">
 
-
-                                        <!-- =================================
-                                            DEREGISTER
-                                        ================================== -->
-
                                         <i
                                             *ngIf="
                                                 row.dbStatus?.toLowerCase()
@@ -453,10 +432,6 @@
 
                                         </i>
 
-
-                                        <!-- =================================
-                                            REGISTER
-                                        ================================== -->
 
                                         <i
                                             *ngIf="
@@ -473,32 +448,113 @@
 
 
                                     <!-- =====================================
-                                        DATABASE CREATE / REMOVE
+                                        MIGRATION CREATE / REMOVE
+
+                                        Migration remains available only
+                                        while the database table does not
+                                        exist.
+
+                                        Once databaseCreated === true,
+                                        migration is locked because the
+                                        database must be removed first.
                                     ====================================== -->
-                                    <!--
-                                        DATABASE RULE:
 
-                                            Not Synchronized
-                                                -> Disabled
+                                    <button
+                                        *ngIf="
+                                            showRegistration
+                                        "
 
-                                            Synchronized +
-                                            Not Registered
-                                                -> Disabled
+                                        type="button"
 
-                                            Registered +
-                                            Database Not Created
-                                                -> BLUE / CREATE
+                                        class="action-btn migration"
 
-                                            Registered +
-                                            Database Created
-                                                -> ORANGE / REMOVE
+                                        [class.remove-migration]="
+                                            row.migrationCreated === true
+                                        "
 
-                                        The database button remains enabled
-                                        after creation so the physical
-                                        table can be removed.
+                                        [disabled]="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                            ||
+                                            row.dbStatus?.toLowerCase()
+                                            !==
+                                            'registered'
+                                            ||
+                                            row.databaseCreated === true
+                                        "
 
-                                        databaseCreated is the physical
-                                        database-table state.
+                                        [title]="
+                                            row.status?.toLowerCase()
+                                            !==
+                                            'synchronized'
+                                                ?
+                                                'Migration operation unavailable until code synchronization is completed'
+                                                :
+                                                (
+                                                    row.dbStatus?.toLowerCase()
+                                                    !==
+                                                    'registered'
+                                                        ?
+                                                        'Register backend code before creating a migration'
+                                                        :
+                                                        (
+                                                            row.databaseCreated === true
+                                                                ?
+                                                                'Migration operation disabled while database table exists. Remove the database table first.'
+                                                                :
+                                                                (
+                                                                    row.migrationCreated === true
+                                                                        ?
+                                                                        'Remove Migration'
+                                                                        :
+                                                                        'Create Migration'
+                                                                )
+                                                        )
+                                                )
+                                        "
+
+                                        (click)="
+                                            onMigrationClick(
+                                                row,
+                                                $event
+                                            )
+                                        ">
+
+                                        <i
+                                            *ngIf="
+                                                row.migrationCreated !== true
+                                            "
+
+                                            class="fas fa-file-circle-plus">
+
+                                        </i>
+
+
+                                        <i
+                                            *ngIf="
+                                                row.migrationCreated === true
+                                            "
+
+                                            class="fas fa-file-circle-minus">
+
+                                        </i>
+
+                                    </button>
+
+
+                                    <!-- =====================================
+                                        DATABASE CREATE / REMOVE
+
+                                        Database creation requires a
+                                        migration.
+
+                                        Once the database table exists,
+                                        the same button becomes the
+                                        Remove Database operation.
+
+                                        Migration removal is blocked while
+                                        databaseCreated === true.
                                     ====================================== -->
 
                                     <button
@@ -522,6 +578,12 @@
                                             row.dbStatus?.toLowerCase()
                                             !==
                                             'registered'
+                                            ||
+                                            (
+                                                row.databaseCreated !== true
+                                                &&
+                                                row.migrationCreated !== true
+                                            )
                                         "
 
                                         [title]="
@@ -541,9 +603,15 @@
                                                         (
                                                             row.databaseCreated === true
                                                                 ?
-                                                                'Remove Database Table'
+                                                                'Remove Database'
                                                                 :
-                                                                'Create Database Table'
+                                                                (
+                                                                    row.migrationCreated !== true
+                                                                        ?
+                                                                        'Create migration before creating the database'
+                                                                        :
+                                                                        'Create Database'
+                                                                )
                                                         )
                                                 )
                                         "
@@ -556,16 +624,13 @@
                                         ">
 
 
-                                        <!-- =================================
-                                            DATABASE
-                                        ================================== -->
-
                                         <i
                                             class="fas fa-database">
 
                                         </i>
 
                                     </button>
+
 
                                 </div>
 
@@ -590,8 +655,7 @@
                                         onOperationClick(
                                             row,
                                             $event
-                                        )
-                                    ">
+                                        )">
 
                                     <i
                                         class="fas fa-arrows-rotate">

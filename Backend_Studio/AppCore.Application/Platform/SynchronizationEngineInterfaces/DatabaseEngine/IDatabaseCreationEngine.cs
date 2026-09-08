@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using System.Threading.Tasks;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -6,19 +13,27 @@ namespace AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseE
 
 
 //===============================================================
-// Database Creation Engine
+// Database Creation Engine Interface
 //===============================================================
 
 public interface IDatabaseCreationEngine
 {
-
     //===========================================================
     // Create Database
     //===========================================================
 
     Task CreateAsync
     (
-        long codeSynchronizationId
+        long submenuId
     );
 
+
+    //===========================================================
+    // Remove Database
+    //===========================================================
+
+    Task RemoveAsync
+    (
+        long submenuId
+    );
 }

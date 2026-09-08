@@ -111,6 +111,68 @@ public class CodeSynchronizationDto
 
 
     //===========================================================
+    // Migration Status
+    //===========================================================
+    //
+    // Used by Migration Engine.
+    //
+    // Possible values:
+    //
+    // Ready
+    // Created
+    // Failed
+    // N/A
+    //
+    // Backend records only.
+    //
+    //===========================================================
+
+    public string MigrationStatus { get; set; } = "N/A";
+
+
+
+    //===========================================================
+    // Migration Created
+    //===========================================================
+    //
+    // Used by Frontend to determine whether the migration
+    // action should display Create Migration or Remove Migration.
+    //
+    //===========================================================
+
+    public bool MigrationCreated
+    {
+        get
+        {
+            return string.Equals
+            (
+                MigrationStatus,
+
+                "Created",
+
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Database Created
+    //===========================================================
+    //
+    // Represents whether the physical database table has been
+    // created from the generated migration.
+    //
+    // Backend records only.
+    //
+    //===========================================================
+
+    public bool DatabaseCreated { get; set; }
+
+
+
+    //===========================================================
     // Configuration
     //===========================================================
 

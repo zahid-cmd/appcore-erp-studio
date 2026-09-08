@@ -552,7 +552,7 @@
 
 
 /* =====================================================
-   OPERATION - SYNC
+   OPERATION - SYNCHRONIZE
 ===================================================== */
 
 .action-btn.sync
@@ -612,7 +612,7 @@
 
 
 /* =====================================================
-   REGISTRATION - UNREGISTER
+   REGISTRATION - DEREGISTER
 ===================================================== */
 
 .action-btn.registration.unregister
@@ -632,7 +632,68 @@
 
 
 /* =====================================================
+   MIGRATION - CREATE
+
+   This operation creates the EF Core migration only.
+
+   Flow:
+
+       Synchronize
+           ->
+       Register
+           ->
+       Create Migration
+           ->
+       Manual Rebuild
+           ->
+       Create Database Table
+===================================================== */
+
+.action-btn.migration
+{
+    background: #f5f3ff;
+
+    color: #7c3aed;
+}
+
+
+.action-btn.migration:hover
+{
+    background: #ede9fe;
+
+    color: #6d28d9;
+}
+
+
+/* =====================================================
+   MIGRATION - REMOVE
+
+   When a migration has already been created,
+   the same control can represent removal of
+   that migration.
+===================================================== */
+
+.action-btn.migration.remove-migration
+{
+    background: #fff1f2;
+
+    color: #e11d48;
+}
+
+
+.action-btn.migration.remove-migration:hover
+{
+    background: #ffe4e6;
+
+    color: #be123c;
+}
+
+
+/* =====================================================
    DATABASE - CREATE
+
+   This operation applies the already-created migration
+   and creates the physical database table.
 ===================================================== */
 
 .action-btn.database
@@ -657,21 +718,20 @@
 
 /* =====================================================
    DATABASE - REMOVE
+
+   When the physical database table already exists,
+   the database action becomes REMOVE.
+
+   Visual state:
+
+       Blue
+           =
+       Create Database Table
+
+       Orange
+           =
+       Remove Database Table
 ===================================================== */
-/*
-    When the physical database table already exists,
-    the database action becomes REMOVE.
-
-    Visual state:
-
-        Blue
-            =
-        Create Database
-
-        Orange
-            =
-        Remove Database
-*/
 
 .action-btn.database.remove-database
 {
@@ -722,6 +782,30 @@
 
 
 .action-btn.database:disabled:hover
+{
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   MIGRATION - DISABLED
+===================================================== */
+
+.action-btn.migration:disabled
+{
+    cursor: not-allowed;
+
+    opacity: .45;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+.action-btn.migration:disabled:hover
 {
     transform: none;
 

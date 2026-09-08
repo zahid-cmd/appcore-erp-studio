@@ -3,113 +3,89 @@
   previewMode
 ) {
 
-  <div
-    class="progress-overlay"
-    [class.preview-mode]="previewMode"
-  >
+    <div
+        class="progress-overlay"
+        [class.preview-mode]="previewMode"
+    >
 
-    <div class="progress-dialog">
+        <div class="progress-dialog">
 
-      <!-- =====================================================
-           HEADER
-      ====================================================== -->
+        <!-- =====================================================
+            HEADER
+        ====================================================== -->
 
-      <div class="progress-header">
+        <div class="progress-header">
 
-        <div class="progress-title">
+            <div class="progress-title">
 
-          {{
-            previewMode
-              ? 'Processing Request'
-              : progressService.title()
-          }}
+            {{
+                previewMode
+                ? 'Processing Request'
+                : progressService.title()
+            }}
+
+            </div>
 
         </div>
 
-      </div>
+        <!-- =====================================================
+            BODY
+        ===================================================== -->
 
-      <!-- =====================================================
-          BODY
-      ===================================================== -->
+        <div class="progress-body">
 
-      <div class="progress-body">
+            <div class="progress-message-row">
 
-          <div class="progress-message-row">
+                <div class="progress-message">
 
-              <div class="progress-message">
+                    {{
+                        previewMode
+                            ? 'Please wait while the operation is being completed.'
+                            : progressService.message()
+                    }}
 
-                  {{
-                      previewMode
-                          ? 'Please wait while the operation is being completed.'
-                          : progressService.message()
-                  }}
+                </div>
 
-              </div>
+                <!-- =================================================
+                    ROUND LOADER
+                ================================================== -->
 
-              <!-- =================================================
-                  ECG LOADER
-              ================================================== -->
+                <div class="round-loader">
 
-              <div class="ecg-loader">
+                    <div class="round-loader-spinner"></div>
 
-                  <svg
-                      viewBox="0 0 120 24"
-                      class="ecg-svg"
-                  >
-                      <path
-                          class="ecg-line"
-                          d="
-                              M0 12
-                              L18 12
-                              L24 12
-                              L30 12
-                              L36 12
-                              L42 12
-                              L46 16
-                              L50 4
-                              L54 22
-                              L60 8
-                              L66 15
-                              L72 10
-                              L78 12
-                              L120 12
-                          "
-                      />
+                </div>
 
-                  </svg>
+            </div>
 
-              </div>
+            <div class="progress-percent">
 
-          </div>
+                {{
+                    previewMode
+                        ? previewProgress
+                        : progressService.progress()
+                }}%
 
-          <div class="progress-percent">
+            </div>
 
-              {{
-                  previewMode
-                      ? previewProgress
-                      : progressService.progress()
-              }}%
+            <div class="progress-bar">
 
-          </div>
+                <div
+                    class="progress-fill"
+                    [style.width.%]="
+                        previewMode
+                            ? previewProgress
+                            : progressService.progress()
+                    "
+                >
+                </div>
 
-          <div class="progress-bar">
+            </div>
 
-              <div
-                  class="progress-fill"
-                  [style.width.%]="
-                      previewMode
-                          ? previewProgress
-                          : progressService.progress()
-                  "
-              >
-              </div>
+        </div>
 
-          </div>
-
-      </div>
+        </div>
 
     </div>
-
-  </div>
 
 }

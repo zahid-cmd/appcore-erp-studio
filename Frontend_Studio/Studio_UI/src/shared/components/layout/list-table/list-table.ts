@@ -164,8 +164,7 @@ implements OnChanges
      Default:
      Registration is hidden.
 
-     Code Synchronization Backend page
-     will explicitly enable it.
+     Controls only the Register / Deregister button.
   ===================================================== */
 
   @Input()
@@ -173,25 +172,63 @@ implements OnChanges
 
 
   /* =====================================================
+     MIGRATION VISIBILITY
+
+     Default:
+     Migration is hidden.
+
+     Controls only the Create / Remove Migration button.
+  ===================================================== */
+
+  @Input()
+  showMigration = false;
+
+
+  /* =====================================================
+     DATABASE VISIBILITY
+
+     Default:
+     Database is hidden.
+
+     Controls only the Create / Remove Database button.
+  ===================================================== */
+
+  @Input()
+  showDatabase = false;
+
+
+  /* =====================================================
      REGISTRATION STATE
 
-     The parent list page supplies the registration state
-     on each row.
+     Registration availability is determined only from
+     the actual synchronization workflow state.
 
-     Expected row property:
+     A registration lock exists when another row is:
 
-         registrationDisabled
+         1. Synchronized
+         2. Registered
+         3. Database table not yet created
 
-     Rules:
+     While that pending registration exists, all OTHER
+     unregistered registration controls are disabled.
 
-         false
-             Registration / Deregistration control enabled.
+     IMPORTANT:
 
-         true
-             Registration / Deregistration control disabled.
+         migrationCreated
 
-     This state is intentionally read from the row instead
-     of being inferred from DB status text.
+     has absolutely no effect on registration state.
+
+     Creating or removing a migration must not enable,
+     disable, register, deregister, or otherwise modify
+     registration controls.
+
+     IMPORTANT:
+
+         A currently registered row is NEVER blocked by
+         the global registration lock.
+
+     The global lock applies only when the current row
+     itself is attempting to become registered.
   ===================================================== */
 
   isRegistrationDisabled
@@ -200,7 +237,176 @@ implements OnChanges
   ):
       boolean
   {
-      return row?.registrationDisabled === true;
+      //=====================================================
+      // A registered row is performing DEREGISTRATION.
+      //
+      // It must not be blocked by another pending row.
+      //
+      // Deregistration is allowed only when the database
+      // table does not exist.
+      //=====================================================
+
+      if
+      (
+          row?.dbStatus
+              ?.toLowerCase()
+          ===
+          'registered'
+      )
+      {
+          return (
+              row?.databaseCreated === true
+          );
+      }
+
+
+      //=====================================================
+      // An unregistered row with an existing database table
+      // cannot be registered.
+      //=====================================================
+
+      if
+      (
+          row?.databaseCreated === true
+      )
+      {
+          return true;
+      }
+
+
+      //=====================================================
+      // GLOBAL REGISTRATION LOCK
+      //
+      // Only an UNREGISTERED row is subject to this lock.
+      //
+      // If another backend submenu is currently:
+      //
+      //     Synchronized
+      //     +
+      //     Registered
+      //     +
+      //     Database NOT Created
+      //
+      // registration of this unregistered row is blocked.
+      //
+      // Once that database is successfully created,
+      // databaseCreated becomes true and the lock is
+      // released for the other rows.
+      //=====================================================
+
+      return this.rows.some(
+          currentRow =>
+          {
+              if
+              (
+                  this.isSameRow(
+                      currentRow,
+                      row
+                  )
+              )
+              {
+                  return false;
+              }
+
+
+              return this.isPendingRegistration(
+                  currentRow
+              );
+          }
+      );
+  }
+
+
+  /* =====================================================
+     PENDING REGISTRATION
+
+     A pending registration exists when a row is:
+
+         1. Synchronized
+         2. Registered
+         3. Database table not yet created
+
+     migrationCreated is intentionally not checked here.
+
+     Migration state and Database state are completely
+     independent.
+  ===================================================== */
+
+  private isPendingRegistration
+  (
+      row: any
+  ):
+      boolean
+  {
+      return (
+          row?.status
+              ?.toLowerCase()
+          ===
+          'synchronized'
+
+          &&
+
+          row?.dbStatus
+              ?.toLowerCase()
+          ===
+          'registered'
+
+          &&
+
+          row?.databaseCreated
+          !==
+          true
+      );
+  }
+
+
+  /* =====================================================
+     SAME ROW
+
+     Uses object reference first.
+
+     If an ID is available, it is also used so the
+     registration lock remains correct when row objects
+     are refreshed or replaced.
+  ===================================================== */
+
+  private isSameRow
+  (
+      firstRow: any,
+
+      secondRow: any
+  ):
+      boolean
+  {
+      if
+      (
+          firstRow === secondRow
+      )
+      {
+          return true;
+      }
+
+
+      if
+      (
+          firstRow?.id !== undefined
+          &&
+          firstRow?.id !== null
+          &&
+          secondRow?.id !== undefined
+          &&
+          secondRow?.id !== null
+      )
+      {
+          return (
+              firstRow.id
+              ===
+              secondRow.id
+          );
+      }
+
+
+      return false;
   }
 
 
@@ -245,6 +451,38 @@ implements OnChanges
   registration =
       new EventEmitter<any>();
 
+
+  /* =====================================================
+     MIGRATION
+  ===================================================== */
+
+  @Output()
+  migration =
+      new EventEmitter<any>();
+
+
+  /* =====================================================
+     DATABASE
+
+     Database execution is handled by the parent
+     Code Synchronization component.
+
+     This component only emits the selected row.
+
+     Flow:
+
+         Database Button
+              ↓
+         onDatabaseClick()
+              ↓
+         database.emit(row)
+              ↓
+         Parent database(row)
+              ↓
+         Confirm Dialog
+              ↓
+         Backend Database Creation / Removal
+  ===================================================== */
 
   @Output()
   database =
@@ -642,19 +880,26 @@ implements OnChanges
 
 
       //=====================================================
-      // Safety Guard
+      // A registered row must always be allowed to emit
+      // the registration event.
       //
-      // Do not emit a registration event when the parent
-      // has marked the registration control as disabled.
+      // The parent component decides whether this event
+      // means Register or Deregister.
       //
-      // This prevents deregistration after the physical
-      // database table has been created, even if a click
-      // somehow reaches this handler.
+      // The registration lock applies only to an
+      // unregistered row attempting registration.
       //=====================================================
 
       if
       (
-          this.isRegistrationDisabled(row)
+          row?.dbStatus
+              ?.toLowerCase()
+          !==
+          'registered'
+          &&
+          this.isRegistrationDisabled(
+              row
+          )
       )
       {
           return;
@@ -674,7 +919,71 @@ implements OnChanges
 
 
   /* =====================================================
+     MIGRATION CLICK
+
+     Migration state is independent from:
+
+         Registration
+         Database Creation
+
+     This method only emits the selected row.
+
+     It does not modify:
+
+         dbStatus
+         registration state
+         databaseCreated
+  ===================================================== */
+
+  onMigrationClick
+  (
+      row: any,
+
+      event: MouseEvent
+  ):
+      void
+  {
+      event.stopPropagation();
+
+
+      console.log(
+          'MIGRATION CLICK',
+          row
+      );
+
+
+      this.migration.emit(
+          row
+      );
+  }
+
+
+  /* =====================================================
      DATABASE CLICK
+
+     Database state is controlled by the parent.
+
+     This method only emits the selected row.
+
+     The button itself remains protected by the template
+     eligibility rule:
+
+         synchronized
+         +
+         registered
+         +
+         migrationCreated === true
+
+     Once the button is enabled, the event is emitted to
+     the parent Code Synchronization component.
+
+     The parent then decides whether to:
+
+         Create Database
+         or
+         Remove Database
+
+     and opens the Confirm Dialog before execution.
   ===================================================== */
 
   onDatabaseClick

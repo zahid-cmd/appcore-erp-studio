@@ -31,58 +31,6 @@ Routes =
         children:
         [
 
-                // AUTO-BEGIN : SUB-003-002-002
-
-    //===========================================================
-    // Account Group
-    //===========================================================
-
-    {
-        path:'account-group',
-
-        data:
-        {
-            breadcrumb:'Account Group'
-        },
-
-        loadChildren:() =>
-            import(
-                './account-group.routes'
-            )
-            .then(
-                m =>
-                    m.AccountGroupRoutes
-            )
-    },
-
-    // AUTO-END : SUB-003-002-002
-
-// AUTO-BEGIN : SUB-003-002-001
-
-    //===========================================================
-    // Account Class
-    //===========================================================
-
-    {
-        path:'account-class',
-
-        data:
-        {
-            breadcrumb:'Account Class'
-        },
-
-        loadChildren:() =>
-            import(
-                './account-class.routes'
-            )
-            .then(
-                m =>
-                    m.AccountClassRoutes
-            )
-    },
-
-    // AUTO-END : SUB-003-002-001
-
 ]
 
     }

@@ -48,11 +48,18 @@
                 (command1Click)="refresh()"
 
 
-                command2Text="Rebuild"
+                command2Text="FE Rebuild"
 
-                command2Icon="fas fa-arrows-rotate"
+                command2Icon="fab fa-angular"
 
-                (command2Click)="rebuild()"
+                (command2Click)="rebuildFrontend()"
+
+
+                command3Text="BE Rebuild"
+
+                command3Icon="fas fa-server"
+
+                (command3Click)="rebuildBackend()"
 
 
                 rightCommandIcon="fas fa-clock-rotate-left"
@@ -191,40 +198,42 @@
 
         <div canvasBody>
 
-            <app-list-table 
- 
-                [columns]="columns" 
- 
-                [rows]="pagedSynchronizations" 
- 
-                [serialOffset]=" 
-                    (currentPage - 1) * pageSize 
-                " 
- 
-                [loading]="loading" 
- 
-                [error]="loadFailed" 
- 
-                [showRegistration]=" 
-                    selectedTab === 'backend' 
-                " 
- 
-                [actions]="{ 
-                    view: true, 
-                    edit: false, 
-                    delete: false 
-                }" 
- 
-                (view)="view($event)" 
- 
-                (operation)="synchronize($event)" 
- 
-                (registration)="register($event)" 
- 
+            <app-list-table
+
+                [columns]="columns"
+
+                [rows]="pagedSynchronizations"
+
+                [serialOffset]="
+                    (currentPage - 1) * pageSize
+                "
+
+                [loading]="loading"
+
+                [error]="loadFailed"
+
+                [showRegistration]="
+                    selectedTab === 'backend'
+                "
+
+                [actions]="{
+                    view: true,
+                    edit: false,
+                    delete: false
+                }"
+
+                (view)="view($event)"
+
+                (operation)="synchronize($event)"
+
+                (registration)="register($event)"
+
                 (database)="database($event)"
- 
-                (sortChange)="onSort($event)"> 
- 
+
+                (migration)="migration($event)"
+
+                (sortChange)="onSort($event)">
+
             </app-list-table>
 
         </div>

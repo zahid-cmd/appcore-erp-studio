@@ -146,6 +146,9 @@ public class AppDbContext
  
     // AUTO-BEGIN : AUTO REGISTER DBSETS 
 
+
+
+
     // AUTO-BEGIN : Company
 
     public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Company>

@@ -31,58 +31,6 @@ Routes =
         children:
         [
 
-                // AUTO-BEGIN : SUB-003-001-001
-
-    //===========================================================
-    // Company
-    //===========================================================
-
-    {
-        path:'company',
-
-        data:
-        {
-            breadcrumb:'Company'
-        },
-
-        loadChildren:() =>
-            import(
-                './company.routes'
-            )
-            .then(
-                m =>
-                    m.CompanyRoutes
-            )
-    },
-
-    // AUTO-END : SUB-003-001-001
-
-// AUTO-BEGIN : SUB-003-001-002
-
-    //===========================================================
-    // Branch
-    //===========================================================
-
-    {
-        path:'branch',
-
-        data:
-        {
-            breadcrumb:'Branch'
-        },
-
-        loadChildren:() =>
-            import(
-                './branch.routes'
-            )
-            .then(
-                m =>
-                    m.BranchRoutes
-            )
-    },
-
-    // AUTO-END : SUB-003-001-002
-
 ]
 
     }

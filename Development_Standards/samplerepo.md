@@ -42,4 +42,7 @@
 
 dotnet ef migrations list --context AppDbContext --project "..\AppCore.Infrastructure\AppCore.Infrastructure.csproj" --startup-project ".\AppCore.API.csproj"
 
-dotnet ef migrations remove --force --context AppDbContext --project "..\AppCore.Infrastructure\AppCore.Infrastructure.csproj" --startup-project ".\AppCore.API.csproj"
+dotnet ef migrations remove --project ".\AppCore.Infrastructure\AppCore.Infrastructure.csproj" --startup-project ".\AppCore.API\AppCore.API.csproj" --force
+del /q ".\AppCore.Infrastructure\Migrations\*.dbmigration-backup" 2>nul
+
+dotnet ef migrations remove --project ".\AppCore.Infrastructure\AppCore.Infrastructure.csproj" --startup-project ".\AppCore.API\AppCore.API.csproj" --force

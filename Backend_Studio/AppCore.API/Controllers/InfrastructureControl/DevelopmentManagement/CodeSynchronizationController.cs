@@ -2,6 +2,11 @@
 // Namespaces
 //===============================================================
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
@@ -12,6 +17,7 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
+
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
 
@@ -53,12 +59,12 @@ public class CodeSynchronizationController
         _backendRegistrationEngine;
 
 
+    private readonly IDatabaseMigrationEngine
+        _databaseMigrationEngine;
+
+
     private readonly IDatabaseCreationEngine
         _databaseCreationEngine;
-
-
-    private readonly IDatabaseRemovalEngine
-        _databaseRemovalEngine;
 
 
 
@@ -74,9 +80,9 @@ public class CodeSynchronizationController
 
         IBackendRegistrationEngine backendRegistrationEngine,
 
-        IDatabaseCreationEngine databaseCreationEngine,
+        IDatabaseMigrationEngine databaseMigrationEngine,
 
-        IDatabaseRemovalEngine databaseRemovalEngine
+        IDatabaseCreationEngine databaseCreationEngine
     )
     {
         _repository =
@@ -91,12 +97,12 @@ public class CodeSynchronizationController
             backendRegistrationEngine;
 
 
+        _databaseMigrationEngine =
+            databaseMigrationEngine;
+
+
         _databaseCreationEngine =
             databaseCreationEngine;
-
-
-        _databaseRemovalEngine =
-            databaseRemovalEngine;
     }
 
 
@@ -358,10 +364,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Validate Synchronization Type
-            //===================================================
-
             if
             (
                 !string.Equals
@@ -381,10 +383,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Validate Synchronization State
-            //===================================================
-
             if
             (
                 !string.Equals
@@ -403,10 +401,6 @@ public class CodeSynchronizationController
                 );
             }
 
-
-            //===================================================
-            // Prevent Duplicate Registration
-            //===================================================
 
             if
             (
@@ -515,263 +509,6 @@ public class CodeSynchronizationController
 
 
     //===========================================================
-    // Database Creation
-    //===========================================================
-
-    [HttpPost("{id:long}/database")]
-
-    public async Task<ActionResult>
-        CreateDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            //===================================================
-            // Validate Synchronization Type
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.SynchronizationType,
-
-                    "Backend",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Database creation is available only for Backend Code Synchronization."
-                );
-            }
-
-
-            //===================================================
-            // Validate Synchronization State
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.Status,
-
-                    "Synchronized",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Database creation is available only after Code Synchronization has completed successfully."
-                );
-            }
-
-
-            //===================================================
-            // Validate Backend Registration
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.DbStatus,
-
-                    "Registered",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    "Database creation is available only after the backend code has been registered."
-                );
-            }
-
-
-            //===================================================
-            // Create Database
-            //===================================================
-
-            await _databaseCreationEngine
-                .CreateAsync
-                (
-                    id
-                );
-
-
-            //===================================================
-            // Database Creation Successful
-            //===================================================
-
-            return Ok
-            (
-                new
-                {
-                    success =
-                        true,
-
-                    message =
-                        "Database created successfully."
-                }
-            );
-        }
-
-        catch
-        (
-            Exception exception
-        )
-        {
-            return BadRequest
-            (
-                new
-                {
-                    success =
-                        false,
-
-                    message =
-                        exception.Message
-                }
-            );
-        }
-    }
-
-
-
-    //===========================================================
-    // Database Removal
-    //===========================================================
-
-    [HttpPost("{id:long}/database/remove")]
-
-    public async Task<ActionResult>
-        RemoveDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            //===================================================
-            // Validate Synchronization Type
-            //===================================================
-
-            if
-            (
-                !string.Equals
-                (
-                    synchronization.SynchronizationType,
-
-                    "Backend",
-
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest
-                (
-                    new
-                    {
-                        success =
-                            false,
-
-                        message =
-                            "Database removal is available only for Backend Code Synchronization."
-                    }
-                );
-            }
-
-
-            //===================================================
-            // Remove Database
-            //===================================================
-
-            await _databaseRemovalEngine
-                .RemoveDatabaseAsync
-                (
-                    id
-                );
-
-
-            //===================================================
-            // Database Removal Successful
-            //===================================================
-
-            return Ok
-            (
-                new
-                {
-                    success =
-                        true,
-
-                    message =
-                        "Database removed successfully."
-                }
-            );
-        }
-
-        catch
-        (
-            Exception exception
-        )
-        {
-            return BadRequest
-            (
-                new
-                {
-                    success =
-                        false,
-
-                    message =
-                        exception.Message
-                }
-            );
-        }
-    }
-
-
-
-    //===========================================================
     // Backend Deregistration
     //===========================================================
 
@@ -801,10 +538,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Validate Synchronization Type
-            //===================================================
-
             if
             (
                 !string.Equals
@@ -824,10 +557,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Validate Synchronization State
-            //===================================================
-
             if
             (
                 !string.Equals
@@ -846,10 +575,6 @@ public class CodeSynchronizationController
                 );
             }
 
-
-            //===================================================
-            // Validate Registration State
-            //===================================================
 
             if
             (
@@ -934,6 +659,419 @@ public class CodeSynchronizationController
 
 
     //===========================================================
+    // Migration Create
+    //===========================================================
+
+    [HttpPost("{id:long}/migration/create")]
+
+    public async Task<ActionResult>
+        CreateMigration
+    (
+        long id
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            var submenuId =
+                synchronization.SubmenuId;
+
+
+            var entityName =
+                $"Submenu_{submenuId}";
+
+
+            await _databaseMigrationEngine
+                .CreateAsync
+                (
+                    id,
+
+                    entityName
+                );
+
+
+            //===================================================
+            // Persist Migration State
+            //===================================================
+
+            var statusUpdated =
+                await _repository
+                    .UpdateMigrationStatusAsync
+                    (
+                        id,
+
+                        true,
+
+                        "Migration created successfully."
+                    );
+
+
+            if
+            (
+                !statusUpdated
+            )
+            {
+                return BadRequest
+                (
+                    "Migration was created successfully, but the migration status could not be saved."
+                );
+            }
+
+
+            return Ok
+            (
+                "Migration created successfully. Physical migration file and Designer file were created."
+            );
+        }
+
+        catch
+        (
+            ArgumentException exception
+        )
+        {
+            await _repository
+                .UpdateMigrationStatusAsync
+                (
+                    id,
+
+                    false,
+
+                    exception.Message
+                );
+
+
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            await _repository
+                .UpdateMigrationStatusAsync
+                (
+                    id,
+
+                    false,
+
+                    exception.Message
+                );
+
+
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            IOException exception
+        )
+        {
+            await _repository
+                .UpdateMigrationStatusAsync
+                (
+                    id,
+
+                    false,
+
+                    exception.Message
+                );
+
+
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Migration Remove
+    //===========================================================
+
+    [HttpPost("{id:long}/migration/remove")]
+
+    public async Task<ActionResult>
+        RemoveMigration
+    (
+        long id
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            await _databaseMigrationEngine
+                .RemoveAsync
+                (
+                    id
+                );
+
+
+            //===================================================
+            // Persist Migration Removal State
+            //===================================================
+
+            var statusUpdated =
+                await _repository
+                    .UpdateMigrationRemovalStatusAsync
+                    (
+                        id,
+
+                        "Migration removed successfully."
+                    );
+
+
+            if
+            (
+                !statusUpdated
+            )
+            {
+                return BadRequest
+                (
+                    "Migration was removed successfully, but the migration removal status could not be saved."
+                );
+            }
+
+
+            return Ok
+            (
+                "Migration removed successfully. Physical migration file and Designer file were removed."
+            );
+        }
+
+        catch
+        (
+            ArgumentException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            IOException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Database Create
+    //===========================================================
+
+    [HttpPost("{id:long}/database/create")]
+
+    public async Task<ActionResult>
+        CreateDatabase
+    (
+        long id
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            await _databaseCreationEngine
+                .CreateAsync
+                (
+                    id
+                );
+
+
+            return Ok
+            (
+                "Database created successfully."
+            );
+        }
+
+        catch
+        (
+            ArgumentException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            IOException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Database Remove
+    //===========================================================
+
+    [HttpPost("{id:long}/database/remove")]
+
+    public async Task<ActionResult>
+        RemoveDatabase
+    (
+        long id
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            await _databaseCreationEngine
+                .RemoveAsync
+                (
+                    id
+                );
+
+
+            return Ok
+            (
+                "Database removed successfully."
+            );
+        }
+
+        catch
+        (
+            ArgumentException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+
+        catch
+        (
+            IOException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
     // Rollback Code Synchronization
     //===========================================================
 
@@ -963,10 +1101,6 @@ public class CodeSynchronizationController
             }
 
 
-            //===================================================
-            // Prevent Code Rollback While Backend Is Registered
-            //===================================================
-
             if
             (
                 string.Equals
@@ -990,7 +1124,7 @@ public class CodeSynchronizationController
             {
                 return BadRequest
                 (
-                    "Code Synchronization rollback is not allowed while the backend registration is active. Deregister the backend code first."
+                    "Code Synchronization rollback is not allowed while the backend registration is active."
                 );
             }
 

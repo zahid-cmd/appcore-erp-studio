@@ -214,7 +214,8 @@ public class CodeSynchronizationRepository
                                         submenu.SynchronizationType
                                 )
 
-                                .FirstOrDefault(),
+                                .FirstOrDefault()
+                                ?? string.Empty,
 
 
                         //===================================================
@@ -229,6 +230,12 @@ public class CodeSynchronizationRepository
 
                         DbStatus =
                             x.DbStatus,
+
+                        MigrationStatus =
+                            x.MigrationStatus,
+
+                        DatabaseCreated =
+                            x.DatabaseCreated,
 
                         Remarks =
                             x.Remarks,
@@ -344,7 +351,8 @@ public class CodeSynchronizationRepository
                                         submenu.SynchronizationType
                                 )
 
-                                .FirstOrDefault(),
+                                .FirstOrDefault()
+                                ?? string.Empty,
 
                         Status =
                             x.Status,
@@ -354,6 +362,12 @@ public class CodeSynchronizationRepository
 
                         DbStatus =
                             x.DbStatus,
+
+                        MigrationStatus =
+                            x.MigrationStatus,
+
+                        DatabaseCreated =
+                            x.DatabaseCreated,
 
                         Remarks =
                             x.Remarks,
@@ -491,170 +505,171 @@ public class CodeSynchronizationRepository
 
 
 
-    //=========================================================== 
-    // Get Submenu Synchronization For Registration 
-    //=========================================================== 
- 
-    public async Task<SubmenuSynchronizationDto?> 
-        GetSubmenuSynchronizationForRegistrationAsync 
-    ( 
-        long id 
-    ) 
-    { 
-        var codeSynchronization = 
-            await _context.CodeSynchronizations 
- 
-                .AsNoTracking() 
- 
-                .FirstOrDefaultAsync 
-                ( 
-                    x => 
- 
-                        x.Id == 
-                        id 
- 
-                        && 
- 
-                        !x.IsDeleted 
-                ); 
- 
- 
-        if 
-        ( 
-            codeSynchronization == null 
-        ) 
-        { 
-            return null; 
-        } 
- 
- 
-        var synchronization = 
-            await _context.SubmenuSynchronizations 
- 
-                .AsNoTracking() 
- 
-                .FirstOrDefaultAsync 
-                ( 
-                    x => 
- 
-                        x.Id == 
-                        codeSynchronization.SubmenuSynchronizationId 
- 
-                        && 
- 
-                        !x.IsDeleted 
-                ); 
- 
- 
-        if 
-        ( 
-            synchronization == null 
-        ) 
-        { 
-            return null; 
-        } 
- 
- 
-        return new SubmenuSynchronizationDto 
-        { 
-            Id = 
-                synchronization.Id, 
- 
-            ModuleId = 
-                synchronization.ModuleId, 
- 
-            ModuleCode = 
-                synchronization.ModuleCode, 
- 
-            ModuleName = 
-                synchronization.ModuleName, 
- 
-            MenuId = 
-                synchronization.MenuId, 
- 
-            MenuCode = 
-                synchronization.MenuCode, 
- 
-            MenuName = 
-                synchronization.MenuName, 
- 
-            SubmenuId = 
-                synchronization.SubmenuId, 
- 
-            SubmenuCode = 
-                synchronization.SubmenuCode, 
- 
-            SubmenuName = 
-                synchronization.SubmenuName, 
- 
-            SynchronizationType = 
-                synchronization.SynchronizationType, 
- 
- 
-            //=================================================== 
-            // Backend Target Location 
-            //=================================================== 
- 
-            BackendSolution = 
-                synchronization.BackendSolution, 
- 
-            BackendApplicationProject = 
-                synchronization.BackendApplicationProject, 
- 
-            BackendDomainProject = 
-                synchronization.BackendDomainProject, 
- 
-            BackendInfrastructureProject = 
-                synchronization.BackendInfrastructureProject, 
- 
- 
-            //=================================================== 
-            // Backend API 
-            //=================================================== 
- 
-            BackendControllerFile = 
-                synchronization.BackendControllerFile, 
- 
- 
-            //=================================================== 
-            // Backend Application 
-            //=================================================== 
- 
-            BackendSubMenuDtoFile = 
-                synchronization.BackendSubMenuDtoFile, 
- 
-            BackendCreateSubMenuDtoFile = 
-                synchronization.BackendCreateSubMenuDtoFile, 
- 
-            BackendUpdateSubMenuDtoFile = 
-                synchronization.BackendUpdateSubMenuDtoFile, 
- 
-            BackendSubMenuDefaultsDtoFile = 
-                synchronization.BackendSubMenuDefaultsDtoFile, 
- 
-            BackendSubMenuRepositoryInterfaceFile = 
-                synchronization.BackendSubMenuRepositoryInterfaceFile, 
- 
- 
-            //=================================================== 
-            // Backend Domain 
-            //=================================================== 
- 
-            BackendSubMenuEntityFile = 
-                synchronization.BackendSubMenuEntityFile, 
- 
- 
-            //=================================================== 
-            // Backend Infrastructure 
-            //=================================================== 
- 
-            BackendSubMenuConfigurationFile = 
-                synchronization.BackendSubMenuConfigurationFile, 
- 
-            BackendSubMenuRepositoryFile = 
-                synchronization.BackendSubMenuRepositoryFile 
-        }; 
-    } 
+    //===========================================================
+    // Get Submenu Synchronization For Registration
+    //===========================================================
+
+    public async Task<SubmenuSynchronizationDto?>
+        GetSubmenuSynchronizationForRegistrationAsync
+    (
+        long id
+    )
+    {
+        var codeSynchronization =
+            await _context.CodeSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            codeSynchronization == null
+        )
+        {
+            return null;
+        }
+
+
+        var synchronization =
+            await _context.SubmenuSynchronizations
+
+                .AsNoTracking()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        codeSynchronization.SubmenuSynchronizationId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return null;
+        }
+
+
+        return new SubmenuSynchronizationDto
+        {
+            Id =
+                synchronization.Id,
+
+            ModuleId =
+                synchronization.ModuleId,
+
+            ModuleCode =
+                synchronization.ModuleCode,
+
+            ModuleName =
+                synchronization.ModuleName,
+
+            MenuId =
+                synchronization.MenuId,
+
+            MenuCode =
+                synchronization.MenuCode,
+
+            MenuName =
+                synchronization.MenuName,
+
+            SubmenuId =
+                synchronization.SubmenuId,
+
+            SubmenuCode =
+                synchronization.SubmenuCode,
+
+            SubmenuName =
+                synchronization.SubmenuName,
+
+            SynchronizationType =
+                synchronization.SynchronizationType,
+
+
+            //===================================================
+            // Backend Target Location
+            //===================================================
+
+            BackendSolution =
+                synchronization.BackendSolution,
+
+            BackendApplicationProject =
+                synchronization.BackendApplicationProject,
+
+            BackendDomainProject =
+                synchronization.BackendDomainProject,
+
+            BackendInfrastructureProject =
+                synchronization.BackendInfrastructureProject,
+
+
+            //===================================================
+            // Backend API
+            //===================================================
+
+            BackendControllerFile =
+                synchronization.BackendControllerFile,
+
+
+            //===================================================
+            // Backend Application
+            //===================================================
+
+            BackendSubMenuDtoFile =
+                synchronization.BackendSubMenuDtoFile,
+
+            BackendCreateSubMenuDtoFile =
+                synchronization.BackendCreateSubMenuDtoFile,
+
+            BackendUpdateSubMenuDtoFile =
+                synchronization.BackendUpdateSubMenuDtoFile,
+
+            BackendSubMenuDefaultsDtoFile =
+                synchronization.BackendSubMenuDefaultsDtoFile,
+
+            BackendSubMenuRepositoryInterfaceFile =
+                synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+
+            //===================================================
+            // Backend Domain
+            //===================================================
+
+            BackendSubMenuEntityFile =
+                synchronization.BackendSubMenuEntityFile,
+
+
+            //===================================================
+            // Backend Infrastructure
+            //===================================================
+
+            BackendSubMenuConfigurationFile =
+                synchronization.BackendSubMenuConfigurationFile,
+
+            BackendSubMenuRepositoryFile =
+                synchronization.BackendSubMenuRepositoryFile
+        };
+    }
+
 
 
     //===========================================================
@@ -671,7 +686,8 @@ public class CodeSynchronizationRepository
     {
         if
         (
-            string.IsNullOrWhiteSpace(
+            string.IsNullOrWhiteSpace
+            (
                 fileName
             )
         )
@@ -717,7 +733,8 @@ public class CodeSynchronizationRepository
 
 
         var files =
-            await GetSynchronizationFilePathsAsync(
+            await GetSynchronizationFilePathsAsync
+            (
                 id
             );
 
@@ -728,7 +745,10 @@ public class CodeSynchronizationRepository
                 x =>
                     string.Equals
                     (
-                        Path.GetFileName(x),
+                        Path.GetFileName
+                        (
+                            x
+                        ),
 
                         fileName,
 
@@ -739,7 +759,8 @@ public class CodeSynchronizationRepository
 
         if
         (
-            string.IsNullOrWhiteSpace(
+            string.IsNullOrWhiteSpace
+            (
                 filePath
             )
         )
@@ -749,14 +770,16 @@ public class CodeSynchronizationRepository
 
 
         var baselinePath =
-            GetBaselinePath(
+            GetBaselinePath
+            (
                 filePath
             );
 
 
         if
         (
-            !File.Exists(
+            !File.Exists
+            (
                 baselinePath
             )
         )
@@ -797,7 +820,8 @@ public class CodeSynchronizationRepository
         (
             filePath,
 
-            File.GetLastWriteTimeUtc(
+            File.GetLastWriteTimeUtc
+            (
                 baselinePath
             )
         );
@@ -855,7 +879,8 @@ public class CodeSynchronizationRepository
 
 
         var files =
-            await GetSynchronizationFilePathsAsync(
+            await GetSynchronizationFilePathsAsync
+            (
                 id
             );
 
@@ -871,7 +896,8 @@ public class CodeSynchronizationRepository
         {
             if
             (
-                string.IsNullOrWhiteSpace(
+                string.IsNullOrWhiteSpace
+                (
                     filePath
                 )
             )
@@ -881,14 +907,16 @@ public class CodeSynchronizationRepository
 
 
             var baselinePath =
-                GetBaselinePath(
+                GetBaselinePath
+                (
                     filePath
                 );
 
 
             if
             (
-                !File.Exists(
+                !File.Exists
+                (
                     baselinePath
                 )
             )
@@ -929,7 +957,8 @@ public class CodeSynchronizationRepository
             (
                 filePath,
 
-                File.GetLastWriteTimeUtc(
+                File.GetLastWriteTimeUtc
+                (
                     baselinePath
                 )
             );
@@ -956,7 +985,8 @@ public class CodeSynchronizationRepository
     )
     {
         var files =
-            await GetSynchronizationFilePathsAsync(
+            await GetSynchronizationFilePathsAsync
+            (
                 id
             );
 
@@ -968,7 +998,8 @@ public class CodeSynchronizationRepository
         {
             if
             (
-                string.IsNullOrWhiteSpace(
+                string.IsNullOrWhiteSpace
+                (
                     filePath
                 )
             )
@@ -979,7 +1010,8 @@ public class CodeSynchronizationRepository
 
             if
             (
-                !File.Exists(
+                !File.Exists
+                (
                     filePath
                 )
             )
@@ -989,25 +1021,29 @@ public class CodeSynchronizationRepository
 
 
             var baselinePath =
-                GetBaselinePath(
+                GetBaselinePath
+                (
                     filePath
                 );
 
 
             var directory =
-                Path.GetDirectoryName(
+                Path.GetDirectoryName
+                (
                     baselinePath
                 );
 
 
             if
             (
-                !string.IsNullOrWhiteSpace(
+                !string.IsNullOrWhiteSpace
+                (
                     directory
                 )
             )
             {
-                Directory.CreateDirectory(
+                Directory.CreateDirectory
+                (
                     directory
                 );
             }
@@ -1027,7 +1063,8 @@ public class CodeSynchronizationRepository
             (
                 baselinePath,
 
-                File.GetLastWriteTimeUtc(
+                File.GetLastWriteTimeUtc
+                (
                     filePath
                 )
             );
@@ -1132,13 +1169,21 @@ public class CodeSynchronizationRepository
 
                 submenuSynchronization.FrontendSubmenuListCssFile
             }
-            .Where(
+
+            .Where
+            (
                 x =>
-                    !string.IsNullOrWhiteSpace(x)
+                    !string.IsNullOrWhiteSpace
+                    (
+                        x
+                    )
             )
-            .Select(
+
+            .Select
+            (
                 Path.GetFullPath
             )
+
             .ToList();
         }
 
@@ -1175,13 +1220,21 @@ public class CodeSynchronizationRepository
 
                 submenuSynchronization.BackendSubMenuRepositoryFile
             }
-            .Where(
+
+            .Where
+            (
                 x =>
-                    !string.IsNullOrWhiteSpace(x)
+                    !string.IsNullOrWhiteSpace
+                    (
+                        x
+                    )
             )
-            .Select(
+
+            .Select
+            (
                 Path.GetFullPath
             )
+
             .ToList();
         }
 
@@ -1221,7 +1274,8 @@ public class CodeSynchronizationRepository
     {
         if
         (
-            !File.Exists(
+            !File.Exists
+            (
                 baselinePath
             )
         )
@@ -1232,7 +1286,8 @@ public class CodeSynchronizationRepository
 
         if
         (
-            !File.Exists(
+            !File.Exists
+            (
                 filePath
             )
         )
@@ -1242,18 +1297,21 @@ public class CodeSynchronizationRepository
 
 
         var currentBytes =
-            await File.ReadAllBytesAsync(
+            await File.ReadAllBytesAsync
+            (
                 filePath
             );
 
 
         var baselineBytes =
-            await File.ReadAllBytesAsync(
+            await File.ReadAllBytesAsync
+            (
                 baselinePath
             );
 
 
-        return !currentBytes.SequenceEqual(
+        return !currentBytes.SequenceEqual
+        (
             baselineBytes
         );
     }
@@ -1375,7 +1433,8 @@ public class CodeSynchronizationRepository
         {
             if
             (
-                string.IsNullOrWhiteSpace(
+                string.IsNullOrWhiteSpace
+                (
                     filePath
                 )
             )
@@ -1385,20 +1444,23 @@ public class CodeSynchronizationRepository
 
 
             var fullPath =
-                Path.GetFullPath(
+                Path.GetFullPath
+                (
                     filePath
                 );
 
 
             var fileName =
-                Path.GetFileName(
+                Path.GetFileName
+                (
                     fullPath
                 );
 
 
             if
             (
-                string.IsNullOrWhiteSpace(
+                string.IsNullOrWhiteSpace
+                (
                     fileName
                 )
             )
@@ -1414,13 +1476,15 @@ public class CodeSynchronizationRepository
 
             if
             (
-                File.Exists(
+                File.Exists
+                (
                     fullPath
                 )
             )
             {
                 lastModified =
-                    File.GetLastWriteTime(
+                    File.GetLastWriteTime
+                    (
                         fullPath
                     );
             }
@@ -1436,14 +1500,16 @@ public class CodeSynchronizationRepository
             )
             {
                 var baselinePath =
-                    GetBaselinePath(
+                    GetBaselinePath
+                    (
                         fullPath
                     );
 
 
                 if
                 (
-                    !File.Exists(
+                    !File.Exists
+                    (
                         fullPath
                     )
                 )
@@ -1454,7 +1520,8 @@ public class CodeSynchronizationRepository
 
                 else if
                 (
-                    File.Exists(
+                    File.Exists
+                    (
                         baselinePath
                     )
                 )
@@ -1566,11 +1633,27 @@ public class CodeSynchronizationRepository
         {
             synchronization.DbStatus =
                 "Pending";
+
+
+            synchronization.MigrationStatus =
+                "Ready";
+
+
+            synchronization.DatabaseCreated =
+                false;
         }
         else
         {
             synchronization.DbStatus =
                 "N/A";
+
+
+            synchronization.MigrationStatus =
+                "N/A";
+
+
+            synchronization.DatabaseCreated =
+                false;
         }
 
 
@@ -1636,7 +1719,8 @@ public class CodeSynchronizationRepository
         // Create Synchronization Baseline
         //=======================================================
 
-        await CreateSynchronizationBaselineAsync(
+        await CreateSynchronizationBaselineAsync
+        (
             id
         );
 
@@ -1650,7 +1734,7 @@ public class CodeSynchronizationRepository
 
 
         //=======================================================
-        // Backend DB Status
+        // Backend Status
         //=======================================================
 
         if
@@ -1667,11 +1751,27 @@ public class CodeSynchronizationRepository
         {
             synchronization.DbStatus =
                 "Pending";
+
+
+            synchronization.MigrationStatus =
+                "Ready";
+
+
+            synchronization.DatabaseCreated =
+                false;
         }
         else
         {
             synchronization.DbStatus =
                 "N/A";
+
+
+            synchronization.MigrationStatus =
+                "N/A";
+
+
+            synchronization.DatabaseCreated =
+                false;
         }
 
 
@@ -1745,7 +1845,10 @@ public class CodeSynchronizationRepository
 
 
         synchronization.LastSynchronizationResult =
-            string.IsNullOrWhiteSpace(message)
+            string.IsNullOrWhiteSpace
+            (
+                message
+            )
                 ? (
                     successful
                         ? "Backend database registration completed successfully."
@@ -1764,25 +1867,6 @@ public class CodeSynchronizationRepository
 
     //===========================================================
     // Update Backend Deregistration Status
-    //===========================================================
-    //
-    // Successful deregistration means:
-    //
-    //     Code Status:
-    //         Synchronized
-    //
-    //     Build Status:
-    //         Successful
-    //
-    //     Database Status:
-    //         Pending
-    //
-    // The generated backend code remains synchronized.
-    //
-    // The database registration has simply been removed.
-    //
-    // Therefore the Register action becomes available again.
-    //
     //===========================================================
 
     public async Task<bool>
@@ -1863,8 +1947,302 @@ public class CodeSynchronizationRepository
         //=======================================================
 
         synchronization.LastSynchronizationResult =
-            string.IsNullOrWhiteSpace(message)
+            string.IsNullOrWhiteSpace
+            (
+                message
+            )
                 ? "Backend database deregistration completed successfully."
+                : message.Trim();
+
+
+        await _context.SaveChangesAsync();
+
+
+        return true;
+    }
+
+
+
+    //===========================================================
+    // Update Migration Status
+    //===========================================================
+
+    public async Task<bool>
+        UpdateMigrationStatusAsync
+    (
+        long id,
+
+        bool successful,
+
+        string message
+    )
+    {
+        var synchronization =
+            await _context.CodeSynchronizations
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            !string.Equals
+            (
+                synchronization.SynchronizationType,
+
+                "Backend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Migration State
+        //
+        // Migration state is completely independent from
+        // DatabaseCreated.
+        //=======================================================
+
+        synchronization.MigrationStatus =
+            successful
+                ? "Created"
+                : "Failed";
+
+
+        synchronization.LastSynchronizationResult =
+            string.IsNullOrWhiteSpace
+            (
+                message
+            )
+                ? (
+                    successful
+                        ? "Database migration completed successfully."
+                        : "Database migration failed."
+                )
+                : message.Trim();
+
+
+        await _context.SaveChangesAsync();
+
+
+        return true;
+    }
+
+
+
+    //===========================================================
+    // Update Migration Removal Status
+    //===========================================================
+
+    public async Task<bool>
+        UpdateMigrationRemovalStatusAsync
+    (
+        long id,
+
+        string message
+    )
+    {
+        var synchronization =
+            await _context.CodeSynchronizations
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            !string.Equals
+            (
+                synchronization.SynchronizationType,
+
+                "Backend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Migration Is Removed
+        //=======================================================
+
+        synchronization.MigrationStatus =
+            "Ready";
+
+
+        //=======================================================
+        // Migration Removal Can Only Exist Without The
+        // Database Table
+        //
+        // DatabaseCreated is therefore reset here only because
+        // the migration removal workflow has already completed.
+        //=======================================================
+
+        synchronization.DatabaseCreated =
+            false;
+
+
+        //=======================================================
+        // Code Remains Synchronized
+        //=======================================================
+
+        synchronization.Status =
+            "Synchronized";
+
+
+        synchronization.BuildStatus =
+            "Successful";
+
+
+        //=======================================================
+        // Save Migration Removal Result
+        //=======================================================
+
+        synchronization.LastSynchronizationResult =
+            string.IsNullOrWhiteSpace
+            (
+                message
+            )
+                ? "Database migration removed successfully."
+                : message.Trim();
+
+
+        await _context.SaveChangesAsync();
+
+
+        return true;
+    }
+
+
+
+    //===========================================================
+    // Update Database Status
+    //===========================================================
+    //
+    // DatabaseCreated is updated only after the actual
+    // Database Creation Engine operation has completed
+    // successfully.
+    //
+    // Migration creation does not call this method.
+    //
+    //===========================================================
+
+    public async Task<bool>
+        UpdateDatabaseStatusAsync
+    (
+        long id,
+
+        bool successful,
+
+        string message
+    )
+    {
+        var synchronization =
+            await _context.CodeSynchronizations
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.Id ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return false;
+        }
+
+
+        if
+        (
+            !string.Equals
+            (
+                synchronization.SynchronizationType,
+
+                "Backend",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return false;
+        }
+
+
+        //=======================================================
+        // Database State
+        //=======================================================
+
+        synchronization.DatabaseCreated =
+            successful;
+
+
+        //=======================================================
+        // Save Database Operation Result
+        //=======================================================
+
+        synchronization.LastSynchronizationResult =
+            string.IsNullOrWhiteSpace
+            (
+                message
+            )
+                ? (
+                    successful
+                        ? "Database operation completed successfully."
+                        : "Database operation failed."
+                )
                 : message.Trim();
 
 
@@ -1916,11 +2294,6 @@ public class CodeSynchronizationRepository
 
         //=======================================================
         // Backend Registration Protection
-        //
-        // Code Rollback is not allowed while the backend
-        // database structure is registered.
-        //
-        // Deregistration must be completed first.
         //=======================================================
 
         if
@@ -1933,7 +2306,9 @@ public class CodeSynchronizationRepository
 
                 StringComparison.OrdinalIgnoreCase
             )
+
             &&
+
             string.Equals
             (
                 synchronization.DbStatus,
@@ -1996,9 +2371,6 @@ public class CodeSynchronizationRepository
 
         //=======================================================
         // Rollback Successful
-        //
-        // The generated code is no longer considered
-        // successfully synchronized.
         //=======================================================
 
         synchronization.BuildStatus =
@@ -2014,12 +2386,7 @@ public class CodeSynchronizationRepository
 
 
         //=======================================================
-        // Backend Database Registration
-        //
-        // Code rollback does not perform database registration
-        // or deregistration.
-        //
-        // At this point registration must already be absent.
+        // Backend Status Reset
         //=======================================================
 
         if
@@ -2036,11 +2403,27 @@ public class CodeSynchronizationRepository
         {
             synchronization.DbStatus =
                 "Pending";
+
+
+            synchronization.MigrationStatus =
+                "Ready";
+
+
+            synchronization.DatabaseCreated =
+                false;
         }
         else
         {
             synchronization.DbStatus =
                 "N/A";
+
+
+            synchronization.MigrationStatus =
+                "N/A";
+
+
+            synchronization.DatabaseCreated =
+                false;
         }
 
 
@@ -2197,7 +2580,8 @@ public class CodeSynchronizationRepository
                 "Pending";
 
 
-            existing.DbStatus =
+            if
+            (
                 string.Equals
                 (
                     synchronizationType,
@@ -2206,8 +2590,32 @@ public class CodeSynchronizationRepository
 
                     StringComparison.OrdinalIgnoreCase
                 )
-                    ? "Pending"
-                    : "N/A";
+            )
+            {
+                existing.DbStatus =
+                    "Pending";
+
+
+                existing.MigrationStatus =
+                    "Ready";
+
+
+                existing.DatabaseCreated =
+                    false;
+            }
+            else
+            {
+                existing.DbStatus =
+                    "N/A";
+
+
+                existing.MigrationStatus =
+                    "N/A";
+
+
+                existing.DatabaseCreated =
+                    false;
+            }
 
 
             await _context.SaveChangesAsync();
@@ -2277,6 +2685,23 @@ public class CodeSynchronizationRepository
                     )
                         ? "Pending"
                         : "N/A",
+
+
+                MigrationStatus =
+                    string.Equals
+                    (
+                        synchronizationType,
+
+                        "Backend",
+
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                        ? "Ready"
+                        : "N/A",
+
+
+                DatabaseCreated =
+                    false,
 
 
                 Remarks =
@@ -2435,7 +2860,8 @@ public class CodeSynchronizationRepository
                                         submenu.SynchronizationType
                                 )
 
-                                .FirstOrDefault(),
+                                .FirstOrDefault()
+                                ?? string.Empty,
 
                         Status =
                             x.Status,
@@ -2445,6 +2871,12 @@ public class CodeSynchronizationRepository
 
                         DbStatus =
                             x.DbStatus,
+
+                        MigrationStatus =
+                            x.MigrationStatus,
+
+                        DatabaseCreated =
+                            x.DatabaseCreated,
 
                         Remarks =
                             x.Remarks,

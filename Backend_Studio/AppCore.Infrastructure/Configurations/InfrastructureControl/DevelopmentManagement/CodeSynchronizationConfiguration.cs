@@ -152,6 +152,33 @@ public class CodeSynchronizationConfiguration
 
 
         //=======================================================
+        // Migration Status
+        //=======================================================
+
+        builder.Property(
+            x => x.MigrationStatus
+        )
+        .HasMaxLength(50)
+        .IsRequired()
+        .HasDefaultValue(
+            "N/A"
+        );
+
+
+        //=======================================================
+        // Database Created
+        //=======================================================
+
+        builder.Property(
+            x => x.DatabaseCreated
+        )
+        .IsRequired()
+        .HasDefaultValue(
+            false
+        );
+
+
+        //=======================================================
         // Configuration
         //=======================================================
 

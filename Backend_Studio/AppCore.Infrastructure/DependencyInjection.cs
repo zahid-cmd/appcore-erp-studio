@@ -100,14 +100,20 @@ using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegist
 
 
 //===============================================================
-// Database Engines
+// Database Migration Engine Interface
 //===============================================================
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
-using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseCreationEngine;
-using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseRemovalEngine;
-using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Shared;
+
+//===============================================================
+// Backend Project Builder
+//===============================================================
+
+using AppCore.Application.Platform.ProjectBuilderInterfaces;
+
+using AppCore.Infrastructure.Platform.ProjectBuilder.BackendProjectBuilder;
+using AppCore.Infrastructure.Platform.ProjectBuilder.Shared;
 
 
 //===============================================================
@@ -122,6 +128,19 @@ using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
 
 
 //===============================================================
+// Database Migration Engine
+//===============================================================
+
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.MigrationEngine;
+
+
+//===============================================================
+// Database Creation Engine
+//===============================================================
+
+using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEngine;
+
+//===============================================================
 // AUTO REGISTER NAMESPACES
 //===============================================================
 
@@ -133,14 +152,6 @@ using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
 
 // AUTO-END : Company
-
-
-
-
-
-
-
-
 
 
 
@@ -288,14 +299,6 @@ public static class DependencyInjection
 
 
 
-
-
-
-
-
-
-
-
         // AUTO-END : AUTO REGISTER SERVICES
 
 
@@ -415,51 +418,95 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Database Engines
+        // Backend Project Builder
         //=======================================================
 
         services.AddScoped
         <
-            DatabaseInitializationContextResolver
+            BackendProjectBuildContextResolver
         >();
 
         services.AddScoped
         <
-            DatabaseArtifactIdentityBuilder
+            BackendProjectBuildValidator
         >();
 
         services.AddScoped
         <
-            DatabaseMigrationTracker
+            BackendProjectBuildExecutor
         >();
 
         services.AddScoped
         <
-            DatabaseTableInspector
+            IBackendProjectBuilder,
+            AppCore.Infrastructure.Platform.ProjectBuilder.BackendProjectBuilder.BackendProjectBuilder
+        >();
+
+
+        //=======================================================
+        // Database Migration Engine
+        //=======================================================
+
+        services.AddScoped
+        <
+            MigrationProjectResolver
         >();
 
         services.AddScoped
         <
-            DatabaseInitializationStateEvaluator
+            MigrationNameBuilder
         >();
 
         services.AddScoped
         <
-            EfCoreMigrationExecutor
+            MigrationCommandExecutor
+        >();
+
+        services.AddScoped
+        <
+            MigrationFileManager
+        >();
+
+        services.AddScoped
+        <
+            MigrationSnapshotManager
+        >();
+
+        services.AddScoped
+        <
+            MigrationValidator
+        >();
+
+        services.AddScoped
+        <
+            IDatabaseMigrationEngine,
+            DatabaseMigrationEngine
+        >();
+
+        //=======================================================
+        // Database Creation Engine
+        //=======================================================
+
+        services.AddScoped
+        <
+            DatabaseProjectResolver
+        >();
+
+        services.AddScoped
+        <
+            DatabaseValidator
+        >();
+
+        services.AddScoped
+        <
+            DatabaseCommandExecutor
         >();
 
         services.AddScoped
         <
             IDatabaseCreationEngine,
-            DatabaseCreationEngine
+            DatabaseEngine
         >();
-
-        services.AddScoped
-        <
-            IDatabaseRemovalEngine,
-            DatabaseRemovalEngine
-        >();
-
 
         //=======================================================
         // Development Management Engines
