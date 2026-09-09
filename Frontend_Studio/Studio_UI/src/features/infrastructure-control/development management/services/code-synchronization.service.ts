@@ -314,32 +314,11 @@ export class CodeSynchronizationService
     ):
         Observable<BackendMigrationResult>
     {
-        return this.http.post
+        return this.http.post<BackendMigrationResult>
         (
             `${this.apiUrl}/${id}/migration/create`,
 
-            {},
-
-            {
-                responseType:
-                    'text'
-            }
-        )
-
-        .pipe(
-            map(
-                response =>
-                ({
-                    success:
-                        true,
-
-                    message:
-                        response,
-
-                    created:
-                        true
-                })
-            )
+            {}
         );
     }
 
@@ -353,18 +332,13 @@ export class CodeSynchronizationService
         id:
             number
     ):
-        Observable<string>
+        Observable<BackendMigrationResult>
     {
-        return this.http.post
+        return this.http.post<BackendMigrationResult>
         (
             `${this.apiUrl}/${id}/migration/remove`,
 
-            {},
-
-            {
-                responseType:
-                    'text'
-            }
+            {}
         );
     }
 
@@ -380,32 +354,11 @@ export class CodeSynchronizationService
     ):
         Observable<BackendDatabaseResult>
     {
-        return this.http.post
+        return this.http.post<BackendDatabaseResult>
         (
             `${this.apiUrl}/${id}/database/create`,
 
-            {},
-
-            {
-                responseType:
-                    'text'
-            }
-        )
-
-        .pipe(
-            map(
-                response =>
-                ({
-                    success:
-                        true,
-
-                    message:
-                        response,
-
-                    created:
-                        true
-                })
-            )
+            {}
         );
     }
 
@@ -421,32 +374,11 @@ export class CodeSynchronizationService
     ):
         Observable<BackendDatabaseResult>
     {
-        return this.http.post
+        return this.http.post<BackendDatabaseResult>
         (
             `${this.apiUrl}/${id}/database/remove`,
 
-            {},
-
-            {
-                responseType:
-                    'text'
-            }
-        )
-
-        .pipe(
-            map(
-                response =>
-                ({
-                    success:
-                        true,
-
-                    message:
-                        response,
-
-                    removed:
-                        true
-                })
-            )
+            {}
         );
     }
 

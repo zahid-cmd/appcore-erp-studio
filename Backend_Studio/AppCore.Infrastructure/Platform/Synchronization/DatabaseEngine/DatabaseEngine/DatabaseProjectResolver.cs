@@ -4,292 +4,162 @@
 
 using System;
 using System.IO;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 
 
 //===============================================================
-// Namespace
+// Database Project Resolver
 //===============================================================
 
-namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEngine
+namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEngine;
+
+
+//===============================================================
+// Database Project Resolver
+//===============================================================
+
+public class DatabaseProjectResolver
 {
-
     //===========================================================
-    // Database Project
+    // Resolve Backend Studio Root
     //===========================================================
 
-    public sealed class DatabaseProject
+    public Task<string> ResolveBackendStudioRootAsync()
     {
-
-        //=======================================================
-        // Infrastructure Project
-        //=======================================================
-
-        public string InfrastructureProject
-        {
-            get;
-        }
+        var currentDirectory =
+            new DirectoryInfo(
+                AppContext.BaseDirectory
+            );
 
 
-        public string InfrastructureProjectFile
-        {
-            get;
-        }
-
-
-        //=======================================================
-        // API Project
-        //=======================================================
-
-        public string ApiProject
-        {
-            get;
-        }
-
-
-        public string ApiProjectFile
-        {
-            get;
-        }
-
-
-        //=======================================================
-        // Migrations Path
-        //=======================================================
-
-        public string MigrationsPath
-        {
-            get;
-        }
-
-
-
-        //=======================================================
-        // Constructor
-        //=======================================================
-
-        public DatabaseProject
+        while
         (
-            string infrastructureProject,
-
-            string infrastructureProjectFile,
-
-            string apiProject,
-
-            string apiProjectFile,
-
-            string migrationsPath
+            currentDirectory != null
         )
         {
-            InfrastructureProject =
-                infrastructureProject;
+            var infrastructureProject =
+                Directory.GetFiles(
+                    currentDirectory.FullName,
+                    "AppCore.Infrastructure.csproj",
+                    SearchOption.AllDirectories
+                )
+                .FirstOrDefault();
 
 
-            InfrastructureProjectFile =
-                infrastructureProjectFile;
+            var apiProject =
+                Directory.GetFiles(
+                    currentDirectory.FullName,
+                    "AppCore.API.csproj",
+                    SearchOption.AllDirectories
+                )
+                .FirstOrDefault()
+                ??
+                Directory.GetFiles(
+                    currentDirectory.FullName,
+                    "AppCore.Api.csproj",
+                    SearchOption.AllDirectories
+                )
+                .FirstOrDefault();
 
 
-            ApiProject =
-                apiProject;
-
-
-            ApiProjectFile =
-                apiProjectFile;
-
-
-            MigrationsPath =
-                migrationsPath;
-        }
-    }
-
-
-
-    //===========================================================
-    // Database Project Resolver
-    //===========================================================
-
-    public sealed class DatabaseProjectResolver
-    {
-
-        //=======================================================
-        // Resolve
-        //=======================================================
-
-        public Task<DatabaseProject>
-            ResolveAsync
-        (
-            CancellationToken cancellationToken
-        )
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-
-            //===================================================
-            // Locate Backend Studio Root
-            //===================================================
-
-            var currentDirectory =
-                new DirectoryInfo
-                (
-                    Directory.GetCurrentDirectory()
-                );
-
-
-            DirectoryInfo?
-                backendStudioRoot =
-                    currentDirectory;
-
-
-            while
+            if
             (
-                backendStudioRoot != null
+                infrastructureProject != null
+                &&
+                apiProject != null
             )
             {
-                var infrastructureDirectory =
-                    Path.Combine
-                    (
-                        backendStudioRoot.FullName,
-
-                        "AppCore.Infrastructure"
-                    );
-
-
-                var apiDirectory =
-                    Path.Combine
-                    (
-                        backendStudioRoot.FullName,
-
-                        "AppCore.API"
-                    );
-
-
-                var alternateApiDirectory =
-                    Path.Combine
-                    (
-                        backendStudioRoot.FullName,
-
-                        "AppCore.Api"
-                    );
-
-
-                if
-                (
-                    Directory.Exists
-                    (
-                        infrastructureDirectory
-                    )
-                    &&
-                    (
-                        Directory.Exists
-                        (
-                            apiDirectory
-                        )
-                        ||
-                        Directory.Exists
-                        (
-                            alternateApiDirectory
-                        )
-                    )
-                )
-                {
-                    //===========================================
-                    // Resolve API Project
-                    //===========================================
-
-                    var resolvedApiDirectory =
-                        Directory.Exists
-                        (
-                            apiDirectory
-                        )
-                            ?
-                            apiDirectory
-                            :
-                            alternateApiDirectory;
-
-
-                    //===========================================
-                    // Resolve Infrastructure Project File
-                    //===========================================
-
-                    var infrastructureProjectFile =
-                        Path.Combine
-                        (
-                            infrastructureDirectory,
-
-                            "AppCore.Infrastructure.csproj"
-                        );
-
-
-                    //===========================================
-                    // Resolve API Project File
-                    //===========================================
-
-                    var apiProjectFile =
-                        Directory.Exists
-                        (
-                            apiDirectory
-                        )
-                            ?
-                            Path.Combine
-                            (
-                                resolvedApiDirectory,
-
-                                "AppCore.API.csproj"
-                            )
-                            :
-                            Path.Combine
-                            (
-                                resolvedApiDirectory,
-
-                                "AppCore.Api.csproj"
-                            );
-
-
-                    //===========================================
-                    // Resolve Migrations Directory
-                    //===========================================
-
-                    var migrationsPath =
-                        Path.Combine
-                        (
-                            infrastructureDirectory,
-
-                            "Migrations"
-                        );
-
-
-                    //===========================================
-                    // Return Database Project
-                    //===========================================
-
-                    return Task.FromResult
-                    (
-                        new DatabaseProject
-                        (
-                            infrastructureDirectory,
-
-                            infrastructureProjectFile,
-
-                            resolvedApiDirectory,
-
-                            apiProjectFile,
-
-                            migrationsPath
-                        )
-                    );
-                }
-
-
-                backendStudioRoot =
-                    backendStudioRoot.Parent;
+                return Task.FromResult(
+                    currentDirectory.FullName
+                );
             }
 
 
-            throw new DirectoryNotFoundException
-            (
-                "Unable to locate the Backend Studio root containing AppCore.Infrastructure and AppCore.API/AppCore.Api."
+            currentDirectory =
+                currentDirectory.Parent;
+        }
+
+
+        throw new DirectoryNotFoundException(
+            "Unable to locate the Backend_Studio root containing AppCore.Infrastructure and AppCore.API."
+        );
+    }
+
+
+    //===========================================================
+    // Resolve Infrastructure Project
+    //===========================================================
+
+    public async Task<string> ResolveInfrastructureProjectAsync()
+    {
+        var backendStudioRoot =
+            await ResolveBackendStudioRootAsync();
+
+
+        var infrastructureProject =
+            Directory.GetFiles(
+                backendStudioRoot,
+                "AppCore.Infrastructure.csproj",
+                SearchOption.AllDirectories
+            )
+            .FirstOrDefault();
+
+
+        if
+        (
+            infrastructureProject == null
+        )
+        {
+            throw new FileNotFoundException(
+                "AppCore.Infrastructure.csproj could not be found.",
+                backendStudioRoot
             );
         }
+
+
+        return infrastructureProject;
+    }
+
+
+    //===========================================================
+    // Resolve API Project
+    //===========================================================
+
+    public async Task<string> ResolveApiProjectAsync()
+    {
+        var backendStudioRoot =
+            await ResolveBackendStudioRootAsync();
+
+
+        var apiProject =
+            Directory.GetFiles(
+                backendStudioRoot,
+                "AppCore.API.csproj",
+                SearchOption.AllDirectories
+            )
+            .FirstOrDefault()
+            ??
+            Directory.GetFiles(
+                backendStudioRoot,
+                "AppCore.Api.csproj",
+                SearchOption.AllDirectories
+            )
+            .FirstOrDefault();
+
+
+        if
+        (
+            apiProject == null
+        )
+        {
+            throw new FileNotFoundException(
+                "AppCore.API.csproj or AppCore.Api.csproj could not be found.",
+                backendStudioRoot
+            );
+        }
+
+
+        return apiProject;
     }
 }

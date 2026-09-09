@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +16,6 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
-
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
 
@@ -59,10 +57,6 @@ public class CodeSynchronizationController
         _backendRegistrationEngine;
 
 
-    private readonly IDatabaseMigrationEngine
-        _databaseMigrationEngine;
-
-
     private readonly IDatabaseCreationEngine
         _databaseCreationEngine;
 
@@ -80,8 +74,6 @@ public class CodeSynchronizationController
 
         IBackendRegistrationEngine backendRegistrationEngine,
 
-        IDatabaseMigrationEngine databaseMigrationEngine,
-
         IDatabaseCreationEngine databaseCreationEngine
     )
     {
@@ -95,10 +87,6 @@ public class CodeSynchronizationController
 
         _backendRegistrationEngine =
             backendRegistrationEngine;
-
-
-        _databaseMigrationEngine =
-            databaseMigrationEngine;
 
 
         _databaseCreationEngine =
@@ -659,261 +647,6 @@ public class CodeSynchronizationController
 
 
     //===========================================================
-    // Migration Create
-    //===========================================================
-
-    [HttpPost("{id:long}/migration/create")]
-
-    public async Task<ActionResult>
-        CreateMigration
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            var submenuId =
-                synchronization.SubmenuId;
-
-
-            var entityName =
-                $"Submenu_{submenuId}";
-
-
-            await _databaseMigrationEngine
-                .CreateAsync
-                (
-                    id,
-
-                    entityName
-                );
-
-
-            //===================================================
-            // Persist Migration State
-            //===================================================
-
-            var statusUpdated =
-                await _repository
-                    .UpdateMigrationStatusAsync
-                    (
-                        id,
-
-                        true,
-
-                        "Migration created successfully."
-                    );
-
-
-            if
-            (
-                !statusUpdated
-            )
-            {
-                return BadRequest
-                (
-                    "Migration was created successfully, but the migration status could not be saved."
-                );
-            }
-
-
-            return Ok
-            (
-                "Migration created successfully. Physical migration file and Designer file were created."
-            );
-        }
-
-        catch
-        (
-            ArgumentException exception
-        )
-        {
-            await _repository
-                .UpdateMigrationStatusAsync
-                (
-                    id,
-
-                    false,
-
-                    exception.Message
-                );
-
-
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            await _repository
-                .UpdateMigrationStatusAsync
-                (
-                    id,
-
-                    false,
-
-                    exception.Message
-                );
-
-
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-
-        catch
-        (
-            IOException exception
-        )
-        {
-            await _repository
-                .UpdateMigrationStatusAsync
-                (
-                    id,
-
-                    false,
-
-                    exception.Message
-                );
-
-
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
-    // Migration Remove
-    //===========================================================
-
-    [HttpPost("{id:long}/migration/remove")]
-
-    public async Task<ActionResult>
-        RemoveMigration
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            await _databaseMigrationEngine
-                .RemoveAsync
-                (
-                    id
-                );
-
-
-            //===================================================
-            // Persist Migration Removal State
-            //===================================================
-
-            var statusUpdated =
-                await _repository
-                    .UpdateMigrationRemovalStatusAsync
-                    (
-                        id,
-
-                        "Migration removed successfully."
-                    );
-
-
-            if
-            (
-                !statusUpdated
-            )
-            {
-                return BadRequest
-                (
-                    "Migration was removed successfully, but the migration removal status could not be saved."
-                );
-            }
-
-
-            return Ok
-            (
-                "Migration removed successfully. Physical migration file and Designer file were removed."
-            );
-        }
-
-        catch
-        (
-            ArgumentException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-
-        catch
-        (
-            IOException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
     // Database Create
     //===========================================================
 
@@ -950,37 +683,25 @@ public class CodeSynchronizationController
                 );
 
 
+            //=======================================================
+            // Database Create Success
+            //=======================================================
+
             return Ok
             (
-                "Database created successfully."
-            );
-        }
+                new
+                {
+                    success = true,
 
-        catch
-        (
-            ArgumentException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
+                    message =
+                        "Database table created successfully."
+                }
             );
         }
 
         catch
         (
             InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-
-        catch
-        (
-            IOException exception
         )
         {
             return BadRequest
@@ -1029,37 +750,25 @@ public class CodeSynchronizationController
                 );
 
 
+            //=======================================================
+            // Database Remove Success
+            //=======================================================
+
             return Ok
             (
-                "Database removed successfully."
-            );
-        }
+                new
+                {
+                    success = true,
 
-        catch
-        (
-            ArgumentException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
+                    message =
+                        "Database table removed successfully."
+                }
             );
         }
 
         catch
         (
             InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-
-        catch
-        (
-            IOException exception
         )
         {
             return BadRequest

@@ -149,16 +149,17 @@ public class AppDbContext
 
 
 
-    // AUTO-BEGIN : Company
 
-    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Company>
-    Companys
+    // AUTO-BEGIN : AccountGroup
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup>
+    AccountGroups
     {
     get;
     set;
     } = null!;
 
-    // AUTO-END : Company
+    // AUTO-END : AccountGroup
 
     // AUTO-END : AUTO REGISTER DBSETS 
  

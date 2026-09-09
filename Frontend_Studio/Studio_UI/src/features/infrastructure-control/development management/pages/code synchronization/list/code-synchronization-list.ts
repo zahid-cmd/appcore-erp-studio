@@ -10,11 +10,13 @@ import
     ChangeDetectorRef
 }
 from '@angular/core';
+
 import
 {
     Observable
 }
 from 'rxjs';
+
 import
 {
     Router
@@ -739,6 +741,14 @@ implements OnInit
 
     //===========================================================
     // Migration State
+    //
+    // NEUTRALIZED:
+    //
+    // Migration Engine is no longer executed by this page.
+    //
+    // The state helper remains temporarily so the existing
+    // template/model structure does not need to be changed in
+    // this neutralization step.
     //===========================================================
 
     isMigrationCreated
@@ -781,14 +791,15 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Set Migration State
     //
-    // Updates the actual synchronization source record and the
-    // runtime migration state for this synchronization.
+    // NEUTRALIZED:
     //
-    // This is the frontend state transition after the backend
-    // migration command succeeds.
+    // No frontend operation calls this method anymore.
+    // It remains only for temporary compatibility with the
+    // existing component state.
     //===========================================================
 
     private setMigrationCreated
@@ -840,6 +851,8 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
+
+
     //===========================================================
     // Database Created State
     //
@@ -849,8 +862,8 @@ implements OnInit
     //
     // databaseCreated represents the actual DATABASE TABLE.
     //
-    // Therefore databaseCreated is the authoritative state for
-    // determining whether the database table currently exists.
+    // The Database Engine updates this state after a successful
+    // database create or remove operation.
     //===========================================================
 
     isDatabaseCreated
@@ -948,10 +961,7 @@ implements OnInit
     //===========================================================
     // Set Database Created State
     //
-    // Updates both the runtime database state and the current
-    // synchronization record.
-    //
-    // This is the frontend state transition after the backend
+    // Updates the frontend database state after the backend
     // database create/remove operation succeeds.
     //===========================================================
 
@@ -980,10 +990,6 @@ implements OnInit
             created
         );
 
-
-        //=======================================================
-        // PERSIST DATABASE STATE PER SYNCHRONIZATION ID
-        //=======================================================
 
         try
         {
@@ -1036,11 +1042,8 @@ implements OnInit
     //===========================================================
     // Database Ready State
     //
-    // A synchronized and registered backend becomes eligible
-    // for database operations only when its own migration exists.
-    //
-    // Each backend synchronization record has its own independent
-    // migration and database lifecycle.
+    // A synchronized and registered backend is eligible for
+    // database operations.
     //===========================================================
 
     private isDatabaseReady
@@ -1053,26 +1056,13 @@ implements OnInit
             this.isSynchronized(item)
             &&
             this.isRegistered(item)
-            &&
-            this.isMigrationCreated(item)
         );
     }
 
+
+
     //===========================================================
     // Database State
-    //
-    // Tracks the physical database table state for each
-    // synchronization record during the current page session.
-    //
-    // dbStatus represents backend registration.
-    //
-    // databaseCreated represents the physical database table.
-    //
-    // TRUE
-    //     Database table exists.
-    //
-    // FALSE
-    //     Database table does not exist.
     //===========================================================
 
     private readonly databaseCreatedState =
@@ -1086,43 +1076,18 @@ implements OnInit
 
     //===========================================================
     // Migration State
-    //
-    // Tracks the migration lifecycle for each synchronization
-    // record during the current page session.
-    //
-    // Physical migration creation/removal is performed by the
-    // backend. This state controls the frontend workflow UI.
-    //
-    // TRUE
-    //     Migration exists
-    //
-    // FALSE
-    //     Migration does not exist
     //===========================================================
 
     private readonly migrationCreatedState =
         new Map<number, boolean>();
 
 
+
     //===========================================================
     // Global Registration Unlock State
     //
-    // IMPORTANT:
-    //
-    // This is ONLY the GLOBAL registration lock state.
-    // It is NOT databaseCreated state and it is NOT stored per
-    // synchronization record.
-    //
-    // FALSE
-    //     A registered backend is still waiting for database
-    //     creation, so other backend registrations are locked.
-    //
-    // TRUE
-    //     Database creation has completed successfully and the
-    //     global registration lock has been released.
-    //
-    // The state is persisted so a browser reload does not recreate
-    // the global lock after a successful database creation.
+    // This state remains part of the Backend Registration
+    // workflow.
     //===========================================================
 
     private readonly backendRegistrationUnlockStorageKey =
@@ -1133,54 +1098,16 @@ implements OnInit
         false;
 
 
+
     //===========================================================
     // Any Pending Backend Registration Exists
     //
-    // IMPORTANT:
-    //
-    // Backend registration uses a GLOBAL LOCK only while a
-    // registered backend is waiting for its database table
-    // to be created.
-    //
-    // Therefore:
-    //
-    //     Registered
-    //     +
-    //     Database NOT Created
-    //             ↓
-    //     GLOBAL REGISTRATION LOCK
-    //
-    // Once database creation succeeds:
-    //
-    //     Registered
-    //     +
-    //     Database Created
-    //             ↓
-    //     GLOBAL REGISTRATION LOCK RELEASED
-    //
-    // This allows the next synchronized backend to start its
-    // own registration → migration → database creation cycle.
-    //
-    // A completed database record does NOT block another
-    // backend registration.
-    //
-    // This check does NOT affect deregistration.
+    // The existing registration lock is preserved.
     //===========================================================
 
     private hasAnyBackendRegistration():
         boolean
     {
-        //=======================================================
-        // GLOBAL REGISTRATION UNLOCK
-        //
-        // A successful database creation releases the GLOBAL
-        // registration lock.
-        //
-        // The persisted value is authoritative after browser
-        // reload. A registered row returned by the API must NOT
-        // recreate the global lock when the unlock state is true.
-        //=======================================================
-
         try
         {
             const persistedUnlockState =
@@ -1219,10 +1146,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // RUNTIME GLOBAL UNLOCK
-        //=======================================================
-
         if
         (
             this.backendRegistrationUnlocked
@@ -1232,13 +1155,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // GLOBAL REGISTRATION LOCK
-        //
-        // Only a registered backend whose database table has NOT
-        // been created may hold the global registration lock.
-        //=======================================================
-
         return this.synchronizations.some(
             item =>
                 this.isRegistered(item)
@@ -1247,23 +1163,10 @@ implements OnInit
         );
     }
 
+
+
     //===========================================================
     // Registration Enabled
-    //
-    // IMPORTANT:
-    //
-    // Only ONE backend registration may exist at a time.
-    //
-    // Therefore:
-    //
-    //     ANY Registered Backend
-    //             ↓
-    //     Registration locked for every OTHER row
-    //
-    // However, the registered row itself is NOT disabled for
-    // deregistration.
-    //
-    // Deregistration is handled separately by canDeregister().
     //===========================================================
 
     canRegister
@@ -1319,13 +1222,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // GLOBAL REGISTRATION LOCK
-        //
-        // A successful database creation releases this global
-        // lock. The released state survives browser reload.
-        //=======================================================
-
         if
         (
             this.hasAnyBackendRegistration()
@@ -1339,32 +1235,18 @@ implements OnInit
     }
 
 
+
     //===========================================================
     // Deregistration Enabled
     //
     // IMPORTANT:
     //
-    // This decision is COMPLETELY PER ROW.
+    // Migration is no longer part of the deregistration
+    // prerequisite because the Migration Engine has been
+    // neutralized.
     //
-    // The fact that another submenu is registered has absolutely
-    // no effect on this method.
-    //
-    // A registered backend submenu may be deregistered safely when:
-    //
-    //     1. Code Synchronization = Synchronized
-    //     2. This row = Registered
-    //     3. This row has NO migration
-    //     4. This row has NO database table
-    //
-    // Therefore a row such as:
-    //
-    //     Account Class
-    //         Registered
-    //         Migration = false
-    //         Database = false
-    //
-    // MUST return TRUE here.
-    //
+    // Database table state remains a protection until the new
+    // Database Engine is implemented.
     //===========================================================
 
     canDeregister
@@ -1393,10 +1275,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // The current row itself must be synchronized.
-        //=======================================================
-
         if
         (
             !this.isSynchronized(item)
@@ -1405,10 +1283,6 @@ implements OnInit
             return false;
         }
 
-
-        //=======================================================
-        // The current row itself must be registered.
-        //=======================================================
 
         if
         (
@@ -1420,25 +1294,11 @@ implements OnInit
 
 
         //=======================================================
-        // Migration must NOT exist.
-        //
-        // Migration removal must happen before deregistration.
-        //=======================================================
-
-        if
-        (
-            this.isMigrationCreated(item)
-        )
-        {
-            return false;
-        }
-
-
-        //=======================================================
         // Database table must NOT exist.
         //
-        // Database removal must happen before migration removal
-        // and deregistration.
+        // The old Database Engine has been neutralized.
+        // This protection remains until the new Database Engine
+        // is implemented.
         //=======================================================
 
         if
@@ -1450,10 +1310,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Safe to deregister this specific row.
-        //=======================================================
-
         return true;
     }
 
@@ -1461,17 +1317,6 @@ implements OnInit
 
     //===========================================================
     // Registration Control Enabled
-    //
-    // IMPORTANT:
-    //
-    // Registered row:
-    //     → Evaluate ONLY its own deregistration state.
-    //
-    // Unregistered row:
-    //     → Evaluate the global registration lock.
-    //
-    // This prevents the global registration lock from disabling
-    // deregistration of an already registered submenu.
     //===========================================================
 
     canRegistrationAction
@@ -1500,15 +1345,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // REGISTERED ROW
-        //
-        // This MUST use only the current row's deregistration
-        // state.
-        //
-        // Other registered rows are irrelevant here.
-        //=======================================================
-
         if
         (
             this.isRegistered(item)
@@ -1517,12 +1353,6 @@ implements OnInit
             return this.canDeregister(item);
         }
 
-
-        //=======================================================
-        // UNREGISTERED ROW
-        //
-        // This is where the global registration lock applies.
-        //=======================================================
 
         return this.canRegister(item);
     }
@@ -1554,6 +1384,7 @@ implements OnInit
             this.canRemoveDatabase(item)
         );
     }
+
 
 
     //===========================================================
@@ -1593,9 +1424,7 @@ implements OnInit
 
         if
         (
-            item.status?.toLowerCase()
-            !==
-            'synchronized'
+            !this.isSynchronized(item)
         )
         {
             return false;
@@ -1608,9 +1437,7 @@ implements OnInit
 
         if
         (
-            item.dbStatus?.toLowerCase()
-            !==
-            'registered'
+            !this.isRegistered(item)
         )
         {
             return false;
@@ -1630,21 +1457,10 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Migration Must Exist
-        //=======================================================
-
-        if
-        (
-            item.migrationCreated !== true
-        )
-        {
-            return false;
-        }
-
-
         return true;
     }
+
+
 
     //===========================================================
     // Can Remove Database
@@ -1683,9 +1499,7 @@ implements OnInit
 
         if
         (
-            item.status?.toLowerCase()
-            !==
-            'synchronized'
+            !this.isSynchronized(item)
         )
         {
             return false;
@@ -1698,9 +1512,7 @@ implements OnInit
 
         if
         (
-            item.dbStatus?.toLowerCase()
-            !==
-            'registered'
+            !this.isRegistered(item)
         )
         {
             return false;
@@ -1743,15 +1555,9 @@ implements OnInit
     //===========================================================
     // Migration Control Enabled
     //
-    // Migration operations are available only while the actual
-    // database table does NOT exist.
+    // NEUTRALIZED:
     //
-    // Once databaseCreated === true:
-    //
-    //     Migration Create = disabled
-    //     Migration Remove = disabled
-    //
-    // Database must be removed first.
+    // The EF Migration Engine is no longer available.
     //===========================================================
 
     canMigrationAction
@@ -1760,22 +1566,7 @@ implements OnInit
     ):
         boolean
     {
-        if
-        (
-            this.selectedTab !== 'backend'
-        )
-        {
-            return false;
-        }
-
-
-        return (
-            this.isSynchronized(item)
-            &&
-            this.isRegistered(item)
-            &&
-            !this.isDatabaseCreated(item)
-        );
+        return false;
     }
 
 
@@ -1790,11 +1581,7 @@ implements OnInit
     ):
         boolean
     {
-        return (
-            this.canMigrationAction(item)
-            &&
-            !this.isMigrationCreated(item)
-        );
+        return false;
     }
 
 
@@ -1809,11 +1596,7 @@ implements OnInit
     ):
         boolean
     {
-        return (
-            this.canMigrationAction(item)
-            &&
-            this.isMigrationCreated(item)
-        );
+        return false;
     }
 
 
@@ -1828,7 +1611,7 @@ implements OnInit
     ):
         boolean
     {
-        return !this.canMigrationAction(item);
+        return true;
     }
 
 
@@ -1939,26 +1722,6 @@ implements OnInit
 
     //===========================================================
     // Prepare Table Rows
-    //
-    // IMPORTANT:
-    //
-    // databaseRegistered MUST NOT be used as the "database
-    // operation available" state.
-    //
-    // databaseRegistered means ONLY:
-    //
-    //     Actual database table exists.
-    //
-    // databaseCreateAllowed means:
-    //
-    //     Database creation is currently available.
-    //
-    // databaseRemoveAllowed means:
-    //
-    //     Database removal is currently available.
-    //
-    // This keeps the actual database state separate from the
-    // available database operation state.
     //===========================================================
 
     private prepareTableRows
@@ -1987,13 +1750,6 @@ implements OnInit
                     this.isRegistered(item);
 
 
-                //===================================================
-                // Actual database table state.
-                //
-                // TRUE  = table exists.
-                // FALSE = table does not exist.
-                //===================================================
-
                 row.databaseRegistered =
                     this.isDatabaseCreated(item);
 
@@ -2003,9 +1759,7 @@ implements OnInit
 
 
                 //===================================================
-                // Database operation states.
-                //
-                // These are independent from databaseRegistered.
+                // Database operations are neutralized.
                 //===================================================
 
                 row.databaseCreateAllowed =
@@ -2016,8 +1770,12 @@ implements OnInit
                     this.canRemoveDatabase(item);
 
 
+                //===================================================
+                // Migration operations are neutralized.
+                //===================================================
+
                 row.migrationDisabled =
-                    this.isMigrationDisabled(item);
+                    true;
 
 
                 row.migrationCreated =
@@ -2025,11 +1783,11 @@ implements OnInit
 
 
                 row.migrationCreateAllowed =
-                    this.canCreateMigration(item);
+                    false;
 
 
                 row.migrationRemoveAllowed =
-                    this.canRemoveMigration(item);
+                    false;
 
 
                 row.rollbackAllowed =
@@ -2074,14 +1832,6 @@ implements OnInit
                 'frontend';
         }
 
-
-        //=======================================================
-        // RESTORE GLOBAL REGISTRATION UNLOCK
-        //
-        // This MUST happen before loadCodeSynchronizations().
-        // The global unlock is independent of the synchronization
-        // rows returned by the API.
-        //=======================================================
 
         try
         {
@@ -4215,15 +3965,7 @@ implements OnInit
 
 
         //=======================================================
-        // IMPORTANT:
-        //
         // Determine the operation from THIS ROW only.
-        //
-        // A registered row must go through deregistration.
-        // An unregistered row must go through registration.
-        //
-        // The global registration lock is NOT used to decide
-        // whether an already registered row may deregister.
         //=======================================================
 
         if
@@ -4231,10 +3973,6 @@ implements OnInit
             this.isRegistered(item)
         )
         {
-            //===================================================
-            // Deregister THIS specific submenu.
-            //===================================================
-
             if
             (
                 !this.canDeregister(item)
@@ -4268,12 +4006,6 @@ implements OnInit
             return;
         }
 
-
-        //=======================================================
-        // Register THIS specific submenu.
-        //
-        // Global registration lock applies here.
-        //=======================================================
 
         if
         (
@@ -4364,7 +4096,7 @@ implements OnInit
                 (
                     60,
 
-                    'Updating database registration.'
+                    'Updating backend registration.'
                 );
             },
 
@@ -4385,14 +4117,6 @@ implements OnInit
                     {
                         next:() =>
                         {
-                            //===================================================
-                            // Backend Registration Started Again
-                            //
-                            // Once a new backend is successfully registered,
-                            // the global registration lock becomes active
-                            // again until its database table is created.
-                            //===================================================
-
                             this.setBackendRegistrationUnlocked(
                                 false
                             );
@@ -4477,15 +4201,6 @@ implements OnInit
     ):
         void
     {
-        //=======================================================
-        // IMPORTANT:
-        //
-        // This validation checks ONLY the selected row.
-        //
-        // Another registered submenu does NOT block this
-        // deregistration.
-        //=======================================================
-
         if
         (
             !this.canDeregister(item)
@@ -4518,7 +4233,7 @@ implements OnInit
                 (
                     30,
 
-                    'Preparing database rollback.'
+                    'Preparing backend unregistration.'
                 );
             },
 
@@ -4746,67 +4461,6 @@ implements OnInit
     }
 
 
-    //===========================================================
-    // Set Global Backend Registration Unlock State
-    //===========================================================
-
-    private setBackendRegistrationUnlocked
-    (
-        unlocked:boolean
-    ):
-        void
-    {
-        //=======================================================
-        // UPDATE RUNTIME GLOBAL STATE
-        //=======================================================
-
-        this.backendRegistrationUnlocked =
-            unlocked;
-
-
-        //=======================================================
-        // PERSIST GLOBAL STATE
-        //
-        // TRUE:
-        //     Database creation completed successfully.
-        //     Global registration lock is released.
-        //
-        // FALSE:
-        //     Database was removed and the workflow must be
-        //     locked again until another database is created.
-        //=======================================================
-
-        try
-        {
-            localStorage.setItem(
-                this.backendRegistrationUnlockStorageKey,
-
-                unlocked
-                    ? 'true'
-                    : 'false'
-            );
-        }
-        catch
-        {
-            // Ignore browser storage errors.
-        }
-
-
-        //=======================================================
-        // REFRESH UI
-        //=======================================================
-
-        this.applyFilters();
-
-        this.updatePagination();
-
-        this.cdr.detectChanges();
-    }
-
-
-    //===========================================================
-    // Start Database Create
-    //===========================================================
 
     //===========================================================
     // Start Database Create
@@ -4844,24 +4498,6 @@ implements OnInit
         );
 
 
-        this.scheduleDatabaseCreatePreparation();
-
-
-        this.scheduleDatabaseCreateProgress();
-
-
-        this.scheduleDatabaseCreateExecution(item);
-    }
-
-
-
-    //===========================================================
-    // Schedule Database Create Preparation
-    //===========================================================
-
-    private scheduleDatabaseCreatePreparation():
-        void
-    {
         setTimeout(
             () =>
             {
@@ -4875,17 +4511,8 @@ implements OnInit
 
             300
         );
-    }
 
 
-
-    //===========================================================
-    // Schedule Database Create Progress
-    //===========================================================
-
-    private scheduleDatabaseCreateProgress():
-        void
-    {
         setTimeout(
             () =>
             {
@@ -4899,21 +4526,8 @@ implements OnInit
 
             700
         );
-    }
 
 
-
-    //===========================================================
-    // Schedule Database Create Execution
-    //===========================================================
-
-    private scheduleDatabaseCreateExecution
-    (
-        item:
-            CodeSynchronization
-    ):
-        void
-    {
         setTimeout(
             () =>
             {
@@ -4985,11 +4599,23 @@ implements OnInit
     ):
         void
     {
+        const message =
+            typeof response === 'string'
+                ?
+                response
+                :
+                response?.message
+                ??
+                'Database table created successfully.';
+
+
         if
         (
-            !response
-            ||
-            response.success !== true
+            response
+            &&
+            typeof response !== 'string'
+            &&
+            response.success === false
         )
         {
             this.progressDialog.close();
@@ -4999,9 +4625,7 @@ implements OnInit
             (
                 'Database Creation Failed',
 
-                response?.message
-                ??
-                'Failed to create the database table.'
+                message
             );
 
 
@@ -5012,9 +4636,9 @@ implements OnInit
         }
 
 
-        //===================================================
+        //=======================================================
         // Database Creation Succeeded
-        //===================================================
+        //=======================================================
 
         this.setDatabaseCreated
         (
@@ -5024,15 +4648,9 @@ implements OnInit
         );
 
 
-        //===================================================
+        //=======================================================
         // RELEASE GLOBAL REGISTRATION LOCK
-        //
-        // ANY successful database creation releases the GLOBAL
-        // registration lock.
-        //
-        // setBackendRegistrationUnlocked() persists this state,
-        // so the global unlock survives browser reload.
-        //===================================================
+        //=======================================================
 
         this.setBackendRegistrationUnlocked
         (
@@ -5044,33 +4662,10 @@ implements OnInit
         (
             100,
 
-            'Database table created successfully.'
+            message
         );
 
 
-        this.scheduleDatabaseCreateSuccess
-        (
-            item,
-
-            response
-        );
-    }
-
-
-
-    //===========================================================
-    // Schedule Database Create Success
-    //===========================================================
-
-    private scheduleDatabaseCreateSuccess
-    (
-        item:
-            CodeSynchronization,
-
-        response:any
-    ):
-        void
-    {
         setTimeout(
             () =>
             {
@@ -5081,10 +4676,11 @@ implements OnInit
                 (
                     'Database Table',
 
-                    response?.message
-                    ??
-                    `${item.submenuName} database table created successfully.`
+                    message
                 );
+
+
+                this.loadCodeSynchronizations();
 
 
                 this.cdr.detectChanges();
@@ -5202,150 +4798,260 @@ implements OnInit
         setTimeout(
             () =>
             {
-                this.codeSynchronizationService
-
-                    .removeDatabase(
-                        item.id
-                    )
-
-                    .subscribe(
-                    {
-                        next:
-                        (
-                            response
-                        ) =>
-                        {
-                            if
-                            (
-                                !response
-                                ||
-                                response.success === false
-                            )
-                            {
-                                this.progressDialog.close();
-
-
-                                this.toast.error
-                                (
-                                    'Database Removal Failed',
-
-                                    response?.message
-                                    ??
-                                    'Failed to remove the database table.'
-                                );
-
-
-                                this.cdr.detectChanges();
-
-
-                                return;
-                            }
-
-
-                            //===================================================
-                            // Update Database State
-                            //
-                            // The physical database table no longer exists.
-                            //
-                            // Clear the runtime state before reloading the
-                            // synchronization records so the database
-                            // control returns to CREATE state.
-                            //===================================================
-
-                            this.setDatabaseCreated
-                            (
-                                item,
-
-                                false
-                            );
-
-
-                            //===================================================
-                            // RE-LOCK GLOBAL REGISTRATION
-                            //
-                            // The database table has been removed while the
-                            // backend remains registered. The registration
-                            // workflow is therefore pending again.
-                            //===================================================
-
-                            this.setBackendRegistrationUnlocked(
-                                false
-                            );
-
-
-                            this.progressDialog.update
-                            (
-                                100,
-
-                                'Database table removed successfully.'
-                            );
-
-
-                            setTimeout(
-                                () =>
-                                {
-                                    this.progressDialog.close();
-
-
-                                    this.toast.success
-                                    (
-                                        'Database Table',
-
-                                        response?.message
-                                        ??
-                                        `${item.submenuName} database table removed successfully.`
-                                    );
-
-
-                                    this.loadCodeSynchronizations();
-
-
-                                    this.cdr.detectChanges();
-                                },
-
-                                300
-                            );
-                        },
-
-
-                        error:
-                        (
-                            error
-                        ) =>
-                        {
-                            console.error(
-                                'Database Removal Failed',
-
-                                error
-                            );
-
-
-                            this.progressDialog.close();
-
-
-                            this.toast.error
-                            (
-                                'Database Removal Failed',
-
-                                error?.error?.message
-                                ??
-                                error?.error
-                                ??
-                                'Failed to remove the database table.'
-                            );
-
-
-                            this.cdr.detectChanges();
-                        }
-                    });
+                this.executeDatabaseRemove(item);
             },
 
             1000
         );
     }
 
+
+
+    //===========================================================
+    // Execute Database Remove
+    //===========================================================
+
+    private executeDatabaseRemove
+    (
+        item:
+            CodeSynchronization
+    ):
+        void
+    {
+        this.codeSynchronizationService
+
+            .removeDatabase(
+                item.id
+            )
+
+            .subscribe(
+            {
+                next:
+                (
+                    response:any
+                ) =>
+                {
+                    this.handleDatabaseRemoveSuccess(
+                        item,
+
+                        response
+                    );
+                },
+
+
+                error:
+                (
+                    error:any
+                ) =>
+                {
+                    this.handleDatabaseRemoveError(
+                        error
+                    );
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Handle Database Remove Success
+    //===========================================================
+
+    private handleDatabaseRemoveSuccess
+    (
+        item:
+            CodeSynchronization,
+
+        response:any
+    ):
+        void
+    {
+        const message =
+            typeof response === 'string'
+                ?
+                response
+                :
+                response?.message
+                ??
+                'Database table removed successfully.';
+
+
+        if
+        (
+            response
+            &&
+            typeof response !== 'string'
+            &&
+            response.success === false
+        )
+        {
+            this.progressDialog.close();
+
+
+            this.toast.error
+            (
+                'Database Removal Failed',
+
+                message
+            );
+
+
+            this.cdr.detectChanges();
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Database Removal Succeeded
+        //=======================================================
+
+        this.setDatabaseCreated
+        (
+            item,
+
+            false
+        );
+
+
+        //=======================================================
+        // RE-LOCK GLOBAL REGISTRATION
+        //
+        // The backend remains registered while its database
+        // table has been removed.
+        //=======================================================
+
+        this.setBackendRegistrationUnlocked(
+            false
+        );
+
+
+        this.progressDialog.update
+        (
+            100,
+
+            message
+        );
+
+
+        setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+
+                this.toast.success
+                (
+                    'Database Table',
+
+                    message
+                );
+
+
+                this.loadCodeSynchronizations();
+
+
+                this.cdr.detectChanges();
+            },
+
+            300
+        );
+    }
+
+
+
+    //===========================================================
+    // Handle Database Remove Error
+    //===========================================================
+
+    private handleDatabaseRemoveError
+    (
+        error:any
+    ):
+        void
+    {
+        console.error(
+            'Database Removal Failed',
+
+            error
+        );
+
+
+        this.progressDialog.close();
+
+
+        this.toast.error
+        (
+            'Database Removal Failed',
+
+            error?.error?.message
+            ??
+            error?.error
+            ??
+            'Failed to remove the database table.'
+        );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Set Global Backend Registration Unlock State
+    //
+    // This method remains part of the existing Backend
+    // Registration workflow.
+    //
+    // It is no longer changed by Database Create / Remove.
+    //===========================================================
+
+    private setBackendRegistrationUnlocked
+    (
+        unlocked:boolean
+    ):
+        void
+    {
+        this.backendRegistrationUnlocked =
+            unlocked;
+
+
+        try
+        {
+            localStorage.setItem(
+                this.backendRegistrationUnlockStorageKey,
+
+                unlocked
+                    ? 'true'
+                    : 'false'
+            );
+        }
+        catch
+        {
+            // Ignore browser storage errors.
+        }
+
+
+        this.applyFilters();
+
+        this.updatePagination();
+
+        this.cdr.detectChanges();
+    }
+
+
+
     //===========================================================
     // Migration Create / Remove
+    //
+    // NEUTRALIZED
+    //
+    // The old EF Migration Engine is completely disconnected
+    // from the frontend.
+    //
+    // The method is retained only because the existing HTML may
+    // still bind to migration().
     //===========================================================
 
     migration
@@ -5375,81 +5081,20 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Migration operations are completely unavailable while
-        // the actual database table exists.
-        //=======================================================
-
-        if
+        this.toast.warning
         (
-            !this.canMigrationAction(item)
-        )
-        {
-            return;
-        }
+            'Migration Engine',
 
-
-        //=======================================================
-        // Remove Migration
-        //=======================================================
-
-        if
-        (
-            this.isMigrationCreated(item)
-        )
-        {
-            this.confirmDialog.open
-            (
-                'Remove Migration',
-
-                `Are you sure you want to remove the migration for "${item.submenuName}"?`,
-
-                () =>
-                {
-                    this.startMigrationRemove(
-                        item
-                    );
-                },
-
-                'Remove',
-
-                'Cancel',
-
-                'danger'
-            );
-
-
-            return;
-        }
-
-
-        //=======================================================
-        // Create Migration
-        //=======================================================
-
-        this.confirmDialog.open
-        (
-            'Create Migration',
-
-            `Are you sure you want to create a migration for "${item.submenuName}"?`,
-
-            () =>
-            {
-                this.startMigrationCreate(
-                    item
-                );
-            },
-
-            'Create',
-
-            'Cancel',
-
-            'primary'
+            'EF Core migration operations are permanently disabled for this workflow.'
         );
     }
 
+
+
     //===========================================================
     // Start Migration Create
+    //
+    // NEUTRALIZED
     //===========================================================
 
     private startMigrationCreate
@@ -5459,185 +5104,15 @@ implements OnInit
     ):
         void
     {
-        if
-        (
-            !this.canCreateMigration(item)
-        )
-        {
-            return;
-        }
-
-
-        this.progressDialog.show
-        (
-            'Create Migration',
-
-            'Starting EF Core migration creation.'
-        );
-
-
-        this.progressDialog.update
-        (
-            10,
-
-            'Preparing migration.'
-        );
-
-
-        setTimeout(
-            () =>
-            {
-                this.progressDialog.update
-                (
-                    40,
-
-                    'Generating EF Core migration.'
-                );
-            },
-
-            300
-        );
-
-
-        setTimeout(
-            () =>
-            {
-                this.codeSynchronizationService
-
-                    .createMigration(
-                        item.id
-                    )
-
-                    .subscribe(
-                    {
-                        next:
-                        (
-                            response
-                        ) =>
-                        {
-                            if
-                            (
-                                !response.success
-                            )
-                            {
-                                this.progressDialog.close();
-
-
-                                this.toast.error
-                                (
-                                    'Migration Creation Failed',
-
-                                    response.message
-                                    ||
-                                    'Failed to create migration.'
-                                );
-
-
-                                this.cdr.detectChanges();
-
-
-                                return;
-                            }
-
-
-                            //===================================================
-                            // BACKEND MIGRATION CREATION SUCCESS
-                            //
-                            // The physical migration has now been created.
-                            //
-                            // Move the frontend workflow to:
-                            //
-                            //     Create Migration
-                            //             ↓
-                            //       Demigration
-                            //
-                            //     Registration
-                            //             ↓
-                            //          Disabled
-                            //
-                            //     Database Create
-                            //             ↓
-                            //           Enabled
-                            //===================================================
-
-                            this.setMigrationCreated
-                            (
-                                item,
-
-                                true
-                            );
-
-
-                            this.progressDialog.update
-                            (
-                                100,
-
-                                'Migration created successfully.'
-                            );
-
-
-                            setTimeout(
-                                () =>
-                                {
-                                    this.progressDialog.close();
-
-
-                                    this.toast.success
-                                    (
-                                        'Migration',
-
-                                        response.message
-                                        ||
-                                        `${item.submenuName} migration created successfully. Rebuild the Backend immediately to Proceed Next.`
-                                    );
-
-
-                                    this.cdr.detectChanges();
-                                },
-
-                                300
-                            );
-                        },
-
-
-                        error:
-                        (
-                            error
-                        ) =>
-                        {
-                            console.error(
-                                'Migration Creation Failed',
-
-                                error
-                            );
-
-
-                            this.progressDialog.close();
-
-
-                            this.toast.error
-                            (
-                                'Migration Creation Failed',
-
-                                error?.error?.message
-                                ??
-                                error?.error
-                                ??
-                                'Failed to create migration.'
-                            );
-
-
-                            this.cdr.detectChanges();
-                        }
-                    });
-            },
-
-            700
-        );
+        return;
     }
+
+
 
     //===========================================================
     // Start Migration Remove
+    //
+    // NEUTRALIZED
     //===========================================================
 
     private startMigrationRemove
@@ -5647,155 +5122,10 @@ implements OnInit
     ):
         void
     {
-        if
-        (
-            !this.canRemoveMigration(item)
-        )
-        {
-            return;
-        }
-
-
-        this.progressDialog.show
-        (
-            'Remove Migration',
-
-            'Starting EF Core migration removal.'
-        );
-
-
-        this.progressDialog.update
-        (
-            10,
-
-            'Preparing migration removal.'
-        );
-
-
-        setTimeout(
-            () =>
-            {
-                this.progressDialog.update
-                (
-                    40,
-
-                    'Removing EF Core migration.'
-                );
-            },
-
-            300
-        );
-
-
-        setTimeout(
-            () =>
-            {
-                this.codeSynchronizationService
-
-                    .removeMigration(
-                        item.id
-                    )
-
-                    .subscribe(
-                    {
-                        next:
-                        (
-                            response
-                        ) =>
-                        {
-                            //===================================================
-                            // Physical migration removal succeeded.
-                            //
-                            // Update the frontend migration state immediately.
-                            //
-                            // TRUE
-                            //     Demigration button
-                            //
-                            // FALSE
-                            //     Create Migration button
-                            //
-                            // This same state also:
-                            //
-                            //     Enables Registration
-                            //     Disables Database Create
-                            //===================================================
-
-                            this.setMigrationCreated
-                            (
-                                item,
-
-                                false
-                            );
-
-
-                            this.progressDialog.update
-                            (
-                                100,
-
-                                'Migration removed successfully.'
-                            );
-
-
-                            setTimeout(
-                                () =>
-                                {
-                                    this.progressDialog.close();
-
-
-                                    this.toast.success
-                                    (
-                                        'Migration',
-
-                                        response
-                                        ||
-                                        `${item.submenuName} migration removed successfully. Physical migration file and Designer file were removed. Rebuild the Backend immediately to Proceed Next.`
-                                    );
-
-
-                                    this.cdr.detectChanges();
-                                },
-
-                                300
-                            );
-                        },
-
-
-                        error:
-                        (
-                            error
-                        ) =>
-                        {
-                            console.error
-                            (
-                                'Migration Removal Failed',
-
-                                error
-                            );
-
-
-                            this.progressDialog.close();
-
-
-                            this.toast.error
-                            (
-                                'Migration Removal Failed',
-
-                                error?.error?.message
-                                ??
-                                error?.error
-                                ??
-                                'Failed to remove migration.'
-                            );
-
-
-                            this.cdr.detectChanges();
-                        }
-                    });
-            },
-
-            700
-        );
+        return;
     }
+
+
 
     //===========================================================
     // Restore

@@ -448,113 +448,14 @@
 
 
                                     <!-- =====================================
-                                        MIGRATION CREATE / REMOVE
-
-                                        Migration remains available only
-                                        while the database table does not
-                                        exist.
-
-                                        Once databaseCreated === true,
-                                        migration is locked because the
-                                        database must be removed first.
-                                    ====================================== -->
-
-                                    <button
-                                        *ngIf="
-                                            showRegistration
-                                        "
-
-                                        type="button"
-
-                                        class="action-btn migration"
-
-                                        [class.remove-migration]="
-                                            row.migrationCreated === true
-                                        "
-
-                                        [disabled]="
-                                            row.status?.toLowerCase()
-                                            !==
-                                            'synchronized'
-                                            ||
-                                            row.dbStatus?.toLowerCase()
-                                            !==
-                                            'registered'
-                                            ||
-                                            row.databaseCreated === true
-                                        "
-
-                                        [title]="
-                                            row.status?.toLowerCase()
-                                            !==
-                                            'synchronized'
-                                                ?
-                                                'Migration operation unavailable until code synchronization is completed'
-                                                :
-                                                (
-                                                    row.dbStatus?.toLowerCase()
-                                                    !==
-                                                    'registered'
-                                                        ?
-                                                        'Register backend code before creating a migration'
-                                                        :
-                                                        (
-                                                            row.databaseCreated === true
-                                                                ?
-                                                                'Migration operation disabled while database table exists. Remove the database table first.'
-                                                                :
-                                                                (
-                                                                    row.migrationCreated === true
-                                                                        ?
-                                                                        'Remove Migration'
-                                                                        :
-                                                                        'Create Migration'
-                                                                )
-                                                        )
-                                                )
-                                        "
-
-                                        (click)="
-                                            onMigrationClick(
-                                                row,
-                                                $event
-                                            )
-                                        ">
-
-                                        <i
-                                            *ngIf="
-                                                row.migrationCreated !== true
-                                            "
-
-                                            class="fas fa-file-circle-plus">
-
-                                        </i>
-
-
-                                        <i
-                                            *ngIf="
-                                                row.migrationCreated === true
-                                            "
-
-                                            class="fas fa-file-circle-minus">
-
-                                        </i>
-
-                                    </button>
-
-
-                                    <!-- =====================================
                                         DATABASE CREATE / REMOVE
 
-                                        Database creation requires a
-                                        migration.
+                                        Database creation will be handled
+                                        directly by the Database Engine.
 
                                         Once the database table exists,
                                         the same button becomes the
                                         Remove Database operation.
-
-                                        Migration removal is blocked while
-                                        databaseCreated === true.
                                     ====================================== -->
 
                                     <button
@@ -578,12 +479,6 @@
                                             row.dbStatus?.toLowerCase()
                                             !==
                                             'registered'
-                                            ||
-                                            (
-                                                row.databaseCreated !== true
-                                                &&
-                                                row.migrationCreated !== true
-                                            )
                                         "
 
                                         [title]="
@@ -605,13 +500,7 @@
                                                                 ?
                                                                 'Remove Database'
                                                                 :
-                                                                (
-                                                                    row.migrationCreated !== true
-                                                                        ?
-                                                                        'Create migration before creating the database'
-                                                                        :
-                                                                        'Create Database'
-                                                                )
+                                                                'Create Database'
                                                         )
                                                 )
                                         "

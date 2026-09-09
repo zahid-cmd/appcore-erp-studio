@@ -172,32 +172,6 @@ implements OnChanges
 
 
   /* =====================================================
-     MIGRATION VISIBILITY
-
-     Default:
-     Migration is hidden.
-
-     Controls only the Create / Remove Migration button.
-  ===================================================== */
-
-  @Input()
-  showMigration = false;
-
-
-  /* =====================================================
-     DATABASE VISIBILITY
-
-     Default:
-     Database is hidden.
-
-     Controls only the Create / Remove Database button.
-  ===================================================== */
-
-  @Input()
-  showDatabase = false;
-
-
-  /* =====================================================
      REGISTRATION STATE
 
      Registration availability is determined only from
@@ -214,9 +188,7 @@ implements OnChanges
 
      IMPORTANT:
 
-         migrationCreated
-
-     has absolutely no effect on registration state.
+         Migration state is completely independent.
 
      Creating or removing a migration must not enable,
      disable, register, deregister, or otherwise modify
@@ -326,7 +298,7 @@ implements OnChanges
          2. Registered
          3. Database table not yet created
 
-     migrationCreated is intentionally not checked here.
+     Migration state is intentionally not checked here.
 
      Migration state and Database state are completely
      independent.
@@ -449,15 +421,6 @@ implements OnChanges
 
   @Output()
   registration =
-      new EventEmitter<any>();
-
-
-  /* =====================================================
-     MIGRATION
-  ===================================================== */
-
-  @Output()
-  migration =
       new EventEmitter<any>();
 
 
@@ -919,65 +882,14 @@ implements OnChanges
 
 
   /* =====================================================
-     MIGRATION CLICK
-
-     Migration state is independent from:
-
-         Registration
-         Database Creation
-
-     This method only emits the selected row.
-
-     It does not modify:
-
-         dbStatus
-         registration state
-         databaseCreated
-  ===================================================== */
-
-  onMigrationClick
-  (
-      row: any,
-
-      event: MouseEvent
-  ):
-      void
-  {
-      event.stopPropagation();
-
-
-      console.log(
-          'MIGRATION CLICK',
-          row
-      );
-
-
-      this.migration.emit(
-          row
-      );
-  }
-
-
-  /* =====================================================
      DATABASE CLICK
 
      Database state is controlled by the parent.
 
      This method only emits the selected row.
 
-     The button itself remains protected by the template
-     eligibility rule:
-
-         synchronized
-         +
-         registered
-         +
-         migrationCreated === true
-
-     Once the button is enabled, the event is emitted to
-     the parent Code Synchronization component.
-
-     The parent then decides whether to:
+     The parent Code Synchronization component decides
+     whether the operation is:
 
          Create Database
          or

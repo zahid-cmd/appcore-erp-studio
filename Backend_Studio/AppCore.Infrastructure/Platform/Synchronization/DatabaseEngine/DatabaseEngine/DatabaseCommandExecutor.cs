@@ -1,647 +1,385 @@
-//===============================================================
-// Namespaces
-//===============================================================
-
-using System;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Npgsql;
-
-
-//===============================================================
-// Namespace
-//===============================================================
-
-namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEngine
-{
-
-    //===========================================================
-    // Database Command Executor
-    //===========================================================
-
-    public sealed class DatabaseCommandExecutor
-    {
-
-        //=======================================================
-        // Execute
-        //=======================================================
-
-        public async Task
-            ExecuteAsync
-        (
-            string fileName,
-
-            string arguments,
-
-            string workingDirectory,
-
-            CancellationToken cancellationToken
-        )
-        {
-            await ExecuteAndReturnOutputAsync
-            (
-                fileName,
-
-                arguments,
-
-                workingDirectory,
-
-                cancellationToken
-            );
-        }
-
-
-
-        //=======================================================
-        // Execute And Return Output
-        //=======================================================
-
-        public async Task<string>
-            ExecuteAndReturnOutputAsync
-        (
-            string fileName,
-
-            string arguments,
-
-            string workingDirectory,
-
-            CancellationToken cancellationToken
-        )
-        {
-            //===================================================
-            // Validate File Name
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace(fileName)
-            )
-            {
-                throw new ArgumentException
-                (
-                    "Command file name is required.",
-                    nameof(fileName)
-                );
-            }
-
-
-            //===================================================
-            // Validate Working Directory
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace(workingDirectory)
-            )
-            {
-                throw new ArgumentException
-                (
-                    "Working directory is required.",
-                    nameof(workingDirectory)
-                );
-            }
-
-
-            if
-            (
-                !System.IO.Directory.Exists
-                (
-                    workingDirectory
-                )
-            )
-            {
-                throw new InvalidOperationException
-                (
-                    $"Working directory does not exist: {workingDirectory}"
-                );
-            }
-
-
-            //===================================================
-            // Normalize Command Arguments
-            //===================================================
-
-            var normalizedArguments =
-                string.IsNullOrWhiteSpace(arguments)
-                    ? string.Empty
-                    : NormalizeCommandArguments
-                    (
-                        arguments
-                    );
-
-
-            //===================================================
-            // Process Information
-            //===================================================
-
-            var processStartInfo =
-                new ProcessStartInfo
-                {
-                    FileName =
-                        fileName,
-
-                    Arguments =
-                        normalizedArguments,
-
-                    WorkingDirectory =
-                        workingDirectory,
-
-                    RedirectStandardOutput =
-                        true,
-
-                    RedirectStandardError =
-                        true,
-
-                    UseShellExecute =
-                        false,
-
-                    CreateNoWindow =
-                        true
-                };
-
-
-            //===================================================
-            // Start Process
-            //===================================================
-
-            using var process =
-                new Process
-                {
-                    StartInfo =
-                        processStartInfo
-                };
-
-
-            try
-            {
-                if
-                (
-                    !process.Start()
-                )
-                {
-                    throw new InvalidOperationException
-                    (
-                        $"Unable to start command: {fileName}"
-                    );
-                }
-            }
-            catch
-            {
-                throw new InvalidOperationException
-                (
-                    $"Unable to start command '{fileName}' " +
-                    $"with working directory '{workingDirectory}'."
-                );
-            }
-
-
-            //===================================================
-            // Read Output
-            //===================================================
-
-            var standardOutputTask =
-                process.StandardOutput
-                    .ReadToEndAsync
-                    (
-                        cancellationToken
-                    );
-
-
-            var standardErrorTask =
-                process.StandardError
-                    .ReadToEndAsync
-                    (
-                        cancellationToken
-                    );
-
-
-            //===================================================
-            // Wait For Process
-            //===================================================
-
-            await process.WaitForExitAsync
-            (
-                cancellationToken
-            );
-
-
-            //===================================================
-            // Read Standard Output
-            //===================================================
-
-            var standardOutput =
-                await standardOutputTask;
-
-
-            //===================================================
-            // Read Standard Error
-            //===================================================
-
-            var standardError =
-                await standardErrorTask;
-
-
-            //===================================================
-            // Validate Exit Code
-            //===================================================
-
-            if
-            (
-                process.ExitCode != 0
-            )
-            {
-                var output =
-                    string.IsNullOrWhiteSpace(standardOutput)
-                        ? "(no standard output)"
-                        : standardOutput.Trim();
-
-
-                var error =
-                    string.IsNullOrWhiteSpace(standardError)
-                        ? "(no standard error)"
-                        : standardError.Trim();
-
-
-                throw new InvalidOperationException
-                (
-                    $"Database command failed." +
-                    Environment.NewLine +
-                    $"Command: {fileName}" +
-                    Environment.NewLine +
-                    $"Arguments: {normalizedArguments}" +
-                    Environment.NewLine +
-                    $"Working Directory: {workingDirectory}" +
-                    Environment.NewLine +
-                    $"Exit Code: {process.ExitCode}" +
-                    Environment.NewLine +
-                    $"Output: {output}" +
-                    Environment.NewLine +
-                    $"Error: {error}"
-                );
-            }
-
-
-            //===================================================
-            // Return Output
-            //===================================================
-
-            return standardOutput;
-        }
-
-
-
-        //=======================================================
-        // Execute SQL
-        //=======================================================
-
-        public async Task
-            ExecuteSqlAsync
-        (
-            string connectionString,
-
-            string sql,
-
-            CancellationToken cancellationToken
-        )
-        {
-            //===================================================
-            // Validate Connection String
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace(connectionString)
-            )
-            {
-                throw new ArgumentException
-                (
-                    "Database connection string is required.",
-                    nameof(connectionString)
-                );
-            }
-
-
-            //===================================================
-            // Validate SQL
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace(sql)
-            )
-            {
-                throw new ArgumentException
-                (
-                    "SQL command is required.",
-                    nameof(sql)
-                );
-            }
-
-
-            //===================================================
-            // Open Database Connection
-            //===================================================
-
-            await using var connection =
-                new NpgsqlConnection
-                (
-                    connectionString
-                );
-
-
-            await connection.OpenAsync
-            (
-                cancellationToken
-            );
-
-
-            //===================================================
-            // Create SQL Command
-            //===================================================
-
-            await using var command =
-                new NpgsqlCommand
-                (
-                    sql,
-
-                    connection
-                );
-
-
-            //===================================================
-            // Execute SQL Command
-            //===================================================
-
-            try
-            {
-                await command.ExecuteNonQueryAsync
-                (
-                    cancellationToken
-                );
-            }
-            catch
-            (
-                PostgresException exception
-            )
-            {
-                //================================================
-                // Ignore Missing Database Object During Removal
-                //================================================
-
-                if
-                (
-                    exception.SqlState == "42P01"
-                    &&
-                    IsRemovalSql
-                    (
-                        sql
-                    )
-                )
-                {
-                    return;
-                }
-
-
-                //================================================
-                // Re-throw Other Database Errors
-                //================================================
-
-                throw;
-            }
-        }
-
-
-
-        //=======================================================
-        // Execute SQL And Return Scalar
-        //=======================================================
-
-        public async Task<string?>
-            ExecuteScalarAsync
-        (
-            string connectionString,
-
-            string sql,
-
-            CancellationToken cancellationToken
-        )
-        {
-            //===================================================
-            // Validate Connection String
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace(connectionString)
-            )
-            {
-                throw new ArgumentException
-                (
-                    "Database connection string is required.",
-                    nameof(connectionString)
-                );
-            }
-
-
-            //===================================================
-            // Validate SQL
-            //===================================================
-
-            if
-            (
-                string.IsNullOrWhiteSpace(sql)
-            )
-            {
-                throw new ArgumentException
-                (
-                    "SQL command is required.",
-                    nameof(sql)
-                );
-            }
-
-
-            //===================================================
-            // Open Database Connection
-            //===================================================
-
-            await using var connection =
-                new NpgsqlConnection
-                (
-                    connectionString
-                );
-
-
-            await connection.OpenAsync
-            (
-                cancellationToken
-            );
-
-
-            //===================================================
-            // Create SQL Command
-            //===================================================
-
-            await using var command =
-                new NpgsqlCommand
-                (
-                    sql,
-
-                    connection
-                );
-
-
-            //===================================================
-            // Execute Scalar Command
-            //===================================================
-
-            var result =
-                await command.ExecuteScalarAsync
-                (
-                    cancellationToken
-                );
-
-
-            //===================================================
-            // No Result
-            //===================================================
-
-            if
-            (
-                result == null
-                ||
-                result == DBNull.Value
-            )
-            {
-                return null;
-            }
-
-
-            //===================================================
-            // Return Scalar Value
-            //===================================================
-
-            return
-                Convert.ToString
-                (
-                    result
-                );
-        }
-
-
-
-        //=======================================================
-        // Normalize Command Arguments
-        //=======================================================
-
-        private static string
-            NormalizeCommandArguments
-        (
-            string arguments
-        )
-        {
-            //===================================================
-            // Remove Escaping Added By Command Builder
-            //===================================================
-
-            return arguments
-                .Replace
-                (
-                    "\\\"",
-
-                    "\""
-                )
-                .Replace
-                (
-                    "\\\\",
-
-                    "\\"
-                );
-        }
-
-
-
-        //=======================================================
-        // Determine Removal SQL
-        //=======================================================
-
-        private static bool
-            IsRemovalSql
-        (
-            string sql
-        )
-        {
-            //===================================================
-            // Normalize SQL
-            //===================================================
-
-            var normalizedSql =
-                sql.Trim();
-
-
-            //===================================================
-            // Drop Table
-            //===================================================
-
-            if
-            (
-                normalizedSql
-                    .Contains
-                    (
-                        "DROP TABLE",
-
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            )
-            {
-                return true;
-            }
-
-
-            //===================================================
-            // Drop Column
-            //===================================================
-
-            if
-            (
-                normalizedSql
-                    .Contains
-                    (
-                        "DROP COLUMN",
-
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            )
-            {
-                return true;
-            }
-
-
-            //===================================================
-            // Drop Index
-            //===================================================
-
-            if
-            (
-                normalizedSql
-                    .Contains
-                    (
-                        "DROP INDEX",
-
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            )
-            {
-                return true;
-            }
-
-
-            //===================================================
-            // Not Removal SQL
-            //===================================================
-
-            return false;
-        }
-    }
-}
+//===============================================================  
+// Namespaces  
+//===============================================================  
+  
+using System;  
+using System.Threading.Tasks;  
+  
+using Npgsql;  
+  
+  
+//===============================================================  
+// Database Command Executor  
+//===============================================================  
+  
+namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEngine;  
+  
+  
+//===============================================================  
+// Database Command Executor  
+//===============================================================  
+  
+public class DatabaseCommandExecutor  
+{  
+    //===========================================================  
+    // Dependencies  
+    //===========================================================  
+  
+    private readonly DatabaseConnectionResolver  
+        _connectionResolver;  
+  
+  
+    //===========================================================  
+    // Constructor  
+    //===========================================================  
+  
+    public DatabaseCommandExecutor  
+    (  
+        DatabaseConnectionResolver connectionResolver  
+    )  
+    {  
+        _connectionResolver =  
+            connectionResolver;  
+    }  
+  
+  
+    //===========================================================  
+    // Execute  
+    //===========================================================  
+  
+    public async Task ExecuteAsync  
+    (  
+        string fileName,  
+  
+        string arguments,  
+  
+        string workingDirectory  
+    )  
+    {  
+        if  
+        (  
+            string.IsNullOrWhiteSpace(  
+                fileName  
+            )  
+        )  
+        {  
+            throw new ArgumentException(  
+                "Command file name is required.",  
+                nameof(fileName)  
+            );  
+        }  
+  
+  
+        if  
+        (  
+            string.IsNullOrWhiteSpace(  
+                workingDirectory  
+            )  
+        )  
+        {  
+            throw new ArgumentException(  
+                "Working directory is required.",  
+                nameof(workingDirectory)  
+            );  
+        }  
+  
+  
+        //=======================================================  
+        // SQL Execution  
+        //=======================================================  
+  
+        if  
+        (  
+            string.Equals(  
+                fileName,  
+                "psql",  
+                StringComparison.OrdinalIgnoreCase  
+            )  
+        )  
+        {  
+            await ExecuteSqlAsync(  
+                ExtractSqlFromArguments(  
+                    arguments  
+                )  
+            );  
+  
+  
+            return;  
+        }  
+  
+  
+        //=======================================================  
+        // Execute External Command  
+        //=======================================================  
+  
+        var startInfo =  
+            new System.Diagnostics.ProcessStartInfo  
+            {  
+                FileName =  
+                    fileName,  
+  
+                Arguments =  
+                    arguments,  
+  
+                WorkingDirectory =  
+                    workingDirectory,  
+  
+                RedirectStandardOutput =  
+                    true,  
+  
+                RedirectStandardError =  
+                    true,  
+  
+                UseShellExecute =  
+                    false,  
+  
+                CreateNoWindow =  
+                    true  
+            };  
+  
+  
+        using var process =  
+            new System.Diagnostics.Process  
+            {  
+                StartInfo =  
+                    startInfo  
+            };  
+  
+  
+        if  
+        (  
+            !process.Start()  
+        )  
+        {  
+            throw new InvalidOperationException(  
+                $"Unable to start command: {fileName}"  
+            );  
+        }  
+  
+  
+        var standardOutputTask =  
+            process.StandardOutput.ReadToEndAsync();  
+  
+  
+        var standardErrorTask =  
+            process.StandardError.ReadToEndAsync();  
+  
+  
+        await process.WaitForExitAsync();  
+  
+  
+        var standardOutput =  
+            await standardOutputTask;  
+  
+  
+        var standardError =  
+            await standardErrorTask;  
+  
+  
+        if  
+        (  
+            process.ExitCode != 0  
+        )  
+        {  
+            var errorMessage =  
+                string.Join  
+                (  
+                    Environment.NewLine,  
+  
+                    new[]  
+                    {  
+                        standardOutput,  
+  
+                        standardError  
+                    }  
+                )  
+                .Trim();  
+  
+  
+            throw new InvalidOperationException(  
+                string.IsNullOrWhiteSpace(  
+                    errorMessage  
+                )  
+                    ?  
+                    $"Command failed with exit code {process.ExitCode}: {fileName}"  
+                    :  
+                    errorMessage  
+            );  
+        }  
+    }  
+  
+  
+    //===========================================================  
+    // Execute SQL  
+    //===========================================================  
+  
+    public async Task ExecuteSqlAsync  
+    (  
+        string sql  
+    )  
+    {  
+        if  
+        (  
+            string.IsNullOrWhiteSpace(  
+                sql  
+            )  
+        )  
+        {  
+            throw new ArgumentException(  
+                "SQL command is required.",  
+                nameof(sql)  
+            );  
+        }  
+  
+  
+        //=======================================================  
+        // Resolve Connection String  
+        //=======================================================  
+  
+        var connectionString =  
+            await _connectionResolver  
+                .ResolveAsync();  
+  
+  
+        if  
+        (  
+            string.IsNullOrWhiteSpace(  
+                connectionString  
+            )  
+        )  
+        {  
+            throw new InvalidOperationException(  
+                "Unable to resolve the PostgreSQL connection string."  
+            );  
+        }  
+  
+  
+        //=======================================================  
+        // PostgreSQL Connection  
+        //=======================================================  
+  
+        await using var connection =  
+            new NpgsqlConnection(  
+                connectionString  
+            );  
+  
+  
+        //=======================================================  
+        // Open Connection  
+        //=======================================================  
+  
+        await connection.OpenAsync();  
+  
+  
+        //=======================================================  
+        // Create Command  
+        //=======================================================  
+  
+        await using var command =  
+            connection.CreateCommand();  
+  
+  
+        command.CommandText =  
+            sql;  
+  
+  
+        //=======================================================  
+        // Execute SQL  
+        //=======================================================  
+  
+        try  
+        {  
+            await command.ExecuteNonQueryAsync();  
+        }  
+        catch  
+        (  
+            Exception exception  
+        )  
+        {  
+            throw new InvalidOperationException(  
+                "Database SQL execution failed.",  
+                exception  
+            );  
+        }  
+    }  
+  
+  
+    //===========================================================  
+    // Extract SQL From Arguments  
+    //===========================================================  
+  
+    private string ExtractSqlFromArguments  
+    (  
+        string arguments  
+    )  
+    {  
+        if  
+        (  
+            string.IsNullOrWhiteSpace(  
+                arguments  
+            )  
+        )  
+        {  
+            throw new ArgumentException(  
+                "Database SQL arguments are required.",  
+                nameof(arguments)  
+            );  
+        }  
+  
+  
+        const string commandToken =  
+            "-c";  
+  
+  
+        var commandIndex =  
+            arguments.IndexOf(  
+                commandToken,  
+                StringComparison.OrdinalIgnoreCase  
+            );  
+  
+  
+        if  
+        (  
+            commandIndex < 0  
+        )  
+        {  
+            throw new InvalidOperationException(  
+                "Unable to resolve SQL command from database arguments."  
+            );  
+        }  
+  
+  
+        var sqlStart =  
+            commandIndex +  
+            commandToken.Length;  
+  
+  
+        var sqlArguments =  
+            arguments[sqlStart..]  
+                .Trim();  
+  
+  
+        if  
+        (  
+            sqlArguments.Length >= 2  
+            &&  
+            (  
+                sqlArguments[0] == '"'  
+                &&  
+                sqlArguments[^1] == '"'  
+            )  
+        )  
+        {  
+            sqlArguments =  
+                sqlArguments[1..^1];  
+        }  
+  
+  
+        return  
+            sqlArguments  
+                .Replace(  
+                    "\\\"",  
+                    "\""  
+                );  
+    }  
+}  

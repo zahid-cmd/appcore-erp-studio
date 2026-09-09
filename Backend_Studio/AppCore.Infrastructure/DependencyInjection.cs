@@ -100,7 +100,7 @@ using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegist
 
 
 //===============================================================
-// Database Migration Engine Interface
+// Database Creation Engine Interface
 //===============================================================
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
@@ -128,17 +128,11 @@ using AppCore.Infrastructure.Platform.Synchronization.BackendRegistrationEngine;
 
 
 //===============================================================
-// Database Migration Engine
-//===============================================================
-
-using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.MigrationEngine;
-
-
-//===============================================================
 // Database Creation Engine
 //===============================================================
 
 using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEngine;
+
 
 //===============================================================
 // AUTO REGISTER NAMESPACES
@@ -146,12 +140,14 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
-// AUTO-BEGIN : Company
+// AUTO-BEGIN : AccountGroup
 
-using AppCore.Application.Settings.GeneralSettings;
-using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
-// AUTO-END : Company
+// AUTO-END : AccountGroup
+
+
 
 
 
@@ -287,15 +283,17 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
-        // AUTO-BEGIN : Company
+        // AUTO-BEGIN : AccountGroup
 
         services.AddScoped
         <
-            ICompanyRepository,
-            CompanyRepository
+            IAccountGroupRepository,
+            AccountGroupRepository
         >();
 
-        // AUTO-END : Company
+        // AUTO-END : AccountGroup
+
+
 
 
 
@@ -444,46 +442,6 @@ public static class DependencyInjection
 
 
         //=======================================================
-        // Database Migration Engine
-        //=======================================================
-
-        services.AddScoped
-        <
-            MigrationProjectResolver
-        >();
-
-        services.AddScoped
-        <
-            MigrationNameBuilder
-        >();
-
-        services.AddScoped
-        <
-            MigrationCommandExecutor
-        >();
-
-        services.AddScoped
-        <
-            MigrationFileManager
-        >();
-
-        services.AddScoped
-        <
-            MigrationSnapshotManager
-        >();
-
-        services.AddScoped
-        <
-            MigrationValidator
-        >();
-
-        services.AddScoped
-        <
-            IDatabaseMigrationEngine,
-            DatabaseMigrationEngine
-        >();
-
-        //=======================================================
         // Database Creation Engine
         //=======================================================
 
@@ -494,7 +452,7 @@ public static class DependencyInjection
 
         services.AddScoped
         <
-            DatabaseValidator
+            DatabaseConnectionResolver
         >();
 
         services.AddScoped
@@ -504,9 +462,15 @@ public static class DependencyInjection
 
         services.AddScoped
         <
+            DatabaseOperationResolver
+        >();
+
+        services.AddScoped
+        <
             IDatabaseCreationEngine,
             DatabaseEngine
         >();
+
 
         //=======================================================
         // Development Management Engines
