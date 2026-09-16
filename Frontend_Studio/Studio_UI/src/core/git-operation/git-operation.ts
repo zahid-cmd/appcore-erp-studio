@@ -636,6 +636,17 @@ implements OnInit
 
     //===========================================================
     // Header Page Refresh
+    //
+    // IMPORTANT:
+    // This is NOT a Git operation.
+    //
+    // It does not:
+    // - open confirmation
+    // - open progress dialog
+    // - call Git status
+    // - show operation toast
+    //
+    // It simply reloads the current page.
     //===========================================================
 
     refreshPage():
@@ -1147,6 +1158,14 @@ implements OnInit
 
     //===========================================================
     // Refresh Status
+    //
+    // This is the ACTION-CARD refresh.
+    //
+    // Unlike refreshPage(), this DOES:
+    // - confirmation
+    // - progress dialog
+    // - Git status request
+    // - success/error toast
     //===========================================================
 
     private refreshStatus():
@@ -1327,6 +1346,10 @@ implements OnInit
 
             this.reloadRepositoryData();
 
+
+            this.cdr.detectChanges();
+
+
             return;
         }
 
@@ -1341,6 +1364,9 @@ implements OnInit
 
 
         this.reloadRepositoryData();
+
+
+        this.cdr.detectChanges();
     }
 
 
@@ -1451,6 +1477,11 @@ implements OnInit
 
     //===========================================================
     // Refresh
+    //
+    // Kept for compatibility with existing callers.
+    //
+    // This represents the repository-status refresh action,
+    // not the Command Center page reload.
     //===========================================================
 
     refresh():
@@ -1692,45 +1723,97 @@ implements OnInit
 
     //===========================================================
     // Modified Count
+    //
+    // Backend status parser returns:
+    //
+    // [MODIFIED] ...
+    //
     //===========================================================
 
     get modifiedCount():
         number
     {
-        return this.modifiedFiles.length;
+        return this.modifiedFiles
+            .filter(
+                file =>
+                    file.startsWith(
+                        '[MODIFIED] '
+                    )
+            )
+            .length;
     }
 
 
     //===========================================================
     // Deleted Count
+    //
+    // Backend status parser returns:
+    //
+    // [DELETED] ...
+    //
     //===========================================================
 
     get deletedCount():
         number
     {
-        return 0;
+        return this.modifiedFiles
+            .filter(
+                file =>
+                    file.startsWith(
+                        '[DELETED] '
+                    )
+            )
+            .length;
     }
 
 
     //===========================================================
     // Untracked Count
+    //
+    // Backend status parser returns:
+    //
+    // [UNTRACKED] ...
+    //
     //===========================================================
 
     get untrackedCount():
         number
     {
-        return 0;
+        return this.modifiedFiles
+            .filter(
+                file =>
+                    file.startsWith(
+                        '[UNTRACKED] '
+                    )
+            )
+            .length;
     }
 
 
     //===========================================================
     // Submodule Count
+    //
+    // Backend status parser returns:
+    //
+    // [SUBMODULE] ...
+    //
+    // This is important for entries such as:
+    //
+    // modified: Master_ERP (untracked content)
+    //
     //===========================================================
 
     get submoduleCount():
         number
     {
-        return 0;
+        return this.modifiedFiles
+            .filter(
+                file =>
+                    file.startsWith(
+                        '[SUBMODULE] '
+                    )
+            )
+            .length;
     }
 
 
@@ -1755,6 +1838,8 @@ implements OnInit
 
     //===========================================================
     // Modified File Count
+    //
+    // Kept for compatibility with existing template/code.
     //===========================================================
 
     get modifiedFileCount():

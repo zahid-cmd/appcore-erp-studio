@@ -203,7 +203,7 @@ public class SourceControlRepository
         )
         {
             throw new InvalidOperationException(
-                "SourceControl record was not found."
+                "Source Control repository not found."
             );
         }
 
@@ -242,6 +242,10 @@ public class SourceControlRepository
 
         existing.ModifiedDate =
             DateTime.UtcNow;
+
+
+        await _context
+            .SaveChangesAsync();
 
 
         await CreateActivityHistoryAsync(
@@ -287,7 +291,9 @@ public class SourceControlRepository
             entity is null
         )
         {
-            return;
+            throw new InvalidOperationException(
+                "Source Control repository not found."
+            );
         }
 
 
@@ -313,6 +319,10 @@ public class SourceControlRepository
 
         entity.ModifiedDate =
             DateTime.UtcNow;
+
+
+        await _context
+            .SaveChangesAsync();
 
 
         await CreateActivityHistoryAsync(
@@ -408,10 +418,9 @@ public class SourceControlRepository
     public async Task<IReadOnlyList<ActivityHistoryDto>>
         GetHistoryAsync()
     {
-        return await _context.ActivityHistories
-
+        return await _context
+            .ActivityHistories
             .AsNoTracking()
-
             .Where(
                 x =>
                     x.Module ==
@@ -422,12 +431,10 @@ public class SourceControlRepository
                     x.EntityName ==
                     "SourceControl"
             )
-
             .OrderByDescending(
                 x =>
                     x.PerformedDate
             )
-
             .Select(
                 x =>
                     new ActivityHistoryDto
@@ -463,7 +470,6 @@ public class SourceControlRepository
                             x.PerformedDate
                     }
             )
-
             .ToListAsync();
     }
 
@@ -479,10 +485,9 @@ public class SourceControlRepository
         long sourceControlId
     )
     {
-        return await _context.ActivityHistories
-
+        return await _context
+            .ActivityHistories
             .AsNoTracking()
-
             .Where(
                 x =>
                     x.Module ==
@@ -498,12 +503,10 @@ public class SourceControlRepository
                     x.EntityId ==
                     sourceControlId
             )
-
             .OrderByDescending(
                 x =>
                     x.PerformedDate
             )
-
             .Select(
                 x =>
                     new ActivityHistoryDto
@@ -539,7 +542,6 @@ public class SourceControlRepository
                             x.PerformedDate
                     }
             )
-
             .ToListAsync();
     }
 
@@ -556,26 +558,7 @@ public class SourceControlRepository
     )
     {
         var result =
-            new GitStatusDto
-            {
-                RepositoryName =
-                    string.Empty,
-
-                Branch =
-                    string.Empty,
-
-                LastCommitHash =
-                    string.Empty,
-
-                LastCommitMessage =
-                    string.Empty,
-
-                IsClean =
-                    false,
-
-                ModifiedFiles =
-                    []
-            };
+            new GitStatusDto();
 
 
         try
@@ -591,9 +574,13 @@ public class SourceControlRepository
                 sourceControl is null
             )
             {
-                result.ModifiedFiles.Add(
+                result.IsClean =
+                    false;
+
+                result.ModifiedFiles =
+                [
                     "Source Control repository was not found."
-                );
+                ];
 
                 return result;
             }
@@ -614,9 +601,13 @@ public class SourceControlRepository
                 !validation.Success
             )
             {
-                result.ModifiedFiles.Add(
+                result.IsClean =
+                    false;
+
+                result.ModifiedFiles =
+                [
                     validation.Message
-                );
+                ];
 
                 return result;
             }
@@ -634,19 +625,12 @@ public class SourceControlRepository
 
             if
             (
-                !branchResult.Success
+                branchResult.Success
             )
             {
-                result.ModifiedFiles.Add(
-                    branchResult.Error
-                );
-
-                return result;
+                result.Branch =
+                    branchResult.Output.Trim();
             }
-
-
-            result.Branch =
-                branchResult.Output.Trim();
 
 
             var hashResult =
@@ -691,13 +675,23 @@ public class SourceControlRepository
             }
 
 
+            //===================================================
+            // Git status
+            //
+            // --short gives machine-readable status.
+            // --ignore-submodules=none is important because
+            // submodule working-tree changes must be visible.
+            //===================================================
+
             var statusResult =
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
 
                     "status",
 
-                    "--short"
+                    "--short",
+
+                    "--ignore-submodules=none"
                 );
 
 
@@ -706,9 +700,13 @@ public class SourceControlRepository
                 !statusResult.Success
             )
             {
-                result.ModifiedFiles.Add(
+                result.IsClean =
+                    false;
+
+                result.ModifiedFiles =
+                [
                     statusResult.Error
-                );
+                ];
 
                 return result;
             }
@@ -735,9 +733,9 @@ public class SourceControlRepository
                 false;
 
             result.ModifiedFiles =
-                [
-                    exception.Message
-                ];
+            [
+                exception.Message
+            ];
 
             return result;
         }
@@ -769,7 +767,8 @@ public class SourceControlRepository
             )
             {
                 return GitFailure(
-                    "Repository Not Found",
+                    "Pull Failed",
+
                     "Source Control repository was not found."
                 );
             }
@@ -801,38 +800,8 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Pull Failed",
+
                     validation.Message
-                );
-            }
-
-
-            var localRepositoryResult =
-                await EnsureLocalRepositoryAsync(
-                    sourceControl
-                );
-
-
-            if
-            (
-                !localRepositoryResult.Success
-            )
-            {
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "PULL",
-
-                    "Pull Failed",
-
-                    localRepositoryResult.Message,
-
-                    "FAILED"
-                );
-
-
-                return GitFailure(
-                    "Pull Failed",
-                    localRepositoryResult.Message
                 );
             }
 
@@ -863,6 +832,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Pull Failed",
+
                     remoteResult.Message
                 );
             }
@@ -894,6 +864,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Pull Failed",
+
                     branchResult.Message
                 );
             }
@@ -941,6 +912,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Pull Failed",
+
                     message,
 
                     pullResult.Output
@@ -1003,6 +975,7 @@ public class SourceControlRepository
 
             return GitFailure(
                 "Pull Failed",
+
                 exception.Message
             );
         }
@@ -1027,7 +1000,9 @@ public class SourceControlRepository
             if
             (
                 dto is null
+
                 ||
+
                 string.IsNullOrWhiteSpace(
                     dto.Message
                 )
@@ -1035,6 +1010,7 @@ public class SourceControlRepository
             {
                 return GitFailure(
                     "Commit Failed",
+
                     "Commit message is required."
                 );
             }
@@ -1053,6 +1029,7 @@ public class SourceControlRepository
             {
                 return GitFailure(
                     "Commit Failed",
+
                     "Source Control repository was not found."
                 );
             }
@@ -1084,38 +1061,8 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Commit Failed",
+
                     validation.Message
-                );
-            }
-
-
-            var branchResult =
-                await EnsureCurrentBranchAsync(
-                    sourceControl
-                );
-
-
-            if
-            (
-                !branchResult.Success
-            )
-            {
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "COMMIT",
-
-                    "Commit Failed",
-
-                    branchResult.Message,
-
-                    "FAILED"
-                );
-
-
-                return GitFailure(
-                    "Commit Failed",
-                    branchResult.Message
                 );
             }
 
@@ -1126,7 +1073,7 @@ public class SourceControlRepository
 
                     "add",
 
-                    "--all"
+                    "."
                 );
 
 
@@ -1158,94 +1105,12 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Commit Failed",
+
                     message,
 
                     addResult.Output
                 );
             }
-
-
-            var stagedResult =
-                await ExecuteGitCommandAsync(
-                    sourceControl.RepositoryPath,
-
-                    "diff",
-
-                    "--cached",
-
-                    "--quiet"
-                );
-
-
-            if
-            (
-                stagedResult.ExitCode == 0
-            )
-            {
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "COMMIT",
-
-                    "Commit Skipped",
-
-                    "No repository changes were available to commit.",
-
-                    "SUCCESS"
-                );
-
-
-                return new GitOperationResultDto
-                {
-                    Success =
-                        true,
-
-                    Message =
-                        "No repository changes were available to commit.",
-
-                    Output =
-                        "Working tree is already clean."
-                };
-            }
-
-
-            if
-            (
-                stagedResult.ExitCode != 1
-            )
-            {
-                var message =
-                    BuildGitFailureMessage(
-                        "Unable to inspect staged repository changes.",
-
-                        stagedResult
-                    );
-
-
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "COMMIT",
-
-                    "Commit Failed",
-
-                    message,
-
-                    "FAILED"
-                );
-
-
-                return GitFailure(
-                    "Commit Failed",
-                    message,
-
-                    stagedResult.Output
-                );
-            }
-
-
-            var commitMessage =
-                dto.Message.Trim();
 
 
             var commitResult =
@@ -1256,7 +1121,7 @@ public class SourceControlRepository
 
                     "-m",
 
-                    commitMessage
+                    dto.Message.Trim()
                 );
 
 
@@ -1267,7 +1132,7 @@ public class SourceControlRepository
             {
                 var message =
                     BuildGitFailureMessage(
-                        "Git commit operation failed.",
+                        "Commit failed.",
 
                         commitResult
                     );
@@ -1288,6 +1153,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Commit Failed",
+
                     message,
 
                     commitResult.Output
@@ -1308,7 +1174,7 @@ public class SourceControlRepository
             var commitHash =
                 hashResult.Success
                     ? hashResult.Output.Trim()
-                    : null;
+                    : string.Empty;
 
 
             var output =
@@ -1322,9 +1188,13 @@ public class SourceControlRepository
 
                 "COMMIT",
 
-                "Commit Created",
+                "Commit Completed",
 
-                commitMessage,
+                string.IsNullOrWhiteSpace(
+                    output
+                )
+                ? dto.Message.Trim()
+                : output,
 
                 "SUCCESS"
             );
@@ -1366,6 +1236,7 @@ public class SourceControlRepository
 
             return GitFailure(
                 "Commit Failed",
+
                 exception.Message
             );
         }
@@ -1398,6 +1269,7 @@ public class SourceControlRepository
             {
                 return GitFailure(
                     "Push Failed",
+
                     "Source Control repository was not found."
                 );
             }
@@ -1429,6 +1301,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Push Failed",
+
                     validation.Message
                 );
             }
@@ -1460,6 +1333,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Push Failed",
+
                     remoteResult.Message
                 );
             }
@@ -1491,6 +1365,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Push Failed",
+
                     branchResult.Message
                 );
             }
@@ -1536,6 +1411,7 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Push Failed",
+
                     message,
 
                     pushResult.Output
@@ -1598,6 +1474,7 @@ public class SourceControlRepository
 
             return GitFailure(
                 "Push Failed",
+
                 exception.Message
             );
         }
@@ -1622,7 +1499,9 @@ public class SourceControlRepository
             if
             (
                 dto is null
+
                 ||
+
                 string.IsNullOrWhiteSpace(
                     dto.Message
                 )
@@ -1630,7 +1509,8 @@ public class SourceControlRepository
             {
                 return GitFailure(
                     "Synchronization Failed",
-                    "Synchronization message is required."
+
+                    "Commit message is required."
                 );
             }
 
@@ -1648,6 +1528,7 @@ public class SourceControlRepository
             {
                 return GitFailure(
                     "Synchronization Failed",
+
                     "Source Control repository was not found."
                 );
             }
@@ -1679,18 +1560,61 @@ public class SourceControlRepository
 
                 return GitFailure(
                     "Synchronization Failed",
+
                     validation.Message
                 );
             }
 
 
-            //===================================================
-            // Pull
-            //===================================================
+            var remoteResult =
+                await EnsureRemoteAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !remoteResult.Success
+            )
+            {
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    remoteResult.Message
+                );
+            }
+
+
+            var branchResult =
+                await EnsureCurrentBranchAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !branchResult.Success
+            )
+            {
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    branchResult.Message
+                );
+            }
+
 
             var pullResult =
-                await PullAsync(
-                    sourceControlId
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "pull",
+
+                    "--ff-only",
+
+                    "origin",
+
+                    sourceControl.DefaultBranch
                 );
 
 
@@ -1699,29 +1623,92 @@ public class SourceControlRepository
                 !pullResult.Success
             )
             {
-                return new GitOperationResultDto
-                {
-                    Success =
-                        false,
+                var message =
+                    BuildGitFailureMessage(
+                        "Synchronization pull phase failed.",
 
-                    Message =
-                        "Synchronization failed during Pull operation.",
+                        pullResult
+                    );
 
-                    Output =
-                        pullResult.Output
-                };
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    message,
+
+                    pullResult.Output
+                );
             }
 
 
-            //===================================================
-            // Commit
-            //===================================================
+            var addResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
 
-            var commitResult =
-                await CommitAsync(
+                    "add",
+
+                    "."
+                );
+
+
+            if
+            (
+                !addResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Synchronization staging phase failed.",
+
+                        addResult
+                    );
+
+
+                await CreateGitHistoryAsync(
                     sourceControlId,
 
-                    dto
+                    "SYNC",
+
+                    "Synchronization Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    message,
+
+                    addResult.Output
+                );
+            }
+
+
+            var commitResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "commit",
+
+                    "-m",
+
+                    dto.Message.Trim()
                 );
 
 
@@ -1730,27 +1717,71 @@ public class SourceControlRepository
                 !commitResult.Success
             )
             {
-                return new GitOperationResultDto
+                var normalizedCommitOutput =
+                    NormalizeGitOutput(
+                        commitResult
+                    );
+
+
+                //===================================================
+                // "nothing to commit" is not an operational failure.
+                // Continue to push the existing local commits.
+                //===================================================
+
+                var nothingToCommit =
+                    normalizedCommitOutput
+                        .Contains(
+                            "nothing to commit",
+                            StringComparison.OrdinalIgnoreCase
+                        );
+
+
+                if
+                (
+                    !nothingToCommit
+                )
                 {
-                    Success =
-                        false,
+                    var message =
+                        BuildGitFailureMessage(
+                            "Synchronization commit phase failed.",
 
-                    Message =
-                        "Synchronization failed during Commit operation.",
+                            commitResult
+                        );
 
-                    Output =
+
+                    await CreateGitHistoryAsync(
+                        sourceControlId,
+
+                        "SYNC",
+
+                        "Synchronization Failed",
+
+                        message,
+
+                        "FAILED"
+                    );
+
+
+                    return GitFailure(
+                        "Synchronization Failed",
+
+                        message,
+
                         commitResult.Output
-                };
+                    );
+                }
             }
 
 
-            //===================================================
-            // Push
-            //===================================================
-
             var pushResult =
-                await PushAsync(
-                    sourceControlId
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "push",
+
+                    "origin",
+
+                    sourceControl.DefaultBranch
                 );
 
 
@@ -1759,34 +1790,45 @@ public class SourceControlRepository
                 !pushResult.Success
             )
             {
-                return new GitOperationResultDto
-                {
-                    Success =
-                        false,
+                var message =
+                    BuildGitFailureMessage(
+                        "Synchronization push phase failed.",
 
-                    Message =
-                        "Synchronization failed during Push operation.",
-
-                    Output =
-                        pushResult.Output
-                };
-            }
+                        pushResult
+                    );
 
 
-            //===================================================
-            // Final Status
-            //===================================================
+                await CreateGitHistoryAsync(
+                    sourceControlId,
 
-            var finalStatus =
-                await GetStatusAsync(
-                    sourceControlId
+                    "SYNC",
+
+                    "Synchronization Failed",
+
+                    message,
+
+                    "FAILED"
                 );
 
 
-            var finalMessage =
-                finalStatus.IsClean
-                    ? "Pull → Commit → Push completed successfully. Repository is clean."
-                    : "Pull → Commit → Push completed successfully. Repository contains remaining changes.";
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    message,
+
+                    pushResult.Output
+                );
+            }
+
+
+            var output =
+                CombineGitOutput(
+                    pullResult,
+
+                    commitResult,
+
+                    pushResult
+                );
 
 
             await CreateGitHistoryAsync(
@@ -1796,7 +1838,11 @@ public class SourceControlRepository
 
                 "Synchronization Completed",
 
-                finalMessage,
+                string.IsNullOrWhiteSpace(
+                    output
+                )
+                ? "Pull, commit, and push completed successfully."
+                : output,
 
                 "SUCCESS"
             );
@@ -1808,10 +1854,10 @@ public class SourceControlRepository
                     true,
 
                 Message =
-                    "Repository synchronization completed successfully.",
+                    "Full repository synchronization completed successfully.",
 
                 Output =
-                    finalMessage
+                    output
             };
         }
         catch
@@ -1834,6 +1880,7 @@ public class SourceControlRepository
 
             return GitFailure(
                 "Synchronization Failed",
+
                 exception.Message
             );
         }
@@ -1895,6 +1942,19 @@ public class SourceControlRepository
 
         if
         (
+            !Directory.Exists(
+                sourceControl.RepositoryPath
+            )
+        )
+        {
+            return GitValidationResult.Failure(
+                $"Repository path was not found: {sourceControl.RepositoryPath}"
+            );
+        }
+
+
+        if
+        (
             string.IsNullOrWhiteSpace(
                 sourceControl.GitRemoteUrl
             )
@@ -1915,134 +1975,6 @@ public class SourceControlRepository
         {
             return GitValidationResult.Failure(
                 "Default branch is not configured."
-            );
-        }
-
-
-        return GitValidationResult.SuccessResult();
-    }
-
-
-
-    //===========================================================
-    // Ensure Local Repository
-    //===========================================================
-
-    private static async Task<GitValidationResult>
-        EnsureLocalRepositoryAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.SourceControl sourceControl
-    )
-    {
-        var repositoryPath =
-            sourceControl.RepositoryPath.Trim();
-
-
-        var remoteUrl =
-            sourceControl.GitRemoteUrl.Trim();
-
-
-        var defaultBranch =
-            sourceControl.DefaultBranch.Trim();
-
-
-        try
-        {
-            if
-            (
-                !Directory.Exists(
-                    repositoryPath
-                )
-            )
-            {
-                Directory.CreateDirectory(
-                    repositoryPath
-                );
-            }
-        }
-        catch
-        (
-            Exception exception
-        )
-        {
-            return GitValidationResult.Failure(
-                $"Unable to create repository path '{repositoryPath}'. {exception.Message}"
-            );
-        }
-
-
-        var gitDirectory =
-            Path.Combine(
-                repositoryPath,
-                ".git"
-            );
-
-
-        if
-        (
-            Directory.Exists(
-                gitDirectory
-            )
-
-            ||
-
-            File.Exists(
-                gitDirectory
-            )
-        )
-        {
-            return GitValidationResult.SuccessResult();
-        }
-
-
-        var hasFiles =
-            Directory
-                .EnumerateFileSystemEntries(
-                    repositoryPath
-                )
-                .Any();
-
-
-        if
-        (
-            hasFiles
-        )
-        {
-            return GitValidationResult.Failure(
-                $"Repository path '{repositoryPath}' is not an empty Git directory. Initial download was stopped to protect existing files."
-            );
-        }
-
-
-        var cloneResult =
-            await ExecuteGitCommandAsync(
-                repositoryPath,
-
-                "clone",
-
-                "--branch",
-
-                defaultBranch,
-
-                "--single-branch",
-
-                remoteUrl,
-
-                "."
-            );
-
-
-        if
-        (
-            !cloneResult.Success
-        )
-        {
-            return GitValidationResult.Failure(
-                BuildGitFailureMessage(
-                    "Unable to download the remote repository.",
-
-                    cloneResult
-                )
             );
         }
 
@@ -2087,7 +2019,9 @@ public class SourceControlRepository
             (
                 string.Equals(
                     configuredRemote,
+
                     sourceControl.GitRemoteUrl.Trim(),
+
                     StringComparison.OrdinalIgnoreCase
                 )
             )
@@ -2204,33 +2138,298 @@ public class SourceControlRepository
 
         if
         (
-            string.IsNullOrWhiteSpace(
-                currentBranch
-            )
-        )
-        {
-            return GitValidationResult.Failure(
-                "The repository is in a detached HEAD state. A named branch is required."
-            );
-        }
-
-
-        if
-        (
-            !string.Equals(
+            string.Equals(
                 currentBranch,
+
                 sourceControl.DefaultBranch.Trim(),
+
                 StringComparison.OrdinalIgnoreCase
             )
         )
         {
+            return GitValidationResult.SuccessResult();
+        }
+
+
+        var checkoutResult =
+            await ExecuteGitCommandAsync(
+                sourceControl.RepositoryPath,
+
+                "checkout",
+
+                sourceControl.DefaultBranch.Trim()
+            );
+
+
+        if
+        (
+            !checkoutResult.Success
+        )
+        {
             return GitValidationResult.Failure(
-                $"Current branch '{currentBranch}' does not match configured default branch '{sourceControl.DefaultBranch}'."
+                BuildGitFailureMessage(
+                    $"Unable to switch to branch '{sourceControl.DefaultBranch}'.",
+
+                    checkoutResult
+                )
             );
         }
 
 
         return GitValidationResult.SuccessResult();
+    }
+
+
+
+    //===========================================================
+    // Parse Git Status
+    //===========================================================
+    //
+    // Git short status:
+    //
+    //   XY path
+    //
+    // Normal file:
+    //   M  file       -> staged modification
+    //    M file       -> working-tree modification
+    //   D  file       -> staged deletion
+    //    D file       -> working-tree deletion
+    //   ?? file      -> untracked
+    //
+    // Submodule:
+    //   M  module     -> submodule commit differs in index
+    //    M module     -> submodule commit differs in worktree
+    //    m module     -> submodule contains modified content
+    //    ? module     -> submodule contains untracked content
+    //
+    // We prefix the result so the existing frontend can classify
+    // each status without changing the GitStatusDto contract.
+    //
+    //===========================================================
+
+    private static List<string>
+        ParseGitStatus
+    (
+        string output
+    )
+    {
+        var statuses =
+            new List<string>();
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                output
+            )
+        )
+        {
+            return statuses;
+        }
+
+
+        var lines =
+            output
+                .Replace(
+                    "\r\n",
+                    "\n"
+                )
+                .Replace(
+                    "\r",
+                    "\n"
+                )
+                .Split(
+                    '\n',
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+
+        foreach
+        (
+            var rawLine in lines
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    rawLine
+                )
+            )
+            {
+                continue;
+            }
+
+
+            var line =
+                rawLine.TrimEnd();
+
+
+            if
+            (
+                line.Length < 3
+            )
+            {
+                statuses.Add(
+                    "[MODIFIED] "
+                    +
+                    line.Trim()
+                );
+
+                continue;
+            }
+
+
+            var indexStatus =
+                line[0];
+
+
+            var workTreeStatus =
+                line[1];
+
+
+            var path =
+                line.Length > 3
+                    ? line[3..].Trim()
+                    : string.Empty;
+
+
+            if
+            (
+                path.Contains(
+                    " -> ",
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                path =
+                    path
+                        .Split(
+                            " -> ",
+                            StringSplitOptions.None
+                        )
+                        .Last()
+                        .Trim();
+            }
+
+
+            //=======================================================
+            // Untracked entry
+            //=======================================================
+
+            if
+            (
+                indexStatus == '?'
+                &&
+                workTreeStatus == '?'
+            )
+            {
+                statuses.Add(
+                    "[UNTRACKED] "
+                    +
+                    path
+                );
+
+                continue;
+            }
+
+
+            //=======================================================
+            // Git submodule status
+            //
+            // A submodule is identified by Git's lowercase
+            // work-tree status markers m / ?.
+            //=======================================================
+
+            if
+            (
+                workTreeStatus == 'm'
+                ||
+                workTreeStatus == '?'
+                ||
+                indexStatus == 'm'
+                ||
+                indexStatus == '?'
+            )
+            {
+                statuses.Add(
+                    "[SUBMODULE] "
+                    +
+                    path
+                );
+
+                continue;
+            }
+
+
+            //=======================================================
+            // Deleted
+            //=======================================================
+
+            if
+            (
+                indexStatus == 'D'
+                ||
+                workTreeStatus == 'D'
+            )
+            {
+                statuses.Add(
+                    "[DELETED] "
+                    +
+                    path
+                );
+
+                continue;
+            }
+
+
+            //=======================================================
+            // Modified
+            //=======================================================
+
+            if
+            (
+                indexStatus == 'M'
+                ||
+                workTreeStatus == 'M'
+                ||
+                indexStatus == 'A'
+                ||
+                workTreeStatus == 'A'
+                ||
+                indexStatus == 'R'
+                ||
+                workTreeStatus == 'R'
+            )
+            {
+                statuses.Add(
+                    "[MODIFIED] "
+                    +
+                    path
+                );
+
+                continue;
+            }
+
+
+            //=======================================================
+            // Fallback
+            //=======================================================
+
+            statuses.Add(
+                "[MODIFIED] "
+                +
+                (
+                    string.IsNullOrWhiteSpace(
+                        path
+                    )
+                    ? line.Trim()
+                    : path
+                )
+            );
+        }
+
+
+        return statuses;
     }
 
 
@@ -2247,115 +2446,76 @@ public class SourceControlRepository
         params string[] arguments
     )
     {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                repositoryPath
-            )
-        )
-        {
-            return GitCommandResult.Failure(
-                -1,
-
-                "Repository path is not configured."
-            );
-        }
-
-
-        if
-        (
-            !Directory.Exists(
-                repositoryPath
-            )
-        )
-        {
-            return GitCommandResult.Failure(
-                -1,
-
-                $"Repository path was not found: {repositoryPath}"
-            );
-        }
-
-
-        using var process =
-            new Process();
-
-
-        process.StartInfo =
-            new ProcessStartInfo
-            {
-                FileName =
-                    "git",
-
-                WorkingDirectory =
-                    repositoryPath,
-
-                RedirectStandardOutput =
-                    true,
-
-                RedirectStandardError =
-                    true,
-
-                UseShellExecute =
-                    false,
-
-                CreateNoWindow =
-                    true
-            };
-
-
-        foreach
-        (
-            var argument in arguments
-        )
-        {
-            process.StartInfo.ArgumentList.Add(
-                argument
-            );
-        }
-
-
         try
         {
-            process.Start();
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    repositoryPath
+                )
+            )
+            {
+                return GitCommandResult.Failure(
+                    -1,
 
-
-            var standardOutputTask =
-                process.StandardOutput
-                    .ReadToEndAsync();
-
-
-            var standardErrorTask =
-                process.StandardError
-                    .ReadToEndAsync();
-
-
-            await Task.WhenAll(
-                standardOutputTask,
-
-                standardErrorTask
-            );
-
-
-            await process.WaitForExitAsync();
-
-
-            var output =
-                standardOutputTask.Result
-                    .Trim();
-
-
-            var error =
-                standardErrorTask.Result
-                    .Trim();
-
-
-            var combinedOutput =
-                CombineGitOutput(
-                    output,
-
-                    error
+                    "Repository path is not configured."
                 );
+            }
+
+
+            if
+            (
+                !Directory.Exists(
+                    repositoryPath
+                )
+            )
+            {
+                return GitCommandResult.Failure(
+                    -1,
+
+                    $"Repository path was not found: {repositoryPath}"
+                );
+            }
+
+
+            var process =
+                new Process();
+
+
+            process.StartInfo =
+                new ProcessStartInfo
+                {
+                    FileName =
+                        "git",
+
+                    WorkingDirectory =
+                        repositoryPath,
+
+                    RedirectStandardOutput =
+                        true,
+
+                    RedirectStandardError =
+                        true,
+
+                    UseShellExecute =
+                        false,
+
+                    CreateNoWindow =
+                        true
+                };
+
+
+            foreach
+            (
+                var argument in arguments
+            )
+            {
+                process.StartInfo
+                    .ArgumentList
+                    .Add(
+                        argument
+                    );
+            }
 
 
             Console.WriteLine(
@@ -2368,6 +2528,33 @@ public class SourceControlRepository
             );
 
 
+            process.Start();
+
+
+            var outputTask =
+                process
+                    .StandardOutput
+                    .ReadToEndAsync();
+
+
+            var errorTask =
+                process
+                    .StandardError
+                    .ReadToEndAsync();
+
+
+            await process
+                .WaitForExitAsync();
+
+
+            var output =
+                await outputTask;
+
+
+            var error =
+                await errorTask;
+
+
             Console.WriteLine(
                 $"[GIT] Exit Code : {process.ExitCode}"
             );
@@ -2376,12 +2563,25 @@ public class SourceControlRepository
             if
             (
                 !string.IsNullOrWhiteSpace(
-                    combinedOutput
+                    output
                 )
             )
             {
                 Console.WriteLine(
-                    $"[GIT OUTPUT]\n{combinedOutput}"
+                    $"[GIT OUTPUT]\n{output}"
+                );
+            }
+
+
+            if
+            (
+                !string.IsNullOrWhiteSpace(
+                    error
+                )
+            )
+            {
+                Console.WriteLine(
+                    $"[GIT ERROR]\n{error}"
                 );
             }
 
@@ -2395,14 +2595,10 @@ public class SourceControlRepository
                     process.ExitCode,
 
                 Output =
-                    combinedOutput,
+                    output.Trim(),
 
                 Error =
-                    string.IsNullOrWhiteSpace(
-                        error
-                    )
-                    ? combinedOutput
-                    : error
+                    error.Trim()
             };
         }
         catch
@@ -2421,60 +2617,27 @@ public class SourceControlRepository
 
 
     //===========================================================
-    // Parse Git Status
-    //===========================================================
-
-    private static List<string>
-        ParseGitStatus
-    (
-        string output
-    )
-    {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                output
-            )
-        )
-        {
-            return [];
-        }
-
-
-        return output
-            .Replace(
-                "\r\n",
-                "\n"
-            )
-            .Replace(
-                "\r",
-                "\n"
-            )
-            .Split(
-                '\n',
-                StringSplitOptions.RemoveEmptyEntries
-            )
-            .Select(
-                x =>
-                    x.Trim()
-            )
-            .ToList();
-    }
-
-
-
-    //===========================================================
-    // Combine Git Output
+    // Normalize Git Output
     //===========================================================
 
     private static string
-        CombineGitOutput
+        NormalizeGitOutput
     (
-        string output,
-
-        string error
+        GitCommandResult result
     )
     {
+        var output =
+            result.Output?.Trim()
+            ??
+            string.Empty;
+
+
+        var error =
+            result.Error?.Trim()
+            ??
+            string.Empty;
+
+
         if
         (
             string.IsNullOrWhiteSpace(
@@ -2508,17 +2671,29 @@ public class SourceControlRepository
 
 
     //===========================================================
-    // Normalize Git Output
+    // Combine Git Output
     //===========================================================
 
     private static string
-        NormalizeGitOutput
+        CombineGitOutput
     (
-        GitCommandResult result
+        params GitCommandResult[] results
     )
     {
-        return
-            result.Output.Trim();
+        return string.Join(
+            Environment.NewLine,
+
+            results
+                .Select(
+                    NormalizeGitOutput
+                )
+                .Where(
+                    x =>
+                        !string.IsNullOrWhiteSpace(
+                            x
+                        )
+                )
+        );
     }
 
 
@@ -2530,32 +2705,34 @@ public class SourceControlRepository
     private static string
         BuildGitFailureMessage
     (
-        string prefix,
+        string fallback,
 
         GitCommandResult result
     )
     {
-        var details =
-            string.IsNullOrWhiteSpace(
-                result.Output
-            )
-            ? result.Error
-            : result.Output;
+        var output =
+            NormalizeGitOutput(
+                result
+            );
 
 
         if
         (
             string.IsNullOrWhiteSpace(
-                details
+                output
             )
         )
         {
-            return prefix;
+            return fallback;
         }
 
 
         return
-            $"{prefix}{Environment.NewLine}{details.Trim()}";
+            fallback
+            +
+            Environment.NewLine
+            +
+            output;
     }
 
 
@@ -2569,7 +2746,7 @@ public class SourceControlRepository
     (
         string message,
 
-        string details,
+        string detail,
 
         string? output = null
     )
@@ -2580,14 +2757,10 @@ public class SourceControlRepository
                 false,
 
             Message =
-                message,
+                detail,
 
             Output =
-                string.IsNullOrWhiteSpace(
-                    output
-                )
-                ? details
-                : output
+                output
         };
     }
 
@@ -2665,7 +2838,7 @@ public class SourceControlRepository
 
         string activityTitle,
 
-        string? activityDescription,
+        string activityDescription,
 
         string activityResult
     )
@@ -2744,6 +2917,7 @@ public class SourceControlRepository
         public bool Success
         {
             get;
+
             private init;
         }
 
@@ -2751,6 +2925,7 @@ public class SourceControlRepository
         public string Message
         {
             get;
+
             private init;
         } =
             string.Empty;
@@ -2798,6 +2973,7 @@ public class SourceControlRepository
         public bool Success
         {
             get;
+
             init;
         }
 
@@ -2805,6 +2981,7 @@ public class SourceControlRepository
         public int ExitCode
         {
             get;
+
             init;
         }
 
@@ -2812,6 +2989,7 @@ public class SourceControlRepository
         public string Output
         {
             get;
+
             init;
         } =
             string.Empty;
@@ -2820,6 +2998,7 @@ public class SourceControlRepository
         public string Error
         {
             get;
+
             init;
         } =
             string.Empty;
