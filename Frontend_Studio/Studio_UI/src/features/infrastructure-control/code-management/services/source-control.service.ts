@@ -56,6 +56,9 @@ export interface GitStatusDto
     lastCommitMessage:
         string;
 
+    lastCommitDate:
+        string;
+
     isClean:
         boolean;
 

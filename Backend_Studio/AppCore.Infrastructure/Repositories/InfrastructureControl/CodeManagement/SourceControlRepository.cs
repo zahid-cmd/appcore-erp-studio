@@ -613,6 +613,10 @@ public class SourceControlRepository
             }
 
 
+            //=======================================================
+            // Current Branch
+            //=======================================================
+
             var branchResult =
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
@@ -633,6 +637,10 @@ public class SourceControlRepository
             }
 
 
+            //=======================================================
+            // Last Commit Hash
+            //=======================================================
+
             var hashResult =
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
@@ -652,6 +660,10 @@ public class SourceControlRepository
                     hashResult.Output.Trim();
             }
 
+
+            //=======================================================
+            // Last Commit Message
+            //=======================================================
 
             var messageResult =
                 await ExecuteGitCommandAsync(
@@ -675,13 +687,43 @@ public class SourceControlRepository
             }
 
 
-            //===================================================
-            // Git status
+            //=======================================================
+            // Last Commit Date
+            //=======================================================
+
+            var commitDateResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "log",
+
+                    "-1",
+
+                    "--format=%cI"
+                );
+
+
+            if
+            (
+                commitDateResult.Success
+            )
+            {
+                result.LastCommitDate =
+                    commitDateResult.Output.Trim();
+            }
+
+
+            //=======================================================
+            // Git Status
             //
             // --short gives machine-readable status.
-            // --ignore-submodules=none is important because
-            // submodule working-tree changes must be visible.
-            //===================================================
+            //
+            // --ignore-submodules=all prevents Master_ERP and any
+            // other submodule working-tree changes from appearing
+            // in AppCore Repository Health.
+            //
+            // The pathspec excludes Master_ERP completely.
+            //=======================================================
 
             var statusResult =
                 await ExecuteGitCommandAsync(
@@ -718,11 +760,19 @@ public class SourceControlRepository
             }
 
 
+            //=======================================================
+            // Parse Git Status
+            //=======================================================
+
             result.ModifiedFiles =
                 ParseGitStatus(
                     statusResult.Output
                 );
 
+
+            //=======================================================
+            // Working Tree State
+            //=======================================================
 
             result.IsClean =
                 result.ModifiedFiles.Count == 0;
