@@ -1178,6 +1178,15 @@ implements OnInit
     private executeRefreshStatus():
         void
     {
+        if
+        (
+            this.sourceControlId <= 0
+        )
+        {
+            return;
+        }
+
+
         this.isOperating =
             true;
 
@@ -1186,25 +1195,87 @@ implements OnInit
             'refresh';
 
 
-        this.loadGitStatus();
+        this.progressDialog.show(
+            'Refresh Repository Status',
 
-
-        this.isOperating =
-            false;
-
-
-        this.currentOperation =
-            '';
-
-
-        this.toast.success(
-            'Refresh Completed',
-
-            'Repository status refreshed successfully.'
+            'Preparing to refresh repository status...'
         );
 
 
-        this.cdr.detectChanges();
+        this.progressDialog.update(
+            25,
+
+            'Checking repository working tree...'
+        );
+
+
+        this.sourcecontrolservice
+            .getStatus(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    status =>
+                    {
+                        this.gitStatus =
+                            status;
+
+
+                        this.cdr.detectChanges();
+
+
+                        this.progressDialog.update(
+                            100,
+
+                            'Repository status refreshed.'
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        this.isOperating =
+                            false;
+
+
+                        this.currentOperation =
+                            '';
+
+
+                        this.toast.success(
+                            'Refresh Completed',
+
+                            'Repository status refreshed successfully.'
+                        );
+
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        console.error(
+                            'Refresh Repository Status Error',
+
+                            error
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        this.operationFailed(
+                            error,
+
+                            'Refresh Failed',
+
+                            'Failed to refresh repository status.'
+                        );
+                    }
+            });
     }
 
 
@@ -1314,6 +1385,9 @@ implements OnInit
                 fallback
             )
         );
+
+
+        this.cdr.detectChanges();
     }
 
 
