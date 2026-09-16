@@ -691,7 +691,13 @@ public class SourceControlRepository
 
                     "--short",
 
-                    "--ignore-submodules=none"
+                    "--ignore-submodules=all",
+
+                    "--",
+
+                    ".",
+
+                    ":(exclude)Master_ERP"
                 );
 
 
@@ -873,6 +879,10 @@ public class SourceControlRepository
             var pullResult =
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
+
+                    "-c",
+
+                    "submodule.recurse=false",
 
                     "pull",
 
@@ -1073,7 +1083,13 @@ public class SourceControlRepository
 
                     "add",
 
-                    "."
+                    "-A",
+
+                    "--",
+
+                    ".",
+
+                    ":(exclude)Master_ERP"
                 );
 
 
@@ -1109,6 +1125,100 @@ public class SourceControlRepository
                     message,
 
                     addResult.Output
+                );
+            }
+
+
+            //===================================================
+            // Check whether AppCore-managed files were staged.
+            //
+            // Master_ERP is intentionally excluded from staging.
+            // Therefore changes that exist only inside that
+            // submodule must never make the commit fail.
+            //===================================================
+
+            var stagedResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "diff",
+
+                    "--cached",
+
+                    "--quiet"
+                );
+
+
+            if
+            (
+                stagedResult.ExitCode == 0
+            )
+            {
+                var message =
+                    "No AppCore repository changes were found to commit. "
+                    +
+                    "Master_ERP is excluded from AppCore Git operations.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "COMMIT",
+
+                    "Commit Completed",
+
+                    message,
+
+                    "SUCCESS"
+                );
+
+
+                return new GitOperationResultDto
+                {
+                    Success =
+                        true,
+
+                    Message =
+                        message,
+
+                    Output =
+                        message
+                };
+            }
+
+
+            if
+            (
+                stagedResult.ExitCode != 1
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to determine staged repository changes.",
+
+                        stagedResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "COMMIT",
+
+                    "Commit Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Commit Failed",
+
+                    message,
+
+                    stagedResult.Output
                 );
             }
 
@@ -1375,6 +1485,10 @@ public class SourceControlRepository
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
 
+                    "-c",
+
+                    "submodule.recurse=false",
+
                     "push",
 
                     "origin",
@@ -1608,6 +1722,10 @@ public class SourceControlRepository
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
 
+                    "-c",
+
+                    "submodule.recurse=false",
+
                     "pull",
 
                     "--ff-only",
@@ -1660,7 +1778,13 @@ public class SourceControlRepository
 
                     "add",
 
-                    "."
+                    "-A",
+
+                    "--",
+
+                    ".",
+
+                    ":(exclude)Master_ERP"
                 );
 
 
@@ -1696,6 +1820,174 @@ public class SourceControlRepository
                     message,
 
                     addResult.Output
+                );
+            }
+
+
+            //===================================================
+            // Check whether AppCore-managed files were staged.
+            //
+            // Master_ERP is intentionally excluded from staging.
+            // If it is the only changed area, there is nothing for
+            // the parent repository to commit.
+            //===================================================
+
+            var stagedResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "diff",
+
+                    "--cached",
+
+                    "--quiet"
+                );
+
+
+            if
+            (
+                stagedResult.ExitCode == 0
+            )
+            {
+                var message =
+                    "No AppCore repository changes were found to commit. "
+                    +
+                    "Master_ERP is excluded from AppCore Git operations.";
+
+
+                //===================================================
+                // Nothing needs to be committed. Continue to push
+                // the parent repository so existing local commits
+                // can still be published.
+                //===================================================
+
+                var pushResultNoCommit =
+                    await ExecuteGitCommandAsync(
+                        sourceControl.RepositoryPath,
+
+                        "-c",
+
+                        "submodule.recurse=false",
+
+                        "push",
+
+                        "origin",
+
+                        sourceControl.DefaultBranch
+                    );
+
+
+                if
+                (
+                    !pushResultNoCommit.Success
+                )
+                {
+                    var pushMessage =
+                        BuildGitFailureMessage(
+                            "Synchronization push phase failed.",
+
+                            pushResultNoCommit
+                        );
+
+
+                    await CreateGitHistoryAsync(
+                        sourceControlId,
+
+                        "SYNC",
+
+                        "Synchronization Failed",
+
+                        pushMessage,
+
+                        "FAILED"
+                    );
+
+
+                    return GitFailure(
+                        "Synchronization Failed",
+
+                        pushMessage,
+
+                        pushResultNoCommit.Output
+                    );
+                }
+
+
+                var noCommitOutput =
+                    CombineGitOutput(
+                        pullResult,
+
+                        stagedResult,
+
+                        pushResultNoCommit
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Completed",
+
+                    string.IsNullOrWhiteSpace(
+                        noCommitOutput
+                    )
+                    ? message
+                    : noCommitOutput,
+
+                    "SUCCESS"
+                );
+
+
+                return new GitOperationResultDto
+                {
+                    Success =
+                        true,
+
+                    Message =
+                        "Full repository synchronization completed successfully. "
+                        +
+                        "No new AppCore changes required a commit.",
+
+                    Output =
+                        noCommitOutput
+                };
+            }
+
+
+            if
+            (
+                stagedResult.ExitCode != 1
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Synchronization staging verification failed.",
+
+                        stagedResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    message,
+
+                    stagedResult.Output
                 );
             }
 
@@ -1776,6 +2068,10 @@ public class SourceControlRepository
             var pushResult =
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
+
+                    "-c",
+
+                    "submodule.recurse=false",
 
                     "push",
 
