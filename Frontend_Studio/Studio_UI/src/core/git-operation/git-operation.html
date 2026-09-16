@@ -20,7 +20,7 @@
 
             command1Icon="fas fa-sync-alt"
 
-            (command1Click)="onOperation('refresh')"
+            (command1Click)="refreshPage()"
 
             [command1Visible]="true"
 
@@ -96,11 +96,6 @@
 
                         <div class="overview-section">
 
-
-                            <!-- =================================
-                                 HEADER
-                            ================================== -->
-
                             <div class="overview-header">
 
                                 <div class="overview-title">
@@ -121,18 +116,12 @@
                             </div>
 
 
-                            <!-- =================================
-                                 BODY
-                            ================================== -->
-
                             <div class="overview-content">
 
                                 <div class="pipeline-container">
 
 
-                                    <!-- =========================
-                                         LOCAL
-                                    ========================== -->
+                                    <!-- LOCAL -->
 
                                     <div class="pipeline-node">
 
@@ -172,9 +161,7 @@
 
 
 
-                                    <!-- =========================
-                                         ARROW
-                                    ========================== -->
+                                    <!-- ARROW -->
 
                                     <div class="pipeline-arrow">
 
@@ -184,9 +171,7 @@
 
 
 
-                                    <!-- =========================
-                                         COMMIT
-                                    ========================== -->
+                                    <!-- COMMIT -->
 
                                     <div class="pipeline-node">
 
@@ -222,9 +207,7 @@
 
 
 
-                                    <!-- =========================
-                                         ARROW
-                                    ========================== -->
+                                    <!-- ARROW -->
 
                                     <div class="pipeline-arrow">
 
@@ -234,9 +217,7 @@
 
 
 
-                                    <!-- =========================
-                                         REMOTE
-                                    ========================== -->
+                                    <!-- REMOTE -->
 
                                     <div class="pipeline-node">
 
@@ -284,11 +265,6 @@
 
                         <div class="repository-information-section">
 
-
-                            <!-- =================================
-                                 HEADER
-                            ================================== -->
-
                             <div class="repository-information-header">
 
                                 <div class="repository-information-title">
@@ -309,28 +285,18 @@
                             </div>
 
 
-                            <!-- =================================
-                                 BODY
-                            ================================== -->
-
                             <div class="repository-information-card">
 
-
-                                <!-- =============================
-                                     REPOSITORY CODE
-                                ============================== -->
 
                                 <div class="info-item">
 
                                     <i class="fas fa-hashtag"></i>
-
 
                                     <span class="info-label">
 
                                         Repository Code
 
                                     </span>
-
 
                                     <span class="info-value">
 
@@ -342,21 +308,15 @@
 
 
 
-                                <!-- =============================
-                                     REPOSITORY NAME
-                                ============================== -->
-
                                 <div class="info-item">
 
                                     <i class="fas fa-folder"></i>
-
 
                                     <span class="info-label">
 
                                         Repository Name
 
                                     </span>
-
 
                                     <span class="info-value">
 
@@ -368,21 +328,15 @@
 
 
 
-                                <!-- =============================
-                                     DEFAULT BRANCH
-                                ============================== -->
-
                                 <div class="info-item">
 
                                     <i class="fas fa-code-branch"></i>
-
 
                                     <span class="info-label">
 
                                         Default Branch
 
                                     </span>
-
 
                                     <span class="info-value">
 
@@ -394,21 +348,15 @@
 
 
 
-                                <!-- =============================
-                                     REPOSITORY PATH
-                                ============================== -->
-
                                 <div class="info-item">
 
                                     <i class="fas fa-folder-tree"></i>
-
 
                                     <span class="info-label">
 
                                         Repository Path
 
                                     </span>
-
 
                                     <span
                                         class="info-value"
@@ -422,21 +370,15 @@
 
 
 
-                                <!-- =============================
-                                     REMOTE URL
-                                ============================== -->
-
                                 <div class="info-item">
 
                                     <i class="fas fa-globe"></i>
-
 
                                     <span class="info-label">
 
                                         Git Remote
 
                                     </span>
-
 
                                     <span
                                         class="info-value"
@@ -460,11 +402,6 @@
 
                         <div class="repository-status-section">
 
-
-                            <!-- =================================
-                                 HEADER
-                            ================================== -->
-
                             <div class="repository-status-header">
 
                                 <div class="repository-status-title">
@@ -485,28 +422,18 @@
                             </div>
 
 
-                            <!-- =================================
-                                 BODY
-                            ================================== -->
-
                             <div class="repository-status-card">
 
-
-                                <!-- =============================
-                                     CONNECTION STATUS
-                                ============================== -->
 
                                 <div class="status-item">
 
                                     <i class="fas fa-circle-check"></i>
-
 
                                     <span class="status-label">
 
                                         Connection Status
 
                                     </span>
-
 
                                     <span class="status-value">
 
@@ -522,21 +449,15 @@
 
 
 
-                                <!-- =============================
-                                     CURRENT BRANCH
-                                ============================== -->
-
                                 <div class="status-item">
 
                                     <i class="fas fa-code-branch"></i>
-
 
                                     <span class="status-label">
 
                                         Default Branch
 
                                     </span>
-
 
                                     <span class="status-value">
 
@@ -548,21 +469,15 @@
 
 
 
-                                <!-- =============================
-                                     REPOSITORY STATUS
-                                ============================== -->
-
                                 <div class="status-item">
 
                                     <i class="fas fa-circle-info"></i>
-
 
                                     <span class="status-label">
 
                                         Repository Status
 
                                     </span>
-
 
                                     <span class="status-value">
 
@@ -574,21 +489,15 @@
 
 
 
-                                <!-- =============================
-                                     WORKSPACE
-                                ============================== -->
-
                                 <div class="status-item">
 
                                     <i class="fas fa-folder-tree"></i>
-
 
                                     <span class="status-label">
 
                                         Workspace
 
                                     </span>
-
 
                                     <span
                                         class="status-value"
@@ -606,21 +515,15 @@
 
 
 
-                                <!-- =============================
-                                     REMOTE
-                                ============================== -->
-
                                 <div class="status-item">
 
                                     <i class="fas fa-cloud"></i>
-
 
                                     <span class="status-label">
 
                                         Remote
 
                                     </span>
-
 
                                     <span
                                         class="status-value"
@@ -651,9 +554,7 @@
                     <div class="repository-action-row">
 
 
-                        <!-- =========================================
-                             PULL
-                        ========================================== -->
+                        <!-- PULL -->
 
                         <button
 
@@ -689,9 +590,7 @@
 
 
 
-                        <!-- =========================================
-                             COMMIT
-                        ========================================== -->
+                        <!-- COMMIT -->
 
                         <button
 
@@ -727,9 +626,7 @@
 
 
 
-                        <!-- =========================================
-                             PUSH
-                        ========================================== -->
+                        <!-- PUSH -->
 
                         <button
 
@@ -765,9 +662,7 @@
 
 
 
-                        <!-- =========================================
-                             REFRESH
-                        ========================================== -->
+                        <!-- REFRESH STATUS -->
 
                         <button
 
@@ -803,12 +698,9 @@
 
 
 
-                        <!-- =========================================
-                             FULL REPOSITORY SYNCHRONIZATION
-                        ========================================== -->
+                        <!-- FULL SYNCHRONIZATION -->
 
                         <div class="sync-banner">
-
 
                             <div class="sync-left">
 
@@ -876,15 +768,11 @@
 
 
                     <!-- =====================================================
-                         RECENT REPOSITORY ACTIVITY
+                         REPOSITORY HEALTH
                     ===================================================== -->
 
                     <div class="activity-section">
 
-
-                        <!-- =================================================
-                             HEADER
-                        ================================================== -->
 
                         <div class="activity-header">
 
@@ -892,11 +780,11 @@
 
                                 <div class="activity-section-title">
 
-                                    <i class="fas fa-history"></i>
+                                    <i class="fas fa-heart-pulse"></i>
 
                                     <span>
 
-                                        Recent Repository Activity
+                                        Repository Health
 
                                     </span>
 
@@ -905,7 +793,7 @@
 
                                 <div class="activity-section-subtitle">
 
-                                    Latest repository operation history
+                                    Current Git working tree status
 
                                 </div>
 
@@ -915,44 +803,206 @@
 
 
 
-                        <!-- =================================================
-                             BODY
-                        ================================================== -->
-
-                        <div class="activity-list">
-
-                            <div class="activity-scroll appcore-scrollbar">
+                        <div class="repository-health-body">
 
 
-                                <!-- =============================================
-                                     CURRENTLY NO GIT HISTORY
-                                ============================================== -->
+                            <!-- HEALTH COUNTERS -->
 
-                                <div class="activity-item">
+                            <div class="health-counter-grid">
 
-                                    <div class="activity-dot info">
+
+                                <div class="health-counter">
+
+                                    <div class="health-counter-value">
+
+                                        {{ modifiedCount }}
+
                                     </div>
 
 
-                                    <div class="activity-content">
+                                    <div class="health-counter-label">
 
-                                        <div class="activity-title">
-
-                                            No Repository Activity
-
-                                        </div>
-
-
-                                        <div class="activity-description">
-
-                                            Git operation history will appear here.
-
-                                        </div>
+                                        Modified
 
                                     </div>
 
                                 </div>
 
+
+
+                                <div class="health-counter">
+
+                                    <div class="health-counter-value">
+
+                                        {{ deletedCount }}
+
+                                    </div>
+
+
+                                    <div class="health-counter-label">
+
+                                        Deleted
+
+                                    </div>
+
+                                </div>
+
+
+
+                                <div class="health-counter">
+
+                                    <div class="health-counter-value">
+
+                                        {{ untrackedCount }}
+
+                                    </div>
+
+
+                                    <div class="health-counter-label">
+
+                                        Untracked
+
+                                    </div>
+
+                                </div>
+
+
+
+                                <div class="health-counter">
+
+                                    <div class="health-counter-value">
+
+                                        {{ submoduleCount }}
+
+                                    </div>
+
+
+                                    <div class="health-counter-label">
+
+                                        Submodule
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- WORKING TREE -->
+
+                            <div class="health-divider">
+                            </div>
+
+
+                            <div class="health-status-block">
+
+                                <div class="health-status-icon">
+
+                                    <i class="fas fa-code-branch"></i>
+
+                                </div>
+
+
+                                <div class="health-status-content">
+
+                                    <div class="health-status-title">
+
+                                        Working Tree
+
+                                    </div>
+
+
+                                    <div
+                                        class="health-status-value"
+                                        [class.clean]="workspaceStatus === 'Clean'"
+                                        [class.changed]="workspaceStatus !== 'Clean'">
+
+                                        <span class="health-status-dot">
+                                        </span>
+
+                                        {{
+                                            workspaceStatus === 'Clean'
+                                                ? 'Clean'
+                                                : 'Changes Detected'
+                                        }}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- TOTAL CHANGES -->
+
+                            <div class="health-total-row">
+
+                                <div class="health-total-icon">
+
+                                    <i class="fas fa-hashtag"></i>
+
+                                </div>
+
+
+                                <span class="health-total-label">
+
+                                    Total Changes
+
+                                </span>
+
+
+                                <span class="health-total-value">
+
+                                    {{ totalChanges }}
+
+                                </span>
+
+                            </div>
+
+
+
+                            <!-- LAST COMMIT -->
+
+                            <div class="health-divider">
+                            </div>
+
+
+                            <div class="health-last-commit">
+
+                                <div class="health-last-commit-icon">
+
+                                    <i class="fas fa-clock"></i>
+
+                                </div>
+
+
+                                <div class="health-last-commit-content">
+
+                                    <div class="health-last-commit-title">
+
+                                        Last Commit
+
+                                    </div>
+
+
+                                    <div
+                                        class="health-last-commit-hash"
+                                        [title]="lastCommitHash">
+
+                                        {{ lastCommitHash }}
+
+                                    </div>
+
+
+                                    <div class="health-last-commit-message">
+
+                                        {{ lastCommitMessage }}
+
+                                    </div>
+
+                                </div>
 
                             </div>
 

@@ -118,6 +118,7 @@ import
 }
 from '../../shared/components/utilities/toast/toast';
 
+
 //===============================================================
 // Models & Services
 //===============================================================
@@ -133,8 +134,6 @@ import
     SourceControlService,
 
     GitStatusDto,
-
-    SourceControlHistoryDto,
 
     GitOperationResultDto
 }
@@ -273,15 +272,6 @@ implements OnInit
     gitStatus:
         GitStatusDto | null =
         null;
-
-
-    //===========================================================
-    // Repository History
-    //===========================================================
-
-    recentActivities:
-        SourceControlHistoryDto[] =
-        [];
 
 
     //===========================================================
@@ -463,8 +453,6 @@ implements OnInit
 
                         this.loadGitStatus();
 
-                        this.loadHistory();
-
 
                         this.cdr.detectChanges();
                     },
@@ -486,10 +474,6 @@ implements OnInit
 
                         this.gitStatus =
                             null;
-
-
-                        this.recentActivities =
-                            [];
 
 
                         this.isLoading =
@@ -554,59 +538,6 @@ implements OnInit
 
                         this.gitStatus =
                             null;
-
-
-                        this.cdr.detectChanges();
-                    }
-            });
-    }
-
-
-    //===========================================================
-    // Load History
-    //===========================================================
-
-    private loadHistory():
-        void
-    {
-        if
-        (
-            this.sourceControlId <= 0
-        )
-        {
-            return;
-        }
-
-
-        this.sourcecontrolservice
-            .getEntityHistory(
-                this.sourceControlId
-            )
-            .subscribe(
-            {
-                next:
-                    history =>
-                    {
-                        this.recentActivities =
-                            history as SourceControlHistoryDto[];
-
-
-                        this.cdr.detectChanges();
-                    },
-
-
-                error:
-                    error =>
-                    {
-                        console.error(
-                            'Repository History Error',
-
-                            error
-                        );
-
-
-                        this.recentActivities =
-                            [];
 
 
                         this.cdr.detectChanges();
@@ -700,6 +631,17 @@ implements OnInit
 
                 break;
         }
+    }
+
+
+    //===========================================================
+    // Header Page Refresh
+    //===========================================================
+
+    refreshPage():
+        void
+    {
+        window.location.reload();
     }
 
 
@@ -1213,7 +1155,7 @@ implements OnInit
         this.confirmDialog.open(
             'Refresh Repository Status',
 
-            'Are you sure you want to refresh the current repository status and activity information?',
+            'Are you sure you want to refresh the current repository status?',
 
             () =>
             {
@@ -1246,8 +1188,6 @@ implements OnInit
 
         this.loadGitStatus();
 
-        this.loadHistory();
-
 
         this.isOperating =
             false;
@@ -1260,7 +1200,7 @@ implements OnInit
         this.toast.success(
             'Refresh Completed',
 
-            'Repository status and activity information refreshed.'
+            'Repository status refreshed successfully.'
         );
 
 
@@ -1331,6 +1271,7 @@ implements OnInit
 
         this.reloadRepositoryData();
     }
+
 
     //===========================================================
     // Operation Failed
@@ -1676,13 +1617,76 @@ implements OnInit
 
 
     //===========================================================
+    // Modified Count
+    //===========================================================
+
+    get modifiedCount():
+        number
+    {
+        return this.modifiedFiles.length;
+    }
+
+
+    //===========================================================
+    // Deleted Count
+    //===========================================================
+
+    get deletedCount():
+        number
+    {
+        return 0;
+    }
+
+
+    //===========================================================
+    // Untracked Count
+    //===========================================================
+
+    get untrackedCount():
+        number
+    {
+        return 0;
+    }
+
+
+    //===========================================================
+    // Submodule Count
+    //===========================================================
+
+    get submoduleCount():
+        number
+    {
+        return 0;
+    }
+
+
+    //===========================================================
+    // Total Changes
+    //===========================================================
+
+    get totalChanges():
+        number
+    {
+        return (
+            this.modifiedCount
+            +
+            this.deletedCount
+            +
+            this.untrackedCount
+            +
+            this.submoduleCount
+        );
+    }
+
+
+    //===========================================================
     // Modified File Count
     //===========================================================
 
     get modifiedFileCount():
         number
     {
-        return this.modifiedFiles.length;
+        return this.modifiedCount;
     }
 
 

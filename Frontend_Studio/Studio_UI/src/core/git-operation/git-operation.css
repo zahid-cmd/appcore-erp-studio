@@ -1559,7 +1559,7 @@
 
 
 /* =====================================================
-   RECENT REPOSITORY ACTIVITY
+   REPOSITORY HEALTH
 ===================================================== */
 
 .activity-section
@@ -1574,6 +1574,8 @@
 
     height:100%;
 
+    width:100%;
+
     background:#ffffff;
 
     border:1px solid #e2e8f0;
@@ -1581,11 +1583,13 @@
     border-radius:12px;
 
     overflow:hidden;
+
+    box-sizing:border-box;
 }
 
 
 /* =====================================================
-   ACTIVITY HEADER
+   REPOSITORY HEALTH HEADER
 ===================================================== */
 
 .activity-header
@@ -1678,38 +1682,378 @@
 
 
 /* =====================================================
-   ACTIVITY BODY
+   REPOSITORY HEALTH BODY
 ===================================================== */
 
-.activity-list
+.repository-health-body
 {
     flex:1;
 
     min-height:0;
 
+    width:100%;
+
+    height:100%;
+
+    display:flex;
+
+    flex-direction:column;
+
+    padding:16px;
+
+    background:#ffffff;
+
+    box-sizing:border-box;
+
     overflow:hidden;
 }
 
 
-.activity-scroll
+/* =====================================================
+   HEALTH COUNTER GRID
+===================================================== */
+
+.health-counter-grid
 {
-    height:100%;
+    display:grid;
 
-    overflow-y:auto;
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
 
-    overflow-x:hidden;
+    gap:8px;
 
-    padding:8px 12px 12px;
+    width:100%;
 
-    box-sizing:border-box;
+    min-width:0;
+
+    flex-shrink:0;
 }
 
 
 /* =====================================================
-   ACTIVITY ITEM
+   HEALTH COUNTER
 ===================================================== */
 
-.activity-item
+.health-counter
+{
+    min-width:0;
+
+    height:92px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:8px 4px;
+
+    box-sizing:border-box;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfdff,
+            #f8fafc
+        );
+
+    box-shadow:
+        0 3px 10px rgba(15,23,42,.025);
+}
+
+
+/* =====================================================
+   COUNTER VALUE
+===================================================== */
+
+.health-counter-value
+{
+    font-size:27px;
+
+    line-height:32px;
+
+    font-weight:700;
+
+    color:#4f46e5;
+
+    text-align:center;
+}
+
+
+/* =====================================================
+   COUNTER LABEL
+===================================================== */
+
+.health-counter-label
+{
+    margin-top:6px;
+
+    width:100%;
+
+    font-size:11px;
+
+    line-height:14px;
+
+    font-weight:600;
+
+    color:#64748b;
+
+    text-align:center;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   HEALTH DIVIDER
+===================================================== */
+
+.health-divider
+{
+    width:100%;
+
+    height:1px;
+
+    margin:
+        16px 0;
+
+    flex-shrink:0;
+
+    background:#e2e8f0;
+}
+
+
+/* =====================================================
+   WORKING TREE
+===================================================== */
+
+.health-status-block
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    width:100%;
+
+    min-width:0;
+
+    flex-shrink:0;
+}
+
+
+/* =====================================================
+   WORKING TREE ICON
+===================================================== */
+
+.health-status-icon
+{
+    width:42px;
+
+    height:42px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:12px;
+
+    background:#ecfdf5;
+
+    color:#16a34a;
+
+    font-size:18px;
+}
+
+
+/* =====================================================
+   WORKING TREE CONTENT
+===================================================== */
+
+.health-status-content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+}
+
+
+.health-status-title
+{
+    font-size:13px;
+
+    line-height:18px;
+
+    font-weight:700;
+
+    color:#0f172a;
+}
+
+
+.health-status-value
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin-top:4px;
+
+    font-size:12px;
+
+    line-height:18px;
+
+    font-weight:700;
+}
+
+
+.health-status-value.clean
+{
+    color:#16a34a;
+}
+
+
+.health-status-value.changed
+{
+    color:#ef4444;
+}
+
+
+/* =====================================================
+   WORKING TREE STATUS DOT
+===================================================== */
+
+.health-status-dot
+{
+    width:10px;
+
+    height:10px;
+
+    flex-shrink:0;
+
+    border-radius:50%;
+
+    background:#ef4444;
+}
+
+
+.health-status-value.clean .health-status-dot
+{
+    background:#22c55e;
+}
+
+
+/* =====================================================
+   TOTAL CHANGES
+===================================================== */
+
+.health-total-row
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:48px;
+
+    flex-shrink:0;
+}
+
+
+/* =====================================================
+   TOTAL CHANGES ICON
+===================================================== */
+
+.health-total-icon
+{
+    width:42px;
+
+    height:42px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:12px;
+
+    background:#ecfdf5;
+
+    color:#16a34a;
+
+    font-size:18px;
+}
+
+
+/* =====================================================
+   TOTAL CHANGES LABEL
+===================================================== */
+
+.health-total-label
+{
+    flex:1;
+
+    min-width:0;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#64748b;
+}
+
+
+/* =====================================================
+   TOTAL CHANGES VALUE
+===================================================== */
+
+.health-total-value
+{
+    flex-shrink:0;
+
+    font-size:20px;
+
+    line-height:24px;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+    text-align:right;
+}
+
+
+/* =====================================================
+   LAST COMMIT
+===================================================== */
+
+.health-last-commit
 {
     display:flex;
 
@@ -1717,126 +2061,121 @@
 
     gap:12px;
 
-    padding:12px 10px;
+    width:100%;
 
-    border-bottom:1px solid #f1f5f9;
+    min-width:0;
 
-    transition:background .2s ease;
-}
-
-
-.activity-item:last-child
-{
-    border-bottom:none;
-}
-
-
-.activity-item:hover
-{
-    background:#f8fbff;
+    flex-shrink:0;
 }
 
 
 /* =====================================================
-   STATUS DOT
+   LAST COMMIT ICON
 ===================================================== */
 
-.activity-dot
+.health-last-commit-icon
 {
-    width:10px;
+    width:42px;
 
-    height:10px;
+    height:42px;
 
-    margin-top:7px;
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
 
     flex-shrink:0;
 
-    border-radius:50%;
-}
+    border-radius:12px;
 
+    background:#eff6ff;
 
-.activity-dot.success
-{
-    background:#22c55e;
+    color:#4f46e5;
 
-    box-shadow:
-        0 0 8px rgba(34,197,94,.35);
-}
-
-
-.activity-dot.info
-{
-    background:#2563eb;
-
-    box-shadow:
-        0 0 8px rgba(37,99,235,.35);
-}
-
-
-.activity-dot.danger
-{
-    background:#ef4444;
-
-    box-shadow:
-        0 0 8px rgba(239,68,68,.35);
+    font-size:18px;
 }
 
 
 /* =====================================================
-   ACTIVITY CONTENT
+   LAST COMMIT CONTENT
 ===================================================== */
 
-.activity-content
+.health-last-commit-content
 {
-    flex:1;
+    display:flex;
+
+    flex-direction:column;
 
     min-width:0;
+
+    flex:1;
 }
 
 
-.activity-title
+/* =====================================================
+   LAST COMMIT TITLE
+===================================================== */
+
+.health-last-commit-title
 {
     font-size:13px;
+
+    line-height:18px;
 
     font-weight:700;
 
     color:#0f172a;
-
-    margin-bottom:3px;
 }
 
 
-.activity-description
+/* =====================================================
+   LAST COMMIT HASH
+===================================================== */
+
+.health-last-commit-hash
 {
+    margin-top:7px;
+
+    width:100%;
+
+    font-size:11px;
+
+    line-height:16px;
+
+    font-weight:600;
+
+    color:#64748b;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   LAST COMMIT MESSAGE
+===================================================== */
+
+.health-last-commit-message
+{
+    margin-top:3px;
+
+    width:100%;
+
     font-size:12px;
 
     line-height:18px;
 
     color:#64748b;
-}
 
+    overflow:hidden;
 
-.activity-time
-{
-    margin-left:auto;
-
-    padding-left:10px;
+    text-overflow:ellipsis;
 
     white-space:nowrap;
-
-    font-size:11px;
-
-    color:#94a3b8;
-}
-
-
-/* =====================================================
-   EMPTY STATE
-===================================================== */
-
-.activity-item:has(.activity-content)
-{
-    min-height:50px;
 }
 
 
@@ -1874,6 +2213,24 @@
 
         padding:
             0 14px;
+    }
+
+
+    .repository-health-body
+    {
+        padding:14px;
+    }
+
+
+    .health-counter-grid
+    {
+        gap:6px;
+    }
+
+
+    .health-counter
+    {
+        height:88px;
     }
 
 }
@@ -1982,6 +2339,12 @@
         min-height:132px;
     }
 
+
+    .health-counter
+    {
+        height:86px;
+    }
+
 }
 
 
@@ -2059,6 +2422,18 @@
         width:100%;
     }
 
+
+    .health-counter-grid
+    {
+        gap:8px;
+    }
+
+
+    .health-counter
+    {
+        height:86px;
+    }
+
 }
 
 
@@ -2113,15 +2488,22 @@
     }
 
 
-    .activity-time
-    {
-        display:none;
-    }
-
-
     .action-card
     {
         height:132px;
+    }
+
+
+    .health-counter-grid
+    {
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+
+    .health-counter
+    {
+        height:92px;
     }
 
 }
@@ -2218,6 +2600,34 @@
     .sync-title
     {
         font-size:14px;
+    }
+
+
+    .repository-health-body
+    {
+        padding:12px;
+    }
+
+
+    .health-counter-grid
+    {
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+        gap:8px;
+    }
+
+
+    .health-counter
+    {
+        height:86px;
+    }
+
+
+    .health-divider
+    {
+        margin:
+            12px 0;
     }
 
 }
