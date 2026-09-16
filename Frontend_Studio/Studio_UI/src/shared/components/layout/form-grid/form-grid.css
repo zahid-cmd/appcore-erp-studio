@@ -4,20 +4,23 @@
 
 .form-grid
 {
-    position: relative;
+    position:relative;
 
-    display: grid;
+    display:grid;
 
-    width: 100%;
+    width:100%;
 
-    align-content: start;
+    align-content:start;
 
-    box-sizing: border-box;
+    align-items:stretch;
 
-    overflow: visible;
+    box-sizing:border-box;
 
-    z-index: 1;
+    overflow:visible;
+
+    z-index:1;
 }
+
 
 /* =====================================================
    STRETCH
@@ -25,8 +28,9 @@
 
 .form-grid.stretch-height
 {
-    height: 100%;
+    height:100%;
 }
+
 
 /* =====================================================
    CHILDREN
@@ -34,24 +38,31 @@
 
 .form-grid > *
 {
-    position: relative;
+    position:relative;
 
-    min-width: 0;
+    min-width:0;
 
-    overflow: visible;
+    height:100%;
 
-    z-index: 1;
+    min-height:0;
+
+    overflow:visible;
+
+    z-index:1;
 }
+
 
 /* =====================================================
    ACTIVE GRID ITEM
 ===================================================== */
 
 .form-grid > *:has(.dropdown-selector.open),
+
 .form-grid > *:has(.calendar-popup)
 {
-    z-index: 999999;
+    z-index:999999;
 }
+
 
 /* =====================================================
    RESPONSIVE
@@ -62,9 +73,10 @@
     .form-grid
     {
         grid-template-columns:
-            repeat(2, minmax(0,1fr)) !important;
+            repeat(2,minmax(0,1fr)) !important;
     }
 }
+
 
 @media (max-width:992px)
 {

@@ -1,14 +1,22 @@
 /* =====================================================
-   HOST
+   SIZE CONTROL
 ===================================================== */
 
 :host
 {
-    display: block;
+    --textbox-width:360px;
 
-    width: 100%;
+    --textbox-height:36px;
 
-    box-sizing: border-box;
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+
+    max-width:100%;
+
+    box-sizing:border-box;
 }
 
 
@@ -18,13 +26,19 @@
 
 .textbox-container
 {
-    display: flex;
+    display:flex;
 
-    flex-direction: column;
+    flex-direction:column;
 
-    width: 100%;
+    width:100%;
 
-    margin-bottom: 0px;
+    min-width:0;
+
+    max-width:100%;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
 }
 
 
@@ -34,23 +48,31 @@
 
 .textbox-label
 {
-    display: flex;
+    display:flex;
 
-    align-items: center;
+    align-items:center;
 
-    gap: 4px;
+    gap:4px;
 
-    margin-bottom: 10px;
+    width:100%;
 
-    color: #334155;
+    min-width:0;
 
-    font-size: 15px;
+    max-width:100%;
 
-    font-weight: 600;
+    margin-bottom:10px;
 
-    line-height: 1.3;
+    color:#334155;
 
-    user-select: none;
+    font-size:15px;
+
+    font-weight:600;
+
+    line-height:1.3;
+
+    user-select:none;
+
+    box-sizing:border-box;
 }
 
 
@@ -60,11 +82,11 @@
 
 .textbox-required
 {
-    color: #ef4444;
+    color:#ef4444;
 
-    font-size: 15px;
+    font-size:15px;
 
-    font-weight: 700;
+    font-weight:700;
 }
 
 
@@ -74,19 +96,27 @@
 
 .textbox
 {
-    display: flex;
+    display:flex;
 
-    align-items: center;
+    align-items:center;
 
-    width: 100%;
+    width:100%;
 
-    height: 36px;
+    min-width:0;
 
-    box-sizing: border-box;
+    max-width:100%;
 
-    border: 1px solid #d9e5f2;
+    height:var(--textbox-height);
 
-    border-radius: 12px;
+    min-height:var(--textbox-height);
+
+    max-height:var(--textbox-height);
+
+    box-sizing:border-box;
+
+    border:1px solid #d9e5f2;
+
+    border-radius:12px;
 
     background:
         linear-gradient(
@@ -95,7 +125,7 @@
             #fcfdff 100%
         );
 
-    overflow: hidden;
+    overflow:hidden;
 
     transition:
         border-color .20s ease,
@@ -110,7 +140,7 @@
 
 .textbox:hover
 {
-    border-color: #9fc2f7;
+    border-color:#9fc2f7;
 
     box-shadow:
         0 4px 10px rgba(37,99,235,.08);
@@ -123,7 +153,7 @@
 
 .textbox:focus-within
 {
-    border-color: #2563eb;
+    border-color:#2563eb;
 
     box-shadow:
         0 0 0 3px rgba(37,99,235,.12);
@@ -136,13 +166,13 @@
 
 .textbox.disabled
 {
-    background: #f8fafc;
+    background:#f8fafc;
 
-    opacity: .70;
+    opacity:.70;
 
-    pointer-events: none;
+    pointer-events:none;
 
-    box-shadow: none;
+    box-shadow:none;
 }
 
 
@@ -152,9 +182,9 @@
 
 .textbox.readonly
 {
-    background: #fbfcfd;
+    background:#fbfcfd;
 
-    opacity: .95;
+    opacity:.95;
 }
 
 
@@ -164,25 +194,31 @@
 
 .textbox-prefix
 {
-    display: flex;
+    display:flex;
 
-    align-items: center;
+    align-items:center;
 
-    justify-content: center;
+    justify-content:center;
 
-    width: 42px;
+    width:42px;
 
-    height: 100%;
+    min-width:42px;
 
-    flex-shrink: 0;
+    max-width:42px;
 
-    color: #64748b;
+    height:100%;
 
-    font-size: 15px;
+    flex-shrink:0;
 
-    border-right: 1px solid #edf2f7;
+    color:#64748b;
 
-    background: transparent;
+    font-size:15px;
+
+    border-right:1px solid #edf2f7;
+
+    background:transparent;
+
+    box-sizing:border-box;
 }
 
 
@@ -192,25 +228,31 @@
 
 .textbox-suffix
 {
-    display: flex;
+    display:flex;
 
-    align-items: center;
+    align-items:center;
 
-    justify-content: center;
+    justify-content:center;
 
-    width: 42px;
+    width:42px;
 
-    height: 100%;
+    min-width:42px;
 
-    flex-shrink: 0;
+    max-width:42px;
 
-    color: #64748b;
+    height:100%;
 
-    font-size: 15px;
+    flex-shrink:0;
 
-    border-left: 1px solid #edf2f7;
+    color:#64748b;
 
-    background: transparent;
+    font-size:15px;
+
+    border-left:1px solid #edf2f7;
+
+    background:transparent;
+
+    box-sizing:border-box;
 }
 
 
@@ -220,29 +262,33 @@
 
 .textbox input
 {
-    flex: 1;
+    flex:1 1 auto;
 
-    width: 100%;
+    width:100%;
 
-    height: 100%;
+    min-width:0;
 
-    padding: 0 14px;
+    max-width:100%;
 
-    border: none;
+    height:100%;
 
-    outline: none;
+    padding:0 14px;
 
-    background: transparent;
+    border:none;
 
-    color: #1e293b;
+    outline:none;
 
-    font-size: 15px;
+    background:transparent;
 
-    font-weight: 500;
+    color:#1e293b;
 
-    font-family: inherit;
+    font-size:15px;
 
-    box-sizing: border-box;
+    font-weight:500;
+
+    font-family:inherit;
+
+    box-sizing:border-box;
 }
 
 
@@ -252,7 +298,7 @@
 
 .textbox.has-prefix input
 {
-    padding-left: 12px;
+    padding-left:12px;
 }
 
 
@@ -262,8 +308,9 @@
 
 .textbox.has-suffix input
 {
-    padding-right: 12px;
+    padding-right:12px;
 }
+
 
 /* =====================================================
    PLACEHOLDER
@@ -271,13 +318,13 @@
 
 .textbox input::placeholder
 {
-    color: #94a3b8;
+    color:#94a3b8;
 
-    font-size: 15px;
+    font-size:15px;
 
-    font-weight: 400;
+    font-weight:400;
 
-    opacity: 1;
+    opacity:1;
 }
 
 
@@ -287,13 +334,13 @@
 
 .textbox.disabled input
 {
-    cursor: not-allowed;
+    cursor:not-allowed;
 
-    color: #64748b;
+    color:#64748b;
 
-    background: transparent;
+    background:transparent;
 
-    -webkit-text-fill-color: #64748b;
+    -webkit-text-fill-color:#64748b;
 }
 
 
@@ -303,9 +350,9 @@
 
 .textbox.readonly input
 {
-    cursor: default;
+    cursor:default;
 
-    color: #334155;
+    color:#334155;
 }
 
 
@@ -314,9 +361,10 @@
 ===================================================== */
 
 .textbox:focus-within .textbox-prefix,
+
 .textbox:focus-within .textbox-suffix
 {
-    color: #2563eb;
+    color:#2563eb;
 }
 
 
@@ -325,6 +373,7 @@
 ===================================================== */
 
 .textbox-prefix,
+
 .textbox-suffix
 {
     transition:
@@ -338,14 +387,17 @@
 ===================================================== */
 
 .textbox input:-webkit-autofill,
+
 .textbox input:-webkit-autofill:hover,
+
 .textbox input:-webkit-autofill:focus,
+
 .textbox input:-webkit-autofill:active
 {
     -webkit-box-shadow:
         0 0 0 1000px #ffffff inset;
 
-    -webkit-text-fill-color: #1e293b;
+    -webkit-text-fill-color:#1e293b;
 
     transition:
         background-color 9999s ease-in-out 0s;
@@ -357,18 +409,20 @@
 ===================================================== */
 
 .textbox input[type="number"]::-webkit-outer-spin-button,
+
 .textbox input[type="number"]::-webkit-inner-spin-button
 {
-    -webkit-appearance: none;
+    -webkit-appearance:none;
 
-    margin: 0;
+    margin:0;
 }
+
 
 .textbox input[type="number"]
 {
-    -moz-appearance: textfield;
+    -moz-appearance:textfield;
 
-    appearance: textfield;
+    appearance:textfield;
 }
 
 
@@ -378,9 +432,9 @@
 
 .textbox input::selection
 {
-    background: #bfdbfe;
+    background:#bfdbfe;
 
-    color: #1e293b;
+    color:#1e293b;
 }
 
 
@@ -390,7 +444,7 @@
 
 .textbox input:invalid
 {
-    box-shadow: none;
+    box-shadow:none;
 }
 
 
@@ -402,27 +456,58 @@
 {
     .textbox-container
     {
-        margin-bottom: 20px;
+        width:100%;
+
+        min-width:0;
+
+        max-width:100%;
+
+        margin-bottom:0;
     }
+
 
     .textbox-label
     {
-        margin-bottom: 8px;
+        width:100%;
+
+        margin-bottom:8px;
     }
+
 
     .textbox
     {
-        height: 42px;
+        width:100%;
+
+        min-width:0;
+
+        max-width:100%;
+
+        height:var(--textbox-height);
+
+        min-height:var(--textbox-height);
+
+        max-height:var(--textbox-height);
     }
 
+
     .textbox-prefix,
+
     .textbox-suffix
     {
-        width: 40px;
+        width:40px;
+
+        min-width:40px;
+
+        max-width:40px;
     }
+
 
     .textbox input
     {
-        font-size: 15px;
+        min-width:0;
+
+        max-width:100%;
+
+        font-size:15px;
     }
 }

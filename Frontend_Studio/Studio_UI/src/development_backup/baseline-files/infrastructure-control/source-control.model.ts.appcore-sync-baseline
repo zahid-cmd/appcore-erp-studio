@@ -1,0 +1,90 @@
+/* ============================================================
+   Source Control
+============================================================ */
+
+export interface SourceControl
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Source Control
+============================================================ */
+
+export interface CreateSourceControl
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Source Control
+============================================================ */
+
+export interface UpdateSourceControl
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Source Control Defaults
+============================================================ */
+
+export interface SourceControlDefaults
+{
+    code:
+        string;
+}

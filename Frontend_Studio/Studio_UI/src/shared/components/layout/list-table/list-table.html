@@ -69,14 +69,10 @@
 
         <!-- =====================================================
             EMPTY
-        ====================================================== -->
+        ===================================================== -->
 
         <div
-            *ngIf="
-                !loading &&
-                !error &&
-                rows.length===0
-            "
+            *ngIf="!loading && !error && rows.length===0"
             class="table-state">
 
             <app-empty-state
@@ -91,13 +87,10 @@
 
         <!-- =====================================================
             ERROR
-        ====================================================== -->
+        ===================================================== -->
 
         <div
-            *ngIf="
-                !loading &&
-                error
-            "
+            *ngIf="!loading && error"
             class="table-state">
 
             <app-empty-state
@@ -112,14 +105,10 @@
 
         <!-- =====================================================
             TABLE
-        ====================================================== -->
+        ===================================================== -->
 
         <table
-            *ngIf="
-                !loading &&
-                !error &&
-                rows.length>0
-            "
+            *ngIf="!loading && !error && rows.length>0"
             class="list-table-grid">
 
             <tbody>
@@ -151,9 +140,7 @@
                         ================================================== -->
 
                         <ng-container
-                            *ngIf="
-                                column.type==='serial'
-                            ">
+                            *ngIf="column.type==='serial'">
 
                             {{ getSerial(i) }}
 
@@ -165,9 +152,7 @@
                         ================================================== -->
 
                         <ng-container
-                            *ngIf="
-                                column.type==='status'
-                            ">
+                            *ngIf="column.type==='status'">
 
                             <span
                                 class="status"
@@ -196,9 +181,7 @@
                         ================================================== -->
 
                         <ng-container
-                            *ngIf="
-                                column.type==='boolean'
-                            ">
+                            *ngIf="column.type==='boolean'">
 
                             <span
                                 class="status"
@@ -236,9 +219,7 @@
                         ================================================== -->
 
                         <ng-container
-                            *ngIf="
-                                column.type==='operation'
-                            ">
+                            *ngIf="column.type==='operation'">
 
 
                             <!-- =============================================
@@ -350,9 +331,7 @@
                                     ====================================== -->
 
                                     <button
-                                        *ngIf="
-                                            showRegistration
-                                        "
+                                        *ngIf="showRegistration"
 
                                         type="button"
 
@@ -369,10 +348,22 @@
                                             !==
                                             'synchronized'
                                             ||
-                                            row.registrationDisabled === true
-                                            ||
-                                            isRegistrationDisabled(
-                                                row
+                                            (
+                                                row.dbStatus?.toLowerCase()
+                                                ===
+                                                'registered'
+                                                    ?
+                                                    row.databaseCreated === true
+                                                    :
+                                                    (
+                                                        row.databaseCreated === true
+                                                        ||
+                                                        row.registrationDisabled === true
+                                                        ||
+                                                        isRegistrationDisabled(
+                                                            row
+                                                        )
+                                                    )
                                             )
                                         "
 
@@ -384,16 +375,22 @@
                                                 'Registration unavailable until code synchronization is completed'
                                                 :
                                                 (
-                                                    row.databaseCreated === true
+                                                    row.dbStatus?.toLowerCase()
+                                                    ===
+                                                    'registered'
                                                         ?
-                                                        'Deregister disabled while database table exists'
+                                                        (
+                                                            row.databaseCreated === true
+                                                                ?
+                                                                'Deregister disabled while database table exists'
+                                                                :
+                                                                'Deregister'
+                                                        )
                                                         :
                                                         (
-                                                            row.dbStatus?.toLowerCase()
-                                                            ===
-                                                            'registered'
+                                                            row.databaseCreated === true
                                                                 ?
-                                                                'Deregister'
+                                                                'Registration unavailable while database table exists'
                                                                 :
                                                                 (
                                                                     row.registrationDisabled === true
@@ -459,9 +456,7 @@
                                     ====================================== -->
 
                                     <button
-                                        *ngIf="
-                                            showRegistration
-                                        "
+                                        *ngIf="showRegistration"
 
                                         type="button"
 
@@ -521,6 +516,56 @@
                                     </button>
 
 
+                                    <!-- =====================================
+                                        INITIALIZE DB
+
+                                        Initialize DB is available only
+                                        after the physical database table
+                                        has been created.
+
+                                        Initial state:
+
+                                            Disabled
+
+                                        Database created:
+
+                                            Enabled
+                                    ====================================== -->
+
+                                    <button
+                                        *ngIf="showRegistration"
+
+                                        type="button"
+
+                                        class="action-btn initialize-database"
+
+                                        [disabled]="
+                                            row.databaseCreated !== true
+                                        "
+
+                                        [title]="
+                                            row.databaseCreated === true
+                                                ?
+                                                'Initialize DB'
+                                                :
+                                                'Initialize DB disabled until database is created'
+                                        "
+
+                                        (click)="
+                                            onInitializeDatabaseClick(
+                                                row,
+                                                $event
+                                            )
+                                        ">
+
+                                        <i
+                                            class="fas fa-database">
+
+                                        </i>
+
+                                    </button>
+
+
                                 </div>
 
                             </ng-container>
@@ -563,9 +608,7 @@
                         ================================================== -->
 
                         <ng-container
-                            *ngIf="
-                                column.type==='actions'
-                            ">
+                            *ngIf="column.type==='actions'">
 
                             <div class="action-buttons">
 
@@ -575,9 +618,7 @@
                                 ========================================== -->
 
                                 <button
-                                    *ngIf="
-                                        actions.view
-                                    "
+                                    *ngIf="actions.view"
 
                                     type="button"
 
@@ -601,13 +642,42 @@
 
 
                                 <!-- =========================================
+                                    SAVE RESTORE POINT
+
+                                    Visible ONLY when the parent page
+                                    explicitly enables Restore Point.
+                                ========================================== -->
+
+                                <button
+                                    *ngIf="showRestorePoint"
+
+                                    type="button"
+
+                                    class="action-btn restore-point"
+
+                                    title="Save Restore Point"
+
+                                    (click)="
+                                        onSaveRestorePointClick(
+                                            row,
+                                            $event
+                                        )
+                                    ">
+
+                                    <i
+                                        class="fas fa-bookmark">
+
+                                    </i>
+
+                                </button>
+
+
+                                <!-- =========================================
                                     EDIT
                                 ========================================== -->
 
                                 <button
-                                    *ngIf="
-                                        actions.edit
-                                    "
+                                    *ngIf="actions.edit"
 
                                     type="button"
 
@@ -635,9 +705,7 @@
                                 ========================================== -->
 
                                 <button
-                                    *ngIf="
-                                        actions.delete
-                                    "
+                                    *ngIf="actions.delete"
 
                                     type="button"
 

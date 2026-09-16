@@ -1,20 +1,30 @@
 /* =====================================================
-   HOST
+   SIZE CONTROL
 ===================================================== */
 
 :host
 {
+    --pagination-width:1400px;
+
+    position:relative;
+
     display:flex;
 
-    flex:1 1 auto;
+    flex:0 0 var(--pagination-width);
 
-    width:100%;
+    width:var(--pagination-width);
 
     height:100%;
 
-    min-width:0;
+    min-width:var(--pagination-width);
 
     min-height:0;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    box-sizing:border-box;
 }
 
 
@@ -54,6 +64,7 @@
         inset 0 1px 0 rgba(255,255,255,.8),
         0 -3px 10px rgba(15,23,42,.04);
 }
+
 
 
 .pagination-bar *
@@ -125,6 +136,7 @@
 }
 
 
+
 .record-icon i
 {
     font-size:14px;
@@ -154,6 +166,7 @@
 }
 
 
+
 .record-summary strong
 {
     color:#2563eb;
@@ -162,6 +175,7 @@
 
     font-weight:700;
 }
+
 
 
 .record-label
@@ -468,6 +482,20 @@
 
 @media(max-width:900px)
 {
+    :host
+    {
+        width:var(--pagination-width);
+
+        min-width:var(--pagination-width);
+
+        flex-basis:var(--pagination-width);
+
+        left:0;
+
+        transform:none;
+    }
+
+
     .pagination-bar
     {
         height:auto;

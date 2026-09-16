@@ -130,10 +130,10 @@
     display:grid;
 
     grid-template-columns:
-        1fr
-        1fr
-        1fr
-        1fr;
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
 
     gap:16px;
 
@@ -145,7 +145,7 @@
 
     overflow-y:auto;
 
-    align-items:start;
+    align-items:stretch;
 
     box-sizing:border-box;
 
@@ -183,6 +183,8 @@
         0 1px 3px rgba(15,23,42,.03);
 
     box-sizing:border-box;
+
+    overflow:hidden;
 }
 
 
@@ -198,7 +200,11 @@
 
     justify-content:space-between;
 
+    width:calc(100% + 20px);
+
     height:38px;
+
+    min-height:38px;
 
     margin:
         -10px
@@ -229,6 +235,8 @@
         10px
         0
         0;
+
+    box-sizing:border-box;
 }
 
 
@@ -255,6 +263,8 @@
     align-items:center;
 
     gap:8px;
+
+    min-width:0;
 }
 
 
@@ -299,6 +309,8 @@
     border-radius:8px;
 
     transition:all .18s ease;
+
+    flex:0 0 28px;
 }
 
 
@@ -329,12 +341,108 @@
  *==============================================================*/
 
 .workspace-section app-textbox,
+
 .workspace-section app-dropdown,
+
 .workspace-section app-textarea
 {
     display:block;
 
-    width:100%;
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+
+    flex:0 1 auto;
+}
+
+
+/*==============================================================*
+ * TEXTBOX INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textbox input,
+
+.workspace-section ::ng-deep app-textbox .textbox,
+
+.workspace-section ::ng-deep app-textbox .textbox-container,
+
+.workspace-section ::ng-deep app-textbox .input-container
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * DROPDOWN INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-dropdown .dropdown-container,
+
+.workspace-section ::ng-deep app-dropdown .dropdown,
+
+.workspace-section ::ng-deep app-dropdown .dropdown-selector
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * TEXTAREA INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textarea textarea,
+
+.workspace-section ::ng-deep app-textarea .textarea,
+
+.workspace-section ::ng-deep app-textarea .textarea-container
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * FORM CONTROL BOX SIZING
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textbox *,
+
+.workspace-section ::ng-deep app-dropdown *,
+
+.workspace-section ::ng-deep app-textarea *
+{
+    box-sizing:border-box;
 }
 
 
@@ -373,7 +481,10 @@
     .workspace-content .workspace-card-body
     {
         grid-template-columns:
-            repeat(4,1fr);
+            repeat(
+                4,
+                minmax(0,1fr)
+            );
     }
 }
 
@@ -383,7 +494,10 @@
     .workspace-content .workspace-card-body
     {
         grid-template-columns:
-            repeat(2,1fr);
+            repeat(
+                2,
+                minmax(0,1fr)
+            );
     }
 }
 

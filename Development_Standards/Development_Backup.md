@@ -1,0 +1,12 @@
+Backend_Studio\AppCore.API\Development_Backup\Baseline_Files || 
+Backend_Studio\AppCore.API\Development_Backup\Restore_Files || 
+Backend_Studio\AppCore.Application\Development_Backup\Baseline_Files\DTOs || 
+Backend_Studio\AppCore.Application\Development_Backup\Baseline_Files\Interfaces || 
+Backend_Studio\AppCore.Application\Development_Backup\Restore_Files\DTOs || 
+Backend_Studio\AppCore.Application\Development_Backup\Restore_Files\Interfaces || 
+Backend_Studio\AppCore.Domain\Development_Backup\Baseline_Files || 
+Backend_Studio\AppCore.Domain\Development_Backup\Restore_Files || 
+Backend_Studio\AppCore.Infrastructure\Configurations\Development_Backup\Baseline_Files || 
+Backend_Studio\AppCore.Infrastructure\Configurations\Development_Backup\Restore_Files || 
+Backend_Studio\AppCore.Infrastructure\Repositories\Development_Backup\Baseline_Files || 
+Backend_Studio\AppCore.Infrastructure\Repositories\Development_Backup\Restore_Files ||

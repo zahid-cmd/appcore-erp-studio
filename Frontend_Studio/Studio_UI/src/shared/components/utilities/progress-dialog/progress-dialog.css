@@ -1,320 +1,621 @@
-/* =====================================================  
-   OVERLAY  
-===================================================== */  
- 
-.progress-overlay {  
- 
-  position: fixed;  
- 
-  inset: 0;  
- 
-  background:  
-    rgba(15,23,42,.15);  
- 
-  backdrop-filter:  
-    blur(1px);  
- 
-  display: flex;  
- 
-  align-items: center; 
-  justify-content: center;  
- 
-  z-index: 3000;  
-}  
- 
-/* =====================================================  
-   PREVIEW MODE  
-===================================================== */  
- 
-.progress-overlay.preview-mode 
-{  
-  position: relative;  
- 
-  inset: auto;  
- 
-  width: 100%;  
- 
-  height: 260px;  
- 
-  display: flex;  
- 
-  justify-content: center;  
- 
-  align-items: center;  
- 
-  background: transparent;  
- 
-  backdrop-filter: none;  
- 
-  -webkit-backdrop-filter: none;  
- 
-  z-index: 1;  
-}  
- 
-.progress-overlay.preview-mode  
-.progress-dialog  
-{  
-  animation: none;  
-}  
- 
-/* =====================================================  
-   DIALOG  
-===================================================== */  
- 
-.progress-dialog {  
- 
-  width: 480px;  
- 
-  background: #ffffff;  
- 
-  border: 1px solid #dbe4f0;  
- 
-  border-radius: 16px;  
- 
-  overflow: hidden;  
- 
-  box-shadow:  
-    0 20px 40px rgba(15,23,42,.15);  
-}  
- 
-/* =====================================================  
-   HEADER  
-===================================================== */  
- 
-.progress-header {  
- 
-  height: 40px;  
- 
-  display: flex;  
- 
-  align-items: center;  
- 
-  padding: 0 20px;  
- 
-  background:  
-    linear-gradient(  
-      135deg,  
-      #0f2a44,  
-      #2563eb  
-    );  
- 
-  color: #ffffff;  
- 
-  font-size: 16px;  
-  font-weight: 700;  
-}  
- 
-/* =====================================================  
-   BODY  
-===================================================== */  
- 
-.progress-body {  
- 
-  padding: 24px;  
-}  
- 
-.progress-message {  
- 
-  margin-bottom: 14px;  
- 
-  font-size: 14px;  
- 
-  color: #475569;  
-}  
- 
-.progress-percent {  
- 
-  margin-bottom: 10px;  
- 
-  font-size: 28px;  
- 
-  font-weight: 700;  
- 
-  color: #2563eb;  
-}  
- 
-/* =====================================================  
-   BAR  
-===================================================== */  
- 
-.progress-bar {  
- 
-  height: 16px;  
- 
-  overflow: hidden;  
- 
-  border-radius: 999px;  
- 
-  background: #e2e8f0;  
-}  
- 
-.progress-fill {  
- 
-  position: relative;  
- 
-  height: 100%;  
- 
-  width: 0;  
- 
-  overflow: hidden;  
- 
-  border-radius: 999px;  
- 
-  background:  
-    linear-gradient(  
-      90deg,  
-      #0f2a44 0%,  
-      #2563eb 100%  
-    );  
- 
-  transition:  
-    width .25s ease;  
-}  
- 
-/* =====================================================  
-   GLOW BEAM  
-===================================================== */  
- 
-.progress-fill::after {  
- 
-  content: '';  
- 
-  position: absolute;  
- 
-  top: 0;  
- 
-  left: -10%;  
- 
-  width: 10%;  
- 
-  height: 100%;  
- 
-  border-radius: 999px;  
- 
-  background:  
-    linear-gradient(  
-      90deg,  
-      transparent 0%,  
-      rgba(147, 197, 253, .35) 20%,  
-      rgba(191, 219, 254, .95) 50%,  
-      rgba(147, 197, 253, .35) 80%,  
-      transparent 100%  
-    );  
- 
-  box-shadow:  
-    0 0 8px rgba(147,197,253,.8),  
-    0 0 14px rgba(147,197,253,.45);  
- 
-  animation:  
-    progressGlow 1.6s linear infinite;  
-}  
- 
-/* =====================================================  
-   GLOW ANIMATION  
-===================================================== */  
- 
-@keyframes progressGlow {  
- 
-  from {  
- 
-    left: -10%;  
-  }  
- 
-  to {  
- 
-    left: 100%;  
-  }  
-}  
- 
-/* =====================================================  
-   MESSAGE ROW  
-===================================================== */  
- 
-.progress-message-row 
-{  
-  display: flex;  
- 
-  align-items: center;  
- 
-  justify-content: space-between;  
- 
-  margin-bottom: 14px;  
-}  
- 
-/* =====================================================  
-   MESSAGE  
-===================================================== */  
- 
-.progress-message-row  
-.progress-message  
-{  
-  margin-bottom: 0;  
- 
-  flex: 1;  
-}  
- 
-/* =====================================================  
-   ROUND LOADER  
-===================================================== */  
- 
-.round-loader 
-{  
-  width: 42px;  
- 
-  height: 42px;  
- 
-  margin-left: 18px;  
- 
-  display: flex;  
- 
-  align-items: center;  
- 
-  justify-content: center;  
- 
-  flex-shrink: 0;  
-}  
- 
-/* =====================================================  
-   ROUND LOADER SPINNER  
-===================================================== */  
- 
-.round-loader-spinner 
-{  
-  width: 30px;  
- 
-  height: 30px;  
- 
-  border-radius: 50%;  
- 
-  border: 5px solid transparent;  
- 
-  border-top-color: #0f2a44;  
- 
-  border-right-color: #2563eb;  
- 
-  border-bottom-color: #3b82f6;  
- 
-  border-left-color: #60a5fa;  
- 
-  animation:  
-    roundLoaderSpin .8s linear infinite;  
-}  
- 
-/* =====================================================  
-   ROUND LOADER ANIMATION  
-===================================================== */  
- 
-@keyframes roundLoaderSpin 
-{  
-  from  
-  {  
-    transform:  
-      rotate(0deg);  
-  }  
- 
-  to  
-  {  
-    transform:  
-      rotate(360deg);  
-  }  
+/* =====================================================
+   COMPONENT
+===================================================== */
+
+:host
+{
+    display:block;
+
+    width:520px;
+
+    height:240px;
+
+    min-width:520px;
+
+    min-height:240px;
+
+    max-width:520px;
+
+    max-height:240px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+.progress-overlay
+{
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:100%;
+
+    height:100%;
+
+    background:transparent;
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    filter:none;
+
+    -webkit-filter:none;
+
+    z-index:3000;
+}
+
+
+
+/* =====================================================
+   PREVIEW MODE
+===================================================== */
+
+.progress-overlay.preview-mode
+{
+    position:relative;
+
+    inset:auto;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:520px;
+
+    height:240px;
+
+    min-width:520px;
+
+    min-height:240px;
+
+    max-width:520px;
+
+    max-height:240px;
+
+    background:transparent;
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    filter:none;
+
+    -webkit-filter:none;
+
+    z-index:1;
+}
+
+
+
+/* =====================================================
+   PREVIEW DIALOG
+===================================================== */
+
+.progress-overlay.preview-mode
+.progress-dialog
+{
+    animation:none;
+
+    filter:none;
+
+    -webkit-filter:none;
+}
+
+
+
+/* =====================================================
+   DIALOG
+===================================================== */
+
+.progress-dialog
+{
+    width:520px;
+
+    height:240px;
+
+    min-width:520px;
+
+    min-height:240px;
+
+    max-width:520px;
+
+    max-height:240px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    background:#ffffff;
+
+    border:
+        1px solid #dbe4f0;
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0
+        20px
+        40px
+        rgba(
+            15,
+            23,
+            42,
+            .15
+        );
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.progress-header
+{
+    width:100%;
+
+    height:50px;
+
+    min-height:50px;
+
+    max-height:50px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:
+        0
+        12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44,
+            #2563eb
+        );
+
+    color:#ffffff;
+
+    box-sizing:border-box;
+
+    flex:none;
+}
+
+
+
+/* =====================================================
+   HEADER ICON
+===================================================== */
+
+.header-icon
+{
+    width:28px;
+
+    height:28px;
+
+    min-width:28px;
+
+    min-height:28px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin-right:10px;
+
+    border-radius:8px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .16
+        );
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
+
+    color:#ffffff;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   HEADER ICON SYMBOL
+===================================================== */
+
+.header-icon i
+{
+    font-size:13px;
+
+    line-height:1;
+}
+
+
+
+/* =====================================================
+   HEADER TITLE
+===================================================== */
+
+.progress-title
+{
+    min-width:0;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    line-height:1.2;
+}
+
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.progress-body
+{
+    width:100%;
+
+    height:200px;
+
+    min-height:200px;
+
+    max-height:200px;
+
+    padding:24px;
+
+    background:#ffffff;
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1;
+
+    min-width:0;
+
+    overflow:hidden;
+}
+
+
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+.progress-message
+{
+    margin-bottom:14px;
+
+    font-size:14px;
+
+    color:#475569;
+
+    line-height:1.5;
+}
+
+
+
+/* =====================================================
+   PERCENT
+===================================================== */
+
+.progress-percent
+{
+    margin-bottom:10px;
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#2563eb;
+
+    line-height:1.2;
+}
+
+
+
+/* =====================================================
+   BAR
+===================================================== */
+
+.progress-bar
+{
+    width:100%;
+
+    height:16px;
+
+    min-height:16px;
+
+    max-height:16px;
+
+    overflow:hidden;
+
+    border-radius:999px;
+
+    background:#e2e8f0;
+
+    flex:none;
+}
+
+
+
+/* =====================================================
+   PROGRESS FILL
+===================================================== */
+
+.progress-fill
+{
+    position:relative;
+
+    height:100%;
+
+    width:0;
+
+    overflow:hidden;
+
+    border-radius:999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #0f2a44 0%,
+            #2563eb 100%
+        );
+
+    transition:
+        width .25s ease;
+}
+
+
+
+/* =====================================================
+   GLOW BEAM
+===================================================== */
+
+.progress-fill::after
+{
+    content:'';
+
+    position:absolute;
+
+    top:0;
+
+    left:-10%;
+
+    width:10%;
+
+    height:100%;
+
+    border-radius:999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(
+                147,
+                197,
+                253,
+                .35
+            ) 20%,
+            rgba(
+                191,
+                219,
+                254,
+                .95
+            ) 50%,
+            rgba(
+                147,
+                197,
+                253,
+                .35
+            ) 80%,
+            transparent 100%
+        );
+
+    box-shadow:
+        0
+        0
+        8px
+        rgba(
+            147,
+            197,
+            253,
+            .8
+        ),
+        0
+        0
+        14px
+        rgba(
+            147,
+            197,
+            253,
+            .45
+        );
+
+    animation:
+        progressGlow
+        1.6s
+        linear
+        infinite;
+}
+
+
+
+/* =====================================================
+   GLOW ANIMATION
+===================================================== */
+
+@keyframes progressGlow
+{
+    from
+    {
+        left:-10%;
+    }
+
+    to
+    {
+        left:100%;
+    }
+}
+
+
+
+/* =====================================================
+   MESSAGE ROW
+===================================================== */
+
+.progress-message-row
+{
+    width:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-bottom:14px;
+
+    min-width:0;
+}
+
+
+
+/* =====================================================
+   MESSAGE ROW MESSAGE
+===================================================== */
+
+.progress-message-row
+.progress-message
+{
+    margin-bottom:0;
+
+    flex:1;
+
+    min-width:0;
+}
+
+
+
+/* =====================================================
+   ROUND LOADER
+===================================================== */
+
+.round-loader
+{
+    width:42px;
+
+    height:42px;
+
+    min-width:42px;
+
+    min-height:42px;
+
+    margin-left:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+}
+
+
+
+/* =====================================================
+   ROUND LOADER SPINNER
+===================================================== */
+
+.round-loader-spinner
+{
+    width:30px;
+
+    height:30px;
+
+    min-width:30px;
+
+    min-height:30px;
+
+    border-radius:50%;
+
+    border:5px solid transparent;
+
+    border-top-color:#0f2a44;
+
+    border-right-color:#2563eb;
+
+    border-bottom-color:#3b82f6;
+
+    border-left-color:#60a5fa;
+
+    animation:
+        roundLoaderSpin
+        .8s
+        linear
+        infinite;
+}
+
+
+
+/* =====================================================
+   ROUND LOADER ANIMATION
+===================================================== */
+
+@keyframes roundLoaderSpin
+{
+    from
+    {
+        transform:
+            rotate(0deg);
+    }
+
+    to
+    {
+        transform:
+            rotate(360deg);
+    }
 }

@@ -96,6 +96,46 @@ public class DatabaseEngine : IDatabaseCreationEngine
                 .ResolveAsync();
 
 
+        //=======================================================
+        // Resolve Database Removal Operation
+        //=======================================================
+
+        var removalOperation =
+            await _operationResolver
+                .ResolveRemovalAsync
+                (
+                    submenuId
+                );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                removalOperation
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Unable to resolve database initialization removal operation for submenu synchronization {submenuId}."
+            );
+        }
+
+
+        //=======================================================
+        // Remove Existing Database Table
+        //=======================================================
+
+        await _commandExecutor
+            .ExecuteSqlAsync
+            (
+                removalOperation
+            );
+
+
+        //=======================================================
+        // Resolve Database Creation Operation
+        //=======================================================
+
         var operation =
             await _operationResolver
                 .ResolveAsync
@@ -130,6 +170,13 @@ public class DatabaseEngine : IDatabaseCreationEngine
 
                 backendStudioRoot
             );
+
+
+        _ =
+            infrastructureProject;
+
+        _ =
+            apiProject;
     }
 
 
@@ -164,7 +211,7 @@ public class DatabaseEngine : IDatabaseCreationEngine
 
         var operation =
             await _operationResolver
-                .ResolveAsync
+                .ResolveRemovalAsync
                 (
                     submenuId
                 );
@@ -184,93 +231,13 @@ public class DatabaseEngine : IDatabaseCreationEngine
 
 
         //=======================================================
-        // Resolve CREATE TABLE Definition
-        //=======================================================
-
-        const string createTablePrefix =
-            "CREATE TABLE ";
-
-
-        if
-        (
-            !operation.StartsWith
-            (
-                createTablePrefix,
-                StringComparison.OrdinalIgnoreCase
-            )
-        )
-        {
-            throw new InvalidOperationException(
-                $"Unable to resolve database table definition for submenu synchronization {submenuId}."
-            );
-        }
-
-
-        var tableStartIndex =
-            createTablePrefix.Length;
-
-
-        var tableEndIndex =
-            operation.IndexOf
-            (
-                " (",
-                tableStartIndex,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            tableEndIndex <= tableStartIndex
-        )
-        {
-            throw new InvalidOperationException(
-                $"Unable to resolve database table name for submenu synchronization {submenuId}."
-            );
-        }
-
-
-        var qualifiedTableName =
-            operation
-                .Substring
-                (
-                    tableStartIndex,
-
-                    tableEndIndex -
-                    tableStartIndex
-                )
-                .Trim();
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                qualifiedTableName
-            )
-        )
-        {
-            throw new InvalidOperationException(
-                $"Unable to resolve database table name for submenu synchronization {submenuId}."
-            );
-        }
-
-
-        //=======================================================
-        // Build DROP TABLE SQL
-        //=======================================================
-
-        var removalOperation =
-            $"DROP TABLE IF EXISTS {qualifiedTableName} CASCADE;";
-
-
-        //=======================================================
         // Execute Database SQL
         //=======================================================
 
         await _commandExecutor
             .ExecuteSqlAsync
             (
-                removalOperation
+                operation
             );
 
 
@@ -285,5 +252,118 @@ public class DatabaseEngine : IDatabaseCreationEngine
 
         _ =
             connectionString;
+    }
+
+
+    //===========================================================
+    // Initialize Database
+    //===========================================================
+
+    public async Task InitializeAsync
+    (
+        long submenuId
+    )
+    {
+        var backendStudioRoot =
+            await _projectResolver
+                .ResolveBackendStudioRootAsync();
+
+
+        var infrastructureProject =
+            await _projectResolver
+                .ResolveInfrastructureProjectAsync();
+
+
+        var apiProject =
+            await _projectResolver
+                .ResolveApiProjectAsync();
+
+
+        var connectionString =
+            await _connectionResolver
+                .ResolveAsync();
+
+
+        //=======================================================
+        // Resolve Database Removal Operation
+        //=======================================================
+
+        var removalOperation =
+            await _operationResolver
+                .ResolveRemovalAsync
+                (
+                    submenuId
+                );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                removalOperation
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Unable to resolve database initialization removal operation for submenu synchronization {submenuId}."
+            );
+        }
+
+
+        //=======================================================
+        // Drop Existing Database Table
+        //=======================================================
+
+        await _commandExecutor
+            .ExecuteSqlAsync
+            (
+                removalOperation
+            );
+
+
+        //=======================================================
+        // Resolve Database Creation Operation
+        //=======================================================
+
+        var operation =
+            await _operationResolver
+                .ResolveAsync
+                (
+                    submenuId
+                );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                operation
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Unable to resolve database initialization creation operation for submenu synchronization {submenuId}."
+            );
+        }
+
+
+        //=======================================================
+        // Execute Database SQL
+        //=======================================================
+
+        await _commandExecutor
+            .ExecuteAsync
+            (
+                "psql",
+
+                $"-d \"{connectionString}\" -c \"{operation}\"",
+
+                backendStudioRoot
+            );
+
+
+        _ =
+            infrastructureProject;
+
+        _ =
+            apiProject;
     }
 }

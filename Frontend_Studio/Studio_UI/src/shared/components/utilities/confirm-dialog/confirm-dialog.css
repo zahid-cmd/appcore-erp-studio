@@ -19,7 +19,7 @@
             15,
             23,
             42,
-            .10
+            .15
         );
 
     backdrop-filter:
@@ -29,9 +29,6 @@
         blur(1px);
 
     z-index:2000;
-
-    animation:
-        fadeIn .18s ease;
 }
 
 
@@ -42,28 +39,35 @@
 
 .dialog-box
 {
-    width:480px;
+    width:520px;
+
+    height:240px;
+
+    display:flex;
+
+    flex-direction:column;
 
     background:#ffffff;
+
+    border:
+        1px solid #dbe5f1;
 
     border-radius:18px;
 
     overflow:hidden;
 
-    border:
-        1px solid #dbe5f1;
-
     box-shadow:
-        0 20px 48px
+        0
+        20px
+        40px
         rgba(
             15,
             23,
             42,
-            .18
+            .15
         );
 
-    animation:
-        dialogIn .20s ease;
+    box-sizing:border-box;
 }
 
 
@@ -74,13 +78,19 @@
 
 .dialog-header
 {
+    width:100%;
+
+    height:50px;
+
+    min-height:50px;
+
+    max-height:50px;
+
     display:flex;
 
     align-items:center;
 
     gap:12px;
-
-    height:56px;
 
     padding:
         0
@@ -89,11 +99,17 @@
     background:
         linear-gradient(
             135deg,
-            #0f2a44 0%,
-            #2563eb 100%
+            #0f2a44,
+            #2563eb
         );
 
+    color:#ffffff;
+
     box-sizing:border-box;
+
+    flex:none;
+
+    overflow:hidden;
 }
 
 
@@ -116,6 +132,12 @@
 
     min-width:36px;
 
+    min-height:36px;
+
+    max-width:36px;
+
+    max-height:36px;
+
     border-radius:10px;
 
     background:
@@ -129,6 +151,10 @@
     color:#ffffff;
 
     font-size:16px;
+
+    flex:none;
+
+    box-sizing:border-box;
 }
 
 
@@ -148,6 +174,10 @@
     gap:2px;
 
     min-width:0;
+
+    flex:1;
+
+    overflow:hidden;
 }
 
 
@@ -167,31 +197,13 @@
     line-height:1.2;
 
     letter-spacing:.2px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
 }
-
-
-
-/* =====================================================
-   SUBTITLE
-===================================================== */
-
-.dialog-subtitle
-{
-    color:
-        rgba(
-            255,
-            255,
-            255,
-            .78
-        );
-
-    font-size:11px;
-
-    font-weight:500;
-
-    line-height:1.2;
-}
-
 
 
 /* =====================================================
@@ -200,8 +212,6 @@
 
 .dialog-body
 {
-    height:120px;
-
     padding:
         8px
         22px
@@ -218,7 +228,13 @@
     justify-content:flex-start;
 
     gap:8px;
+
+    flex:1;
+
+    min-height:0;
 }
+
+
 
 /* =====================================================
    ACTION CARD
@@ -231,8 +247,6 @@
     align-items:center;
 
     gap:14px;
-
-    min-height:66px;
 
     padding:
         10px
@@ -263,6 +277,8 @@
         );
 
     box-sizing:border-box;
+
+    flex:none;
 }
 
 
@@ -282,8 +298,6 @@
     width:44px;
 
     height:44px;
-
-    min-width:44px;
 
     border-radius:12px;
 
@@ -319,6 +333,8 @@
             255,
             .65
         );
+
+    flex:none;
 }
 
 
@@ -345,7 +361,7 @@
 
 
 /* =====================================================
-   DELETE TITLE
+   ACTION TITLE
 ===================================================== */
 
 .action-title
@@ -364,7 +380,7 @@
 
 
 /* =====================================================
-   DELETE MESSAGE
+   ACTION MESSAGE
 ===================================================== */
 
 .action-message
@@ -399,8 +415,6 @@
 
     gap:8px;
 
-    min-height:36px;
-
     margin-top:2px;
 
     padding:
@@ -428,6 +442,8 @@
     line-height:1.35;
 
     box-sizing:border-box;
+
+    flex:none;
 }
 
 
@@ -449,8 +465,6 @@
 
 .dialog-footer
 {
-    height:66px;
-
     display:flex;
 
     align-items:center;
@@ -460,10 +474,8 @@
     gap:10px;
 
     padding:
-        0
+        10px
         22px;
-
-    margin-top:-4px;
 
     background:#ffffff;
 
@@ -471,6 +483,8 @@
 
     border-top:
         1px solid #eef2f7;
+
+    flex:none;
 }
 
 
@@ -490,8 +504,6 @@
 
     gap:8px;
 
-    min-width:112px;
-
     height:38px;
 
     padding:
@@ -508,6 +520,8 @@
 
     transition:
         all .18s ease;
+
+    box-sizing:border-box;
 }
 
 
@@ -546,7 +560,13 @@
 
 .btn-primary
 {
-    background:#2563eb;
+    background:
+        linear-gradient(
+            135deg,
+            #101943 0%,
+            #182451 52%,
+            #223363 100%
+        );
 
     color:#ffffff;
 
@@ -626,15 +646,19 @@
 
     width:100%;
 
-    height:300px;
+    height:260px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
 
     background:transparent;
 
     backdrop-filter:none;
 
     -webkit-backdrop-filter:none;
-
-    pointer-events:none;
 
     z-index:1;
 }
@@ -644,22 +668,7 @@
 .dialog-overlay.preview-mode
 .dialog-box
 {
-    margin-top:20px;
-
-    pointer-events:auto;
-
     animation:none;
-
-    box-shadow:
-        0
-        12px
-        30px
-        rgba(
-            15,
-            23,
-            42,
-            .14
-        );
 }
 
 
@@ -678,28 +687,5 @@
     to
     {
         opacity:1;
-    }
-}
-
-
-
-@keyframes dialogIn
-{
-    from
-    {
-        opacity:0;
-
-        transform:
-            translateY(10px)
-            scale(.97);
-    }
-
-    to
-    {
-        opacity:1;
-
-        transform:
-            translateY(0)
-            scale(1);
     }
 }

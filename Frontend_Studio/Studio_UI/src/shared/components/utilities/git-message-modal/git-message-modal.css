@@ -1,0 +1,683 @@
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+.git-modal-overlay
+{
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            .15
+        );
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    z-index:2000;
+}
+
+
+/* =====================================================
+   PREVIEW MODE
+===================================================== */
+
+.git-modal-overlay.preview-mode
+{
+    position:relative;
+
+    inset:auto;
+
+    width:100%;
+
+    height:260px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:0;
+
+    background:transparent;
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    z-index:1;
+
+    overflow:visible;
+}
+
+
+/* =====================================================
+   MODAL BOX
+===================================================== */
+
+.git-modal
+{
+    width:520px;
+
+    height:240px;
+
+    min-width:520px;
+
+    min-height:240px;
+
+    max-width:520px;
+
+    max-height:240px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    background:#ffffff;
+
+    border:
+        1px solid #dbe5f1;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0
+        20px
+        40px
+        rgba(
+            15,
+            23,
+            42,
+            .15
+        );
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   PREVIEW MODAL
+===================================================== */
+
+.git-modal-overlay.preview-mode
+.git-modal
+{
+    width:520px;
+
+    height:240px;
+
+    min-width:520px;
+
+    min-height:240px;
+
+    max-width:520px;
+
+    max-height:240px;
+
+    margin:0;
+
+    transform:none;
+
+    animation:none;
+
+    box-shadow:
+        0
+        20px
+        40px
+        rgba(
+            15,
+            23,
+            42,
+            .15
+        );
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.git-modal-header
+{
+    width:100%;
+
+    height:50px;
+
+    min-height:50px;
+
+    max-height:50px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+    padding:
+        0
+        20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44,
+            #2563eb
+        );
+
+    color:#ffffff;
+
+    box-sizing:border-box;
+
+    flex:none;
+
+    overflow:hidden;
+}
+
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.git-modal-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    color:#ffffff;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    line-height:1.2;
+
+    letter-spacing:.2px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    min-width:0;
+
+    flex:1;
+}
+
+
+/* =====================================================
+   CLOSE BUTTON
+===================================================== */
+
+.close-btn
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:36px;
+
+    height:36px;
+
+    min-width:36px;
+
+    min-height:36px;
+
+    max-width:36px;
+
+    max-height:36px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .16
+        );
+
+    color:#ffffff;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    transition:
+        all .18s ease;
+
+    box-sizing:border-box;
+
+    flex:none;
+}
+
+
+.close-btn:hover
+{
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .26
+        );
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.git-modal-body
+{
+    padding:
+        8px
+        22px;
+
+    background:#ffffff;
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    gap:0;
+
+    flex:1;
+
+    min-height:0;
+
+    overflow:hidden;
+}
+
+
+/* =====================================================
+   FORM SECTION
+===================================================== */
+
+.form-section
+{
+    display:flex;
+
+    flex-direction:column;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    flex:none;
+}
+
+
+/* =====================================================
+   FORM LABEL
+===================================================== */
+
+.form-label
+{
+    display:block;
+
+    margin-bottom:14px;
+
+    color:#334155;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    line-height:1.25;
+}
+
+
+.required
+{
+    color:#ef4444;
+
+    margin-left:2px;
+}
+
+
+/* =====================================================
+   MESSAGE TEXTAREA
+===================================================== */
+
+.message-textarea
+{
+    width:100%;
+
+    height:70px;
+
+    min-height:70px;
+
+    max-height:70px;
+
+    padding:
+        10px
+        12px;
+
+    box-sizing:border-box;
+
+    resize:none;
+
+    border:
+        1px solid #dbe5f1;
+
+    border-radius:10px;
+
+    background:#ffffff;
+
+    color:#0f172a;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    line-height:1.45;
+
+    outline:none;
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease;
+}
+
+
+.message-textarea::placeholder
+{
+    color:#94a3b8;
+}
+
+
+.message-textarea:focus
+{
+    border-color:#2563eb;
+
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            37,
+            99,
+            235,
+            .10
+        );
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.git-modal-footer
+{
+    width:100%;
+
+    height:50px;
+
+    min-height:50px;
+
+    max-height:50px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+    padding:
+        10px
+        22px;
+
+    background:#ffffff;
+
+    border-top:
+        1px solid #eef2f7;
+
+    box-sizing:border-box;
+
+    flex:none;
+}
+
+
+/* =====================================================
+   BUTTON BASE
+===================================================== */
+
+.btn-cancel,
+.btn-confirm
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    height:38px;
+
+    min-height:38px;
+
+    max-height:38px;
+
+    padding:
+        0
+        18px;
+
+    border-radius:10px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:
+        all .18s ease;
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   CANCEL
+===================================================== */
+
+.btn-cancel
+{
+    background:#ffffff;
+
+    color:#475569;
+
+    border:
+        1px solid #dbe5f1;
+}
+
+
+.btn-cancel:hover
+{
+    background:#f8fafc;
+
+    border-color:#94a3b8;
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* =====================================================
+   CONFIRM
+===================================================== */
+
+.btn-confirm
+{
+    background:
+        linear-gradient(
+            135deg,
+            #101943 0%,
+            #182451 52%,
+            #223363 100%
+        );
+
+    color:#ffffff;
+
+    border:
+        1px solid #2563eb;
+
+    box-shadow:
+        0
+        6px
+        14px
+        rgba(
+            37,
+            99,
+            235,
+            .22
+        );
+}
+
+
+.btn-confirm:hover:not(:disabled)
+{
+    background:#1d4ed8;
+
+    transform:
+        translateY(-1px);
+}
+
+
+.btn-confirm:disabled
+{
+    opacity:.50;
+
+    cursor:not-allowed;
+
+    box-shadow:none;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width:768px)
+{
+
+    .git-modal-overlay
+    {
+        background:
+            rgba(
+                15,
+                23,
+                42,
+                .15
+            );
+
+        backdrop-filter:none;
+
+        -webkit-backdrop-filter:none;
+    }
+
+
+    .git-modal-overlay.preview-mode
+    {
+        height:260px;
+
+        overflow:visible;
+    }
+
+
+    .git-modal,
+    .git-modal-overlay.preview-mode
+    .git-modal
+    {
+        width:520px;
+
+        height:240px;
+
+        min-width:520px;
+
+        min-height:240px;
+
+        max-width:520px;
+
+        max-height:240px;
+    }
+
+
+    .git-modal-header
+    {
+        padding:
+            0
+            20px;
+    }
+
+
+    .git-modal-body
+    {
+        padding:
+            8px
+            22px;
+    }
+
+
+    .form-label
+    {
+        margin-bottom:14px;
+    }
+
+
+    .git-modal-footer
+    {
+        padding:
+            10px
+            22px;
+    }
+
+
+    .message-textarea
+    {
+        height:70px;
+
+        min-height:70px;
+
+        max-height:70px;
+    }
+
+}

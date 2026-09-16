@@ -214,6 +214,12 @@ public class ModuleFrontendSynchronizationEngine
         );
 
 
+        await CreateDevelopmentBackupFoldersAsync
+        (
+            synchronization
+        );
+
+
         return new ModuleSynchronizationResultDto
         {
             Success =
@@ -317,6 +323,89 @@ public class ModuleFrontendSynchronizationEngine
         await RegisterApplicationRouteAsync
         (
             synchronization
+        );
+    }
+
+
+
+    //===========================================================
+    // Development Backup Folders
+    //===========================================================
+
+    private async Task CreateDevelopmentBackupFoldersAsync
+    (
+        ModuleSynchronizationDto synchronization
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.FrontendFeatureFolder
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Frontend feature folder is required to create development backup folders."
+            );
+        }
+
+
+        var frontendSolution =
+            Path.GetFullPath
+            (
+                synchronization.FrontendSolution
+            );
+
+
+        //=======================================================
+        // Baseline Folder
+        //=======================================================
+
+        var baselineFolder =
+            Path.Combine
+            (
+                frontendSolution,
+
+                "src",
+
+                "development_backup",
+
+                "baseline-files",
+
+                synchronization.FrontendFeatureFolder
+            );
+
+
+        await CreateFolderAsync
+        (
+            baselineFolder
+        );
+
+
+        //=======================================================
+        // Restore Folder
+        //=======================================================
+
+        var restoreFolder =
+            Path.Combine
+            (
+                frontendSolution,
+
+                "src",
+
+                "development_backup",
+
+                "restore-files",
+
+                synchronization.FrontendFeatureFolder
+            );
+
+
+        await CreateFolderAsync
+        (
+            restoreFolder
         );
     }
 
@@ -950,6 +1039,16 @@ public class ModuleFrontendSynchronizationEngine
         (
             synchronization
         );
+
+
+        //=======================================================
+        // Delete Development Backup Folders
+        //=======================================================
+
+        await DeleteDevelopmentBackupFoldersAsync
+        (
+            synchronization
+        );
     }
 
 
@@ -983,6 +1082,98 @@ public class ModuleFrontendSynchronizationEngine
         await DeleteFolderAsync
         (
             synchronization.FrontendRoutesFolder
+        );
+    }
+
+
+
+    //===========================================================
+    // Development Backup Folders
+    //===========================================================
+
+    private async Task DeleteDevelopmentBackupFoldersAsync
+    (
+        ModuleSynchronizationDto synchronization
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.FrontendFeatureFolder
+            )
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.FrontendSolution
+            )
+        )
+        {
+            return;
+        }
+
+
+        var frontendSolution =
+            Path.GetFullPath
+            (
+                synchronization.FrontendSolution
+            );
+
+
+        //=======================================================
+        // Baseline Folder
+        //=======================================================
+
+        var baselineFolder =
+            Path.Combine
+            (
+                frontendSolution,
+
+                "src",
+
+                "development_backup",
+
+                "baseline-files",
+
+                synchronization.FrontendFeatureFolder
+            );
+
+
+        await DeleteFolderAsync
+        (
+            baselineFolder
+        );
+
+
+        //=======================================================
+        // Restore Folder
+        //=======================================================
+
+        var restoreFolder =
+            Path.Combine
+            (
+                frontendSolution,
+
+                "src",
+
+                "development_backup",
+
+                "restore-files",
+
+                synchronization.FrontendFeatureFolder
+            );
+
+
+        await DeleteFolderAsync
+        (
+            restoreFolder
         );
     }
 

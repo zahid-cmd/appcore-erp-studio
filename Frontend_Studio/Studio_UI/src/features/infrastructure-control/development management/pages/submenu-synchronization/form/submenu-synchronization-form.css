@@ -11,9 +11,9 @@
 
     align-items:center;
 
-    flex:0 0 auto;
+    flex:1 1 auto;
 
-    min-width:220px;
+    min-width:0;
 }
 
 
@@ -27,9 +27,11 @@
 
     gap:12px;
 
-    flex:1 1 auto;
+    flex:0 0 auto;
 
-    min-width:0;
+    width:auto;
+
+    min-width:max-content;
 
     margin-left:16px;
 }
@@ -43,13 +45,7 @@
 {
     display:block;
 
-    flex:0 0 260px;
-
-    width:260px;
-
-    min-width:260px;
-
-    max-width:260px;
+    flex:0 0 auto;
 }
 
 
@@ -194,6 +190,8 @@
 
     gap:6px;
 
+    flex:0 0 auto;
+
     height:36px;
 
     padding:0 18px;
@@ -286,16 +284,16 @@
         flex-wrap:wrap;
 
         justify-content:flex-start;
+
+        min-width:0;
+
+        margin-left:0;
     }
 
 
     .module-toolbar-right app-search-dropdown
     {
-        flex:1 1 320px;
-
-        min-width:320px;
-
-        max-width:100%;
+        flex:0 0 auto;
     }
 
 

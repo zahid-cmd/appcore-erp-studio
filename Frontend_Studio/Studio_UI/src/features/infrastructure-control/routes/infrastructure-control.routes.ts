@@ -61,5 +61,57 @@ export const infrastructureControlRoutes:
         redirectTo:'navigation-management',
 
         pathMatch:'full'
-    }
+    },
+    // AUTO-BEGIN : MNU-002-003
+
+    //===========================================================
+    // Component Management
+    //===========================================================
+
+    {
+        path:'component-management',
+
+        data:
+        {
+            breadcrumb:'Component Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../component-management/routes/component-management.routes'
+            )
+            .then(
+                m =>
+                    m.mnu002003Routes
+            )
+    },
+
+    // AUTO-END : MNU-002-003
+
+    // AUTO-BEGIN : MNU-002-004
+
+    //===========================================================
+    // Code Management
+    //===========================================================
+
+    {
+        path:'code-management',
+
+        data:
+        {
+            breadcrumb:'Code Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../code-management/routes/code-management.routes'
+            )
+            .then(
+                m =>
+                    m.mnu002004Routes
+            )
+    },
+
+    // AUTO-END : MNU-002-004
+
 ];

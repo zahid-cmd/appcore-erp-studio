@@ -136,35 +136,25 @@
 {
     display:grid;
 
-
     grid-template-columns:
-
-        1fr
-
-        1fr;
-
-
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
 
     gap:16px;
 
-
     flex:1;
-
 
     padding:12px;
 
-
     overflow-x:hidden;
-
 
     overflow-y:auto;
 
-
-    align-items:start;
-
+    align-items:stretch;
 
     box-sizing:border-box;
-
 
     min-width:0;
 }
@@ -181,37 +171,28 @@
 
     flex-direction:column;
 
-
     width:100%;
-
 
     min-width:0;
 
-
     height:100%;
-
 
     gap:10px;
 
-
     padding:10px;
-
 
     background:#ffffff;
 
-
     border:1px solid #e7edf5;
-
 
     border-radius:10px;
 
-
     box-shadow:
-
         0 1px 3px rgba(15,23,42,.03);
 
-
     box-sizing:border-box;
+
+    overflow:hidden;
 }
 
 
@@ -224,24 +205,20 @@
 {
     display:flex;
 
-
     align-items:center;
-
 
     justify-content:space-between;
 
+    width:calc(100% + 20px);
 
     height:38px;
 
+    min-height:38px;
 
     margin:
-
         -10px
-
         -10px
-
         12px
-
         -10px;
 
     padding:0 12px;
@@ -253,31 +230,25 @@
     font-weight:700;
 
     background:
-
         linear-gradient(
-
             180deg,
-
             #fbfdff 0%,
-
             #f4f8fe 55%,
-
             #eef5fd 100%
-
         );
 
     border-bottom:1px solid #dbe8f7;
 
     border-radius:
-
         10px
-
         10px
-
         0
-
         0;
+
+    box-sizing:border-box;
 }
+
+
 
 .workspace-section-title i
 {
@@ -290,6 +261,8 @@
     text-align:center;
 }
 
+
+
 /*==============================================================
     SECTION HEADER CONTENT
 ==============================================================*/
@@ -301,7 +274,11 @@
     align-items:center;
 
     gap:8px;
+
+    min-width:0;
 }
+
+
 
 .section-title-left i
 {
@@ -313,6 +290,8 @@
 
     text-align:center;
 }
+
+
 
 /*==============================================================
     SECTION LOCK BUTTON
@@ -343,7 +322,11 @@
     border-radius:8px;
 
     transition:all .18s ease;
+
+    flex:0 0 28px;
 }
+
+
 
 .section-lock-button:hover
 {
@@ -354,28 +337,136 @@
     border-color:#bfd6ff;
 }
 
+
+
 .section-lock-button i
 {
     font-size:13px;
 }
+
+
 
 .section-lock-button:hover i
 {
     color:#2563eb;
 }
 
+
+
 /*==============================================================
     CONTROLS
 ==============================================================*/
 
 .workspace-section app-textbox,
+
 .workspace-section app-dropdown,
+
 .workspace-section app-textarea
 {
     display:block;
 
-    width:100%;
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+
+    flex:0 1 auto;
 }
+
+
+
+/*==============================================================
+    TEXTBOX INTERNAL WIDTH
+==============================================================*/
+
+.workspace-section ::ng-deep app-textbox input,
+
+.workspace-section ::ng-deep app-textbox .textbox,
+
+.workspace-section ::ng-deep app-textbox .textbox-container,
+
+.workspace-section ::ng-deep app-textbox .input-container
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+
+/*==============================================================
+    DROPDOWN INTERNAL WIDTH
+==============================================================*/
+
+.workspace-section ::ng-deep app-dropdown .dropdown-container,
+
+.workspace-section ::ng-deep app-dropdown .dropdown,
+
+.workspace-section ::ng-deep app-dropdown .dropdown-selector
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+
+/*==============================================================
+    TEXTAREA INTERNAL WIDTH
+==============================================================*/
+
+.workspace-section ::ng-deep app-textarea textarea,
+
+.workspace-section ::ng-deep app-textarea .textarea,
+
+.workspace-section ::ng-deep app-textarea .textarea-container
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+
+/*==============================================================
+    FORM CONTROL BOX SIZING
+==============================================================*/
+
+.workspace-section ::ng-deep app-textbox *,
+
+.workspace-section ::ng-deep app-dropdown *,
+
+.workspace-section ::ng-deep app-textarea *
+{
+    box-sizing:border-box;
+}
+
+
 
 /*==============================================================
     SCROLLBAR
@@ -389,6 +480,7 @@
 }
 
 
+
 .workspace-card-body::-webkit-scrollbar-thumb
 {
     background:#d7e2f2;
@@ -397,24 +489,31 @@
 }
 
 
+
 .workspace-card-body::-webkit-scrollbar-track
 {
     background:#f8fafc;
 }
 
 
+
 /*==============================================================
     RESPONSIVE
 ==============================================================*/
 
-@media (max-width:1600px)
+@media (max-width:1400px)
 {
     .workspace-content .workspace-card-body
     {
         grid-template-columns:
-            1fr;
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
     }
 }
+
+
 
 @media (max-width:1200px)
 {

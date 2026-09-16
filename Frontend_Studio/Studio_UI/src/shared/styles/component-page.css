@@ -1,0 +1,936 @@
+/* ============================================================
+   Component Page
+============================================================ */
+
+/* ============================================================
+   Component Canvas
+============================================================ */
+
+.component-canvas
+
+{
+
+    position:relative;
+
+    width:100%;
+
+    flex:0 0 auto;
+
+    min-width:0;
+
+    min-height:0;
+
+    height:auto;
+
+    display:flex;
+
+    flex-direction:column;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    border:1px solid
+
+        rgba(148,163,184,.28);
+
+    border-radius:12px;
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            #f8fafc 0%,
+
+            #f2f5f9 48%,
+
+            #eef4fb 100%
+
+        );
+
+}
+
+/* ============================================================
+   Preview Section Header
+============================================================ */
+
+.component-section-header
+
+{
+
+    position:relative;
+
+    z-index:2;
+
+    display:flex;
+
+    flex:0 0 auto;
+
+    width:100%;
+
+    height:40px;
+
+    min-height:40px;
+
+    max-height:40px;
+
+    align-items:center;
+
+    justify-content:flex-start;
+
+    gap:10px;
+
+    padding:0 16px;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+
+    border-top:1px solid
+
+        rgba(255,255,255,.95);
+
+    border-bottom:1px solid
+
+        rgba(148,163,184,.20);
+
+    border-radius:12px 12px 0 0;
+
+    background:
+
+        linear-gradient(
+
+            180deg,
+
+            rgba(248,250,252,.96) 0%,
+
+            rgba(239,244,249,.94) 52%,
+
+            rgba(232,240,249,.94) 100%
+
+        );
+
+    backdrop-filter:blur(14px);
+
+    -webkit-backdrop-filter:blur(14px);
+
+    text-align:left;
+
+    user-select:none;
+
+    transition:
+
+        background .18s ease,
+
+        color .18s ease,
+
+        border-color .18s ease;
+
+}
+
+/* ============================================================
+   Preview Section Header Hover
+============================================================ */
+
+.component-section-header:hover
+
+{
+
+    background:
+
+        linear-gradient(
+
+            180deg,
+
+            rgba(250,252,255,.98) 0%,
+
+            rgba(242,247,252,.96) 52%,
+
+            rgba(234,242,250,.96) 100%
+
+        );
+
+}
+
+/* ============================================================
+   Preview Section Header Icon
+============================================================ */
+
+.component-section-icon
+
+{
+
+    position:relative;
+
+    z-index:1;
+
+    width:30px;
+
+    height:30px;
+
+    flex:0 0 30px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:8px;
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            rgba(238,241,255,.96),
+
+            rgba(247,249,255,.94)
+
+        );
+
+    color:var(--primary-color, #4f46e5);
+
+    font-size:13px;
+
+    border:1px solid
+
+        rgba(79,70,229,.10);
+
+    box-sizing:border-box;
+
+}
+
+/* ============================================================
+   Preview Section Header Icon Symbol
+============================================================ */
+
+.component-section-icon i
+
+{
+
+    font-size:13px;
+
+    line-height:1;
+
+}
+
+/* ============================================================
+   Preview Section Header Name
+============================================================ */
+
+.component-section-name
+
+{
+
+    position:relative;
+
+    z-index:1;
+
+    min-width:0;
+
+    margin:0;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    line-height:1.4;
+
+    color:#55667d;
+
+    text-align:left;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+}
+
+/* ============================================================
+   Component Edit Button
+============================================================ */
+
+.component-edit-button
+
+{
+
+    position:relative;
+
+    z-index:1;
+
+    width:auto;
+
+    min-width:68px;
+
+    min-height:30px;
+
+    flex:0 0 auto;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    margin-left:auto;
+
+    padding:5px 11px;
+
+    border:1px solid
+
+        rgba(255,255,255,.92);
+
+    border-radius:9px;
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            rgba(255,255,255,.94),
+
+            rgba(231,238,246,.88)
+
+        );
+
+    color:#315f91;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    backdrop-filter:blur(12px);
+
+    -webkit-backdrop-filter:blur(12px);
+
+    transition:
+
+        background .18s ease,
+
+        border-color .18s ease,
+
+        color .18s ease,
+
+        transform .18s ease;
+
+}
+
+.component-edit-button:hover
+
+{
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            rgba(255,255,255,.98),
+
+            rgba(237,244,250,.94)
+
+        );
+
+    border-color:
+
+        rgba(86,125,164,.28);
+
+    color:#294f78;
+
+    transform:translateY(-1px);
+
+}
+
+.component-edit-button:active
+
+{
+
+    transform:translateY(0);
+
+}
+
+.component-edit-button i
+
+{
+
+    font-size:10px;
+
+}
+
+/* ============================================================
+   Component Delete Button
+============================================================ */
+
+.component-delete-button
+
+{
+
+    position:relative;
+
+    z-index:1;
+
+    width:auto;
+
+    min-width:68px;
+
+    min-height:30px;
+
+    flex:0 0 auto;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    padding:5px 11px;
+
+    border:1px solid
+
+        rgba(255,255,255,.92);
+
+    border-radius:9px;
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            rgba(255,255,255,.94),
+
+            rgba(231,238,246,.88)
+
+        );
+
+    color:#315f91;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    backdrop-filter:blur(12px);
+
+    -webkit-backdrop-filter:blur(12px);
+
+    transition:
+
+        background .18s ease,
+
+        border-color .18s ease,
+
+        color .18s ease,
+
+        transform .18s ease;
+
+}
+
+.component-delete-button:hover
+
+{
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            rgba(255,255,255,.98),
+
+            rgba(249,239,239,.94)
+
+        );
+
+    border-color:
+
+        rgba(180,75,75,.28);
+
+    color:#a33d3d;
+
+    transform:translateY(-1px);
+
+}
+
+.component-delete-button:active
+
+{
+
+    transform:translateY(0);
+
+}
+
+.component-delete-button i
+
+{
+
+    font-size:10px;
+
+}
+
+/* ============================================================
+   Preview Holder
+============================================================ */
+
+.component-preview-content
+
+{
+
+    position:relative;
+
+    z-index:1;
+
+    width:100%;
+
+    flex:0 0 520px;
+
+    min-width:0;
+
+    height:520px;
+
+    min-height:520px;
+
+    max-height:520px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:0;
+
+    padding:32px;
+
+    box-sizing:border-box;
+
+    border:0;
+
+    border-radius:0 0 12px 12px;
+
+    background:
+
+        linear-gradient(
+
+            145deg,
+
+            #eef1f5 0%,
+
+            #f3f6f9 42%,
+
+            #e8f1fb 100%
+
+        );
+
+    overflow:hidden;
+
+}
+
+/* ============================================================
+   Preview Holder Inner Glass
+============================================================ */
+
+.component-preview-content::after
+
+{
+
+    content:'';
+
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            rgba(255,255,255,.34) 0%,
+
+            rgba(255,255,255,.10) 45%,
+
+            rgba(191,219,254,.12) 100%
+
+        );
+
+    z-index:0;
+
+}
+
+/* ============================================================
+   Preview Holder Subtle Grid
+============================================================ */
+
+.component-preview-content::before
+
+{
+
+    content:'';
+
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.20;
+
+    background-image:
+
+        linear-gradient(
+
+            rgba(100,116,139,.045) 1px,
+
+            transparent 1px
+
+        ),
+
+        linear-gradient(
+
+            90deg,
+
+            rgba(100,116,139,.045) 1px,
+
+            transparent 1px
+
+        );
+
+    background-size:
+
+        24px 24px;
+
+    z-index:0;
+
+}
+
+/* ============================================================
+   Component Renderer Host
+============================================================ */
+
+.component-preview-content
+app-component-renderer
+
+{
+
+    position:relative;
+
+    z-index:2;
+
+    flex:0 0 auto;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:360px;
+
+    height:auto;
+
+    max-width:100%;
+
+    max-height:100%;
+
+}
+
+/* ============================================================
+   Empty State
+============================================================ */
+
+.component-empty
+
+{
+
+    position:relative;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-height:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    text-align:center;
+
+    box-sizing:border-box;
+
+    color:var(--text-secondary, #6b7280);
+
+}
+
+.component-empty i
+
+{
+
+    font-size:16px;
+
+    color:var(--primary-color, #4f46e5);
+
+}
+
+.component-empty span
+
+{
+
+    font-size:14px;
+
+}
+
+/* ============================================================
+   Loading State
+============================================================ */
+
+.component-loading
+
+{
+
+    position:relative;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-height:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    text-align:center;
+
+    color:var(--text-secondary, #6b7280);
+
+}
+
+.component-loading i
+
+{
+
+    font-size:16px;
+
+    color:var(--primary-color, #4f46e5);
+
+}
+
+.component-loading span
+
+{
+
+    font-size:14px;
+
+}
+
+/* ============================================================
+   Error State
+============================================================ */
+
+.component-error
+
+{
+
+    position:relative;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-height:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    text-align:center;
+
+    padding:40px;
+
+    box-sizing:border-box;
+
+    color:var(--text-secondary, #6b7280);
+
+}
+
+.component-error i
+
+{
+
+    font-size:28px;
+
+    color:var(--primary-color, #4f46e5);
+
+}
+
+.component-error span
+
+{
+
+    font-size:14px;
+
+    line-height:1.5;
+
+}
+
+/* ============================================================
+   Responsive
+============================================================ */
+
+@media
+
+(
+
+    max-width:768px
+
+)
+
+{
+
+    .component-canvas
+
+    {
+
+        width:100%;
+
+        height:auto;
+
+        min-height:0;
+
+        border-radius:12px;
+
+    }
+
+    .component-section-header
+
+    {
+
+        height:40px;
+
+        min-height:40px;
+
+        max-height:40px;
+
+        gap:8px;
+
+        padding:0 10px;
+
+        border-radius:12px 12px 0 0;
+
+    }
+
+    .component-section-icon
+
+    {
+
+        width:28px;
+
+        height:28px;
+
+        flex-basis:28px;
+
+        font-size:12px;
+
+    }
+
+    .component-section-icon i
+
+    {
+
+        font-size:12px;
+
+    }
+
+    .component-section-name
+
+    {
+
+        font-size:12px;
+
+        letter-spacing:.4px;
+
+    }
+
+    .component-edit-button,
+
+    .component-delete-button
+
+    {
+
+        min-width:64px;
+
+        min-height:30px;
+
+        padding:5px 8px;
+
+        font-size:10px;
+
+    }
+
+    .component-preview-content
+
+    {
+
+        height:520px;
+
+        min-height:520px;
+
+        max-height:520px;
+
+        flex-basis:520px;
+
+        margin:0;
+
+        padding:24px;
+
+        border-radius:0 0 12px 12px;
+
+    }
+
+    .component-empty
+
+    {
+
+        width:100%;
+
+        min-height:0;
+
+    }
+
+}

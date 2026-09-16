@@ -200,6 +200,36 @@ public class FileUpdater
             );
 
 
+        //=======================================================
+        // Module Routes
+        //
+        // Module Routes is a logical collection representing
+        // the top-level Routes array.
+        //
+        // The target file does not need to contain a literal
+        // "Module Routes" collection marker.
+        //=======================================================
+
+        if
+        (
+            string.Equals
+            (
+                collection,
+
+                "Module Routes",
+
+                StringComparison.Ordinal
+            )
+        )
+        {
+            collectionIndex =
+                FindModuleRoutesCollectionIndex
+                (
+                    text
+                );
+        }
+
+
         if
         (
             collectionIndex < 0
@@ -552,6 +582,96 @@ public class FileUpdater
 
 
     //===========================================================
+    // Find Module Routes Collection Index
+    //===========================================================
+
+    private static int FindModuleRoutesCollectionIndex
+    (
+        string text
+    )
+    {
+        //=======================================================
+        // Find Routes Declaration
+        //=======================================================
+
+        var routesDeclarationIndex =
+            text.IndexOf
+            (
+                "Routes",
+
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            routesDeclarationIndex < 0
+        )
+        {
+            return -1;
+        }
+
+
+
+        //=======================================================
+        // Find Equals Sign
+        //=======================================================
+
+        var equalsIndex =
+            text.IndexOf
+            (
+                '=',
+
+                routesDeclarationIndex
+            );
+
+
+        if
+        (
+            equalsIndex < 0
+        )
+        {
+            return -1;
+        }
+
+
+
+        //=======================================================
+        // Find Opening Bracket
+        //=======================================================
+
+        var openingBracketIndex =
+            text.IndexOf
+            (
+                '[',
+
+                equalsIndex
+            );
+
+
+        if
+        (
+            openingBracketIndex < 0
+        )
+        {
+            return -1;
+        }
+
+
+
+        //=======================================================
+        // Use Routes Array Opening Bracket As Collection Index
+        //
+        // The returned position is used as the logical
+        // collection location for the top-level Routes array.
+        //=======================================================
+
+        return openingBracketIndex;
+    }
+
+
+
+    //===========================================================
     // Resolve Collection Item Indentation
     //===========================================================
 
@@ -652,16 +772,18 @@ public class FileUpdater
         //
         // Example:
         //
-        // export const accountsFiananceRoutes:
+        // export const infrastructureControlRoutes:
         //     Routes =
         // [
-        //     // Module Routes
-        //     ...
+        //     {
+        //         path:'navigation-management',
+        //         ...
+        //     }
         // ]
         //
         // The collection item indentation is therefore taken
-        // from the first route object after the Module Routes
-        // section.
+        // from the first route object inside the top-level
+        // Routes array.
         //=======================================================
 
         if
@@ -785,8 +907,8 @@ public class FileUpdater
                 (
                     text,
 
-                    childrenLineStart
-                );
+                childrenLineStart
+            );
 
 
             return childrenIndentation +
@@ -879,11 +1001,11 @@ public class FileUpdater
         //=======================================================
         // Module Routes
         //
-        // Module Routes is a comment INSIDE the top-level
-        // Routes array.
+        // Module Routes is a logical collection representing
+        // the top-level Routes array.
         //
-        // Therefore the opening '[' must be searched BEFORE
-        // the collection comment.
+        // The opening '[' has already been resolved by
+        // FindModuleRoutesCollectionIndex().
         //=======================================================
 
         if
@@ -991,6 +1113,29 @@ public class FileUpdater
         int collectionIndex
     )
     {
+        //=======================================================
+        // If collectionIndex already points to the top-level
+        // Routes array opening bracket, use it directly.
+        //=======================================================
+
+        if
+        (
+            collectionIndex >= 0
+
+            &&
+
+            collectionIndex < text.Length
+
+            &&
+
+            text[collectionIndex] == '['
+        )
+        {
+            return collectionIndex;
+        }
+
+
+
         //=======================================================
         // Find Routes Declaration Before Module Routes Comment
         //=======================================================

@@ -3,7 +3,9 @@ import
   Component,
   EventEmitter,
   Input,
-  Output
+  Output,
+  OnChanges,
+  SimpleChanges
 }
 from '@angular/core';
 
@@ -32,7 +34,17 @@ from '@angular/common';
 })
 
 export class CommandCenterComponent
+implements OnChanges
 {
+  /* =====================================================
+     PREVIEW MODE
+  ====================================================== */
+
+  @Input()
+  previewMode =
+    false;
+
+
   /* =====================================================
      LEFT COMMAND 1
   ====================================================== */
@@ -45,6 +57,7 @@ export class CommandCenterComponent
 
   @Output() command1Click =
     new EventEmitter<void>();
+
 
   /* =====================================================
      LEFT COMMAND 2
@@ -59,6 +72,7 @@ export class CommandCenterComponent
   @Output() command2Click =
     new EventEmitter<void>();
 
+
   /* =====================================================
      LEFT COMMAND 3
   ====================================================== */
@@ -72,6 +86,7 @@ export class CommandCenterComponent
   @Output() command3Click =
     new EventEmitter<void>();
 
+
   /* =====================================================
      RIGHT COMMAND
   ====================================================== */
@@ -83,6 +98,75 @@ export class CommandCenterComponent
   @Output() rightCommandClick =
     new EventEmitter<void>();
 
+
+  /* =====================================================
+     CHANGES
+  ====================================================== */
+
+  ngOnChanges
+  (
+    changes:
+      SimpleChanges
+  ):
+    void
+  {
+    if
+    (
+      changes['previewMode']
+      &&
+      this.previewMode
+    )
+    {
+      this.applyPreviewData();
+    }
+  }
+
+
+  /* =====================================================
+     PREVIEW DATA
+  ====================================================== */
+
+  private applyPreviewData():
+    void
+  {
+    this.command1Text =
+      'Add';
+
+    this.command1Icon =
+      'fas fa-plus';
+
+    this.command1Visible =
+      true;
+
+
+    this.command2Text =
+      'Refresh';
+
+    this.command2Icon =
+      'fas fa-rotate-right';
+
+    this.command2Visible =
+      true;
+
+
+    this.command3Text =
+      'Restore';
+
+    this.command3Icon =
+      'fas fa-trash-arrow-up';
+
+    this.command3Visible =
+      true;
+
+
+    this.rightCommandIcon =
+      'fas fa-clock-rotate-left';
+
+    this.rightCommandVisible =
+      true;
+  }
+
+
   /* =====================================================
      LEFT COMMAND 1 CLICK
   ====================================================== */
@@ -92,6 +176,7 @@ export class CommandCenterComponent
   {
     this.command1Click.emit();
   }
+
 
   /* =====================================================
      LEFT COMMAND 2 CLICK
@@ -103,6 +188,7 @@ export class CommandCenterComponent
     this.command2Click.emit();
   }
 
+
   /* =====================================================
      LEFT COMMAND 3 CLICK
   ====================================================== */
@@ -112,6 +198,7 @@ export class CommandCenterComponent
   {
     this.command3Click.emit();
   }
+
 
   /* =====================================================
      RIGHT COMMAND CLICK

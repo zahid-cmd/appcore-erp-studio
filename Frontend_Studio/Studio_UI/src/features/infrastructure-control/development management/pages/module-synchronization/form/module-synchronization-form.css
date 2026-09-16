@@ -27,9 +27,11 @@
 
     gap:12px;
 
-    flex:1 1 auto;
+    flex:0 0 auto;
 
-    min-width:0;
+    width:auto;
+
+    min-width:max-content;
 
     margin-left:16px;
 }
@@ -39,17 +41,40 @@
    DROPDOWN
 ========================================================= */
 
-.module-toolbar-right app-search-dropdown
+.module-toolbar-right ::ng-deep app-search-dropdown
 {
     display:block;
 
-    flex:0 0 260px;
+    flex:0 0 280px !important;
 
-    width:260px;
+    width:280px !important;
 
-    min-width:260px;
+    min-width:280px !important;
 
-    max-width:260px;
+    max-width:280px !important;
+
+    margin:0 !important;
+}
+
+
+/* =========================================================
+   DROPDOWN
+   HOST NORMALIZATION
+========================================================= */
+
+.module-toolbar-right ::ng-deep app-search-dropdown .dropdown-container,
+
+.module-toolbar-right ::ng-deep app-search-dropdown .dropdown,
+
+.module-toolbar-right ::ng-deep app-search-dropdown .dropdown-selector
+{
+    width:280px !important;
+
+    min-width:280px !important;
+
+    max-width:280px !important;
+
+    box-sizing:border-box;
 }
 
 
@@ -193,6 +218,10 @@
     justify-content:center;
 
     gap:6px;
+
+    flex:0 0 auto;
+
+    width:auto;
 
     height:36px;
 
@@ -828,16 +857,36 @@
         flex-wrap:wrap;
 
         justify-content:flex-start;
+
+        min-width:0;
+
+        margin-left:0;
     }
 
 
-    .module-toolbar-right app-search-dropdown
+    .module-toolbar-right ::ng-deep app-search-dropdown
     {
-        flex:1 1 320px;
+        flex:0 0 280px !important;
 
-        min-width:320px;
+        width:280px !important;
 
-        max-width:100%;
+        min-width:280px !important;
+
+        max-width:280px !important;
+    }
+
+
+    .module-toolbar-right ::ng-deep app-search-dropdown .dropdown-container,
+
+    .module-toolbar-right ::ng-deep app-search-dropdown .dropdown,
+
+    .module-toolbar-right ::ng-deep app-search-dropdown .dropdown-selector
+    {
+        width:280px !important;
+
+        min-width:280px !important;
+
+        max-width:280px !important;
     }
 
 
@@ -874,6 +923,40 @@
 
 @media (max-width:600px)
 {
+    .module-toolbar-right ::ng-deep app-search-dropdown
+    {
+        width:100% !important;
+
+        min-width:0 !important;
+
+        max-width:100% !important;
+
+        flex:1 1 100% !important;
+    }
+
+
+    .module-toolbar-right ::ng-deep app-search-dropdown .dropdown-container,
+
+    .module-toolbar-right ::ng-deep app-search-dropdown .dropdown,
+
+    .module-toolbar-right ::ng-deep app-search-dropdown .dropdown-selector
+    {
+        width:100% !important;
+
+        min-width:0 !important;
+
+        max-width:100% !important;
+    }
+
+
+    .module-analyze-button,
+
+    .module-reset-button
+    {
+        width:140px;
+    }
+
+
     .module-rollback-blocked-dialog
     {
         max-width:calc(100vw - 28px);

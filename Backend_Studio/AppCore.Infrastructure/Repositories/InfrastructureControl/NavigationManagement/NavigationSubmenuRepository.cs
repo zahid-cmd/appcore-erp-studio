@@ -760,9 +760,7 @@ public class NavigationSubmenuRepository : INavigationSubmenuRepository
             await _context.NavigationSubmenus
 
                 .Where(x =>
-                    x.NavigationMenuId == navigationMenuId
-                    &&
-                    !x.IsDeleted)
+                    x.NavigationMenuId == navigationMenuId)
 
                 .MaxAsync(x =>
                     (int?)x.SequenceNo);

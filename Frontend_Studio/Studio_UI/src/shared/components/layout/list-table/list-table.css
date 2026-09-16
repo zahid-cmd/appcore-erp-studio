@@ -705,6 +705,71 @@
 
 
 /* =====================================================
+   INITIALIZE DB
+
+   Initialize Database remains a separate operation
+   button.
+
+   Visual state:
+
+       Deep Green
+           =
+       Initialize DB
+===================================================== */
+
+.action-btn.initialize-database
+{
+    background: #dcfce7;
+
+    color: #166534;
+
+    border: 1px solid #4ade80;
+}
+
+
+.action-btn.initialize-database:hover
+{
+    background: #bbf7d0;
+
+    color: #14532d;
+
+    border-color: #22c55e;
+}
+
+
+/* =====================================================
+   SAVE RESTORE POINT
+
+   Save Restore Point is an action-level operation.
+
+   Visual state:
+
+       Deep Blue
+           =
+       Save Restore Point
+===================================================== */
+
+.action-btn.restore-point
+{
+    background: #dbeafe;
+
+    color: #1e40af;
+
+    border: 1px solid #60a5fa;
+}
+
+
+.action-btn.restore-point:hover
+{
+    background: #bfdbfe;
+
+    color: #1e3a8a;
+
+    border-color: #3b82f6;
+}
+
+
+/* =====================================================
    DATABASE - DISABLED
 ===================================================== */
 
@@ -747,6 +812,54 @@
 
 .action-btn.registration:disabled:hover,
 .action-btn.rollback:disabled:hover
+{
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   INITIALIZE DB - DISABLED
+===================================================== */
+
+.action-btn.initialize-database:disabled
+{
+    cursor: not-allowed;
+
+    opacity: .45;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+.action-btn.initialize-database:disabled:hover
+{
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   SAVE RESTORE POINT - DISABLED
+===================================================== */
+
+.action-btn.restore-point:disabled
+{
+    cursor: not-allowed;
+
+    opacity: .45;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+.action-btn.restore-point:disabled:hover
 {
     transform: none;
 

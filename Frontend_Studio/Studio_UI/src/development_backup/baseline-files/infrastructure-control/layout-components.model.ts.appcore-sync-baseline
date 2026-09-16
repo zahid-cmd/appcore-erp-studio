@@ -1,0 +1,90 @@
+/* ============================================================
+   Layout Components
+============================================================ */
+
+export interface LayoutComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Layout Components
+============================================================ */
+
+export interface CreateLayoutComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Layout Components
+============================================================ */
+
+export interface UpdateLayoutComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Layout Components Defaults
+============================================================ */
+
+export interface LayoutComponentsDefaults
+{
+    code:
+        string;
+}

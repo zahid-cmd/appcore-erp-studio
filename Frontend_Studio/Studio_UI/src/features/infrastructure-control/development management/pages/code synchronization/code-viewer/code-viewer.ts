@@ -28,10 +28,16 @@ export interface CodeViewerFile
         string;
 
     status:
-        'Clean' | 'Modified';
+        'Clean' | 'Modified' | 'Restored';
 
     lastModified:
         string | Date | null;
+
+    canInitialize?:
+        boolean;
+
+    canRestore?:
+        boolean;
 }
 
 
@@ -121,6 +127,30 @@ export class CodeViewerComponent
 
 
     //===========================================================
+    // Initialize All State
+    //
+    // This is set ONLY after the confirmation dialog is confirmed.
+    //===========================================================
+
+    initializing:
+        boolean =
+        false;
+
+
+
+    //===========================================================
+    // Initializing File
+    //
+    // This is set ONLY after the confirmation dialog is confirmed.
+    //===========================================================
+
+    initializingFileName:
+        string | null =
+        null;
+
+
+
+    //===========================================================
     // Events
     //===========================================================
 
@@ -151,6 +181,26 @@ export class CodeViewerComponent
 
 
     //===========================================================
+    // Initialize All
+    //===========================================================
+
+    @Output()
+    initializeRequested =
+        new EventEmitter<void>();
+
+
+
+    //===========================================================
+    // Initialize Single File
+    //===========================================================
+
+    @Output()
+    initializeFileRequested =
+        new EventEmitter<CodeViewerFile>();
+
+
+
+    //===========================================================
     // Modified Files
     //===========================================================
 
@@ -168,6 +218,42 @@ export class CodeViewerComponent
 
 
     //===========================================================
+    // Initial Stage Files
+    //
+    // Clean represents the current initial stage.
+    //===========================================================
+
+    get initialStageFiles():
+        CodeViewerFile[]
+    {
+        return this.files.filter
+        (
+            file =>
+                file.status ===
+                'Clean'
+        );
+    }
+
+
+
+    //===========================================================
+    // Restored Files
+    //===========================================================
+
+    get restoredFiles():
+        CodeViewerFile[]
+    {
+        return this.files.filter
+        (
+            file =>
+                file.status ===
+                'Restored'
+        );
+    }
+
+
+
+    //===========================================================
     // Has Modified Files
     //===========================================================
 
@@ -176,6 +262,42 @@ export class CodeViewerComponent
     {
         return this.modifiedFiles.length >
                0;
+    }
+
+
+
+    //===========================================================
+    // Can Initialize Any File
+    //===========================================================
+
+    get canInitializeAnyFile():
+        boolean
+    {
+        return this.files.some
+        (
+            file =>
+                this.canInitializeFile(
+                    file
+                )
+        );
+    }
+
+
+
+    //===========================================================
+    // Can Restore Any File
+    //===========================================================
+
+    get canRestoreAnyFile():
+        boolean
+    {
+        return this.files.some
+        (
+            file =>
+                this.canRestoreFile(
+                    file
+                )
+        );
     }
 
 
@@ -200,6 +322,30 @@ export class CodeViewerComponent
         number
     {
         return this.modifiedFiles.length;
+    }
+
+
+
+    //===========================================================
+    // Initial Stage Count
+    //===========================================================
+
+    get initialStageCount():
+        number
+    {
+        return this.initialStageFiles.length;
+    }
+
+
+
+    //===========================================================
+    // Restored Count
+    //===========================================================
+
+    get restoredCount():
+        number
+    {
+        return this.restoredFiles.length;
     }
 
 
@@ -242,7 +388,30 @@ export class CodeViewerComponent
 
 
     //===========================================================
+    // Check File Can Initialize
+    //
+    // Initialize uses the concrete baseline file created by
+    // the Code Synchronization Engine.
+    //===========================================================
+
+    canInitializeFile
+    (
+        file:
+            CodeViewerFile
+    ):
+        boolean
+    {
+        return file.canInitialize ===
+               true;
+    }
+
+
+
+    //===========================================================
     // Check File Can Restore
+    //
+    // Restore uses the latest restore point saved for the
+    // synchronization/submenu.
     //===========================================================
 
     canRestoreFile
@@ -252,8 +421,8 @@ export class CodeViewerComponent
     ):
         boolean
     {
-        return file.status ===
-               'Modified';
+        return file.canRestore ===
+               true;
     }
 
 
@@ -276,6 +445,23 @@ export class CodeViewerComponent
 
 
     //===========================================================
+    // Check File Is Initializing
+    //===========================================================
+
+    isInitializingFile
+    (
+        file:
+            CodeViewerFile
+    ):
+        boolean
+    {
+        return this.initializingFileName ===
+               file.fileName;
+    }
+
+
+
+    //===========================================================
     // Close
     //===========================================================
 
@@ -287,6 +473,10 @@ export class CodeViewerComponent
             this.restoring
             ||
             this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
         )
         {
             return;
@@ -329,6 +519,10 @@ export class CodeViewerComponent
             this.restoring
             ||
             this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
         )
         {
             return;
@@ -337,7 +531,7 @@ export class CodeViewerComponent
 
         if
         (
-            !this.hasModifiedFiles
+            !this.canRestoreAnyFile
         )
         {
             return;
@@ -365,6 +559,10 @@ export class CodeViewerComponent
             this.restoring
             ||
             this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
         )
         {
             return;
@@ -373,7 +571,7 @@ export class CodeViewerComponent
 
         if
         (
-            !this.hasModifiedFiles
+            !this.canRestoreAnyFile
         )
         {
             return;
@@ -408,6 +606,10 @@ export class CodeViewerComponent
             this.restoring
             ||
             this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
         )
         {
             return;
@@ -452,6 +654,10 @@ export class CodeViewerComponent
             this.restoring
             ||
             this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
         )
         {
             return;
@@ -470,6 +676,186 @@ export class CodeViewerComponent
 
 
         this.restoringFileName =
+            file.fileName;
+    }
+
+
+
+    //===========================================================
+    // Request Initialize All
+    //
+    // IMPORTANT:
+    //
+    // Do NOT set initializing here.
+    //
+    // This only opens the confirmation dialog through the parent.
+    //===========================================================
+
+    initializeAll():
+        void
+    {
+        if
+        (
+            this.restoring
+            ||
+            this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.canInitializeAnyFile
+        )
+        {
+            return;
+        }
+
+
+        this.initializeRequested.emit();
+    }
+
+
+
+    //===========================================================
+    // Begin Initialize All
+    //
+    // IMPORTANT:
+    //
+    // Call this ONLY after the confirmation dialog is confirmed.
+    //===========================================================
+
+    beginInitialize():
+        void
+    {
+        if
+        (
+            this.restoring
+            ||
+            this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.canInitializeAnyFile
+        )
+        {
+            return;
+        }
+
+
+        this.initializing =
+            true;
+    }
+
+
+
+    //===========================================================
+    // Request Initialize Single File
+    //
+    // IMPORTANT:
+    //
+    // Do NOT set initializingFileName here.
+    //
+    // This only opens the confirmation dialog through the parent.
+    //===========================================================
+
+    initializeFile
+    (
+        file:
+            CodeViewerFile
+    ):
+        void
+    {
+        if
+        (
+            this.restoring
+            ||
+            this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.canInitializeFile(
+                file
+            )
+        )
+        {
+            return;
+        }
+
+
+        this.initializeFileRequested.emit(
+            file
+        );
+    }
+
+
+
+    //===========================================================
+    // Begin Initialize Single File
+    //
+    // IMPORTANT:
+    //
+    // Call this ONLY after the confirmation dialog is confirmed.
+    //===========================================================
+
+    beginFileInitialize
+    (
+        file:
+            CodeViewerFile
+    ):
+        void
+    {
+        if
+        (
+            this.restoring
+            ||
+            this.restoringFileName !== null
+            ||
+            this.initializing
+            ||
+            this.initializingFileName !== null
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.canInitializeFile(
+                file
+            )
+        )
+        {
+            return;
+        }
+
+
+        this.initializingFileName =
             file.fileName;
     }
 
@@ -530,6 +916,66 @@ export class CodeViewerComponent
         void
     {
         this.restoringFileName =
+            null;
+    }
+
+
+
+    //===========================================================
+    // Initialize All Completed
+    //===========================================================
+
+    completeInitialize():
+        void
+    {
+        this.initializing =
+            false;
+
+
+        this.initializingFileName =
+            null;
+    }
+
+
+
+    //===========================================================
+    // Initialize All Failed
+    //===========================================================
+
+    initializeFailed():
+        void
+    {
+        this.initializing =
+            false;
+
+
+        this.initializingFileName =
+            null;
+    }
+
+
+
+    //===========================================================
+    // Single File Initialize Completed
+    //===========================================================
+
+    completeFileInitialize():
+        void
+    {
+        this.initializingFileName =
+            null;
+    }
+
+
+
+    //===========================================================
+    // Single File Initialize Failed
+    //===========================================================
+
+    fileInitializeFailed():
+        void
+    {
+        this.initializingFileName =
             null;
     }
 

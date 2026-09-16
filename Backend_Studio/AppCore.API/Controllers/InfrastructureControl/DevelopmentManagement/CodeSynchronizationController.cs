@@ -1,5 +1,5 @@
 //===============================================================
-// Namespaces
+// Imports
 //===============================================================
 
 using System;
@@ -166,6 +166,22 @@ public class CodeSynchronizationController
         long id
     )
     {
+        var synchronization =
+            await _repository.GetByIdAsync
+            (
+                id
+            );
+
+
+        if
+        (
+            synchronization == null
+        )
+        {
+            return NotFound();
+        }
+
+
         return Ok
         (
             await _repository.GetFilesAsync
@@ -207,7 +223,16 @@ public class CodeSynchronizationController
                 !restored
             )
             {
-                return NotFound();
+                return BadRequest
+                (
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "The selected code file could not be restored. The file, baseline, or synchronization record may not be available."
+                    }
+                );
             }
 
 
@@ -254,11 +279,154 @@ public class CodeSynchronizationController
                 !restored
             )
             {
-                return NotFound();
+                return BadRequest
+                (
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No modified generated files could be restored."
+                    }
+                );
             }
 
 
             return NoContent();
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Initialize File
+    //===========================================================
+
+    [HttpPost("{id:long}/initialize")]
+
+    public async Task<ActionResult>
+        InitializeFile
+    (
+        long id,
+
+        [FromQuery] string fileName
+    )
+    {
+        try
+        {
+            var initialized =
+                await _repository.InitializeFileAsync
+                (
+                    id,
+
+                    fileName
+                );
+
+
+            if
+            (
+                !initialized
+            )
+            {
+                return BadRequest
+                (
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            $"The selected code file '{fileName}' could not be initialized. The file or its synchronization definition may not be available."
+                    }
+                );
+            }
+
+
+            return Ok
+            (
+                new
+                {
+                    success = true,
+
+                    message =
+                        "File initialized successfully."
+                }
+            );
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Initialize All Files
+    //===========================================================
+
+    [HttpPost("{id:long}/initialize-all")]
+
+    public async Task<ActionResult>
+        InitializeAllFiles
+    (
+        long id
+    )
+    {
+        try
+        {
+            var initialized =
+                await _repository.InitializeAllFilesAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                !initialized
+            )
+            {
+                return BadRequest
+                (
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No generated files could be initialized."
+                    }
+                );
+            }
+
+
+            return Ok
+            (
+                new
+                {
+                    success = true,
+
+                    message =
+                        "All files initialized successfully."
+                }
+            );
         }
 
         catch
@@ -694,7 +862,74 @@ public class CodeSynchronizationController
                     success = true,
 
                     message =
-                        "Database table created successfully."
+                        "Database table initialized successfully."
+                }
+            );
+        }
+
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest
+            (
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Database Initialize
+    //===========================================================
+
+    [HttpPost("{id:long}/database/initialize")]
+
+    public async Task<ActionResult>
+        InitializeDatabase
+    (
+        long id
+    )
+    {
+        try
+        {
+            var synchronization =
+                await _repository.GetByIdAsync
+                (
+                    id
+                );
+
+
+            if
+            (
+                synchronization == null
+            )
+            {
+                return NotFound();
+            }
+
+
+            await _databaseCreationEngine
+                .CreateAsync
+                (
+                    id
+                );
+
+
+            //=======================================================
+            // Database Initialize Success
+            //=======================================================
+
+            return Ok
+            (
+                new
+                {
+                    success = true,
+
+                    message =
+                        "Database table initialized successfully."
                 }
             );
         }

@@ -172,6 +172,28 @@ implements OnChanges
 
 
   /* =====================================================
+     RESTORE POINT VISIBILITY
+
+     Default:
+     Restore Point is hidden.
+
+     The Save Restore Point button is displayed only by
+     pages that explicitly enable it.
+
+     Code Synchronization page:
+
+         showRestorePoint = true
+
+     All other list pages:
+
+         showRestorePoint = false
+  ===================================================== */
+
+  @Input()
+  showRestorePoint = false;
+
+
+  /* =====================================================
      REGISTRATION STATE
 
      Registration availability is determined only from
@@ -199,8 +221,14 @@ implements OnChanges
          A currently registered row is NEVER blocked by
          the global registration lock.
 
-     The global lock applies only when the current row
-     itself is attempting to become registered.
+     IMPORTANT:
+
+         A registered row must always be allowed to emit
+         the registration event so the parent can perform
+         DEREGISTRATION.
+
+     Database state does not block the registration /
+     deregistration button here.
   ===================================================== */
 
   isRegistrationDisabled
@@ -212,10 +240,13 @@ implements OnChanges
       //=====================================================
       // A registered row is performing DEREGISTRATION.
       //
-      // It must not be blocked by another pending row.
+      // It must ALWAYS remain clickable.
       //
-      // Deregistration is allowed only when the database
-      // table does not exist.
+      // The database state must not disable the
+      // registration / deregistration button.
+      //
+      // The parent component decides whether the event
+      // performs registration or deregistration.
       //=====================================================
 
       if
@@ -226,9 +257,7 @@ implements OnChanges
           'registered'
       )
       {
-          return (
-              row?.databaseCreated === true
-          );
+          return false;
       }
 
 
@@ -449,6 +478,98 @@ implements OnChanges
 
   @Output()
   database =
+      new EventEmitter<any>();
+
+
+  /* =====================================================
+     INITIALIZE DATABASE
+
+     Initialize Database is handled by the parent
+     Code Synchronization component.
+
+     This component only emits the selected row.
+
+     Initialize DB is available ONLY when the physical
+     database table has already been created.
+
+     Therefore:
+
+         databaseCreated === false
+                 ↓
+              DISABLED
+
+         databaseCreated === true
+                 ↓
+              ENABLED
+
+     This is intentionally independent from:
+
+         migrationCreated
+         dbStatus
+         registration state
+         restore point state
+
+     The physical database state is the only condition
+     required to enable Initialize DB.
+  ===================================================== */
+
+  @Output()
+  initializeDatabase =
+      new EventEmitter<any>();
+
+
+  /* =====================================================
+     INITIALIZE DATABASE ENABLED
+
+     The Initialize DB button is enabled only after the
+     physical database table has been created.
+
+     IMPORTANT:
+
+         Do not use dbStatus here.
+
+         dbStatus means backend registration.
+
+         databaseCreated means the physical database
+         table exists.
+
+     Therefore databaseCreated is authoritative.
+  ===================================================== */
+
+  canInitializeDatabase
+  (
+      row: any
+  ):
+      boolean
+  {
+      return (
+          row?.databaseCreated === true
+      );
+  }
+
+
+  /* =====================================================
+     RESTORE POINT
+
+     Save Restore Point is handled by the parent
+     Code Synchronization component.
+
+     This component only emits the selected row.
+
+     The restore point operation belongs to the
+     individual record / submenu.
+
+     Visibility is controlled separately through:
+
+         showRestorePoint
+
+     This keeps the generic List Table reusable without
+     displaying the Code Synchronization-specific action
+     on every list page.
+  ===================================================== */
+
+  @Output()
+  saveRestorePoint =
       new EventEmitter<any>();
 
 
@@ -801,6 +922,33 @@ implements OnChanges
 
 
   /* =====================================================
+     SAVE RESTORE POINT CLICK
+  ===================================================== */
+
+  onSaveRestorePointClick
+  (
+      row: any,
+
+      event: MouseEvent
+  ):
+      void
+  {
+      event.stopPropagation();
+
+
+      console.log(
+          'SAVE RESTORE POINT CLICK',
+          row
+      );
+
+
+      this.saveRestorePoint.emit(
+          row
+      );
+  }
+
+
+  /* =====================================================
      OPERATION CLICK
   ===================================================== */
 
@@ -851,6 +999,8 @@ implements OnChanges
       //
       // The registration lock applies only to an
       // unregistered row attempting registration.
+      //
+      // Database state does not block deregistration.
       //=====================================================
 
       if
@@ -916,6 +1066,71 @@ implements OnChanges
 
 
       this.database.emit(
+          row
+      );
+  }
+
+
+  /* =====================================================
+     INITIALIZE DATABASE CLICK
+
+     Initialization is controlled by the parent.
+
+     The Initialize DB operation MUST NOT emit while the
+     physical database table does not exist.
+
+     This guard is intentionally duplicated here even
+     though the HTML button is disabled.
+
+     Therefore:
+
+         databaseCreated !== true
+                 ↓
+              RETURN
+
+         databaseCreated === true
+                 ↓
+              EMIT
+  ===================================================== */
+
+  onInitializeDatabaseClick
+  (
+      row: any,
+
+      event: MouseEvent
+  ):
+      void
+  {
+      event.stopPropagation();
+
+
+      //=====================================================
+      // INITIALIZE DATABASE GUARD
+      //
+      // The database must already exist before Initialize DB
+      // can be executed.
+      //
+      // This prevents the parent Initialize DB workflow from
+      // being triggered while the database is still in its
+      // initial / virgin state.
+      //=====================================================
+
+      if
+      (
+          row?.databaseCreated !== true
+      )
+      {
+          return;
+      }
+
+
+      console.log(
+          'INITIALIZE DATABASE CLICK',
+          row
+      );
+
+
+      this.initializeDatabase.emit(
           row
       );
   }

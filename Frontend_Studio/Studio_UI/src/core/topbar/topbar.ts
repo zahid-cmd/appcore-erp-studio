@@ -1,10 +1,26 @@
-import { Component } from '@angular/core';
+import
+{
+    Component
+}
+from '@angular/core';
 
-import { CommonModule } from '@angular/common';
+import
+{
+    CommonModule
+}
+from '@angular/common';
 
-import { TopbarHeaderComponent } from '../../shared/components/layout/topbar-header/topbar-header';
+import
+{
+    TopbarHeaderComponent
+}
+from '../../shared/components/layout/topbar-header/topbar-header';
 
-import { TopbarActionsComponent } from '../../shared/components/layout/topbar-actions/topbar-actions';
+import
+{
+    TopbarActionsComponent
+}
+from '../../shared/components/layout/topbar-actions/topbar-actions';
 
 @Component({
     selector: 'app-topbar',

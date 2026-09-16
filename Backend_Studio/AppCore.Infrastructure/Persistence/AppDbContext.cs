@@ -146,9 +146,16 @@ public class AppDbContext
  
     // AUTO-BEGIN : AUTO REGISTER DBSETS 
 
+    // AUTO-BEGIN : AccountClass
 
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>
+    AccountClasss
+    {
+    get;
+    set;
+    } = null!;
 
-
+    // AUTO-END : AccountClass
 
     // AUTO-BEGIN : AccountGroup
 
@@ -160,6 +167,80 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : AccountGroup
+
+    // AUTO-BEGIN : Branch
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Branch>
+    Branchs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Branch
+
+    // AUTO-BEGIN : Company
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Company>
+    Companys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Company
+
+
+
+
+    // AUTO-BEGIN : ControlComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ComponentManagement.ControlComponents>
+    ControlComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ControlComponents
+
+    // AUTO-BEGIN : LayoutComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ComponentManagement.LayoutComponents>
+    LayoutComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LayoutComponents
+
+    // AUTO-BEGIN : UtilityComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ComponentManagement.UtilityComponents>
+    UtilityComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : UtilityComponents
+
+
+
+
+
+
+    // AUTO-BEGIN : SourceControl
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.CodeManagement.SourceControl>
+    SourceControls
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SourceControl
 
     // AUTO-END : AUTO REGISTER DBSETS 
  

@@ -1,117 +1,162 @@
-<!-- ==========================================================
-     SIDEBAR
-=========================================================== -->
-
-<div class="sidebar">
-
-    <!-- ======================================================
-         MODULES
-    ======================================================= -->
-
-    <div
-        class="sidebar-module"
-        *ngFor="let module of modules">
-
-        <!-- ==================================================
-             MODULE HEADER
-        =================================================== -->
-
-        <button
-            type="button"
-            class="module-header"
-            (click)="toggleModule(module)">
-
-            <div class="module-title">
-
-                <i [class]="module.icon"></i>
-
-                <span>
-                    {{ module.title }}
-                </span>
-
-            </div>
-
-            <i
-                class="fas"
-                [ngClass]="
-                {
-                    'fa-chevron-down': module.expanded,
-                    'fa-chevron-right': !module.expanded
-                }">
-            </i>
-
-        </button>
-
-        <!-- ==================================================
-             MENUS
-        =================================================== -->
-
-        <div
-            class="sidebar-menus"
-            *ngIf="module.expanded">
-
-            <div
-                class="sidebar-menu"
-                *ngFor="let menu of module.menus">
-
-                <!-- ==========================================
-                     MENU HEADER
-                =========================================== -->
-
-                <button
-                    type="button"
-                    class="menu-header"
-                    (click)="toggleMenu(menu)">
-
-                    <div class="menu-title">
-
-                        <i [class]="menu.icon"></i>
-
-                        <span>
-                            {{ menu.title }}
-                        </span>
-
-                    </div>
-
-                    <i
-                        class="fas"
-                        [ngClass]="
-                        {
-                            'fa-chevron-down': menu.expanded,
-                            'fa-chevron-right': !menu.expanded
-                        }">
-                    </i>
-
-                </button>
-
-                <!-- ==========================================
-                     SUBMENUS
-                =========================================== -->
-
-                <div
-                    class="sidebar-pages"
-                    *ngIf="menu.expanded">
-
-                    <a
-                        class="page-button"
-                        *ngFor="let submenu of menu.submenus"
-                        [class.active]="submenu.active"
-                        [routerLink]="submenu.route">
-
-                        <i [class]="submenu.icon"></i>
-
-                        <span>
-                            {{ submenu.title }}
-                        </span>
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
+<!-- ========================================================== 
+     SIDEBAR 
+=========================================================== --> 
+ 
+<div 
+    class="sidebar" 
+    [class.collapsed]="isCollapsed"> 
+ 
+    <!-- ====================================================== 
+         SIDEBAR HEADER 
+    ======================================================= --> 
+ 
+    <app-sidebar-header 
+        [isCollapsed]="isCollapsed"> 
+    </app-sidebar-header> 
+ 
+ 
+    <!-- ====================================================== 
+         SIDEBAR BODY 
+    ======================================================= --> 
+ 
+    <div 
+        class="sidebar-body"> 
+ 
+        <!-- ================================================== 
+             MODULES 
+        =================================================== --> 
+ 
+        <div 
+            class="sidebar-module" 
+            *ngFor="let module of modules"> 
+ 
+            <!-- ================================================== 
+                 MODULE HEADER 
+            =================================================== --> 
+ 
+            <button 
+                type="button" 
+                class="module-header" 
+                (click)="toggleModule(module)" 
+                [title]="isCollapsed ? module.title : ''" 
+                [attr.aria-label]="module.title"> 
+ 
+                <div class="module-title"> 
+ 
+                    <i 
+                        [class]="module.icon" 
+                        [title]="isCollapsed ? module.title : ''"> 
+                    </i> 
+ 
+                    <span> 
+                        {{ module.title }} 
+                    </span> 
+ 
+                </div> 
+ 
+                <i 
+                    class="fas" 
+                    [ngClass]=" 
+                    { 
+                        'fa-chevron-down': module.expanded, 
+                        'fa-chevron-right': !module.expanded 
+                    }"> 
+                </i> 
+ 
+            </button> 
+ 
+ 
+            <!-- ================================================== 
+                 MENUS 
+            =================================================== --> 
+ 
+            <div 
+                class="sidebar-menus" 
+                *ngIf="module.expanded"> 
+ 
+                <div 
+                    class="sidebar-menu" 
+                    *ngFor="let menu of module.menus"> 
+ 
+                    <!-- ========================================== 
+                         MENU HEADER 
+                    =========================================== --> 
+ 
+                    <button 
+                        type="button" 
+                        class="menu-header" 
+                        (click)="toggleMenu(menu)" 
+                        [title]="isCollapsed ? menu.title : ''" 
+                        [attr.aria-label]="menu.title"> 
+ 
+                        <div class="menu-title"> 
+ 
+                            <i 
+                                [class]="menu.icon" 
+                                [title]="isCollapsed ? menu.title : ''"> 
+                            </i> 
+ 
+                            <span> 
+                                {{ menu.title }} 
+                            </span> 
+ 
+                        </div> 
+ 
+                        <i 
+                            class="fas" 
+                            [ngClass]=" 
+                            { 
+                                'fa-chevron-down': menu.expanded, 
+                                'fa-chevron-right': !menu.expanded 
+                            }"> 
+                        </i> 
+ 
+                    </button> 
+ 
+ 
+                    <!-- ========================================== 
+                         SUBMENUS 
+                    =========================================== --> 
+ 
+                    <div 
+                        class="sidebar-pages" 
+                        *ngIf="menu.expanded"> 
+ 
+                        <a 
+                            class="page-button" 
+                            *ngFor="let submenu of menu.submenus" 
+                            [class.active]="submenu.active" 
+                            [routerLink]="submenu.route" 
+                            [title]="isCollapsed ? submenu.title : ''" 
+                            [attr.aria-label]="submenu.title"> 
+ 
+                            <i 
+                                [class]="submenu.icon" 
+                                [title]="isCollapsed ? submenu.title : ''"> 
+                            </i> 
+ 
+                            <span> 
+                                {{ submenu.title }} 
+                            </span> 
+ 
+                        </a> 
+ 
+                    </div> 
+ 
+                </div> 
+ 
+            </div> 
+ 
+        </div> 
+ 
+    </div> 
+ 
+ 
+    <!-- ====================================================== 
+         SIDEBAR FOOTER 
+    ======================================================= --> 
+ 
+    <app-sidebar-footer> 
+    </app-sidebar-footer> 
+ 
 </div>

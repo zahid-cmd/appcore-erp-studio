@@ -1,13 +1,64 @@
-import { Component } from '@angular/core';
+//===============================================================
+// Imports
+//===============================================================
 
-@Component({
+import
+{
+    Component,
+    inject
+}
+from '@angular/core';
+
+import
+{
+    SidebarService
+}
+from '../../../../core/sidebar/sidebar.service';
+
+//===============================================================
+// Component
+//===============================================================
+
+@Component(
+{
     selector: 'app-footer-version',
+
     standalone: true,
-    templateUrl: './footer-version.html',
-    styleUrl: './footer-version.css'
+
+    templateUrl:
+        './footer-version.html',
+
+    styleUrl:
+        './footer-version.css'
 })
-export class FooterVersionComponent {
 
-    version = 'Version 1.0.0';
+//===============================================================
+// Footer Version Component
+//===============================================================
 
+export class FooterVersionComponent
+{
+    //===========================================================
+    // Dependencies
+    //===========================================================
+
+    private readonly sidebarService =
+        inject(SidebarService);
+
+    //===========================================================
+    // Properties
+    //===========================================================
+
+    version =
+        'Version 1.0.0';
+
+    //===========================================================
+    // Toggle Sidebar
+    //===========================================================
+
+    toggleSidebar():
+        void
+    {
+        this.sidebarService.toggleSidebar();
+    }
 }

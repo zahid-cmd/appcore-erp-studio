@@ -2,6 +2,12 @@
 // Namespaces
 //===============================================================
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.SubmenuSynchronization.DTOs;
@@ -38,6 +44,14 @@ public class FrontendCodeSynchronizationEngine
         _placeholderEngine;
 
 
+    private readonly IFileUpdater
+        _fileUpdater;
+
+
+    private readonly IFileRemover
+        _fileRemover;
+
+
 
     //===========================================================
     // Constructor
@@ -47,7 +61,11 @@ public class FrontendCodeSynchronizationEngine
     (
         ITemplateLoader templateLoader,
 
-        IPlaceholderEngine placeholderEngine
+        IPlaceholderEngine placeholderEngine,
+
+        IFileUpdater fileUpdater,
+
+        IFileRemover fileRemover
     )
     {
         _templateLoader =
@@ -56,6 +74,14 @@ public class FrontendCodeSynchronizationEngine
 
         _placeholderEngine =
             placeholderEngine;
+
+
+        _fileUpdater =
+            fileUpdater;
+
+
+        _fileRemover =
+            fileRemover;
     }
 
 
@@ -87,37 +113,80 @@ public class FrontendCodeSynchronizationEngine
             }
 
 
-            if
-            (
-                string.IsNullOrWhiteSpace(
-                    synchronization.FrontendSubmenuFolder
-                )
-            )
-            {
-                return Failure(
-                    "Frontend submenu folder is not configured."
-                );
-            }
+            //===================================================
+            // Validate Pre-Set Frontend Files
+            //
+            // IMPORTANT:
+            //
+            // The engine works ONLY with the nine pre-set
+            // frontend source files.
+            //
+            // It does NOT create frontend source files.
+            //
+            // It does NOT create frontend feature folders.
+            //
+            // It does NOT create baseline or restore folders.
+            //
+            // The Module Frontend Synchronization Engine is
+            // responsible for creating those folders.
+            //
+            // This engine creates ONLY:
+            //
+            // 9 baseline backup files
+            // 9 restore backup files
+            //
+            // under the folders already created by the
+            // Module Frontend Synchronization Engine.
+            //===================================================
+
+            ValidatePreSetFrontendFiles(
+                synchronization
+            );
 
 
-            if
-            (
-                string.IsNullOrWhiteSpace(
-                    synchronization.FrontendMenuRouteFile
-                )
-            )
-            {
-                return Failure(
-                    "Frontend menu route file is not configured."
-                );
-            }
+            //===================================================
+            // Validate Frontend Menu Route File
+            //
+            // IMPORTANT:
+            //
+            // The submenu route registration is handled by
+            // THIS Code Synchronization Engine.
+            //
+            // The Submenu Synchronization Engine does NOT
+            // modify the parent menu route file.
+            //===================================================
+
+            ValidateFrontendMenuRouteFile(
+                synchronization
+            );
+
+
+            //===================================================
+            // Remove Legacy Duplicate Backup Files
+            //
+            // IMPORTANT:
+            //
+            // Older synchronization logic could create:
+            //
+            // filename.appcore-sync-baseline
+            // filename.appcore-sync-restore
+            //
+            // beside the actual source files.
+            //
+            // These files are NOT part of the current backup
+            // structure and must never remain there.
+            //===================================================
+
+            RemoveLegacyDuplicateBackupFiles(
+                synchronization
+            );
 
 
             //===================================================
             // Model
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Model/model.ts.tpl",
 
                 synchronization.FrontendSubmenuModelFile,
@@ -130,7 +199,7 @@ public class FrontendCodeSynchronizationEngine
             // Service
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Service/service.ts.tpl",
 
                 synchronization.FrontendSubmenuServiceFile,
@@ -143,7 +212,7 @@ public class FrontendCodeSynchronizationEngine
             // Route
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Route/route.ts.tpl",
 
                 synchronization.FrontendSubmenuRouteFile,
@@ -156,7 +225,7 @@ public class FrontendCodeSynchronizationEngine
             // Form TypeScript
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Page/Form/form.ts.tpl",
 
                 synchronization.FrontendSubmenuFormTsFile,
@@ -169,7 +238,7 @@ public class FrontendCodeSynchronizationEngine
             // Form HTML
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Page/Form/form.html.tpl",
 
                 synchronization.FrontendSubmenuFormHtmlFile,
@@ -182,7 +251,7 @@ public class FrontendCodeSynchronizationEngine
             // Form CSS
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Page/Form/form.css.tpl",
 
                 synchronization.FrontendSubmenuFormCssFile,
@@ -195,7 +264,7 @@ public class FrontendCodeSynchronizationEngine
             // List TypeScript
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Page/List/list.ts.tpl",
 
                 synchronization.FrontendSubmenuListTsFile,
@@ -208,7 +277,7 @@ public class FrontendCodeSynchronizationEngine
             // List HTML
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Page/List/list.html.tpl",
 
                 synchronization.FrontendSubmenuListHtmlFile,
@@ -221,7 +290,7 @@ public class FrontendCodeSynchronizationEngine
             // List CSS
             //===================================================
 
-            await WriteTemplateAsync(
+            await WriteTemplateWithBackupsAsync(
                 "Frontend/Page/List/list.css.tpl",
 
                 synchronization.FrontendSubmenuListCssFile,
@@ -232,6 +301,17 @@ public class FrontendCodeSynchronizationEngine
 
             //===================================================
             // Register Submenu Route
+            //
+            // IMPORTANT:
+            //
+            // The route file is now populated by the Code
+            // Synchronization Engine BEFORE registration.
+            //
+            // The registration is inserted into the existing
+            // parent menu route file.
+            //
+            // The Submenu Synchronization Engine has NO
+            // responsibility for this operation.
             //===================================================
 
             await RegisterSubmenuRouteAsync(
@@ -280,14 +360,22 @@ public class FrontendCodeSynchronizationEngine
     //
     // IMPORTANT:
     //
-    // Rollback does not delete generated files or folders.
+    // Rollback operates ONLY on the same nine pre-set
+    // frontend source files.
     //
-    // It:
+    // It removes the centralized backup files.
     //
-    // 1. Clears the nine existing submenu files.
+    // It also removes the submenu route registration created
+    // by this Code Synchronization Engine.
     //
-    // 2. Removes the submenu route registration block from
-    //    the existing menu route file.
+    // It does NOT create frontend source files.
+    //
+    // It does NOT create frontend feature folders.
+    //
+    // It does NOT create baseline or restore folders.
+    //
+    // It does NOT create duplicate backup files beside
+    // frontend source files.
     //
     //===========================================================
 
@@ -312,6 +400,40 @@ public class FrontendCodeSynchronizationEngine
                     "Submenu Synchronization data is required."
                 );
             }
+
+
+            //===================================================
+            // Validate Pre-Set Frontend Files
+            //===================================================
+
+            ValidatePreSetFrontendFiles(
+                synchronization
+            );
+
+
+            //===================================================
+            // Validate Frontend Menu Route File
+            //===================================================
+
+            ValidateFrontendMenuRouteFile(
+                synchronization
+            );
+
+
+            //===================================================
+            // Remove Submenu Route Registration
+            //
+            // IMPORTANT:
+            //
+            // This registration belongs to the Code
+            // Synchronization Engine.
+            //
+            // Therefore rollback also removes it here.
+            //===================================================
+
+            await RemoveSubmenuRouteRegistrationAsync(
+                synchronization
+            );
 
 
             //===================================================
@@ -396,10 +518,19 @@ public class FrontendCodeSynchronizationEngine
 
 
             //===================================================
-            // Remove Submenu Route Registration
+            // Remove Centralized Backup Files
             //===================================================
 
-            await RemoveSubmenuRouteRegistrationAsync(
+            await RemoveBackupFilesAsync(
+                synchronization
+            );
+
+
+            //===================================================
+            // Remove Legacy Duplicate Backup Files
+            //===================================================
+
+            RemoveLegacyDuplicateBackupFiles(
                 synchronization
             );
 
@@ -454,18 +585,113 @@ public class FrontendCodeSynchronizationEngine
 
 
     //===========================================================
-    // Register Submenu Route
+    // Validate Pre-Set Frontend Files
     //===========================================================
 
-    private async Task RegisterSubmenuRouteAsync
+    private static void
+        ValidatePreSetFrontendFiles
     (
         SubmenuSynchronizationDto synchronization
     )
     {
         //=======================================================
-        // Validate Menu Route
+        // Files
         //=======================================================
 
+        var files =
+            new[]
+            {
+                synchronization.FrontendSubmenuModelFile,
+
+                synchronization.FrontendSubmenuServiceFile,
+
+                synchronization.FrontendSubmenuRouteFile,
+
+                synchronization.FrontendSubmenuFormTsFile,
+
+                synchronization.FrontendSubmenuFormHtmlFile,
+
+                synchronization.FrontendSubmenuFormCssFile,
+
+                synchronization.FrontendSubmenuListTsFile,
+
+                synchronization.FrontendSubmenuListHtmlFile,
+
+                synchronization.FrontendSubmenuListCssFile
+            };
+
+
+        //=======================================================
+        // Validate All Nine Files
+        //=======================================================
+
+        foreach
+        (
+            var file in files
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    file
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    "One or more pre-set frontend synchronization files are not configured."
+                );
+            }
+
+
+            var fullPath =
+                Path.GetFullPath(
+                    file
+                );
+
+
+            if
+            (
+                !File.Exists(
+                    fullPath
+                )
+            )
+            {
+                throw new FileNotFoundException(
+                    $"Pre-set frontend synchronization file was not found: {fullPath}"
+                );
+            }
+
+
+            //===================================================
+            // Target Must Be A Normal Source File
+            //===================================================
+
+            if
+            (
+                IsBackupFile(
+                    fullPath
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    $"A synchronization target cannot be a backup file: {fullPath}"
+                );
+            }
+        }
+    }
+
+
+
+    //===========================================================
+    // Validate Frontend Menu Route File
+    //===========================================================
+
+    private static void
+        ValidateFrontendMenuRouteFile
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
         if
         (
             string.IsNullOrWhiteSpace(
@@ -498,351 +724,43 @@ public class FrontendCodeSynchronizationEngine
         }
 
 
-        //=======================================================
-        // Load Menu Route
-        //=======================================================
-
-        var content =
-            await File.ReadAllTextAsync(
-                menuRouteFile
-            );
-
-
-        //=======================================================
-        // Build Registration
-        //=======================================================
-
-        var registration =
-            await BuildSubmenuRouteRegistrationAsync(
-                synchronization,
-
-                menuRouteFile
-            );
-
-
-        //=======================================================
-        // Remove Existing Registration
-        //=======================================================
-
-        content =
-            RemoveSubmenuRegistrationBlock(
-                content,
-
-                synchronization.SubmenuCode
-            );
-
-
-        //=======================================================
-        // Register Into Placeholder
-        //=======================================================
-
-        const string placeholder =
-            "// SUBMENU ROUTE PLACEHOLDER";
-
-
         if
         (
-            content.Contains(
-                placeholder,
-                StringComparison.Ordinal
+            IsBackupFile(
+                menuRouteFile
             )
         )
         {
-            content =
-                content.Replace(
-                    placeholder,
-
-                    registration.TrimEnd(),
-
-                    StringComparison.Ordinal
-                );
+            throw new InvalidOperationException(
+                $"Frontend menu route file cannot be a backup file: {menuRouteFile}"
+            );
         }
-        else
-        {
-            //===================================================
-            // Existing Registrations
-            //
-            // Insert before the children array closing bracket.
-            //===================================================
-
-            var childrenStart =
-                content.IndexOf(
-                    "children:",
-                    StringComparison.Ordinal
-                );
-
-
-            if
-            (
-                childrenStart < 0
-            )
-            {
-                throw new InvalidOperationException(
-                    "The frontend menu route file does not contain a children route collection."
-                );
-            }
-
-
-            var openingBracket =
-                content.IndexOf(
-                    '[',
-
-                    childrenStart
-                );
-
-
-            if
-            (
-                openingBracket < 0
-            )
-            {
-                throw new InvalidOperationException(
-                    "The frontend menu route children collection could not be located."
-                );
-            }
-
-
-            var closingBracket =
-                FindChildrenClosingBracket(
-                    content,
-
-                    openingBracket
-                );
-
-
-            if
-            (
-                closingBracket < 0
-            )
-            {
-                throw new InvalidOperationException(
-                    "The frontend menu route children collection could not be closed."
-                );
-            }
-
-
-            var before =
-                content[..closingBracket]
-                    .TrimEnd();
-
-
-            var after =
-                content[closingBracket..];
-
-
-            content =
-                before
-                +
-                Environment.NewLine
-                +
-                Environment.NewLine
-                +
-                registration.Trim()
-                +
-                Environment.NewLine
-                +
-                Environment.NewLine
-                +
-                after.TrimStart();
-        }
-
-
-        //=======================================================
-        // Write Menu Route
-        //=======================================================
-
-        await File.WriteAllTextAsync(
-            menuRouteFile,
-
-            content
-        );
     }
 
 
 
     //===========================================================
-    // Find Children Closing Bracket
+    // Register Submenu Route
     //===========================================================
 
-    private static int
-        FindChildrenClosingBracket
+    private async Task
+        RegisterSubmenuRouteAsync
     (
-        string content,
-
-        int openingBracket
-    )
-    {
-        var depth =
-            0;
-
-
-        var insideSingleQuote =
-            false;
-
-
-        var insideDoubleQuote =
-            false;
-
-
-        var insideTemplateLiteral =
-            false;
-
-
-        var escaped =
-            false;
-
-
-        for
-        (
-            var index = openingBracket;
-
-            index < content.Length;
-
-            index++
-        )
-        {
-            var character =
-                content[index];
-
-
-            if
-            (
-                escaped
-            )
-            {
-                escaped =
-                    false;
-
-                continue;
-            }
-
-
-            if
-            (
-                character == '\\'
-                &&
-                (
-                    insideSingleQuote
-                    ||
-                    insideDoubleQuote
-                    ||
-                    insideTemplateLiteral
-                )
-            )
-            {
-                escaped =
-                    true;
-
-                continue;
-            }
-
-
-            if
-            (
-                character == '\''
-                &&
-                !insideDoubleQuote
-                &&
-                !insideTemplateLiteral
-            )
-            {
-                insideSingleQuote =
-                    !insideSingleQuote;
-
-                continue;
-            }
-
-
-            if
-            (
-                character == '"'
-                &&
-                !insideSingleQuote
-                &&
-                !insideTemplateLiteral
-            )
-            {
-                insideDoubleQuote =
-                    !insideDoubleQuote;
-
-                continue;
-            }
-
-
-            if
-            (
-                character == '`'
-                &&
-                !insideSingleQuote
-                &&
-                !insideDoubleQuote
-            )
-            {
-                insideTemplateLiteral =
-                    !insideTemplateLiteral;
-
-                continue;
-            }
-
-
-            if
-            (
-                insideSingleQuote
-                ||
-                insideDoubleQuote
-                ||
-                insideTemplateLiteral
-            )
-            {
-                continue;
-            }
-
-
-            if
-            (
-                character == '['
-            )
-            {
-                depth++;
-            }
-            else if
-            (
-                character == ']'
-            )
-            {
-                depth--;
-
-
-                if
-                (
-                    depth == 0
-                )
-                {
-                    return index;
-                }
-            }
-        }
-
-
-        return -1;
-    }
-
-
-
-    //===========================================================
-    // Build Submenu Route Registration
-    //===========================================================
-
-    private async Task<string>
-        BuildSubmenuRouteRegistrationAsync
-    (
-        SubmenuSynchronizationDto synchronization,
-
-        string menuRouteFile
+        SubmenuSynchronizationDto synchronization
     )
     {
         //=======================================================
-        // Load Template
+        // Menu Route File
+        //=======================================================
+
+        var menuRouteFile =
+            Path.GetFullPath(
+                synchronization.FrontendMenuRouteFile
+            );
+
+
+        //=======================================================
+        // Load Registration Template
         //=======================================================
 
         var content =
@@ -865,11 +783,17 @@ public class FrontendCodeSynchronizationEngine
         // Build Relative Route Import
         //=======================================================
 
+        var submenuRouteFile =
+            Path.GetFullPath(
+                synchronization.FrontendSubmenuRouteFile
+            );
+
+
         var submenuRouteImport =
             BuildRelativeRouteImport(
                 menuRouteFile,
 
-                synchronization.FrontendSubmenuRouteFile
+                submenuRouteFile
             );
 
 
@@ -891,7 +815,26 @@ public class FrontendCodeSynchronizationEngine
             );
 
 
-        return content;
+        //=======================================================
+        // Insert Managed Registration Block
+        //
+        // IMPORTANT:
+        //
+        // Registration is inserted into the existing
+        // "children:" section of the parent menu route.
+        //
+        // The managed block makes the operation idempotent.
+        // Re-synchronization replaces the existing block instead
+        // of creating duplicate registration entries.
+        //=======================================================
+
+        await _fileUpdater.InsertManagedBlockAsync(
+            menuRouteFile,
+
+            "children:",
+
+            content
+        );
     }
 
 
@@ -934,41 +877,12 @@ public class FrontendCodeSynchronizationEngine
         }
 
 
-        var content =
-            await File.ReadAllTextAsync(
-                menuRouteFile
-            );
+        var submenuCode =
+            synchronization.SubmenuCode?.Trim()
+            ??
+            string.Empty;
 
 
-        content =
-            RemoveSubmenuRegistrationBlock(
-                content,
-
-                synchronization.SubmenuCode
-            );
-
-
-        await File.WriteAllTextAsync(
-            menuRouteFile,
-
-            content
-        );
-    }
-
-
-
-    //===========================================================
-    // Remove Registration Block
-    //===========================================================
-
-    private static string
-        RemoveSubmenuRegistrationBlock
-    (
-        string content,
-
-        string submenuCode
-    )
-    {
         if
         (
             string.IsNullOrWhiteSpace(
@@ -976,83 +890,21 @@ public class FrontendCodeSynchronizationEngine
             )
         )
         {
-            return content;
+            return;
         }
 
 
-        var beginMarker =
-            $"// AUTO-BEGIN : {submenuCode.Trim()}";
+        //=======================================================
+        // Remove Managed Registration Block
+        //=======================================================
 
+        await _fileRemover.RemoveManagedBlockAsync(
+            menuRouteFile,
 
-        var endMarker =
-            $"// AUTO-END : {submenuCode.Trim()}";
+            $"// AUTO-BEGIN : {submenuCode}",
 
-
-        var startIndex =
-            content.IndexOf(
-                beginMarker,
-
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            startIndex < 0
-        )
-        {
-            return content;
-        }
-
-
-        var endIndex =
-            content.IndexOf(
-                endMarker,
-
-                startIndex,
-
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            endIndex < 0
-        )
-        {
-            throw new InvalidOperationException(
-                $"Submenu route registration end marker was not found for '{submenuCode}'."
-            );
-        }
-
-
-        var removeEnd =
-            endIndex
-            +
-            endMarker.Length;
-
-
-        while
-        (
-            removeEnd < content.Length
-            &&
-            (
-                content[removeEnd] == '\r'
-                ||
-                content[removeEnd] == '\n'
-            )
-        )
-        {
-            removeEnd++;
-        }
-
-
-        return
-            content.Remove(
-                startIndex,
-
-                removeEnd - startIndex
-            );
+            $"// AUTO-END : {submenuCode}"
+        );
     }
 
 
@@ -1159,10 +1011,1027 @@ public class FrontendCodeSynchronizationEngine
 
 
     //===========================================================
+    // Write Template With Backups
+    //===========================================================
+
+    private async Task
+        WriteTemplateWithBackupsAsync
+    (
+        string templateRelativePath,
+
+        string targetFile,
+
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Validate Target
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                targetFile
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Frontend target file is not configured for template '{templateRelativePath}'."
+            );
+        }
+
+
+        //=======================================================
+        // Normalize Target
+        //=======================================================
+
+        targetFile =
+            Path.GetFullPath(
+                targetFile
+            );
+
+
+        //=======================================================
+        // Target Must Be A Normal Source File
+        //=======================================================
+
+        if
+        (
+            IsBackupFile(
+                targetFile
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Frontend synchronization cannot write to a backup file: {targetFile}"
+            );
+        }
+
+
+        //=======================================================
+        // Target Must Already Exist
+        //
+        // IMPORTANT:
+        //
+        // File creation is NEVER performed here.
+        //
+        // The target file must already exist.
+        //=======================================================
+
+        if
+        (
+            !File.Exists(
+                targetFile
+            )
+        )
+        {
+            throw new FileNotFoundException(
+                $"Pre-set frontend target file was not found: {targetFile}"
+            );
+        }
+
+
+        //=======================================================
+        // Load Template
+        //=======================================================
+
+        var content =
+            await _templateLoader.LoadTemplateAsync(
+                templateRelativePath
+            );
+
+
+        //=======================================================
+        // Build Replacements
+        //=======================================================
+
+        var replacements =
+            BuildReplacements(
+                synchronization
+            );
+
+
+        //=======================================================
+        // Apply Template Replacements
+        //=======================================================
+
+        content =
+            _placeholderEngine.Replace(
+                content,
+
+                replacements
+            );
+
+
+        //=======================================================
+        // Build Centralized Backup Paths
+        //
+        // IMPORTANT:
+        //
+        // The backup directories MUST already exist.
+        //
+        // This engine does NOT create:
+        //
+        // baseline-files
+        // restore-files
+        // module folders
+        //
+        // Those folders are created by the Module Frontend
+        // Synchronization Engine.
+        //
+        // This engine only creates/writes the 18 backup files:
+        //
+        // 9 baseline files
+        // 9 restore files
+        //=======================================================
+
+        var backupPaths =
+            BuildBackupPaths(
+                targetFile,
+
+                synchronization
+            );
+
+
+        //=======================================================
+        // Verify Backup Directories Already Exist
+        //=======================================================
+
+        EnsureBackupDirectoriesExist(
+            backupPaths
+        );
+
+
+        //=======================================================
+        // Write Baseline Backup
+        //=======================================================
+
+        await File.WriteAllTextAsync(
+            backupPaths.BaselineFile,
+
+            content
+        );
+
+
+        //=======================================================
+        // Write Restore Backup
+        //=======================================================
+
+        await File.WriteAllTextAsync(
+            backupPaths.RestoreFile,
+
+            content
+        );
+
+
+        //=======================================================
+        // Write Code Into Existing Frontend File
+        //
+        // IMPORTANT:
+        //
+        // FileMode.Open is deliberately used.
+        //
+        // Therefore this method cannot create another frontend
+        // source file.
+        //=======================================================
+
+        await WriteExistingFileAsync(
+            targetFile,
+
+            content
+        );
+
+
+        //=======================================================
+        // Remove Any Legacy Duplicate Backup Files
+        //
+        // IMPORTANT:
+        //
+        // The centralized backup files above are the ONLY
+        // backup files allowed to exist.
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            targetFile
+        );
+    }
+
+
+
+    //===========================================================
+    // Write Existing File
+    //===========================================================
+
+    private static async Task
+        WriteExistingFileAsync
+    (
+        string filePath,
+
+        string content
+    )
+    {
+        await using var stream =
+            new FileStream(
+                filePath,
+
+                FileMode.Open,
+
+                FileAccess.Write,
+
+                FileShare.Read
+            );
+
+
+        stream.SetLength(
+            0
+        );
+
+
+        await using var writer =
+            new StreamWriter(
+                stream
+            );
+
+
+        await writer.WriteAsync(
+            content
+        );
+    }
+
+
+
+    //===========================================================
+    // Build Backup Paths
+    //===========================================================
+
+    private static BackupPaths
+        BuildBackupPaths
+    (
+        string targetFile,
+
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Find Frontend Source Root
+        //=======================================================
+
+        var fullTargetFile =
+            Path.GetFullPath(
+                targetFile
+            );
+
+
+        var sourceMarker =
+            $"{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}";
+
+
+        var sourceIndex =
+            fullTargetFile.IndexOf(
+                sourceMarker,
+
+                StringComparison.OrdinalIgnoreCase
+            );
+
+
+        if
+        (
+            sourceIndex < 0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Frontend source root could not be determined from target file: {fullTargetFile}"
+            );
+        }
+
+
+        var sourceRoot =
+            fullTargetFile[
+                ..(
+                    sourceIndex
+                    +
+                    sourceMarker.Length
+                )
+            ];
+
+
+        //=======================================================
+        // Module Name
+        //=======================================================
+
+        var moduleName =
+            synchronization.ModuleName?.Trim()
+            ??
+            string.Empty;
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                moduleName
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "Module name is required to build frontend synchronization backup paths."
+            );
+        }
+
+
+        //=======================================================
+        // Normalize Module Name
+        //
+        // IMPORTANT:
+        //
+        // The module backup folder must use the same kebab-case
+        // naming convention used by the Module Frontend
+        // Synchronization Engine.
+        //
+        // Example:
+        //
+        // Accounts & Finance
+        //          ↓
+        // accounts-finance
+        //
+        // Settings
+        //          ↓
+        // settings
+        //=======================================================
+
+        moduleName =
+            ToKebabCase(
+                moduleName
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                moduleName
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "Module name could not be converted to a valid backup folder name."
+            );
+        }
+
+
+        //=======================================================
+        // Target File Name
+        //=======================================================
+
+        var targetFileName =
+            Path.GetFileName(
+                fullTargetFile
+            );
+
+
+        //=======================================================
+        // Baseline Directory
+        //=======================================================
+
+        var baselineDirectory =
+            Path.Combine(
+                sourceRoot,
+
+                "development_backup",
+
+                "baseline-files",
+
+                moduleName
+            );
+
+
+        //=======================================================
+        // Restore Directory
+        //=======================================================
+
+        var restoreDirectory =
+            Path.Combine(
+                sourceRoot,
+
+                "development_backup",
+
+                "restore-files",
+
+                moduleName
+            );
+
+
+        //=======================================================
+        // Backup File Names
+        //=======================================================
+
+        var baselineFile =
+            Path.Combine(
+                baselineDirectory,
+
+                $"{targetFileName}.appcore-sync-baseline"
+            );
+
+
+        var restoreFile =
+            Path.Combine(
+                restoreDirectory,
+
+                $"{targetFileName}.appcore-sync-restore"
+            );
+
+
+        return new BackupPaths
+        {
+            BaselineFile =
+                baselineFile,
+
+            RestoreFile =
+                restoreFile
+        };
+    }
+
+
+
+    //===========================================================
+    // Ensure Backup Directories Exist
+    //===========================================================
+    //
+    // IMPORTANT:
+    //
+    // This method ONLY verifies the directories.
+    //
+    // It NEVER creates them.
+    //
+    // The Module Frontend Synchronization Engine is responsible
+    // for creating:
+    //
+    // development_backup/
+    //     baseline-files/
+    //         <module>/
+    //
+    //     restore-files/
+    //         <module>/
+    //
+    //===========================================================
+
+    private static void
+        EnsureBackupDirectoriesExist
+    (
+        BackupPaths backupPaths
+    )
+    {
+        //=======================================================
+        // Baseline Directory
+        //=======================================================
+
+        var baselineDirectory =
+            Path.GetDirectoryName(
+                backupPaths.BaselineFile
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                baselineDirectory
+            )
+            ||
+            !Directory.Exists(
+                baselineDirectory
+            )
+        )
+        {
+            throw new DirectoryNotFoundException(
+                $"Frontend baseline backup directory was not found: {baselineDirectory}"
+            );
+        }
+
+
+        //=======================================================
+        // Restore Directory
+        //=======================================================
+
+        var restoreDirectory =
+            Path.GetDirectoryName(
+                backupPaths.RestoreFile
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                restoreDirectory
+            )
+            ||
+            !Directory.Exists(
+                restoreDirectory
+            )
+        )
+        {
+            throw new DirectoryNotFoundException(
+                $"Frontend restore backup directory was not found: {restoreDirectory}"
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Remove Backup Files
+    //===========================================================
+
+    private static async Task
+        RemoveBackupFilesAsync
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Model
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuModelFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // Service
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuServiceFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // Route
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuRouteFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // Form TypeScript
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuFormTsFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // Form HTML
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuFormHtmlFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // Form CSS
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuFormCssFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // List TypeScript
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuListTsFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // List HTML
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuListHtmlFile,
+
+            synchronization
+        );
+
+
+        //=======================================================
+        // List CSS
+        //=======================================================
+
+        await RemoveBackupFileAsync(
+            synchronization.FrontendSubmenuListCssFile,
+
+            synchronization
+        );
+    }
+
+
+
+    //===========================================================
+    // Remove Backup File
+    //===========================================================
+
+    private static async Task
+        RemoveBackupFileAsync
+    (
+        string targetFile,
+
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Validate Target
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                targetFile
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Build Backup Paths
+        //=======================================================
+
+        var backupPaths =
+            BuildBackupPaths(
+                targetFile,
+
+                synchronization
+            );
+
+
+        //=======================================================
+        // Remove Baseline
+        //=======================================================
+
+        if
+        (
+            File.Exists(
+                backupPaths.BaselineFile
+            )
+        )
+        {
+            File.Delete(
+                backupPaths.BaselineFile
+            );
+        }
+
+
+        //=======================================================
+        // Remove Restore
+        //=======================================================
+
+        if
+        (
+            File.Exists(
+                backupPaths.RestoreFile
+            )
+        )
+        {
+            File.Delete(
+                backupPaths.RestoreFile
+            );
+        }
+
+
+        //=======================================================
+        // Remove Legacy Duplicate Backup Files
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            targetFile
+        );
+
+
+        //=======================================================
+        // Allow Async Flow
+        //=======================================================
+
+        await Task.CompletedTask;
+    }
+
+
+
+    //===========================================================
+    // Remove Legacy Duplicate Backup Files
+    //===========================================================
+    //
+    // IMPORTANT:
+    //
+    // These files are NOT part of the current architecture:
+    //
+    // filename.appcore-sync-baseline
+    // filename.appcore-sync-restore
+    //
+    // They must never exist beside the actual source file.
+    //
+    // The valid copies exist ONLY under:
+    //
+    // development_backup/baseline-files/<Module>/
+    // development_backup/restore-files/<Module>/
+    //
+    //===========================================================
+
+    private static void
+        RemoveLegacyDuplicateBackupFiles
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Model
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuModelFile
+        );
+
+
+        //=======================================================
+        // Service
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuServiceFile
+        );
+
+
+        //=======================================================
+        // Route
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuRouteFile
+        );
+
+
+        //=======================================================
+        // Form TypeScript
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuFormTsFile
+        );
+
+
+        //=======================================================
+        // Form HTML
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuFormHtmlFile
+        );
+
+
+        //=======================================================
+        // Form CSS
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuFormCssFile
+        );
+
+
+        //=======================================================
+        // List TypeScript
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuListTsFile
+        );
+
+
+        //=======================================================
+        // List HTML
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuListHtmlFile
+        );
+
+
+        //=======================================================
+        // List CSS
+        //=======================================================
+
+        RemoveLegacyDuplicateBackupFiles(
+            synchronization.FrontendSubmenuListCssFile
+        );
+    }
+
+
+
+    //===========================================================
+    // Remove Legacy Duplicate Backup File
+    //===========================================================
+
+    private static void
+        RemoveLegacyDuplicateBackupFiles
+    (
+        string targetFile
+    )
+    {
+        //=======================================================
+        // Validate
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                targetFile
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Normalize Target
+        //=======================================================
+
+        var fullTargetFile =
+            Path.GetFullPath(
+                targetFile
+            );
+
+
+        //=======================================================
+        // Target Directory
+        //=======================================================
+
+        var targetDirectory =
+            Path.GetDirectoryName(
+                fullTargetFile
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                targetDirectory
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Target File Name
+        //=======================================================
+
+        var targetFileName =
+            Path.GetFileName(
+                fullTargetFile
+            );
+
+
+        //=======================================================
+        // Legacy Baseline File
+        //=======================================================
+
+        var legacyBaselineFile =
+            Path.Combine(
+                targetDirectory,
+
+                $"{targetFileName}.appcore-sync-baseline"
+            );
+
+
+        //=======================================================
+        // Legacy Restore File
+        //=======================================================
+
+        var legacyRestoreFile =
+            Path.Combine(
+                targetDirectory,
+
+                $"{targetFileName}.appcore-sync-restore"
+            );
+
+
+        //=======================================================
+        // Remove Legacy Baseline
+        //=======================================================
+
+        if
+        (
+            File.Exists(
+                legacyBaselineFile
+            )
+        )
+        {
+            File.Delete(
+                legacyBaselineFile
+            );
+        }
+
+
+        //=======================================================
+        // Remove Legacy Restore
+        //=======================================================
+
+        if
+        (
+            File.Exists(
+                legacyRestoreFile
+            )
+        )
+        {
+            File.Delete(
+                legacyRestoreFile
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Is Backup File
+    //===========================================================
+
+    private static bool
+        IsBackupFile
+    (
+        string filePath
+    )
+    {
+        var fileName =
+            Path.GetFileName(
+                filePath
+            );
+
+
+        return
+            fileName.EndsWith(
+                ".appcore-sync-baseline",
+
+                StringComparison.OrdinalIgnoreCase
+            )
+            ||
+            fileName.EndsWith(
+                ".appcore-sync-restore",
+
+                StringComparison.OrdinalIgnoreCase
+            );
+    }
+
+
+
+    //===========================================================
+    // Backup Paths
+    //===========================================================
+
+    private sealed class BackupPaths
+    {
+        public string BaselineFile
+        {
+            get;
+            set;
+        } = string.Empty;
+
+
+        public string RestoreFile
+        {
+            get;
+            set;
+        } = string.Empty;
+    }
+
+
+
+    //===========================================================
     // Clear File
     //===========================================================
 
-    private static async Task ClearFileAsync
+    private static async Task
+        ClearFileAsync
     (
         string filePath
     )
@@ -1208,105 +2077,40 @@ public class FrontendCodeSynchronizationEngine
 
 
         //=======================================================
-        // Clear Existing File
-        //=======================================================
-
-        await File.WriteAllTextAsync(
-            filePath,
-
-            string.Empty
-        );
-    }
-
-
-
-    //===========================================================
-    // Write Template
-    //===========================================================
-
-    private async Task WriteTemplateAsync
-    (
-        string templateRelativePath,
-
-        string targetFile,
-
-        SubmenuSynchronizationDto synchronization
-    )
-    {
-        //=======================================================
-        // Validate Target
+        // Backup File Protection
         //=======================================================
 
         if
         (
-            string.IsNullOrWhiteSpace(
-                targetFile
+            IsBackupFile(
+                filePath
             )
         )
         {
             throw new InvalidOperationException(
-                $"Frontend target file is not configured for template '{templateRelativePath}'."
+                $"Frontend synchronization cannot clear a backup file: {filePath}"
             );
         }
 
 
         //=======================================================
-        // Target Must Already Exist
+        // Clear Existing File
         //=======================================================
 
-        if
-        (
-            !File.Exists(
-                targetFile
-            )
-        )
-        {
-            throw new FileNotFoundException(
-                $"Frontend target file was not found: {targetFile}"
-            );
-        }
+        await using var stream =
+            new FileStream(
+                filePath,
 
+                FileMode.Open,
 
-        //=======================================================
-        // Load Template
-        //=======================================================
+                FileAccess.Write,
 
-        var content =
-            await _templateLoader.LoadTemplateAsync(
-                templateRelativePath
+                FileShare.Read
             );
 
 
-        //=======================================================
-        // Build Replacements
-        //=======================================================
-
-        var replacements =
-            BuildReplacements(
-                synchronization
-            );
-
-
-        //=======================================================
-        // Apply Replacements
-        //=======================================================
-
-        content =
-            _placeholderEngine.Replace(
-                content,
-
-                replacements
-            );
-
-
-        //=======================================================
-        // Write Code Into Existing File
-        //=======================================================
-
-        await File.WriteAllTextAsync(
-            targetFile,
-
-            content
+        stream.SetLength(
+            0
         );
     }
 

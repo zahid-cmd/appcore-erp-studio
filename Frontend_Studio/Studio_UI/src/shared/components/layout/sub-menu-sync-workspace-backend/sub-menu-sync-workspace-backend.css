@@ -9,6 +9,10 @@
     width:100%;
 
     height:100%;
+
+    min-width:0;
+
+    box-sizing:border-box;
 }
 
 
@@ -19,6 +23,10 @@
     width:100%;
 
     height:100%;
+
+    min-width:0;
+
+    box-sizing:border-box;
 }
 
 
@@ -36,6 +44,8 @@
 
     height:100%;
 
+    min-width:0;
+
     overflow:hidden;
 
     background:#ffffff;
@@ -46,6 +56,8 @@
 
     box-shadow:
         0 2px 8px rgba(15,23,42,.04);
+
+    box-sizing:border-box;
 }
 
 
@@ -61,9 +73,15 @@
 
     justify-content:space-between;
 
+    width:100%;
+
     height:42px;
 
+    min-height:42px;
+
     padding:0 14px;
+
+    box-sizing:border-box;
 
     background:
         linear-gradient(
@@ -85,6 +103,8 @@
 
     gap:8px;
 
+    min-width:0;
+
     color:#1f2937;
 
     font-size:13px;
@@ -95,12 +115,16 @@
 
 .workspace-title i
 {
+    flex:0 0 auto;
+
     color:var(--brand-blue);
 }
 
 
 .workspace-status
 {
+    flex:0 0 auto;
+
     padding:2px 10px;
 
     color:#2563eb;
@@ -118,6 +142,8 @@
     border:1px solid #d8e5ff;
 
     border-radius:999px;
+
+    box-sizing:border-box;
 }
 
 
@@ -130,14 +156,21 @@
     display:grid;
 
     grid-template-columns:
-        1fr
-        1fr
-        1fr
-        1fr;
+        repeat(
+            4,
+            minmax(
+                0,
+                1fr
+            )
+        );
 
     gap:16px;
 
-    flex:1;
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-width:0;
 
     padding:12px;
 
@@ -145,11 +178,9 @@
 
     overflow-y:auto;
 
-    align-items:start;
+    align-items:stretch;
 
     box-sizing:border-box;
-
-    min-width:0;
 }
 
 
@@ -167,11 +198,17 @@
 
     min-width:0;
 
+    max-width:100%;
+
     height:100%;
 
     gap:10px;
 
-    padding:10px;
+    padding:
+        0
+        10px
+        10px
+        10px;
 
     background:#ffffff;
 
@@ -183,6 +220,8 @@
         0 1px 3px rgba(15,23,42,.03);
 
     box-sizing:border-box;
+
+    overflow:hidden;
 }
 
 
@@ -198,10 +237,20 @@
 
     justify-content:space-between;
 
+    align-self:stretch;
+
+    width:calc(100% + 20px);
+
+    min-width:calc(100% + 20px);
+
+    max-width:none;
+
     height:38px;
 
+    min-height:38px;
+
     margin:
-        -10px
+        0
         -10px
         12px
         -10px;
@@ -229,6 +278,10 @@
         10px
         0
         0;
+
+    box-sizing:border-box;
+
+    flex:0 0 38px;
 }
 
 
@@ -236,11 +289,15 @@
 {
     width:16px;
 
+    min-width:16px;
+
     color:var(--brand-blue);
 
     font-size:14px;
 
     text-align:center;
+
+    flex:0 0 16px;
 }
 
 
@@ -255,6 +312,12 @@
     align-items:center;
 
     gap:8px;
+
+    min-width:0;
+
+    max-width:100%;
+
+    overflow:hidden;
 }
 
 
@@ -262,11 +325,15 @@
 {
     width:16px;
 
+    min-width:16px;
+
     color:var(--brand-blue);
 
     font-size:14px;
 
     text-align:center;
+
+    flex:0 0 16px;
 }
 
 
@@ -286,6 +353,10 @@
 
     height:28px;
 
+    min-width:28px;
+
+    max-width:28px;
+
     padding:0;
 
     color:#64748b;
@@ -299,6 +370,10 @@
     border-radius:8px;
 
     transition:all .18s ease;
+
+    box-sizing:border-box;
+
+    flex:0 0 28px;
 }
 
 
@@ -329,12 +404,256 @@
  *==============================================================*/
 
 .workspace-section app-textbox,
+
 .workspace-section app-dropdown,
-.workspace-section app-textarea
+
+.workspace-section app-textarea,
+
+.workspace-section app-search-dropdown
 {
     display:block;
 
-    width:100%;
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+
+    flex:0 0 auto;
+}
+
+
+/*==============================================================*
+ * TEXTBOX HOST
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textbox
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * TEXTBOX INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textbox .textbox-container,
+
+.workspace-section ::ng-deep app-textbox .input-container
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+.workspace-section ::ng-deep app-textbox input
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * DROPDOWN HOST
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-dropdown
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * DROPDOWN INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-dropdown .dropdown-container,
+
+.workspace-section ::ng-deep app-dropdown .dropdown,
+
+.workspace-section ::ng-deep app-dropdown .dropdown-selector
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * SEARCH DROPDOWN HOST
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-search-dropdown
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * SEARCH DROPDOWN INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-search-dropdown .dropdown-container,
+
+.workspace-section ::ng-deep app-search-dropdown .dropdown,
+
+.workspace-section ::ng-deep app-search-dropdown .dropdown-selector
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * TEXTAREA HOST
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textarea
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * TEXTAREA INTERNAL WIDTH
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textarea .textarea-container,
+
+.workspace-section ::ng-deep app-textarea .textarea
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+.workspace-section ::ng-deep app-textarea textarea
+{
+    display:block;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    margin:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+/*==============================================================*
+ * FORM CONTROL BOX SIZING
+ *==============================================================*/
+
+.workspace-section ::ng-deep app-textbox *,
+
+.workspace-section ::ng-deep app-dropdown *,
+
+.workspace-section ::ng-deep app-textarea *,
+
+.workspace-section ::ng-deep app-search-dropdown *
+{
+    box-sizing:border-box;
 }
 
 
@@ -373,7 +692,13 @@
     .workspace-content .workspace-card-body
     {
         grid-template-columns:
-            repeat(4,1fr);
+            repeat(
+                4,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
     }
 }
 
@@ -383,7 +708,13 @@
     .workspace-content .workspace-card-body
     {
         grid-template-columns:
-            repeat(2,1fr);
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
     }
 }
 
@@ -393,7 +724,10 @@
     .workspace-content .workspace-card-body
     {
         grid-template-columns:
-            1fr;
+            minmax(
+                0,
+                1fr
+            );
     }
 
 

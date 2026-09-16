@@ -2,110 +2,169 @@
    FOOTER
 =================================================== */
 
-.footer {
+.footer
+{
+    width:100%;
 
-    height: 50px;
+    height:50px;
 
-    display: flex;
+    min-height:50px;
 
-    align-items: center;
+    max-height:50px;
 
-    background: #ffffff;
+    display:flex;
 
-    border-top: 1px solid #e2e8f0;
+    align-items:center;
 
-    box-sizing: border-box;
+    background:#ffffff;
 
-    overflow: hidden;
+    border-top:
+        1px solid
+        #e2e8f0;
 
-    user-select: none;
+    box-sizing:border-box;
 
+    overflow:hidden;
+
+    user-select:none;
 }
+
 
 /* ===================================================
    LEFT
 =================================================== */
 
-.footer-left {
+.footer-left
+{
+    flex:
+        0 0
+        300px;
 
-    flex: 0 0 300px;
+    width:300px;
 
-    width: 300px;
+    min-width:300px;
 
-    height: 100%;
+    max-width:300px;
 
-    display: flex;
+    height:50px;
 
-    align-items: center;
+    min-height:50px;
 
-    justify-content: center;
+    max-height:50px;
 
-    padding: 0;
+    display:flex;
 
-    border-right: 1px solid #e2e8f0;
+    align-items:center;
 
-    box-sizing: border-box;
+    justify-content:center;
 
+    padding:0;
+
+    margin:0;
+
+    border-right:
+        1px solid
+        #e2e8f0;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e8edf3 0%,
+            #e3e8ee 48%,
+            #dde3ea 100%
+        );
 }
+
 
 /* ===================================================
    CENTER
 =================================================== */
 
-.footer-center {
+.footer-center
+{
+    flex:
+        1 1 auto;
 
-    flex: 1;
+    width:auto;
 
-    height: 100%;
+    height:50px;
 
-    display: flex;
+    min-width:0;
 
-    align-items: center;
+    min-height:50px;
 
-    justify-content: center;
+    max-height:50px;
 
-    padding: 0 20px;
+    display:flex;
 
-    min-width: 0;
+    align-items:center;
 
+    justify-content:center;
+
+    padding:0 20px;
+
+    margin:0;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
 }
 
-.footer-copyright {
+.footer-copyright
+{
+    font-size:13px;
 
-    font-size: 13px;
+    font-weight:500;
 
-    font-weight: 500;
+    color:#64748b;
 
-    color: #64748b;
+    letter-spacing:.2px;
 
-    letter-spacing: .2px;
+    line-height:1;
 
-    white-space: nowrap;
-
+    white-space:nowrap;
 }
+
 
 /* ===================================================
    RIGHT
 =================================================== */
 
-.footer-right {
+.footer-right
+{
+    flex:
+        0 0
+        300px;
 
-    flex: 0 0 300px;
+    width:300px;
 
-    width: 300px;
+    min-width:300px;
 
-    height: 100%;
+    max-width:300px;
 
-    display: flex;
+    height:50px;
 
-    align-items: center;
+    min-height:50px;
 
-    justify-content: center;
+    max-height:50px;
 
-    padding: 0;
+    display:flex;
 
-    border-left: 1px solid #e2e8f0;
+    align-items:center;
 
-    box-sizing: border-box;
+    justify-content:center;
 
+    padding:0;
+
+    margin:0;
+
+    border-left:
+        1px solid
+        #e2e8f0;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
 }

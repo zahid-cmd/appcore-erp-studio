@@ -4,6 +4,7 @@
 
 namespace AppCore.Infrastructure.CodeMaster;
 
+
 //===============================================================
 // Code Generator
 //===============================================================
@@ -30,6 +31,8 @@ public static class CodeGenerator
         return $"MOD-{moduleSequenceNo:D3}";
     }
 
+
+
     //===============================================================
     // Menu Code
     //===============================================================
@@ -52,6 +55,8 @@ public static class CodeGenerator
 
         return $"MNU-{moduleSequenceNo:D3}-{menuSequenceNo:D3}";
     }
+
+
 
     //===============================================================
     // Submenu Code
@@ -83,6 +88,8 @@ public static class CodeGenerator
         return $"SUB-{moduleSequenceNo:D3}-{menuSequenceNo:D3}-{submenuSequenceNo:D3}";
     }
 
+
+
     //===============================================================
     // Special Activity Code
     //===============================================================
@@ -98,6 +105,8 @@ public static class CodeGenerator
 
         return $"SACT-{sequenceNo:D4}";
     }
+
+
 
     //===============================================================
     // Master Activity Code
@@ -115,7 +124,8 @@ public static class CodeGenerator
         return $"MACT-{sequenceNo:D4}";
     }
 
-    
+
+
     //===============================================================
     // HUMAN RESOURCE SETUP
     //===============================================================
@@ -131,6 +141,8 @@ public static class CodeGenerator
         return $"DPT-{sequenceNo:D4}";
     }
 
+
+
     //===============================================================
     // Designation Code
     //===============================================================
@@ -142,7 +154,9 @@ public static class CodeGenerator
 
         return $"DSG-{sequenceNo:D3}";
     }
-    
+
+
+
     //===============================================================
     // SECURITY & PERMISSION
     //===============================================================
@@ -161,4 +175,47 @@ public static class CodeGenerator
 
         return $"PRF-{sequenceNo:D2}";
     }
+
+
+
+    //===============================================================
+    // COMPONENT MANAGEMENT
+    //===============================================================
+    //===============================================================
+    // Control Components Code
+    //===============================================================
+
+    public static string GenerateControlComponentsCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid control components sequence number.");
+        }
+
+        return $"CC-{sequenceNo:D3}";
+    }
+
+
+
+    //===============================================================
+    // CODE MANAGEMENT
+    //===============================================================
+    //===============================================================
+    // Source Control Code
+    //===============================================================
+
+    public static string GenerateSourceControlCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid source control sequence number.");
+        }
+
+        return $"SC-{sequenceNo:D3}";
+    }
+
 }

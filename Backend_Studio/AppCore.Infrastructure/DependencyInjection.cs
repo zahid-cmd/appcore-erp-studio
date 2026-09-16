@@ -140,6 +140,55 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : SourceControl
+
+using AppCore.Application.InfrastructureControl.CodeManagement;
+using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement;
+
+// AUTO-END : SourceControl
+
+
+
+
+
+// AUTO-BEGIN : UtilityComponents
+
+using AppCore.Application.InfrastructureControl.ComponentManagement;
+using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManagement;
+
+// AUTO-END : UtilityComponents
+
+// AUTO-BEGIN : LayoutComponents
+
+using AppCore.Application.InfrastructureControl.ComponentManagement;
+using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManagement;
+
+// AUTO-END : LayoutComponents
+
+// AUTO-BEGIN : ControlComponents
+
+using AppCore.Application.InfrastructureControl.ComponentManagement;
+using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManagement;
+
+// AUTO-END : ControlComponents
+
+
+
+
+// AUTO-BEGIN : Company
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+
+// AUTO-END : Company
+
+// AUTO-BEGIN : Branch
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+
+// AUTO-END : Branch
+
 // AUTO-BEGIN : AccountGroup
 
 using AppCore.Application.Settings.AccountSettings;
@@ -147,8 +196,12 @@ using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
 // AUTO-END : AccountGroup
 
+// AUTO-BEGIN : AccountClass
 
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
+// AUTO-END : AccountClass
 
 
 // AUTO-END : AUTO REGISTER NAMESPACES
@@ -283,6 +336,69 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : SourceControl
+
+        services.AddScoped
+        <
+            ISourceControlRepository,
+            SourceControlRepository
+        >();
+
+        // AUTO-END : SourceControl
+
+        // AUTO-BEGIN : UtilityComponents
+
+        services.AddScoped
+        <
+            IUtilityComponentsRepository,
+            UtilityComponentsRepository
+        >();
+
+        // AUTO-END : UtilityComponents
+
+        // AUTO-BEGIN : LayoutComponents
+
+        services.AddScoped
+        <
+            ILayoutComponentsRepository,
+            LayoutComponentsRepository
+        >();
+
+        // AUTO-END : LayoutComponents
+
+        // AUTO-BEGIN : ControlComponents
+
+        services.AddScoped
+        <
+            IControlComponentsRepository,
+            ControlComponentsRepository
+        >();
+
+        // AUTO-END : ControlComponents
+
+
+
+
+        // AUTO-BEGIN : Company
+
+        services.AddScoped
+        <
+            ICompanyRepository,
+            CompanyRepository
+        >();
+
+        // AUTO-END : Company
+
+        // AUTO-BEGIN : Branch
+
+        services.AddScoped
+        <
+            IBranchRepository,
+            BranchRepository
+        >();
+
+        // AUTO-END : Branch
+
         // AUTO-BEGIN : AccountGroup
 
         services.AddScoped
@@ -292,6 +408,35 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : AccountGroup
+
+        // AUTO-BEGIN : AccountClass
+
+        services.AddScoped
+        <
+            IAccountClassRepository,
+            AccountClassRepository
+        >();
+
+        // AUTO-END : AccountClass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -40,7 +40,7 @@
 
                     <div class="code-viewer-subtitle">
 
-                        Review generated files and restore local changes to their last synchronized state.
+                        Review generated files and restore them to their baseline or latest saved restore point.
 
                     </div>
 
@@ -56,6 +56,10 @@
                     restoring
                     ||
                     restoringFileName !== null
+                    ||
+                    initializing
+                    ||
+                    initializingFileName !== null
                 "
                 (click)="close()"
                 aria-label="Close">
@@ -76,7 +80,7 @@
 
 
             <!--===================================================
-                Generated Files
+                Total Files
             ====================================================-->
 
             <div class="summary-item">
@@ -90,43 +94,39 @@
 
                 <span class="summary-label">
 
-                    GENERATED FILES
+                    TOTAL FILES
 
                 </span>
 
             </div>
 
 
-            <div class="summary-divider"></div>
-
 
             <!--===================================================
-                Clean
+                Initial Stage
             ====================================================-->
 
             <div class="summary-item">
 
                 <span class="summary-counter">
 
-                    {{ fileCount - modifiedCount }}
+                    {{ initialStageCount }}
 
                 </span>
 
 
                 <span class="summary-label">
 
-                    CLEAN
+                    INITIAL STAGE
 
                 </span>
 
             </div>
 
 
-            <div class="summary-divider"></div>
-
 
             <!--===================================================
-                Local Changes
+                Modified Files
             ====================================================-->
 
             <div class="summary-item">
@@ -140,32 +140,30 @@
 
                 <span class="summary-label">
 
-                    LOCAL CHANGES
+                    MODIFIED FILES
 
                 </span>
 
             </div>
 
 
-            <div class="summary-divider"></div>
-
 
             <!--===================================================
-                Total
+                Restored Files
             ====================================================-->
 
             <div class="summary-item">
 
                 <span class="summary-counter">
 
-                    {{ fileCount }}
+                    {{ restoredCount }}
 
                 </span>
 
 
                 <span class="summary-label">
 
-                    TOTAL
+                    RESTORED FILES
 
                 </span>
 
@@ -199,7 +197,7 @@
 
                     <div class="section-subtitle">
 
-                        Each generated file is compared with its last synchronized state.
+                        Each file can be initialized from its baseline or restored from its latest saved restore point.
 
                     </div>
 
@@ -313,12 +311,14 @@
                         <span
                             class="file-status-badge"
                             [class.clean]="file.status === 'Clean'"
-                            [class.modified]="file.status === 'Modified'">
+                            [class.modified]="file.status === 'Modified'"
+                            [class.restored]="file.status === 'Restored'">
 
                             <i
                                 class="fas"
                                 [class.fa-circle-check]="file.status === 'Clean'"
-                                [class.fa-pen-to-square]="file.status === 'Modified'">
+                                [class.fa-pen-to-square]="file.status === 'Modified'"
+                                [class.fa-rotate-left]="file.status === 'Restored'">
                             </i>
 
 
@@ -331,10 +331,15 @@
 
 
                     <!--============================================
-                        Row Restore Action
+                        Row Actions
                     =============================================-->
 
                     <div class="file-action">
+
+
+                        <!--========================================
+                            Row Restore Action
+                        =========================================-->
 
                         <button
                             type="button"
@@ -343,6 +348,10 @@
                                 restoring
                                 ||
                                 restoringFileName !== null
+                                ||
+                                initializing
+                                ||
+                                initializingFileName !== null
                                 ||
                                 !canRestoreFile(file)
                             "
@@ -361,6 +370,46 @@
                                 {{ isRestoringFile(file)
                                     ? 'Restoring...'
                                     : 'Restore'
+                                }}
+
+                            </span>
+
+                        </button>
+
+
+                        <!--========================================
+                            Row Initialize Action
+                        =========================================-->
+
+                        <button
+                            type="button"
+                            class="code-viewer-button secondary file-initialize-button"
+                            [disabled]="
+                                restoring
+                                ||
+                                restoringFileName !== null
+                                ||
+                                initializing
+                                ||
+                                initializingFileName !== null
+                                ||
+                                !canInitializeFile(file)
+                            "
+                            (click)="initializeFile(file)">
+
+                            <i
+                                class="fas"
+                                [class.fa-database]="!isInitializingFile(file)"
+                                [class.fa-spinner]="isInitializingFile(file)"
+                                [class.fa-spin]="isInitializingFile(file)">
+                            </i>
+
+
+                            <span>
+
+                                {{ isInitializingFile(file)
+                                    ? 'Initializing...'
+                                    : 'Initialize'
                                 }}
 
                             </span>
@@ -423,14 +472,14 @@
 
                 <span *ngIf="hasModifiedFiles">
 
-                    Restore returns selected files to the version produced by the last successful synchronization.
+                    Initialize returns a file to its original baseline. Restore returns it to its latest saved restore point.
 
                 </span>
 
 
                 <span *ngIf="!hasModifiedFiles">
 
-                    All generated files currently match their last synchronized state.
+                    All generated files currently match their active synchronized state.
 
                 </span>
 
@@ -451,6 +500,10 @@
                         restoring
                         ||
                         restoringFileName !== null
+                        ||
+                        initializing
+                        ||
+                        initializingFileName !== null
                     "
                     (click)="cancel()">
 
@@ -473,7 +526,11 @@
                         ||
                         restoringFileName !== null
                         ||
-                        !hasModifiedFiles
+                        initializing
+                        ||
+                        initializingFileName !== null
+                        ||
+                        !canRestoreAnyFile
                     "
                     (click)="restore()">
 
@@ -490,6 +547,42 @@
                         {{ restoring
                             ? 'Restoring All...'
                             : 'Restore All'
+                        }}
+
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="code-viewer-button primary"
+                    [disabled]="
+                        restoring
+                        ||
+                        restoringFileName !== null
+                        ||
+                        initializing
+                        ||
+                        initializingFileName !== null
+                        ||
+                        !canInitializeAnyFile
+                    "
+                    (click)="initializeAll()">
+
+                    <i
+                        class="fas"
+                        [class.fa-database]="!initializing"
+                        [class.fa-spinner]="initializing"
+                        [class.fa-spin]="initializing">
+                    </i>
+
+
+                    <span>
+
+                        {{ initializing
+                            ? 'Initializing All...'
+                            : 'Initialize All'
                         }}
 
                     </span>

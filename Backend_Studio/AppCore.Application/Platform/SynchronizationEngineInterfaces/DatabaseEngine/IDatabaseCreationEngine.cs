@@ -36,4 +36,14 @@ public interface IDatabaseCreationEngine
     (
         long submenuId
     );
+
+
+    //===========================================================
+    // Initialize Database
+    //===========================================================
+
+    Task InitializeAsync
+    (
+        long submenuId
+    );
 }

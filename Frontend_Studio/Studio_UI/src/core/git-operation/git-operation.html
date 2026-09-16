@@ -1,0 +1,995 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-code-branch"
+
+        [title]="pageTitle"
+
+        subtitle="Manage repository operations and synchronization.">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            command1Text="Refresh"
+
+            command1Icon="fas fa-sync-alt"
+
+            (command1Click)="onOperation('refresh')"
+
+            [command1Visible]="true"
+
+            [command2Visible]="false"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="goBack()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="repository-command-body">
+
+
+            <!-- =================================================
+                 MAIN REPOSITORY WORKSPACE
+            ================================================== -->
+
+            <div class="repository-layout">
+
+
+                <!-- =============================================
+                     LEFT PANEL
+                ============================================== -->
+
+                <div class="repository-left">
+
+
+                    <!-- =========================================
+                         TOP SECTION
+                    ========================================== -->
+
+                    <div class="repository-top-row">
+
+
+                        <!-- =====================================
+                             REPOSITORY PIPELINE
+                        ====================================== -->
+
+                        <div class="overview-section">
+
+
+                            <!-- =================================
+                                 HEADER
+                            ================================== -->
+
+                            <div class="overview-header">
+
+                                <div class="overview-title">
+
+                                    <i class="fas fa-diagram-project"></i>
+
+                                    Repository Pipeline
+
+                                </div>
+
+
+                                <div class="overview-subtitle">
+
+                                    Local workspace to remote repository workflow
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 BODY
+                            ================================== -->
+
+                            <div class="overview-content">
+
+                                <div class="pipeline-container">
+
+
+                                    <!-- =========================
+                                         LOCAL
+                                    ========================== -->
+
+                                    <div class="pipeline-node">
+
+                                        <div class="pipeline-icon">
+
+                                            <i class="fas fa-laptop-code"></i>
+
+                                            <div
+                                                class="pipeline-check"
+                                                *ngIf="repository">
+
+                                                <i class="fas fa-check"></i>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <div class="pipeline-name">
+
+                                            LOCAL
+
+                                        </div>
+
+
+                                        <div class="pipeline-status">
+
+                                            {{
+                                                repository
+                                                    ? 'Repository Workspace'
+                                                    : 'Not Loaded'
+                                            }}
+
+                                        </div>
+
+                                    </div>
+
+
+
+                                    <!-- =========================
+                                         ARROW
+                                    ========================== -->
+
+                                    <div class="pipeline-arrow">
+
+                                        <i class="fas fa-chevron-right"></i>
+
+                                    </div>
+
+
+
+                                    <!-- =========================
+                                         COMMIT
+                                    ========================== -->
+
+                                    <div class="pipeline-node">
+
+                                        <div class="pipeline-icon">
+
+                                            <i class="fas fa-check-circle"></i>
+
+                                            <div
+                                                class="pipeline-check"
+                                                *ngIf="repository">
+
+                                                <i class="fas fa-check"></i>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <div class="pipeline-name">
+
+                                            COMMIT
+
+                                        </div>
+
+
+                                        <div class="pipeline-status">
+
+                                            Repository Changes
+
+                                        </div>
+
+                                    </div>
+
+
+
+                                    <!-- =========================
+                                         ARROW
+                                    ========================== -->
+
+                                    <div class="pipeline-arrow">
+
+                                        <i class="fas fa-chevron-right"></i>
+
+                                    </div>
+
+
+
+                                    <!-- =========================
+                                         REMOTE
+                                    ========================== -->
+
+                                    <div class="pipeline-node">
+
+                                        <div class="pipeline-icon">
+
+                                            <i class="fab fa-github"></i>
+
+                                            <div
+                                                class="pipeline-check"
+                                                *ngIf="repository">
+
+                                                <i class="fas fa-check"></i>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <div class="pipeline-name">
+
+                                            REMOTE
+
+                                        </div>
+
+
+                                        <div class="pipeline-status">
+
+                                            {{ defaultBranch }}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =====================================
+                             REPOSITORY INFORMATION
+                        ====================================== -->
+
+                        <div class="repository-information-section">
+
+
+                            <!-- =================================
+                                 HEADER
+                            ================================== -->
+
+                            <div class="repository-information-header">
+
+                                <div class="repository-information-title">
+
+                                    <i class="fas fa-folder-open"></i>
+
+                                    Repository Information
+
+                                </div>
+
+
+                                <div class="repository-information-subtitle">
+
+                                    Repository identity and configuration details
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 BODY
+                            ================================== -->
+
+                            <div class="repository-information-card">
+
+
+                                <!-- =============================
+                                     REPOSITORY CODE
+                                ============================== -->
+
+                                <div class="info-item">
+
+                                    <i class="fas fa-hashtag"></i>
+
+
+                                    <span class="info-label">
+
+                                        Repository Code
+
+                                    </span>
+
+
+                                    <span class="info-value">
+
+                                        {{ repositoryCode }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     REPOSITORY NAME
+                                ============================== -->
+
+                                <div class="info-item">
+
+                                    <i class="fas fa-folder"></i>
+
+
+                                    <span class="info-label">
+
+                                        Repository Name
+
+                                    </span>
+
+
+                                    <span class="info-value">
+
+                                        {{ repositoryName }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     DEFAULT BRANCH
+                                ============================== -->
+
+                                <div class="info-item">
+
+                                    <i class="fas fa-code-branch"></i>
+
+
+                                    <span class="info-label">
+
+                                        Default Branch
+
+                                    </span>
+
+
+                                    <span class="info-value">
+
+                                        {{ defaultBranch }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     REPOSITORY PATH
+                                ============================== -->
+
+                                <div class="info-item">
+
+                                    <i class="fas fa-folder-tree"></i>
+
+
+                                    <span class="info-label">
+
+                                        Repository Path
+
+                                    </span>
+
+
+                                    <span
+                                        class="info-value"
+                                        [title]="repositoryPath">
+
+                                        {{ repositoryPath }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     REMOTE URL
+                                ============================== -->
+
+                                <div class="info-item">
+
+                                    <i class="fas fa-globe"></i>
+
+
+                                    <span class="info-label">
+
+                                        Git Remote
+
+                                    </span>
+
+
+                                    <span
+                                        class="info-value"
+                                        [title]="gitRemoteUrl">
+
+                                        {{ gitRemoteUrl }}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =====================================
+                             REPOSITORY STATUS
+                        ====================================== -->
+
+                        <div class="repository-status-section">
+
+
+                            <!-- =================================
+                                 HEADER
+                            ================================== -->
+
+                            <div class="repository-status-header">
+
+                                <div class="repository-status-title">
+
+                                    <i class="fas fa-heart-pulse"></i>
+
+                                    Repository Runtime Status
+
+                                </div>
+
+
+                                <div class="repository-status-subtitle">
+
+                                    Current repository availability status
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 BODY
+                            ================================== -->
+
+                            <div class="repository-status-card">
+
+
+                                <!-- =============================
+                                     CONNECTION STATUS
+                                ============================== -->
+
+                                <div class="status-item">
+
+                                    <i class="fas fa-circle-check"></i>
+
+
+                                    <span class="status-label">
+
+                                        Connection Status
+
+                                    </span>
+
+
+                                    <span class="status-value">
+
+                                        {{
+                                            repository
+                                                ? 'Connected'
+                                                : 'Offline'
+                                        }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     CURRENT BRANCH
+                                ============================== -->
+
+                                <div class="status-item">
+
+                                    <i class="fas fa-code-branch"></i>
+
+
+                                    <span class="status-label">
+
+                                        Default Branch
+
+                                    </span>
+
+
+                                    <span class="status-value">
+
+                                        {{ defaultBranch }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     REPOSITORY STATUS
+                                ============================== -->
+
+                                <div class="status-item">
+
+                                    <i class="fas fa-circle-info"></i>
+
+
+                                    <span class="status-label">
+
+                                        Repository Status
+
+                                    </span>
+
+
+                                    <span class="status-value">
+
+                                        {{ repositoryStatus }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     WORKSPACE
+                                ============================== -->
+
+                                <div class="status-item">
+
+                                    <i class="fas fa-folder-tree"></i>
+
+
+                                    <span class="status-label">
+
+                                        Workspace
+
+                                    </span>
+
+
+                                    <span
+                                        class="status-value"
+                                        [title]="repositoryPath">
+
+                                        {{
+                                            repository
+                                                ? 'Available'
+                                                : 'N/A'
+                                        }}
+
+                                    </span>
+
+                                </div>
+
+
+
+                                <!-- =============================
+                                     REMOTE
+                                ============================== -->
+
+                                <div class="status-item">
+
+                                    <i class="fas fa-cloud"></i>
+
+
+                                    <span class="status-label">
+
+                                        Remote
+
+                                    </span>
+
+
+                                    <span
+                                        class="status-value"
+                                        [title]="gitRemoteUrl">
+
+                                        {{
+                                            repository
+                                                ? 'Configured'
+                                                : 'N/A'
+                                        }}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- =============================================
+                         GIT OPERATION ROW
+                    ============================================== -->
+
+                    <div class="repository-action-row">
+
+
+                        <!-- =========================================
+                             PULL
+                        ========================================== -->
+
+                        <button
+
+                            type="button"
+
+                            class="action-card"
+
+                            [disabled]="isLoading || !repository"
+
+                            (click)="onOperation('pull')">
+
+                            <div class="action-icon">
+
+                                <i class="fas fa-download"></i>
+
+                            </div>
+
+
+                            <div class="action-title">
+
+                                Pull Latest
+
+                            </div>
+
+
+                            <div class="action-description">
+
+                                Download latest from remote repository
+
+                            </div>
+
+                        </button>
+
+
+
+                        <!-- =========================================
+                             COMMIT
+                        ========================================== -->
+
+                        <button
+
+                            type="button"
+
+                            class="action-card"
+
+                            [disabled]="isLoading || !repository"
+
+                            (click)="onOperation('commit')">
+
+                            <div class="action-icon">
+
+                                <i class="fas fa-check-circle"></i>
+
+                            </div>
+
+
+                            <div class="action-title">
+
+                                Commit Changes
+
+                            </div>
+
+
+                            <div class="action-description">
+
+                                Save local repository changes
+
+                            </div>
+
+                        </button>
+
+
+
+                        <!-- =========================================
+                             PUSH
+                        ========================================== -->
+
+                        <button
+
+                            type="button"
+
+                            class="action-card"
+
+                            [disabled]="isLoading || !repository"
+
+                            (click)="onOperation('push')">
+
+                            <div class="action-icon">
+
+                                <i class="fas fa-upload"></i>
+
+                            </div>
+
+
+                            <div class="action-title">
+
+                                Push Changes
+
+                            </div>
+
+
+                            <div class="action-description">
+
+                                Publish commits to remote repository
+
+                            </div>
+
+                        </button>
+
+
+
+                        <!-- =========================================
+                             REFRESH
+                        ========================================== -->
+
+                        <button
+
+                            type="button"
+
+                            class="action-card"
+
+                            [disabled]="isLoading"
+
+                            (click)="onOperation('refresh')">
+
+                            <div class="action-icon">
+
+                                <i class="fas fa-sync-alt"></i>
+
+                            </div>
+
+
+                            <div class="action-title">
+
+                                Refresh Status
+
+                            </div>
+
+
+                            <div class="action-description">
+
+                                Reload repository information
+
+                            </div>
+
+                        </button>
+
+
+
+                        <!-- =========================================
+                             FULL REPOSITORY SYNCHRONIZATION
+                        ========================================== -->
+
+                        <div class="sync-banner">
+
+
+                            <div class="sync-left">
+
+                                <div class="sync-icon">
+
+                                    <i class="fas fa-code-branch"></i>
+
+                                </div>
+
+
+                                <div class="sync-content">
+
+                                    <div class="sync-title">
+
+                                        Full Repository Synchronization
+
+                                    </div>
+
+
+                                    <div class="sync-description">
+
+                                        Pull → Commit → Push
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+
+                                type="button"
+
+                                class="sync-button"
+
+                                [disabled]="isLoading || !repository"
+
+                                (click)="onOperation('sync')">
+
+                                <span>
+
+                                    Start Synchronization
+
+                                </span>
+
+
+                                <i class="fas fa-angles-right"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     RIGHT PANEL
+                ================================================== -->
+
+                <div class="repository-right">
+
+
+                    <!-- =====================================================
+                         RECENT REPOSITORY ACTIVITY
+                    ===================================================== -->
+
+                    <div class="activity-section">
+
+
+                        <!-- =================================================
+                             HEADER
+                        ================================================== -->
+
+                        <div class="activity-header">
+
+                            <div class="activity-title-wrapper">
+
+                                <div class="activity-section-title">
+
+                                    <i class="fas fa-history"></i>
+
+                                    <span>
+
+                                        Recent Repository Activity
+
+                                    </span>
+
+                                </div>
+
+
+                                <div class="activity-section-subtitle">
+
+                                    Latest repository operation history
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =================================================
+                             BODY
+                        ================================================== -->
+
+                        <div class="activity-list">
+
+                            <div class="activity-scroll appcore-scrollbar">
+
+
+                                <!-- =============================================
+                                     CURRENTLY NO GIT HISTORY
+                                ============================================== -->
+
+                                <div class="activity-item">
+
+                                    <div class="activity-dot info">
+                                    </div>
+
+
+                                    <div class="activity-content">
+
+                                        <div class="activity-title">
+
+                                            No Repository Activity
+
+                                        </div>
+
+
+                                        <div class="activity-description">
+
+                                            Git operation history will appear here.
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+
+
+    <!-- =====================================================
+         GIT MESSAGE MODAL
+    ====================================================== -->
+
+    <app-git-message-modal></app-git-message-modal>
+
+
+
+    <!-- =====================================================
+         PROGRESS DIALOG
+    ====================================================== -->
+
+    <app-progress-dialog></app-progress-dialog>
+
+
+
+    <!-- =====================================================
+         CONFIRM DIALOG
+    ====================================================== -->
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+</div>

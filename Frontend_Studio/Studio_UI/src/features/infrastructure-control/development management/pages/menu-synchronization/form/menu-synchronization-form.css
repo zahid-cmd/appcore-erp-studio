@@ -5,19 +5,19 @@
    PAGE TOOLBAR
 ========================================================= */
 
-.module-toolbar-left
+.menu-toolbar-left
 {
     display:flex;
 
     align-items:center;
 
-    flex:0 0 auto;
+    flex:1 1 auto;
 
-    min-width:220px;
+    min-width:0;
 }
 
 
-.module-toolbar-right
+.menu-toolbar-right
 {
     display:flex;
 
@@ -27,39 +27,33 @@
 
     gap:12px;
 
-    flex:1 1 auto;
+    flex:0 0 auto;
 
-    min-width:0;
+    width:auto;
+
+    min-width:max-content;
 
     margin-left:16px;
 }
 
 
 /* =========================================================
-   PAGE TOOLBAR
    DROPDOWN
 ========================================================= */
 
-.module-toolbar-right app-search-dropdown
+.menu-toolbar-right app-search-dropdown
 {
     display:block;
 
-    flex:0 0 260px;
-
-    width:260px;
-
-    min-width:260px;
-
-    max-width:260px;
+    flex:0 0 auto;
 }
 
 
 /* =========================================================
-   PAGE TOOLBAR
    ANALYZE BUTTON
 ========================================================= */
 
-.module-analyze-button
+.menu-analyze-button
 {
     display:inline-flex;
 
@@ -115,7 +109,7 @@
 }
 
 
-.module-analyze-button i
+.menu-analyze-button i
 {
     width:14px;
 
@@ -127,7 +121,7 @@
 }
 
 
-.module-analyze-button span
+.menu-analyze-button span
 {
     flex:1;
 
@@ -135,7 +129,7 @@
 }
 
 
-.module-analyze-button:hover:not(:disabled)
+.menu-analyze-button:hover:not(:disabled)
 {
     transform:translateY(-2px);
 
@@ -144,7 +138,7 @@
 }
 
 
-.module-analyze-button:active:not(:disabled)
+.menu-analyze-button:active:not(:disabled)
 {
     transform:translateY(0);
 
@@ -153,7 +147,7 @@
 }
 
 
-.module-analyze-button:disabled
+.menu-analyze-button:disabled
 {
     cursor:not-allowed;
 
@@ -173,7 +167,7 @@
 }
 
 
-.module-analyze-button:focus-visible
+.menu-analyze-button:focus-visible
 {
     outline:none;
 
@@ -183,11 +177,10 @@
 
 
 /* =========================================================
-   PAGE TOOLBAR
    RESET BUTTON
 ========================================================= */
 
-.module-reset-button
+.menu-reset-button
 {
     display:inline-flex;
 
@@ -196,6 +189,8 @@
     justify-content:center;
 
     gap:6px;
+
+    flex:0 0 auto;
 
     height:36px;
 
@@ -224,7 +219,7 @@
 }
 
 
-.module-reset-button:hover:not(:disabled)
+.menu-reset-button:hover:not(:disabled)
 {
     background:
         linear-gradient(
@@ -244,7 +239,7 @@
 }
 
 
-.module-reset-button:active:not(:disabled)
+.menu-reset-button:active:not(:disabled)
 {
     transform:translateY(0);
 
@@ -252,7 +247,7 @@
 }
 
 
-.module-reset-button:disabled
+.menu-reset-button:disabled
 {
     opacity:.55;
 
@@ -264,7 +259,7 @@
 }
 
 
-.module-reset-button i
+.menu-reset-button i
 {
     font-size:13px;
 }
@@ -819,35 +814,35 @@
        PAGE TOOLBAR
     ====================================================== */
 
-    .module-toolbar-left,
+    .menu-toolbar-left,
 
-    .module-toolbar-right
+    .menu-toolbar-right
     {
         width:100%;
     }
 
 
-    .module-toolbar-right
+    .menu-toolbar-right
     {
         flex-wrap:wrap;
 
         justify-content:flex-start;
+
+        min-width:0;
+
+        margin-left:0;
     }
 
 
-    .module-toolbar-right app-search-dropdown
+    .menu-toolbar-right app-search-dropdown
     {
-        flex:1 1 320px;
-
-        min-width:320px;
-
-        max-width:100%;
+        flex:0 0 auto;
     }
 
 
-    .module-analyze-button,
+    .menu-analyze-button,
 
-    .module-reset-button
+    .menu-reset-button
     {
         width:140px;
     }
@@ -878,6 +873,14 @@
 
 @media (max-width:600px)
 {
+    .menu-analyze-button,
+
+    .menu-reset-button
+    {
+        width:140px;
+    }
+
+
     .menu-rollback-blocked-dialog
     {
         max-width:calc(100vw - 28px);

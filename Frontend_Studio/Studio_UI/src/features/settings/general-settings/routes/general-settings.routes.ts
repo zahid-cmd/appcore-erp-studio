@@ -4,7 +4,6 @@ import
 }
 from '@angular/router';
 
-
 //===========================================================
 // MNU-003-001 Routes
 //===========================================================
@@ -12,7 +11,6 @@ from '@angular/router';
 export const mnu003001Routes:
 Routes =
 [
-
 
     //===========================================================
     // Menu Routes
@@ -24,14 +22,65 @@ Routes =
     //   • Page routes
     //===========================================================
 
-
     {
         path:'',
 
         children:
         [
 
-]
+            // AUTO-BEGIN : SUB-003-001-002
+
+                //===========================================================
+                // Branch
+                //===========================================================
+
+                {
+                    path:'branch',
+
+                    data:
+                    {
+                        breadcrumb:'Branch'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './branch.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BranchRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-002
+
+            // AUTO-BEGIN : SUB-003-001-001
+
+                //===========================================================
+                // Company
+                //===========================================================
+
+                {
+                    path:'company',
+
+                    data:
+                    {
+                        breadcrumb:'Company'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './company.routes'
+                        )
+                        .then(
+                            m =>
+                                m.CompanyRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-001
+
+        ]
 
     }
 

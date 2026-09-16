@@ -1,0 +1,136 @@
+@if
+(
+    state().visible ||
+    previewMode
+)
+{
+
+    <div
+        class="git-modal-overlay"
+        [class.preview-mode]="previewMode"
+    >
+
+        <div
+            class="git-modal"
+        >
+
+
+            <!-- =====================================================
+                 HEADER
+            ====================================================== -->
+
+            <div
+                class="git-modal-header"
+            >
+
+                <div
+                    class="git-modal-title"
+                >
+
+                    {{
+                        previewMode
+                            ? 'Git Message'
+                            : state().title
+                    }}
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="close-btn"
+                    (click)="close()"
+                >
+
+                    <i
+                        class="fas fa-times"
+                    ></i>
+
+                </button>
+
+            </div>
+
+
+
+            <!-- =====================================================
+                 BODY
+            ====================================================== -->
+
+            <div
+                class="git-modal-body"
+            >
+
+                <div
+                    class="form-section"
+                >
+
+                    <label
+                        class="form-label"
+                    >
+
+                        Commit / Sync Message
+
+                        <span
+                            class="required"
+                        >
+                            *
+                        </span>
+
+                    </label>
+
+
+                    <textarea
+                        class="message-textarea"
+                        [(ngModel)]="message"
+                        [placeholder]="state().placeholder"
+                        rows="8"
+                    >
+                    </textarea>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =====================================================
+                 FOOTER
+            ====================================================== -->
+
+            <div
+                class="git-modal-footer"
+            >
+
+                <button
+                    type="button"
+                    class="btn-cancel"
+                    (click)="close()"
+                >
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn-confirm"
+                    [disabled]="!isValid"
+                    (click)="confirm()"
+                >
+
+                    {{
+                        previewMode
+                            ? 'Commit'
+                            : state().confirmText
+                    }}
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+}

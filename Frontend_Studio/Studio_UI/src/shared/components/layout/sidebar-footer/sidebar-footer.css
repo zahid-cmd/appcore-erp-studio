@@ -1,86 +1,207 @@
-.sidebar-footer {
+/* =====================================================
+   SIDEBAR FOOTER
+===================================================== */
 
-    height: 64px;
+.sidebar-footer
+{
+    position:relative;
 
-    display: flex;
+    width:300px;
 
-    align-items: center;
+    min-width:300px;
 
-    justify-content: center;
+    max-width:300px;
 
-    gap: 40px;
+    height:40px;
 
-    padding: 0 12px;
+    min-height:40px;
 
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    max-height:40px;
 
-    background: transparent;
+    display:flex;
 
+    align-items:center;
+
+    justify-content:center;
+
+    gap:40px;
+
+    padding:
+        0
+        12px;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            #111a3d 0%,
+            #182552 48%,
+            #202f67 100%
+        );
+
+    overflow:hidden;
 }
 
-.footer-icon-button {
 
-    width: 20px;
 
-    height: 20px;
+/* =====================================================
+   TOP BORDER GRADIENT
+===================================================== */
 
-    display: flex;
+.sidebar-footer::before
+{
+    content:'';
 
-    align-items: center;
+    position:absolute;
 
-    justify-content: center;
+    top:0;
 
-    padding: 0;
+    left:0;
 
-    border: none;
+    width:100%;
 
-    border-radius: 50%;
+    height:2px;
 
-    background: transparent;
+    background:
+        linear-gradient(
+            90deg,
+            #7f1d1d 0%,
+            #dc2626 25%,
+            #ef4444 50%,
+            #dc2626 75%,
+            #7f1d1d 100%
+        );
 
-    color: rgba(255, 255, 255, 0.72);
+    z-index:2;
 
-    cursor: pointer;
+    pointer-events:none;
+}
+
+
+
+/* =====================================================
+   FOOTER ICON BUTTON
+===================================================== */
+
+.footer-icon-button
+{
+    width:20px;
+
+    height:20px;
+
+    min-width:20px;
+
+    min-height:20px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:0;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:transparent;
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            .72
+        );
+
+    cursor:pointer;
+
+    box-sizing:border-box;
 
     transition:
-        background-color 0.2s ease,
-        color 0.2s ease,
-        transform 0.2s ease;
-
+        background-color .20s ease,
+        color .20s ease,
+        transform .20s ease;
 }
 
-.footer-icon-button:hover {
 
-    background: rgba(37, 99, 235, 0.18);
 
-    color: #ffffff;
+/* =====================================================
+   FOOTER ICON BUTTON HOVER
+===================================================== */
 
-    transform: translateY(-1px);
+.footer-icon-button:hover
+{
+    background:
+        rgba(
+            37,
+            99,
+            235,
+            .18
+        );
 
+    color:#ffffff;
+
+    transform:
+        translateY(-1px);
 }
 
-.footer-icon-button:active {
 
-    transform: scale(0.95);
 
+/* =====================================================
+   FOOTER ICON BUTTON ACTIVE
+===================================================== */
+
+.footer-icon-button:active
+{
+    transform:
+        scale(.95);
 }
 
-.footer-icon-button:focus-visible {
 
-    outline: none;
 
-    background: rgba(37, 99, 235, 0.25);
+/* =====================================================
+   FOOTER ICON BUTTON FOCUS
+===================================================== */
 
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+.footer-icon-button:focus-visible
+{
+    outline:none;
 
+    background:
+        rgba(
+            37,
+            99,
+            235,
+            .25
+        );
+
+    box-shadow:
+        0
+        0
+        0
+        2px
+        rgba(
+            37,
+            99,
+            235,
+            .35
+        );
 }
 
-.footer-icon-button i {
 
-    font-size: 18px;
 
-    line-height: 1;
+/* =====================================================
+   FOOTER ICON
+===================================================== */
 
-    pointer-events: none;
+.footer-icon-button i
+{
+    font-size:18px;
 
+    line-height:1;
+
+    pointer-events:none;
 }

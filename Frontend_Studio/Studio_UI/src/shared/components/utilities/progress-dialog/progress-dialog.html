@@ -1,6 +1,6 @@
 @if (
-  progressService.isOpen() ||
-  previewMode
+    progressService.isOpen() ||
+    previewMode
 ) {
 
     <div
@@ -10,79 +10,89 @@
 
         <div class="progress-dialog">
 
-        <!-- =====================================================
-            HEADER
-        ====================================================== -->
+            <!-- =====================================================
+                 HEADER
+            ====================================================== -->
 
-        <div class="progress-header">
+            <div class="progress-header">
 
-            <div class="progress-title">
+                <div class="header-icon">
 
-            {{
-                previewMode
-                ? 'Processing Request'
-                : progressService.title()
-            }}
+                    <i class="fas fa-gears"></i>
 
-            </div>
+                </div>
 
-        </div>
-
-        <!-- =====================================================
-            BODY
-        ===================================================== -->
-
-        <div class="progress-body">
-
-            <div class="progress-message-row">
-
-                <div class="progress-message">
+                <div class="progress-title">
 
                     {{
                         previewMode
-                            ? 'Please wait while the operation is being completed.'
-                            : progressService.message()
+                            ? 'Processing Request'
+                            : progressService.title()
                     }}
 
                 </div>
 
-                <!-- =================================================
-                    ROUND LOADER
-                ================================================== -->
+            </div>
 
-                <div class="round-loader">
 
-                    <div class="round-loader-spinner"></div>
+            <!-- =====================================================
+                 BODY
+            ====================================================== -->
+
+            <div class="progress-body">
+
+                <div class="progress-message-row">
+
+                    <div class="progress-message">
+
+                        {{
+                            previewMode
+                                ? 'Please wait while the operation is being completed.'
+                                : progressService.message()
+                        }}
+
+                    </div>
+
+
+                    <!-- =================================================
+                         ROUND LOADER
+                    ================================================== -->
+
+                    <div class="round-loader">
+
+                        <div class="round-loader-spinner"></div>
+
+                    </div>
 
                 </div>
 
-            </div>
 
-            <div class="progress-percent">
+                <div class="progress-percent">
 
-                {{
-                    previewMode
-                        ? previewProgress
-                        : progressService.progress()
-                }}%
-
-            </div>
-
-            <div class="progress-bar">
-
-                <div
-                    class="progress-fill"
-                    [style.width.%]="
+                    {{
                         previewMode
                             ? previewProgress
                             : progressService.progress()
-                    "
-                >
+                    }}%
+
+                </div>
+
+
+                <div class="progress-bar">
+
+                    <div
+                        class="progress-fill"
+                        [style.width.%]="
+                            previewMode
+                                ? previewProgress
+                                : progressService.progress()
+                        "
+                    >
+                    </div>
+
                 </div>
 
             </div>
-
-        </div>
 
         </div>
 

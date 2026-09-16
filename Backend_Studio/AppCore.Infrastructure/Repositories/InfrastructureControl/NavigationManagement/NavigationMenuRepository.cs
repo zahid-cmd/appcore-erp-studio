@@ -39,6 +39,8 @@ public class NavigationMenuRepository : INavigationMenuRepository
     {
         _context = context;
     }
+
+
 //===============================================================
 // Navigation Menu Query
 //===============================================================
@@ -93,6 +95,8 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
                 x.IsActive
         });
 }
+
+
     //===============================================================
     // Get All
     //===============================================================
@@ -225,6 +229,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             .ToListAsync();
     }
 
+
     //===============================================================
     // Get Next Code
     //===============================================================
@@ -254,6 +259,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             nextSequenceNo);
     }
 
+
     //===============================================================
     // Get Defaults
     //===============================================================
@@ -273,14 +279,15 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
         };
     }
 
+
     //===============================================================
     // Get Suggested Display Order
     //===============================================================
 
     public async Task<int> GetSuggestedDisplayOrderAsync(
-    long navigationModuleId)
+        long navigationModuleId)
     {
-        List<int> usedDisplayOrders =
+        int? lastDisplayOrder =
             await _context.NavigationMenus
 
                 .AsNoTracking()
@@ -290,35 +297,13 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
                     &&
                     !x.IsDeleted)
 
-                .Select(x =>
-                    x.DisplayOrder)
+                .MaxAsync(x =>
+                    (int?)x.DisplayOrder);
 
-                .OrderBy(x =>
-                    x)
-
-                .ToListAsync();
-
-
-        int suggestedDisplayOrder = 1;
-
-
-        foreach (int displayOrder in usedDisplayOrders)
-        {
-            if (displayOrder == suggestedDisplayOrder)
-            {
-                suggestedDisplayOrder++;
-
-                continue;
-            }
-
-            if (displayOrder > suggestedDisplayOrder)
-            {
-                break;
-            }
-        }
-
-        return suggestedDisplayOrder;
+        return
+            (lastDisplayOrder ?? 0) + 1;
     }
+
 
     //===============================================================
     // Get By Id
@@ -380,6 +365,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             .FirstOrDefaultAsync();
     }
 
+
     //===============================================================
     // Create
     //===============================================================
@@ -440,7 +426,17 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             $"/{module.RouteKey}/{dto.RouteKey}";
 
         //===========================================================
-        // Generate Code
+        // Generate Sequence Number
+        //
+        // SequenceNo is the permanent creation sequence.
+        //
+        // It is completely independent from:
+        //
+        //     DisplayOrder
+        //     Database Id
+        //
+        // Changing DisplayOrder therefore has no effect on the
+        // next generated Code.
         //===========================================================
 
         int nextSequenceNo =
@@ -539,6 +535,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
 
         return entity.Id;
     }
+
 
     //===============================================================
     // Update
@@ -696,6 +693,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
         await _context.SaveChangesAsync();
     }
 
+
     //===============================================================
     // Delete
     //===============================================================
@@ -767,6 +765,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
 
         await _context.SaveChangesAsync();
     }
+
 
     //===============================================================
     // Restore
@@ -848,6 +847,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
         return true;
     }
     
+
     //===============================================================
     // Exists
     //===============================================================
@@ -862,6 +862,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
                 &&
                 !x.IsDeleted);
     }
+
 
     //===============================================================
     // Route Key Exists
@@ -890,6 +891,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
                 x.Id != excludeId.Value));
     }
 
+
     //===============================================================
     // Get Next Sequence Number
     //===============================================================
@@ -897,13 +899,37 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
     private async Task<int> GetNextSequenceNoAsync(
         long navigationModuleId)
     {
+        //===========================================================
+        // SequenceNo is completely independent from DisplayOrder
+        // and Database Id.
+        //
+        // Deleted records are included because SequenceNo is the
+        // permanent creation sequence used for Code generation.
+        //
+        // Therefore:
+        //
+        //     DisplayOrder
+        //          ↓
+        //     UI ordering only
+        //
+        //     SequenceNo
+        //          ↓
+        //     Permanent creation sequence
+        //
+        //     Code
+        //          ↓
+        //     Permanent business code
+        //
+        //     Database Id
+        //          ↓
+        //     Database primary key only
+        //===========================================================
+
         int? lastSequenceNo =
             await _context.NavigationMenus
 
                 .Where(x =>
-                    x.NavigationModuleId == navigationModuleId
-                    &&
-                    !x.IsDeleted)
+                    x.NavigationModuleId == navigationModuleId)
 
                 .MaxAsync(x =>
                     (int?)x.SequenceNo);

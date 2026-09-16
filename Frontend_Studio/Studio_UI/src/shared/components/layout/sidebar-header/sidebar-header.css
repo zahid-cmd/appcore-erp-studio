@@ -1,0 +1,149 @@
+/* ===========================================================
+   DASHBOARD HEADER
+=========================================================== */
+
+.dashboard-header
+{
+    position:relative;
+    width:100%;
+    height:50px;
+    min-height:50px;
+    max-height:50px;
+    display:flex;
+    align-items:center;
+    box-sizing:border-box;
+    padding:0 16px;
+    background:
+        linear-gradient(
+            135deg,
+            #111a3d 0%,
+            #182552 48%,
+            #202f67 100%
+        );
+    color:#ffffff;
+    text-decoration:none;
+    cursor:pointer;
+    user-select:none;
+    overflow:hidden;
+    transition:
+        background .2s ease,
+        color .2s ease;
+}
+
+
+/* ===========================================================
+   ACTIVE INDICATOR
+=========================================================== */
+
+.dashboard-header::before
+{
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    width:3px;
+    height:100%;
+    background:
+        linear-gradient(
+            180deg,
+            #60a5fa 0%,
+            #3b82f6 50%,
+            #2563eb 100%
+        );
+    opacity:0;
+    transition:
+        opacity .2s ease;
+}
+
+
+/* ===========================================================
+   HOVER
+=========================================================== */
+
+.dashboard-header:hover
+{
+    background:
+        linear-gradient(
+            135deg,
+            #162044 0%,
+            #1d2d5d 48%,
+            #263b78 100%
+        );
+}
+
+
+/* ===========================================================
+   ACTIVE
+=========================================================== */
+
+.dashboard-header.active
+{
+    background:
+        linear-gradient(
+            135deg,
+            #1a2a52 0%,
+            #24396f 48%,
+            #2d4788 100%
+        );
+}
+
+.dashboard-header.active::before
+{
+    opacity:1;
+}
+
+
+/* ===========================================================
+   DASHBOARD TITLE
+=========================================================== */
+
+.dashboard-title
+{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    width:100%;
+    min-width:0;
+    color:#ffffff;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.15px;
+    white-space:nowrap;
+}
+
+
+/* ===========================================================
+   DASHBOARD ICON
+=========================================================== */
+
+.dashboard-title i
+{
+    width:20px;
+    min-width:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#bfdbfe;
+    font-size:16px;
+}
+
+
+/* ===========================================================
+   COLLAPSED SIDEBAR
+=========================================================== */
+
+:host-context(.sidebar.collapsed) .dashboard-header
+{
+    justify-content:center;
+    padding:0;
+}
+
+:host-context(.sidebar.collapsed) .dashboard-title
+{
+    justify-content:center;
+}
+
+:host-context(.sidebar.collapsed) .dashboard-title span
+{
+    display:none;
+}

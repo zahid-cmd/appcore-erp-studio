@@ -2,7 +2,12 @@
 // Namespaces
 //===============================================================
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
@@ -267,11 +272,22 @@ public class BackendCodeSynchronizationEngine
 
 
             //===================================================
+            // Create Development Backup Files
+            //===================================================
+
+            await CreateDevelopmentBackupFilesAsync
+            (
+                synchronization
+            );
+
+
+            //===================================================
             // Backend Build
             //===================================================
 
             var buildResult =
-                await BuildBackendAsync(
+                await BuildBackendAsync
+                (
                     synchronization.BackendSubMenuEntityFile
                 );
 
@@ -390,6 +406,27 @@ public class BackendCodeSynchronizationEngine
                     "Submenu Synchronization data is required."
                 );
             }
+
+
+            //===================================================
+            // Delete Development Backup Files
+            //
+            // IMPORTANT:
+            //
+            // The module synchronization engine owns the
+            // module folders.
+            //
+            // This engine only deletes the 9 baseline and
+            // 9 restore backup files.
+            //
+            // Module folders must NEVER be deleted here.
+            //
+            //===================================================
+
+            await DeleteDevelopmentBackupFilesAsync
+            (
+                synchronization
+            );
 
 
             //===================================================
@@ -620,6 +657,1029 @@ public class BackendCodeSynchronizationEngine
 
 
     //===========================================================
+    // Create Development Backup Files
+    //===========================================================
+
+    private async Task CreateDevelopmentBackupFilesAsync
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Validate Module Name
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                synchronization.ModuleName
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "Module name is required to create development backup files."
+            );
+        }
+
+
+        //=======================================================
+        // Validate Backend Solution
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                synchronization.BackendSolution
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "Backend solution path is not configured."
+            );
+        }
+
+
+        //=======================================================
+        // Backend Studio
+        //=======================================================
+
+        var backendStudio =
+            Path.GetFullPath(
+                synchronization.BackendSolution
+            );
+
+
+        //=======================================================
+        // Module Name
+        //=======================================================
+
+        var backupModuleName =
+            CreateDevelopmentBackupFolderName(
+                synchronization.ModuleName
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                backupModuleName
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "A valid module name is required to create development backup files."
+            );
+        }
+
+
+        //=======================================================
+        // API
+        //=======================================================
+
+        await CreateBackupFileAsync(
+            synchronization.BackendControllerFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.API",
+                "Development_Backup",
+                "Baseline_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendControllerFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.API",
+                "Development_Backup",
+                "Restore_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Application DTOs
+        //=======================================================
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendCreateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendUpdateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuDefaultsDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendCreateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendUpdateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuDefaultsDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Application Interfaces
+        //=======================================================
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "Interfaces",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "Interfaces",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Domain
+        //=======================================================
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuEntityFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Domain",
+                "Development_Backup",
+                "Baseline_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuEntityFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Domain",
+                "Development_Backup",
+                "Restore_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations
+        //=======================================================
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuConfigurationFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Baseline_Files",
+                "Configurations",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuConfigurationFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Restore_Files",
+                "Configurations",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories
+        //=======================================================
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Baseline_Files",
+                "Repositories",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await CreateBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Restore_Files",
+                "Repositories",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+    }
+
+
+
+    //===========================================================
+    // Create Backup File
+    //===========================================================
+
+    private static async Task CreateBackupFileAsync
+    (
+        string sourceFile,
+
+        string backupFolder,
+
+        string suffix
+    )
+    {
+        //=======================================================
+        // Validate Source
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                sourceFile
+            )
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !File.Exists(
+                sourceFile
+            )
+        )
+        {
+            throw new FileNotFoundException(
+                $"Backup source file was not found: {sourceFile}"
+            );
+        }
+
+
+        //=======================================================
+        // Normalize Paths
+        //=======================================================
+
+        sourceFile =
+            Path.GetFullPath(
+                sourceFile
+            );
+
+
+        backupFolder =
+            Path.GetFullPath(
+                backupFolder
+            );
+
+
+        //=======================================================
+        // Validate Existing Backup Folder
+        //
+        // IMPORTANT:
+        //
+        // The Backend Module Synchronization Engine creates
+        // the module folder.
+        //
+        // This engine must NEVER create that folder.
+        //
+        //=======================================================
+
+        if
+        (
+            !Directory.Exists(
+                backupFolder
+            )
+        )
+        {
+            throw new DirectoryNotFoundException(
+                $"Development backup folder was not found: {backupFolder}"
+            );
+        }
+
+
+        //=======================================================
+        // Backup File Name
+        //=======================================================
+
+        var fileName =
+            Path.GetFileName(
+                sourceFile
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                fileName
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Backup source file name could not be determined: {sourceFile}"
+            );
+        }
+
+
+        //=======================================================
+        // Backup File
+        //=======================================================
+
+        var backupFile =
+            Path.Combine(
+                backupFolder,
+                $"{fileName}{suffix}"
+            );
+
+
+        //=======================================================
+        // Create Backup
+        //
+        // File.Copy is used intentionally.
+        //
+        // System.IO.File does not provide File.CopyAsync.
+        //
+        //=======================================================
+
+        File.Copy(
+            sourceFile,
+
+            backupFile,
+
+            true
+        );
+
+
+        await Task.CompletedTask;
+    }
+
+
+
+    //===========================================================
+    // Delete Development Backup Files
+    //===========================================================
+
+    private async Task DeleteDevelopmentBackupFilesAsync
+    (
+        SubmenuSynchronizationDto synchronization
+    )
+    {
+        //=======================================================
+        // Validate Module Name
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                synchronization.ModuleName
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Validate Backend Solution
+        //=======================================================
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                synchronization.BackendSolution
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Backend Studio
+        //=======================================================
+
+        var backendStudio =
+            Path.GetFullPath(
+                synchronization.BackendSolution
+            );
+
+
+        //=======================================================
+        // Module Name
+        //=======================================================
+
+        var backupModuleName =
+            CreateDevelopmentBackupFolderName(
+                synchronization.ModuleName
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                backupModuleName
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // API Baseline
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendControllerFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.API",
+                "Development_Backup",
+                "Baseline_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        //=======================================================
+        // API Restore
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendControllerFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.API",
+                "Development_Backup",
+                "Restore_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Application DTOs Baseline
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendCreateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendUpdateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuDefaultsDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        //=======================================================
+        // Application DTOs Restore
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendCreateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendUpdateSubMenuDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuDefaultsDtoFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "DTOs",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Application Interfaces Baseline
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Baseline_Files",
+                "Interfaces",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        //=======================================================
+        // Application Interfaces Restore
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryInterfaceFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Application",
+                "Development_Backup",
+                "Restore_Files",
+                "Interfaces",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Domain Baseline
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuEntityFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Domain",
+                "Development_Backup",
+                "Baseline_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        //=======================================================
+        // Domain Restore
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuEntityFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Domain",
+                "Development_Backup",
+                "Restore_Files",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations Baseline
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuConfigurationFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Baseline_Files",
+                "Configurations",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations Restore
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuConfigurationFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Restore_Files",
+                "Configurations",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories Baseline
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Baseline_Files",
+                "Repositories",
+                backupModuleName
+            ),
+
+            ".appcore-sync-baseline"
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories Restore
+        //=======================================================
+
+        await DeleteBackupFileAsync(
+            synchronization.BackendSubMenuRepositoryFile,
+
+            Path.Combine(
+                backendStudio,
+                "AppCore.Infrastructure",
+                "Development_Backup",
+                "Restore_Files",
+                "Repositories",
+                backupModuleName
+            ),
+
+            ".appcore-sync-restore"
+        );
+
+
+        //=======================================================
+        // IMPORTANT
+        //
+        // Do NOT delete backup folders here.
+        //
+        // The module synchronization engine owns those folders.
+        //
+        // This engine deletes only the 18 backup files:
+        //
+        // 9 Baseline files
+        // 9 Restore files
+        //
+        //=======================================================
+
+        await Task.CompletedTask;
+    }
+
+
+
+    //===========================================================
+    // Delete Backup File
+    //===========================================================
+
+    private static async Task DeleteBackupFileAsync
+    (
+        string sourceFile,
+
+        string backupFolder,
+
+        string suffix
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                sourceFile
+            )
+            ||
+            string.IsNullOrWhiteSpace(
+                backupFolder
+            )
+        )
+        {
+            return;
+        }
+
+
+        var fileName =
+            Path.GetFileName(
+                sourceFile
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                fileName
+            )
+        )
+        {
+            return;
+        }
+
+
+        var backupFile =
+            Path.Combine(
+                Path.GetFullPath(
+                    backupFolder
+                ),
+
+                $"{fileName}{suffix}"
+            );
+
+
+        //=======================================================
+        // Delete Backup File Only
+        //=======================================================
+
+        if
+        (
+            File.Exists(
+                backupFile
+            )
+        )
+        {
+            File.Delete(
+                backupFile
+            );
+        }
+
+
+        await Task.CompletedTask;
+    }
+
+
+
+    //===========================================================
     // Build Backend
     //===========================================================
 
@@ -705,21 +1765,6 @@ public class BackendCodeSynchronizationEngine
 
         //=======================================================
         // Temporary Artifacts Directory
-        //
-        // IMPORTANT:
-        //
-        // We intentionally do NOT override:
-        //
-        // BaseIntermediateOutputPath
-        // BaseOutputPath
-        // MSBuildProjectExtensionsPath
-        //
-        // .NET 10 provides --artifacts-path specifically for
-        // this purpose.
-        //
-        // MSBuild automatically separates every project under
-        // the artifacts directory.
-        //
         //=======================================================
 
         var artifactsDirectory =
@@ -741,17 +1786,6 @@ public class BackendCodeSynchronizationEngine
         {
             //===================================================
             // Build
-            //
-            // --artifacts-path
-            //
-            // Keeps generated bin/obj files completely outside
-            // the real project directories.
-            //
-            // --disable-build-servers
-            //
-            // Prevents persistent build servers from holding
-            // generated assemblies or intermediate files.
-            //
             //===================================================
 
             var buildResult =
@@ -844,10 +1878,10 @@ public class BackendCodeSynchronizationEngine
             }
             catch
             {
-                //===============================================
+                //================================================
                 // Temporary cleanup failure does not change
                 // the actual build result.
-                //===============================================
+                //================================================
             }
         }
     }
@@ -1258,6 +2292,39 @@ public class BackendCodeSynchronizationEngine
             filePath,
 
             string.Empty
+        );
+    }
+
+
+
+    //===========================================================
+    // Development Backup Folder Name
+    //===========================================================
+
+    private static string
+        CreateDevelopmentBackupFolderName
+    (
+        string moduleName
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                moduleName
+            )
+        )
+        {
+            return string.Empty;
+        }
+
+
+        return new string
+        (
+            moduleName
+                .Where(
+                    char.IsLetterOrDigit
+                )
+                .ToArray()
         );
     }
 

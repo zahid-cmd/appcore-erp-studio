@@ -1,0 +1,25 @@
+<!-- ==========================================================
+     DASHBOARD HEADER
+=========================================================== -->
+
+<a
+    class="dashboard-header"
+    [class.active]="isActive"
+    [routerLink]="'/dashboard'"
+    [title]="isCollapsed ? 'Dashboard' : ''"
+    aria-label="Dashboard">
+
+    <div class="dashboard-title">
+
+        <i
+            class="fas fa-house"
+            [title]="isCollapsed ? 'Dashboard' : ''">
+        </i>
+
+        <span>
+            Dashboard
+        </span>
+
+    </div>
+
+</a>

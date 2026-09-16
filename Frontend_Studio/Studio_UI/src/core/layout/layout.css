@@ -99,7 +99,21 @@ app-sidebar
 
     overflow:hidden;
 
-    transition:width .25s ease;
+    transition:
+        width .25s ease,
+        flex-basis .25s ease;
+}
+
+
+/* =====================================================
+   COLLAPSED SIDEBAR
+===================================================== */
+
+app-sidebar.sidebar-collapsed
+{
+    width:70px;
+
+    flex:0 0 70px;
 }
 
 

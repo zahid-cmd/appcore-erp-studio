@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 using AppCore.Application.Platform.BackendSynchronizationEngine.Interfaces;
@@ -40,6 +41,9 @@ public class ModuleBackendSynchronizationEngine
     {
         // Keep the existing constructor body unchanged
     }
+
+
+
     //===========================================================
     // Synchronize
     //===========================================================
@@ -54,19 +58,31 @@ public class ModuleBackendSynchronizationEngine
             synchronization
         );
 
+
         await CreateBackendStructureAsync
         (
             synchronization
         );
 
+
+        await CreateDevelopmentBackupFoldersAsync
+        (
+            synchronization
+        );
+
+
         return new ModuleSynchronizationResultDto
         {
             Success = true,
+
 
             Message =
                 "Backend synchronization completed successfully."
         };
     }
+
+
+
     //===========================================================
     // Backend Preparation
     //===========================================================
@@ -94,6 +110,7 @@ public class ModuleBackendSynchronizationEngine
             );
         }
 
+
         //=======================================================
         // Backend Solution Exists
         //=======================================================
@@ -112,8 +129,11 @@ public class ModuleBackendSynchronizationEngine
             );
         }
 
+
         await Task.CompletedTask;
     }
+
+
 
     //===========================================================
     // Create Backend Structure
@@ -133,6 +153,7 @@ public class ModuleBackendSynchronizationEngine
             synchronization
         );
 
+
         //=======================================================
         // Application
         //=======================================================
@@ -141,6 +162,7 @@ public class ModuleBackendSynchronizationEngine
         (
             synchronization
         );
+
 
         //=======================================================
         // Domain
@@ -151,6 +173,7 @@ public class ModuleBackendSynchronizationEngine
             synchronization
         );
 
+
         //=======================================================
         // Repository
         //=======================================================
@@ -159,6 +182,7 @@ public class ModuleBackendSynchronizationEngine
         (
             synchronization
         );
+
 
         //=======================================================
         // Configuration
@@ -169,6 +193,429 @@ public class ModuleBackendSynchronizationEngine
             synchronization
         );
     }
+
+
+
+    //===========================================================
+    // Development Backup Folder Name
+    //===========================================================
+
+    private static string CreateDevelopmentBackupFolderName
+    (
+        string moduleName
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                moduleName
+            )
+        )
+        {
+            return string.Empty;
+        }
+
+
+        return new string
+        (
+            moduleName
+                .Where
+                (
+                    char.IsLetterOrDigit
+                )
+                .ToArray()
+        );
+    }
+
+
+
+    //===========================================================
+    // Development Backup Folders
+    //===========================================================
+
+    private async Task CreateDevelopmentBackupFoldersAsync
+    (
+        ModuleSynchronizationDto synchronization
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.ModuleName
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Module name is required to create development backup folders."
+            );
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.BackendSolution
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Backend solution path is not configured."
+            );
+        }
+
+
+        var backendStudio =
+            Path.GetFullPath
+            (
+                synchronization.BackendSolution
+            );
+
+
+        var backupModuleName =
+            CreateDevelopmentBackupFolderName
+            (
+                synchronization.ModuleName
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                backupModuleName
+            )
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "A valid module name is required to create development backup folders."
+            );
+        }
+
+
+        //=======================================================
+        // API Baseline Folder
+        //=======================================================
+
+        var apiBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.API",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            apiBaselineFolder
+        );
+
+
+        //=======================================================
+        // API Restore Folder
+        //=======================================================
+
+        var apiRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.API",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            apiRestoreFolder
+        );
+
+
+        //=======================================================
+        // Application DTOs Baseline Folder
+        //=======================================================
+
+        var applicationDtosBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "DTOs",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            applicationDtosBaselineFolder
+        );
+
+
+        //=======================================================
+        // Application Interfaces Baseline Folder
+        //=======================================================
+
+        var applicationInterfacesBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "Interfaces",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            applicationInterfacesBaselineFolder
+        );
+
+
+        //=======================================================
+        // Application DTOs Restore Folder
+        //=======================================================
+
+        var applicationDtosRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "DTOs",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            applicationDtosRestoreFolder
+        );
+
+
+        //=======================================================
+        // Application Interfaces Restore Folder
+        //=======================================================
+
+        var applicationInterfacesRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "Interfaces",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            applicationInterfacesRestoreFolder
+        );
+
+
+        //=======================================================
+        // Domain Baseline Folder
+        //=======================================================
+
+        var domainBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Domain",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            domainBaselineFolder
+        );
+
+
+        //=======================================================
+        // Domain Restore Folder
+        //=======================================================
+
+        var domainRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Domain",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            domainRestoreFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations Baseline Folder
+        //=======================================================
+
+        var configurationsBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "Configurations",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            configurationsBaselineFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations Restore Folder
+        //=======================================================
+
+        var configurationsRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "Configurations",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            configurationsRestoreFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories Baseline Folder
+        //=======================================================
+
+        var repositoriesBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "Repositories",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            repositoriesBaselineFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories Restore Folder
+        //=======================================================
+
+        var repositoriesRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "Repositories",
+
+                backupModuleName
+            );
+
+
+        await CreateFolderAsync
+        (
+            repositoriesRestoreFolder
+        );
+    }
+
+
+
     //===========================================================
     // Controller Folder
     //===========================================================
@@ -183,6 +630,8 @@ public class ModuleBackendSynchronizationEngine
             synchronization.BackendControllerFolder
         );
     }
+
+
 
     //===========================================================
     // Application Folder
@@ -199,6 +648,8 @@ public class ModuleBackendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Domain Folder
     //===========================================================
@@ -213,6 +664,8 @@ public class ModuleBackendSynchronizationEngine
             synchronization.BackendEntityFolder
         );
     }
+
+
 
     //===========================================================
     // Repository Folder
@@ -229,6 +682,8 @@ public class ModuleBackendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Configuration Folder
     //===========================================================
@@ -243,6 +698,8 @@ public class ModuleBackendSynchronizationEngine
             synchronization.BackendConfigurationFolder
         );
     }
+
+
 
     //===========================================================
     // Create Folder
@@ -268,6 +725,7 @@ public class ModuleBackendSynchronizationEngine
             return;
         }
 
+
         //=======================================================
         // Normalize Path
         //=======================================================
@@ -277,6 +735,7 @@ public class ModuleBackendSynchronizationEngine
             (
                 folderPath
             );
+
 
         //=======================================================
         // Create Folder
@@ -295,6 +754,7 @@ public class ModuleBackendSynchronizationEngine
                 folderPath
             );
         }
+
 
         await Task.CompletedTask;
     }
@@ -315,14 +775,18 @@ public class ModuleBackendSynchronizationEngine
             synchronization
         );
 
+
         return new ModuleSynchronizationResultDto
         {
             Success = true,
+
 
             Message =
                 "Backend rollback completed successfully."
         };
     }
+
+
 
     //===========================================================
     // Delete Backend Structure
@@ -338,26 +802,38 @@ public class ModuleBackendSynchronizationEngine
             synchronization
         );
 
+
         await DeleteApplicationFolderAsync
         (
             synchronization
         );
+
 
         await DeleteDomainFolderAsync
         (
             synchronization
         );
 
+
         await DeleteRepositoryFolderAsync
         (
             synchronization
         );
 
+
         await DeleteConfigurationFolderAsync
         (
             synchronization
         );
+
+
+        await DeleteDevelopmentBackupFoldersAsync
+        (
+            synchronization
+        );
     }
+
+
 
     //===========================================================
     // Controller Folder
@@ -374,6 +850,8 @@ public class ModuleBackendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Application Folder
     //===========================================================
@@ -388,6 +866,8 @@ public class ModuleBackendSynchronizationEngine
             synchronization.BackendApplicationFolder
         );
     }
+
+
 
     //===========================================================
     // Domain Folder
@@ -404,6 +884,8 @@ public class ModuleBackendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Repository Folder
     //===========================================================
@@ -419,6 +901,8 @@ public class ModuleBackendSynchronizationEngine
         );
     }
 
+
+
     //===========================================================
     // Configuration Folder
     //===========================================================
@@ -433,6 +917,385 @@ public class ModuleBackendSynchronizationEngine
             synchronization.BackendConfigurationFolder
         );
     }
+
+
+
+    //===========================================================
+    // Development Backup Folders
+    //===========================================================
+
+    private async Task DeleteDevelopmentBackupFoldersAsync
+    (
+        ModuleSynchronizationDto synchronization
+    )
+    {
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.ModuleName
+            )
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                synchronization.BackendSolution
+            )
+        )
+        {
+            return;
+        }
+
+
+        var backendStudio =
+            Path.GetFullPath
+            (
+                synchronization.BackendSolution
+            );
+
+
+        var backupModuleName =
+            CreateDevelopmentBackupFolderName
+            (
+                synchronization.ModuleName
+            );
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace
+            (
+                backupModuleName
+            )
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // API Baseline Folder
+        //=======================================================
+
+        var apiBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.API",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            apiBaselineFolder
+        );
+
+
+        //=======================================================
+        // API Restore Folder
+        //=======================================================
+
+        var apiRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.API",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            apiRestoreFolder
+        );
+
+
+        //=======================================================
+        // Application DTOs Baseline Folder
+        //=======================================================
+
+        var applicationDtosBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "DTOs",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            applicationDtosBaselineFolder
+        );
+
+
+        //=======================================================
+        // Application Interfaces Baseline Folder
+        //=======================================================
+
+        var applicationInterfacesBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "Interfaces",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            applicationInterfacesBaselineFolder
+        );
+
+
+        //=======================================================
+        // Application DTOs Restore Folder
+        //=======================================================
+
+        var applicationDtosRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "DTOs",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            applicationDtosRestoreFolder
+        );
+
+
+        //=======================================================
+        // Application Interfaces Restore Folder
+        //=======================================================
+
+        var applicationInterfacesRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Application",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "Interfaces",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            applicationInterfacesRestoreFolder
+        );
+
+
+        //=======================================================
+        // Domain Baseline Folder
+        //=======================================================
+
+        var domainBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Domain",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            domainBaselineFolder
+        );
+
+
+        //=======================================================
+        // Domain Restore Folder
+        //=======================================================
+
+        var domainRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Domain",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            domainRestoreFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations Baseline Folder
+        //=======================================================
+
+        var configurationsBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "Configurations",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            configurationsBaselineFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Configurations Restore Folder
+        //=======================================================
+
+        var configurationsRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "Configurations",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            configurationsRestoreFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories Baseline Folder
+        //=======================================================
+
+        var repositoriesBaselineFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Baseline_Files",
+
+                "Repositories",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            repositoriesBaselineFolder
+        );
+
+
+        //=======================================================
+        // Infrastructure Repositories Restore Folder
+        //=======================================================
+
+        var repositoriesRestoreFolder =
+            Path.Combine
+            (
+                backendStudio,
+
+                "AppCore.Infrastructure",
+
+                "Development_Backup",
+
+                "Restore_Files",
+
+                "Repositories",
+
+                backupModuleName
+            );
+
+
+        await DeleteFolderAsync
+        (
+            repositoriesRestoreFolder
+        );
+    }
+
+
 
     //===========================================================
     // Delete Folder
@@ -458,6 +1321,7 @@ public class ModuleBackendSynchronizationEngine
             return;
         }
 
+
         //=======================================================
         // Normalize Path
         //=======================================================
@@ -467,6 +1331,7 @@ public class ModuleBackendSynchronizationEngine
             (
                 folderPath
             );
+
 
         //=======================================================
         // Folder Exists
@@ -482,6 +1347,7 @@ public class ModuleBackendSynchronizationEngine
         {
             return;
         }
+
 
         //=======================================================
         // Delete Only Empty Folder
@@ -500,6 +1366,7 @@ public class ModuleBackendSynchronizationEngine
                 folderPath
             );
         }
+
 
         await Task.CompletedTask;
     }

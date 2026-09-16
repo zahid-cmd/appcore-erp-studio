@@ -224,6 +224,138 @@ export class CodeSynchronizationService
 
 
     //===========================================================
+    // Get Generated Files
+    //===========================================================
+
+    getFiles
+    (
+        id:
+            number
+    ):
+        Observable<CodeSynchronizationFile[]>
+    {
+        return this.http.get<CodeSynchronizationFile[]>
+        (
+            `${this.apiUrl}/${id}/files`
+        );
+    }
+
+
+    //===========================================================
+    // Initialize File
+    //===========================================================
+
+    initializeFile
+    (
+        id:
+            number,
+
+        fileName:
+            string
+    ):
+        Observable<void>
+    {
+        const params =
+            new HttpParams()
+                .set
+                (
+                    'fileName',
+
+                    fileName
+                );
+
+
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/initialize`,
+
+            {},
+
+            {
+                params
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Initialize All Files
+    //===========================================================
+
+    initializeAll
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/initialize-all`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
+    // Restore File
+    //===========================================================
+
+    restoreFile
+    (
+        id:
+            number,
+
+        fileName:
+            string
+    ):
+        Observable<void>
+    {
+        const params =
+            new HttpParams()
+                .set
+                (
+                    'fileName',
+
+                    fileName
+                );
+
+
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/restore`,
+
+            {},
+
+            {
+                params
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Restore All Modified Files
+    //===========================================================
+
+    restoreAll
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>
+        (
+            `${this.apiUrl}/${id}/restore-all`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
     // Synchronize Code
     //===========================================================
 
@@ -304,46 +436,6 @@ export class CodeSynchronizationService
 
 
     //===========================================================
-    // Backend Migration Create
-    //===========================================================
-
-    createMigration
-    (
-        id:
-            number
-    ):
-        Observable<BackendMigrationResult>
-    {
-        return this.http.post<BackendMigrationResult>
-        (
-            `${this.apiUrl}/${id}/migration/create`,
-
-            {}
-        );
-    }
-
-
-    //===========================================================
-    // Backend Migration Remove
-    //===========================================================
-
-    removeMigration
-    (
-        id:
-            number
-    ):
-        Observable<BackendMigrationResult>
-    {
-        return this.http.post<BackendMigrationResult>
-        (
-            `${this.apiUrl}/${id}/migration/remove`,
-
-            {}
-        );
-    }
-
-
-    //===========================================================
     // Backend Database Create
     //===========================================================
 
@@ -364,6 +456,26 @@ export class CodeSynchronizationService
 
 
     //===========================================================
+    // Backend Database Initialize
+    //===========================================================
+
+    initializeDatabase
+    (
+        id:
+            number
+    ):
+        Observable<BackendDatabaseResult>
+    {
+        return this.http.post<BackendDatabaseResult>
+        (
+            `${this.apiUrl}/${id}/database/initialize`,
+
+            {}
+        );
+    }
+
+
+    //===========================================================
     // Backend Database Remove
     //===========================================================
 
@@ -377,81 +489,6 @@ export class CodeSynchronizationService
         return this.http.post<BackendDatabaseResult>
         (
             `${this.apiUrl}/${id}/database/remove`,
-
-            {}
-        );
-    }
-
-
-    //===========================================================
-    // Get Generated Files
-    //===========================================================
-
-    getFiles
-    (
-        id:
-            number
-    ):
-        Observable<CodeSynchronizationFile[]>
-    {
-        return this.http.get<CodeSynchronizationFile[]>
-        (
-            `${this.apiUrl}/${id}/files`
-        );
-    }
-
-
-    //===========================================================
-    // Restore File
-    //===========================================================
-
-    restoreFile
-    (
-        id:
-            number,
-
-        fileName:
-            string
-    ):
-        Observable<void>
-    {
-        const params =
-            new HttpParams()
-                .set
-                (
-                    'fileName',
-
-                    fileName
-                );
-
-
-        return this.http.post<void>
-        (
-            `${this.apiUrl}/${id}/restore`,
-
-            {},
-
-            {
-                params
-            }
-        );
-    }
-
-
-    //===========================================================
-    // Restore All Modified Files
-    //===========================================================
-
-    restoreAll
-    (
-        id:
-            number
-    ):
-        Observable<void>
-    {
-        return this.http.post<void>
-        (
-            `${this.apiUrl}/${id}/restore-all`,
 
             {}
         );

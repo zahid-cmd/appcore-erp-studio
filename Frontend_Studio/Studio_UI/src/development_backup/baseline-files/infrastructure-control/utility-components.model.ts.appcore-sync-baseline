@@ -1,0 +1,90 @@
+/* ============================================================
+   Utility Components
+============================================================ */
+
+export interface UtilityComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Utility Components
+============================================================ */
+
+export interface CreateUtilityComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Utility Components
+============================================================ */
+
+export interface UpdateUtilityComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Utility Components Defaults
+============================================================ */
+
+export interface UtilityComponentsDefaults
+{
+    code:
+        string;
+}
