@@ -112,6 +112,11 @@ import
 }
 from '../../shared/components/utilities/git-message-modal/git-message-modal.service';
 
+import
+{
+    ToastComponent
+}
+from '../../shared/components/utilities/toast/toast';
 
 //===============================================================
 // Models & Services
@@ -175,6 +180,8 @@ from '../../features/infrastructure-control/code-management/services/source-cont
         ConfirmDialogComponent,
 
         ProgressDialogComponent,
+
+        ToastComponent,
 
         GitMessageModalComponent
     ],
@@ -1286,10 +1293,37 @@ implements OnInit
             '';
 
 
+        if
+        (
+            !result
+            ||
+            result.success !== true
+        )
+        {
+            this.toast.error(
+                title.replace(
+                    'Completed',
+                    'Failed'
+                ),
+
+                result?.message
+                ||
+                fallback
+                ||
+                'Git operation failed.'
+            );
+
+
+            this.reloadRepositoryData();
+
+            return;
+        }
+
+
         this.toast.success(
             title,
 
-            result?.message
+            result.message
             ||
             fallback
         );
@@ -1297,7 +1331,6 @@ implements OnInit
 
         this.reloadRepositoryData();
     }
-
 
     //===========================================================
     // Operation Failed
