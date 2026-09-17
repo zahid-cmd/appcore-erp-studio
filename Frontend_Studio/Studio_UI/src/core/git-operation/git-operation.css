@@ -2165,11 +2165,13 @@
 
     width:100%;
 
-    font-size:12px;
+    font-size:11px;
 
     line-height:18px;
 
-    color:#64748b;
+    color:#4f46e5;
+
+    font-weight: 700;
 
     overflow:hidden;
 

@@ -131,6 +131,32 @@ export const routes:
  
             // AUTO-END : MOD-002 
  
+            // AUTO-BEGIN : MOD-005
+
+            //===========================================================
+            // Human Resource Manangement
+            //===========================================================
+
+            {
+                path:'human-resource-manangement',
+
+                data:
+                {
+                    breadcrumb:'Human Resource Manangement'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/human-resource-manangement/routes/human-resource-manangement.routes'
+                    )
+                    .then(
+                        m =>
+                            m.humanResourceManangementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-005
+
         ] 
     }, 
  

@@ -133,10 +133,14 @@ public static class CodeGenerator
     // Department Code
     //===============================================================
 
-    public static string GenerateDepartmentCode(int sequenceNo)
+    public static string GenerateDepartmentCode(
+        int sequenceNo)
     {
         if (sequenceNo < 1)
-            throw new ArgumentException("Invalid sequence number.");
+        {
+            throw new ArgumentException(
+                "Invalid sequence number.");
+        }
 
         return $"DPT-{sequenceNo:D4}";
     }
@@ -147,10 +151,14 @@ public static class CodeGenerator
     // Designation Code
     //===============================================================
 
-    public static string GenerateDesignationCode(int sequenceNo)
+    public static string GenerateDesignationCode(
+        int sequenceNo)
     {
         if (sequenceNo < 1)
-            throw new ArgumentException("Invalid sequence number.");
+        {
+            throw new ArgumentException(
+                "Invalid sequence number.");
+        }
 
         return $"DSG-{sequenceNo:D3}";
     }
@@ -173,7 +181,7 @@ public static class CodeGenerator
                 "Invalid sequence number.");
         }
 
-        return $"PRF-{sequenceNo:D2}";
+        return $"RP-{sequenceNo:D3}";
     }
 
 

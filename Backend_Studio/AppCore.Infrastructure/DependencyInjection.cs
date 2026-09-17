@@ -140,6 +140,36 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+
+
+// AUTO-BEGIN : Designation
+
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanResourceSetup;
+
+// AUTO-END : Designation
+
+// AUTO-BEGIN : Department
+
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanResourceSetup;
+
+// AUTO-END : Department
+
+// AUTO-BEGIN : DeploymentCenter
+
+using AppCore.Application.InfrastructureControl.CodeManagement;
+using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement;
+
+// AUTO-END : DeploymentCenter
+
+// AUTO-BEGIN : ServerManagement
+
+using AppCore.Application.InfrastructureControl.CodeManagement;
+using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement;
+
+// AUTO-END : ServerManagement
+
 // AUTO-BEGIN : SourceControl
 
 using AppCore.Application.InfrastructureControl.CodeManagement;
@@ -335,6 +365,48 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+
+
+        // AUTO-BEGIN : Designation
+
+        services.AddScoped
+        <
+            IDesignationRepository,
+            DesignationRepository
+        >();
+
+        // AUTO-END : Designation
+
+        // AUTO-BEGIN : Department
+
+        services.AddScoped
+        <
+            IDepartmentRepository,
+            DepartmentRepository
+        >();
+
+        // AUTO-END : Department
+
+        // AUTO-BEGIN : DeploymentCenter
+
+        services.AddScoped
+        <
+            IDeploymentCenterRepository,
+            DeploymentCenterRepository
+        >();
+
+        // AUTO-END : DeploymentCenter
+
+        // AUTO-BEGIN : ServerManagement
+
+        services.AddScoped
+        <
+            IServerManagementRepository,
+            ServerManagementRepository
+        >();
+
+        // AUTO-END : ServerManagement
 
         // AUTO-BEGIN : SourceControl
 

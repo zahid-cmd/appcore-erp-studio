@@ -27,11 +27,32 @@
                     class="git-modal-title"
                 >
 
-                    {{
-                        previewMode
-                            ? 'Git Message'
-                            : state().title
-                    }}
+                    <!-- HEADER ICON -->
+
+                    <span
+                        class="git-modal-icon"
+                    >
+
+                        <i
+                            class="fa-solid fa-code-commit"
+                        ></i>
+
+                    </span>
+
+
+                    <!-- TITLE -->
+
+                    <span
+                        class="git-modal-title-text"
+                    >
+
+                        {{
+                            previewMode
+                                ? 'Git Message'
+                                : state().title
+                        }}
+
+                    </span>
 
                 </div>
 

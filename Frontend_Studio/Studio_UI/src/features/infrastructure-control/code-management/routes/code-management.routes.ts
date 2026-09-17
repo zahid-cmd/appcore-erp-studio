@@ -59,6 +59,58 @@ Routes =
 
                 // AUTO-END : SUB-002-004-001
 
+            // AUTO-BEGIN : SUB-002-004-002
+
+                //===========================================================
+                // Server Management
+                //===========================================================
+
+                {
+                    path:'server-management',
+
+                    data:
+                    {
+                        breadcrumb:'Server Management'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './server-management.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ServerManagementRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-002-004-002
+
+            // AUTO-BEGIN : SUB-002-004-003
+
+                //===========================================================
+                // Deployment Center
+                //===========================================================
+
+                {
+                    path:'deployment-center',
+
+                    data:
+                    {
+                        breadcrumb:'Deployment Center'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './deployment-center.routes'
+                        )
+                        .then(
+                            m =>
+                                m.DeploymentCenterRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-002-004-003
+
         ]
 
     }

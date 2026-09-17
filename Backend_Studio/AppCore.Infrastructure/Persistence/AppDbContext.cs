@@ -242,6 +242,52 @@ public class AppDbContext
 
     // AUTO-END : SourceControl
 
+    // AUTO-BEGIN : ServerManagement
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement>
+    ServerManagements
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ServerManagement
+
+    // AUTO-BEGIN : DeploymentCenter
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>
+    DeploymentCenters
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : DeploymentCenter
+
+    // AUTO-BEGIN : Department
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>
+    Departments
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Department
+
+    // AUTO-BEGIN : Designation
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>
+    Designations
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Designation
+
+
+
     // AUTO-END : AUTO REGISTER DBSETS 
  
     //=========================================================== 
