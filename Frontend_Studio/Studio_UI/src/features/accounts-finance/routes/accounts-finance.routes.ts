@@ -28,4 +28,30 @@ export const accountsFinanceRoutes:
 
         pathMatch:'full'
     },
+    // AUTO-BEGIN : MNU-004-001
+
+    //===========================================================
+    // Voucher Management
+    //===========================================================
+
+    {
+        path:'voucher-management',
+
+        data:
+        {
+            breadcrumb:'Voucher Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../voucher-management/routes/voucher-management.routes'
+            )
+            .then(
+                m =>
+                    m.mnu004001Routes
+            )
+    },
+
+    // AUTO-END : MNU-004-001
+
 ];

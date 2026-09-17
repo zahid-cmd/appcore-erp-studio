@@ -1,0 +1,966 @@
+/* =====================================================
+   APP FORM PAGE
+===================================================== */
+
+@import '../../../../../../shared/styles/app-form-page.css';
+
+
+
+/* =====================================================
+   ACTIVITY TOOLBAR — MASTER CONTROL
+===================================================== */
+
+.activity-toolbar-right
+{
+    --activity-dropdown-width:260px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    flex:1 1 auto;
+
+    width:auto;
+
+    min-width:0;
+
+    margin-left:10px;
+
+    gap:6px;
+
+    box-sizing:border-box;
+
+    overflow:visible;
+
+    position:relative;
+
+    z-index:100;
+}
+
+
+
+/* =====================================================
+   PAGE TOOLBAR — LEFT
+===================================================== */
+
+.activity-toolbar-left
+{
+    display:flex;
+
+    align-items:center;
+
+    flex:0 0 150px;
+
+    width:200px;
+
+    min-width:200px;
+
+    max-width:200px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — MASTER WIDTH
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+{
+    --dropdown-width:var(--activity-dropdown-width) !important;
+
+    --dropdown-height:36px !important;
+
+    display:block !important;
+
+    flex:0 0 var(--activity-dropdown-width) !important;
+
+    width:var(--activity-dropdown-width) !important;
+
+    min-width:var(--activity-dropdown-width) !important;
+
+    max-width:var(--activity-dropdown-width) !important;
+
+    height:36px !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+
+    position:relative;
+
+    z-index:100;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — CONTAINER
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-container
+{
+    display:flex !important;
+
+    flex-direction:column !important;
+
+    width:var(--activity-dropdown-width) !important;
+
+    min-width:var(--activity-dropdown-width) !important;
+
+    max-width:var(--activity-dropdown-width) !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — ROOT
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown
+{
+    position:relative !important;
+
+    width:var(--activity-dropdown-width) !important;
+
+    min-width:var(--activity-dropdown-width) !important;
+
+    max-width:var(--activity-dropdown-width) !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SELECTOR
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-selector
+{
+    display:flex !important;
+
+    align-items:center !important;
+
+    justify-content:space-between !important;
+
+    width:var(--activity-dropdown-width) !important;
+
+    min-width:var(--activity-dropdown-width) !important;
+
+    max-width:var(--activity-dropdown-width) !important;
+
+    height:36px !important;
+
+    box-sizing:border-box !important;
+
+    padding:0 8px 0 12px !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SELECTED TEXT
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-selected-text,
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-placeholder
+{
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — PANEL
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-panel
+{
+    position:absolute !important;
+
+    left:0 !important;
+
+    width:var(--activity-dropdown-width) !important;
+
+    min-width:var(--activity-dropdown-width) !important;
+
+    max-width:var(--activity-dropdown-width) !important;
+
+    box-sizing:border-box !important;
+
+    z-index:1000 !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SEARCH
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-search
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    padding:8px !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SEARCH INPUT
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-search input
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — OPTIONS
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-options
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — OPTION LABEL
+===================================================== */
+
+:host ::ng-deep
+.activity-toolbar-right
+app-search-dropdown
+.dropdown-option-label
+{
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+}
+
+
+
+/* =====================================================
+   DROPDOWN STACKING
+===================================================== */
+
+.activity-toolbar-right
+app-search-dropdown:nth-child(1)
+{
+    z-index:104;
+}
+
+
+.activity-toolbar-right
+app-search-dropdown:nth-child(2)
+{
+    z-index:103;
+}
+
+
+.activity-toolbar-right
+app-search-dropdown:nth-child(3)
+{
+    z-index:102;
+}
+
+
+.activity-toolbar-right
+app-search-dropdown:nth-child(4)
+{
+    z-index:101;
+}
+
+
+
+/* =====================================================
+   ACTIVITY ADD BUTTON
+===================================================== */
+
+.activity-add-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    flex:0 0 78px;
+
+    width:78px;
+
+    min-width:78px;
+
+    max-width:78px;
+
+    height:36px;
+
+    padding:0 8px;
+
+    margin:0;
+
+    border:none;
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+    color:#ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    box-shadow:
+        0 8px 18px rgba(37,99,235,.22),
+        inset 0 1px 1px rgba(255,255,255,.18);
+
+    transition:
+        background .22s ease,
+        color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.activity-add-button i
+{
+    width:14px;
+
+    text-align:center;
+
+    font-size:13px;
+
+    flex-shrink:0;
+}
+
+
+.activity-add-button span
+{
+    flex:1;
+
+    text-align:center;
+}
+
+
+.activity-add-button:hover:not(:disabled)
+{
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 10px 20px rgba(37,99,235,.28);
+}
+
+
+.activity-add-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,.10);
+}
+
+
+.activity-add-button:disabled
+{
+    cursor:not-allowed;
+
+    color:#94a3b8;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fafc 0%,
+            #eef2f7 100%
+        );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95);
+
+    opacity:.8;
+}
+
+
+.activity-add-button:focus-visible
+{
+    outline:none;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.14);
+}
+
+
+
+/* =====================================================
+   RESET BUTTON
+===================================================== */
+
+.activity-reset-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:5px;
+
+    flex:0 0 78px;
+
+    width:78px;
+
+    min-width:78px;
+
+    max-width:78px;
+
+    height:36px;
+
+    padding:0 8px;
+
+    margin:0;
+
+    border:1px solid #d9e2ef;
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f7f9fc 100%
+        );
+
+    color:#55667d;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.activity-reset-button:hover:not(:disabled)
+{
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4fb 100%
+        );
+
+    border-color:#c5d2e3;
+
+    color:#334155;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.08);
+
+    transform:translateY(-1px);
+}
+
+
+.activity-reset-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:none;
+}
+
+
+.activity-reset-button:disabled
+{
+    opacity:.55;
+
+    cursor:not-allowed;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
+
+.activity-reset-button i
+{
+    width:14px;
+
+    text-align:center;
+
+    font-size:12px;
+
+    flex-shrink:0;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.list-table-body app-empty-state
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    align-items:stretch;
+
+    justify-content:stretch;
+}
+
+
+
+/* =====================================================
+   PAGE HEADER ACTIONS
+===================================================== */
+
+.page-header-actions
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+
+
+/* =====================================================
+   ASSIGNMENT LAYOUT
+===================================================== */
+
+.assignment-layout
+{
+    display:flex;
+
+    width:100%;
+
+    min-width:0;
+
+    gap:20px;
+
+    box-sizing:border-box;
+}
+
+
+.assignment-left
+{
+    flex:0 0 300px;
+
+    width:300px;
+
+    min-width:300px;
+
+    box-sizing:border-box;
+}
+
+
+.assignment-right
+{
+    flex:1 1 auto;
+
+    width:auto;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+.assignment-right app-form-grid
+{
+    width:100%;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 1400px
+===================================================== */
+
+@media (max-width:1400px)
+{
+    .activity-toolbar-right
+    {
+        --activity-dropdown-width:165px;
+
+        gap:5px;
+
+        margin-left:8px;
+    }
+
+
+    .activity-add-button,
+    .activity-reset-button
+    {
+        flex-basis:72px;
+
+        width:72px;
+
+        min-width:72px;
+
+        max-width:72px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 1200px
+===================================================== */
+
+@media (max-width:1200px)
+{
+    .activity-toolbar-left
+    {
+        flex-basis:130px;
+
+        width:130px;
+
+        min-width:130px;
+
+        max-width:130px;
+    }
+
+
+    .activity-toolbar-right
+    {
+        --activity-dropdown-width:145px;
+
+        gap:4px;
+
+        margin-left:6px;
+    }
+
+
+    .activity-add-button,
+    .activity-reset-button
+    {
+        flex-basis:68px;
+
+        width:68px;
+
+        min-width:68px;
+
+        max-width:68px;
+
+        padding:0 6px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 992px
+===================================================== */
+
+@media (max-width:992px)
+{
+    .activity-toolbar-left
+    {
+        flex:0 0 auto;
+
+        width:auto;
+
+        min-width:0;
+
+        max-width:none;
+    }
+
+
+    .activity-toolbar-right
+    {
+        --activity-dropdown-width:calc(50% - 4px);
+
+        flex-wrap:wrap;
+
+        justify-content:flex-start;
+
+        width:100%;
+
+        margin-left:0;
+
+        gap:8px;
+    }
+
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    {
+        flex:1 1 var(--activity-dropdown-width) !important;
+
+        width:var(--activity-dropdown-width) !important;
+
+        min-width:120px !important;
+
+        max-width:none !important;
+    }
+
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown-container,
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown,
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown-selector,
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown-panel
+    {
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    .activity-add-button,
+    .activity-reset-button
+    {
+        flex:1 1 90px;
+
+        width:auto;
+
+        min-width:90px;
+
+        max-width:none;
+    }
+
+
+    .assignment-layout
+    {
+        flex-direction:column;
+
+        height:auto;
+    }
+
+
+    .assignment-left
+    {
+        flex:none;
+
+        width:100%;
+
+        min-width:100%;
+
+        height:auto;
+    }
+
+
+    .assignment-right
+    {
+        width:100%;
+
+        height:auto;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 600px
+===================================================== */
+
+@media (max-width:600px)
+{
+    .activity-toolbar-right
+    {
+        --activity-dropdown-width:100%;
+
+        flex-direction:column;
+
+        flex-wrap:nowrap;
+
+        width:100%;
+
+        gap:8px;
+    }
+
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    {
+        flex:0 0 auto !important;
+
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown-container,
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown,
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown-selector,
+
+    :host ::ng-deep
+    .activity-toolbar-right
+    app-search-dropdown
+    .dropdown-panel
+    {
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    .activity-add-button,
+    .activity-reset-button
+    {
+        flex:0 0 auto;
+
+        width:100%;
+
+        min-width:100%;
+
+        max-width:100%;
+    }
+}

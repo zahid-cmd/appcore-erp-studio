@@ -1,0 +1,90 @@
+/* ============================================================
+   Activity Assignment
+============================================================ */
+
+export interface ActivityAssignment
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Activity Assignment
+============================================================ */
+
+export interface CreateActivityAssignment
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Activity Assignment
+============================================================ */
+
+export interface UpdateActivityAssignment
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Activity Assignment Defaults
+============================================================ */
+
+export interface ActivityAssignmentDefaults
+{
+    code:
+        string;
+}

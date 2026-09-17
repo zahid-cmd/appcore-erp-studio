@@ -1,0 +1,90 @@
+/* ============================================================
+   Role Profile
+============================================================ */
+
+export interface RoleProfile
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Role Profile
+============================================================ */
+
+export interface CreateRoleProfile
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Role Profile
+============================================================ */
+
+export interface UpdateRoleProfile
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Role Profile Defaults
+============================================================ */
+
+export interface RoleProfileDefaults
+{
+    code:
+        string;
+}

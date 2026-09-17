@@ -1,0 +1,253 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-user-shield"
+
+        [title]="pageTitle"
+
+        subtitle="Manage role profiles">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 1
+                 ROLE PROFILE INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Role Profile Information"
+
+                icon="fas fa-user-shield">
+
+
+                <!-- Profile Code -->
+
+                <app-textbox
+
+                    label="Profile Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.ProfileCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Profile Name -->
+
+                <app-textbox
+
+                    label="Profile Name"
+
+                    placeholder="Enter profile name"
+
+                    [(value)]="entity.ProfileName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 2
+                 PROFILE SETTINGS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Profile Settings"
+
+                icon="fas fa-sliders">
+
+
+                <!-- Display Order -->
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    placeholder="Enter display order"
+
+                    [(value)]="entity.DisplayOrder"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 3
+                 STATUS INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status Information"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 4
+                 ADDITIONAL INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Additional Information"
+
+                icon="fas fa-clipboard">
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

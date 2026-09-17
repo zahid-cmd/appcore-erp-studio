@@ -140,6 +140,35 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : ActivityAssignment
+
+using AppCore.Application.SecurityPermission.RoleManagement;
+using AppCore.Infrastructure.Configurations.SecurityPermission.RoleManagement;
+
+// AUTO-END : ActivityAssignment
+
+// AUTO-BEGIN : RoleProfile
+
+using AppCore.Application.SecurityPermission.RoleManagement;
+using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
+
+// AUTO-END : RoleProfile
+
+// AUTO-BEGIN : PaymentVoucher
+
+using AppCore.Application.AccountsFinance.VoucherManagement;
+using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
+
+// AUTO-END : PaymentVoucher
+
+// AUTO-BEGIN : ReceiptVoucher
+
+using AppCore.Application.AccountsFinance.VoucherManagement;
+using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
+
+// AUTO-END : ReceiptVoucher
+
+
 
 
 // AUTO-BEGIN : Designation
@@ -366,6 +395,48 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : ActivityAssignment
+
+        services.AddScoped
+        <
+            IActivityAssignmentRepository,
+            ActivityAssignmentRepository
+        >();
+
+        // AUTO-END : ActivityAssignment
+
+        // AUTO-BEGIN : RoleProfile
+
+        services.AddScoped
+        <
+            IRoleProfileRepository,
+            RoleProfileRepository
+        >();
+
+        // AUTO-END : RoleProfile
+
+
+        // AUTO-BEGIN : PaymentVoucher
+
+        services.AddScoped
+        <
+            IPaymentVoucherRepository,
+            PaymentVoucherRepository
+        >();
+
+        // AUTO-END : PaymentVoucher
+
+        // AUTO-BEGIN : ReceiptVoucher
+
+        services.AddScoped
+        <
+            IReceiptVoucherRepository,
+            ReceiptVoucherRepository
+        >();
+
+        // AUTO-END : ReceiptVoucher
+
+
 
 
         // AUTO-BEGIN : Designation
@@ -490,29 +561,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : AccountClass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         // AUTO-END : AUTO REGISTER SERVICES
 

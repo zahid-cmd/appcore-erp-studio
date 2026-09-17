@@ -286,7 +286,56 @@ public class AppDbContext
 
     // AUTO-END : Designation
 
+    // AUTO-BEGIN : ReceiptVoucher
 
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucher>
+    ReceiptVouchers
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ReceiptVoucher
+
+    // AUTO-BEGIN : PaymentVoucher
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.PaymentVoucher>
+    PaymentVouchers
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PaymentVoucher
+
+
+
+
+
+
+
+
+    // AUTO-BEGIN : RoleProfile
+
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.RoleManagement.RoleProfile>
+    RoleProfiles
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : RoleProfile
+
+    // AUTO-BEGIN : ActivityAssignment
+
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment>
+    ActivityAssignments
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ActivityAssignment
 
     // AUTO-END : AUTO REGISTER DBSETS 
  

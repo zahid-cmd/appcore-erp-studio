@@ -157,6 +157,32 @@ export const routes:
 
             // AUTO-END : MOD-005
 
+            // AUTO-BEGIN : MOD-006
+
+            //===========================================================
+            // Security & Permission
+            //===========================================================
+
+            {
+                path:'security-permission',
+
+                data:
+                {
+                    breadcrumb:'Security & Permission'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/security-permission/routes/security-permission.routes'
+                    )
+                    .then(
+                        m =>
+                            m.securityPermissionRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-006
+
         ] 
     }, 
  
