@@ -8,7 +8,6 @@ using AppCore.Domain.Common;
 using AppCore.Domain.Entities.SecurityPermission.RoleManagement;
 
 using AppCore.Application.SecurityPermission.RoleManagement;
-
 using AppCore.Application.SecurityPermission.RoleManagement.ActivityAssignment.DTOs;
 
 using AppCore.Infrastructure.Persistence;
@@ -78,7 +77,7 @@ public class ActivityAssignmentRepository
             await
             (
                 from assignment
-                in _context.ActivityAssignments
+                in _context.Set<ActivityAssignment>()
 
                 join roleProfile
                 in _context.RoleProfiles
@@ -148,7 +147,7 @@ public class ActivityAssignmentRepository
 
                             &&
 
-                            x.MasterActivityId != null
+                            x.MasterActivityId.HasValue
 
                             &&
 
@@ -186,7 +185,7 @@ public class ActivityAssignmentRepository
 
                             &&
 
-                            x.NavigationActivityId != null
+                            x.NavigationActivityId.HasValue
 
                             &&
 
@@ -262,7 +261,7 @@ public class ActivityAssignmentRepository
             await
             (
                 from activityAssignment
-                in _context.ActivityAssignments
+                in _context.Set<ActivityAssignment>()
 
                 join roleProfile
                 in _context.RoleProfiles
@@ -302,8 +301,7 @@ public class ActivityAssignmentRepository
 
         if
         (
-            assignment
-            ==
+            assignment ==
             null
         )
         {
@@ -374,7 +372,7 @@ public class ActivityAssignmentRepository
             await
             (
                 from activityAssignment
-                in _context.ActivityAssignments
+                in _context.Set<ActivityAssignment>()
 
                 join roleProfile
                 in _context.RoleProfiles
@@ -414,8 +412,7 @@ public class ActivityAssignmentRepository
 
         if
         (
-            assignment
-            ==
+            assignment ==
             null
         )
         {
@@ -486,8 +483,7 @@ public class ActivityAssignmentRepository
             await
             (
                 from detail
-                in _context
-                    .Set<ActivityAssignmentDetail>()
+                in _context.Set<ActivityAssignmentDetail>()
 
                 join module
                 in _context.NavigationModules
@@ -615,6 +611,111 @@ public class ActivityAssignmentRepository
             CreateActivityAssignmentDto dto
         )
     {
+        //=======================================================
+        // System User
+        //=======================================================
+
+        const long systemUserId =
+            1;
+
+
+        //=======================================================
+        // Validation
+        //=======================================================
+
+        if
+        (
+            dto.RoleProfileId <= 0
+        )
+        {
+            throw new InvalidOperationException(
+                "Role Profile is required."
+            );
+        }
+
+
+        if
+        (
+            dto.Details == null ||
+            dto.Details.Count == 0
+        )
+        {
+            throw new InvalidOperationException(
+                "At least one activity assignment detail is required."
+            );
+        }
+
+
+        //=======================================================
+        // Duplicate Detail Validation
+        //=======================================================
+
+        var duplicateDetails =
+
+            dto.Details
+                .GroupBy
+                (
+                    x => new
+                    {
+                        x.ModuleId,
+                        x.MenuId,
+                        x.SubMenuId
+                    }
+                )
+                .Any
+                (
+                    x =>
+                        x.Count() > 1
+                );
+
+
+        if
+        (
+            duplicateDetails
+        )
+        {
+            throw new InvalidOperationException(
+                "Duplicate submenu assignment detected."
+            );
+        }
+
+
+        //=======================================================
+        // Existing Assignment Validation
+        //=======================================================
+
+        var existingAssignment =
+
+            await _context
+                .Set<ActivityAssignment>()
+                .AnyAsync
+                (
+                    x =>
+
+                        x.RoleProfileId ==
+                        dto.RoleProfileId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            existingAssignment
+        )
+        {
+            throw new InvalidOperationException(
+                $"An activity assignment already exists for Role Profile Id '{dto.RoleProfileId}'."
+            );
+        }
+
+
+        //=======================================================
+        // Transaction
+        //=======================================================
+
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
 
@@ -631,22 +732,32 @@ public class ActivityAssignmentRepository
                     RoleProfileId =
                         dto.RoleProfileId,
 
+                    // IMPORTANT:
+                    // Explicitly set database-required value.
                     IsActive =
-                        dto.IsActive,
+                        true,
+
+                    IsDeleted =
+                        false,
+
+                    CreatedBy =
+                        systemUserId,
 
                     CreatedDate =
                         DateTime.UtcNow,
 
-                    IsDeleted =
-                        false
+                    ModifiedBy =
+                        null,
+
+                    ModifiedDate =
+                        null,
+
+                    DeletedBy =
+                        null,
+
+                    DeletedDate =
+                        null
                 };
-
-
-            _context.ActivityAssignments.Add(
-                entity);
-
-
-            await _context.SaveChangesAsync();
 
 
             //===================================================
@@ -662,9 +773,6 @@ public class ActivityAssignmentRepository
                 var detail =
                     new ActivityAssignmentDetail
                     {
-                        ActivityAssignmentId =
-                            entity.ActivityAssignmentId,
-
                         ModuleId =
                             detailDto.ModuleId,
 
@@ -674,24 +782,32 @@ public class ActivityAssignmentRepository
                         SubMenuId =
                             detailDto.SubMenuId,
 
+                        // IMPORTANT:
+                        // Explicitly set database-required value.
                         IsActive =
-                            detailDto.IsActive,
+                            true,
+
+                        IsDeleted =
+                            false,
+
+                        CreatedBy =
+                            systemUserId,
 
                         CreatedDate =
                             DateTime.UtcNow,
 
-                        IsDeleted =
-                            false
+                        ModifiedBy =
+                            null,
+
+                        ModifiedDate =
+                            null,
+
+                        DeletedBy =
+                            null,
+
+                        DeletedDate =
+                            null
                     };
-
-
-                _context
-                    .Set<ActivityAssignmentDetail>()
-                    .Add(
-                        detail);
-
-
-                await _context.SaveChangesAsync();
 
 
                 //================================================
@@ -700,48 +816,96 @@ public class ActivityAssignmentRepository
 
                 if
                 (
-                    detailDto
-                        .ActivityAssignmentPermissions
-                        .Any()
+                    detailDto.ActivityAssignmentPermissions !=
+                    null
                 )
                 {
-                    var permissions =
+                    foreach
+                    (
+                        var permissionDto
+                        in detailDto.ActivityAssignmentPermissions
+                    )
+                    {
+                        //========================================
+                        // Ignore empty permission
+                        //========================================
 
-                        detailDto
-                            .ActivityAssignmentPermissions
-
-                            .Select
-                            (
-                                permission =>
-
-                                    new ActivityAssignmentPermission
-                                    {
-                                        ActivityAssignmentDetailId =
-                                            detail.ActivityAssignmentDetailId,
-
-                                        MasterActivityId =
-                                            permission.MasterActivityId,
-
-                                        NavigationActivityId =
-                                            permission.NavigationActivityId,
-
-                                        CreatedDate =
-                                            DateTime.UtcNow,
-
-                                        IsDeleted =
-                                            false
-                                    }
-                            )
-
-                            .ToList();
+                        if
+                        (
+                            !permissionDto.MasterActivityId.HasValue
+                            &&
+                            !permissionDto.NavigationActivityId.HasValue
+                        )
+                        {
+                            continue;
+                        }
 
 
-                    _context
-                        .Set<ActivityAssignmentPermission>()
-                        .AddRange(
-                            permissions);
+                        var permission =
+                            new ActivityAssignmentPermission
+                            {
+                                MasterActivityId =
+                                    permissionDto.MasterActivityId,
+
+                                NavigationActivityId =
+                                    permissionDto.NavigationActivityId,
+
+                                // IMPORTANT
+                                IsActive =
+                                    true,
+
+                                IsDeleted =
+                                    false,
+
+                                CreatedBy =
+                                    systemUserId,
+
+                                CreatedDate =
+                                    DateTime.UtcNow,
+
+                                ModifiedBy =
+                                    null,
+
+                                ModifiedDate =
+                                    null,
+
+                                DeletedBy =
+                                    null,
+
+                                DeletedDate =
+                                    null
+                            };
+
+
+                        detail.ActivityAssignmentPermissions.Add(
+                            permission
+                        );
+                    }
                 }
+
+
+                entity.Details.Add(
+                    detail
+                );
             }
+
+
+            //===================================================
+            // Add Complete Graph
+            //===================================================
+
+            _context
+                .Set<ActivityAssignment>()
+                .Add(
+                    entity
+                );
+
+
+            //===================================================
+            // Save Complete Graph
+            //===================================================
+
+            await _context.SaveChangesAsync();
 
 
             //===================================================
@@ -771,18 +935,23 @@ public class ActivityAssignmentRepository
                         $"Activity Assignment created for Role Profile Id '{entity.RoleProfileId}'.",
 
                     PerformedBy =
-                        1,
+                        systemUserId,
 
                     PerformedByName =
                         "System",
 
                     PerformedDate =
                         DateTime.UtcNow
-                });
+                }
+            );
 
 
             await _context.SaveChangesAsync();
 
+
+            //===================================================
+            // Commit
+            //===================================================
 
             await transaction.CommitAsync();
 
@@ -808,15 +977,137 @@ public class ActivityAssignmentRepository
             UpdateActivityAssignmentDto dto
         )
     {
+        const long systemUserId =
+            1;
+
+
+        //=======================================================
+        // Validation
+        //=======================================================
+
+        if
+        (
+            dto.ActivityAssignmentId <= 0
+        )
+        {
+            throw new InvalidOperationException(
+                "Activity Assignment Id is required."
+            );
+        }
+
+
+        if
+        (
+            dto.RoleProfileId <= 0
+        )
+        {
+            throw new InvalidOperationException(
+                "Role Profile is required."
+            );
+        }
+
+
+        if
+        (
+            dto.Details == null ||
+            dto.Details.Count == 0
+        )
+        {
+            throw new InvalidOperationException(
+                "At least one activity assignment detail is required."
+            );
+        }
+
+
+        //=======================================================
+        // Duplicate Details
+        //=======================================================
+
+        var duplicateDetails =
+
+            dto.Details
+                .GroupBy
+                (
+                    x => new
+                    {
+                        x.ModuleId,
+                        x.MenuId,
+                        x.SubMenuId
+                    }
+                )
+                .Any
+                (
+                    x =>
+                        x.Count() > 1
+                );
+
+
+        if
+        (
+            duplicateDetails
+        )
+        {
+            throw new InvalidOperationException(
+                "Duplicate submenu assignment detected."
+            );
+        }
+
+
+        //=======================================================
+        // Duplicate Role Profile
+        //=======================================================
+
+        var duplicateRoleProfile =
+
+            await _context
+                .Set<ActivityAssignment>()
+                .AnyAsync
+                (
+                    x =>
+
+                        x.RoleProfileId ==
+                        dto.RoleProfileId
+
+                        &&
+
+                        x.ActivityAssignmentId !=
+                        dto.ActivityAssignmentId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            duplicateRoleProfile
+        )
+        {
+            throw new InvalidOperationException(
+                $"An activity assignment already exists for Role Profile Id '{dto.RoleProfileId}'."
+            );
+        }
+
+
+        //=======================================================
+        // Transaction
+        //=======================================================
+
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
 
 
         try
         {
+            //===================================================
+            // Load Header
+            //===================================================
+
             var entity =
 
-                await _context.ActivityAssignments
+                await _context
+                    .Set<ActivityAssignment>()
 
                     .FirstOrDefaultAsync
                     (
@@ -833,8 +1124,7 @@ public class ActivityAssignmentRepository
 
             if
             (
-                entity
-                ==
+                entity ==
                 null
             )
             {
@@ -850,17 +1140,20 @@ public class ActivityAssignmentRepository
                 dto.RoleProfileId;
 
             entity.IsActive =
-                dto.IsActive;
+                true;
+
+            entity.ModifiedBy =
+                systemUserId;
 
             entity.ModifiedDate =
                 DateTime.UtcNow;
 
 
             //===================================================
-            // Remove Existing Permissions
+            // Existing Details
             //===================================================
 
-            var existingDetailIds =
+            var existingDetails =
 
                 await _context
                     .Set<ActivityAssignmentDetail>()
@@ -871,21 +1164,25 @@ public class ActivityAssignmentRepository
 
                             x.ActivityAssignmentId ==
                             entity.ActivityAssignmentId
-
-                            &&
-
-                            !x.IsDeleted
-                    )
-
-                    .Select
-                    (
-                        x =>
-
-                            x.ActivityAssignmentDetailId
                     )
 
                     .ToListAsync();
 
+
+            var existingDetailIds =
+
+                existingDetails
+                    .Select
+                    (
+                        x =>
+                            x.ActivityAssignmentDetailId
+                    )
+                    .ToList();
+
+
+            //===================================================
+            // Existing Permissions
+            //===================================================
 
             if
             (
@@ -901,14 +1198,9 @@ public class ActivityAssignmentRepository
                         (
                             x =>
 
-                                existingDetailIds.Contains
-                                (
+                                existingDetailIds.Contains(
                                     x.ActivityAssignmentDetailId
                                 )
-
-                                &&
-
-                                !x.IsDeleted
                         )
 
                         .ToListAsync();
@@ -921,8 +1213,7 @@ public class ActivityAssignmentRepository
                 {
                     _context
                         .Set<ActivityAssignmentPermission>()
-                        .RemoveRange
-                        (
+                        .RemoveRange(
                             existingPermissions
                         );
                 }
@@ -933,26 +1224,6 @@ public class ActivityAssignmentRepository
             // Remove Existing Details
             //===================================================
 
-            var existingDetails =
-
-                await _context
-                    .Set<ActivityAssignmentDetail>()
-
-                    .Where
-                    (
-                        x =>
-
-                            x.ActivityAssignmentId ==
-                            entity.ActivityAssignmentId
-
-                            &&
-
-                            !x.IsDeleted
-                    )
-
-                    .ToListAsync();
-
-
             if
             (
                 existingDetails.Any()
@@ -960,8 +1231,7 @@ public class ActivityAssignmentRepository
             {
                 _context
                     .Set<ActivityAssignmentDetail>()
-                    .RemoveRange
-                    (
+                    .RemoveRange(
                         existingDetails
                     );
             }
@@ -996,73 +1266,113 @@ public class ActivityAssignmentRepository
                             detailDto.SubMenuId,
 
                         IsActive =
-                            detailDto.IsActive,
+                            true,
+
+                        IsDeleted =
+                            false,
+
+                        CreatedBy =
+                            systemUserId,
 
                         CreatedDate =
                             DateTime.UtcNow,
 
-                        IsDeleted =
-                            false
+                        ModifiedBy =
+                            null,
+
+                        ModifiedDate =
+                            null,
+
+                        DeletedBy =
+                            null,
+
+                        DeletedDate =
+                            null
                     };
+
+
+                //================================================
+                // Permissions
+                //================================================
+
+                if
+                (
+                    detailDto.ActivityAssignmentPermissions !=
+                    null
+                )
+                {
+                    foreach
+                    (
+                        var permissionDto
+                        in detailDto.ActivityAssignmentPermissions
+                    )
+                    {
+                        if
+                        (
+                            !permissionDto.MasterActivityId.HasValue
+                            &&
+                            !permissionDto.NavigationActivityId.HasValue
+                        )
+                        {
+                            continue;
+                        }
+
+
+                        var permission =
+                            new ActivityAssignmentPermission
+                            {
+                                MasterActivityId =
+                                    permissionDto.MasterActivityId,
+
+                                NavigationActivityId =
+                                    permissionDto.NavigationActivityId,
+
+                                IsActive =
+                                    true,
+
+                                IsDeleted =
+                                    false,
+
+                                CreatedBy =
+                                    systemUserId,
+
+                                CreatedDate =
+                                    DateTime.UtcNow,
+
+                                ModifiedBy =
+                                    null,
+
+                                ModifiedDate =
+                                    null,
+
+                                DeletedBy =
+                                    null,
+
+                                DeletedDate =
+                                    null
+                            };
+
+
+                        detail.ActivityAssignmentPermissions.Add(
+                            permission
+                        );
+                    }
+                }
 
 
                 _context
                     .Set<ActivityAssignmentDetail>()
                     .Add(
-                        detail);
-
-
-                await _context.SaveChangesAsync();
-
-
-                //================================================
-                // Insert Permissions
-                //================================================
-
-                if
-                (
-                    detailDto
-                        .ActivityAssignmentPermissions
-                        .Any()
-                )
-                {
-                    var permissions =
-
-                        detailDto
-                            .ActivityAssignmentPermissions
-
-                            .Select
-                            (
-                                permission =>
-
-                                    new ActivityAssignmentPermission
-                                    {
-                                        ActivityAssignmentDetailId =
-                                            detail.ActivityAssignmentDetailId,
-
-                                        MasterActivityId =
-                                            permission.MasterActivityId,
-
-                                        NavigationActivityId =
-                                            permission.NavigationActivityId,
-
-                                        CreatedDate =
-                                            DateTime.UtcNow,
-
-                                        IsDeleted =
-                                            false
-                                    }
-                            )
-
-                            .ToList();
-
-
-                    _context
-                        .Set<ActivityAssignmentPermission>()
-                        .AddRange(
-                            permissions);
-                }
+                        detail
+                    );
             }
+
+
+            //===================================================
+            // Save
+            //===================================================
+
+            await _context.SaveChangesAsync();
 
 
             //===================================================
@@ -1092,18 +1402,23 @@ public class ActivityAssignmentRepository
                         $"Activity Assignment updated for Role Profile Id '{entity.RoleProfileId}'.",
 
                     PerformedBy =
-                        1,
+                        systemUserId,
 
                     PerformedByName =
                         "System",
 
                     PerformedDate =
                         DateTime.UtcNow
-                });
+                }
+            );
 
 
             await _context.SaveChangesAsync();
 
+
+            //===================================================
+            // Commit
+            //===================================================
 
             await transaction.CommitAsync();
 
@@ -1137,7 +1452,8 @@ public class ActivityAssignmentRepository
         {
             var entity =
 
-                await _context.ActivityAssignments
+                await _context
+                    .Set<ActivityAssignment>()
 
                     .FirstOrDefaultAsync
                     (
@@ -1154,8 +1470,7 @@ public class ActivityAssignmentRepository
 
             if
             (
-                entity
-                ==
+                entity ==
                 null
             )
             {
@@ -1164,18 +1479,27 @@ public class ActivityAssignmentRepository
 
 
             //===================================================
-            // Delete Header
+            // Header
             //===================================================
 
             entity.IsDeleted =
                 true;
 
+            entity.DeletedBy =
+                1;
+
             entity.DeletedDate =
+                DateTime.UtcNow;
+
+            entity.ModifiedBy =
+                1;
+
+            entity.ModifiedDate =
                 DateTime.UtcNow;
 
 
             //===================================================
-            // Delete Details
+            // Details
             //===================================================
 
             var details =
@@ -1207,21 +1531,24 @@ public class ActivityAssignmentRepository
                 detail.IsDeleted =
                     true;
 
+                detail.DeletedBy =
+                    1;
+
                 detail.DeletedDate =
                     DateTime.UtcNow;
             }
 
 
             //===================================================
-            // Delete Permissions
+            // Permissions
             //===================================================
 
             var detailIds =
+
                 details
                     .Select
                     (
                         x =>
-
                             x.ActivityAssignmentDetailId
                     )
                     .ToList();
@@ -1241,8 +1568,7 @@ public class ActivityAssignmentRepository
                         (
                             x =>
 
-                                detailIds.Contains
-                                (
+                                detailIds.Contains(
                                     x.ActivityAssignmentDetailId
                                 )
 
@@ -1263,6 +1589,9 @@ public class ActivityAssignmentRepository
                     permission.IsDeleted =
                         true;
 
+                    permission.DeletedBy =
+                        1;
+
                     permission.DeletedDate =
                         DateTime.UtcNow;
                 }
@@ -1270,7 +1599,7 @@ public class ActivityAssignmentRepository
 
 
             //===================================================
-            // Activity History
+            // History
             //===================================================
 
             _context.ActivityHistories.Add(
@@ -1303,7 +1632,8 @@ public class ActivityAssignmentRepository
 
                     PerformedDate =
                         DateTime.UtcNow
-                });
+                }
+            );
 
 
             await _context.SaveChangesAsync();
@@ -1338,19 +1668,18 @@ public class ActivityAssignmentRepository
         {
             var entity =
 
-                await _context.ActivityAssignments
+                await _context
+                    .Set<ActivityAssignment>()
 
                     .Where
                     (
                         x =>
-
                             x.IsDeleted
                     )
 
                     .OrderByDescending
                     (
                         x =>
-
                             x.DeletedDate
                     )
 
@@ -1359,8 +1688,7 @@ public class ActivityAssignmentRepository
 
             if
             (
-                entity
-                ==
+                entity ==
                 null
             )
             {
@@ -1369,18 +1697,30 @@ public class ActivityAssignmentRepository
 
 
             //===================================================
-            // Restore Header
+            // Header
             //===================================================
 
             entity.IsDeleted =
                 false;
 
+            entity.DeletedBy =
+                null;
+
             entity.DeletedDate =
                 null;
 
+            entity.IsActive =
+                true;
+
+            entity.ModifiedBy =
+                1;
+
+            entity.ModifiedDate =
+                DateTime.UtcNow;
+
 
             //===================================================
-            // Restore Details
+            // Details
             //===================================================
 
             var details =
@@ -1412,21 +1752,33 @@ public class ActivityAssignmentRepository
                 detail.IsDeleted =
                     false;
 
+                detail.DeletedBy =
+                    null;
+
                 detail.DeletedDate =
                     null;
+
+                detail.IsActive =
+                    true;
+
+                detail.ModifiedBy =
+                    1;
+
+                detail.ModifiedDate =
+                    DateTime.UtcNow;
             }
 
 
             //===================================================
-            // Restore Permissions
+            // Permissions
             //===================================================
 
             var detailIds =
+
                 details
                     .Select
                     (
                         x =>
-
                             x.ActivityAssignmentDetailId
                     )
                     .ToList();
@@ -1446,8 +1798,7 @@ public class ActivityAssignmentRepository
                         (
                             x =>
 
-                                detailIds.Contains
-                                (
+                                detailIds.Contains(
                                     x.ActivityAssignmentDetailId
                                 )
 
@@ -1468,14 +1819,26 @@ public class ActivityAssignmentRepository
                     permission.IsDeleted =
                         false;
 
+                    permission.DeletedBy =
+                        null;
+
                     permission.DeletedDate =
                         null;
+
+                    permission.IsActive =
+                        true;
+
+                    permission.ModifiedBy =
+                        1;
+
+                    permission.ModifiedDate =
+                        DateTime.UtcNow;
                 }
             }
 
 
             //===================================================
-            // Activity History
+            // History
             //===================================================
 
             _context.ActivityHistories.Add(
@@ -1508,7 +1871,8 @@ public class ActivityAssignmentRepository
 
                     PerformedDate =
                         DateTime.UtcNow
-                });
+                }
+            );
 
 
             await _context.SaveChangesAsync();

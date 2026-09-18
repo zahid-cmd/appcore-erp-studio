@@ -140,12 +140,46 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : SpecialAssignment
+
+using AppCore.Application.SecurityPermission.UserManagement;
+using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
+
+// AUTO-END : SpecialAssignment
+
+
+
+
+// AUTO-BEGIN : RoleAssignment
+
+using AppCore.Application.SecurityPermission.UserManagement;
+using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
+
+// AUTO-END : RoleAssignment
+
+// AUTO-BEGIN : UserProfile
+
+using AppCore.Application.SecurityPermission.UserManagement;
+using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
+
+// AUTO-END : UserProfile
+
+
+
+
+
+
+
+
+
 // AUTO-BEGIN : ActivityAssignment
 
 using AppCore.Application.SecurityPermission.RoleManagement;
-using AppCore.Infrastructure.Configurations.SecurityPermission.RoleManagement;
+using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
 
 // AUTO-END : ActivityAssignment
+
+
 
 // AUTO-BEGIN : RoleProfile
 
@@ -154,12 +188,16 @@ using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
 
 // AUTO-END : RoleProfile
 
+
+
 // AUTO-BEGIN : PaymentVoucher
 
 using AppCore.Application.AccountsFinance.VoucherManagement;
 using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
 
 // AUTO-END : PaymentVoucher
+
+
 
 // AUTO-BEGIN : ReceiptVoucher
 
@@ -178,12 +216,16 @@ using AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanResour
 
 // AUTO-END : Designation
 
+
+
 // AUTO-BEGIN : Department
 
 using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
 using AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanResourceSetup;
 
 // AUTO-END : Department
+
+
 
 // AUTO-BEGIN : DeploymentCenter
 
@@ -192,12 +234,16 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement
 
 // AUTO-END : DeploymentCenter
 
+
+
 // AUTO-BEGIN : ServerManagement
 
 using AppCore.Application.InfrastructureControl.CodeManagement;
 using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement;
 
 // AUTO-END : ServerManagement
+
+
 
 // AUTO-BEGIN : SourceControl
 
@@ -217,12 +263,16 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 // AUTO-END : UtilityComponents
 
+
+
 // AUTO-BEGIN : LayoutComponents
 
 using AppCore.Application.InfrastructureControl.ComponentManagement;
 using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManagement;
 
 // AUTO-END : LayoutComponents
+
+
 
 // AUTO-BEGIN : ControlComponents
 
@@ -241,6 +291,8 @@ using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
 
 // AUTO-END : Company
 
+
+
 // AUTO-BEGIN : Branch
 
 using AppCore.Application.Settings.GeneralSettings;
@@ -248,12 +300,16 @@ using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
 
 // AUTO-END : Branch
 
+
+
 // AUTO-BEGIN : AccountGroup
 
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
 // AUTO-END : AccountGroup
+
+
 
 // AUTO-BEGIN : AccountClass
 
@@ -395,6 +451,47 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : SpecialAssignment
+
+        services.AddScoped
+        <
+            ISpecialAssignmentRepository,
+            SpecialAssignmentRepository
+        >();
+
+        // AUTO-END : SpecialAssignment
+
+
+
+
+        // AUTO-BEGIN : RoleAssignment
+
+        services.AddScoped
+        <
+            IRoleAssignmentRepository,
+            RoleAssignmentRepository
+        >();
+
+        // AUTO-END : RoleAssignment
+
+        // AUTO-BEGIN : UserProfile
+
+        services.AddScoped
+        <
+            IUserProfileRepository,
+            UserProfileRepository
+        >();
+
+        // AUTO-END : UserProfile
+
+
+
+
+
+
+
+
+
         // AUTO-BEGIN : ActivityAssignment
 
         services.AddScoped
@@ -404,6 +501,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ActivityAssignment
+
+
 
         // AUTO-BEGIN : RoleProfile
 
@@ -416,6 +515,7 @@ public static class DependencyInjection
         // AUTO-END : RoleProfile
 
 
+
         // AUTO-BEGIN : PaymentVoucher
 
         services.AddScoped
@@ -425,6 +525,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : PaymentVoucher
+
+
 
         // AUTO-BEGIN : ReceiptVoucher
 
@@ -449,6 +551,8 @@ public static class DependencyInjection
 
         // AUTO-END : Designation
 
+
+
         // AUTO-BEGIN : Department
 
         services.AddScoped
@@ -458,6 +562,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : Department
+
+
 
         // AUTO-BEGIN : DeploymentCenter
 
@@ -469,6 +575,8 @@ public static class DependencyInjection
 
         // AUTO-END : DeploymentCenter
 
+
+
         // AUTO-BEGIN : ServerManagement
 
         services.AddScoped
@@ -478,6 +586,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ServerManagement
+
+
 
         // AUTO-BEGIN : SourceControl
 
@@ -489,6 +599,8 @@ public static class DependencyInjection
 
         // AUTO-END : SourceControl
 
+
+
         // AUTO-BEGIN : UtilityComponents
 
         services.AddScoped
@@ -499,6 +611,8 @@ public static class DependencyInjection
 
         // AUTO-END : UtilityComponents
 
+
+
         // AUTO-BEGIN : LayoutComponents
 
         services.AddScoped
@@ -508,6 +622,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : LayoutComponents
+
+
 
         // AUTO-BEGIN : ControlComponents
 
@@ -532,6 +648,8 @@ public static class DependencyInjection
 
         // AUTO-END : Company
 
+
+
         // AUTO-BEGIN : Branch
 
         services.AddScoped
@@ -542,6 +660,8 @@ public static class DependencyInjection
 
         // AUTO-END : Branch
 
+
+
         // AUTO-BEGIN : AccountGroup
 
         services.AddScoped
@@ -551,6 +671,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : AccountGroup
+
+
 
         // AUTO-BEGIN : AccountClass
 

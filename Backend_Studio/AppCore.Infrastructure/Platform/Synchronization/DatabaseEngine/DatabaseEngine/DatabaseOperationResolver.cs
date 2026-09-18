@@ -3,12 +3,14 @@
 //===============================================================
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 using AppCore.Infrastructure.Persistence;
@@ -39,6 +41,7 @@ public class DatabaseOperationResolver
         _context;
 
 
+
     //===========================================================
     // Constructor
     //===========================================================
@@ -53,8 +56,9 @@ public class DatabaseOperationResolver
     }
 
 
+
     //===========================================================
-    // Resolve Operation
+    // Resolve Creation Operation
     //===========================================================
 
     public async Task<string> ResolveAsync
@@ -76,11 +80,6 @@ public class DatabaseOperationResolver
 
         //=======================================================
         // Resolve Code Synchronization
-        //
-        // The Database Engine receives the Code Synchronization
-        // ID from the Code Synchronization Controller.
-        //
-        // Do NOT treat this ID as SubmenuSynchronization.Id.
         //=======================================================
 
         var codeSynchronization =
@@ -90,7 +89,8 @@ public class DatabaseOperationResolver
                 .FirstOrDefaultAsync
                 (
                     x =>
-                        x.Id == synchronizationId
+                        x.Id ==
+                        synchronizationId
                 );
 
 
@@ -106,7 +106,7 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Submenu Synchronization ID
+        // Resolve Submenu Synchronization
         //=======================================================
 
         var submenuSynchronizationId =
@@ -124,10 +124,6 @@ public class DatabaseOperationResolver
             );
         }
 
-
-        //=======================================================
-        // Resolve Submenu Synchronization
-        //=======================================================
 
         var synchronization =
             await _context
@@ -153,19 +149,18 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Entity
+        // Resolve Target Entity
         //=======================================================
 
-        var entityType =
-            ResolveEntityType
-            (
+        var targetEntityClrType =
+            ResolveEntityClrType(
                 synchronization
             );
 
 
         if
         (
-            entityType == null
+            targetEntityClrType == null
         )
         {
             throw new InvalidOperationException(
@@ -175,182 +170,170 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Table
+        // Resolve Configuration Entity Group
+        //
+        // IMPORTANT:
+        //
+        // One configuration class may configure multiple
+        // database entities.
+        //
+        // Example:
+        //
+        // ActivityAssignmentConfiguration
+        //     ├── ActivityAssignment
+        //     ├── ActivityAssignmentDetail
+        //     └── ActivityAssignmentPermission
+        //
+        // The same structure can therefore be used for:
+        //
+        // SpecialAssignmentConfiguration
+        //     ├── SpecialAssignment
+        //     ├── SpecialAssignmentDetail
+        //     └── SpecialAssignmentPermission
+        //
+        // All entities exposed by the matching configuration
+        // class are included in the database operation.
         //=======================================================
 
-        var tableName =
-            entityType.GetTableName();
-
-
-        var schemaName =
-            entityType.GetSchema();
+        var entityClrTypes =
+            ResolveConfigurationEntityTypes(
+                targetEntityClrType
+            );
 
 
         if
         (
-            string.IsNullOrWhiteSpace(
-                tableName
+            !entityClrTypes.Contains(
+                targetEntityClrType
             )
         )
         {
-            throw new InvalidOperationException(
-                $"Unable to resolve database table for code synchronization {synchronizationId}."
+            entityClrTypes.Insert(
+                0,
+                targetEntityClrType
             );
         }
 
 
         //=======================================================
-        // Resolve Schema
+        // Remove Duplicate CLR Types
         //=======================================================
 
-        var qualifiedTableName =
-            string.IsNullOrWhiteSpace(
-                schemaName
-            )
-                ?
-                $"\"{tableName}\""
-                :
-                $"\"{schemaName}\".\"{tableName}\"";
+        entityClrTypes =
+            entityClrTypes
+                .Distinct()
+                .ToList();
 
 
         //=======================================================
-        // Resolve Columns
+        // Build Fresh EF Model
         //=======================================================
 
-        var storeObject =
-            StoreObjectIdentifier.Table
-            (
-                tableName,
-
-                schemaName
+        var model =
+            BuildFreshModel(
+                entityClrTypes
             );
 
 
-        var columns =
-            entityType
-                .GetProperties();
+        //=======================================================
+        // Resolve Entity Metadata
+        //=======================================================
+
+        var entityTypes =
+            entityClrTypes
+                .Select
+                (
+                    clrType =>
+                        model.FindEntityType(
+                            clrType
+                        )
+                )
+                .Where
+                (
+                    entityType =>
+                        entityType != null
+                )
+                .Cast<IEntityType>()
+                .ToList();
 
 
         if
         (
-            columns == null
-            ||
-            !columns.Any()
+            !entityTypes.Any()
         )
         {
             throw new InvalidOperationException(
-                $"No database columns were found for table '{tableName}'."
+                $"Unable to resolve EF metadata for database entity '{targetEntityClrType.Name}'."
             );
         }
 
 
         //=======================================================
-        // Build SQL
+        // Validate Resolved Entity Group
         //=======================================================
 
-        var sql =
-            $"CREATE TABLE {qualifiedTableName} (";
+        ValidateResolvedEntityGroup(
+            targetEntityClrType,
+            entityTypes
+        );
 
 
-        var firstColumn =
-            true;
+        //=======================================================
+        // Order Entities
+        //
+        // Parent tables are created before child tables.
+        //
+        // Example:
+        //
+        // ActivityAssignments
+        //         ↓
+        // ActivityAssignmentDetails
+        //         ↓
+        // ActivityAssignmentPermissions
+        //
+        // The same dependency ordering is applied to
+        // Special Assignment or any other master/detail group.
+        //=======================================================
+
+        var orderedEntityTypes =
+            OrderEntityTypesForCreation(
+                entityTypes
+            );
+
+
+        //=======================================================
+        // Build CREATE TABLE Operations
+        //=======================================================
+
+        var operations =
+            new List<string>();
 
 
         foreach
         (
-            var property in columns
+            var entityType
+            in orderedEntityTypes
         )
         {
-            if
-            (
-                !firstColumn
-            )
-            {
-                sql += ",";
-            }
-
-
-            var columnName =
-                property.GetColumnName(
-                    storeObject
-                );
-
-
-            if
-            (
-                string.IsNullOrWhiteSpace(
-                    columnName
+            operations.Add(
+                BuildCreateTableSql(
+                    entityType
                 )
-            )
-            {
-                throw new InvalidOperationException(
-                    $"Unable to resolve database column for property '{property.Name}' on table '{tableName}'."
-                );
-            }
-
-
-            sql +=
-                $"{Environment.NewLine}    " +
-                $"\"{columnName}\" " +
-                $"{ResolvePostgreSqlColumnDefinition(property)}";
-
-
-            if
-            (
-                property.IsNullable == false
-            )
-            {
-                sql +=
-                    " NOT NULL";
-            }
-
-
-            firstColumn =
-                false;
+            );
         }
 
 
         //=======================================================
-        // Primary Key
+        // Return Combined SQL
         //=======================================================
 
-        var primaryKey =
-            entityType.FindPrimaryKey();
-
-
-        if
-        (
-            primaryKey != null
-        )
-        {
-            var primaryKeyColumns =
-                primaryKey
-                    .Properties
-                    .Select
-                    (
-                        property =>
-                            $"\"{property.GetColumnName(storeObject)}\""
-                    );
-
-
-            sql +=
-                "," +
-                $"{Environment.NewLine}    " +
-                $"CONSTRAINT \"PK_{tableName}\" " +
-                $"PRIMARY KEY ({string.Join(", ", primaryKeyColumns)})";
-        }
-
-
-        sql +=
-            $"{Environment.NewLine});";
-
-
-        //=======================================================
-        // Return Operation
-        //=======================================================
-
-        return sql;
+        return
+            string.Join(
+                $"{Environment.NewLine}{Environment.NewLine}",
+                operations
+            );
     }
+
 
 
     //===========================================================
@@ -376,11 +359,6 @@ public class DatabaseOperationResolver
 
         //=======================================================
         // Resolve Code Synchronization
-        //
-        // The Database Engine receives the Code Synchronization
-        // ID from the Code Synchronization Controller.
-        //
-        // Do NOT treat this ID as SubmenuSynchronization.Id.
         //=======================================================
 
         var codeSynchronization =
@@ -390,7 +368,8 @@ public class DatabaseOperationResolver
                 .FirstOrDefaultAsync
                 (
                     x =>
-                        x.Id == synchronizationId
+                        x.Id ==
+                        synchronizationId
                 );
 
 
@@ -406,7 +385,7 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Submenu Synchronization ID
+        // Resolve Submenu Synchronization
         //=======================================================
 
         var submenuSynchronizationId =
@@ -424,10 +403,6 @@ public class DatabaseOperationResolver
             );
         }
 
-
-        //=======================================================
-        // Resolve Submenu Synchronization
-        //=======================================================
 
         var synchronization =
             await _context
@@ -453,19 +428,18 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Entity
+        // Resolve Target Entity
         //=======================================================
 
-        var entityType =
-            ResolveEntityType
-            (
+        var targetEntityClrType =
+            ResolveEntityClrType(
                 synchronization
             );
 
 
         if
         (
-            entityType == null
+            targetEntityClrType == null
         )
         {
             throw new InvalidOperationException(
@@ -475,66 +449,165 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Table
+        // Resolve Configuration Entity Group
         //=======================================================
 
-        var tableName =
-            entityType.GetTableName();
-
-
-        var schemaName =
-            entityType.GetSchema();
+        var entityClrTypes =
+            ResolveConfigurationEntityTypes(
+                targetEntityClrType
+            );
 
 
         if
         (
-            string.IsNullOrWhiteSpace(
-                tableName
+            !entityClrTypes.Contains(
+                targetEntityClrType
             )
         )
         {
-            throw new InvalidOperationException(
-                $"Unable to resolve database table for code synchronization {synchronizationId}."
+            entityClrTypes.Insert(
+                0,
+                targetEntityClrType
             );
         }
 
 
         //=======================================================
-        // Resolve Schema
+        // Remove Duplicate CLR Types
         //=======================================================
 
-        var qualifiedTableName =
-            string.IsNullOrWhiteSpace(
-                schemaName
+        entityClrTypes =
+            entityClrTypes
+                .Distinct()
+                .ToList();
+
+
+        //=======================================================
+        // Build Fresh EF Model
+        //=======================================================
+
+        var model =
+            BuildFreshModel(
+                entityClrTypes
+            );
+
+
+        //=======================================================
+        // Resolve Entity Metadata
+        //=======================================================
+
+        var entityTypes =
+            entityClrTypes
+                .Select
+                (
+                    clrType =>
+                        model.FindEntityType(
+                            clrType
+                        )
+                )
+                .Where
+                (
+                    entityType =>
+                        entityType != null
+                )
+                .Cast<IEntityType>()
+                .ToList();
+
+
+        if
+        (
+            !entityTypes.Any()
+        )
+        {
+            throw new InvalidOperationException(
+                $"Unable to resolve EF metadata for database entity '{targetEntityClrType.Name}'."
+            );
+        }
+
+
+        //=======================================================
+        // Validate Resolved Entity Group
+        //=======================================================
+
+        ValidateResolvedEntityGroup(
+            targetEntityClrType,
+            entityTypes
+        );
+
+
+        //=======================================================
+        // Order Entity Types For Removal
+        //
+        // Child tables are removed before parent tables.
+        //=======================================================
+
+        var orderedEntityTypes =
+            OrderEntityTypesForRemoval(
+                entityTypes
+            );
+
+
+        //=======================================================
+        // Build DROP Operations
+        //=======================================================
+
+        var operations =
+            new List<string>();
+
+
+        foreach
+        (
+            var entityType
+            in orderedEntityTypes
+        )
+        {
+            var tableName =
+                entityType.GetTableName();
+
+
+            var schemaName =
+                entityType.GetSchema();
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    tableName
+                )
             )
-                ?
-                $"\"{tableName}\""
-                :
-                $"\"{schemaName}\".\"{tableName}\"";
+            {
+                continue;
+            }
 
 
-        //=======================================================
-        // Build Removal SQL
-        //=======================================================
+            var qualifiedTableName =
+                ResolveQualifiedTableName(
+                    tableName,
+                    schemaName
+                );
 
-        var sql =
-            $"DROP TABLE IF EXISTS {qualifiedTableName} CASCADE;";
+
+            operations.Add(
+                $"DROP TABLE IF EXISTS {qualifiedTableName} CASCADE;"
+            );
+        }
 
 
-        //=======================================================
-        // Return Removal Operation
-        //=======================================================
-
-        return sql;
+        return
+            string.Join(
+                Environment.NewLine,
+                operations
+            );
     }
 
 
+
     //===========================================================
-    // Resolve Entity Type
+    // Resolve Entity CLR Type
     //===========================================================
 
-    private IReadOnlyEntityType?
-        ResolveEntityType
+    private Type?
+        ResolveEntityClrType
     (
         SubmenuSynchronization synchronization
     )
@@ -559,8 +632,7 @@ public class DatabaseOperationResolver
         //=======================================================
 
         var entityName =
-            Path.GetFileNameWithoutExtension
-            (
+            Path.GetFileNameWithoutExtension(
                 synchronization.BackendSubMenuEntityFile
             );
 
@@ -589,105 +661,363 @@ public class DatabaseOperationResolver
         // Resolve CLR Type
         //=======================================================
 
-        var entityClrType =
+        return
             domainAssembly
                 .GetTypes()
                 .FirstOrDefault
                 (
                     type =>
                         type.IsClass
+
                         &&
+
                         !type.IsAbstract
+
                         &&
+
                         string.Equals
                         (
                             type.Name,
-
                             entityName,
-
                             StringComparison.Ordinal
+                        )
+                );
+    }
+
+
+
+    //===========================================================
+    // Resolve Configuration Entity Types
+    //===========================================================
+
+    private List<Type>
+        ResolveConfigurationEntityTypes
+    (
+        Type targetEntityClrType
+    )
+    {
+        var configurationAssembly =
+            typeof(AppDbContext)
+                .Assembly;
+
+
+        //=======================================================
+        // Find Configuration Class
+        //
+        // The configuration class is identified by finding a
+        // configuration implementing:
+        //
+        // IEntityTypeConfiguration<TargetEntity>
+        //
+        //=======================================================
+
+        var configurationType =
+            configurationAssembly
+                .GetTypes()
+                .Where
+                (
+                    type =>
+                        type.IsClass
+
+                        &&
+
+                        !type.IsAbstract
+                )
+                .FirstOrDefault
+                (
+                    type =>
+                        ImplementsEntityConfiguration
+                        (
+                            type,
+                            targetEntityClrType
                         )
                 );
 
 
+        //=======================================================
+        // No Configuration Class
+        //=======================================================
+
         if
         (
-            entityClrType == null
+            configurationType == null
         )
         {
-            return null;
+            return
+                new List<Type>
+                {
+                    targetEntityClrType
+                };
         }
 
 
         //=======================================================
-        // Resolve Existing EF Entity Type
+        // Resolve ALL Entities From Configuration Class
         //
-        // If the entity is already registered in the running
-        // EF model, use the existing metadata.
+        // IMPORTANT:
+        //
+        // We intentionally inspect every
+        // IEntityTypeConfiguration<T> implemented by the
+        // matching configuration class.
+        //
+        // Therefore one configuration class can represent a
+        // complete database artifact group.
+        //
+        // Example:
+        //
+        // ActivityAssignmentConfiguration
+        //     ├── ActivityAssignment
+        //     ├── ActivityAssignmentDetail
+        //     └── ActivityAssignmentPermission
+        //
+        // SpecialAssignmentConfiguration
+        //     ├── SpecialAssignment
+        //     ├── SpecialAssignmentDetail
+        //     └── SpecialAssignmentPermission
         //=======================================================
 
-        var existingEntityType =
-            _context
-                .Model
-                .FindEntityType
+        var entityTypes =
+            configurationType
+                .GetInterfaces()
+                .Where
                 (
-                    entityClrType
+                    interfaceType =>
+                        IsEntityConfigurationInterface(
+                            interfaceType
+                        )
+                )
+                .Select
+                (
+                    interfaceType =>
+                        interfaceType
+                            .GetGenericArguments()
+                            [0]
+                )
+                .Distinct()
+                .ToList();
+
+
+        //=======================================================
+        // Always Include Target Entity
+        //=======================================================
+
+        if
+        (
+            !entityTypes.Contains(
+                targetEntityClrType
+            )
+        )
+        {
+            entityTypes.Insert(
+                0,
+                targetEntityClrType
+            );
+        }
+
+
+        return entityTypes;
+    }
+
+
+
+    //===========================================================
+    // Implements Entity Configuration
+    //===========================================================
+
+    private bool
+        ImplementsEntityConfiguration
+    (
+        Type configurationType,
+        Type targetEntityClrType
+    )
+    {
+        return
+            configurationType
+                .GetInterfaces()
+                .Any
+                (
+                    interfaceType =>
+                        IsEntityConfigurationInterface(
+                            interfaceType
+                        )
+
+                        &&
+
+                        interfaceType
+                            .GetGenericArguments()
+                            [0]
+                            ==
+                        targetEntityClrType
+                );
+    }
+
+
+
+    //===========================================================
+    // Is Entity Configuration Interface
+    //===========================================================
+
+    private bool
+        IsEntityConfigurationInterface
+    (
+        Type interfaceType
+    )
+    {
+        return
+            interfaceType.IsGenericType
+
+            &&
+
+            interfaceType
+                .GetGenericTypeDefinition()
+                ==
+            typeof(
+                IEntityTypeConfiguration<>
+            );
+    }
+
+
+
+    //===========================================================
+    // Validate Resolved Entity Group
+    //===========================================================
+
+    private void
+        ValidateResolvedEntityGroup
+    (
+        Type targetEntityClrType,
+        List<IEntityType> entityTypes
+    )
+    {
+        //=======================================================
+        // Target Entity Must Exist
+        //=======================================================
+
+        var targetEntityType =
+            entityTypes
+                .FirstOrDefault
+                (
+                    entityType =>
+                        entityType.ClrType ==
+                        targetEntityClrType
                 );
 
 
         if
         (
-            existingEntityType != null
+            targetEntityType == null
         )
         {
-            return existingEntityType;
+            throw new InvalidOperationException(
+                $"Resolved database entity group does not contain target entity '{targetEntityClrType.Name}'."
+            );
         }
 
 
         //=======================================================
-        // Build Fresh EF Metadata
-        //
-        // The Registration Engine may have added the entity to
-        // AppDbContext.cs after the current API process started.
-        //
-        // The running DbContext model may therefore not contain
-        // the newly registered entity.
-        //
-        // Build a fresh model for the target entity so Database
-        // Creation does not require a manual API rebuild.
+        // Every Entity Must Have a Table
+        //=======================================================
+
+        foreach
+        (
+            var entityType
+            in entityTypes
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    entityType.GetTableName()
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Unable to resolve database table for entity '{entityType.ClrType.Name}'."
+                );
+            }
+        }
+    }
+
+
+
+    //===========================================================
+    // Build Fresh EF Model
+    //===========================================================
+
+    private IMutableModel
+        BuildFreshModel
+    (
+        List<Type> entityClrTypes
+    )
+    {
+        //=======================================================
+        // Convention Set
         //=======================================================
 
         var conventionSet =
             ConventionSet
-                .CreateConventionSet
-                (
+                .CreateConventionSet(
                     _context
                 );
 
 
+        //=======================================================
+        // Model Builder
+        //=======================================================
+
         var modelBuilder =
-            new ModelBuilder
-            (
+            new ModelBuilder(
                 conventionSet
             );
 
 
         //=======================================================
-        // Register Target Entity
+        // Register Target Entity Group
         //=======================================================
 
-        modelBuilder
-            .Entity
-            (
-                entityClrType
-            );
+        foreach
+        (
+            var entityClrType
+            in entityClrTypes
+        )
+        {
+            modelBuilder
+                .Entity(
+                    entityClrType
+                );
+        }
 
 
         //=======================================================
-        // Apply Entity Configurations
+        // Entity Type Set
+        //=======================================================
+
+        var entityTypeSet =
+            entityClrTypes
+                .ToHashSet();
+
+
+        //=======================================================
+        // Apply Only Matching Configuration Classes
         //
-        // Apply only the configuration belonging to the target
-        // entity.
+        // IMPORTANT:
+        //
+        // A configuration class is selected when ANY of its
+        // IEntityTypeConfiguration<T> interfaces belongs to the
+        // resolved entity group.
+        //
+        // This is what allows:
+        //
+        // ActivityAssignmentConfiguration
+        //     ├── ActivityAssignment
+        //     ├── ActivityAssignmentDetail
+        //     └── ActivityAssignmentPermission
+        //
+        // to be applied as one complete configuration group.
+        //
+        // The same mechanism applies to Special Assignment.
+        //
+        // Unrelated configuration classes are NOT applied.
         //=======================================================
 
         modelBuilder
@@ -697,82 +1027,589 @@ public class DatabaseOperationResolver
 
                 configurationType =>
                 {
-                    //===================================================
-                    // Resolve Configuration Interface
-                    //===================================================
-
-                    Type?
-                        configurationInterface =
-                            configurationType
-                                .GetInterfaces()
-                                .FirstOrDefault
-                                (
-                                    interfaceType =>
-                                        interfaceType.IsGenericType
-                                        &&
+                    var configurationEntityTypes =
+                        configurationType
+                            .GetInterfaces()
+                            .Where
+                            (
+                                interfaceType =>
+                                    IsEntityConfigurationInterface(
                                         interfaceType
-                                            .GetGenericTypeDefinition()
-                                            ==
-                                        typeof
-                                        (
-                                            IEntityTypeConfiguration<>
-                                        )
-                                );
+                                    )
+                            )
+                            .Select
+                            (
+                                interfaceType =>
+                                    interfaceType
+                                        .GetGenericArguments()
+                                        [0]
+                            )
+                            .ToList();
 
-
-                    //===================================================
-                    // Configuration Interface Not Found
-                    //===================================================
 
                     if
                     (
-                        configurationInterface
-                        ==
-                        null
+                        !configurationEntityTypes.Any()
                     )
                     {
-                        return
-                            false;
+                        return false;
                     }
 
 
-                    //===================================================
-                    // Resolve Configuration Entity Type
-                    //===================================================
-
-                    var configurationEntityType =
-                        configurationInterface
-                            .GetGenericArguments()
-                            [0];
-
-
-                    //===================================================
-                    // Apply Only Target Entity Configuration
-                    //===================================================
-
                     return
-                        configurationEntityType
-                        ==
-                        entityClrType;
+                        configurationEntityTypes
+                            .Any
+                            (
+                                entityTypeSet.Contains
+                            );
                 }
             );
 
 
         //=======================================================
-        // Resolve Fresh EF Entity Type
+        // Return Mutable Model
         //=======================================================
 
-        var freshEntityType =
+        return
             modelBuilder
-                .Model
-                .FindEntityType
+                .Model;
+    }
+
+
+
+    //===========================================================
+    // Order Entity Types For Creation
+    //===========================================================
+
+    private List<IEntityType>
+        OrderEntityTypesForCreation
+    (
+        List<IEntityType> entityTypes
+    )
+    {
+        var result =
+            new List<IEntityType>();
+
+
+        var remaining =
+            new HashSet<IEntityType>(
+                entityTypes
+            );
+
+
+        //=======================================================
+        // Parent Before Child
+        //=======================================================
+
+        while
+        (
+            remaining.Any()
+        )
+        {
+            var addedAny =
+                false;
+
+
+            foreach
+            (
+                var entityType
+                in remaining.ToList()
+            )
+            {
+                var foreignKeys =
+                    entityType
+                        .GetForeignKeys()
+                        .ToList();
+
+
+                var dependsOnRemainingEntity =
+                    foreignKeys.Any
+                    (
+                        foreignKey =>
+                            remaining.Contains(
+                                foreignKey.PrincipalEntityType
+                            )
+                    );
+
+
+                if
                 (
-                    entityClrType
+                    !dependsOnRemainingEntity
+                )
+                {
+                    result.Add(
+                        entityType
+                    );
+
+
+                    remaining.Remove(
+                        entityType
+                    );
+
+
+                    addedAny =
+                        true;
+                }
+            }
+
+
+            //===================================================
+            // Circular Relationship Protection
+            //===================================================
+
+            if
+            (
+                !addedAny
+            )
+            {
+                result.AddRange(
+                    remaining
                 );
 
 
-        return freshEntityType;
+                break;
+            }
+        }
+
+
+        return result;
     }
+
+
+
+    //===========================================================
+    // Order Entity Types For Removal
+    //===========================================================
+
+    private List<IEntityType>
+        OrderEntityTypesForRemoval
+    (
+        List<IEntityType> entityTypes
+    )
+    {
+        var ordered =
+            OrderEntityTypesForCreation(
+                entityTypes
+            );
+
+
+        ordered.Reverse();
+
+
+        return ordered;
+    }
+
+
+
+    //===========================================================
+    // Build CREATE TABLE SQL
+    //===========================================================
+
+    private string
+        BuildCreateTableSql
+    (
+        IEntityType entityType
+    )
+    {
+        //=======================================================
+        // Table
+        //=======================================================
+
+        var tableName =
+            entityType.GetTableName();
+
+
+        var schemaName =
+            entityType.GetSchema();
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                tableName
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"Unable to resolve database table for entity '{entityType.ClrType.Name}'."
+            );
+        }
+
+
+        //=======================================================
+        // Qualified Table
+        //=======================================================
+
+        var qualifiedTableName =
+            ResolveQualifiedTableName(
+                tableName,
+                schemaName
+            );
+
+
+        //=======================================================
+        // Store Object
+        //=======================================================
+
+        var storeObject =
+            StoreObjectIdentifier.Table(
+                tableName,
+                schemaName
+            );
+
+
+        var definitions =
+            new List<string>();
+
+
+        //=======================================================
+        // Columns
+        //=======================================================
+
+        foreach
+        (
+            var property
+            in entityType.GetProperties()
+        )
+        {
+            var columnName =
+                property.GetColumnName(
+                    storeObject
+                );
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    columnName
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Unable to resolve database column for property '{property.Name}' on table '{tableName}'."
+                );
+            }
+
+
+            var definition =
+                $"\"{columnName}\" " +
+                $"{ResolvePostgreSqlColumnDefinition(property)}";
+
+
+            //===================================================
+            // Nullability
+            //===================================================
+
+            if
+            (
+                property.IsNullable ==
+                false
+            )
+            {
+                definition +=
+                    " NOT NULL";
+            }
+
+
+            //===================================================
+            // Default
+            //===================================================
+
+            var defaultSql =
+                ResolveDefaultValueSql(
+                    property
+                );
+
+
+            if
+            (
+                !string.IsNullOrWhiteSpace(
+                    defaultSql
+                )
+            )
+            {
+                definition +=
+                    $" DEFAULT {defaultSql}";
+            }
+
+
+            definitions.Add(
+                definition
+            );
+        }
+
+
+        //=======================================================
+        // Primary Key
+        //=======================================================
+
+        var primaryKey =
+            entityType.FindPrimaryKey();
+
+
+        if
+        (
+            primaryKey != null
+        )
+        {
+            var primaryKeyColumns =
+                primaryKey
+                    .Properties
+                    .Select
+                    (
+                        property =>
+                            $"\"{property.GetColumnName(storeObject)}\""
+                    )
+                    .ToList();
+
+
+            if
+            (
+                primaryKeyColumns.Any()
+            )
+            {
+                definitions.Add(
+                    $"CONSTRAINT \"PK_{tableName}\" " +
+                    $"PRIMARY KEY ({string.Join(", ", primaryKeyColumns)})"
+                );
+            }
+        }
+
+
+        //=======================================================
+        // Foreign Keys
+        //=======================================================
+
+        foreach
+        (
+            var foreignKey
+            in entityType.GetForeignKeys()
+        )
+        {
+            var dependentColumns =
+                foreignKey
+                    .Properties
+                    .Select
+                    (
+                        property =>
+                            $"\"{property.GetColumnName(storeObject)}\""
+                    )
+                    .ToList();
+
+
+            if
+            (
+                !dependentColumns.Any()
+            )
+            {
+                continue;
+            }
+
+
+            var principalEntityType =
+                foreignKey
+                    .PrincipalEntityType;
+
+
+            var principalTableName =
+                principalEntityType
+                    .GetTableName();
+
+
+            var principalSchemaName =
+                principalEntityType
+                    .GetSchema();
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    principalTableName
+                )
+            )
+            {
+                continue;
+            }
+
+
+            var principalStoreObject =
+                StoreObjectIdentifier.Table(
+                    principalTableName,
+                    principalSchemaName
+                );
+
+
+            var principalColumns =
+                foreignKey
+                    .PrincipalKey
+                    .Properties
+                    .Select
+                    (
+                        property =>
+                            $"\"{property.GetColumnName(principalStoreObject)}\""
+                    )
+                    .ToList();
+
+
+            if
+            (
+                !principalColumns.Any()
+            )
+            {
+                continue;
+            }
+
+
+            var foreignKeyName =
+                foreignKey.GetConstraintName();
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    foreignKeyName
+                )
+            )
+            {
+                foreignKeyName =
+                    $"FK_{tableName}_{principalTableName}";
+            }
+
+
+            var principalQualifiedName =
+                ResolveQualifiedTableName(
+                    principalTableName,
+                    principalSchemaName
+                );
+
+
+            var foreignKeySql =
+                $"CONSTRAINT \"{foreignKeyName}\" " +
+                $"FOREIGN KEY ({string.Join(", ", dependentColumns)}) " +
+                $"REFERENCES {principalQualifiedName} " +
+                $"({string.Join(", ", principalColumns)})";
+
+
+            definitions.Add(
+                foreignKeySql
+            );
+        }
+
+
+        //=======================================================
+        // CREATE TABLE
+        //=======================================================
+
+        var sql =
+            $"CREATE TABLE {qualifiedTableName} (" +
+            Environment.NewLine +
+            "    " +
+            string.Join(
+                "," +
+                Environment.NewLine +
+                "    ",
+                definitions
+            ) +
+            Environment.NewLine +
+            ");";
+
+
+        //=======================================================
+        // Unique Indexes
+        //=======================================================
+
+        foreach
+        (
+            var index
+            in entityType.GetIndexes()
+        )
+        {
+            if
+            (
+                !index.IsUnique
+            )
+            {
+                continue;
+            }
+
+
+            var indexColumns =
+                index
+                    .Properties
+                    .Select
+                    (
+                        property =>
+                            $"\"{property.GetColumnName(storeObject)}\""
+                    )
+                    .ToList();
+
+
+            if
+            (
+                !indexColumns.Any()
+            )
+            {
+                continue;
+            }
+
+
+            var indexName =
+                index.Name;
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    indexName
+                )
+            )
+            {
+                indexName =
+                    $"UX_{tableName}_" +
+                    string.Join(
+                        "_",
+                        index.Properties.Select(
+                            x => x.Name
+                        )
+                    );
+            }
+
+
+            sql +=
+                Environment.NewLine +
+                Environment.NewLine +
+                $"CREATE UNIQUE INDEX \"{indexName}\" " +
+                $"ON {qualifiedTableName} " +
+                $"({string.Join(", ", indexColumns)});";
+        }
+
+
+        return sql;
+    }
+
+
+
+    //===========================================================
+    // Resolve Qualified Table Name
+    //===========================================================
+
+    private string
+        ResolveQualifiedTableName
+    (
+        string tableName,
+        string? schemaName
+    )
+    {
+        return
+            string.IsNullOrWhiteSpace(
+                schemaName
+            )
+                ?
+                $"\"{tableName}\""
+                :
+                $"\"{schemaName}\".\"{tableName}\"";
+    }
+
 
 
     //===========================================================
@@ -791,46 +1628,220 @@ public class DatabaseOperationResolver
             );
 
 
+        var clrType =
+            Nullable.GetUnderlyingType(
+                property.ClrType
+            )
+            ??
+            property.ClrType;
+
+
         //=======================================================
-        // Resolve Database Generated Value
+        // Integer Identity
         //=======================================================
 
         if
         (
             property.ValueGenerated ==
             ValueGenerated.OnAdd
+
+            &&
+
+            (
+                clrType ==
+                typeof(long)
+
+                ||
+
+                clrType ==
+                typeof(int)
+            )
         )
         {
-            if
-            (
-                property.ClrType == typeof(long)
-                ||
-                property.ClrType == typeof(int)
-                ||
-                Nullable.GetUnderlyingType(
-                    property.ClrType
-                ) == typeof(long)
-                ||
-                Nullable.GetUnderlyingType(
-                    property.ClrType
-                ) == typeof(int)
-            )
-            {
-                return
-                    $"{postgreSqlType} " +
-                    "GENERATED BY DEFAULT AS IDENTITY";
-            }
-
-
-            throw new InvalidOperationException(
-                $"Database-generated property '{property.Name}' uses unsupported PostgreSQL identity type '{property.ClrType.Name}'."
-            );
+            return
+                $"{postgreSqlType} " +
+                "GENERATED BY DEFAULT AS IDENTITY";
         }
 
 
         return
             postgreSqlType;
     }
+
+
+
+    //===========================================================
+    // Resolve Default Value SQL
+    //===========================================================
+
+    private string?
+        ResolveDefaultValueSql
+    (
+        IReadOnlyProperty property
+    )
+    {
+        //=======================================================
+        // Identity Columns
+        //=======================================================
+
+        var clrType =
+            Nullable.GetUnderlyingType(
+                property.ClrType
+            )
+            ??
+            property.ClrType;
+
+
+        if
+        (
+            property.ValueGenerated ==
+            ValueGenerated.OnAdd
+
+            &&
+
+            (
+                clrType ==
+                typeof(long)
+
+                ||
+
+                clrType ==
+                typeof(int)
+            )
+        )
+        {
+            return null;
+        }
+
+
+        //=======================================================
+        // SQL Default
+        //=======================================================
+
+        var defaultSql =
+            property.GetDefaultValueSql();
+
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(
+                defaultSql
+            )
+        )
+        {
+            return defaultSql;
+        }
+
+
+        //=======================================================
+        // CLR Default
+        //=======================================================
+
+        var defaultValue =
+            property.GetDefaultValue();
+
+
+        if
+        (
+            defaultValue == null
+        )
+        {
+            return null;
+        }
+
+
+        //=======================================================
+        // Boolean
+        //=======================================================
+
+        if
+        (
+            clrType ==
+            typeof(bool)
+        )
+        {
+            return
+                (bool)defaultValue
+                    ?
+                    "TRUE"
+                    :
+                    "FALSE";
+        }
+
+
+        //=======================================================
+        // Integer
+        //=======================================================
+
+        if
+        (
+            clrType ==
+            typeof(long)
+
+            ||
+
+            clrType ==
+            typeof(int)
+        )
+        {
+            return
+                Convert.ToString(
+                    defaultValue,
+                    System.Globalization.CultureInfo.InvariantCulture
+                );
+        }
+
+
+        //=======================================================
+        // DateTime
+        //=======================================================
+
+        if
+        (
+            clrType ==
+            typeof(DateTime)
+        )
+        {
+            var value =
+                (DateTime)defaultValue;
+
+
+            return
+                $"'{value:yyyy-MM-dd HH:mm:ss.ffffff}'";
+        }
+
+
+        //=======================================================
+        // String
+        //=======================================================
+
+        if
+        (
+            clrType ==
+            typeof(string)
+        )
+        {
+            var value =
+                defaultValue
+                    .ToString()
+                    ?.Replace(
+                        "'",
+                        "''"
+                    );
+
+
+            return
+                $"'{value}'";
+        }
+
+
+        //=======================================================
+        // Unsupported Default
+        //=======================================================
+
+        return null;
+    }
+
 
 
     //===========================================================
@@ -851,54 +1862,84 @@ public class DatabaseOperationResolver
             property.ClrType;
 
 
+        //=======================================================
+        // Int64
+        //=======================================================
+
         if
         (
-            clrType == typeof(long)
+            clrType ==
+            typeof(long)
         )
         {
             return "bigint";
         }
 
 
+        //=======================================================
+        // Int32
+        //=======================================================
+
         if
         (
-            clrType == typeof(int)
+            clrType ==
+            typeof(int)
         )
         {
             return "integer";
         }
 
 
+        //=======================================================
+        // Boolean
+        //=======================================================
+
         if
         (
-            clrType == typeof(bool)
+            clrType ==
+            typeof(bool)
         )
         {
             return "boolean";
         }
 
 
+        //=======================================================
+        // DateTime
+        //=======================================================
+
         if
         (
-            clrType == typeof(DateTime)
+            clrType ==
+            typeof(DateTime)
         )
         {
             return "timestamp with time zone";
         }
 
 
+        //=======================================================
+        // Guid
+        //=======================================================
+
         if
         (
-            clrType == typeof(Guid)
+            clrType ==
+            typeof(Guid)
         )
         {
             return "uuid";
         }
 
 
+        //=======================================================
+        // String
+        //=======================================================
+
         if
         (
-            clrType == typeof(string)
+            clrType ==
+            typeof(string)
         )
         {
             var maxLength =
@@ -918,6 +1959,10 @@ public class DatabaseOperationResolver
             return "text";
         }
 
+
+        //=======================================================
+        // Unsupported
+        //=======================================================
 
         throw new InvalidOperationException(
             $"Unsupported database property type '{property.ClrType.Name}'."

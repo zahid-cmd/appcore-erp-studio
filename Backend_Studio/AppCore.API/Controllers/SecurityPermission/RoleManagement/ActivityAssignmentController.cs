@@ -3,6 +3,7 @@
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
@@ -243,14 +244,102 @@ public class ActivityAssignmentController
             CreateActivityAssignmentDto dto
         )
     {
-        long id =
-            await _repository.CreateAsync(
-                dto
-            );
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto
+                );
 
-        return Ok(
-            id
-        );
+            return Ok(
+                id
+            );
+        }
+        catch
+        (
+            DbUpdateException ex
+        )
+        {
+            //===================================================
+            // Database Error
+            //===================================================
+
+            string message =
+                ex.InnerException?.Message
+                ??
+                ex.Message;
+
+
+            return StatusCode
+            (
+                StatusCodes.Status500InternalServerError,
+
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Database update failed.",
+
+                    message =
+                        message
+                }
+            );
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            //===================================================
+            // Business / Validation Error
+            //===================================================
+
+            return BadRequest
+            (
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Activity assignment validation failed.",
+
+                    message =
+                        ex.Message
+                }
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            //===================================================
+            // General Error
+            //===================================================
+
+            string message =
+                ex.InnerException?.Message
+                ??
+                ex.Message;
+
+
+            return StatusCode
+            (
+                StatusCodes.Status500InternalServerError,
+
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Failed to create activity assignment.",
+
+                    message =
+                        message
+                }
+            );
+        }
     }
 
 
@@ -266,20 +355,96 @@ public class ActivityAssignmentController
             UpdateActivityAssignmentDto dto
         )
     {
-        bool updated =
-            await _repository.UpdateAsync(
-                dto
-            );
+        try
+        {
+            bool updated =
+                await _repository.UpdateAsync(
+                    dto
+                );
 
-        if
+            if
+            (
+                !updated
+            )
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch
         (
-            !updated
+            DbUpdateException ex
         )
         {
-            return NotFound();
-        }
+            string message =
+                ex.InnerException?.Message
+                ??
+                ex.Message;
 
-        return NoContent();
+
+            return StatusCode
+            (
+                StatusCodes.Status500InternalServerError,
+
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Database update failed.",
+
+                    message =
+                        message
+                }
+            );
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest
+            (
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Activity assignment validation failed.",
+
+                    message =
+                        ex.Message
+                }
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            string message =
+                ex.InnerException?.Message
+                ??
+                ex.Message;
+
+
+            return StatusCode
+            (
+                StatusCodes.Status500InternalServerError,
+
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Failed to update activity assignment.",
+
+                    message =
+                        message
+                }
+            );
+        }
     }
 
 
@@ -295,20 +460,50 @@ public class ActivityAssignmentController
             long id
         )
     {
-        bool deleted =
-            await _repository.DeleteAsync(
-                id
-            );
+        try
+        {
+            bool deleted =
+                await _repository.DeleteAsync(
+                    id
+                );
 
-        if
+            if
+            (
+                !deleted
+            )
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch
         (
-            !deleted
+            Exception ex
         )
         {
-            return NotFound();
-        }
+            string message =
+                ex.InnerException?.Message
+                ??
+                ex.Message;
 
-        return NoContent();
+
+            return StatusCode
+            (
+                StatusCodes.Status500InternalServerError,
+
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Failed to delete activity assignment.",
+
+                    message =
+                        message
+                }
+            );
+        }
     }
 
 
@@ -321,17 +516,47 @@ public class ActivityAssignmentController
     public async Task<IActionResult>
         Restore()
     {
-        bool restored =
-            await _repository.RestoreLastDeletedAsync();
+        try
+        {
+            bool restored =
+                await _repository.RestoreLastDeletedAsync();
 
-        if
+            if
+            (
+                !restored
+            )
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch
         (
-            !restored
+            Exception ex
         )
         {
-            return NotFound();
-        }
+            string message =
+                ex.InnerException?.Message
+                ??
+                ex.Message;
 
-        return NoContent();
+
+            return StatusCode
+            (
+                StatusCodes.Status500InternalServerError,
+
+                new
+                {
+                    success = false,
+
+                    error =
+                        "Failed to restore activity assignment.",
+
+                    message =
+                        message
+                }
+            );
+        }
     }
 }

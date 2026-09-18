@@ -59,7 +59,7 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Required
+        // Role Profile
         //=======================================================
 
         builder.Property(
@@ -69,18 +69,68 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Unique Index
+        // Status
+        //
+        // Explicitly sent by EF.
+        // Do not depend on database default values.
         //=======================================================
 
-        builder
-            .HasIndex(
-                x => x.RoleProfileId
-            )
-            .IsUnique();
+        builder.Property(
+            x => x.IsActive
+        )
+        .IsRequired()
+        .ValueGeneratedNever();
+
+
+        builder.Property(
+            x => x.IsDeleted
+        )
+        .IsRequired()
+        .ValueGeneratedNever();
 
 
         //=======================================================
-        // Relationship
+        // Audit
+        //=======================================================
+
+        builder.Property(
+            x => x.CreatedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.CreatedDate
+        )
+        .IsRequired();
+
+
+        builder.Property(
+            x => x.ModifiedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.ModifiedDate
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.DeletedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.DeletedDate
+        )
+        .IsRequired(false);
+
+
+        //=======================================================
+        // Relationship : Details
         //=======================================================
 
         builder
@@ -99,38 +149,15 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Status
-        //=======================================================
-
-        builder.Property(
-            x => x.IsActive
-        )
-        .HasDefaultValue(
-            true
-        );
-
-
-        builder.Property(
-            x => x.IsDeleted
-        )
-        .HasDefaultValue(
-            false
-        );
-
-
-        //=======================================================
-        // Audit
-        //=======================================================
-
-        builder.Property(
-            x => x.CreatedDate
-        )
-        .IsRequired();
-
-
-        //=======================================================
         // Indexes
         //=======================================================
+
+        builder
+            .HasIndex(
+                x => x.RoleProfileId
+            )
+            .IsUnique();
+
 
         builder.HasIndex(
             x => x.IsActive
@@ -177,7 +204,7 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Required
+        // Foreign Key
         //=======================================================
 
         builder.Property(
@@ -185,6 +212,10 @@ public class ActivityAssignmentConfiguration
         )
         .IsRequired();
 
+
+        //=======================================================
+        // Navigation
+        //=======================================================
 
         builder.Property(
             x => x.ModuleId
@@ -202,6 +233,66 @@ public class ActivityAssignmentConfiguration
             x => x.SubMenuId
         )
         .IsRequired();
+
+
+        //=======================================================
+        // Status
+        //
+        // Explicitly sent by EF.
+        //=======================================================
+
+        builder.Property(
+            x => x.IsActive
+        )
+        .IsRequired()
+        .ValueGeneratedNever();
+
+
+        builder.Property(
+            x => x.IsDeleted
+        )
+        .IsRequired()
+        .ValueGeneratedNever();
+
+
+        //=======================================================
+        // Audit
+        //=======================================================
+
+        builder.Property(
+            x => x.CreatedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.CreatedDate
+        )
+        .IsRequired();
+
+
+        builder.Property(
+            x => x.ModifiedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.ModifiedDate
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.DeletedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.DeletedDate
+        )
+        .IsRequired(false);
 
 
         //=======================================================
@@ -243,36 +334,6 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Status
-        //=======================================================
-
-        builder.Property(
-            x => x.IsActive
-        )
-        .HasDefaultValue(
-            true
-        );
-
-
-        builder.Property(
-            x => x.IsDeleted
-        )
-        .HasDefaultValue(
-            false
-        );
-
-
-        //=======================================================
-        // Audit
-        //=======================================================
-
-        builder.Property(
-            x => x.CreatedDate
-        )
-        .IsRequired();
-
-
-        //=======================================================
         // Indexes
         //=======================================================
 
@@ -305,6 +366,10 @@ public class ActivityAssignmentConfiguration
             x => x.IsDeleted
         );
 
+
+        //=======================================================
+        // Unique Detail
+        //=======================================================
 
         builder
             .HasIndex(
@@ -354,7 +419,7 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Required
+        // Foreign Key
         //=======================================================
 
         builder.Property(
@@ -364,7 +429,83 @@ public class ActivityAssignmentConfiguration
 
 
         //=======================================================
-        // Relationship
+        // Activity References
+        //=======================================================
+
+        builder.Property(
+            x => x.MasterActivityId
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.NavigationActivityId
+        )
+        .IsRequired(false);
+
+
+        //=======================================================
+        // Status
+        //
+        // Explicitly sent by EF.
+        //=======================================================
+
+        builder.Property(
+            x => x.IsActive
+        )
+        .IsRequired()
+        .ValueGeneratedNever();
+
+
+        builder.Property(
+            x => x.IsDeleted
+        )
+        .IsRequired()
+        .ValueGeneratedNever();
+
+
+        //=======================================================
+        // Audit
+        //=======================================================
+
+        builder.Property(
+            x => x.CreatedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.CreatedDate
+        )
+        .IsRequired();
+
+
+        builder.Property(
+            x => x.ModifiedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.ModifiedDate
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.DeletedBy
+        )
+        .IsRequired(false);
+
+
+        builder.Property(
+            x => x.DeletedDate
+        )
+        .IsRequired(false);
+
+
+        //=======================================================
+        // Relationship : Detail
         //=======================================================
 
         builder
@@ -380,36 +521,6 @@ public class ActivityAssignmentConfiguration
             .OnDelete(
                 DeleteBehavior.Cascade
             );
-
-
-        //=======================================================
-        // Status
-        //=======================================================
-
-        builder.Property(
-            x => x.IsActive
-        )
-        .HasDefaultValue(
-            true
-        );
-
-
-        builder.Property(
-            x => x.IsDeleted
-        )
-        .HasDefaultValue(
-            false
-        );
-
-
-        //=======================================================
-        // Audit
-        //=======================================================
-
-        builder.Property(
-            x => x.CreatedDate
-        )
-        .IsRequired();
 
 
         //=======================================================

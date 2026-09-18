@@ -1,0 +1,298 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-user"
+
+        [title]="pageTitle"
+
+        subtitle="Manage user profiles">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 USER PROFILE IDENTIFICATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="User Profile Identification"
+
+                icon="fas fa-id-card">
+
+
+
+                <!-- User Profile Code -->
+
+                <app-textbox
+
+                    label="User Profile Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.ProfileCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 LOGIN INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Login Information"
+
+                icon="fas fa-right-to-bracket">
+
+
+
+                <!-- User Name / Login ID -->
+
+                <app-textbox
+
+                    label="User Name / Login ID"
+
+                    placeholder="Enter user name / login ID"
+
+                    [(value)]="entity.UserName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 PERSONAL INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Personal Information"
+
+                icon="fas fa-user">
+
+
+
+                <!-- Display Name -->
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    placeholder="Enter display name"
+
+                    [(value)]="entity.DisplayName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Full Name -->
+
+                <app-textbox
+
+                    label="Full Name"
+
+                    placeholder="Enter full name"
+
+                    [(value)]="entity.FullName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 CONTACT INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Contact Information"
+
+                icon="fas fa-address-card">
+
+
+
+                <!-- Email -->
+
+                <app-textbox
+
+                    label="Email"
+
+                    placeholder="Enter email address"
+
+                    [(value)]="entity.Email"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Mobile No. -->
+
+                <app-textbox
+
+                    label="Mobile No."
+
+                    placeholder="Enter mobile number"
+
+                    [(value)]="entity.MobileNo"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

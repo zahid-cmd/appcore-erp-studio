@@ -418,7 +418,7 @@ implements OnInit
 
             field:'pageCount',
 
-            width:'100px',
+            width:'220px',
 
             align:'center'
         },
@@ -428,7 +428,7 @@ implements OnInit
 
             field:'masterActivityCount',
 
-            width:'150px',
+            width:'220px',
 
             align:'center'
         },
@@ -438,7 +438,7 @@ implements OnInit
 
             field:'specialActivityCount',
 
-            width:'150px',
+            width:'220px',
 
             align:'center'
         },
@@ -448,7 +448,7 @@ implements OnInit
 
             field:'totalActivityCount',
 
-            width:'140px',
+            width:'220px',
 
             align:'center'
         },
@@ -460,7 +460,7 @@ implements OnInit
 
             type:'status',
 
-            width:'120px',
+            width:'150px',
 
             align:'center'
         },
@@ -472,7 +472,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }

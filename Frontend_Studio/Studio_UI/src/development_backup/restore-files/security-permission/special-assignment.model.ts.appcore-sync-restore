@@ -1,0 +1,90 @@
+/* ============================================================
+   Special Assignment
+============================================================ */
+
+export interface SpecialAssignment
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Special Assignment
+============================================================ */
+
+export interface CreateSpecialAssignment
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Special Assignment
+============================================================ */
+
+export interface UpdateSpecialAssignment
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Special Assignment Defaults
+============================================================ */
+
+export interface SpecialAssignmentDefaults
+{
+    code:
+        string;
+}

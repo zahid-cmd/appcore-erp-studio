@@ -1,0 +1,1287 @@
+/* =====================================================
+   APP FORM PAGE
+===================================================== */
+
+@import '../../../../../../shared/styles/app-form-page.css';
+
+
+
+/* =====================================================
+   SPECIAL TOOLBAR — MASTER CONTROL
+===================================================== */
+
+.special-toolbar-right
+{
+    --special-dropdown-width:260px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    flex:1 1 auto;
+
+    width:auto;
+
+    min-width:0;
+
+    margin-left:10px;
+
+    gap:6px;
+
+    box-sizing:border-box;
+
+    overflow:visible;
+
+    position:relative;
+
+    z-index:100;
+}
+
+
+
+/* =====================================================
+   PAGE TOOLBAR — LEFT
+===================================================== */
+
+.special-toolbar-left
+{
+    display:flex;
+
+    align-items:center;
+
+    flex:0 0 150px;
+
+    width:200px;
+
+    min-width:200px;
+
+    max-width:200px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — MASTER WIDTH
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+{
+    --dropdown-width:var(--special-dropdown-width) !important;
+
+    --dropdown-height:36px !important;
+
+    display:block !important;
+
+    flex:0 0 var(--special-dropdown-width) !important;
+
+    width:var(--special-dropdown-width) !important;
+
+    min-width:var(--special-dropdown-width) !important;
+
+    max-width:var(--special-dropdown-width) !important;
+
+    height:36px !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+
+    position:relative;
+
+    z-index:100;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — CONTAINER
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-container
+{
+    display:flex !important;
+
+    flex-direction:column !important;
+
+    width:var(--special-dropdown-width) !important;
+
+    min-width:var(--special-dropdown-width) !important;
+
+    max-width:var(--special-dropdown-width) !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — ROOT
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown
+{
+    position:relative !important;
+
+    width:var(--special-dropdown-width) !important;
+
+    min-width:var(--special-dropdown-width) !important;
+
+    max-width:var(--special-dropdown-width) !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SELECTOR
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-selector
+{
+    display:flex !important;
+
+    align-items:center !important;
+
+    justify-content:space-between !important;
+
+    width:var(--special-dropdown-width) !important;
+
+    min-width:var(--special-dropdown-width) !important;
+
+    max-width:var(--special-dropdown-width) !important;
+
+    height:36px !important;
+
+    box-sizing:border-box !important;
+
+    padding:0 8px 0 12px !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SELECTED TEXT
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-selected-text,
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-placeholder
+{
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — PANEL
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-panel
+{
+    position:absolute !important;
+
+    left:0 !important;
+
+    width:var(--special-dropdown-width) !important;
+
+    min-width:var(--special-dropdown-width) !important;
+
+    max-width:var(--special-dropdown-width) !important;
+
+    box-sizing:border-box !important;
+
+    z-index:1000 !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SEARCH
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-search
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    padding:8px !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SEARCH INPUT
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-search input
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — OPTIONS
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-options
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — OPTION LABEL
+===================================================== */
+
+:host ::ng-deep
+.special-toolbar-right
+app-search-dropdown
+.dropdown-option-label
+{
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+}
+
+
+
+/* =====================================================
+   DROPDOWN STACKING
+===================================================== */
+
+.special-toolbar-right
+app-search-dropdown:nth-child(1)
+{
+    z-index:104;
+}
+
+
+.special-toolbar-right
+app-search-dropdown:nth-child(2)
+{
+    z-index:103;
+}
+
+
+.special-toolbar-right
+app-search-dropdown:nth-child(3)
+{
+    z-index:102;
+}
+
+
+.special-toolbar-right
+app-search-dropdown:nth-child(4)
+{
+    z-index:101;
+}
+
+
+
+/* =====================================================
+   SPECIAL ADD BUTTON
+===================================================== */
+
+.special-add-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    flex:0 0 78px;
+
+    width:78px;
+
+    min-width:78px;
+
+    max-width:78px;
+
+    height:36px;
+
+    padding:0 8px;
+
+    margin:0;
+
+    border:none;
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+    color:#ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    box-shadow:
+        0 8px 18px rgba(37,99,235,.22),
+        inset 0 1px 1px rgba(255,255,255,.18);
+
+    transition:
+        background .22s ease,
+        color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.special-add-button i
+{
+    width:14px;
+
+    text-align:center;
+
+    font-size:13px;
+
+    flex-shrink:0;
+}
+
+
+.special-add-button span
+{
+    flex:1;
+
+    text-align:center;
+}
+
+
+.special-add-button:hover:not(:disabled)
+{
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 10px 20px rgba(37,99,235,.28);
+}
+
+
+.special-add-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,.10);
+}
+
+
+.special-add-button:disabled
+{
+    cursor:not-allowed;
+
+    color:#94a3b8;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fafc 0%,
+            #eef2f7 100%
+        );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95);
+
+    opacity:.8;
+}
+
+
+.special-add-button:focus-visible
+{
+    outline:none;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.14);
+}
+
+
+
+/* =====================================================
+   RESET BUTTON
+===================================================== */
+
+.special-reset-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:5px;
+
+    flex:0 0 78px;
+
+    width:78px;
+
+    min-width:78px;
+
+    max-width:78px;
+
+    height:36px;
+
+    padding:0 8px;
+
+    margin:0;
+
+    border:1px solid #d9e2ef;
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f7f9fc 100%
+        );
+
+    color:#55667d;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.special-reset-button:hover:not(:disabled)
+{
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4fb 100%
+        );
+
+    border-color:#c5d2e3;
+
+    color:#334155;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.08);
+
+    transform:translateY(-1px);
+}
+
+
+.special-reset-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:none;
+}
+
+
+.special-reset-button:disabled
+{
+    opacity:.55;
+
+    cursor:not-allowed;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
+
+.special-reset-button i
+{
+    width:14px;
+
+    text-align:center;
+
+    font-size:12px;
+
+    flex-shrink:0;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — MASTER CONTAINER
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+{
+    display:flex !important;
+
+    align-items:center !important;
+
+    justify-content:center !important;
+
+    flex:1 1 auto !important;
+
+    width:100% !important;
+
+    height:100% !important;
+
+    min-height:220px !important;
+
+    box-sizing:border-box !important;
+
+    padding:36px 24px !important;
+
+    text-align:center !important;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — TABLE BODY
+===================================================== */
+
+:host ::ng-deep
+.list-table-body
+{
+    position:relative;
+
+    min-height:260px;
+}
+
+
+:host ::ng-deep
+.list-table-body
+app-empty-state
+{
+    position:absolute !important;
+
+    inset:0 !important;
+
+    width:100% !important;
+
+    height:100% !important;
+
+    min-height:260px !important;
+
+    display:flex !important;
+
+    align-items:center !important;
+
+    justify-content:center !important;
+
+    box-sizing:border-box !important;
+
+    padding:30px 20px !important;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — CONTENT WRAPPER
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-state
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:100%;
+
+    max-width:420px;
+
+    margin:0 auto;
+
+    padding:28px 24px;
+
+    box-sizing:border-box;
+
+    text-align:center;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — ICON AREA
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-state-icon
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:64px;
+
+    height:64px;
+
+    margin:0 auto 16px;
+
+    border:1px solid #dce7f7;
+
+    border-radius:50%;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4ff 100%
+        );
+
+    color:#5274d9;
+
+    box-shadow:
+        0 8px 24px rgba(37,99,235,.08),
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+
+:host ::ng-deep
+app-empty-state
+.empty-state-icon i
+{
+    font-size:24px;
+
+    line-height:1;
+
+    color:#5274d9;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — TITLE
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-state-title
+{
+    margin:0 0 7px;
+
+    color:#17233d;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    line-height:1.4;
+
+    letter-spacing:-.1px;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — DESCRIPTION
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-state-description
+{
+    max-width:360px;
+
+    margin:0 auto;
+
+    color:#7a899f;
+
+    font-size:12px;
+
+    font-weight:400;
+
+    line-height:1.6;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — ACTION
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-state-action
+{
+    margin-top:16px;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — HOVER / SUBTLE DEPTH
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-state-icon
+{
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease;
+}
+
+
+:host ::ng-deep
+app-empty-state:hover
+.empty-state-icon
+{
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 10px 28px rgba(37,99,235,.11),
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — FALLBACK FOR CUSTOM CONTENT
+===================================================== */
+
+:host ::ng-deep
+app-empty-state
+.empty-icon
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:64px;
+
+    height:64px;
+
+    margin:0 auto 16px;
+
+    border:1px solid #dce7f7;
+
+    border-radius:50%;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4ff 100%
+        );
+
+    color:#5274d9;
+
+    box-sizing:border-box;
+
+    box-shadow:
+        0 8px 24px rgba(37,99,235,.08);
+}
+
+
+
+/* =====================================================
+   PAGE HEADER ACTIONS
+===================================================== */
+
+.page-header-actions
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+
+
+/* =====================================================
+   ASSIGNMENT LAYOUT
+===================================================== */
+
+.assignment-layout
+{
+    display:flex;
+
+    width:100%;
+
+    min-width:0;
+
+    gap:20px;
+
+    box-sizing:border-box;
+}
+
+
+.assignment-left
+{
+    flex:0 0 300px;
+
+    width:300px;
+
+    min-width:300px;
+
+    box-sizing:border-box;
+}
+
+
+.assignment-right
+{
+    flex:1 1 auto;
+
+    width:auto;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+.assignment-right app-form-grid
+{
+    width:100%;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 1400px
+===================================================== */
+
+@media (max-width:1400px)
+{
+    .special-toolbar-right
+    {
+        --special-dropdown-width:165px;
+
+        gap:5px;
+
+        margin-left:8px;
+    }
+
+
+    .special-add-button,
+    .special-reset-button
+    {
+        flex-basis:72px;
+
+        width:72px;
+
+        min-width:72px;
+
+        max-width:72px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 1200px
+===================================================== */
+
+@media (max-width:1200px)
+{
+    .special-toolbar-left
+    {
+        flex-basis:130px;
+
+        width:130px;
+
+        min-width:130px;
+
+        max-width:130px;
+    }
+
+
+    .special-toolbar-right
+    {
+        --special-dropdown-width:145px;
+
+        gap:4px;
+
+        margin-left:6px;
+    }
+
+
+    .special-add-button,
+    .special-reset-button
+    {
+        flex-basis:68px;
+
+        width:68px;
+
+        min-width:68px;
+
+        max-width:68px;
+
+        padding:0 6px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 992px
+===================================================== */
+
+@media (max-width:992px)
+{
+    .special-toolbar-left
+    {
+        flex:0 0 auto;
+
+        width:auto;
+
+        min-width:0;
+
+        max-width:none;
+    }
+
+
+    .special-toolbar-right
+    {
+        --special-dropdown-width:calc(50% - 4px);
+
+        flex-wrap:wrap;
+
+        justify-content:flex-start;
+
+        width:100%;
+
+        margin-left:0;
+
+        gap:8px;
+    }
+
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    {
+        flex:1 1 var(--special-dropdown-width) !important;
+
+        width:var(--special-dropdown-width) !important;
+
+        min-width:120px !important;
+
+        max-width:none !important;
+    }
+
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown-container,
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown,
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown-selector,
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown-panel
+    {
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    .special-add-button,
+    .special-reset-button
+    {
+        flex:1 1 90px;
+
+        width:auto;
+
+        min-width:90px;
+
+        max-width:none;
+    }
+
+
+    .assignment-layout
+    {
+        flex-direction:column;
+
+        height:auto;
+    }
+
+
+    .assignment-left
+    {
+        flex:none;
+
+        width:100%;
+
+        min-width:100%;
+
+        height:auto;
+    }
+
+
+    .assignment-right
+    {
+        width:100%;
+
+        height:auto;
+    }
+
+
+    :host ::ng-deep
+    .list-table-body
+    app-empty-state
+    {
+        min-height:220px !important;
+
+        padding:24px 16px !important;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 600px
+===================================================== */
+
+@media (max-width:600px)
+{
+    .special-toolbar-right
+    {
+        --special-dropdown-width:100%;
+
+        flex-direction:column;
+
+        flex-wrap:nowrap;
+
+        width:100%;
+
+        gap:8px;
+    }
+
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    {
+        flex:0 0 auto !important;
+
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown-container,
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown,
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown-selector,
+
+    :host ::ng-deep
+    .special-toolbar-right
+    app-search-dropdown
+    .dropdown-panel
+    {
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    .special-add-button,
+    .special-reset-button
+    {
+        flex:0 0 auto;
+
+        width:100%;
+
+        min-width:100%;
+
+        max-width:100%;
+    }
+
+
+    :host ::ng-deep
+    .list-table-body
+    app-empty-state
+    {
+        min-height:200px !important;
+
+        padding:20px 12px !important;
+    }
+
+
+    :host ::ng-deep
+    app-empty-state
+    .empty-state
+    {
+        padding:20px 12px;
+    }
+
+
+    :host ::ng-deep
+    app-empty-state
+    .empty-state-icon,
+
+    :host ::ng-deep
+    app-empty-state
+    .empty-icon
+    {
+        width:56px;
+
+        height:56px;
+
+        margin-bottom:13px;
+    }
+
+
+    :host ::ng-deep
+    app-empty-state
+    .empty-state-title
+    {
+        font-size:14px;
+    }
+
+
+    :host ::ng-deep
+    app-empty-state
+    .empty-state-description
+    {
+        font-size:11px;
+    }
+}

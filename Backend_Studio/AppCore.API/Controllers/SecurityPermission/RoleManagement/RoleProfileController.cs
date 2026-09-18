@@ -180,16 +180,63 @@ public class RoleProfileController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
+        //===========================================================
+        // Verify Role Profile Exists
+        //===========================================================
+
         if (!await _repository.ExistsAsync(id))
         {
             return NotFound();
         }
 
+
+        //===========================================================
+        // Current User
+        //===========================================================
+
         long userId = 1;
 
-        await _repository.DeleteAsync(
-            id,
-            userId);
+
+        //===========================================================
+        // Delete
+        //
+        // The repository protects Role Profiles that already have
+        // Activity Assignment data.
+        //===========================================================
+
+        try
+        {
+            await _repository.DeleteAsync(
+                id,
+                userId);
+        }
+        catch
+        (
+            InvalidOperationException exception
+        )
+        {
+            //=======================================================
+            // Activity Assignment Exists
+            //=======================================================
+
+            return Conflict(
+                new
+                {
+                    success =
+                        false,
+
+                    error =
+                        "Activity Assignment Exists",
+
+                    message =
+                        exception.Message
+                });
+        }
+
+
+        //===========================================================
+        // Delete Successful
+        //===========================================================
 
         return NoContent();
     }

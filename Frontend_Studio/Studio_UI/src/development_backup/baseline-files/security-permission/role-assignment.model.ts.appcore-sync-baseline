@@ -1,0 +1,90 @@
+/* ============================================================
+   Role Assignment
+============================================================ */
+
+export interface RoleAssignment
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Role Assignment
+============================================================ */
+
+export interface CreateRoleAssignment
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Role Assignment
+============================================================ */
+
+export interface UpdateRoleAssignment
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Role Assignment Defaults
+============================================================ */
+
+export interface RoleAssignmentDefaults
+{
+    code:
+        string;
+}

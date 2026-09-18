@@ -84,7 +84,7 @@ public class ActivityAssignment
     // Create Audit
     //===========================================================
 
-    public long CreatedBy
+    public long? CreatedBy
     {
         get;
         set;
@@ -96,6 +96,8 @@ public class ActivityAssignment
         get;
         set;
     }
+    =
+        DateTime.UtcNow;
 
 
     //===========================================================
@@ -228,7 +230,7 @@ public class ActivityAssignmentDetail
     // Create Audit
     //===========================================================
 
-    public long CreatedBy
+    public long? CreatedBy
     {
         get;
         set;
@@ -240,6 +242,8 @@ public class ActivityAssignmentDetail
         get;
         set;
     }
+    =
+        DateTime.UtcNow;
 
 
     //===========================================================
@@ -294,7 +298,6 @@ public class ActivityAssignmentDetail
 //===============================================================
 
 public class ActivityAssignmentPermission
-    : BaseEntity
 {
     //===========================================================
     // Primary Key
@@ -334,6 +337,84 @@ public class ActivityAssignmentPermission
     //===========================================================
 
     public long? NavigationActivityId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    }
+    =
+        true;
+
+
+    public bool IsDeleted
+    {
+        get;
+        set;
+    }
+    =
+        false;
+
+
+    //===========================================================
+    // Delete Audit
+    //===========================================================
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Create Audit
+    //===========================================================
+
+    public long? CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+    =
+        DateTime.UtcNow;
+
+
+    //===========================================================
+    // Modify Audit
+    //===========================================================
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
     {
         get;
         set;

@@ -602,6 +602,18 @@ implements OnInit
         '';
 
 
+    //===========================================================
+    // Edit Cart Initialization
+    //
+    // Existing database rows are restored into the cart only once.
+    // After that, the cart becomes the working source of truth
+    // until Update is saved.
+    //===========================================================
+
+    private editCartInitialized =
+        false;
+
+
     hasChanges =
         false;
 
@@ -684,7 +696,7 @@ implements OnInit
 
             type:'serial',
 
-            width:'100px',
+            width:'50px',
 
             align:'center'
         },
@@ -696,7 +708,7 @@ implements OnInit
 
             type:'text',
 
-            width:'260px',
+            width:'220px',
 
             align:'left'
         },
@@ -708,7 +720,7 @@ implements OnInit
 
             type:'text',
 
-            width:'260px',
+            width:'280px',
 
             align:'left'
         },
@@ -720,7 +732,7 @@ implements OnInit
 
             type:'masterActivities',
 
-            width:'460px',
+            width:'500px',
 
             align:'center',
 
@@ -734,7 +746,7 @@ implements OnInit
 
             type:'specialActivities',
 
-            width:'460px',
+            width:'500px',
 
             align:'center',
 
@@ -748,11 +760,13 @@ implements OnInit
 
             type:'action',
 
-            width:'60px',
+            width:'150px',
 
             align:'center'
         }
     ];
+
+
     //===========================================================
     // Header Activity Checkbox Changed
     //===========================================================
@@ -1071,8 +1085,198 @@ implements OnInit
     //===========================================================
     // Load Role Profiles
     //===========================================================
+    //
+    // ADD MODE RULE:
+    // A Role Profile that already has an Activity Assignment in
+    // the database must NOT be available for a new assignment.
+    //
+    // EDIT / VIEW MODE RULE:
+    // The complete Role Profile list remains available because
+    // the existing assigned Role Profile must be displayed.
+    //
+    // The Activity Assignment list endpoint is used as the
+    // database source of truth for already-configured profiles.
+    //===========================================================
 
     private loadRoleProfiles():
+        void
+    {
+        //=======================================================
+        // EDIT / VIEW
+        //=======================================================
+
+        if
+        (
+            this.mode !== 'add'
+        )
+        {
+            this.loadAllRoleProfiles();
+
+            return;
+        }
+
+
+        //=======================================================
+        // ADD
+        //
+        // First load all Role Profiles.
+        // Then load existing Activity Assignments and remove
+        // every Role Profile already configured in the database.
+        //=======================================================
+
+        this.roleProfileService
+            .getAll()
+            .subscribe(
+            {
+                next:
+                    (
+                        response:
+                            any[]
+                    ): void =>
+                {
+                    const allRoleProfiles =
+                        [
+                            ...response
+                        ];
+
+
+                    this.activityAssignmentService
+                        .getAll()
+                        .subscribe(
+                        {
+                            next:
+                                (
+                                    assignments:
+                                        any[]
+                                ): void =>
+                            {
+                                const assignedRoleProfileIds =
+                                    new Set<number>
+                                    (
+                                        assignments
+                                            .filter
+                                            (
+                                                assignment =>
+                                                    assignment != null
+                                                    &&
+                                                    assignment.roleProfileId != null
+                                            )
+                                            .map
+                                            (
+                                                assignment =>
+                                                    Number(
+                                                        assignment.roleProfileId
+                                                    )
+                                            )
+                                            .filter
+                                            (
+                                                id =>
+                                                    id > 0
+                                            )
+                                    );
+
+
+                                this.roleProfiles =
+                                    allRoleProfiles.filter
+                                    (
+                                        roleProfile =>
+                                        {
+                                            const roleProfileId =
+                                                Number(
+                                                    roleProfile.id
+                                                    ??
+                                                    roleProfile.roleProfileId
+                                                );
+
+
+                                            return roleProfileId > 0
+                                                &&
+                                                !assignedRoleProfileIds.has(
+                                                    roleProfileId
+                                                );
+                                        }
+                                    );
+
+
+                                this.cdr.detectChanges();
+                            },
+
+
+                            error:
+                                (
+                                    error:
+                                        unknown
+                                ): void =>
+                            {
+                                console.error
+                                (
+                                    'Load Activity Assignments For Role Profile Filter Error',
+
+                                    error
+                                );
+
+
+                                // Do NOT expose already configured
+                                // profiles if the assignment source
+                                // could not be loaded.
+                                this.roleProfiles =
+                                [
+                                ];
+
+
+                                this.toast.error
+                                (
+                                    'Load Failed',
+
+                                    'Unable to determine already configured role profiles.'
+                                );
+
+
+                                this.cdr.detectChanges();
+                            }
+                        }
+                    );
+                },
+
+
+                error:
+                    (
+                        error:
+                            unknown
+                    ): void =>
+                {
+                    console.error
+                    (
+                        'Load Role Profiles Error',
+
+                        error
+                    );
+
+
+                    this.roleProfiles =
+                    [
+                    ];
+
+
+                    this.toast.error
+                    (
+                        'Load Failed',
+
+                        'Unable to load role profiles.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Load All Role Profiles
+    //===========================================================
+
+    private loadAllRoleProfiles():
         void
     {
         this.roleProfileService
@@ -1120,6 +1324,9 @@ implements OnInit
 
                         'Unable to load role profiles.'
                     );
+
+
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -1228,31 +1435,66 @@ implements OnInit
             moduleId <= 0
         )
         {
-            row.specialActivities =
-            [
-            ];
+            const updatedRow:ItemCartRow =
+            {
+                ...row,
 
-            this.completedActivityLoads++;
+                specialActivities:
+                [
+                ]
+            };
+
+
+            const rowIndex =
+                this.itemCartRows.findIndex
+                (
+                    item =>
+                        item.subMenuId ===
+                        row.subMenuId
+                );
+
 
             if
             (
-                this.completedActivityLoads >= this.pendingActivityLoads
+                rowIndex >= 0
+            )
+            {
+                this.itemCartRows =
+                    this.itemCartRows.map
+                    (
+                        (item,index) =>
+                            index === rowIndex
+                            ?
+                            updatedRow
+                            :
+                            item
+                    );
+            }
+
+
+            this.completedActivityLoads++;
+
+
+            if
+            (
+                this.completedActivityLoads >=
+                this.pendingActivityLoads
             )
             {
                 this.orbitLoading =
                     false;
-
-                this.applyPermissionsToCart();
-
-                this.updatePagination();
-
-                this.updateHeaderCheckboxStates();
-
-                this.cdr.detectChanges();
             }
+
+
+            this.updatePagination();
+
+            this.updateHeaderCheckboxStates();
+
+            this.cdr.detectChanges();
 
             return;
         }
+
 
         //=======================================================
         // Load Activities
@@ -1260,89 +1502,245 @@ implements OnInit
 
         this.navigationActivityService
 
-            .getAll(
+            .getAll
+            (
                 moduleId
             )
 
-            .subscribe(
-            {
-                next:(activities) =>
-                {
-                    const existingPermissions =
+            .subscribe
+            ({
+                next:
+                    (
+                        activities
+                    ) =>
+                    {
+                        //===================================================
+                        // Existing Permissions
+                        //===================================================
 
-                        this.getExistingPermissions(
-                            row.subMenuId
+                        const existingPermissions =
+
+                            this.getExistingPermissions
+                            (
+                                row.subMenuId
+                            );
+
+
+                        //===================================================
+                        // Build Special Activities
+                        //===================================================
+
+                        const specialActivities:ActivityItem[] =
+
+                            activities.map
+                            (
+                                activity =>
+                                ({
+                                    id:
+                                        activity.id,
+
+                                    text:
+                                        activity.name,
+
+                                    checked:
+
+                                        existingPermissions.some
+                                        (
+                                            permission =>
+
+                                                permission.navigationActivityId ===
+                                                activity.id
+                                        )
+                                })
+                            );
+
+
+                        //===================================================
+                        // Create Updated Row
+                        //===================================================
+
+                        const updatedRow:ItemCartRow =
+                        {
+                            ...row,
+
+                            specialActivities:
+                                specialActivities
+                        };
+
+
+                        //===================================================
+                        // Find Current Row
+                        //===================================================
+
+                        const rowIndex =
+
+                            this.itemCartRows.findIndex
+                            (
+                                item =>
+
+                                    item.subMenuId ===
+                                    row.subMenuId
+                            );
+
+
+                        //===================================================
+                        // Replace Current Row
+                        //===================================================
+
+                        if
+                        (
+                            rowIndex >= 0
+                        )
+                        {
+                            this.itemCartRows =
+
+                                this.itemCartRows.map
+                                (
+                                    (item,index) =>
+
+                                        index === rowIndex
+                                        ?
+                                        updatedRow
+                                        :
+                                        item
+                                );
+                        }
+
+
+                        //===================================================
+                        // Activity Loading Counter
+                        //===================================================
+
+                        this.completedActivityLoads++;
+
+
+                        if
+                        (
+                            this.completedActivityLoads >=
+                            this.pendingActivityLoads
+                        )
+                        {
+                            this.orbitLoading =
+                                false;
+                        }
+
+
+                        //===================================================
+                        // Rebuild Paged Rows
+                        //===================================================
+
+                        this.updatePagination();
+
+
+                        //===================================================
+                        // Update Header Checkbox
+                        //===================================================
+
+                        this.updateHeaderCheckboxStates();
+
+
+                        //===================================================
+                        // Angular Refresh
+                        //===================================================
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                error:
+                    (
+                        error
+                    ) =>
+                    {
+                        console.error
+                        (
+                            'Load Special Activities Error',
+                            error
                         );
 
-                    row.specialActivities =
 
-                        activities.map(
-                            activity =>
-                            ({
-                                id:
-                                    activity.id,
+                        //===================================================
+                        // Replace Row With Empty Special Activities
+                        //===================================================
 
-                                text:
-                                    activity.name,
+                        const updatedRow:ItemCartRow =
+                        {
+                            ...row,
 
-                                checked:
+                            specialActivities:
+                            [
+                            ]
+                        };
 
-                                    existingPermissions.some(
-                                        permission =>
-                                            permission.navigationActivityId ===
-                                            activity.id
-                                    )
-                            })
+
+                        const rowIndex =
+
+                            this.itemCartRows.findIndex
+                            (
+                                item =>
+
+                                    item.subMenuId ===
+                                    row.subMenuId
+                            );
+
+
+                        if
+                        (
+                            rowIndex >= 0
+                        )
+                        {
+                            this.itemCartRows =
+
+                                this.itemCartRows.map
+                                (
+                                    (item,index) =>
+
+                                        index === rowIndex
+                                        ?
+                                        updatedRow
+                                        :
+                                        item
+                                );
+                        }
+
+
+                        //===================================================
+                        // Activity Loading Counter
+                        //===================================================
+
+                        this.completedActivityLoads++;
+
+
+                        if
+                        (
+                            this.completedActivityLoads >=
+                            this.pendingActivityLoads
+                        )
+                        {
+                            this.orbitLoading =
+                                false;
+                        }
+
+
+                        //===================================================
+                        // Refresh
+                        //===================================================
+
+                        this.updatePagination();
+
+                        this.updateHeaderCheckboxStates();
+
+
+                        this.toast.error
+                        (
+                            'Error',
+
+                            'Failed to load special activities.'
                         );
 
 
-                    this.completedActivityLoads++;
-
-                    if
-                    (
-                        this.completedActivityLoads >= this.pendingActivityLoads
-                    )
-                    {
-                        this.orbitLoading =
-                            false;
-
-                        this.applyPermissionsToCart();
+                        this.cdr.detectChanges();
                     }
-
-
-                    this.updatePagination();
-
-                    this.updateHeaderCheckboxStates();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:(error) =>
-                {
-                    console.error(error);
-
-                    row.specialActivities =
-                    [
-                    ];
-
-                    this.completedActivityLoads++;
-
-                    if
-                    (
-                        this.completedActivityLoads >= this.pendingActivityLoads
-                    )
-                    {
-                        this.orbitLoading =
-                            false;
-                    }
-
-                    this.toast.error(
-                        'Error',
-                        'Failed to load special activities.'
-                    );
-
-                    this.cdr.detectChanges();
-                }
             });
     }
 
@@ -1560,6 +1958,18 @@ implements OnInit
         {
             ...data
         };
+
+
+        //=======================================================
+        // Reset Edit Cart Initialization
+        //
+        // The first submenu load will restore the saved database
+        // rows. Later selection changes must preserve the working
+        // cart instead of rebuilding it.
+        //=======================================================
+
+        this.editCartInitialized =
+            false;
 
 
         this.selectedRoleProfileId =
@@ -1790,7 +2200,9 @@ implements OnInit
                 0
             );
 
-            this.loadAllSubMenus();
+            this.loadSubMenus(
+                0
+            );
 
             this.isAddDisabled =
                 false;
@@ -1802,13 +2214,24 @@ implements OnInit
         // Specific Module
         //=======================================================
 
+        this.selectedMenuId =
+            0;
+
+        this.selectedSubMenuId =
+            0;
+
         this.loadMenus(
             value
         );
 
+        this.loadSubMenus(
+            0
+        );
+
         this.isAddDisabled =
-            true;
+            false;
     }
+
 
     //===========================================================
     // Load Menus
@@ -1937,10 +2360,15 @@ implements OnInit
             value === 0
         )
         {
-            this.loadAllSubMenus();
+            this.selectedSubMenuId =
+                0;
+
+            this.loadSubMenus(
+                0
+            );
 
             this.isAddDisabled =
-                true;
+                false;
 
             return;
         }
@@ -1949,13 +2377,17 @@ implements OnInit
         // Specific Menu
         //=======================================================
 
+        this.selectedSubMenuId =
+            0;
+
         this.loadSubMenus(
             value
         );
 
         this.isAddDisabled =
-            true;
+            false;
     }
+
 
     //===========================================================
     // Load Sub Menus
@@ -1982,23 +2414,64 @@ implements OnInit
         {
             next:(response:any[]) =>
             {
+                //===================================================
+                // Filter All Sub Menus By Selected Module
+                //===================================================
+
+                let filteredResponse =
+                    response;
+
+                if
+                (
+                    menuId === 0
+                    &&
+                    this.selectedModuleId != null
+                    &&
+                    this.selectedModuleId !== 0
+                )
+                {
+                    filteredResponse =
+                        response.filter(
+                            subMenu =>
+                                subMenu.navigationModuleId ===
+                                this.selectedModuleId
+                        );
+                }
+
+
                 this.subMenus =
                 [
                     ...this.defaultSubMenus,
 
-                    ...response
+                    ...filteredResponse
                 ];
 
 
                 //===================================================
-                // Restore Item Cart During Edit/View
+                // Restore Item Cart During Edit/View — ONCE ONLY
+                //
+                // IMPORTANT:
+                // Previously this ran on EVERY Module/Menu/Sub Menu
+                // change in Edit mode. That rebuilt itemCartRows from
+                // the original database data and therefore removed
+                // rows that had just been added during the same edit
+                // session.
+                //
+                // Now the saved rows are restored only on the first
+                // submenu load. All later selections work against
+                // the existing itemCartRows and therefore APPEND.
                 //===================================================
 
                 if
                 (
                     this.mode !== 'add'
+                    &&
+                    !this.editCartInitialized
                 )
                 {
+                    this.editCartInitialized =
+                        true;
+
                     this.refreshItemCartRows();
 
                     this.applyPermissionsToCart();
@@ -2024,48 +2497,6 @@ implements OnInit
                 );
             }
         });
-    }
-
-
-
-    //===========================================================
-    // Load All Sub Menus
-    //===========================================================
-
-    private loadAllSubMenus():
-        void
-    {
-        this.submenuService
-
-            .getAll()
-
-            .subscribe(
-            {
-                next:(response:any[]) =>
-                {
-                    this.subMenus =
-                    [
-                        ...this.defaultSubMenus,
-
-                        ...response
-                    ];
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:(error:any) =>
-                {
-                    console.error(error);
-
-
-                    this.toast.error(
-                        'Error',
-                        'Failed to load sub menus.'
-                    );
-                }
-            });
     }
 
 
@@ -2308,35 +2739,42 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
-//===========================================================
-// Get Existing Permissions
-//===========================================================
+    //===========================================================
+    // Get Existing Permissions
+    //===========================================================
 
-private getExistingPermissions
-(
-    subMenuId:number
-):
-    ActivityAssignmentPermission[]
-{
-    const detail =
-
-        this.activityAssignment.details.find(
-            x =>
-                x.subMenuId === subMenuId
-        );
-
-
-    if
+    private getExistingPermissions
     (
-        !detail
-    )
+        subMenuId:number
+    ):
+        ActivityAssignmentPermission[]
     {
-        return [];
+        const details =
+            this.activityAssignment?.details
+            ??
+            [];
+
+
+        const detail =
+            details.find
+            (
+                x =>
+                    x.subMenuId ===
+                    subMenuId
+            );
+
+
+        if
+        (
+            !detail
+        )
+        {
+            return [];
+        }
+
+
+        return detail.activityAssignmentPermissions ?? [];
     }
-
-
-    return detail.activityAssignmentPermissions ?? [];
-}
 
 
 
@@ -3161,7 +3599,7 @@ private getExistingPermissions
 
         return rows;
     }
-
+    
     //===========================================================
     // Add Selection
     //===========================================================
@@ -3177,9 +3615,19 @@ private getExistingPermissions
             return;
         }
 
+
         const selectedSubMenus =
 
             this.buildSelectedRows();
+
+
+        let duplicateFound =
+            false;
+
+
+        let addedCount =
+            0;
+
 
         selectedSubMenus.forEach(
             row =>
@@ -3191,21 +3639,50 @@ private getExistingPermissions
                             item.subMenuId === row.subMenuId
                     );
 
+
                 if
                 (
-                    !exists
+                    exists
                 )
                 {
-                    this.itemCartRows.push(
-                        row
-                    );
+                    duplicateFound =
+                        true;
 
-                    this.loadSpecialActivities(
-                        row,
-                        row.moduleId
-                    );
+                    return;
                 }
-            });
+
+
+                this.itemCartRows.push(
+                    row
+                );
+
+
+                addedCount++;
+
+
+                this.loadSpecialActivities(
+                    row,
+                    row.moduleId
+                );
+            }
+        );
+
+
+        //=======================================================
+        // Duplicate Validation Toast
+        //=======================================================
+
+        if
+        (
+            duplicateFound
+        )
+        {
+            this.toast.warning(
+                'Already Added',
+                'One or more selected sub menus are already added in the cart.'
+            );
+        }
+
 
         //=======================================================
         // Update Role Profile Lock

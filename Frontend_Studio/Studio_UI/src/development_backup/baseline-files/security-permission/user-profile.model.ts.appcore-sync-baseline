@@ -1,0 +1,90 @@
+/* ============================================================
+   User Profile
+============================================================ */
+
+export interface UserProfile
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create User Profile
+============================================================ */
+
+export interface CreateUserProfile
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update User Profile
+============================================================ */
+
+export interface UpdateUserProfile
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   User Profile Defaults
+============================================================ */
+
+export interface UserProfileDefaults
+{
+    code:
+        string;
+}

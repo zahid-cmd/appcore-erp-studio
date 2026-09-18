@@ -161,6 +161,10 @@
 
             <!-- =============================================
                  MENU
+                 Locked when:
+                 1. View Mode
+                 2. No Module selected
+                 3. All Modules selected
             ============================================== -->
 
             <app-search-dropdown
@@ -177,6 +181,8 @@
                     isViewMode
                     ||
                     selectedModuleId == null
+                    ||
+                    selectedModuleId === 0
                 "
 
                 [(value)]="selectedMenuId"
@@ -189,6 +195,11 @@
 
             <!-- =============================================
                  SUB MENU
+                 Locked when:
+                 1. View Mode
+                 2. No Menu selected
+                 3. All Modules selected
+                 4. All Menus selected
             ============================================== -->
 
             <app-search-dropdown
@@ -205,6 +216,10 @@
                     isViewMode
                     ||
                     selectedMenuId == null
+                    ||
+                    selectedModuleId === 0
+                    ||
+                    selectedMenuId === 0
                 "
 
                 [(value)]="selectedSubMenuId"

@@ -410,7 +410,7 @@ implements OnInit
 
             field:'ProfileCode',
 
-            width:'180px',
+            width:'250px',
 
             align:'center'
         },
@@ -428,7 +428,7 @@ implements OnInit
 
             field:'DisplayOrder',
 
-            width:'120px',
+            width:'220px',
 
             align:'center'
         },
@@ -440,7 +440,7 @@ implements OnInit
 
             type:'status',
 
-            width:'120px',
+            width:'220px',
 
             align:'center'
         },
@@ -452,7 +452,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }
@@ -774,6 +774,7 @@ implements OnInit
 
         this.updatePagination();
     }
+
 
 
     //===========================================================
@@ -1160,6 +1161,29 @@ implements OnInit
                             );
 
 
+                            //===================================================
+                            // Activity Assignment Protection
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                this.toast.error
+                                (
+                                    'Delete Not Allowed',
+
+                                    'Activity Assignment exists against this Role Profile.'
+                                );
+
+
+                                return;
+                            }
+
+
                             this.toast.error
                             (
                                 'Delete Failed',
@@ -1271,6 +1295,7 @@ implements OnInit
                 }
             });
     }
+
 
 
     //===========================================================

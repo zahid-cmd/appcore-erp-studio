@@ -190,6 +190,24 @@ public static class CodeGenerator
 
 
     //===============================================================
+    // User Profile Code
+    //===============================================================
+
+    public static string GenerateUserProfileCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid user profile sequence number.");
+        }
+
+        return $"UP-{sequenceNo:D3}";
+    }
+
+
+
+    //===============================================================
     // COMPONENT MANAGEMENT
     //===============================================================
 

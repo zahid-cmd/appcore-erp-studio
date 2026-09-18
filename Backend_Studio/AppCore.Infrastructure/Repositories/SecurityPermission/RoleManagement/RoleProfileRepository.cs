@@ -10,6 +10,9 @@ using AppCore.Application.SecurityPermission.RoleManagement.RoleProfile.DTOs;
 using RoleProfileEntity =
     AppCore.Domain.Entities.SecurityPermission.RoleManagement.RoleProfile;
 
+using ActivityAssignmentEntity =
+    AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment;
+
 using AppCore.Infrastructure.Persistence;
 
 using AppCore.Domain.Common;
@@ -496,6 +499,10 @@ public class RoleProfileRepository : IRoleProfileRepository
         long id,
         long userId)
     {
+        //===========================================================
+        // Resolve Role Profile
+        //===========================================================
+
         RoleProfileEntity? entity =
             await _context.RoleProfiles
 
@@ -514,6 +521,49 @@ public class RoleProfileRepository : IRoleProfileRepository
                 "Role Profile not found.");
         }
 
+
+        //===========================================================
+        // Activity Assignment Protection
+        //
+        // A Role Profile that has already been configured in
+        // Activity Assignment must never be deleted.
+        //
+        // IMPORTANT:
+        //
+        // We intentionally DO NOT check IsDeleted here.
+        //
+        // The rule is:
+        //
+        // If Activity Assignment data exists against this
+        // Role Profile, the Role Profile remains protected.
+        //===========================================================
+
+        bool activityAssignmentExists =
+            await _context
+                .Set<ActivityAssignmentEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        x.RoleProfileId ==
+                        id
+                );
+
+
+        if
+        (
+            activityAssignmentExists
+        )
+        {
+            throw new InvalidOperationException(
+                $"Activity Assignment exists against Role Profile '{entity.ProfileName}'."
+            );
+        }
+
+
+        //===========================================================
+        // Soft Delete Role Profile
+        //===========================================================
 
         entity.IsDeleted =
             true;

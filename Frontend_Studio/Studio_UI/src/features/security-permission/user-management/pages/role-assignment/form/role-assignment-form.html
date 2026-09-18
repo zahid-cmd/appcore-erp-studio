@@ -1,0 +1,547 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-user-tag"
+
+        [title]="pageTitle"
+
+        subtitle="Manage role assignments.">
+
+        <!-- =================================================
+             CENTER
+        ================================================== -->
+
+        <app-record-counter
+
+            pageHeaderCenter
+
+            [sections]="recordCounterSections"
+
+            [compact]="true">
+
+        </app-record-counter>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div
+
+            pageToolbarLeft
+
+            class="role-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab"
+
+                (selectedTabChange)="onTabChange($event)">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            class="role-toolbar-right">
+
+
+            <!-- =============================================
+                 USER PROFILE
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select User Profile"
+
+                [items]="userProfiles"
+
+                labelField="displayName"
+
+                valueField="userProfileId"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    isUserProfileLocked
+                "
+
+                [(value)]="selectedUserProfileId"
+
+                (valueChange)="onUserProfileChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 ROLE PROFILE
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Role Profile"
+
+                [items]="roleProfiles"
+
+                labelField="displayName"
+
+                valueField="roleProfileId"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedRoleProfileId"
+
+                (valueChange)="onRoleProfileChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 ADD BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="role-add-button"
+
+                [disabled]="addDisabled"
+
+                (click)="onAddSelection()">
+
+                <i class="fas fa-plus"></i>
+
+                <span>
+                    Add
+                </span>
+
+            </button>
+
+
+
+            <!-- =============================================
+                 RESET BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="role-reset-button"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    selectedRoleProfileId == null
+                "
+
+                (click)="onResetSelection()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>
+                    Reset
+                </span>
+
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <!-- =================================================
+             BODY
+        ================================================== -->
+
+        <ng-container canvasBody>
+
+            <!-- =================================================
+                 ROLE ASSIGNMENT TABLE CONTAINER
+            ================================================== -->
+
+            <div class="role-assignment-table-container">
+
+                <!-- =============================================
+                     TABLE
+                ============================================== -->
+
+                <table class="role-assignment-table">
+
+                    <!-- =========================================
+                         TABLE HEADER
+                    ========================================== -->
+
+                    <thead>
+
+                        <tr>
+
+                            <!-- =================================
+                                 SERIAL
+                            ================================== -->
+
+                            <th
+
+                                class="col-serial"
+
+                                [style.width]="
+                                    columns[0].width
+                                ">
+
+                                #
+
+                            </th>
+
+
+
+                            <!-- =================================
+                                 ROLE PROFILE CODE
+                            ================================== -->
+
+                            <th
+
+                                class="col-code"
+
+                                [style.width]="
+                                    columns[1].width
+                                ">
+
+                                Role Profile Code
+
+                            </th>
+
+
+
+                            <!-- =================================
+                                 ROLE PROFILE
+                            ================================== -->
+
+                            <th
+
+                                class="col-name">
+
+                                Role Profile
+
+                            </th>
+
+
+
+                            <!-- =================================
+                                 ACTION
+                            ================================== -->
+
+                            <th
+
+                                class="col-action"
+
+                                [style.width]="
+                                    columns[3].width
+                                ">
+
+                                Actions
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+
+                    <!-- =========================================
+                         TABLE BODY
+                    ========================================== -->
+
+                    <tbody>
+
+
+                        <!-- =====================================
+                             DATA ROWS
+                        ====================================== -->
+
+                        <tr
+
+                            *ngFor="
+                                let row of pagedRoleAssignmentRows;
+                                let i = index
+                            "
+
+                            class="role-data-row">
+
+
+                            <!-- =================================
+                                 SERIAL
+                            ================================== -->
+
+                            <td
+
+                                class="col-serial"
+
+                                [style.width]="
+                                    columns[0].width
+                                ">
+
+                                {{
+                                    (
+                                        (
+                                            currentPage - 1
+                                        )
+                                        *
+                                        pageSize
+                                    )
+                                    +
+                                    i
+                                    +
+                                    1
+                                }}
+
+                            </td>
+
+
+
+                            <!-- =================================
+                                 ROLE PROFILE CODE
+                            ================================== -->
+
+                            <td
+
+                                class="col-code"
+
+                                [style.width]="
+                                    columns[1].width
+                                "
+
+                                [title]="
+                                    row.roleProfileCode
+                                ">
+
+                                {{
+                                    row.roleProfileCode
+                                    ||
+                                    '-'
+                                }}
+
+                            </td>
+
+
+
+                            <!-- =================================
+                                 ROLE PROFILE
+                            ================================== -->
+
+                            <td
+
+                                class="col-name"
+
+                                [title]="
+                                    row.roleProfileName
+                                ">
+
+                                {{
+                                    row.roleProfileName
+                                    ||
+                                    '-'
+                                }}
+
+                            </td>
+
+
+
+                            <!-- =================================
+                                 ACTION
+                            ================================== -->
+
+                            <td
+
+                                class="col-action"
+
+                                [style.width]="
+                                    columns[3].width
+                                ">
+
+
+                                <button
+
+                                    type="button"
+
+                                    class="role-remove-button"
+
+                                    [disabled]="isViewMode"
+
+                                    title="Remove Role Profile"
+
+                                    (click)="
+                                        onRemoveAssignment(row)
+                                    ">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <!-- =====================================
+                             EMPTY STATE
+                        ====================================== -->
+
+                        <tr
+
+                            *ngIf="
+                                roleAssignmentRows.length === 0
+                            "
+
+                            class="empty-row">
+
+                            <td
+
+                                colspan="4"
+
+                                class="empty-cell">
+
+                                <div class="role-empty-state">
+
+                                    <i class="fas fa-user-tag"></i>
+
+                                    <div>
+
+                                        <strong>
+                                            No Role Profiles Assigned
+                                        </strong>
+
+                                        <span>
+                                            Select a User Profile and Role Profile, then click Add.
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </ng-container>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <ng-container canvasFooter>
+
+            <app-pagination
+
+                [totalRecords]="roleAssignmentRows.length"
+
+                [currentPage]="currentPage"
+
+                [pageSize]="pageSize"
+
+                (pageChange)="onPageChange($event)"
+
+                (pageSizeChange)="onPageSizeChange($event)">
+
+            </app-pagination>
+
+        </ng-container>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =========================================================
+     UTILITIES
+========================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

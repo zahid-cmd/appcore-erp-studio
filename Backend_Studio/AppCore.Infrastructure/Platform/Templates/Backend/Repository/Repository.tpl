@@ -17,7 +17,7 @@ using global::{{ApplicationNamespace}};
 // Namespace
 //===============================================================
 
-namespace {{InfrastructureNamespace}};
+namespace {{RepositoryNamespace}};
 
 
 //===============================================================

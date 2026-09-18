@@ -4,7 +4,6 @@ import
 }
 from '@angular/router';
 
-
 export const securityPermissionRoutes:
     Routes =
 [
@@ -17,7 +16,6 @@ export const securityPermissionRoutes:
     //   • Submenu routes
     //   • Activity/Page routes
     //===========================================================
-
 
     //===========================================================
     // Default
@@ -55,5 +53,31 @@ export const securityPermissionRoutes:
     },
 
     // AUTO-END : MNU-006-001
+
+    // AUTO-BEGIN : MNU-006-002
+
+    //===========================================================
+    // User Management
+    //===========================================================
+
+    {
+        path:'user-management',
+
+        data:
+        {
+            breadcrumb:'User Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../user-management/routes/user-management.routes'
+            )
+            .then(
+                m =>
+                    m.mnu006002Routes
+            )
+    },
+
+    // AUTO-END : MNU-006-002
 
 ];

@@ -308,11 +308,16 @@ public class AppDbContext
 
     // AUTO-END : PaymentVoucher
 
+    // AUTO-BEGIN : ActivityAssignment
 
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment>
+    ActivityAssignments
+    {
+        get;
+        set;
+    } = null!;
 
-
-
-
+    // AUTO-END : ActivityAssignment
 
 
     // AUTO-BEGIN : RoleProfile
@@ -326,16 +331,49 @@ public class AppDbContext
 
     // AUTO-END : RoleProfile
 
-    // AUTO-BEGIN : ActivityAssignment
 
-    public DbSet<AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment>
-    ActivityAssignments
+
+
+
+
+
+
+
+    // AUTO-BEGIN : UserProfile
+
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile>
+    UserProfiles
     {
     get;
     set;
     } = null!;
 
-    // AUTO-END : ActivityAssignment
+    // AUTO-END : UserProfile
+
+    // AUTO-BEGIN : RoleAssignment
+
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.UserManagement.RoleAssignment>
+    RoleAssignments
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : RoleAssignment
+
+
+
+
+    // AUTO-BEGIN : SpecialAssignment
+
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.UserManagement.SpecialAssignment>
+    SpecialAssignments
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SpecialAssignment
 
     // AUTO-END : AUTO REGISTER DBSETS 
  

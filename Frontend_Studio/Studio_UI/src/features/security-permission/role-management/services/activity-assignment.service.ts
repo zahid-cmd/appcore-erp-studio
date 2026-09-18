@@ -11,13 +11,16 @@ from '@angular/core';
 
 import
 {
-    HttpClient
+    HttpClient,
+    HttpErrorResponse
 }
 from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    catchError,
+    throwError
 }
 from 'rxjs';
 
@@ -165,6 +168,41 @@ export class ActivityAssignmentService
             this.apiUrl,
 
             activityAssignment
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    //===========================================
+                    // Log complete API error
+                    //===========================================
+
+                    console.error(
+                        'Activity Assignment Create API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Activity Assignment Create API Error Body:',
+                        error.error
+                    );
+
+
+                    //===========================================
+                    // Preserve original HttpErrorResponse
+                    //===========================================
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
         );
     }
 
@@ -184,6 +222,41 @@ export class ActivityAssignmentService
             this.apiUrl,
 
             activityAssignment
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    //===========================================
+                    // Log complete API error
+                    //===========================================
+
+                    console.error(
+                        'Activity Assignment Update API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Activity Assignment Update API Error Body:',
+                        error.error
+                    );
+
+
+                    //===========================================
+                    // Preserve original HttpErrorResponse
+                    //===========================================
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
         );
     }
 
@@ -201,6 +274,33 @@ export class ActivityAssignmentService
     {
         return this.http.delete<void>(
             `${this.apiUrl}/${id}`
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    console.error(
+                        'Activity Assignment Delete API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Activity Assignment Delete API Error Body:',
+                        error.error
+                    );
+
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
         );
     }
 
@@ -216,6 +316,33 @@ export class ActivityAssignmentService
             `${this.apiUrl}/restore`,
 
             {}
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    console.error(
+                        'Activity Assignment Restore API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Activity Assignment Restore API Error Body:',
+                        error.error
+                    );
+
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
         );
     }
 

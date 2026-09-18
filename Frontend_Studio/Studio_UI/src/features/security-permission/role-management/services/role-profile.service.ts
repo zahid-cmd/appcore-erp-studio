@@ -234,7 +234,7 @@ export class RoleProfileService
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.RoleProfileId}`,
+            this.apiUrl,
 
             model
         );
