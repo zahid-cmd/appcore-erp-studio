@@ -18,6 +18,14 @@ from '@angular/core';
 
 
 //===============================================================
+// Login Page Components
+//===============================================================
+
+
+
+
+
+//===============================================================
 // Control Components
 //===============================================================
 
@@ -348,6 +356,10 @@ implements OnChanges
     =
     {
         //=======================================================
+
+
+
+        //=======================================================
         // Control Components
         //=======================================================
 
@@ -532,10 +544,48 @@ implements OnChanges
             );
 
 
+        this.setComponentHostSize();
+
+
         this.setPreviewMode();
 
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Set Component Host Size
+    //===========================================================
+
+    private setComponentHostSize():
+        void
+    {
+        if
+        (
+            !this.componentRef
+        )
+        {
+            return;
+        }
+
+
+        const hostElement =
+            this.componentRef
+                .location
+                .nativeElement as HTMLElement;
+
+
+        hostElement.style.display =
+            'block';
+
+
+        hostElement.style.width =
+            '100%';
+
+
+        hostElement.style.height =
+            '100%';
     }
 
 

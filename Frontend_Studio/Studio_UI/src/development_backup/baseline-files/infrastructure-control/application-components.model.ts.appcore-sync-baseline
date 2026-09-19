@@ -1,0 +1,90 @@
+/* ============================================================
+   Application Components
+============================================================ */
+
+export interface ApplicationComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Application Components
+============================================================ */
+
+export interface CreateApplicationComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Application Components
+============================================================ */
+
+export interface UpdateApplicationComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Application Components Defaults
+============================================================ */
+
+export interface ApplicationComponentsDefaults
+{
+    code:
+        string;
+}

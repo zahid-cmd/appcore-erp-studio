@@ -1,0 +1,90 @@
+/* ============================================================
+   Login Pages
+============================================================ */
+
+export interface LoginPages
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Login Pages
+============================================================ */
+
+export interface CreateLoginPages
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Login Pages
+============================================================ */
+
+export interface UpdateLoginPages
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Login Pages Defaults
+============================================================ */
+
+export interface LoginPagesDefaults
+{
+    code:
+        string;
+}

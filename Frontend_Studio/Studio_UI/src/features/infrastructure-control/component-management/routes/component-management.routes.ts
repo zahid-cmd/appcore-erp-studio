@@ -108,6 +108,32 @@ Routes =
 
                 // AUTO-END : SUB-002-003-003
 
+            // AUTO-BEGIN : SUB-002-003-004
+
+                //===========================================================
+                // Application Components
+                //===========================================================
+
+                {
+                    path:'application-components',
+
+                    data:
+                    {
+                        breadcrumb:'Application Components'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './application-components.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ApplicationComponentsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-002-003-004
+
         ]
 
     }

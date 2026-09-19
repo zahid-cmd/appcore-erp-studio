@@ -249,4 +249,26 @@ public static class CodeGenerator
         return $"SC-{sequenceNo:D3}";
     }
 
+
+
+    //===============================================================
+    // APPLICATION CONFIGURATION
+    //===============================================================
+
+    //===============================================================
+    // Login Pages Code
+    //===============================================================
+
+    public static string GenerateLoginPagesCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid login pages sequence number.");
+        }
+
+        return $"LP-{sequenceNo:D3}";
+    }
+
 }

@@ -140,6 +140,46 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : LoginComponent3
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : LoginComponent3
+
+// AUTO-BEGIN : LoginComponent2
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : LoginComponent2
+
+// AUTO-BEGIN : LoginComponent1
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : LoginComponent1
+
+// AUTO-BEGIN : LoginPages
+
+using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfiguration;
+
+// AUTO-END : LoginPages
+
+
+
+
+
+// AUTO-BEGIN : ApplicationComponents
+
+using AppCore.Application.InfrastructureControl.ComponentManagement;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.ComponentManagement;
+
+// AUTO-END : ApplicationComponents
+
+
 // AUTO-BEGIN : SpecialAssignment
 
 using AppCore.Application.SecurityPermission.UserManagement;
@@ -450,6 +490,61 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : LoginComponent3
+
+        services.AddScoped
+        <
+            ILoginComponent3Repository,
+            LoginComponent3Repository
+        >();
+
+        // AUTO-END : LoginComponent3
+
+        // AUTO-BEGIN : LoginComponent2
+
+        services.AddScoped
+        <
+            ILoginComponent2Repository,
+            LoginComponent2Repository
+        >();
+
+        // AUTO-END : LoginComponent2
+
+        // AUTO-BEGIN : LoginComponent1
+
+        services.AddScoped
+        <
+            ILoginComponent1Repository,
+            LoginComponent1Repository
+        >();
+
+        // AUTO-END : LoginComponent1
+
+        // AUTO-BEGIN : LoginPages
+
+        services.AddScoped
+        <
+            ILoginPagesRepository,
+            LoginPagesRepository
+        >();
+
+        // AUTO-END : LoginPages
+
+
+
+
+
+        // AUTO-BEGIN : ApplicationComponents
+
+        services.AddScoped
+        <
+            IApplicationComponentsRepository,
+            ApplicationComponentsRepository
+        >();
+
+        // AUTO-END : ApplicationComponents
+
 
         // AUTO-BEGIN : SpecialAssignment
 

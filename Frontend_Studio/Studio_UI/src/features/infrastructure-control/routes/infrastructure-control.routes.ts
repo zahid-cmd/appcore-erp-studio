@@ -114,4 +114,56 @@ export const infrastructureControlRoutes:
 
     // AUTO-END : MNU-002-004
 
+    // AUTO-BEGIN : MNU-002-005
+
+    //===========================================================
+    // Application Configuration
+    //===========================================================
+
+    {
+        path:'application-configuration',
+
+        data:
+        {
+            breadcrumb:'Application Configuration'
+        },
+
+        loadChildren:() =>
+            import(
+                '../application-configuration/routes/application-configuration.routes'
+            )
+            .then(
+                m =>
+                    m.mnu002005Routes
+            )
+    },
+
+    // AUTO-END : MNU-002-005
+
+    // AUTO-BEGIN : MNU-002-006
+
+    //===========================================================
+    // Login Components
+    //===========================================================
+
+    {
+        path:'login-components',
+
+        data:
+        {
+            breadcrumb:'Login Components'
+        },
+
+        loadChildren:() =>
+            import(
+                '../login-components/routes/login-components.routes'
+            )
+            .then(
+                m =>
+                    m.mnu002006Routes
+            )
+    },
+
+    // AUTO-END : MNU-002-006
+
 ];

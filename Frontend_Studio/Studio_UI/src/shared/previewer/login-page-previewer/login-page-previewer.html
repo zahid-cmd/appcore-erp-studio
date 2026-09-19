@@ -1,0 +1,45 @@
+<!-- ===========================================================
+     LOGIN PAGE PREVIEWER
+============================================================ -->
+
+<div
+    class="login-page-previewer"
+    [class.preview-closed]="!isOpen">
+
+
+    <!-- =======================================================
+         LOGIN PAGE HOST
+    ======================================================== -->
+
+    <div
+        class="login-page-previewer-host">
+
+
+        <!-- ===================================================
+             LOGIN PAGE 1
+        ==================================================== -->
+
+        <app-login-page-1
+            *ngIf="isLoginPage1">
+
+        </app-login-page-1>
+
+
+
+        <!-- ===================================================
+             PAGE NOT AVAILABLE
+        ==================================================== -->
+
+        <div
+            *ngIf="!isLoginPage1"
+            class="login-page-previewer-message">
+
+            Login Page Preview is not available.
+
+        </div>
+
+
+    </div>
+
+
+</div>

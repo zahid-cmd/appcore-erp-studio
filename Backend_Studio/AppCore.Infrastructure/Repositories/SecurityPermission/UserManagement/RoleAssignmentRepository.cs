@@ -66,143 +66,143 @@ public class RoleAssignmentRepository
     }
 
 
-//===========================================================
-// Get All
-//===========================================================
+    //===========================================================
+    // Get All
+    //===========================================================
 
-public async Task<List<RoleAssignmentDto>>
-    GetAllAsync()
-{
-    var assignments =
-
-        await
-        (
-            from assignment
-            in _context.Set<RoleAssignment>()
-
-            join userProfile
-            in _context.Set<UserProfile>()
-
-            on assignment.UserProfileId
-            equals userProfile.UserProfileId
-
-            where
-
-                !assignment.IsDeleted
-
-            orderby
-                userProfile.ProfileCode
-
-            select new
-            {
-                Assignment =
-                    assignment,
-
-                UserProfileCode =
-                    userProfile.ProfileCode,
-
-                UserProfileName =
-                    userProfile.UserName
-            }
-        )
-
-        .AsNoTracking()
-
-        .ToListAsync();
-
-
-    var result =
-        new List<RoleAssignmentDto>();
-
-
-    foreach
-    (
-        var item
-        in assignments
-    )
+    public async Task<List<RoleAssignmentDto>>
+        GetAllAsync()
     {
-        //=======================================================
-        // Role Profile Count
-        //=======================================================
+        var assignments =
 
-        var roleProfileCount =
+            await
+            (
+                from assignment
+                in _context.Set<RoleAssignment>()
 
-            await _context
-                .Set<RoleAssignmentDetail>()
+                join userProfile
+                in _context.Set<UserProfile>()
 
-                .CountAsync
+                on assignment.UserProfileId
+                equals userProfile.UserProfileId
+
+                where
+
+                    !assignment.IsDeleted
+
+                orderby
+                    userProfile.ProfileCode
+
+                select new
+                {
+                    Assignment =
+                        assignment,
+
+                    UserProfileCode =
+                        userProfile.ProfileCode,
+
+                    UserProfileName =
+                        userProfile.UserName
+                }
+            )
+
+            .AsNoTracking()
+
+            .ToListAsync();
+
+
+        var result =
+            new List<RoleAssignmentDto>();
+
+
+        foreach
+        (
+            var item
+            in assignments
+        )
+        {
+            //=======================================================
+            // Role Profile Count
+            //=======================================================
+
+            var roleProfileCount =
+
+                await _context
+                    .Set<RoleAssignmentDetail>()
+
+                    .CountAsync
+                    (
+                        x =>
+
+                            x.RoleAssignmentId ==
+                            item.Assignment.RoleAssignmentId
+
+                            &&
+
+                            !x.IsDeleted
+                    );
+
+
+            //=======================================================
+            // Primary Role
+            //=======================================================
+
+            var primaryRoleName =
+
+                await LoadPrimaryRoleNameAsync
                 (
-                    x =>
-
-                        x.RoleAssignmentId ==
-                        item.Assignment.RoleAssignmentId
-
-                        &&
-
-                        !x.IsDeleted
+                    item.Assignment.RoleAssignmentId
                 );
 
 
-        //=======================================================
-        // Primary Role
-        //=======================================================
+            //=======================================================
+            // Primary Role Fallback
+            //=======================================================
 
-        var primaryRoleName =
-
-            await LoadPrimaryRoleNameAsync
-            (
-                item.Assignment.RoleAssignmentId
-            );
-
-
-        //=======================================================
-        // Primary Role Fallback
-        //=======================================================
-
-        primaryRoleName =
-            string.IsNullOrWhiteSpace(
-                primaryRoleName
-            )
-                ?
-                "Not Assigned"
-                :
-                primaryRoleName;
+            primaryRoleName =
+                string.IsNullOrWhiteSpace(
+                    primaryRoleName
+                )
+                    ?
+                    "Not Assigned"
+                    :
+                    primaryRoleName;
 
 
-        //=======================================================
-        // Result
-        //=======================================================
+            //=======================================================
+            // Result
+            //=======================================================
 
-        result.Add(
+            result.Add(
 
-            new RoleAssignmentDto
-            {
-                RoleAssignmentId =
-                    item.Assignment.RoleAssignmentId,
+                new RoleAssignmentDto
+                {
+                    RoleAssignmentId =
+                        item.Assignment.RoleAssignmentId,
 
-                UserProfileId =
-                    item.Assignment.UserProfileId,
+                    UserProfileId =
+                        item.Assignment.UserProfileId,
 
-                UserProfileCode =
-                    item.UserProfileCode,
+                    UserProfileCode =
+                        item.UserProfileCode,
 
-                UserProfileName =
-                    item.UserProfileName,
+                    UserProfileName =
+                        item.UserProfileName,
 
-                RoleProfileCount =
-                    roleProfileCount,
+                    RoleProfileCount =
+                        roleProfileCount,
 
-                PrimaryRoleName =
-                    primaryRoleName,
+                    PrimaryRoleName =
+                        primaryRoleName,
 
-                IsActive =
-                    item.Assignment.IsActive
-            });
+                    IsActive =
+                        item.Assignment.IsActive
+                });
+        }
+
+
+        return result;
     }
-
-
-    return result;
-}
 
 
     //===========================================================

@@ -375,6 +375,66 @@ public class AppDbContext
 
     // AUTO-END : SpecialAssignment
 
+
+    // AUTO-BEGIN : ApplicationComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ComponentManagement.ApplicationComponents>
+    ApplicationComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ApplicationComponents
+
+
+
+
+
+    // AUTO-BEGIN : LoginPages
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.LoginPages>
+    LoginPagess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LoginPages
+
+    // AUTO-BEGIN : LoginComponent1
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent1>
+    LoginComponent1s
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LoginComponent1
+
+    // AUTO-BEGIN : LoginComponent2
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent2>
+    LoginComponent2s
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LoginComponent2
+
+    // AUTO-BEGIN : LoginComponent3
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent3>
+    LoginComponent3s
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LoginComponent3
+
     // AUTO-END : AUTO REGISTER DBSETS 
  
     //=========================================================== 
