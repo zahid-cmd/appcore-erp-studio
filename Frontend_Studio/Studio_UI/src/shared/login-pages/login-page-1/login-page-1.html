@@ -2,18 +2,73 @@
      LOGIN PAGE 1
 ============================================================ -->
 
-<div class="login-page-1">
+<div
+    class="login-page-1">
 
-    <div class="login-page-1-content">
 
-        <h1>
-            Login Page 1
-        </h1>
+    <!-- =======================================================
+         LOGIN PAGE BACKGROUND
+         -------------------------------------------------------
+         The Background component owns the complete visual
+         background layer.
+    ======================================================== -->
 
-        <p>
-            AppCore Login Page 1
-        </p>
+    <app-login-page-background>
+    </app-login-page-background>
+
+
+    <!-- =======================================================
+         LOGIN PAGE CONTENT
+         -------------------------------------------------------
+         Components placed here render above the Background.
+
+         Current:
+         - Branding
+         - Promotional Panel
+         - Login Panel
+         - Powered By
+
+         Registration and Password Recovery remain part of
+         the Login Panel.
+    ======================================================== -->
+
+    <div
+        class="login-page-1-content">
+
+
+        <!-- ===================================================
+             BRANDING
+        ==================================================== -->
+
+        <app-login-page-branding>
+        </app-login-page-branding>
+
+
+        <!-- ===================================================
+             PROMOTIONAL PANEL
+        ==================================================== -->
+
+        <app-login-page-promotional-panel>
+        </app-login-page-promotional-panel>
+
+
+        <!-- ===================================================
+             LOGIN PANEL
+        ==================================================== -->
+
+        <app-login-page-login-panel>
+        </app-login-page-login-panel>
+
+
+        <!-- ===================================================
+             POWERED BY
+        ==================================================== -->
+
+        <app-login-page-powered-by>
+        </app-login-page-powered-by>
+
 
     </div>
+
 
 </div>

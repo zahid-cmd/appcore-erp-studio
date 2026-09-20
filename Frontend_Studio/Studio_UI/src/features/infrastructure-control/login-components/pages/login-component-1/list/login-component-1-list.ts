@@ -19,6 +19,12 @@ from '@angular/common';
 
 import
 {
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
     ActivatedRoute,
     Router
 }
@@ -54,48 +60,21 @@ from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
 
 import
 {
-    PageCanvasComponent,
-    PageCanvasConfig
-}
-from '../../../../../../shared/components/layout/page-canvas/page-canvas';
-
-import
-{
     ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
-import
-{
-    SearchBoxComponent
-}
-from '../../../../../../shared/components/utilities/search-box/search-box';
 
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
+//===============================================================
+// Utility Components
+//===============================================================
 
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
-
-import
-{
-    ListTableComponent,
-    ListTableColumn
-}
-from '../../../../../../shared/components/layout/list-table/list-table';
-
-import
-{
-    PaginationComponent
-}
-from '../../../../../../shared/components/controls/pagination/pagination';
 
 import
 {
@@ -129,6 +108,17 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 
 //===============================================================
+// Component Renderer
+//===============================================================
+
+import
+{
+    ComponentRenderer
+}
+from '../../../../../../core/component-renderer/component-renderer';
+
+
+//===============================================================
 // Service
 //===============================================================
 
@@ -145,9 +135,11 @@ from '../../../services/login-component-1.service';
 
 @Component(
 {
-    selector:'loginComponent1-list',
+    selector:
+        'loginComponent1-list',
 
-    standalone:true,
+    standalone:
+        true,
 
     imports:
     [
@@ -159,28 +151,26 @@ from '../../../services/login-component-1.service';
 
         ControlTabsComponent,
 
-        SearchBoxComponent,
-
-        DropdownComponent,
-
         CommandCenterComponent,
-
-        PageCanvasComponent,
-
-        ListTableComponent,
-
-        PaginationComponent,
 
         HistoryDrawerComponent,
 
         ConfirmDialogComponent,
 
-        ToastComponent
+        ToastComponent,
+
+        ComponentRenderer
     ],
 
-    templateUrl:'./login-component-1-list.html',
+    templateUrl:
+        './login-component-1-list.html',
 
-    styleUrl:'./login-component-1-list.css'
+    styleUrls:
+    [
+        './login-component-1-list.css',
+
+        '../../../../../../shared/styles/component-page.css'
+    ]
 })
 
 
@@ -227,56 +217,17 @@ implements OnInit
 
     tabs:
         ControlTab[] =
-    [
-        {
-            id:'all',
-
-            label:'All LoginComponent1s'
-        }
-    ];
+    [];
 
 
     selectedTab:
         string =
-        'all';
+        '';
 
 
 
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Login Component 1
     //===========================================================
 
     logincomponent1s:
@@ -284,25 +235,15 @@ implements OnInit
     [];
 
 
-    filteredLoginComponent1s:
-        LoginComponent1[] =
-    [];
-
-
-    pagedLoginComponent1s:
-        LoginComponent1[] =
-    [];
+    selectedComponent:
+        LoginComponent1 | null =
+        null;
 
 
 
     //===========================================================
-    // Search & Loading
+    // Loading
     //===========================================================
-
-    searchText:
-        string =
-        '';
-
 
     loading:
         boolean =
@@ -312,21 +253,6 @@ implements OnInit
     loadFailed:
         boolean =
         false;
-
-
-
-    //===========================================================
-    // Pagination
-    //===========================================================
-
-    currentPage:
-        number =
-        1;
-
-
-    pageSize:
-        number =
-        10;
 
 
 
@@ -351,100 +277,6 @@ implements OnInit
 
 
     //===========================================================
-    // Page Canvas Configuration
-    //===========================================================
-
-    readonly canvasConfig:
-        PageCanvasConfig =
-    {
-        mode:'list',
-
-        showHeader:false,
-
-        showFooter:true,
-
-        reserveFooterSpace:true,
-
-        bodyScrollable:true,
-
-        fixedHeight:true,
-
-        visibleRows:10,
-
-        rowHeight:32,
-
-        headerHeight:36,
-
-        footerHeight:56
-    };
-
-
-
-    //===========================================================
-    // Table Columns
-    //===========================================================
-
-    readonly columns:
-        ListTableColumn[] =
-    [
-        {
-            header:'#',
-
-            field:'serial',
-
-            type:'serial',
-
-            width:'60px',
-
-            align:'center'
-        },
-
-        {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
-
-            align:'left'
-        },
-
-        {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:'120px',
-
-            align:'center'
-        },
-
-        {
-            header:'Actions',
-
-            field:'actions',
-
-            type:'actions',
-
-            width:'180px',
-
-            align:'center'
-        }
-    ];
-
-
-
-    //===========================================================
     // Initialization
     //===========================================================
 
@@ -457,7 +289,7 @@ implements OnInit
 
 
     //===========================================================
-    // Load LoginComponent1s
+    // Load Login Component 1
     //===========================================================
 
     loadItems():
@@ -479,7 +311,8 @@ implements OnInit
                 (
                     response:
                         LoginComponent1[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.logincomponent1s =
                     [
@@ -487,7 +320,16 @@ implements OnInit
                     ];
 
 
-                    this.applyFilters();
+                    console.log(
+                        'Login Component 1 Records:',
+                        this.logincomponent1s
+                    );
+
+
+                    this.buildTabs();
+
+
+                    this.selectInitialTab();
 
 
                     this.loading =
@@ -506,11 +348,12 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load LoginComponent1s Error',
+                        'Load Login Component 1 Error',
 
                         error
                     );
@@ -520,12 +363,16 @@ implements OnInit
                     [];
 
 
-                    this.filteredLoginComponent1s =
+                    this.tabs =
                     [];
 
 
-                    this.pagedLoginComponent1s =
-                    [];
+                    this.selectedTab =
+                        '';
+
+
+                    this.selectedComponent =
+                        null;
 
 
                     this.loading =
@@ -540,7 +387,7 @@ implements OnInit
                     (
                         'Load Failed',
 
-                        'Unable to load logincomponent1s.'
+                        'Unable to load login component 1.'
                     );
 
 
@@ -552,239 +399,313 @@ implements OnInit
 
 
     //===========================================================
-    // Status Filter Changed
+    // Build Tabs
     //===========================================================
 
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
+    private buildTabs():
         void
     {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
-
-    //===========================================================
-    // Apply Filters
-    //===========================================================
-
-    applyFilters():
-        void
-    {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-
-        this.filteredLoginComponent1s =
+        this.tabs =
             this.logincomponent1s
-                .filter
+                .map
                 (
                     (
-                        x:
+                        component:
                             LoginComponent1
                     ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                        ControlTab =>
+                    ({
+                        id:
+                            String(
+                                component.id
+                            ),
 
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
+                        label:
+                            component.tabName
+                    })
                 );
 
 
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        console.log(
+            'Login Component 1 Tabs:',
+            this.tabs
+        );
     }
 
 
 
     //===========================================================
-    // Search
+    // Select Initial Tab
     //===========================================================
 
-    onSearch
+    private selectInitialTab():
+        void
+    {
+        if
+        (
+            this.tabs.length === 0
+        )
+        {
+            this.selectedTab =
+                '';
+
+            this.selectedComponent =
+                null;
+
+            return;
+        }
+
+
+        const existingTab =
+            this.tabs.find
+            (
+                tab =>
+                    tab.id ===
+                    this.selectedTab
+            );
+
+
+        if
+        (
+            existingTab
+        )
+        {
+            this.selectTab(
+                existingTab.id
+            );
+
+            return;
+        }
+
+
+        this.selectTab(
+            this.tabs[0].id
+        );
+    }
+
+
+
+    //===========================================================
+    // Tab Changed
+    //===========================================================
+
+    onTabChange
     (
-        value:
+        tabId:
             string
     ):
         void
     {
-        this.searchText =
-            value;
-
-
-        this.applyFilters();
+        this.selectTab(
+            tabId
+        );
     }
 
 
 
     //===========================================================
-    // Sort
+    // Select Tab
     //===========================================================
 
-    onSort
+    private selectTab
     (
-        event:
-        {
-            field:
-                string;
-
-            direction:
-                'asc' | 'desc';
-        }
+        tabId:
+            string
     ):
         void
     {
-        this.filteredLoginComponent1s =
-        [
-            ...this.filteredLoginComponent1s
-        ];
+        this.selectedTab =
+            tabId;
 
 
-        this.filteredLoginComponent1s.sort
-        (
-            (
-                a:
-                    LoginComponent1,
-
-                b:
-                    LoginComponent1
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof LoginComponent1
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof LoginComponent1
-                    ];
-
-
-                if
+        this.selectedComponent =
+            this.logincomponent1s
+                .find
                 (
-                    valueA == null
-                    &&
-                    valueB == null
+                    component =>
+                        String(
+                            component.id
+                        ) ===
+                        tabId
                 )
-                {
-                    return 0;
-                }
+                ??
+                null;
 
 
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
+        //=======================================================
+        // Renderer Diagnostic
+        //=======================================================
 
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
+        console.log(
+            'Login Component 1 Selected Component:',
+            this.selectedComponent
         );
 
 
-        this.currentPage =
-            1;
+        console.log(
+            'Login Component 1 Component Path:',
+            this.selectedComponent?.componentPath
+        );
 
 
-        this.updatePagination();
+        console.log(
+            'Login Component 1 Renderer Key:',
+            this.getRendererKey(
+                this.selectedComponent?.componentPath
+                ??
+                ''
+            )
+        );
+
+
+        console.log(
+            'Login Component 1 Component Name:',
+            this.selectedComponent?.name
+        );
+
+
+        console.log(
+            'Login Component 1 Component ID:',
+            this.selectedComponent?.id
+        );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Get Renderer Key
+    //
+    // Converts the database componentPath into the key used
+    // by the shared ComponentRenderer registry.
+    //
+    // Example:
+    //
+    // Frontend_Studio\Studio_UI\src\shared\components\
+    // login-page-1\background
+    //
+    // becomes:
+    //
+    // login-page-1-background
+    //===========================================================
+
+    getRendererKey
+    (
+        componentPath:
+            string
+    ):
+        string
+    {
+        if
+        (
+            !componentPath
+            ||
+            !componentPath.trim()
+        )
+        {
+            return '';
+        }
+
+
+        const normalizedPath =
+            componentPath
+                .trim()
+                .replace(
+                    /\\/g,
+                    '/'
+                )
+                .replace(
+                    /\/+/g,
+                    '/'
+                )
+                .replace(
+                    /\/$/,
+                    ''
+                );
+
+
+        //=======================================================
+        // Already a renderer key
+        //=======================================================
+
+        if
+        (
+            normalizedPath
+                .toLowerCase()
+                .startsWith(
+                    'login-page-1-'
+                )
+        )
+        {
+            return normalizedPath
+                .toLowerCase();
+        }
+
+
+        //=======================================================
+        // Find Login Page 1 Folder
+        //=======================================================
+
+        const pathParts =
+            normalizedPath
+                .split('/')
+                .filter(
+                    part =>
+                        part.trim().length > 0
+                );
+
+
+        const loginPageIndex =
+            pathParts.findIndex
+            (
+                part =>
+                    part
+                        .trim()
+                        .toLowerCase()
+                        ===
+                        'login-page-1'
+            );
+
+
+        if
+        (
+            loginPageIndex < 0
+        )
+        {
+            console.warn
+            (
+                'Login Component 1: Unable to resolve Login Page 1 renderer key.',
+                componentPath
+            );
+
+
+            return '';
+        }
+
+
+        //=======================================================
+        // Get Child Component Folder Path
+        //=======================================================
+
+        const componentParts =
+            pathParts.slice(
+                loginPageIndex
+            );
+
+
+        //=======================================================
+        // Build Renderer Key
+        //
+        // login-page-1 + background
+        //         ↓
+        // login-page-1-background
+        //=======================================================
+
+        return componentParts
+            .join('-')
+            .toLowerCase();
     }
 
 
@@ -796,89 +717,15 @@ implements OnInit
     refresh():
         void
     {
-        this.searchText =
+        this.selectedTab =
             '';
 
 
-        this.selectedStatus =
+        this.selectedComponent =
             null;
 
 
         this.loadItems();
-    }
-
-
-
-    //===========================================================
-    // Update Pagination
-    //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
-        this.pagedLoginComponent1s =
-        [
-            ...this.filteredLoginComponent1s
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
-        ];
-    }
-
-
-
-    //===========================================================
-    // Page Change
-    //===========================================================
-
-    onPageChange
-    (
-        page:
-            number
-    ):
-        void
-    {
-        this.currentPage =
-            page;
-
-
-        this.updatePagination();
-    }
-
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
-
-    onPageSizeChange
-    (
-        size:
-            number
-    ):
-        void
-    {
-        this.pageSize =
-            size;
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
     }
 
 
@@ -894,34 +741,6 @@ implements OnInit
         (
             [
                 'add'
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
-        );
-    }
-
-
-
-    //===========================================================
-    // View
-    //===========================================================
-
-    view
-    (
-        item:
-            LoginComponent1
-    ):
-        void
-    {
-        void this.router.navigate
-        (
-            [
-                'view',
-
-                item.id
             ],
 
             {
@@ -978,7 +797,8 @@ implements OnInit
 
             `Are you sure you want to delete "${item.name}" ?`,
 
-            (): void =>
+            ():
+                void =>
             {
                 this.logincomponent1service
                     .delete
@@ -988,7 +808,8 @@ implements OnInit
                     .subscribe
                     ({
                         next:
-                        (): void =>
+                        ():
+                            void =>
                         {
                             this.toast.success
                             (
@@ -1006,7 +827,8 @@ implements OnInit
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
@@ -1020,7 +842,7 @@ implements OnInit
                             (
                                 'Delete Failed',
 
-                                'Failed to delete loginComponent1.'
+                                'Failed to delete login component 1.'
                             );
                         }
                     });
@@ -1041,9 +863,10 @@ implements OnInit
         (
             'Restore Login Component 1',
 
-            'Are you sure you want to restore the most recently deleted loginComponent1?',
+            'Are you sure you want to restore the most recently deleted login component 1.',
 
-            (): void =>
+            ():
+                void =>
             {
                 this.restoreItem();
             },
@@ -1070,13 +893,14 @@ implements OnInit
             .subscribe
             ({
                 next:
-                (): void =>
+                ():
+                    void =>
                 {
                     this.toast.success
                     (
                         'Restore Successful',
 
-                        'The most recently deleted loginComponent1 has been restored.'
+                        'The most recently deleted login component 1 has been restored.'
                     );
 
 
@@ -1088,7 +912,8 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
@@ -1098,11 +923,29 @@ implements OnInit
                     );
 
 
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted login component 1 record to restore.'
+                        );
+
+                        return;
+                    }
+
+
                     this.toast.error
                     (
                         'Restore Failed',
 
-                        'Failed to restore loginComponent1.'
+                        'Failed to restore login component 1.'
                     );
                 }
             });
@@ -1125,7 +968,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1176,7 +1020,8 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
@@ -1190,7 +1035,7 @@ implements OnInit
                     (
                         'History',
 
-                        'Failed to load loginComponent1 history.'
+                        'Failed to load login component 1 history.'
                     );
                 }
             });

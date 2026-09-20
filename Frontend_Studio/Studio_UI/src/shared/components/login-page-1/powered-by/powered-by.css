@@ -1,0 +1,1161 @@
+/* ===========================================================
+   POWERED BY
+   -----------------------------------------------------------
+   Six-logo horizontal presentation.
+
+   FINAL GEOMETRY
+   -----------------------------------------------------------
+   Total Powered By width:
+       1040px
+
+   Logo count:
+       6
+
+   Logo size:
+       Controlled by ONE variable:
+
+           --powered-by-logo-size
+
+   Current logo size:
+       100px
+
+   Gap BETWEEN logos:
+       15px
+
+   IMPORTANT:
+   -----------------------------------------------------------
+   The 15px gap exists ONLY between logos.
+
+   There is:
+       NO 15px left padding
+       NO 15px right padding
+
+   Visual structure:
+
+       |100| 15 |100| 15 |100| 15 |100| 15 |100| 15 |100|
+
+   VISUAL STYLE
+   -----------------------------------------------------------
+   Each logo is presented inside an individual glass-style
+   rounded card.
+
+   Glass effects:
+   - Rounded corners
+   - Transparent white surface
+   - Backdrop blur
+   - Soft border
+   - Outer shadow
+   - Inner highlight
+   - Hover elevation
+
+   No platform.
+   No platform depth.
+   No platform shadow.
+=========================================================== */
+
+
+/* ===========================================================
+   POWERED BY SIZE CONTROLS
+=========================================================== */
+
+:host
+{
+    --powered-by-width:
+        1040px;
+
+    --powered-by-logo-size:
+        100px;
+
+    /* =======================================================
+       GAP BETWEEN LOGOS ONLY
+       -------------------------------------------------------
+       This value controls ONLY the space between each logo.
+
+       6 logos create 5 internal gaps.
+
+       There is NO edge padding.
+    ======================================================== */
+
+    --powered-by-gap:
+        15px;
+
+
+    /* =======================================================
+       GLASS EFFECT CONTROLS
+    ======================================================== */
+
+    --powered-by-glass-radius:
+        20px;
+
+    --powered-by-glass-background:
+        rgba(
+            255,
+            255,
+            255,
+            .48
+        );
+
+    --powered-by-glass-border:
+        rgba(
+            255,
+            255,
+            255,
+            .82
+        );
+
+    --powered-by-glass-shadow:
+        0
+        10px
+        28px
+        rgba(
+            38,
+            61,
+            101,
+            .14
+        );
+
+    --powered-by-glass-blur:
+        14px;
+}
+
+
+/* ===========================================================
+   HOST
+=========================================================== */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===========================================================
+   MAIN CONTAINER
+   -----------------------------------------------------------
+   TOTAL POWERED BY AREA:
+       1040px
+=========================================================== */
+
+.login-page-powered-by
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        center;
+
+    width:
+        var(--powered-by-width);
+
+    max-width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    overflow:
+        visible;
+}
+
+
+/* ===========================================================
+   LOGO AREA
+   -----------------------------------------------------------
+   SIX ACTUAL LOGO POSITIONS.
+
+   Logo size:
+       100px
+
+   Gap BETWEEN logos:
+       15px
+
+   There are five gaps:
+
+       Logo 1 |15| Logo 2 |15| Logo 3 |15|
+       Logo 4 |15| Logo 5 |15| Logo 6
+
+   IMPORTANT:
+   -----------------------------------------------------------
+   No horizontal padding is applied.
+
+   Therefore the 15px spacing exists ONLY between logos.
+=========================================================== */
+
+.powered-by-logo-area
+{
+    position:
+        relative;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            6,
+            var(--powered-by-logo-size)
+        );
+
+    column-gap:
+        var(--powered-by-gap);
+
+    align-items:
+        center;
+
+    justify-content:
+        start;
+
+    width:
+        var(--powered-by-width);
+
+    height:
+        150px;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* ===========================================================
+   LOGO SLOT
+   -----------------------------------------------------------
+   EACH SLOT:
+       100px
+=========================================================== */
+
+.powered-by-logo-slot
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        var(--powered-by-logo-size);
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* ===========================================================
+   LOGO
+   -----------------------------------------------------------
+   GLASS CARD
+
+   Actual logo card size:
+       100px × 100px
+
+   Logo size remains controlled by:
+
+       --powered-by-logo-size
+=========================================================== */
+
+.powered-by-logo
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        var(--powered-by-logo-size) !important;
+
+    height:
+        var(--powered-by-logo-size);
+
+    max-width:
+        var(--powered-by-logo-size);
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        12px;
+
+    box-sizing:
+        border-box;
+
+
+    /* =======================================================
+       GLASS SURFACE
+    ======================================================== */
+
+    background:
+        var(--powered-by-glass-background);
+
+    border:
+        1px solid
+        var(--powered-by-glass-border);
+
+    border-radius:
+        var(--powered-by-glass-radius);
+
+    backdrop-filter:
+        blur(
+            var(--powered-by-glass-blur)
+        );
+
+    -webkit-backdrop-filter:
+        blur(
+            var(--powered-by-glass-blur)
+        );
+
+
+    /* =======================================================
+       GLASS SHADOW
+    ======================================================== */
+
+    box-shadow:
+        var(--powered-by-glass-shadow),
+
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        ),
+
+        inset
+        0
+        -1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .22
+        );
+
+
+    /* =======================================================
+       TRANSFORM
+    ======================================================== */
+
+    transform:
+        translate3d(
+            0,
+            0,
+            0
+        );
+
+    transform-origin:
+        center center;
+
+    transform-style:
+        preserve-3d;
+
+    cursor:
+        pointer;
+
+
+    /* =======================================================
+       TRANSITIONS
+    ======================================================== */
+
+    transition:
+        transform
+        var(--hover-duration)
+        cubic-bezier(
+            .2,
+            .8,
+            .2,
+            1
+        ),
+
+        box-shadow
+        var(--hover-duration)
+        ease,
+
+        background
+        var(--hover-duration)
+        ease,
+
+        border-color
+        var(--hover-duration)
+        ease,
+
+        filter
+        var(--hover-duration)
+        ease;
+
+    z-index:
+        10;
+
+    overflow:
+        hidden;
+}
+
+
+/* ===========================================================
+   GLASS HIGHLIGHT
+=========================================================== */
+
+.powered-by-logo::before
+{
+    content:
+        '';
+
+    position:
+        absolute;
+
+    top:
+        -50%;
+
+    left:
+        -35%;
+
+    width:
+        65%;
+
+    height:
+        200%;
+
+    background:
+        linear-gradient(
+            115deg,
+            transparent 0%,
+            rgba(
+                255,
+                255,
+                255,
+                .30
+            ) 45%,
+            rgba(
+                255,
+                255,
+                255,
+                .08
+            ) 60%,
+            transparent 75%
+        );
+
+    transform:
+        rotate(
+            8deg
+        );
+
+    pointer-events:
+        none;
+
+    z-index:
+        0;
+}
+
+
+/* ===========================================================
+   LOGO IMAGE
+=========================================================== */
+
+.powered-by-logo img
+{
+    position:
+        relative;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    max-width:
+        100%;
+
+    max-height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    object-fit:
+        contain;
+
+    box-sizing:
+        border-box;
+
+    user-select:
+        none;
+
+    -webkit-user-drag:
+        none;
+
+    filter:
+        drop-shadow(
+            0
+            3px
+            4px
+            rgba(
+                38,
+                61,
+                101,
+                .16
+            )
+        );
+
+    transition:
+        filter
+        var(--hover-duration)
+        ease;
+
+    z-index:
+        2;
+}
+
+
+/* ===========================================================
+   HOVER BASE
+=========================================================== */
+
+.powered-by-logo:hover
+{
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .62
+        );
+
+    border-color:
+        rgba(
+            255,
+            255,
+            255,
+            .98
+        );
+
+    box-shadow:
+        0
+        16px
+        34px
+        rgba(
+            38,
+            61,
+            101,
+            .22
+        ),
+
+        0
+        4px
+        10px
+        rgba(
+            38,
+            61,
+            101,
+            .10
+        ),
+
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            1
+        );
+
+    filter:
+        brightness(
+            1.04
+        );
+
+    z-index:
+        50;
+}
+
+
+.powered-by-logo:hover img
+{
+    filter:
+        drop-shadow(
+            0
+            8px
+            10px
+            rgba(
+                38,
+                61,
+                101,
+                .24
+            )
+        );
+}
+
+
+/* ===========================================================
+   HOVER — NONE
+=========================================================== */
+
+.powered-by-hover-none
+{
+    transform:
+        translate3d(
+            0,
+            0,
+            0
+        );
+}
+
+
+/* ===========================================================
+   HOVER — JUMP
+=========================================================== */
+
+.powered-by-hover-jump:hover
+{
+    animation:
+        powered-by-logo-jump
+        var(--hover-duration)
+        cubic-bezier(
+            .2,
+            .8,
+            .2,
+            1
+        )
+        both;
+}
+
+
+/* ===========================================================
+   HOVER — ROTATE
+=========================================================== */
+
+.powered-by-hover-rotate:hover
+{
+    animation:
+        powered-by-logo-rotate
+        var(--hover-duration)
+        cubic-bezier(
+            .2,
+            .8,
+            .2,
+            1
+        )
+        both;
+}
+
+
+/* ===========================================================
+   HOVER — ROTATE + JUMP
+=========================================================== */
+
+.powered-by-hover-rotate-jump:hover
+{
+    animation:
+        powered-by-logo-rotate-jump
+        var(--hover-duration)
+        cubic-bezier(
+            .2,
+            .8,
+            .2,
+            1
+        )
+        both;
+}
+
+
+/* ===========================================================
+   JUMP ANIMATION
+=========================================================== */
+
+@keyframes powered-by-logo-jump
+{
+    0%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            );
+    }
+
+    45%
+    {
+        transform:
+            translate3d(
+                0,
+                calc(
+                    var(--hover-intensity) * -1
+                ),
+                20px
+            );
+    }
+
+    70%
+    {
+        transform:
+            translate3d(
+                0,
+                2px,
+                8px
+            );
+    }
+
+    100%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            );
+    }
+}
+
+
+/* ===========================================================
+   ROTATE ANIMATION
+=========================================================== */
+
+@keyframes powered-by-logo-rotate
+{
+    0%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            rotateY(
+                0deg
+            );
+    }
+
+    45%
+    {
+        transform:
+            translate3d(
+                0,
+                -2px,
+                14px
+            )
+            rotateY(
+                180deg
+            );
+    }
+
+    75%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                8px
+            )
+            rotateY(
+                360deg
+            );
+    }
+
+    100%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            rotateY(
+                360deg
+            );
+    }
+}
+
+
+/* ===========================================================
+   ROTATE + JUMP ANIMATION
+=========================================================== */
+
+@keyframes powered-by-logo-rotate-jump
+{
+    0%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            rotateY(
+                0deg
+            );
+    }
+
+    35%
+    {
+        transform:
+            translate3d(
+                0,
+                calc(
+                    var(--hover-intensity) * -1
+                ),
+                24px
+            )
+            rotateY(
+                90deg
+            );
+    }
+
+    65%
+    {
+        transform:
+            translate3d(
+                0,
+                -3px,
+                18px
+            )
+            rotateY(
+                270deg
+            );
+    }
+
+    85%
+    {
+        transform:
+            translate3d(
+                0,
+                1px,
+                8px
+            )
+            rotateY(
+                360deg
+            );
+    }
+
+    100%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            rotateY(
+                360deg
+            );
+    }
+}
+
+
+/* ===========================================================
+   POWERED BY LABEL
+   -----------------------------------------------------------
+   The label remains ABOVE the logo area.
+
+       POWERED BY
+
+       [1] [2] [3] [4] [5] [6]
+=========================================================== */
+
+.powered-by-heading
+{
+    position:
+        relative;
+
+    display:
+        block;
+
+    width:
+        var(--powered-by-width);
+
+    margin:
+        0 0 8px 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    color:
+        #647ba4;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        2.2px;
+
+    text-transform:
+        uppercase;
+
+    text-align:
+        left;
+
+    white-space:
+        nowrap;
+}
+
+
+/* ===========================================================
+   TABLET
+=========================================================== */
+
+@media(max-width:1024px)
+{
+    .login-page-powered-by
+    {
+        width:
+            min(
+                var(--powered-by-width),
+                100%
+            );
+    }
+
+
+    .powered-by-logo-area
+    {
+        width:
+            var(--powered-by-width);
+
+        height:
+            120px;
+
+        padding:
+            0;
+    }
+
+
+    .powered-by-heading
+    {
+        width:
+            var(--powered-by-width);
+
+        margin:
+            0 0 7px 0;
+
+        padding:
+            0;
+
+        font-size:
+            9px;
+
+        letter-spacing:
+            1.8px;
+    }
+
+
+    .powered-by-logo
+    {
+        border-radius:
+            17px;
+    }
+}
+
+
+/* ===========================================================
+   MOBILE
+   -----------------------------------------------------------
+   Mobile keeps the fixed six-logo geometry but scales the
+   complete logo area to the available viewport width.
+=========================================================== */
+
+@media(max-width:768px)
+{
+    .login-page-powered-by
+    {
+        width:
+            100%;
+
+        min-height:
+            105px;
+
+        overflow:
+            visible;
+    }
+
+
+    .powered-by-logo-area
+    {
+        width:
+            var(--powered-by-width);
+
+        height:
+            90px;
+
+        padding:
+            0;
+
+        transform:
+            scale(
+                calc(
+                    100vw
+                    /
+                    var(--powered-by-width)
+                )
+            );
+
+        transform-origin:
+            top left;
+    }
+
+
+    .powered-by-heading
+    {
+        width:
+            100%;
+
+        margin:
+            0 0 8px 0;
+
+        padding:
+            0;
+
+        font-size:
+            8px;
+
+        letter-spacing:
+            1.5px;
+    }
+
+
+    .powered-by-logo
+    {
+        border-radius:
+            14px;
+
+        padding:
+            9px;
+    }
+}
+
+
+/* ===========================================================
+   REDUCED MOTION
+=========================================================== */
+
+@media(prefers-reduced-motion:reduce)
+{
+    .powered-by-logo,
+    .powered-by-logo img
+    {
+        transition:
+            none;
+    }
+
+
+    .powered-by-logo:hover
+    {
+        animation:
+            none;
+    }
+}

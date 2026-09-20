@@ -1,8 +1,10 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
          PAGE HEADER
     ====================================================== -->
+
 
     <app-page-header
 
@@ -10,7 +12,7 @@
 
         [title]="pageTitle"
 
-        subtitle="Manage logincomponent1s">
+        subtitle="Manage login component 1">
 
         <app-command-center
 
@@ -48,6 +50,7 @@
          PAGE TOOLBAR
     ====================================================== -->
 
+
     <app-page-toolbar>
 
         <app-control-tabs
@@ -68,6 +71,7 @@
          PAGE CANVAS
     ====================================================== -->
 
+
     <app-page-canvas>
 
         <app-form-grid
@@ -82,6 +86,7 @@
                  GENERAL INFORMATION
             ============================================== -->
 
+
             <app-form-section
 
                 title="General Information"
@@ -90,6 +95,7 @@
 
 
                 <!-- Code -->
+
 
                 <app-textbox
 
@@ -109,11 +115,12 @@
 
                 <!-- Name -->
 
+
                 <app-textbox
 
                     label="Name"
 
-                    placeholder="Enter name"
+                    placeholder="Enter component name"
 
                     [(value)]="entity.name"
 
@@ -126,53 +133,38 @@
                 </app-textbox>
 
 
-            </app-form-section>
 
+                <!-- Tab Name -->
 
-
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Sample Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Sample Search Dropdown -->
-
-                <app-search-dropdown
-
-                    label="Sample Search Dropdown"
-
-                    [items]="items"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.sampleSearchDropdownId"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sample Field -->
 
                 <app-textbox
 
-                    label="Sample Field"
+                    label="Tab Name"
 
-                    placeholder="Enter sample value"
+                    placeholder="Enter tab name"
 
-                    [(value)]="entity.sampleField"
+                    [(value)]="entity.tabName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Icon -->
+
+
+                <app-textbox
+
+                    label="Icon"
+
+                    placeholder="Enter component icon"
+
+                    [(value)]="entity.icon"
 
                     (valueChange)="onValueChange()"
 
@@ -186,18 +178,227 @@
 
 
             <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
+                 SECTION 2
+                 COMPONENT INFORMATION
             ============================================== -->
+
 
             <app-form-section
 
-                title="Status Information"
+                title="Component Information"
 
-                icon="fas fa-toggle-on">
+                icon="fas fa-puzzle-piece">
+
+
+                <!-- Folder Name -->
+
+
+                <app-textbox
+
+                    label="Folder Name"
+
+                    placeholder="Enter folder name"
+
+                    [(value)]="entity.folderName"
+
+                    (valueChange)="onFolderNameChange()"
+
+                    [readonly]="isFolderNameReadonly"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Feature Folder -->
+
+
+                <app-textbox
+
+                    label="Feature Folder"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.featureFolder"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Feature Sub Folder -->
+
+
+                <app-textbox
+
+                    label="Feature Sub Folder"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.featureSubFolder"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Component Path -->
+
+
+                <app-textbox
+
+                    label="Component Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.componentPath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 3
+                 FILE & REGISTRATION INFORMATION
+            ============================================== -->
+
+
+            <app-form-section
+
+                title="File & Registration Information"
+
+                icon="fas fa-folder-tree">
+
+
+                <!-- Registration File Path -->
+
+
+                <app-textbox
+
+                    label="Registration File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.registrationFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- HTML File Path -->
+
+
+                <app-textbox
+
+                    label="HTML File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.htmlFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- TS File Path -->
+
+
+                <app-textbox
+
+                    label="TS File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.tsFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- CSS File Path -->
+
+
+                <app-textbox
+
+                    label="CSS File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.cssFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 4
+                 STATUS & ADDITIONAL INFORMATION
+            ============================================== -->
+
+
+            <app-form-section
+
+                title="Status & Additional Information"
+
+                icon="fas fa-clipboard-check">
+
+
+                <!-- Display Order -->
+
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    placeholder="Enter display order"
+
+                    [(value)]="entity.displayOrder"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
 
 
                 <!-- Status -->
+
 
                 <app-dropdown
 
@@ -220,23 +421,9 @@
                 </app-dropdown>
 
 
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Additional Information"
-
-                icon="fas fa-clipboard">
-
 
                 <!-- Remarks -->
+
 
                 <app-textarea
 
@@ -267,6 +454,7 @@
 <!-- =====================================================
      UTILITIES
 ====================================================== -->
+
 
 <app-toast></app-toast>
 

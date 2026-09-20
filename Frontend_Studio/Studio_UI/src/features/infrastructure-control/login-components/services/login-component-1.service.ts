@@ -5,6 +5,7 @@
 import
 {
     Injectable,
+
     inject
 }
 from '@angular/core';
@@ -33,7 +34,9 @@ import
 
     CreateLoginComponent1,
 
-    UpdateLoginComponent1
+    UpdateLoginComponent1,
+
+    LoginComponent1Defaults
 }
 from '../models/login-component-1.model';
 
@@ -44,7 +47,8 @@ from '../models/login-component-1.model';
 
 @Injectable(
 {
-    providedIn:'root'
+    providedIn:
+        'root'
 })
 
 
@@ -96,6 +100,20 @@ export class LoginComponent1Service
     {
         return this.http.get<LoginComponent1>(
             `${this.apiUrl}/${id}`
+        );
+    }
+
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<LoginComponent1Defaults>
+    {
+        return this.http.get<LoginComponent1Defaults>(
+            `${this.apiUrl}/defaults`
         );
     }
 

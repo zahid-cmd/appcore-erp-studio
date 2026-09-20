@@ -402,16 +402,6 @@ public class AppDbContext
 
     // AUTO-END : LoginPages
 
-    // AUTO-BEGIN : LoginComponent1
-
-    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent1>
-    LoginComponent1s
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : LoginComponent1
 
     // AUTO-BEGIN : LoginComponent2
 
@@ -434,6 +424,21 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : LoginComponent3
+
+
+
+
+
+    // AUTO-BEGIN : LoginComponent1
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent1>
+    LoginComponent1s
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LoginComponent1
 
     // AUTO-END : AUTO REGISTER DBSETS 
  

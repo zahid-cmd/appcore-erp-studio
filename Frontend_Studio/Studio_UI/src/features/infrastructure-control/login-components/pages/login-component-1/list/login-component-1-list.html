@@ -1,30 +1,18 @@
 <div class="app-list-page">
 
+
     <!-- =====================================================
          PAGE HEADER
     ====================================================== -->
+
 
     <app-page-header
 
         title="Login Component 1"
 
-        subtitle="Manage logincomponent1s"
+        subtitle="Manage login component 1"
 
         icon="fas fa-list">
-
-        <div pageHeaderCenter>
-
-            <app-search-box
-
-                [(value)]="searchText"
-
-                placeholder="Search logincomponent1s..."
-
-                (valueChange)="onSearch($event)">
-
-            </app-search-box>
-
-        </div>
 
 
         <div pageHeaderRight>
@@ -65,6 +53,7 @@
          PAGE TOOLBAR
     ====================================================== -->
 
+
     <app-page-toolbar>
 
         <app-control-tabs
@@ -73,105 +62,227 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [(selectedTab)]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
-
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
-
-            pageToolbarRight
-
-            placeholder="All Status"
-
-            [items]="statusItems"
-
-            labelField="text"
-
-            valueField="value"
-
-            [(value)]="selectedStatus"
-
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-dropdown>
 
     </app-page-toolbar>
 
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         COMPONENT CONTENT
     ====================================================== -->
 
-    <app-page-canvas
 
-        [config]="canvasConfig">
+    <div
+
+        class="component-canvas"
+
+        *ngIf="selectedComponent && !loading">
 
 
         <!-- =================================================
-             LIST TABLE
+             COMPONENT SECTION HEADER
         ================================================== -->
 
-        <div canvasBody>
 
-            <app-list-table
+        <div class="component-section-header">
 
-                [columns]="columns"
 
-                [rows]="pagedLoginComponent1s"
+            <!-- =============================================
+                 COMPONENT ICON
+            ============================================== -->
 
-                [serialOffset]="(currentPage - 1) * pageSize"
 
-                [loading]="loading"
+            <div class="component-section-icon">
 
-                [error]="loadFailed"
+                <i
 
-                (view)="view($event)"
+                    [class]="
 
-                (edit)="edit($event)"
+                        selectedComponent.icon
 
-                (delete)="delete($event)"
+                        || 'fas fa-puzzle-piece'
 
-                (sortChange)="onSort($event)">
+                    ">
 
-            </app-list-table>
+                </i>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 COMPONENT NAME
+            ============================================== -->
+
+
+            <div class="component-section-name">
+
+                {{ selectedComponent.name }}
+
+            </div>
+
+
+
+            <!-- =============================================
+                 EDIT
+            ============================================== -->
+
+
+            <button
+
+                type="button"
+
+                class="component-edit-button"
+
+                (click)="edit(selectedComponent)"
+
+                title="Edit Login Component 1">
+
+                <i class="fas fa-pen"></i>
+
+                <span>Edit</span>
+
+            </button>
+
+
+
+            <!-- =============================================
+                 DELETE
+            ============================================== -->
+
+
+            <button
+
+                type="button"
+
+                class="component-delete-button"
+
+                (click)="delete(selectedComponent)"
+
+                title="Delete Login Component 1">
+
+                <i class="fas fa-trash"></i>
+
+                <span>Delete</span>
+
+            </button>
+
 
         </div>
 
 
 
         <!-- =================================================
-             PAGINATION
+             COMPONENT PREVIEW
         ================================================== -->
 
-        <app-pagination
 
-            canvasFooter
+        <div class="component-preview-content">
 
-            [totalRecords]="filteredLoginComponent1s.length"
+            <app-component-renderer
 
-            [currentPage]="currentPage"
+                [componentKey]="
+                    getRendererKey(
+                        selectedComponent.componentPath
+                    )
+                ">
 
-            [pageSize]="pageSize"
+            </app-component-renderer>
 
-            (pageChange)="onPageChange($event)"
+        </div>
 
-            (pageSizeChange)="onPageSizeChange($event)">
 
-        </app-pagination>
+    </div>
 
-    </app-page-canvas>
+
+
+    <!-- =====================================================
+         NO COMPONENT SELECTED
+    ====================================================== -->
+
+
+    <div
+
+        class="component-empty"
+
+        *ngIf="!selectedComponent && !loading">
+
+
+        <i class="fas fa-puzzle-piece"></i>
+
+
+        <span>
+
+            No login component 1 available.
+
+        </span>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         LOADING
+    ====================================================== -->
+
+
+    <div
+
+        class="component-loading"
+
+        *ngIf="loading">
+
+
+        <i class="fas fa-spinner fa-spin"></i>
+
+
+        <span>
+
+            Loading login component 1...
+
+        </span>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         LOAD ERROR
+    ====================================================== -->
+
+
+    <div
+
+        class="component-error"
+
+        *ngIf="loadFailed && !loading">
+
+
+        <i class="fas fa-triangle-exclamation"></i>
+
+
+        <span>
+
+            Unable to load login component 1.
+
+        </span>
+
+
+    </div>
 
 
 
     <!-- =====================================================
          HISTORY
     ====================================================== -->
+
 
     <app-history-drawer
 
@@ -191,8 +302,11 @@
          UTILITIES
     ====================================================== -->
 
+
     <app-toast></app-toast>
 
+
     <app-confirm-dialog></app-confirm-dialog>
+
 
 </div>

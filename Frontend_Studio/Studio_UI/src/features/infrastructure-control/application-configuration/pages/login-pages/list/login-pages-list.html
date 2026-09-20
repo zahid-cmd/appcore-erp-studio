@@ -120,29 +120,57 @@
 
         <div canvasBody>
 
-            <app-list-table
+            <!--
+                Page-specific wrapper.
 
-                [columns]="columns"
+                This wrapper belongs ONLY to Login Pages.
 
-                [rows]="pagedLoginPages"
+                The mouseover handler changes the native
+                operation tooltip from "Synchronize" to
+                "Preview" for this page only.
 
-                [serialOffset]="(currentPage - 1) * pageSize"
+                The shared ListTableComponent is NOT changed.
+            -->
 
-                [loading]="loading"
+            <div
 
-                [error]="loadFailed"
+                class="login-pages-operation-table"
 
-                (view)="view($event)"
+                (mouseover)="
+                    onLoginPagesOperationMouseOver($event)
+                ">
 
-                (edit)="edit($event)"
 
-                (delete)="delete($event)"
+                <app-list-table
 
-                (operation)="preview($event)"
+                    [columns]="columns"
 
-                (sortChange)="onSort($event)">
+                    [rows]="pagedLoginPages"
 
-            </app-list-table>
+                    [serialOffset]="
+                        (currentPage - 1)
+                        *
+                        pageSize
+                    "
+
+                    [loading]="loading"
+
+                    [error]="loadFailed"
+
+                    (view)="view($event)"
+
+                    (edit)="edit($event)"
+
+                    (delete)="delete($event)"
+
+                    (operation)="preview($event)"
+
+                    (sortChange)="onSort($event)">
+
+                </app-list-table>
+
+
+            </div>
 
         </div>
 
@@ -156,7 +184,9 @@
 
             canvasFooter
 
-            [totalRecords]="filteredLoginPages.length"
+            [totalRecords]="
+                filteredLoginPages.length
+            "
 
             [currentPage]="currentPage"
 

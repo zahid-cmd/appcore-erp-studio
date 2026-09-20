@@ -1,0 +1,199 @@
+/* ===============================================================
+   Login Page Branding
+================================================================ */
+
+
+/* ===============================================================
+   Host
+================================================================ */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   Branding Container
+================================================================ */
+
+.login-page-branding
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   Branding Content
+================================================================ */
+
+.branding-content
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        flex-end;
+
+    justify-content:
+        center;
+
+    width:
+        fit-content;
+
+    height:
+        fit-content;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   Branding Logo
+================================================================ */
+
+.branding-logo
+{
+    display:
+        block;
+
+    max-width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        0;
+
+    box-sizing:
+        border-box;
+
+    vertical-align:
+        middle;
+}
+
+
+/* ===============================================================
+   Branding Email
+   ---------------------------------------------------------------
+   The email is intentionally pulled upward so the visual gap
+   between the logo and email is minimized.
+
+   IMPORTANT:
+   Negative margin is used because the logo image can contain
+   transparent/internal image space that a normal small positive
+   margin does not visually compensate for.
+================================================================ */
+
+.branding-email
+{
+    width:
+        100%;
+
+    margin:
+        -6px 0 0 0;
+
+    padding:
+        0;
+
+    padding-right:
+        20px;
+
+    color:
+        #3158D4;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        18px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        0.15px;
+
+    text-align:
+        right;
+
+    white-space:
+        nowrap;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   Reduced Motion
+================================================================ */
+
+@media
+(
+    prefers-reduced-motion: reduce
+)
+{
+    .branding-logo
+    {
+        transition:
+            none;
+    }
+}

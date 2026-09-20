@@ -1,0 +1,961 @@
+/* ===============================================================
+   LOGIN PAGE PROMOTIONAL PANEL
+================================================================ */
+
+
+/* ===============================================================
+   HOST
+================================================================ */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL PANEL
+================================================================ */
+
+.login-page-promotional-panel
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL HEADER
+================================================================ */
+
+.promotional-header
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL RIBBON
+================================================================ */
+
+.promotional-ribbon
+{
+    display:
+        block;
+
+    width:
+        54px;
+
+    height:
+        3px;
+
+    margin:
+        0 0 24px 0;
+
+    padding:
+        0;
+
+    background:
+        #2478ed;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   EYEBROW
+================================================================ */
+
+.promotional-eyebrow
+{
+    margin:
+        0 0 22px 0;
+
+    padding:
+        0 0 0 2px;
+
+    color:
+        #5a6f9f;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        13px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.4;
+
+    letter-spacing:
+        5px;
+
+    text-transform:
+        uppercase;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL HEADING
+================================================================ */
+
+.promotional-heading
+{
+    display:
+        flex;
+
+    flex-wrap:
+        nowrap;
+
+    column-gap:
+        10px;
+
+    white-space:
+        nowrap;
+
+    row-gap:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+padding-bottom: 0px;
+    color:
+        #10234a;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;                    
+
+    font-size:
+        clamp(
+            34px,
+            3.2vw,
+            54px
+        );
+
+    font-weight:
+        700;
+
+    line-height:
+        1.08;
+
+    letter-spacing:
+        -1.5px;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   HEADING PRIMARY
+================================================================ */
+
+.heading-primary
+{
+    display:
+        inline;
+
+    color:
+        #10234a;
+}
+
+
+/* ===============================================================
+   HEADING HIGHLIGHT
+================================================================ */
+
+.heading-highlight
+{
+    display:
+        inline;
+
+    color:
+        #2375ee;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL DESCRIPTION
+   ---------------------------------------------------------------
+   IMPORTANT:
+
+   The complete sentence MUST remain on ONE line.
+
+   No wrapping.
+   No automatic line break.
+   No max-width restriction.
+================================================================ */
+
+.promotional-description
+{
+    display:
+        block;
+
+    width:
+        max-content;
+
+    max-width:
+        none;
+
+    margin:
+        20px 0 0 0;
+
+    padding:
+        0;
+    padding-bottom: 25px;
+    padding-left: 5px;
+
+    color:
+        #5d739f;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        18px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.65;
+
+    white-space:
+        nowrap;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL VISUAL
+================================================================ */
+
+.promotional-visual
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    min-height:
+        260px;
+
+    margin:
+        18px 0 12px 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL VISUAL IMAGE
+================================================================ */
+
+.promotional-visual-image
+{
+    display:
+        block;
+
+    width:
+        auto;
+
+    max-width:
+        100%;
+
+    max-height:
+        430px;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        0;
+
+    object-fit:
+        contain;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL FEATURES
+================================================================ */
+
+.promotional-features
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        22px;
+
+    width:
+        100%;
+
+    margin:
+        8px 0 0 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   PROMOTIONAL FEATURE
+================================================================ */
+
+.promotional-feature
+{
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   FEATURE ICON
+================================================================ */
+
+.feature-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 68px;
+
+    width:
+        68px;
+
+    height:
+        68px;
+
+    margin:
+        0 24px 0 0;
+
+    padding:
+        0;
+
+    border-radius:
+        16px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .82
+        );
+
+    box-shadow:
+        0
+        10px
+        28px
+        rgba(
+            46,
+            91,
+            165,
+            .10
+        );
+
+    color:
+        #1976ee;
+
+    font-size:
+        25px;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   FEATURE CONTENT
+================================================================ */
+
+.feature-content
+{
+    display:
+        block;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        3px 0 0 0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   FEATURE TITLE
+================================================================ */
+
+.feature-title
+{
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #14264d;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        16px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.35;
+}
+
+
+/* ===============================================================
+   FEATURE DESCRIPTION
+================================================================ */
+
+.feature-description
+{
+    max-width:
+        330px;
+
+    margin:
+        5px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #6077a4;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.55;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   BOTTOM TAGLINE
+================================================================ */
+
+.promotional-bottom-tagline
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        flex-start;
+
+    width:
+        100%;
+
+    margin:
+        auto 0 0 0;
+
+    padding:
+        26px 0 0 0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   TAGLINE LINE
+================================================================ */
+
+.tagline-line
+{
+    display:
+        block;
+
+    width:
+        54px;
+
+    height:
+        3px;
+
+    margin:
+        0 0 20px 0;
+
+    padding:
+        0;
+
+    background:
+        #2478ed;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   TAGLINE TEXT
+================================================================ */
+
+.tagline-text
+{
+    display:
+        block;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #274878;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        12px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.4;
+
+    letter-spacing:
+        5px;
+
+    text-transform:
+        uppercase;
+}
+
+
+/* ===============================================================
+   TABLET
+================================================================ */
+
+@media
+(
+    max-width:1024px
+)
+{
+    .promotional-ribbon
+    {
+        width:
+            50px;
+
+        height:
+            3px;
+
+        margin-bottom:
+            20px;
+    }
+
+
+    .promotional-eyebrow
+    {
+        margin-bottom:
+            18px;
+
+        font-size:
+            12px;
+
+        letter-spacing:
+            4px;
+    }
+
+
+    .promotional-heading
+    {
+        font-size:
+            38px;
+
+        letter-spacing:
+            -1px;
+    }
+
+
+    /* -----------------------------------------------------------
+       Description remains ONE LINE
+    ----------------------------------------------------------- */
+
+    .promotional-description
+    {
+        width:
+            max-content;
+
+        max-width:
+            none;
+
+        white-space:
+            nowrap;
+
+        font-size:
+            15px;
+    }
+
+
+    .promotional-visual
+    {
+        min-height:
+            220px;
+    }
+
+
+    .promotional-visual-image
+    {
+        max-height:
+            340px;
+    }
+
+
+    .promotional-features
+    {
+        gap:
+            18px;
+    }
+
+
+    .feature-icon
+    {
+        flex-basis:
+            58px;
+
+        width:
+            58px;
+
+        height:
+            58px;
+
+        margin-right:
+            18px;
+
+        border-radius:
+            14px;
+
+        font-size:
+            21px;
+    }
+}
+
+
+/* ===============================================================
+   MOBILE
+================================================================ */
+
+@media
+(
+    max-width:768px
+)
+{
+    .login-page-promotional-panel
+    {
+        height:
+            auto;
+
+        min-height:
+            100%;
+    }
+
+
+    .promotional-ribbon
+    {
+        width:
+            46px;
+
+        height:
+            3px;
+
+        margin-bottom:
+            16px;
+    }
+
+
+    .promotional-eyebrow
+    {
+        margin-bottom:
+            14px;
+
+        font-size:
+            11px;
+
+        letter-spacing:
+            3px;
+    }
+
+
+    .promotional-heading
+    {
+        font-size:
+            30px;
+
+        letter-spacing:
+            -.8px;
+    }
+
+
+    /* -----------------------------------------------------------
+       Description remains ONE LINE
+    ----------------------------------------------------------- */
+
+    .promotional-description
+    {
+        width:
+            max-content;
+
+        max-width:
+            none;
+
+        margin-top:
+            15px;
+
+        font-size:
+            14px;
+
+        white-space:
+            nowrap;
+    }
+
+
+    .promotional-visual
+    {
+        min-height:
+            180px;
+
+        margin-top:
+            15px;
+    }
+
+
+    .promotional-visual-image
+    {
+        max-height:
+            260px;
+    }
+
+
+    .promotional-features
+    {
+        gap:
+            16px;
+    }
+
+
+    .feature-icon
+    {
+        flex-basis:
+            50px;
+
+        width:
+            50px;
+
+        height:
+            50px;
+
+        margin-right:
+            14px;
+
+        border-radius:
+            12px;
+
+        font-size:
+            18px;
+    }
+
+
+    .feature-title
+    {
+        font-size:
+            14px;
+    }
+
+
+    .feature-description
+    {
+        font-size:
+            13px;
+    }
+
+
+    .promotional-bottom-tagline
+    {
+        padding-top:
+            22px;
+    }
+
+
+    .tagline-text
+    {
+        font-size:
+            10px;
+
+        letter-spacing:
+            3px;
+    }
+}
+
+
+/* ===============================================================
+   REDUCED MOTION
+================================================================ */
+
+@media
+(
+    prefers-reduced-motion: reduce
+)
+{
+    .promotional-visual-image
+    {
+        transition:
+            none;
+    }
+}

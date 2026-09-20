@@ -4,7 +4,9 @@
 
 import
 {
+    AfterViewChecked,
     Component,
+    ElementRef,
     OnInit,
     inject,
     ChangeDetectorRef
@@ -151,9 +153,11 @@ from '../../../services/login-pages.service';
 
 @Component(
 {
-    selector:'loginPages-list',
+    selector:
+        'loginPages-list',
 
-    standalone:true,
+    standalone:
+        true,
 
     imports:
     [
@@ -184,9 +188,11 @@ from '../../../services/login-pages.service';
         ToastComponent
     ],
 
-    templateUrl:'./login-pages-list.html',
+    templateUrl:
+        './login-pages-list.html',
 
-    styleUrl:'./login-pages-list.css'
+    styleUrl:
+        './login-pages-list.css'
 })
 
 
@@ -195,7 +201,9 @@ from '../../../services/login-pages.service';
 //===============================================================
 
 export class LoginPagesList
-implements OnInit
+implements
+    OnInit,
+    AfterViewChecked
 {
 
     //===========================================================
@@ -226,6 +234,10 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
+    private readonly elementRef =
+        inject(ElementRef);
+
+
 
     //===========================================================
     // Page Tabs
@@ -235,9 +247,11 @@ implements OnInit
         ControlTab[] =
     [
         {
-            id:'all',
+            id:
+                'all',
 
-            label:'All Login Pages'
+            label:
+                'All Login Pages'
         }
     ];
 
@@ -262,21 +276,27 @@ implements OnInit
         }[] =
     [
         {
-            value:null,
+            value:
+                null,
 
-            text:'All Status'
+            text:
+                'All Status'
         },
 
         {
-            value:true,
+            value:
+                true,
 
-            text:'Active'
+            text:
+                'Active'
         },
 
         {
-            value:false,
+            value:
+                false,
 
-            text:'Inactive'
+            text:
+                'Inactive'
         }
     ];
 
@@ -369,25 +389,35 @@ implements OnInit
     readonly canvasConfig:
         PageCanvasConfig =
     {
-        mode:'list',
+        mode:
+            'list',
 
-        showHeader:false,
+        showHeader:
+            false,
 
-        showFooter:true,
+        showFooter:
+            true,
 
-        reserveFooterSpace:true,
+        reserveFooterSpace:
+            true,
 
-        bodyScrollable:true,
+        bodyScrollable:
+            true,
 
-        fixedHeight:true,
+        fixedHeight:
+            true,
 
-        visibleRows:10,
+        visibleRows:
+            10,
 
-        rowHeight:32,
+        rowHeight:
+            32,
 
-        headerHeight:36,
+        headerHeight:
+            36,
 
-        footerHeight:56
+        footerHeight:
+            56
     };
 
 
@@ -400,99 +430,138 @@ implements OnInit
         ListTableColumn[] =
     [
         {
-            header:'#',
+            header:
+                '#',
 
-            field:'serial',
+            field:
+                'serial',
 
-            type:'serial',
+            type:
+                'serial',
 
-            width:'60px',
+            width:
+                '60px',
 
-            align:'center'
+            align:
+                'center'
         },
 
         {
-            header:'Code',
+            header:
+                'Code',
 
-            field:'code',
+            field:
+                'code',
 
-            width:'150px',
+            width:
+                '150px',
 
-            align:'center'
+            align:
+                'center'
         },
 
         {
-            header:'Name',
+            header:
+                'Name',
 
-            field:'name',
+            field:
+                'name',
 
-            width:'220px',
+            width:
+                '220px',
 
-            align:'left'
+            align:
+                'left'
         },
 
         {
-            header:'Page Key',
+            header:
+                'Page Key',
 
-            field:'pageKey',
+            field:
+                'pageKey',
 
-            width:'180px',
+            width:
+                '180px',
 
-            align:'left'
+            align:
+                'left'
         },
 
         {
-            header:'Title',
+            header:
+                'Title',
 
-            field:'title',
+            field:
+                'title',
 
-            width:'200px',
+            width:
+                '200px',
 
-            align:'left'
+            align:
+                'left'
         },
 
         {
-            header:'Subtitle',
+            header:
+                'Subtitle',
 
-            field:'subtitle',
+            field:
+                'subtitle',
 
-            align:'left'
+            align:
+                'left'
         },
 
         {
-            header:'Status',
+            header:
+                'Status',
 
-            field:'status',
+            field:
+                'status',
 
-            type:'status',
+            type:
+                'status',
 
-            width:'120px',
+            width:
+                '120px',
 
-            align:'center'
+            align:
+                'center'
         },
 
         {
-            header:'Operation',
+            header:
+                'Operation',
 
-            field:'operation',
+            field:
+                'operation',
 
-            type:'operation',
+            type:
+                'operation',
 
-            width:'180px',
+            width:
+                '180px',
 
-            align:'center'
+            align:
+                'center'
         },
 
         {
-            header:'Actions',
+            header:
+                'Actions',
 
-            field:'actions',
+            field:
+                'actions',
 
-            type:'actions',
+            type:
+                'actions',
 
-            width:'180px',
+            width:
+                '180px',
 
-            align:'center'
+            align:
+                'center'
         }
     ];
 
@@ -506,6 +575,116 @@ implements OnInit
         void
     {
         this.loadItems();
+    }
+
+
+
+    //===========================================================
+    // PAGE-SPECIFIC OPERATION TOOLTIP
+    //
+    // The shared ListTableComponent uses "Synchronize".
+    //
+    // Login Pages uses the same operation button for
+    // Preview.
+    //
+    // This change is restricted to this page only.
+    //===========================================================
+
+    ngAfterViewChecked():
+        void
+    {
+        this.updateLoginPagesOperationTooltip();
+    }
+
+
+
+    //===========================================================
+    // LOGIN PAGES OPERATION MOUSE OVER
+    //
+    // This is triggered by the page-specific wrapper in
+    // login-pages-list.html.
+    //
+    // It immediately changes the native browser tooltip
+    // from "Synchronize" to "Preview".
+    //===========================================================
+
+    onLoginPagesOperationMouseOver
+    (
+        event:
+            MouseEvent
+    ):
+        void
+    {
+        if
+        (
+            !(event.target instanceof HTMLElement)
+        )
+        {
+            return;
+        }
+
+
+        const operationButton =
+            event.target.closest(
+                '.action-btn.sync'
+            );
+
+
+        if
+        (
+            !(operationButton instanceof HTMLButtonElement)
+        )
+        {
+            return;
+        }
+
+
+        operationButton.title =
+            'Preview';
+    }
+
+
+
+    //===========================================================
+    // UPDATE LOGIN PAGES OPERATION TOOLTIP
+    //
+    // Page-specific DOM correction.
+    //
+    // No shared component is modified.
+    //===========================================================
+
+    private updateLoginPagesOperationTooltip():
+        void
+    {
+        const host =
+            this.elementRef.nativeElement as HTMLElement;
+
+
+        const operationButtons =
+            host.querySelectorAll
+            (
+                '.login-pages-operation-table .action-btn.sync'
+            );
+
+
+        operationButtons.forEach
+        (
+            (
+                button:
+                    Element
+            ):
+                void =>
+            {
+                if
+                (
+                    button instanceof HTMLButtonElement
+                )
+                {
+                    button.title =
+                        'Preview';
+                }
+            }
+        );
     }
 
 
@@ -533,7 +712,8 @@ implements OnInit
                 (
                     response:
                         LoginPages[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.loginpages =
                     [
@@ -560,7 +740,8 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
@@ -731,7 +912,9 @@ implements OnInit
                 string;
 
             direction:
-                'asc' | 'desc';
+                'asc'
+                |
+                'desc';
         }
     ):
         void
@@ -805,9 +988,13 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        valueA.localeCompare(valueB)
+                        valueA.localeCompare(
+                            valueB
+                        )
                         :
-                        valueB.localeCompare(valueA);
+                        valueB.localeCompare(
+                            valueA
+                        );
                 }
 
 
@@ -1263,8 +1450,7 @@ implements OnInit
 
 
                                 dateTime:
-                                    new Date
-                                    (
+                                    new Date(
                                         history.performedDate
                                     )
                                     .toLocaleString(),

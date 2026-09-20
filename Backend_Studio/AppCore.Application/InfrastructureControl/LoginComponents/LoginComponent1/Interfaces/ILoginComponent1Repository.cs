@@ -81,10 +81,7 @@ public interface ILoginComponent1Repository
     //===========================================================
 
     Task
-        RestoreAsync
-    (
-        long id
-    );
+        RestoreAsync();
 
 
 

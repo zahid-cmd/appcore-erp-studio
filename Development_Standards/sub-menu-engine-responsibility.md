@@ -1,3 +1,6 @@
+we will clone utility component first pixel by pixel to create login component 1 page rebuilding. with the 9 frontend and 9 backend files as our sturcture. I will give u utility page code per file in return u will give me full cloned code per file. here is our file structure -
+
+
 ========================================================
 Frontend
 ========================================================

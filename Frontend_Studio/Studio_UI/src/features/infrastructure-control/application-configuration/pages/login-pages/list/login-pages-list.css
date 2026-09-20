@@ -1,1 +1,42 @@
 @import '../../../../../../shared/styles/app-list-page.css';
+
+/* ===========================================================
+   LOGIN PAGES — OPERATION ICON
+   -----------------------------------------------------------
+   Page-specific override.
+   Does NOT modify the shared ListTableComponent.
+=========================================================== */
+
+:host ::ng-deep
+.login-pages-operation-table
+.action-btn.sync
+{
+    font-size:0;
+}
+
+
+:host ::ng-deep
+.login-pages-operation-table
+.action-btn.sync
+i
+{
+    display:none;
+}
+
+
+:host ::ng-deep
+.login-pages-operation-table
+.action-btn.sync::before
+{
+    content:"\f06e";
+
+    font-family:"Font Awesome 6 Free";
+
+    font-weight:900;
+
+    font-size:14px;
+
+    line-height:1;
+
+    display:inline-block;
+}

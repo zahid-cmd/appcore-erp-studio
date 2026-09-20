@@ -1,0 +1,162 @@
+<!-- ===========================================================
+     LOGIN PAGE PROMOTIONAL PANEL
+============================================================ -->
+
+<div
+    class="login-page-promotional-panel"
+    *ngIf="config.visible"
+>
+
+
+    <!-- =======================================================
+         PROMOTIONAL HEADER
+    ======================================================== -->
+
+    <div class="promotional-header">
+
+
+        <!-- ===================================================
+             HEADER RIBBON
+        ==================================================== -->
+
+        <div
+            class="promotional-ribbon"
+            aria-hidden="true">
+        </div>
+
+
+        <!-- ===================================================
+             EYEBROW
+        ==================================================== -->
+
+        <div class="promotional-eyebrow">
+            {{ config.eyebrow }}
+        </div>
+
+
+        <!-- ===================================================
+             HEADING
+        ==================================================== -->
+
+        <h1 class="promotional-heading">
+
+            <span class="heading-primary">
+                {{ config.heading }}
+            </span>
+
+            <span class="heading-highlight">
+                {{ config.highlightedHeading }}
+            </span>
+
+            <span class="heading-primary">
+                {{ config.headingSuffix }}
+            </span>
+
+        </h1>
+
+
+        <!-- ===================================================
+             DESCRIPTION
+             ---------------------------------------------------
+             The complete description is intentionally kept
+             on ONE single line.
+        ==================================================== -->
+
+        <p class="promotional-description">
+            {{ config.description }}
+        </p>
+
+    </div>
+
+
+    <!-- =======================================================
+         PROMOTIONAL VISUAL
+    ======================================================== -->
+
+    <div
+        class="promotional-visual"
+        *ngIf="config.visualImageUrl">
+
+        <img
+            class="promotional-visual-image"
+            [src]="config.visualImageUrl"
+            alt="AppCore ERP"
+        />
+
+    </div>
+
+
+    <!-- =======================================================
+         PROMOTIONAL FEATURES
+    ======================================================== -->
+
+    <div
+        class="promotional-features"
+        *ngIf="visibleFeatures.length > 0">
+
+
+        <!-- ===================================================
+             FEATURE
+        ==================================================== -->
+
+        <div
+            class="promotional-feature"
+            *ngFor="
+                let feature of visibleFeatures;
+                let i = index
+            ">
+
+
+            <!-- ===============================================
+                 FEATURE ICON
+            ================================================ -->
+
+            <div class="feature-icon">
+
+                <i
+                    [class]="feature.icon"
+                    aria-hidden="true">
+                </i>
+
+            </div>
+
+
+            <!-- ===============================================
+                 FEATURE CONTENT
+            ================================================ -->
+
+            <div class="feature-content">
+
+                <div class="feature-title">
+                    {{ feature.title }}
+                </div>
+
+                <div class="feature-description">
+                    {{ feature.description }}
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =======================================================
+         BOTTOM TAGLINE
+    ======================================================== -->
+
+    <div class="promotional-bottom-tagline">
+
+        <span class="tagline-line">
+        </span>
+
+        <span class="tagline-text">
+            {{ config.bottomTagline }}
+        </span>
+
+    </div>
+
+
+</div>

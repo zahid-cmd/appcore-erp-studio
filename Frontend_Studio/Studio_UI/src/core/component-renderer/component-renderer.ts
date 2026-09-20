@@ -4,25 +4,56 @@
 
 import
 {
+    ChangeDetectorRef,
     Component,
+    ComponentRef,
     Input,
     OnChanges,
     SimpleChanges,
-    ViewChild,
-    ViewContainerRef,
     Type,
-    ComponentRef,
-    ChangeDetectorRef
+    ViewChild,
+    ViewContainerRef
 }
 from '@angular/core';
 
 
 //===============================================================
-// Login Page Components
+// Login Page 1 Components
 //===============================================================
 
+import
+{
+    LoginPageBackgroundComponent
+}
+from '../../shared/components/login-page-1/background/background';
 
 
+import
+{
+    LoginPageBrandingComponent
+}
+from '../../shared/components/login-page-1/branding/branding';
+
+
+import
+{
+    LoginPagePromotionalPanelComponent
+}
+from '../../shared/components/login-page-1/promotional-panel/promotional-panel';
+
+
+import
+{
+    LoginPageLoginPanelComponent
+}
+from '../../shared/components/login-page-1/login-panel/login-panel';
+
+
+import
+{
+    LoginPagePoweredByComponent
+}
+from '../../shared/components/login-page-1/powered-by/powered-by';
 
 
 //===============================================================
@@ -289,7 +320,8 @@ from '../../shared/components/utilities/toast/toast';
 
 
 export class ComponentRenderer
-implements OnChanges
+implements
+    OnChanges
 {
 
     //===========================================================
@@ -355,8 +387,25 @@ implements OnChanges
         >
     =
     {
-        //=======================================================
+        
+        //===============================================================
+        // Login Page 1 Components
+        //===============================================================
 
+        'login-page-1-background':
+            LoginPageBackgroundComponent,
+
+        'login-page-1-branding':
+            LoginPageBrandingComponent,
+
+        'login-page-1-promotional-panel':
+            LoginPagePromotionalPanelComponent,
+
+        'login-page-1-login-panel':
+            LoginPageLoginPanelComponent,
+
+        'login-page-1-powered-by':
+            LoginPagePoweredByComponent,
 
 
         //=======================================================
@@ -586,6 +635,18 @@ implements OnChanges
 
         hostElement.style.height =
             '100%';
+
+
+        hostElement.style.minWidth =
+            '0';
+
+
+        hostElement.style.minHeight =
+            '0';
+
+
+        hostElement.style.boxSizing =
+            'border-box';
     }
 
 
@@ -640,18 +701,13 @@ implements OnChanges
         null
     {
         const normalizedKey =
-            componentKey
-                ?.trim()
-                .toLowerCase();
-
-
-        if
-        (
-            !normalizedKey
-        )
-        {
-            return null;
-        }
+            (
+                componentKey
+                ??
+                ''
+            )
+            .trim()
+            .toLowerCase();
 
 
         return this.componentRegistry[

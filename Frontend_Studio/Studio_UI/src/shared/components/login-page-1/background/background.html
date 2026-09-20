@@ -1,0 +1,269 @@
+<!-- ==========================================================
+     LOGIN PAGE — BACKGROUND
+     ----------------------------------------------------------
+     Premium Orbital Flow Background
+=========================================================== -->
+
+<div
+    class="login-page-background"
+
+    [class.background-solid]="
+        config.type === 'solid'
+    "
+
+    [class.background-gradient]="
+        config.type === 'gradient'
+    "
+
+    [class.background-image]="
+        config.type === 'image'
+    "
+
+    [class.background-image-overlay]="
+        config.type === 'image-overlay'
+    ">
+
+
+    <!-- =====================================================
+         PRIMARY BACKGROUND
+         -----------------------------------------------------
+         Clean white / very-light-blue foundation.
+    ====================================================== -->
+
+    <div
+        class="background-layer"
+
+        [style.background]="
+            backgroundValue
+        "
+
+        [style.background-position]="
+            config.imagePosition
+        "
+
+        [style.background-size]="
+            config.imageSize
+        "
+
+        [style.background-repeat]="
+            'no-repeat'
+        ">
+    </div>
+
+
+    <!-- =====================================================
+         ATMOSPHERIC LIGHT
+         -----------------------------------------------------
+         Very soft illumination behind the orbital structure.
+    ====================================================== -->
+
+    <div
+        class="background-atmosphere"
+        aria-hidden="true">
+    </div>
+
+
+    <!-- =====================================================
+         ORBITAL FLOW SYSTEM
+         -----------------------------------------------------
+         The primary visual language of the background.
+
+         These forms represent one continuous flowing
+         architectural / orbital structure.
+    ====================================================== -->
+
+    <div
+        *ngIf="
+            config.decorativeElementsEnabled
+        "
+
+        class="orbital-system"
+
+        aria-hidden="true">
+
+
+        <!-- =================================================
+             MAIN BLUE RIBBON
+        ================================================== -->
+
+        <div
+            class="orbital-ribbon orbital-ribbon-main">
+
+            <span
+                class="ribbon-surface">
+            </span>
+
+            <span
+                class="ribbon-edge">
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             SECONDARY BLUE RIBBON
+        ================================================== -->
+
+        <div
+            class="orbital-ribbon orbital-ribbon-secondary">
+
+            <span
+                class="ribbon-surface">
+            </span>
+
+            <span
+                class="ribbon-edge">
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             FINE CONTOUR FIELD
+        ================================================== -->
+
+        <div
+            class="contour-field">
+
+            <span
+                class="contour contour-01">
+            </span>
+
+            <span
+                class="contour contour-02">
+            </span>
+
+            <span
+                class="contour contour-03">
+            </span>
+
+            <span
+                class="contour contour-04">
+            </span>
+
+            <span
+                class="contour contour-05">
+            </span>
+
+            <span
+                class="contour contour-06">
+            </span>
+
+            <span
+                class="contour contour-07">
+            </span>
+
+            <span
+                class="contour contour-08">
+            </span>
+
+            <span
+                class="contour contour-09">
+            </span>
+
+            <span
+                class="contour contour-10">
+            </span>
+
+            <span
+                class="contour contour-11">
+            </span>
+
+            <span
+                class="contour contour-12">
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             ORANGE ACCENT
+             -------------------------------------------------
+             Very restrained highlight.
+        ================================================== -->
+
+        <div
+            class="orbital-orange-accent">
+
+            <span
+                class="orange-edge">
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             CENTRAL FLOW HIGHLIGHT
+        ================================================== -->
+
+        <div
+            class="orbital-highlight">
+        </div>
+
+
+        <!-- =================================================
+             LOWER FLOW
+        ================================================== -->
+
+        <div
+            class="orbital-lower-flow">
+
+            <span
+                class="lower-flow-line lower-flow-01">
+            </span>
+
+            <span
+                class="lower-flow-line lower-flow-02">
+            </span>
+
+            <span
+                class="lower-flow-line lower-flow-03">
+            </span>
+
+            <span
+                class="lower-flow-line lower-flow-04">
+            </span>
+
+            <span
+                class="lower-flow-line lower-flow-05">
+            </span>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =====================================================
+         OPTIONAL CONFIGURED OVERLAY
+    ====================================================== -->
+
+    <div
+        *ngIf="
+            config.overlayEnabled
+        "
+
+        class="background-overlay"
+
+        [style.background]="
+            overlayValue
+        ">
+    </div>
+
+
+    <!-- =====================================================
+         BACKGROUND CONTENT SLOT
+         -----------------------------------------------------
+         Future Login Page components render above this
+         visual foundation.
+    ====================================================== -->
+
+    <div
+        class="background-content">
+
+        <ng-content></ng-content>
+
+    </div>
+
+
+</div>

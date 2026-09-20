@@ -1,47 +1,866 @@
 /* ===========================================================
    LOGIN PAGE 1
-============================================================ */
+   -----------------------------------------------------------
+   Root page composition.
+
+   The Background component owns the visual environment.
+
+   Login Page 1 owns:
+   - page boundary
+   - stacking
+   - child placement
+   - left / right composition
+=========================================================== */
+
+
+/* ===========================================================
+   PAGE ROOT
+=========================================================== */
 
 .login-page-1
 {
-    width:100%;
-    height:100%;
-    min-width:100%;
-    min-height:100%;
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+    position:
+        relative;
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    width:
+        100%;
 
-    background:#020817;
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    display:
+        block;
+
+    overflow:
+        hidden;
+
+    isolation:
+        isolate;
+
+    background:
+        #ffffff;
 }
 
+
+/* ===========================================================
+   BACKGROUND
+=========================================================== */
+
+.login-page-1
+app-login-page-background
+{
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    z-index:
+        0;
+}
+
+
+/* ===========================================================
+   LOGIN PAGE CONTENT
+=========================================================== */
 
 .login-page-1-content
 {
-    text-align:center;
-    color:#ffffff;
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    z-index:
+        10;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    display:
+        block;
+
+    pointer-events:
+        none;
+
+
+    /* =======================================================
+       PAGE COMPOSITION
+    ======================================================== */
+
+    --login-page-left-width:
+        55%;
+
+    --login-page-right-width:
+        45%;
+
+
+    /* =======================================================
+       COMMON LEFT ALIGNMENT
+       -------------------------------------------------------
+       Branding and Promotional Panel use the SAME left
+       anchor so their visible content starts on the same
+       vertical alignment.
+    ======================================================== */
+
+    --login-page-left-anchor:
+        48px;
+
+
+    /* =======================================================
+       POWERED BY
+       -------------------------------------------------------
+       FINAL LOGO GEOMETRY:
+
+       Logo:
+           150px
+
+       Six logos:
+           6 × 150px = 900px
+
+       Seven spaces:
+           7 × 20px = 140px
+
+       TOTAL:
+           1040px
+    ======================================================== */
+
+    --login-page-powered-by-width:
+        1040px;
+
+    --login-page-powered-by-left:
+        48px;
 }
 
+
+/* ===========================================================
+   BRANDING
+   -----------------------------------------------------------
+   Uses the SAME left anchor as the Promotional Panel.
+=========================================================== */
+
+.login-page-1-content
+app-login-page-branding
+{
+    position:
+        absolute;
+
+    top:
+        28px;
+
+    left:
+        var(
+            --login-page-left-anchor
+        );
+
+    display:
+        block;
+
+    width:
+        330px;
+
+    height:
+        82px;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    z-index:
+        30;
+
+    pointer-events:
+        auto;
+}
+
+
+/* ===========================================================
+   PROMOTIONAL PANEL
+   -----------------------------------------------------------
+   Uses the EXACT SAME left anchor as Branding.
+=========================================================== */
+
+.login-page-1-content
+app-login-page-promotional-panel
+{
+    position:
+        absolute;
+
+    top:
+        185px;
+
+    left:
+        var(
+            --login-page-left-anchor
+        );
+
+    display:
+        block;
+
+    width:
+        calc(
+            var(--login-page-left-width)
+            -
+            96px
+        );
+
+    height:
+        calc(
+            100%
+            -
+            245px
+        );
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    z-index:
+        20;
+
+    pointer-events:
+        auto;
+}
+
+
+/* ===========================================================
+   LOGIN PANEL
+=========================================================== */
+
+.login-page-1-content
+app-login-page-login-panel
+{
+    position:
+        absolute;
+
+    top:
+        0;
+
+    right:
+        0;
+
+    display:
+        block;
+
+    width:
+        var(--login-page-right-width);
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    z-index:
+        40;
+
+    pointer-events:
+        auto;
+
+    overflow:
+        hidden;
+}
+
+
+/* ===========================================================
+   POWERED BY
+   -----------------------------------------------------------
+   FIXED PAGE ANCHOR
+
+   Left:
+       48px
+
+   Width:
+       1040px
+
+   The child owns the internal six-logo geometry.
+
+   IMPORTANT:
+   No centering transform.
+   No negative left.
+   No automatic horizontal positioning.
+=========================================================== */
+
+.login-page-1-content
+app-login-page-powered-by
+{
+    position:
+        absolute;
+
+    top:
+        auto;
+
+    right:
+        auto;
+
+    left:
+        var(
+            --login-page-powered-by-left
+        );
+
+    bottom:
+        128px;
+
+    display:
+        block;
+
+    width:
+        var(
+            --login-page-powered-by-width
+        );
+
+    height:
+        150px;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    z-index:
+        35;
+
+    pointer-events:
+        auto;
+
+    overflow:
+        visible;
+}
+
+
+/* ===========================================================
+   TEMPORARY TITLE
+=========================================================== */
 
 .login-page-1-content h1
 {
-    margin:0 0 12px 0;
-    padding:0;
+    margin:
+        0 0 12px 0;
 
-    font-size:32px;
-    font-weight:600;
+    padding:
+        0;
+
+    font-size:
+        32px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    color:
+        #17304f;
+
+    letter-spacing:
+        -.5px;
 }
 
 
+/* ===========================================================
+   TEMPORARY SUBTITLE
+=========================================================== */
+
 .login-page-1-content p
 {
-    margin:0;
-    padding:0;
+    margin:
+        0;
 
-    font-size:16px;
-    opacity:0.75;
+    padding:
+        0;
+
+    font-size:
+        16px;
+
+    line-height:
+        1.5;
+
+    color:
+        #64748b;
+
+    opacity:
+        .85;
+}
+
+
+/* ===========================================================
+   TABLET
+=========================================================== */
+
+@media
+(
+    max-width:1024px
+)
+{
+    /* -------------------------------------------------------
+       Common Tablet Left Alignment
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    {
+        --login-page-left-anchor:
+            36px;
+    }
+
+
+    /* -------------------------------------------------------
+       Branding
+       -------------------------------------------------------
+       Same left anchor as Promotional Panel.
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-branding
+    {
+        top:
+            24px;
+
+        left:
+            var(
+                --login-page-left-anchor
+            );
+
+        width:
+            300px;
+
+        height:
+            76px;
+    }
+
+
+    /* -------------------------------------------------------
+       Promotional Panel
+       -------------------------------------------------------
+       Same left anchor as Branding.
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-promotional-panel
+    {
+        top:
+            150px;
+
+        left:
+            var(
+                --login-page-left-anchor
+            );
+
+        width:
+            calc(
+                var(--login-page-left-width)
+                -
+                65px
+            );
+
+        height:
+            calc(
+                100%
+                -
+                190px
+            );
+    }
+
+
+    /* -------------------------------------------------------
+       Login Panel
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-login-panel
+    {
+        width:
+            var(--login-page-right-width);
+
+        height:
+            100%;
+
+        top:
+            0;
+
+        right:
+            0;
+    }
+
+
+    /* -------------------------------------------------------
+       Powered By
+       -------------------------------------------------------
+       Keep the fixed left anchor.
+
+       The child remains responsible for the 1040px
+       six-logo geometry.
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-powered-by
+    {
+        left:
+            30px;
+
+        bottom:
+            112px;
+
+        width:
+            var(
+                --login-page-powered-by-width
+            );
+
+        height:
+            120px;
+
+        min-width:
+            0;
+
+        overflow:
+            visible;
+    }
+
+
+    /* -------------------------------------------------------
+       Temporary Title
+    ------------------------------------------------------- */
+
+    .login-page-1-content h1
+    {
+        font-size:
+            28px;
+    }
+
+
+    /* -------------------------------------------------------
+       Temporary Subtitle
+    ------------------------------------------------------- */
+
+    .login-page-1-content p
+    {
+        font-size:
+            15px;
+    }
+}
+
+
+/* ===========================================================
+   MOBILE
+=========================================================== */
+
+@media
+(
+    max-width:768px
+)
+{
+    /* -------------------------------------------------------
+       Page
+    ------------------------------------------------------- */
+
+    .login-page-1
+    {
+        height:
+            auto;
+
+        min-height:
+            100%;
+
+        overflow:
+            auto;
+    }
+
+
+    /* -------------------------------------------------------
+       Content
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    {
+        position:
+            relative;
+
+        inset:
+            auto;
+
+        width:
+            100%;
+
+        height:
+            auto;
+
+        min-height:
+            100%;
+
+        display:
+            block;
+
+        --login-page-left-anchor:
+            24px;
+    }
+
+
+    /* -------------------------------------------------------
+       Branding
+       -------------------------------------------------------
+       Same left anchor as Promotional Panel.
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-branding
+    {
+        position:
+            absolute;
+
+        top:
+            20px;
+
+        left:
+            var(
+                --login-page-left-anchor
+            );
+
+        width:
+            270px;
+
+        height:
+            68px;
+    }
+
+
+    /* -------------------------------------------------------
+       Promotional Panel
+       -------------------------------------------------------
+       Same left anchor as Branding.
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-promotional-panel
+    {
+        position:
+            relative;
+
+        top:
+            auto;
+
+        left:
+            auto;
+
+        width:
+            calc(
+                100%
+                -
+                48px
+            );
+
+        height:
+            auto;
+
+        min-height:
+            520px;
+
+        margin:
+            125px 24px 0 24px;
+        
+    }
+
+
+    /* -------------------------------------------------------
+       Powered By
+       -------------------------------------------------------
+       Mobile becomes fluid.
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-powered-by
+    {
+        position:
+            relative;
+
+        top:
+            auto;
+
+        right:
+            auto;
+
+        left:
+            auto;
+
+        bottom:
+            auto;
+
+        width:
+            calc(
+                100%
+                -
+                48px
+            );
+
+        height:
+            110px;
+
+        min-width:
+            0;
+
+        margin:
+            24px 24px 0 24px;
+
+        overflow:
+            visible;
+    }
+
+
+    /* -------------------------------------------------------
+       Login Panel
+    ------------------------------------------------------- */
+
+    .login-page-1-content
+    app-login-page-login-panel
+    {
+        position:
+            relative;
+
+        top:
+            auto;
+
+        right:
+            auto;
+
+        left:
+            auto;
+
+        width:
+            calc(
+                100%
+                -
+                48px
+            );
+
+        height:
+            auto;
+
+        min-height:
+            650px;
+
+        margin:
+            40px 24px 40px 24px;
+    }
+
+
+    /* -------------------------------------------------------
+       Temporary Title
+    ------------------------------------------------------- */
+
+    .login-page-1-content h1
+    {
+        font-size:
+            24px;
+    }
+
+
+    /* -------------------------------------------------------
+       Temporary Subtitle
+    ------------------------------------------------------- */
+
+    .login-page-1-content p
+    {
+        font-size:
+            14px;
+    }
 }

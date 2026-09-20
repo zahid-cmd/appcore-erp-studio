@@ -118,11 +118,38 @@ public class LoginComponent1Controller
                 Name =
                     dto.Name,
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+                TabName =
+                    dto.TabName,
 
-                SampleField =
-                    dto.SampleField,
+                Icon =
+                    dto.Icon,
+
+                FolderName =
+                    dto.FolderName,
+
+                FeatureFolder =
+                    dto.FeatureFolder,
+
+                FeatureSubFolder =
+                    dto.FeatureSubFolder,
+
+                ComponentPath =
+                    dto.ComponentPath,
+
+                RegistrationFilePath =
+                    dto.RegistrationFilePath,
+
+                HtmlFilePath =
+                    dto.HtmlFilePath,
+
+                TsFilePath =
+                    dto.TsFilePath,
+
+                CssFilePath =
+                    dto.CssFilePath,
+
+                DisplayOrder =
+                    dto.DisplayOrder,
 
                 Status =
                     dto.Status,
@@ -188,12 +215,48 @@ public class LoginComponent1Controller
             dto.Name;
 
 
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
+        entity.TabName =
+            dto.TabName;
 
 
-        entity.SampleField =
-            dto.SampleField;
+        entity.Icon =
+            dto.Icon;
+
+
+        entity.FolderName =
+            dto.FolderName;
+
+
+        entity.FeatureFolder =
+            dto.FeatureFolder;
+
+
+        entity.FeatureSubFolder =
+            dto.FeatureSubFolder;
+
+
+        entity.ComponentPath =
+            dto.ComponentPath;
+
+
+        entity.RegistrationFilePath =
+            dto.RegistrationFilePath;
+
+
+        entity.HtmlFilePath =
+            dto.HtmlFilePath;
+
+
+        entity.TsFilePath =
+            dto.TsFilePath;
+
+
+        entity.CssFilePath =
+            dto.CssFilePath;
+
+
+        entity.DisplayOrder =
+            dto.DisplayOrder;
 
 
         entity.Status =
@@ -255,20 +318,25 @@ public class LoginComponent1Controller
     // Restore
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        try
+        {
+            await _repository
+                .RestoreAsync();
 
 
-        return NoContent();
+            return NoContent();
+        }
+        catch
+        (
+            InvalidOperationException
+        )
+        {
+            return NotFound();
+        }
     }
 
 
