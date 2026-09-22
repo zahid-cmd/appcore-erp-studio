@@ -1,0 +1,226 @@
+<!-- =========================================================
+     POWERED BY
+     ---------------------------------------------------------
+     Six fixed logo positions.
+
+     Rules:
+     - No platform.
+     - No platform depth.
+     - No platform shadow.
+     - Empty logo slots remain completely invisible.
+     - If all six logo URLs are empty, the entire child
+       renders completely blank.
+
+     Layout:
+     - Powered By text appears ABOVE the logos.
+     - Six logos remain horizontally aligned.
+========================================================== -->
+
+<div
+    class="login-page-powered-by"
+    *ngIf="
+        config.visible &&
+        hasRenderableLogos
+    "
+>
+
+
+    <!-- =====================================================
+         POWERED BY LABEL
+         -----------------------------------------------------
+         Positioned ABOVE the logo area.
+         
+         Horizontal alignment and spacing are controlled
+         by powered-by.css.
+    ====================================================== -->
+
+    <div
+        class="powered-by-heading"
+    >
+        {{ config.heading }}
+    </div>
+
+
+    <!-- =====================================================
+         LOGO AREA
+         -----------------------------------------------------
+         Six fixed horizontal logo positions.
+    ====================================================== -->
+
+    <div
+        class="powered-by-logo-area"
+    >
+
+
+        <!-- =================================================
+             LOGO SLOT 1
+        ================================================== -->
+
+        <div
+            class="powered-by-logo-slot powered-by-logo-slot-1"
+            *ngIf="
+                config.logos[0]?.visible &&
+                config.logos[0]?.logoUrl?.trim()
+            "
+        >
+
+            <div
+                class="powered-by-logo
+                       {{ getLogoSlotClass(config.logos[0]) }}"
+                [style]="getLogoStyle(config.logos[0])"
+            >
+
+                <img
+                    [src]="config.logos[0].logoUrl"
+                    [alt]="config.logos[0].altText"
+                />
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LOGO SLOT 2
+        ================================================== -->
+
+        <div
+            class="powered-by-logo-slot powered-by-logo-slot-2"
+            *ngIf="
+                config.logos[1]?.visible &&
+                config.logos[1]?.logoUrl?.trim()
+            "
+        >
+
+            <div
+                class="powered-by-logo
+                       {{ getLogoSlotClass(config.logos[1]) }}"
+                [style]="getLogoStyle(config.logos[1])"
+            >
+
+                <img
+                    [src]="config.logos[1].logoUrl"
+                    [alt]="config.logos[1].altText"
+                />
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LOGO SLOT 3
+        ================================================== -->
+
+        <div
+            class="powered-by-logo-slot powered-by-logo-slot-3"
+            *ngIf="
+                config.logos[2]?.visible &&
+                config.logos[2]?.logoUrl?.trim()
+            "
+        >
+
+            <div
+                class="powered-by-logo
+                       {{ getLogoSlotClass(config.logos[2]) }}"
+                [style]="getLogoStyle(config.logos[2])"
+            >
+
+                <img
+                    [src]="config.logos[2].logoUrl"
+                    [alt]="config.logos[2].altText"
+                />
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LOGO SLOT 4
+        ================================================== -->
+
+        <div
+            class="powered-by-logo-slot powered-by-logo-slot-4"
+            *ngIf="
+                config.logos[3]?.visible &&
+                config.logos[3]?.logoUrl?.trim()
+            "
+        >
+
+            <div
+                class="powered-by-logo
+                       {{ getLogoSlotClass(config.logos[3]) }}"
+                [style]="getLogoStyle(config.logos[3])"
+            >
+
+                <img
+                    [src]="config.logos[3].logoUrl"
+                    [alt]="config.logos[3].altText"
+                />
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LOGO SLOT 5
+        ================================================== -->
+
+        <div
+            class="powered-by-logo-slot powered-by-logo-slot-5"
+            *ngIf="
+                config.logos[4]?.visible &&
+                config.logos[4]?.logoUrl?.trim()
+            "
+        >
+
+            <div
+                class="powered-by-logo
+                       {{ getLogoSlotClass(config.logos[4]) }}"
+                [style]="getLogoStyle(config.logos[4])"
+            >
+
+                <img
+                    [src]="config.logos[4].logoUrl"
+                    [alt]="config.logos[4].altText"
+                />
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LOGO SLOT 6
+        ================================================== -->
+
+        <div
+            class="powered-by-logo-slot powered-by-logo-slot-6"
+            *ngIf="
+                config.logos[5]?.visible &&
+                config.logos[5]?.logoUrl?.trim()
+            "
+        >
+
+            <div
+                class="powered-by-logo
+                       {{ getLogoSlotClass(config.logos[5]) }}"
+                [style]="getLogoStyle(config.logos[5])"
+            >
+
+                <img
+                    [src]="config.logos[5].logoUrl"
+                    [alt]="config.logos[5].altText"
+                />
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+</div>

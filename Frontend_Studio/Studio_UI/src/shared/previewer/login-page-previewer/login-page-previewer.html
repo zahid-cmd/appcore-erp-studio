@@ -27,11 +27,22 @@
 
 
         <!-- ===================================================
+             LOGIN PAGE 2
+        ==================================================== -->
+
+        <app-login-page-2
+            *ngIf="isLoginPage2">
+
+        </app-login-page-2>
+
+
+
+        <!-- ===================================================
              PAGE NOT AVAILABLE
         ==================================================== -->
 
         <div
-            *ngIf="!isLoginPage1"
+            *ngIf="!isLoginPage1 && !isLoginPage2"
             class="login-page-previewer-message">
 
             Login Page Preview is not available.

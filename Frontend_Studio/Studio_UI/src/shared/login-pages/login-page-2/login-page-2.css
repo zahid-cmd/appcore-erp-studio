@@ -1,47 +1,1021 @@
 /* ===========================================================
-   LOGIN PAGE 1
-============================================================ */
+   LOGIN PAGE 2
+   -----------------------------------------------------------
+   PAGE LAYOUT ARCHITECTURE
 
-.login-page-1
+   PAGE
+   │
+   ├── BACKGROUND - FULL PAGE
+   │   └── APPCORE LOGIN PAGE BACKGROUND
+   │
+   ├── PROMOTIONAL AREA - LEFT 55%
+   │   ├── PROMOTIONAL IMAGE LIGHT
+   │   ├── PROMOTIONAL IMAGE DEEP
+   │   ├── CLIENT LOGO - LEFT / EXACTLY 40% FROM BOTTOM
+   │   └── POWERED BY - LEFT / EXACTLY 15% FROM BOTTOM
+   │
+   └── LOGIN AREA - RIGHT 45%
+       └── APPCORE LOGIN PANEL
+
+   This stylesheet contains ONLY the page geometry.
+
+   Individual child visual styling remains inside each
+   child component's own CSS.
+
+   The Background component is responsible for the
+   visual background.
+
+   Layout sections remain transparent so the Background
+   remains visible underneath them.
+================================================================ */
+
+
+/* ===========================================================
+   PAGE ROOT
+================================================================ */
+
+.login-page-2
 {
-    width:100%;
-    height:100%;
-    min-width:100%;
-    min-height:100%;
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+    position:
+        relative;
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:
+        flex;
 
-    background:#020817;
+    flex-direction:
+        row;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 }
 
 
-.login-page-1-content
+/* ===========================================================
+   BACKGROUND
+   -----------------------------------------------------------
+   POSITION:
+
+       FULL PAGE
+
+   PURPOSE:
+
+       Keeps the Background completely behind the
+       Promotional Area and Login Area.
+================================================================ */
+
+.login-page-2
+> app-login-page-background
 {
-    text-align:center;
-    color:#ffffff;
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    z-index:
+        0;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    pointer-events:
+        none;
 }
 
 
-.login-page-1-content h1
-{
-    margin:0 0 12px 0;
-    padding:0;
+/* ===========================================================
+   PROMOTIONAL AREA
+   -----------------------------------------------------------
+   POSITION:
 
-    font-size:32px;
-    font-weight:600;
+       LEFT
+
+   WIDTH:
+
+       55%
+
+   PURPOSE:
+
+       Hosts the Login Page 2 Promotional Image Light,
+       Promotional Image Deep, Client Logo and Powered By.
+
+   Theme Selector determines which promotional image
+   is rendered.
+
+   IMPORTANT:
+
+       This area is the positioning reference for the
+       Client Logo and Powered By.
+================================================================ */
+
+.login-page-2-promotional-area
+{
+    position:
+        relative;
+
+    z-index:
+        1;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 55%;
+
+    width:
+        55%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
 }
 
 
-.login-page-1-content p
-{
-    margin:0;
-    padding:0;
+/* ===========================================================
+   PROMOTIONAL IMAGE LIGHT
+   -----------------------------------------------------------
+   REAL CHILD COMPONENT
 
-    font-size:16px;
-    opacity:0.75;
+   LIGHT THEME IMAGE
+
+   IMPORTANT:
+
+       The image remains behind the Client Logo
+       and Powered By.
+================================================================ */
+
+.login-page-2-promotional-area
+> app-login-page-promotional-image-light
+{
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    z-index:
+        1;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    pointer-events:
+        none;
+}
+
+
+/* ===========================================================
+   PROMOTIONAL IMAGE DEEP
+   -----------------------------------------------------------
+   REAL CHILD COMPONENT
+
+   DEEP THEME IMAGE
+
+   IMPORTANT:
+
+       The image remains behind the Client Logo
+       and Powered By.
+================================================================ */
+
+.login-page-2-promotional-area
+> app-login-page-promotional-image-deep
+{
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    z-index:
+        1;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    pointer-events:
+        none;
+}
+
+
+/* ===========================================================
+   CLIENT LOGO
+   -----------------------------------------------------------
+   REAL CHILD COMPONENT
+
+   POSITION:
+
+       LEFT
+
+       EXACTLY 40% FROM BOTTOM
+
+   IMPORTANT:
+
+       CLIENT LOGO PLACEMENT IS UNCHANGED.
+================================================================ */
+
+.login-page-2-promotional-area
+> app-login-page-client-logo
+{
+    position:
+        absolute;
+
+    left:
+        32px;
+
+    top:
+        auto;
+
+    bottom:
+        30%;
+
+    transform:
+        translateY(50%);
+
+    z-index:
+        5;
+
+    display:
+        block;
+
+    width:
+        auto;
+
+    height:
+        auto;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        calc(100% - 64px);
+
+    max-height:
+        calc(100% - 64px);
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    pointer-events:
+        auto;
+}
+
+
+/* ===========================================================
+   POWERED BY
+   -----------------------------------------------------------
+   REAL CHILD COMPONENT
+
+   POSITION:
+
+       LEFT
+
+       EXACTLY 15% FROM BOTTOM
+
+   PURPOSE:
+
+       Places the Powered By section independently
+       from the Client Logo.
+
+   IMPORTANT:
+
+       This does NOT affect the 55 / 45 layout.
+
+       The Promotional Area remains the positioning
+       reference.
+
+       The CENTER of the Powered By section is positioned
+       at exactly 15% FROM BOTTOM.
+
+       Therefore:
+
+           bottom:
+               15%;
+
+           transform:
+               translateY(50%);
+================================================================ */
+
+.login-page-2-promotional-area
+> app-login-page-powered-by
+{
+    position:
+        absolute;
+
+    left:
+        32px;
+
+    top:
+        auto;
+
+    bottom:
+        10%;
+
+    transform:
+        translateY(50%);
+
+    z-index:
+        5;
+
+    display:
+        block;
+
+    width:
+        auto;
+
+    height:
+        auto;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        calc(100% - 64px);
+
+    max-height:
+        calc(100% - 64px);
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    pointer-events:
+        auto;
+}
+
+
+/* ===========================================================
+   LOGIN AREA
+   -----------------------------------------------------------
+   POSITION:
+
+       RIGHT
+
+   WIDTH:
+
+       45%
+
+   PURPOSE:
+
+       Hosts the Login Page 2 Login Panel.
+================================================================ */
+
+.login-page-2-login-area
+{
+    position:
+        relative;
+
+    z-index:
+        2;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 45%;
+
+    width:
+        45%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+}
+
+
+/* ===========================================================
+   LOGIN PANEL CHILD
+================================================================ */
+
+.login-page-2-login-area
+> app-login-page-login-panel
+{
+    display:
+        block;
+
+    flex:
+        0 0 100%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* ===========================================================
+   TABLET
+================================================================ */
+
+@media
+(
+    max-width:1024px
+)
+{
+    .login-page-2
+    {
+        min-width:
+            0;
+
+        min-height:
+            100%;
+    }
+
+
+    /* =======================================================
+       PROMOTIONAL AREA - TABLET
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    {
+        flex:
+            0 0 55%;
+
+        flex-basis:
+            55%;
+
+        width:
+            55%;
+
+        height:
+            100%;
+
+        overflow:
+            hidden;
+    }
+
+
+    /* =======================================================
+       PROMOTIONAL IMAGE LIGHT - TABLET
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-promotional-image-light
+    {
+        position:
+            absolute;
+
+        inset:
+            0;
+
+        z-index:
+            1;
+
+        width:
+            100%;
+
+        height:
+            100%;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+
+        overflow:
+            hidden;
+
+        pointer-events:
+            none;
+    }
+
+
+    /* =======================================================
+       PROMOTIONAL IMAGE DEEP - TABLET
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-promotional-image-deep
+    {
+        position:
+            absolute;
+
+        inset:
+            0;
+
+        z-index:
+            1;
+
+        width:
+            100%;
+
+        height:
+            100%;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+
+        overflow:
+            hidden;
+
+        pointer-events:
+            none;
+    }
+
+
+    /* =======================================================
+       CLIENT LOGO - TABLET
+       -------------------------------------------------------
+       EXISTING PLACEMENT PRESERVED
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-client-logo
+    {
+        left:
+            24px;
+
+        top:
+            auto;
+
+        bottom:
+            40%;
+
+        transform:
+            translateY(50%);
+
+        z-index:
+            5;
+
+        max-width:
+            calc(100% - 48px);
+
+        max-height:
+            calc(100% - 48px);
+    }
+
+
+    /* =======================================================
+       POWERED BY - TABLET
+       -------------------------------------------------------
+       LEFT / EXACTLY 15% FROM BOTTOM
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-powered-by
+    {
+        left:
+            24px;
+
+        top:
+            auto;
+
+        bottom:
+            15%;
+
+        transform:
+            translateY(50%);
+
+        z-index:
+            5;
+
+        max-width:
+            calc(100% - 48px);
+
+        max-height:
+            calc(100% - 48px);
+    }
+
+
+    /* =======================================================
+       LOGIN AREA - TABLET
+    ======================================================== */
+
+    .login-page-2-login-area
+    {
+        flex:
+            0 0 45%;
+
+        flex-basis:
+            45%;
+
+        width:
+            45%;
+
+        height:
+            100%;
+
+        overflow:
+            hidden;
+    }
+}
+
+
+/* ===========================================================
+   MOBILE
+   -----------------------------------------------------------
+   The approved 55 / 45 architecture remains unchanged.
+================================================================ */
+
+@media
+(
+    max-width:768px
+)
+{
+    .login-page-2
+    {
+        min-width:
+            900px;
+
+        min-height:
+            100%;
+
+        flex-direction:
+            row;
+
+        overflow:
+            hidden;
+    }
+
+
+    /* =======================================================
+       PROMOTIONAL AREA - MOBILE
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    {
+        flex:
+            0 0 55%;
+
+        flex-basis:
+            55%;
+
+        width:
+            55%;
+
+        height:
+            100%;
+
+        overflow:
+            hidden;
+    }
+
+
+    /* =======================================================
+       PROMOTIONAL IMAGE LIGHT - MOBILE
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-promotional-image-light
+    {
+        position:
+            absolute;
+
+        inset:
+            0;
+
+        z-index:
+            1;
+
+        width:
+            100%;
+
+        height:
+            100%;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+
+        overflow:
+            hidden;
+
+        pointer-events:
+            none;
+    }
+
+
+    /* =======================================================
+       PROMOTIONAL IMAGE DEEP - MOBILE
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-promotional-image-deep
+    {
+        position:
+            absolute;
+
+        inset:
+            0;
+
+        z-index:
+            1;
+
+        width:
+            100%;
+
+        height:
+            100%;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+
+        overflow:
+            hidden;
+
+        pointer-events:
+            none;
+    }
+
+
+    /* =======================================================
+       CLIENT LOGO - MOBILE
+       -------------------------------------------------------
+       EXISTING PLACEMENT PRESERVED
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-client-logo
+    {
+        left:
+            20px;
+
+        top:
+            auto;
+
+        bottom:
+            40%;
+
+        transform:
+            translateY(50%);
+
+        z-index:
+            5;
+
+        max-width:
+            calc(100% - 40px);
+
+        max-height:
+            calc(100% - 40px);
+    }
+
+
+    /* =======================================================
+       POWERED BY - MOBILE
+       -------------------------------------------------------
+       LEFT / EXACTLY 15% FROM BOTTOM
+    ======================================================== */
+
+    .login-page-2-promotional-area
+    > app-login-page-powered-by
+    {
+        left:
+            20px;
+
+        top:
+            auto;
+
+        bottom:
+            15%;
+
+        transform:
+            translateY(50%);
+
+        z-index:
+            5;
+
+        max-width:
+            calc(100% - 40px);
+
+        max-height:
+            calc(100% - 40px);
+    }
+
+
+    /* =======================================================
+       LOGIN AREA - MOBILE
+    ======================================================== */
+
+    .login-page-2-login-area
+    {
+        flex:
+            0 0 45%;
+
+        flex-basis:
+            45%;
+
+        width:
+            45%;
+
+        height:
+            100%;
+
+        overflow:
+            hidden;
+    }
 }

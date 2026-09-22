@@ -1,27 +1,73 @@
 /* ===========================================================
    LOGIN PAGE 1
    -----------------------------------------------------------
-   Root page composition.
+   PAGE LAYOUT ARCHITECTURE
 
-   The Background component owns the visual environment.
+   PAGE
+   │
+   ├── BACKGROUND
+   │   └── Full Login Page 1 Background
+   │
+   ├── MAIN BODY
+   │
+   │   ├── BUSINESS AREA - LEFT 30%
+   │   │   ├── APPCORE BRANDING - TOP 15%
+   │   │   ├── APPCORE PANEL    - CENTER 65%
+   │   │   └── APPCORE CLIENTS  - BOTTOM 20%
+   │   │
+   │   ├── DESIGN AREA - CENTER 40%
+   │   │   ├── APPCORE IMAGE    - TOP 80%
+   │   │   └── APPCORE BUSINESS - BOTTOM 20%
+   │   │
+   │   └── LOGIN AREA - RIGHT 30%
+   │       ├── APPCORE LOGIN         - TOP 75%
+   │       └── APPCORE NOTIFICATION  - BOTTOM 25%
+   │
+   └── FOOTER 70px
 
-   Login Page 1 owns:
-   - page boundary
-   - stacking
-   - child placement
-   - left / right composition
-=========================================================== */
+   This stylesheet contains ONLY the page geometry.
+
+   The Background component is responsible for the complete
+   visual background.
+
+   Layout sections are transparent so the Background remains
+   visible underneath them.
+
+   IMPORTANT:
+
+       The Promotional Image is allowed to extend beyond the
+       AppCore Image section so its CSS-controlled width and
+       height can actually render at larger values.
+
+   IMPORTANT:
+
+       The Promotional Panel is positioned above the
+       Promotional Image and is allowed to extend from the
+       Business Area into the Design Area.
+
+   IMPORTANT:
+
+       The Client Logo host area is intentionally larger and
+       allows overflow so 3D hover effects are not clipped.
+
+================================================================ */
 
 
 /* ===========================================================
    PAGE ROOT
-=========================================================== */
+================================================================ */
 
 .login-page-1
 {
     position:
         relative;
 
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
     width:
         100%;
 
@@ -42,242 +88,69 @@
 
     box-sizing:
         border-box;
-
-    display:
-        block;
 
     overflow:
         hidden;
 
-    isolation:
-        isolate;
-
     background:
-        #ffffff;
+        transparent;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 }
 
 
 /* ===========================================================
-   BACKGROUND
-=========================================================== */
-
-.login-page-1
-app-login-page-background
-{
-    position:
-        absolute;
-
-    inset:
-        0;
-
-    display:
-        block;
-
-    width:
-        100%;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    z-index:
-        0;
-}
-
-
-/* ===========================================================
-   LOGIN PAGE CONTENT
-=========================================================== */
-
-.login-page-1-content
-{
-    position:
-        absolute;
-
-    inset:
-        0;
-
-    z-index:
-        10;
-
-    width:
-        100%;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    display:
-        block;
-
-    pointer-events:
-        none;
-
-
-    /* =======================================================
-       PAGE COMPOSITION
-    ======================================================== */
-
-    --login-page-left-width:
-        55%;
-
-    --login-page-right-width:
-        45%;
-
-
-    /* =======================================================
-       COMMON LEFT ALIGNMENT
-       -------------------------------------------------------
-       Branding and Promotional Panel use the SAME left
-       anchor so their visible content starts on the same
-       vertical alignment.
-    ======================================================== */
-
-    --login-page-left-anchor:
-        48px;
-
-
-    /* =======================================================
-       POWERED BY
-       -------------------------------------------------------
-       FINAL LOGO GEOMETRY:
-
-       Logo:
-           150px
-
-       Six logos:
-           6 × 150px = 900px
-
-       Seven spaces:
-           7 × 20px = 140px
-
-       TOTAL:
-           1040px
-    ======================================================== */
-
-    --login-page-powered-by-width:
-        1040px;
-
-    --login-page-powered-by-left:
-        48px;
-}
-
-
-/* ===========================================================
-   BRANDING
+   MAIN BODY
    -----------------------------------------------------------
-   Uses the SAME left anchor as the Promotional Panel.
-=========================================================== */
+   HEIGHT:
 
-.login-page-1-content
-app-login-page-branding
+       calc(100% - 70px)
+
+   HORIZONTAL STRUCTURE:
+
+       Business Area = 30%
+       Design Area   = 40%
+       Login Area    = 30%
+
+   IMPORTANT:
+
+       This layer sits above the Background component.
+
+       Its own background remains transparent.
+================================================================ */
+
+.login-page-1-main
 {
     position:
-        absolute;
-
-    top:
-        28px;
-
-    left:
-        var(
-            --login-page-left-anchor
-        );
-
-    display:
-        block;
-
-    width:
-        330px;
-
-    height:
-        82px;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
+        relative;
 
     z-index:
-        30;
-
-    pointer-events:
-        auto;
-}
-
-
-/* ===========================================================
-   PROMOTIONAL PANEL
-   -----------------------------------------------------------
-   Uses the EXACT SAME left anchor as Branding.
-=========================================================== */
-
-.login-page-1-content
-app-login-page-promotional-panel
-{
-    position:
-        absolute;
-
-    top:
-        185px;
-
-    left:
-        var(
-            --login-page-left-anchor
-        );
+        1;
 
     display:
-        block;
+        flex;
 
-    width:
-        calc(
-            var(--login-page-left-width)
+    flex-direction:
+        row;
+
+    flex:
+        0 0 calc(
+            100%
             -
-            96px
+            70px
         );
+
+    width:
+        100%;
 
     height:
         calc(
             100%
             -
-            245px
+            70px
         );
 
     min-width:
@@ -295,35 +168,61 @@ app-login-page-promotional-panel
     box-sizing:
         border-box;
 
-    z-index:
-        20;
+    overflow:
+        hidden;
 
-    pointer-events:
-        auto;
+    background:
+        transparent;
 }
 
 
 /* ===========================================================
-   LOGIN PANEL
-=========================================================== */
+   BUSINESS AREA
+   -----------------------------------------------------------
+   POSITION:
 
-.login-page-1-content
-app-login-page-login-panel
+       LEFT
+
+   WIDTH:
+
+       30%
+
+   INTERNAL STRUCTURE:
+
+       AppCore Branding = 15%
+       AppCore Panel    = 65%
+       AppCore Clients  = 20%
+
+   IMPORTANT:
+
+       Transparent so the Background remains visible.
+
+   OVERLAP:
+
+       The Business Area is positioned above the Design Area
+       so the Promotional Panel can overlap the Promotional
+       Image.
+================================================================ */
+
+.login-page-1-business-area
 {
     position:
-        absolute;
+        relative;
 
-    top:
-        0;
-
-    right:
-        0;
+    z-index:
+        10;
 
     display:
-        block;
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        0 0 30%;
 
     width:
-        var(--login-page-right-width);
+        30%;
 
     height:
         100%;
@@ -343,66 +242,107 @@ app-login-page-login-panel
     box-sizing:
         border-box;
 
-    z-index:
-        40;
-
-    pointer-events:
-        auto;
-
     overflow:
-        hidden;
+        visible;
+
+    background:
+        transparent;
 }
 
 
 /* ===========================================================
-   POWERED BY
+   APPCORE BRANDING
    -----------------------------------------------------------
-   FIXED PAGE ANCHOR
+   LOCATION:
 
-   Left:
-       48px
+       Business Area
+       Top
 
-   Width:
-       1040px
+   HEIGHT:
 
-   The child owns the internal six-logo geometry.
+       15%
 
-   IMPORTANT:
-   No centering transform.
-   No negative left.
-   No automatic horizontal positioning.
-=========================================================== */
+   ALIGNMENT:
 
-.login-page-1-content
-app-login-page-powered-by
+       Left aligned.
+================================================================ */
+
+.login-page-1-appcore-branding
 {
     position:
-        absolute;
+        relative;
 
-    top:
-        auto;
+    display:
+        flex;
 
-    right:
-        auto;
+    align-items:
+        center;
 
-    left:
-        var(
-            --login-page-powered-by-left
-        );
+    justify-content:
+        flex-start;
 
-    bottom:
-        128px;
+    flex:
+        0 0 15%;
 
+    width:
+        100%;
+
+    height:
+        15%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        16px 22px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    text-align:
+        left;
+}
+
+
+/* ===========================================================
+   APPCORE BRANDING CHILD
+================================================================ */
+
+.login-page-1-appcore-branding
+> app-login-page-branding
+{
     display:
         block;
 
+    flex:
+        0 0 auto;
+
     width:
-        var(
-            --login-page-powered-by-width
-        );
+        auto;
 
     height:
-        150px;
+        100%;
 
     min-width:
         0;
@@ -419,11 +359,235 @@ app-login-page-powered-by
     box-sizing:
         border-box;
 
-    z-index:
-        35;
+    transform:
+        scale(0.82);
 
-    pointer-events:
-        auto;
+    transform-origin:
+        left center;
+}
+
+
+/* ===========================================================
+   APPCORE PANEL
+   -----------------------------------------------------------
+   LOCATION:
+
+       Business Area
+       Center
+
+   HEIGHT:
+
+       65%
+
+   PURPOSE:
+
+       Hosts the AppCore Promotional Panel.
+
+   IMPORTANT:
+
+       The Promotional Panel intentionally extends beyond
+       the 30% Business Area and overlaps the 40% Design Area.
+
+       The Promotional Image remains underneath the panel.
+================================================================ */
+
+.login-page-1-appcore-panel
+{
+    position:
+        relative;
+
+    z-index:
+        20;
+
+    display:
+        flex;
+
+    align-items:
+        stretch;
+
+    justify-content:
+        flex-start;
+
+    flex:
+        0 0 65%;
+
+    width:
+        160%;
+
+    height:
+        65%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        24px 28px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    text-align:
+        left;
+}
+
+
+/* ===========================================================
+   APPCORE CLIENTS
+   -----------------------------------------------------------
+   LOCATION:
+
+       Business Area
+       Bottom 20%
+
+   PURPOSE:
+
+       Hosts the AppCore Client Logo component.
+
+   ALIGNMENT:
+
+       Left aligned.
+
+   IMPORTANT:
+
+       Increased left padding provides additional visual
+       breathing room for the client identity block.
+
+       Overflow is visible so the Client Logo 3D hover
+       effect can extend outside its normal visual bounds.
+================================================================ */
+
+.login-page-1-appcore-clients
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    flex:
+        0 0 20%;
+
+    width:
+        100%;
+
+    height:
+        20%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        10px 18px 10px 32px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    text-align:
+        left;
+}
+
+
+/* ===========================================================
+   CLIENT LOGO COMPONENT
+   -----------------------------------------------------------
+   HOST AREA:
+
+       Full available client section width.
+
+   IMPORTANT:
+
+       The previous host used:
+
+           width:auto;
+           overflow:hidden;
+
+       This caused the Client Logo's 3D hover transform
+       to be clipped.
+
+       The host now provides the complete available width
+       and allows visual overflow.
+
+       This is intentionally a page-level host rule.
+       The Client Logo component itself remains untouched.
+================================================================ */
+
+.login-page-1-appcore-clients
+> app-login-page-client-logo
+{
+    display:
+        block;
+
+    flex:
+        0 0 100%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
 
     overflow:
         visible;
@@ -431,233 +595,762 @@ app-login-page-powered-by
 
 
 /* ===========================================================
-   TEMPORARY TITLE
-=========================================================== */
+   DESIGN AREA
+   -----------------------------------------------------------
+   POSITION:
 
-.login-page-1-content h1
+       CENTER
+
+   WIDTH:
+
+       40%
+
+   INTERNAL STRUCTURE:
+
+       AppCore Image    = 80%
+       AppCore Business = 20%
+
+   IMPORTANT:
+
+       Transparent so the Background remains visible.
+
+   IMPORTANT FOR PROMOTIONAL IMAGE:
+
+       Overflow is visible so a larger Promotional Image is
+       not clipped by the Design Area.
+
+       The Design Area remains underneath the Promotional Panel.
+================================================================ */
+
+.login-page-1-design-area
 {
+    position:
+        relative;
+
+    z-index:
+        1;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        0 0 40%;
+
+    width:
+        40%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
     margin:
-        0 0 12px 0;
+        0;
 
     padding:
         0;
 
-    font-size:
-        32px;
+    box-sizing:
+        border-box;
 
-    font-weight:
-        600;
+    overflow:
+        visible;
 
-    line-height:
-        1.2;
-
-    color:
-        #17304f;
-
-    letter-spacing:
-        -.5px;
+    background:
+        transparent;
 }
 
 
 /* ===========================================================
-   TEMPORARY SUBTITLE
-=========================================================== */
+   APPCORE IMAGE
+   -----------------------------------------------------------
+   LOCATION:
 
-.login-page-1-content p
+       Design Area
+       Top
+
+   HEIGHT:
+
+       80%
+
+   IMPORTANT:
+
+       Overflow is intentionally visible.
+
+       This allows the Promotional Image component to use
+       larger CSS-controlled dimensions.
+
+   STACKING:
+
+       The Promotional Image remains below the Promotional
+       Panel because the Design Area has a lower z-index.
+================================================================ */
+
+.login-page-1-appcore-image
 {
+    position:
+        relative;
+
+    z-index:
+        1;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 80%;
+
+    width:
+        100%;
+
+    height:
+        80%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        16px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        15px;
+
+    font-weight:
+        700;
+
+    text-align:
+        center;
+}
+
+
+/* ===========================================================
+   PROMOTIONAL IMAGE CHILD
+================================================================ */
+
+.login-page-1-appcore-image
+> app-login-page-promotional-image
+{
+    display:
+        block;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
     margin:
         0;
 
     padding:
         0;
 
-    font-size:
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* ===========================================================
+   APPCORE BUSINESS
+   -----------------------------------------------------------
+   LOCATION:
+
+       Design Area
+       Bottom
+
+   HEIGHT:
+
+       20%
+
+   ALIGNMENT:
+
+       CENTER
+================================================================ */
+
+.login-page-1-appcore-business
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 20%;
+
+    width:
+        100%;
+
+    height:
+        20%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
         16px;
 
-    line-height:
-        1.5;
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
 
     color:
-        #64748b;
+        #36547c;
 
-    opacity:
-        .85;
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    text-align:
+        center;
+}
+
+
+/* ===========================================================
+   POWERED BY CHILD
+   -----------------------------------------------------------
+   Explicitly centered inside the AppCore Business section.
+================================================================ */
+
+.login-page-1-appcore-business
+> app-login-page-powered-by
+{
+    display:
+        block;
+
+    flex:
+        0 0 auto;
+
+    width:
+        auto;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0 auto;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===========================================================
+   LOGIN AREA
+   -----------------------------------------------------------
+   POSITION:
+
+       RIGHT
+
+   WIDTH:
+
+       30%
+
+   INTERNAL STRUCTURE:
+
+       AppCore Login        = 75%
+       AppCore Notification = 25%
+
+   PURPOSE:
+
+       The Login Panel remains the primary element while the
+       Notification Area receives a larger lower section.
+================================================================ */
+
+.login-page-1-login-area
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        0 0 30%;
+
+    width:
+        30%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+}
+
+
+/* ===========================================================
+   APPCORE LOGIN
+   -----------------------------------------------------------
+   LOCATION:
+
+       Login Area
+       Top
+
+   HEIGHT:
+
+       75%
+
+   CHANGE:
+
+       80% → 75%
+
+   PURPOSE:
+
+       Provides the Login Panel with 75% of the Login Area
+       while leaving 25% for Notifications.
+================================================================ */
+
+.login-page-1-appcore-login
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 75%;
+
+    width:
+        100%;
+
+    height:
+        75%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        16px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        15px;
+
+    font-weight:
+        700;
+
+    text-align:
+        center;
+}
+
+
+/* ===========================================================
+   APPCORE NOTIFICATION
+   -----------------------------------------------------------
+   LOCATION:
+
+       Login Area
+       Bottom
+
+   HEIGHT:
+
+       25%
+
+   CHANGE:
+
+       20% → 25%
+
+   PURPOSE:
+
+       Gives the Notification Area additional vertical room
+       without changing the Business or Design Areas.
+================================================================ */
+
+.login-page-1-appcore-notification
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 25%;
+
+    width:
+        100%;
+
+    height:
+        25%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        16px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    text-align:
+        center;
+}
+
+
+/* ===========================================================
+   FOOTER
+   -----------------------------------------------------------
+   POSITION:
+
+       PAGE BOTTOM
+
+   HEIGHT:
+
+       70px
+================================================================ */
+
+.login-page-1-footer
+{
+    position:
+        relative;
+
+    z-index:
+        1;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 70px;
+
+    width:
+        100%;
+
+    height:
+        70px;
+
+    min-width:
+        0;
+
+    min-height:
+        70px;
+
+    margin:
+        0;
+
+    padding:
+        12px 16px;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+
+    color:
+        #36547c;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    text-align:
+        center;
 }
 
 
 /* ===========================================================
    TABLET
-=========================================================== */
+================================================================ */
 
 @media
 (
     max-width:1024px
 )
 {
-    /* -------------------------------------------------------
-       Common Tablet Left Alignment
-    ------------------------------------------------------- */
-
-    .login-page-1-content
+    .login-page-1-main
     {
-        --login-page-left-anchor:
-            36px;
-    }
-
-
-    /* -------------------------------------------------------
-       Branding
-       -------------------------------------------------------
-       Same left anchor as Promotional Panel.
-    ------------------------------------------------------- */
-
-    .login-page-1-content
-    app-login-page-branding
-    {
-        top:
-            24px;
-
-        left:
-            var(
-                --login-page-left-anchor
-            );
-
-        width:
-            300px;
-
-        height:
-            76px;
-    }
-
-
-    /* -------------------------------------------------------
-       Promotional Panel
-       -------------------------------------------------------
-       Same left anchor as Branding.
-    ------------------------------------------------------- */
-
-    .login-page-1-content
-    app-login-page-promotional-panel
-    {
-        top:
-            150px;
-
-        left:
-            var(
-                --login-page-left-anchor
-            );
-
-        width:
-            calc(
-                var(--login-page-left-width)
+        flex:
+            0 0 calc(
+                100%
                 -
-                65px
+                70px
             );
 
         height:
             calc(
                 100%
                 -
-                190px
+                70px
             );
     }
 
 
-    /* -------------------------------------------------------
-       Login Panel
-    ------------------------------------------------------- */
+    /* =======================================================
+       BUSINESS AREA - TABLET
+    ======================================================== */
 
-    .login-page-1-content
-    app-login-page-login-panel
+    .login-page-1-business-area
     {
-        width:
-            var(--login-page-right-width);
-
-        height:
-            100%;
-
-        top:
-            0;
-
-        right:
-            0;
-    }
-
-
-    /* -------------------------------------------------------
-       Powered By
-       -------------------------------------------------------
-       Keep the fixed left anchor.
-
-       The child remains responsible for the 1040px
-       six-logo geometry.
-    ------------------------------------------------------- */
-
-    .login-page-1-content
-    app-login-page-powered-by
-    {
-        left:
-            30px;
-
-        bottom:
-            112px;
+        flex-basis:
+            30%;
 
         width:
-            var(
-                --login-page-powered-by-width
-            );
-
-        height:
-            120px;
-
-        min-width:
-            0;
+            30%;
 
         overflow:
             visible;
     }
 
 
-    /* -------------------------------------------------------
-       Temporary Title
-    ------------------------------------------------------- */
+    /* =======================================================
+       DESIGN AREA - TABLET
+    ======================================================== */
 
-    .login-page-1-content h1
+    .login-page-1-design-area
     {
-        font-size:
-            28px;
+        flex-basis:
+            40%;
+
+        width:
+            40%;
+
+        overflow:
+            visible;
     }
 
 
-    /* -------------------------------------------------------
-       Temporary Subtitle
-    ------------------------------------------------------- */
+    /* =======================================================
+       APPCORE IMAGE - TABLET
+    ======================================================== */
 
-    .login-page-1-content p
+    .login-page-1-appcore-image
+    {
+        overflow:
+            visible;
+    }
+
+
+    /* =======================================================
+       CLIENT AREA - TABLET
+       -------------------------------------------------------
+       Keep the enlarged hover-safe host area.
+    ======================================================== */
+
+    .login-page-1-appcore-clients
+    {
+        overflow:
+            visible;
+    }
+
+
+    .login-page-1-appcore-clients
+    > app-login-page-client-logo
+    {
+        width:
+            100%;
+
+        height:
+            100%;
+
+        overflow:
+            visible;
+    }
+
+
+    /* =======================================================
+       LOGIN AREA - TABLET
+    ======================================================== */
+
+    .login-page-1-login-area
+    {
+        flex-basis:
+            30%;
+
+        width:
+            30%;
+    }
+
+
+    /* =======================================================
+       TEMPORARY LABEL SIZE - TABLET
+    ======================================================== */
+
+    .login-page-1-appcore-branding,
+    .login-page-1-appcore-panel,
+    .login-page-1-appcore-clients,
+    .login-page-1-appcore-image,
+    .login-page-1-appcore-business,
+    .login-page-1-appcore-login,
+    .login-page-1-appcore-notification,
+    .login-page-1-footer
     {
         font-size:
-            15px;
+            12px;
     }
 }
 
 
 /* ===========================================================
    MOBILE
-=========================================================== */
+   -----------------------------------------------------------
+   The approved architecture remains unchanged.
+================================================================ */
 
 @media
 (
     max-width:768px
 )
 {
-    /* -------------------------------------------------------
-       Page
-    ------------------------------------------------------- */
-
     .login-page-1
     {
-        height:
-            auto;
+        min-width:
+            0;
 
         min-height:
             100%;
@@ -667,200 +1360,105 @@ app-login-page-powered-by
     }
 
 
-    /* -------------------------------------------------------
-       Content
-    ------------------------------------------------------- */
+    /* =======================================================
+       MAIN BODY - MOBILE ARCHITECTURE TEST
+    ======================================================== */
 
-    .login-page-1-content
+    .login-page-1-main
     {
-        position:
-            relative;
-
-        inset:
-            auto;
+        flex:
+            0 0 calc(
+                100%
+                -
+                70px
+            );
 
         width:
             100%;
 
         height:
-            auto;
-
-        min-height:
-            100%;
-
-        display:
-            block;
-
-        --login-page-left-anchor:
-            24px;
-    }
-
-
-    /* -------------------------------------------------------
-       Branding
-       -------------------------------------------------------
-       Same left anchor as Promotional Panel.
-    ------------------------------------------------------- */
-
-    .login-page-1-content
-    app-login-page-branding
-    {
-        position:
-            absolute;
-
-        top:
-            20px;
-
-        left:
-            var(
-                --login-page-left-anchor
-            );
-
-        width:
-            270px;
-
-        height:
-            68px;
-    }
-
-
-    /* -------------------------------------------------------
-       Promotional Panel
-       -------------------------------------------------------
-       Same left anchor as Branding.
-    ------------------------------------------------------- */
-
-    .login-page-1-content
-    app-login-page-promotional-panel
-    {
-        position:
-            relative;
-
-        top:
-            auto;
-
-        left:
-            auto;
-
-        width:
             calc(
                 100%
                 -
-                48px
+                70px
             );
-
-        height:
-            auto;
-
-        min-height:
-            520px;
-
-        margin:
-            125px 24px 0 24px;
-        
-    }
-
-
-    /* -------------------------------------------------------
-       Powered By
-       -------------------------------------------------------
-       Mobile becomes fluid.
-    ------------------------------------------------------- */
-
-    .login-page-1-content
-    app-login-page-powered-by
-    {
-        position:
-            relative;
-
-        top:
-            auto;
-
-        right:
-            auto;
-
-        left:
-            auto;
-
-        bottom:
-            auto;
-
-        width:
-            calc(
-                100%
-                -
-                48px
-            );
-
-        height:
-            110px;
 
         min-width:
+            900px;
+
+        min-height:
             0;
 
-        margin:
-            24px 24px 0 24px;
+        overflow:
+            hidden;
+    }
+
+
+    /* =======================================================
+       DESIGN AREA - MOBILE
+    ======================================================== */
+
+    .login-page-1-design-area
+    {
+        overflow:
+            visible;
+    }
+
+
+    /* =======================================================
+       APPCORE IMAGE - MOBILE
+    ======================================================== */
+
+    .login-page-1-appcore-image
+    {
+        overflow:
+            visible;
+    }
+
+
+    /* =======================================================
+       CLIENT AREA - MOBILE
+       -------------------------------------------------------
+       Keep the Client Logo hover area open.
+    ======================================================== */
+
+    .login-page-1-appcore-clients
+    {
+        overflow:
+            visible;
+    }
+
+
+    .login-page-1-appcore-clients
+    > app-login-page-client-logo
+    {
+        width:
+            100%;
+
+        height:
+            100%;
 
         overflow:
             visible;
     }
 
 
-    /* -------------------------------------------------------
-       Login Panel
-    ------------------------------------------------------- */
+    /* =======================================================
+       FOOTER - MOBILE
+    ======================================================== */
 
-    .login-page-1-content
-    app-login-page-login-panel
+    .login-page-1-footer
     {
-        position:
-            relative;
-
-        top:
-            auto;
-
-        right:
-            auto;
-
-        left:
-            auto;
+        flex:
+            0 0 70px;
 
         width:
-            calc(
-                100%
-                -
-                48px
-            );
+            100%;
 
         height:
-            auto;
+            70px;
 
         min-height:
-            650px;
-
-        margin:
-            40px 24px 40px 24px;
-    }
-
-
-    /* -------------------------------------------------------
-       Temporary Title
-    ------------------------------------------------------- */
-
-    .login-page-1-content h1
-    {
-        font-size:
-            24px;
-    }
-
-
-    /* -------------------------------------------------------
-       Temporary Subtitle
-    ------------------------------------------------------- */
-
-    .login-page-1-content p
-    {
-        font-size:
-            14px;
+            70px;
     }
 }

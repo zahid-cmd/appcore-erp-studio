@@ -7,20 +7,67 @@ export interface LoginComponent3
     id:
         number;
 
+
+    //===========================================================
+    // Section 1 - General Information
+    //===========================================================
+
     code:
         string;
 
     name:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    tabName:
         string;
+
+    icon:
+        string;
+
+
+    //===========================================================
+    // Section 2 - Component Information
+    //===========================================================
+
+    folderName:
+        string;
+
+    featureFolder:
+        string;
+
+    featureSubFolder:
+        string;
+
+    componentPath:
+        string;
+
+
+    //===========================================================
+    // Section 3 - File & Registration Information
+    //===========================================================
+
+    registrationFilePath:
+        string;
+
+    htmlFilePath:
+        string;
+
+    tsFilePath:
+        string;
+
+    cssFilePath:
+        string;
+
+
+    //===========================================================
+    // Section 4 - Status & Additional Information
+    //===========================================================
+
+    displayOrder:
+        number;
 
     status:
-        string;
+        boolean;
 
     remarks:
         string;
@@ -34,17 +81,63 @@ export interface LoginComponent3
 
 export interface CreateLoginComponent3
 {
+    //===========================================================
+    // Section 1 - General Information
+    //===========================================================
+
     name:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    tabName:
         string;
+
+    icon:
+        string;
+
+
+    //===========================================================
+    // Section 2 - Component Information
+    //===========================================================
+
+    folderName:
+        string;
+
+    featureFolder:
+        string;
+
+    featureSubFolder:
+        string;
+
+    componentPath:
+        string;
+
+
+    //===========================================================
+    // Section 3 - File & Registration Information
+    //===========================================================
+
+    registrationFilePath:
+        string;
+
+    htmlFilePath:
+        string;
+
+    tsFilePath:
+        string;
+
+    cssFilePath:
+        string;
+
+
+    //===========================================================
+    // Section 4 - Status & Additional Information
+    //===========================================================
+
+    displayOrder:
+        number;
 
     status:
-        string;
+        boolean;
 
     remarks:
         string;
@@ -61,17 +154,64 @@ export interface UpdateLoginComponent3
     id:
         number;
 
+
+    //===========================================================
+    // Section 1 - General Information
+    //===========================================================
+
     name:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    tabName:
         string;
+
+    icon:
+        string;
+
+
+    //===========================================================
+    // Section 2 - Component Information
+    //===========================================================
+
+    folderName:
+        string;
+
+    featureFolder:
+        string;
+
+    featureSubFolder:
+        string;
+
+    componentPath:
+        string;
+
+
+    //===========================================================
+    // Section 3 - File & Registration Information
+    //===========================================================
+
+    registrationFilePath:
+        string;
+
+    htmlFilePath:
+        string;
+
+    tsFilePath:
+        string;
+
+    cssFilePath:
+        string;
+
+
+    //===========================================================
+    // Section 4 - Status & Additional Information
+    //===========================================================
+
+    displayOrder:
+        number;
 
     status:
-        string;
+        boolean;
 
     remarks:
         string;

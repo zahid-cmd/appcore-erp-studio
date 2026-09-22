@@ -272,6 +272,10 @@ public class LoginPagesRepository
         // System Fields
         //=======================================================
 
+        entity.Status =
+            false;
+
+
         entity.IsActive =
             true;
 
@@ -387,76 +391,150 @@ public class LoginPagesRepository
         }
 
 
-        existing.Code =
-            entity.Code;
+        //=======================================================
+        // Transaction
+        //=======================================================
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
 
-        existing.Name =
-            entity.Name;
+        try
+        {
+            //===================================================
+            // Activate Selected Login Page
+            //===================================================
 
-
-        existing.PageKey =
-            entity.PageKey;
-
-
-        existing.Title =
-            entity.Title;
-
-
-        existing.Subtitle =
-            entity.Subtitle;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
-            userId;
-
-
-        existing.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+            if
+            (
+                entity.Status
+            )
             {
-                Module =
-                    "InfrastructureControl",
+                var activePages =
+                    await _context
+                        .Set<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.LoginPages>()
+                        .Where(
+                            x =>
+                                x.Id != entity.Id
+                                &&
+                                !x.IsDeleted
+                                &&
+                                x.Status
+                        )
+                        .ToListAsync();
 
-                EntityName =
-                    "LoginPages",
 
-                EntityId =
-                    existing.Id,
+                foreach
+                (
+                    var activePage
+                    in
+                    activePages
+                )
+                {
+                    activePage.Status =
+                        false;
 
-                ActivityType =
-                    "Update",
+                    activePage.ModifiedBy =
+                        userId;
 
-                ActivityTitle =
-                    "LoginPages Updated",
-
-                ActivityDescription =
-                    $"LoginPages '{existing.Name}' was updated.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                    activePage.ModifiedDate =
+                        DateTime.UtcNow;
+                }
             }
-        );
 
 
-        await _context.SaveChangesAsync();
+            //===================================================
+            // Update Selected Login Page
+            //===================================================
+
+            existing.Code =
+                entity.Code;
+
+
+            existing.Name =
+                entity.Name;
+
+
+            existing.PageKey =
+                entity.PageKey;
+
+
+            existing.Title =
+                entity.Title;
+
+
+            existing.Subtitle =
+                entity.Subtitle;
+
+
+            existing.Status =
+                entity.Status;
+
+
+            existing.Remarks =
+                entity.Remarks;
+
+
+            existing.ModifiedBy =
+                userId;
+
+
+            existing.ModifiedDate =
+                DateTime.UtcNow;
+
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "InfrastructureControl",
+
+                    EntityName =
+                        "LoginPages",
+
+                    EntityId =
+                        existing.Id,
+
+                    ActivityType =
+                        "Update",
+
+                    ActivityTitle =
+                        "LoginPages Updated",
+
+                    ActivityDescription =
+                        $"LoginPages '{existing.Name}' was updated.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        DateTime.UtcNow
+                }
+            );
+
+
+            //===================================================
+            // Save
+            //===================================================
+
+            await _context.SaveChangesAsync();
+
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 
@@ -497,6 +575,10 @@ public class LoginPagesRepository
 
         entity.IsDeleted =
             true;
+
+
+        entity.Status =
+            false;
 
 
         entity.IsActive =
@@ -583,59 +665,131 @@ public class LoginPagesRepository
         }
 
 
-        entity.IsDeleted =
-            false;
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
 
-        entity.IsActive =
-            true;
+        try
+        {
+            //===================================================
+            // Restore Selected Login Page
+            //===================================================
+
+            entity.IsDeleted =
+                false;
 
 
-        entity.ModifiedBy =
-            userId;
+            //===================================================
+            // Restored Page Becomes Active
+            //===================================================
+
+            entity.Status =
+                true;
 
 
-        entity.ModifiedDate =
-            DateTime.UtcNow;
+            entity.IsActive =
+                true;
 
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+            //===================================================
+            // Deactivate Other Active Login Pages
+            //===================================================
+
+            var activePages =
+                await _context
+                    .Set<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.LoginPages>()
+                    .Where(
+                        x =>
+                            x.Id != entity.Id
+                            &&
+                            !x.IsDeleted
+                            &&
+                            x.Status
+                    )
+                    .ToListAsync();
+
+
+            foreach
+            (
+                var activePage
+                in
+                activePages
+            )
             {
-                Module =
-                    "InfrastructureControl",
+                activePage.Status =
+                    false;
 
-                EntityName =
-                    "LoginPages",
+                activePage.ModifiedBy =
+                    userId;
 
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Restore",
-
-                ActivityTitle =
-                    "LoginPages Restored",
-
-                ActivityDescription =
-                    $"LoginPages '{entity.Name}' was restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                activePage.ModifiedDate =
+                    DateTime.UtcNow;
             }
-        );
 
 
-        await _context.SaveChangesAsync();
+            //===================================================
+            // System Fields
+            //===================================================
+
+            entity.ModifiedBy =
+                userId;
 
 
-        return true;
+            entity.ModifiedDate =
+                DateTime.UtcNow;
+
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "InfrastructureControl",
+
+                    EntityName =
+                        "LoginPages",
+
+                    EntityId =
+                        entity.Id,
+
+                    ActivityType =
+                        "Restore",
+
+                    ActivityTitle =
+                        "LoginPages Restored",
+
+                    ActivityDescription =
+                        $"LoginPages '{entity.Name}' was restored.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        DateTime.UtcNow
+                }
+            );
+
+
+            await _context.SaveChangesAsync();
+
+
+            await transaction.CommitAsync();
+
+
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 

@@ -1,0 +1,55 @@
+<!-- ===========================================================
+     LOGIN PAGE 2 — PROMOTIONAL IMAGE DEEP
+     -----------------------------------------------------------
+     PURPOSE:
+
+         Clean deep promotional image container.
+
+     IMPORTANT:
+
+         This component contains ONLY the promotional image.
+
+         No:
+         - Border
+         - Background
+         - Card
+         - Shadow
+         - Overlay
+         - Additional content
+
+         Image sizing and positioning are controlled by the
+         component configuration.
+=========================================================== -->
+
+
+<div
+    class="login-page-promotional-image-deep"
+    *ngIf="config.visible"
+>
+
+
+    <!-- =======================================================
+         PROMOTIONAL IMAGE
+    ======================================================== -->
+
+    <img
+        *ngIf="config.imageUrl"
+        class="promotional-image-deep"
+        [src]="config.imageUrl"
+        [style]="imageStyle"
+        [alt]="config.altText"
+    >
+
+
+    <!-- =======================================================
+         EMPTY IMAGE STATE
+    ======================================================== -->
+
+    <div
+        *ngIf="!config.imageUrl"
+        class="promotional-image-deep-empty"
+    >
+    </div>
+
+
+</div>

@@ -31,6 +31,12 @@ import
 }
 from '../../login-pages/login-page-1/login-page-1';
 
+import
+{
+    LoginPage2
+}
+from '../../login-pages/login-page-2/login-page-2';
+
 
 
 //===============================================================
@@ -49,7 +55,9 @@ from '../../login-pages/login-page-1/login-page-1';
     [
         CommonModule,
 
-        LoginPage1
+        LoginPage1,
+
+        LoginPage2
     ],
 
     templateUrl:
@@ -173,13 +181,28 @@ implements OnInit
 
 
     //===========================================================
+    // Login Page 2
+    //===========================================================
+
+    get isLoginPage2():
+        boolean
+    {
+        return this.loginPageId ===
+            2;
+    }
+
+
+
+    //===========================================================
     // Login Page Available
     //===========================================================
 
     get hasLoginPage():
         boolean
     {
-        return this.isLoginPage1;
+        return this.isLoginPage1
+            ||
+            this.isLoginPage2;
     }
 
 

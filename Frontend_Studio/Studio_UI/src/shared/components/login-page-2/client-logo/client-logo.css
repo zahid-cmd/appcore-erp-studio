@@ -1,0 +1,1494 @@
+/* ===========================================================
+   LOGIN PAGE — CLIENT LOGO
+   -----------------------------------------------------------
+   PREMIUM CLIENT IDENTITY
+   -----------------------------------------------------------
+
+   PURPOSE:
+
+       Displays the client/company identity as a premium
+       combination of:
+
+           LEFT:
+               3D Client Logo
+
+           CENTER:
+               Vertical Separator
+
+           RIGHT:
+               Client Name
+
+   VISUAL STRUCTURE:
+
+       ┌──────────────────────────────────────────────────┐
+       │                                                  │
+       │    [ 3D LOGO ]    │    CLIENT                   │
+       │                   │    Moto Zone                │
+       │                   │    ─────────                │
+       │                                                  │
+       └──────────────────────────────────────────────────┘
+
+   IMPORTANT:
+
+       This stylesheet controls ONLY the Client Logo component.
+
+       It does NOT control:
+
+       - Page layout
+       - Business Area
+       - AppCore Branding
+       - AppCore Panel
+       - Background
+       - Footer
+       - Other Login Page sections
+
+   VISUAL EFFECT:
+
+       Normal:
+           - Floating logo
+           - Soft depth
+           - Premium typography
+           - Vertical identity separator
+
+       Hover:
+           - Entire identity lifts slightly
+           - Logo receives 3D tilt
+           - Logo gains depth
+           - Shadow becomes stronger
+           - Separator becomes brighter
+           - Client name receives subtle emphasis
+=========================================================== */
+
+
+/* ===========================================================
+   GLOBAL CLIENT LOGO SIZE CONTROLLER
+   -----------------------------------------------------------
+   THIS IS THE ONLY VALUE THAT CONTROLS THE ACTUAL LOGO SIZE.
+
+   Change ONLY:
+
+       --client-logo-image-size
+
+   Examples:
+
+       160px = compact
+       180px = current
+       200px = large
+       220px = very large
+=========================================================== */
+
+:host
+{
+    --client-logo-image-size:
+        180px;
+
+    --client-logo-separator-height:
+        62px;
+
+    --client-logo-separator-color:
+        rgba(
+            55,
+            91,
+            151,
+            .28
+        );
+
+    --client-logo-accent:
+        #3158d4;
+}
+
+
+/* ===========================================================
+   COMPONENT HOST
+=========================================================== */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    background:
+        transparent;
+}
+
+
+/* ===========================================================
+   CLIENT LOGO ROOT
+   -----------------------------------------------------------
+   Transparent outer environment.
+
+   Provides the main perspective.
+=========================================================== */
+
+.login-page-client-logo
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+
+    perspective:
+        1100px;
+
+    perspective-origin:
+        left center;
+}
+
+
+/* ===========================================================
+   CLIENT IDENTITY HOLDER
+   -----------------------------------------------------------
+   Main horizontal identity structure.
+
+       LOGO
+         +
+       SEPARATOR
+         +
+       NAME
+
+   No visible card is used.
+=========================================================== */
+
+.client-logo-holder
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        auto;
+
+    max-width:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+
+    perspective:
+        1100px;
+
+    perspective-origin:
+        left center;
+
+    transform:
+        translate3d(
+            0,
+            0,
+            0
+        );
+
+    transition:
+        transform 420ms cubic-bezier(
+            .22,
+            .61,
+            .36,
+            1
+        );
+
+    will-change:
+        transform;
+}
+
+
+/* ===========================================================
+   CLIENT IDENTITY HOVER
+   -----------------------------------------------------------
+   The complete identity gently lifts toward the viewer.
+=========================================================== */
+
+.client-logo-holder:hover
+{
+    transform:
+        translate3d(
+            3px,
+            -3px,
+            12px
+        );
+}
+
+
+/* ===========================================================
+   CLIENT LOGO VISUAL AREA
+   -----------------------------------------------------------
+   LEFT SIDE.
+
+   This area is responsible only for the 3D logo.
+=========================================================== */
+
+.client-logo-visual
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 auto;
+
+    width:
+        var(--client-logo-image-size);
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+
+    perspective:
+        900px;
+
+    perspective-origin:
+        center center;
+}
+
+
+/* ===========================================================
+   CLIENT LOGO IMAGE HOLDER
+   -----------------------------------------------------------
+   3D STAGE.
+
+   Completely transparent.
+
+   No:
+       - Card
+       - Background
+       - Border
+       - Holder surface
+=========================================================== */
+
+.client-logo-image-holder
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+
+    perspective:
+        900px;
+
+    perspective-origin:
+        center center;
+
+    transform-style:
+        preserve-3d;
+
+    animation:
+        client-logo-floating
+        4.8s
+        ease-in-out
+        infinite;
+
+    will-change:
+        transform;
+}
+
+
+/* ===========================================================
+   CLIENT LOGO IMAGE
+   -----------------------------------------------------------
+   ACTUAL PNG.
+
+   The CSS variable remains the master image-size controller.
+=========================================================== */
+
+.client-logo-image
+{
+    display:
+        block;
+
+    width:
+        var(--client-logo-image-size) !important;
+
+    height:
+        auto !important;
+
+    max-width:
+        100%;
+
+    max-height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        0;
+
+    outline:
+        none;
+
+    box-sizing:
+        border-box;
+
+    object-fit:
+        contain;
+
+    object-position:
+        center;
+
+    vertical-align:
+        middle;
+
+    background:
+        transparent;
+
+    transform:
+        translateZ(0)
+        rotateX(0deg)
+        rotateY(0deg)
+        scale(1);
+
+    transform-origin:
+        center center;
+
+    transform-style:
+        preserve-3d;
+
+    filter:
+        drop-shadow(
+            0
+            7px
+            9px
+            rgba(
+                20,
+                42,
+                85,
+                .15
+            )
+        );
+
+    cursor:
+        pointer;
+
+    transition:
+        transform 460ms cubic-bezier(
+            .22,
+            .61,
+            .36,
+            1
+        ),
+        filter 460ms cubic-bezier(
+            .22,
+            .61,
+            .36,
+            1
+        );
+
+    will-change:
+        transform,
+        filter;
+}
+
+
+/* ===========================================================
+   CLIENT LOGO HOVER
+   -----------------------------------------------------------
+   Premium restrained 3D tilt.
+
+   The logo does NOT spin.
+
+   The movement is designed for a corporate login screen.
+=========================================================== */
+
+.client-logo-holder:hover
+.client-logo-image
+{
+    transform:
+        translateZ(24px)
+        rotateX(-4deg)
+        rotateY(7deg)
+        scale(1.06);
+
+    filter:
+        drop-shadow(
+            7px
+            13px
+            15px
+            rgba(
+                20,
+                42,
+                85,
+                .24
+            )
+        )
+        drop-shadow(
+            0
+            0
+            8px
+            rgba(
+                49,
+                88,
+                212,
+                .10
+            )
+        );
+}
+
+
+/* ===========================================================
+   CLIENT LOGO ACTIVE
+=========================================================== */
+
+.client-logo-image:active
+{
+    transform:
+        translateZ(8px)
+        rotateX(-2deg)
+        rotateY(3deg)
+        scale(1.025);
+
+    filter:
+        drop-shadow(
+            4px
+            7px
+            9px
+            rgba(
+                20,
+                42,
+                85,
+                .20
+            )
+        );
+}
+
+
+/* ===========================================================
+   VERTICAL SEPARATOR
+   -----------------------------------------------------------
+   Visual bridge between the logo and client identity.
+=========================================================== */
+
+.client-logo-separator
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 24px;
+
+    width:
+        24px;
+
+    height:
+        var(--client-logo-separator-height);
+
+    min-width:
+        24px;
+
+    margin:
+        0 8px;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    background:
+        transparent;
+
+    position:
+        relative;
+}
+
+
+/* ===========================================================
+   SEPARATOR LINE
+   -----------------------------------------------------------
+   Main vertical line.
+=========================================================== */
+
+.client-logo-separator-line
+{
+    display:
+        block;
+
+    width:
+        1px;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    background:
+        linear-gradient(
+            to bottom,
+            transparent 0%,
+            var(--client-logo-separator-color) 18%,
+            #3158d4 50%,
+            var(--client-logo-separator-color) 82%,
+            transparent 100%
+        );
+
+    opacity:
+        .9;
+
+    transform:
+        scaleY(.92);
+
+    transition:
+        transform 420ms ease,
+        opacity 420ms ease,
+        box-shadow 420ms ease;
+}
+
+
+/* ===========================================================
+   SEPARATOR TOP / BOTTOM ACCENTS
+   -----------------------------------------------------------
+   Tiny horizontal details create a more engineered identity
+   marker without creating a card.
+=========================================================== */
+
+.client-logo-separator::before,
+.client-logo-separator::after
+{
+    content:
+        '';
+
+    position:
+        absolute;
+
+    left:
+        50%;
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border-radius:
+        50%;
+
+    background:
+        #3158d4;
+
+    transform:
+        translateX(-50%);
+
+    box-shadow:
+        0
+        0
+        8px
+        rgba(
+            49,
+            88,
+            212,
+            .22
+        );
+
+    transition:
+        transform 420ms ease,
+        box-shadow 420ms ease;
+}
+
+
+.client-logo-separator::before
+{
+    top:
+        -2px;
+}
+
+
+.client-logo-separator::after
+{
+    bottom:
+        -2px;
+}
+
+
+/* ===========================================================
+   SEPARATOR HOVER
+=========================================================== */
+
+.client-logo-holder:hover
+.client-logo-separator-line
+{
+    opacity:
+        1;
+
+    transform:
+        scaleY(1);
+
+    box-shadow:
+        0
+        0
+        8px
+        rgba(
+            49,
+            88,
+            212,
+            .16
+        );
+}
+
+
+.client-logo-holder:hover
+.client-logo-separator::before
+{
+    transform:
+        translateX(-50%)
+        scale(1.35);
+
+    box-shadow:
+        0
+        0
+        10px
+        rgba(
+            49,
+            88,
+            212,
+            .35
+        );
+}
+
+
+.client-logo-holder:hover
+.client-logo-separator::after
+{
+    transform:
+        translateX(-50%)
+        scale(1.35);
+
+    box-shadow:
+        0
+        0
+        10px
+        rgba(
+            49,
+            88,
+            212,
+            .35
+        );
+}
+
+
+/* ===========================================================
+   CLIENT NAME AREA
+   -----------------------------------------------------------
+   RIGHT SIDE.
+
+   The client name is treated as a premium identity rather
+   than a simple text label.
+=========================================================== */
+
+.client-logo-name-area
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        center;
+
+    flex:
+        0 1 auto;
+
+    min-width:
+        110px;
+
+    max-width:
+        240px;
+
+    min-height:
+        60px;
+
+    margin:
+        0;
+
+    padding:
+        0 4px 0 0;
+
+    box-sizing:
+        border-box;
+
+    background:
+        transparent;
+
+    text-align:
+        left;
+
+    transform:
+        translateZ(0);
+
+    transition:
+        transform 420ms cubic-bezier(
+            .22,
+            .61,
+            .36,
+            1
+        );
+}
+
+
+/* ===========================================================
+   CLIENT NAME AREA HOVER
+=========================================================== */
+
+.client-logo-holder:hover
+.client-logo-name-area
+{
+    transform:
+        translateZ(10px);
+}
+
+
+/* ===========================================================
+   CLIENT MICRO LABEL
+=========================================================== */
+
+.client-logo-name-label
+{
+    display:
+        block;
+
+    margin:
+        0 0 5px 0;
+
+    padding:
+        0;
+
+    color:
+        #7185a7;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        8px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        3px;
+
+    text-transform:
+        uppercase;
+
+    white-space:
+        nowrap;
+
+    box-sizing:
+        border-box;
+
+    transition:
+        color 300ms ease;
+}
+
+
+/* ===========================================================
+   CLIENT NAME
+   -----------------------------------------------------------
+   Main client identity.
+=========================================================== */
+
+.client-logo-name
+{
+    display:
+        block;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #182c56;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        23px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.05;
+
+    letter-spacing:
+        .3px;
+
+    text-transform:
+        none;
+
+    white-space:
+        nowrap;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+
+    text-shadow:
+        0
+        2px
+        8px
+        rgba(
+            30,
+            55,
+            100,
+            .06
+        );
+
+    transition:
+        color 300ms ease,
+        transform 300ms ease,
+        text-shadow 300ms ease;
+}
+
+
+/* ===========================================================
+   CLIENT NAME HOVER
+=========================================================== */
+
+.client-logo-holder:hover
+.client-logo-name
+{
+    color:
+        #3158d4;
+
+    transform:
+        translateX(2px);
+
+    text-shadow:
+        0
+        3px
+        10px
+        rgba(
+            49,
+            88,
+            212,
+            .14
+        );
+}
+
+
+/* ===========================================================
+   CLIENT NAME ACCENT
+   -----------------------------------------------------------
+   Small signature line under the client name.
+=========================================================== */
+
+.client-logo-name-accent
+{
+    display:
+        block;
+
+    width:
+        28px;
+
+    height:
+        2px;
+
+    margin:
+        8px 0 0 0;
+
+    padding:
+        0;
+
+    border-radius:
+        2px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #3158d4 0%,
+            #78a0ff 100%
+        );
+
+    box-shadow:
+        0
+        2px
+        6px
+        rgba(
+            49,
+            88,
+            212,
+            .16
+        );
+
+    transform-origin:
+        left center;
+
+    transition:
+        width 360ms cubic-bezier(
+            .22,
+            .61,
+            .36,
+            1
+        ),
+        box-shadow 360ms ease;
+}
+
+
+/* ===========================================================
+   CLIENT NAME ACCENT HOVER
+=========================================================== */
+
+.client-logo-holder:hover
+.client-logo-name-accent
+{
+    width:
+        48px;
+
+    box-shadow:
+        0
+        3px
+        10px
+        rgba(
+            49,
+            88,
+            212,
+            .28
+        );
+}
+
+
+/* ===========================================================
+   FLOATING ANIMATION
+   -----------------------------------------------------------
+   Very subtle vertical movement.
+
+   This animation is applied to the logo stage only.
+=========================================================== */
+
+@keyframes client-logo-floating
+{
+    0%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            );
+    }
+
+    50%
+    {
+        transform:
+            translate3d(
+                0,
+                -4px,
+                0
+            );
+    }
+
+    100%
+    {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            );
+    }
+}
+
+
+/* ===========================================================
+   EMPTY LOGO STATE
+=========================================================== */
+
+.client-logo-empty
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    color:
+        #8a9ab2;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        11px;
+
+    font-weight:
+        500;
+
+    letter-spacing:
+        1px;
+
+    text-align:
+        center;
+
+    background:
+        transparent;
+}
+
+
+/* ===========================================================
+   TABLET
+=========================================================== */
+
+@media
+(
+    max-width:1024px
+)
+{
+    :host
+    {
+        --client-logo-image-size:
+            155px;
+
+        --client-logo-separator-height:
+            54px;
+    }
+
+
+    .login-page-client-logo
+    {
+        justify-content:
+            flex-start;
+
+        perspective:
+            900px;
+    }
+
+
+    .client-logo-holder
+    {
+        perspective:
+            900px;
+    }
+
+
+    .client-logo-visual
+    {
+        width:
+            var(--client-logo-image-size);
+    }
+
+
+    .client-logo-image-holder
+    {
+        perspective:
+            800px;
+    }
+
+
+    .client-logo-name-area
+    {
+        min-width:
+            100px;
+
+        max-width:
+            190px;
+    }
+
+
+    .client-logo-name
+    {
+        font-size:
+            20px;
+    }
+
+
+    .client-logo-holder:hover
+    .client-logo-image
+    {
+        transform:
+            translateZ(18px)
+            rotateX(-3deg)
+            rotateY(6deg)
+            scale(1.05);
+    }
+}
+
+
+/* ===========================================================
+   MOBILE
+=========================================================== */
+
+@media
+(
+    max-width:768px
+)
+{
+    :host
+    {
+        --client-logo-image-size:
+            140px;
+
+        --client-logo-separator-height:
+            48px;
+    }
+
+
+    .login-page-client-logo
+    {
+        justify-content:
+            flex-start;
+
+        perspective:
+            800px;
+    }
+
+
+    .client-logo-holder
+    {
+        perspective:
+            800px;
+    }
+
+
+    .client-logo-visual
+    {
+        width:
+            var(--client-logo-image-size);
+    }
+
+
+    .client-logo-image-holder
+    {
+        perspective:
+            700px;
+    }
+
+
+    .client-logo-separator
+    {
+        flex-basis:
+            18px;
+
+        width:
+            18px;
+
+        min-width:
+            18px;
+
+        margin:
+            0 5px;
+    }
+
+
+    .client-logo-name-area
+    {
+        min-width:
+            90px;
+
+        max-width:
+            160px;
+
+        min-height:
+            48px;
+    }
+
+
+    .client-logo-name-label
+    {
+        font-size:
+            7px;
+
+        letter-spacing:
+            2px;
+    }
+
+
+    .client-logo-name
+    {
+        font-size:
+            17px;
+    }
+
+
+    .client-logo-name-accent
+    {
+        margin-top:
+            6px;
+    }
+
+
+    .client-logo-holder:hover
+    .client-logo-image
+    {
+        transform:
+            translateZ(12px)
+            rotateX(-2deg)
+            rotateY(4deg)
+            scale(1.04);
+    }
+}
+
+
+/* ===========================================================
+   REDUCED MOTION
+   -----------------------------------------------------------
+   Accessibility support.
+=========================================================== */
+
+@media
+(
+    prefers-reduced-motion: reduce
+)
+{
+    .client-logo-holder
+    {
+        transition:
+            none;
+    }
+
+
+    .client-logo-image-holder
+    {
+        animation:
+            none;
+    }
+
+
+    .client-logo-image,
+    .client-logo-name-area,
+    .client-logo-name,
+    .client-logo-name-accent,
+    .client-logo-separator-line,
+    .client-logo-separator::before,
+    .client-logo-separator::after
+    {
+        transition:
+            none;
+    }
+
+
+    .client-logo-holder:hover
+    {
+        transform:
+            none;
+    }
+
+
+    .client-logo-holder:hover
+    .client-logo-image
+    {
+        transform:
+            none;
+    }
+}

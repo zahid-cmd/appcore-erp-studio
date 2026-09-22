@@ -1,136 +1,162 @@
-import 
-{ 
-    Routes 
-} 
-from '@angular/router'; 
- 
-import 
-{ 
-    LayoutComponent 
-} 
-from '../core/layout/layout'; 
+import
+{
+    Routes
+}
+from '@angular/router';
 
-import 
-{ 
-    DashboardComponent 
-} 
-from '../core/dashboard/dashboard'; 
- 
-export const routes: 
-    Routes = 
-[ 
-    { 
-        path:'', 
- 
-        component: 
-            LayoutComponent, 
- 
-        children: 
-        [ 
-            // Fall Back 
-            { 
-                path:'', 
- 
-                redirectTo: 
-                    'dashboard', 
- 
-                pathMatch:'full' 
-            }, 
+import
+{
+    LayoutComponent
+}
+from '../core/layout/layout';
 
-            //=========================================================== 
-            // Dashboard 
-            //=========================================================== 
+import
+{
+    DashboardComponent
+}
+from '../core/dashboard/dashboard';
 
-            { 
-                path:'dashboard', 
- 
-                component: 
-                    DashboardComponent, 
- 
-                data: 
-                { 
-                    breadcrumb:'Dashboard' 
-                } 
-            }, 
- 
-            // AUTO-BEGIN : MOD-004 
- 
-            //=========================================================== 
-            // Accounts & Finance 
-            //=========================================================== 
- 
-            { 
-                path:'accounts-finance', 
- 
-                data: 
-                { 
-                    breadcrumb:'Accounts & Finance' 
-                }, 
- 
-                loadChildren:() => 
-                    import( 
-                        '../features/accounts-finance/routes/accounts-finance.routes' 
-                    ) 
-                    .then( 
-                        m => 
-                            m.accountsFinanceRoutes 
-                    ) 
-            }, 
- 
-            // AUTO-END : MOD-004 
- 
-            // AUTO-BEGIN : MOD-003 
- 
-            //=========================================================== 
-            // Settings 
-            //=========================================================== 
- 
-            { 
-                path:'settings', 
- 
-                data: 
-                { 
-                    breadcrumb:'Settings' 
-                }, 
- 
-                loadChildren:() => 
-                    import( 
-                        '../features/settings/routes/settings.routes' 
-                    ) 
-                    .then( 
-                        m => 
-                            m.settingsRoutes 
-                    ) 
-            }, 
- 
-            // AUTO-END : MOD-003 
- 
-            // AUTO-BEGIN : MOD-002 
- 
-            //=========================================================== 
-            // Infrastructure Control 
-            //=========================================================== 
- 
-            { 
-                path:'infrastructure-control', 
- 
-                data: 
-                { 
-                    breadcrumb:'Infrastructure Control' 
-                }, 
- 
-                loadChildren:() => 
-                    import( 
-                        '../features/infrastructure-control/routes/infrastructure-control.routes' 
-                    ) 
-                    .then( 
-                        m => 
-                            m.infrastructureControlRoutes 
-                    ) 
-            }, 
- 
-            // AUTO-END : MOD-002 
- 
+import
+{
+    LoginPage1
+}
+from '../shared/login-pages/login-page-1/login-page-1';
+
+
+
+export const routes:
+    Routes =
+[
+    //===========================================================
+    // Authentication
+    //===========================================================
+
+    {
+        path:'login',
+
+        component:
+            LoginPage1
+    },
+
+
+    {
+        path:'',
+
+        component:
+            LayoutComponent,
+
+        children:
+        [
+            // Fall Back
+
+            {
+                path:'',
+
+                redirectTo:
+                    'dashboard',
+
+                pathMatch:'full'
+            },
+
+
+            //===========================================================
+            // Dashboard
+            //===========================================================
+
+            {
+                path:'dashboard',
+
+                component:
+                    DashboardComponent,
+
+                data:
+                {
+                    breadcrumb:'Dashboard'
+                }
+            },
+
+
+            // AUTO-BEGIN : MOD-004
+
+            //===========================================================
+            // Accounts & Finance
+            //===========================================================
+
+            {
+                path:'accounts-finance',
+
+                data:
+                {
+                    breadcrumb:'Accounts & Finance'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/accounts-finance/routes/accounts-finance.routes'
+                    )
+                    .then(
+                        m =>
+                            m.accountsFinanceRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-004
+
+
+            // AUTO-BEGIN : MOD-003
+
+            //===========================================================
+            // Settings
+            //===========================================================
+
+            {
+                path:'settings',
+
+                data:
+                {
+                    breadcrumb:'Settings'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/settings/routes/settings.routes'
+                    )
+                    .then(
+                        m =>
+                            m.settingsRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-003
+
+
+            // AUTO-BEGIN : MOD-002
+
+            //===========================================================
+            // Infrastructure Control
+            //===========================================================
+
+            {
+                path:'infrastructure-control',
+
+                data:
+                {
+                    breadcrumb:'Infrastructure Control'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/infrastructure-control/routes/infrastructure-control.routes'
+                    )
+                    .then(
+                        m =>
+                            m.infrastructureControlRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-002
+
+
             // AUTO-BEGIN : MOD-005
 
             //===========================================================
@@ -157,6 +183,7 @@ export const routes:
 
             // AUTO-END : MOD-005
 
+
             // AUTO-BEGIN : MOD-006
 
             //===========================================================
@@ -182,13 +209,13 @@ export const routes:
             },
 
             // AUTO-END : MOD-006
+        ]
+    },
 
-        ] 
-    }, 
- 
-    { 
-        path:'**', 
- 
-        redirectTo:'' 
-    } 
+
+    {
+        path:'**',
+
+        redirectTo:''
+    }
 ];

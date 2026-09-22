@@ -1,0 +1,371 @@
+/* ===========================================================
+   LOGIN PAGE 2 — PROMOTIONAL IMAGE LIGHT
+   -----------------------------------------------------------
+   PURPOSE:
+
+       Clean light promotional image container.
+
+   IMPORTANT:
+
+       This component controls ONLY the Promotional Image Light.
+
+       No:
+       - Border
+       - Background
+       - Card
+       - Shadow
+       - Overlay
+
+       The image remains completely transparent around itself.
+
+   IMAGE SOURCE:
+
+       Promo_Image2_Light.png
+
+       The complete artwork must remain visible.
+
+       IMPORTANT:
+
+           The image must NEVER be forced to:
+
+               width:100%;
+               height:100%;
+
+           because that causes the portrait artwork to be
+           cropped or stretched by the surrounding geometry.
+=========================================================== */
+
+
+/* ===========================================================
+   COMPONENT HOST
+=========================================================== */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+}
+
+
+/* ===========================================================
+   PROMOTIONAL IMAGE LIGHT ROOT
+   -----------------------------------------------------------
+   The root occupies the complete promotional area.
+
+   IMPORTANT:
+
+       The root does NOT determine the image's aspect ratio.
+
+       The image itself determines its own proportional width.
+=========================================================== */
+
+.login-page-promotional-image-light
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+}
+
+
+/* ===========================================================
+   PROMOTIONAL IMAGE LIGHT
+   -----------------------------------------------------------
+   MASTER IMAGE RULE
+
+   The image height follows the available promotional
+   area.
+
+   The width is calculated automatically from the native
+   image aspect ratio.
+
+   Therefore:
+
+       height = available height
+       width  = automatic
+
+   This guarantees:
+
+       - no horizontal stretching
+       - no vertical stretching
+       - no cropping
+       - complete artwork visibility
+       - original aspect ratio preserved
+
+   IMPORTANT:
+
+       Do NOT use:
+
+           width:100%;
+
+       Do NOT use:
+
+           height:100%;
+           width:100%;
+
+       together.
+
+=========================================================== */
+
+.promotional-image-light
+{
+    display:
+        block;
+
+    width:
+        auto;
+
+    height:
+        100%;
+
+    max-width:
+        100%;
+
+    max-height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        0;
+
+    outline:
+        none;
+
+    background:
+        transparent;
+
+    box-shadow:
+        none;
+
+    box-sizing:
+        border-box;
+
+    object-fit:
+        contain;
+
+    object-position:
+        center;
+
+    vertical-align:
+        middle;
+}
+
+
+/* ===========================================================
+   EMPTY STATE
+=========================================================== */
+
+.promotional-image-light-empty
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
+}
+
+
+/* ===========================================================
+   TABLET
+=========================================================== */
+
+@media
+(
+    max-width:1024px
+)
+{
+    .login-page-promotional-image-light
+    {
+        width:
+            100%;
+
+        height:
+            100%;
+
+        overflow:
+            visible;
+    }
+
+
+    .promotional-image-light
+    {
+        width:
+            auto;
+
+        height:
+            100%;
+
+        max-width:
+            100%;
+
+        max-height:
+            100%;
+
+        object-fit:
+            contain;
+
+        object-position:
+            center;
+    }
+}
+
+
+/* ===========================================================
+   MOBILE
+=========================================================== */
+
+@media
+(
+    max-width:768px
+)
+{
+    .login-page-promotional-image-light
+    {
+        width:
+            100%;
+
+        height:
+            100%;
+
+        overflow:
+            visible;
+    }
+
+
+    .promotional-image-light
+    {
+        width:
+            auto;
+
+        height:
+            100%;
+
+        max-width:
+            100%;
+
+        max-height:
+            100%;
+
+        object-fit:
+            contain;
+
+        object-position:
+            center;
+    }
+}
+
+
+/* ===========================================================
+   REDUCED MOTION
+=========================================================== */
+
+@media
+(
+    prefers-reduced-motion: reduce
+)
+{
+    .promotional-image-light
+    {
+        transition:
+            none;
+    }
+}

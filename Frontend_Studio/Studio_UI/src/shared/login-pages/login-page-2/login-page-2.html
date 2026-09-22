@@ -1,19 +1,143 @@
-<!-- ===========================================================
-     LOGIN PAGE 1
-============================================================ -->
-
-<div class="login-page-1">
-
-    <div class="login-page-1-content">
-
-        <h1>
-            Login Page 1
-        </h1>
-
-        <p>
-            AppCore Login Page 1
-        </p>
-
-    </div>
-
+<!-- ===========================================================  
+     LOGIN PAGE 2  
+     -----------------------------------------------------------  
+     LOGIN PAGE 2 COMPOSITION  
+  
+     PAGE  
+     │  
+     ├── BACKGROUND - FULL PAGE  
+     │   └── APPCORE LOGIN PAGE BACKGROUND  
+     │  
+     ├── PROMOTIONAL AREA - LEFT 55%  
+     │   │  
+     │   ├── PROMOTIONAL IMAGE LIGHT  
+     │   │  
+     │   ├── PROMOTIONAL IMAGE DEEP  
+     │   │  
+     │   ├── CLIENT LOGO  
+     │   │   └── BOTTOM LEFT  
+     │   │  
+     │   └── POWERED BY  
+     │  
+     └── LOGIN AREA - RIGHT 45%  
+         └── APPCORE LOGIN PANEL  
+  
+     IMPORTANT:  
+  
+         This file controls ONLY page-level composition.  
+  
+         Individual child visual styling remains inside  
+         each child component's own CSS.  
+  
+         Promotional Image Light and Promotional Image Deep  
+         are separate child components.  
+  
+         Client Logo is a separate child component.  
+  
+         Powered By is a separate child component.  
+  
+         The Theme Selector controls which image is visible.  
+=========================================================== -->  
+  
+  
+<!-- ===========================================================  
+     LOGIN PAGE 2 ROOT  
+============================================================ -->  
+  
+<div  
+    class="login-page-2"  
+>  
+  
+  
+    <!-- =======================================================  
+         BACKGROUND  
+         -------------------------------------------------------  
+         FULL PAGE  
+  
+         REAL CHILD COMPONENT  
+    ======================================================== -->  
+  
+    <app-login-page-background>  
+    </app-login-page-background>  
+  
+  
+    <!-- =======================================================  
+         PROMOTIONAL AREA  
+         -------------------------------------------------------  
+         LEFT 55%  
+  
+         REAL CHILD COMPONENTS  
+    ======================================================== -->  
+  
+    <section  
+        class="login-page-2-promotional-area"  
+    >  
+  
+  
+        <!-- ===================================================  
+             PROMOTIONAL IMAGE LIGHT  
+             ---------------------------------------------------  
+             DISPLAYED WHEN LIGHT THEME IS ACTIVE  
+        ==================================================== -->  
+  
+        <app-login-page-promotional-image-light  
+            *ngIf="isLightTheme"  
+        >  
+        </app-login-page-promotional-image-light>  
+  
+  
+        <!-- ===================================================  
+             PROMOTIONAL IMAGE DEEP  
+             ---------------------------------------------------  
+             DISPLAYED WHEN DEEP THEME IS ACTIVE  
+        ==================================================== -->  
+  
+        <app-login-page-promotional-image-deep  
+            *ngIf="!isLightTheme"  
+        >  
+        </app-login-page-promotional-image-deep>  
+  
+  
+        <!-- ===================================================  
+             CLIENT LOGO  
+             ---------------------------------------------------  
+             DISPLAYED AT THE BOTTOM LEFT OF THE  
+             PROMOTIONAL AREA  
+        ==================================================== -->  
+  
+        <app-login-page-client-logo>  
+        </app-login-page-client-logo>  
+  
+  
+        <!-- ===================================================  
+             POWERED BY  
+             ---------------------------------------------------  
+             SEPARATE CHILD COMPONENT  
+        ==================================================== -->  
+  
+        <app-login-page-powered-by>  
+        </app-login-page-powered-by>  
+  
+  
+    </section>  
+  
+  
+    <!-- =======================================================  
+         LOGIN AREA  
+         -------------------------------------------------------  
+         RIGHT 45%  
+  
+         REAL CHILD COMPONENT  
+    ======================================================== -->  
+  
+    <section  
+        class="login-page-2-login-area"  
+    >  
+  
+        <app-login-page-login-panel>  
+        </app-login-page-login-panel>  
+  
+    </section>  
+  
+  
 </div>

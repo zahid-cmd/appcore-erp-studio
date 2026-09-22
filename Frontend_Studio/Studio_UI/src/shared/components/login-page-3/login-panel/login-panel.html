@@ -1,0 +1,440 @@
+<!-- ===========================================================
+     LOGIN PAGE LOGIN PANEL
+============================================================ -->
+
+<div
+    class="login-page-login-panel"
+    *ngIf="config.visible">
+
+
+    <!-- =======================================================
+         LANGUAGE / TOP META
+         -------------------------------------------------------
+         Placement is controlled by the Login Page layout.
+    ======================================================== -->
+
+    <div class="login-panel-meta">
+
+        <div class="login-panel-language">
+
+            <span class="language-icon">
+                <i
+                    class="fas fa-globe"
+                    aria-hidden="true">
+                </i>
+            </span>
+
+            <span class="language-text">
+                English
+            </span>
+
+            <span class="language-arrow">
+                <i
+                    class="fas fa-chevron-down"
+                    aria-hidden="true">
+                </i>
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =======================================================
+         LOGIN PANEL CONTENT
+    ======================================================== -->
+
+    <div class="login-panel-content">
+
+
+        <!-- ===================================================
+             PANEL TOP META
+        ==================================================== -->
+
+        <div class="login-panel-topline">
+
+            <span>
+                SIMPLE
+            </span>
+
+            <span class="topline-separator">
+                |
+            </span>
+
+            <span>
+                SECURE
+            </span>
+
+            <span class="topline-separator">
+                |
+            </span>
+
+            <span>
+                SCALABLE
+            </span>
+
+        </div>
+
+
+        <!-- ===================================================
+             LOGIN CARD
+        ==================================================== -->
+
+        <div class="login-card">
+
+
+            <!-- ===============================================
+                 CARD HEADER
+            ================================================ -->
+
+            <div class="login-card-header">
+
+
+                <!-- ===========================================
+                     Heading Area
+                ============================================ -->
+
+                <div class="login-card-heading-area">
+
+                    <h2 class="login-card-heading">
+                        {{ config.heading }}
+                    </h2>
+
+                    <p class="login-card-subtitle">
+                        {{ config.subtitle }}
+                    </p>
+
+                </div>
+
+
+                <!-- ===========================================
+                     Secure Login Badge
+                ============================================ -->
+
+                <div
+                    class="secure-login-badge"
+                    *ngIf="config.secureLoginVisible">
+
+                    <span class="secure-login-icon">
+
+                        <i
+                            class="fas fa-shield-halved"
+                            aria-hidden="true">
+                        </i>
+
+                    </span>
+
+                    <span class="secure-login-text">
+                        {{ config.secureLoginText }}
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ===============================================
+                 LOGIN FORM
+            ================================================ -->
+
+            <form
+                class="login-form"
+                (ngSubmit)="onSignIn()"
+                autocomplete="on">
+
+
+                <!-- ===========================================
+                     LOGIN ID
+                ============================================ -->
+
+                <div class="login-form-field">
+
+                    <label
+                        class="login-form-label"
+                        for="login-page-login-id">
+
+                        {{ config.loginIdLabel }}
+
+                    </label>
+
+
+                    <div class="login-input-wrapper">
+
+                        <span class="login-input-icon">
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true">
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="login-page-login-id"
+                            class="login-form-input"
+                            type="text"
+                            name="loginId"
+                            [value]="loginId"
+                            [placeholder]="config.loginIdPlaceholder"
+                            autocomplete="username"
+                            (input)="
+                                onLoginIdChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     PASSWORD
+                ============================================ -->
+
+                <div class="login-form-field">
+
+                    <label
+                        class="login-form-label"
+                        for="login-page-password">
+
+                        {{ config.passwordLabel }}
+
+                    </label>
+
+
+                    <div class="login-input-wrapper">
+
+                        <span class="login-input-icon">
+
+                            <i
+                                class="fas fa-lock"
+                                aria-hidden="true">
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="login-page-password"
+                            class="login-form-input login-password-input"
+                            [type]="
+                                passwordVisible
+                                    ? 'text'
+                                    : 'password'
+                            "
+                            name="password"
+                            [value]="password"
+                            [placeholder]="config.passwordPlaceholder"
+                            autocomplete="current-password"
+                            (input)="
+                                onPasswordChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+
+                        <button
+                            type="button"
+                            class="password-visibility-button"
+                            aria-label="Show or hide password"
+                            (click)="
+                                togglePasswordVisibility()
+                            ">
+
+                            <i
+                                [class]="
+                                    passwordVisible
+                                        ? 'fas fa-eye'
+                                        : 'fas fa-eye-slash'
+                                "
+                                aria-hidden="true">
+                            </i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LOGIN OPTIONS
+                ============================================ -->
+
+                <div class="login-form-options">
+
+
+                    <!-- =======================================
+                         Remember Me
+                    ======================================== -->
+
+                    <label
+                        class="remember-me"
+                        *ngIf="config.rememberMeVisible">
+
+                        <input
+                            type="checkbox"
+                            name="rememberMe"
+                            [checked]="rememberMe"
+                            (change)="
+                                onRememberMeChange(
+                                    $any($event.target).checked
+                                )
+                            "
+                        />
+
+                        <span class="remember-checkbox">
+                        </span>
+
+                        <span class="remember-text">
+                            {{ config.rememberMeText }}
+                        </span>
+
+                    </label>
+
+
+                    <!-- =======================================
+                         Forgot Password
+                    ======================================== -->
+
+                    <button
+                        type="button"
+                        class="forgot-password-button"
+                        *ngIf="config.forgotPasswordVisible"
+                        (click)="onForgotPassword()">
+
+                        {{ config.forgotPasswordText }}
+
+                    </button>
+
+
+                </div>
+
+
+                <!-- ===========================================
+                     SIGN IN BUTTON
+                ============================================ -->
+
+                <button
+                    type="submit"
+                    class="sign-in-button">
+
+
+                    <span class="sign-in-icon">
+
+                        <i
+                            [class]="config.signInButtonIcon"
+                            aria-hidden="true">
+                        </i>
+
+                    </span>
+
+
+                    <span class="sign-in-text">
+                        {{ config.signInButtonText }}
+                    </span>
+
+
+                    <span class="sign-in-arrow">
+
+                        <i
+                            [class]="config.signInButtonArrowIcon"
+                            aria-hidden="true">
+                        </i>
+
+                    </span>
+
+                </button>
+
+
+            </form>
+
+
+            <!-- =================================================
+                 OR SEPARATOR
+            ================================================== -->
+
+            <div class="login-or-separator">
+
+                <span class="separator-line">
+                </span>
+
+                <span class="separator-text">
+                    {{ config.orText }}
+                </span>
+
+                <span class="separator-line">
+                </span>
+
+            </div>
+
+
+            <!-- =================================================
+                 REGISTRATION
+            ================================================== -->
+
+            <div
+                class="registration-area"
+                *ngIf="config.registrationVisible">
+
+
+                <!-- =============================================
+                     Registration Icon
+                ============================================== -->
+
+                <div class="registration-icon">
+
+                    <i
+                        [class]="config.registrationIcon"
+                        aria-hidden="true">
+                    </i>
+
+                </div>
+
+
+                <!-- =============================================
+                     Registration Content
+                ============================================== -->
+
+                <div class="registration-content">
+
+                    <div class="registration-heading">
+                        {{ config.registrationHeading }}
+                    </div>
+
+                    <div class="registration-description">
+                        {{ config.registrationDescription }}
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     Registration Button
+                ============================================== -->
+
+                <button
+                    type="button"
+                    class="registration-button"
+                    (click)="onRegister()">
+
+                    {{ config.registrationButtonText }}
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

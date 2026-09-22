@@ -56,7 +56,9 @@ public class LoginComponent2Configuration
         ) 
         .HasColumnName( 
             "id" 
-        ); 
+        ) 
+        .ValueGeneratedOnAdd() 
+        .UseIdentityByDefaultColumn(); 
  
  
         //======================================================= 
@@ -88,30 +90,156 @@ public class LoginComponent2Configuration
  
  
         //======================================================= 
-        // Sample Search Dropdown 
+        // Tab Name 
         //======================================================= 
  
         builder.Property( 
-            x => x.SampleSearchDropdownId 
+            x => x.TabName 
         ) 
         .HasColumnName( 
-            "sampleSearchDropdownId" 
+            "tabName" 
         ) 
-        .IsRequired(false); 
+        .IsRequired() 
+        .HasMaxLength(200); 
  
  
         //======================================================= 
-        // Sample Field 
+        // Icon 
         //======================================================= 
  
         builder.Property( 
-            x => x.SampleField 
+            x => x.Icon 
         ) 
         .HasColumnName( 
-            "sampleField" 
+            "icon" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(200); 
+ 
+ 
+        //======================================================= 
+        // Folder Name 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.FolderName 
+        ) 
+        .HasColumnName( 
+            "folderName" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(200); 
+ 
+ 
+        //======================================================= 
+        // Feature Folder 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.FeatureFolder 
+        ) 
+        .HasColumnName( 
+            "featureFolder" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(200); 
+ 
+ 
+        //======================================================= 
+        // Feature Sub Folder 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.FeatureSubFolder 
+        ) 
+        .HasColumnName( 
+            "featureSubFolder" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(200); 
+ 
+ 
+        //======================================================= 
+        // Component Path 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.ComponentPath 
+        ) 
+        .HasColumnName( 
+            "componentPath" 
         ) 
         .IsRequired() 
         .HasMaxLength(500); 
+ 
+ 
+        //======================================================= 
+        // Registration File Path 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.RegistrationFilePath 
+        ) 
+        .HasColumnName( 
+            "registrationFilePath" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(500); 
+ 
+ 
+        //======================================================= 
+        // HTML File Path 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.HtmlFilePath 
+        ) 
+        .HasColumnName( 
+            "htmlFilePath" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(500); 
+ 
+ 
+        //======================================================= 
+        // TS File Path 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.TsFilePath 
+        ) 
+        .HasColumnName( 
+            "tsFilePath" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(500); 
+ 
+ 
+        //======================================================= 
+        // CSS File Path 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.CssFilePath 
+        ) 
+        .HasColumnName( 
+            "cssFilePath" 
+        ) 
+        .IsRequired() 
+        .HasMaxLength(500); 
+ 
+ 
+        //======================================================= 
+        // Display Order 
+        //======================================================= 
+ 
+        builder.Property( 
+            x => x.DisplayOrder 
+        ) 
+        .HasColumnName( 
+            "displayOrder" 
+        ) 
+        .IsRequired(); 
  
  
         //======================================================= 

@@ -1,5 +1,7 @@
 //===============================================================
+
 // Imports
+
 //===============================================================
 
 import
@@ -20,6 +22,7 @@ from '@angular/core';
 //===============================================================
 // Login Page 1 Components
 //===============================================================
+
 
 import
 {
@@ -44,6 +47,20 @@ from '../../shared/components/login-page-1/promotional-panel/promotional-panel';
 
 import
 {
+    LoginPagePromotionalImageComponent
+}
+from '../../shared/components/login-page-1/promotional-image/promotional-image';
+
+
+import
+{
+    LoginPageClientLogoComponent
+}
+from '../../shared/components/login-page-1/client-logo/client-logo';
+
+
+import
+{
     LoginPageLoginPanelComponent
 }
 from '../../shared/components/login-page-1/login-panel/login-panel';
@@ -51,9 +68,185 @@ from '../../shared/components/login-page-1/login-panel/login-panel';
 
 import
 {
+    LoginPageNotificationPanelComponent
+}
+from '../../shared/components/login-page-1/notification-panel/notification-panel';
+
+
+import
+{
     LoginPagePoweredByComponent
 }
 from '../../shared/components/login-page-1/powered-by/powered-by';
+
+
+import
+{
+    LoginPageFooterComponent
+}
+from '../../shared/components/login-page-1/footer/footer';
+
+
+//===============================================================
+// Login Page 2 Components
+//===============================================================
+
+
+import
+{
+    LoginPageBackgroundComponent as
+    LoginPage2BackgroundComponent
+}
+from '../../shared/components/login-page-2/background/background';
+
+
+import
+{
+    LoginPageBrandingComponent as
+    LoginPage2BrandingComponent
+}
+from '../../shared/components/login-page-2/branding/branding';
+
+
+import
+{
+    LoginPagePromotionalPanelComponent as
+    LoginPage2PromotionalPanelComponent
+}
+from '../../shared/components/login-page-2/promotional-panel/promotional-panel';
+
+
+import
+{
+    LoginPagePromotionalImageLightComponent as
+    LoginPage2PromotionalImageLightComponent
+}
+from '../../shared/components/login-page-2/promotional-image-light/promotional-image-light';
+
+
+import
+{
+    LoginPagePromotionalImageDeepComponent as
+    LoginPage2PromotionalImageDeepComponent
+}
+from '../../shared/components/login-page-2/promotional-image-deep/promotional-image-deep';
+
+
+import
+{
+    LoginPageClientLogoComponent as
+    LoginPage2ClientLogoComponent
+}
+from '../../shared/components/login-page-2/client-logo/client-logo';
+
+
+import
+{
+    LoginPageLoginPanelComponent as
+    LoginPage2LoginPanelComponent
+}
+from '../../shared/components/login-page-2/login-panel/login-panel';
+
+
+import
+{
+    LoginPageNotificationPanelComponent as
+    LoginPage2NotificationPanelComponent
+}
+from '../../shared/components/login-page-2/notification-panel/notification-panel';
+
+
+import
+{
+    LoginPagePoweredByComponent as
+    LoginPage2PoweredByComponent
+}
+from '../../shared/components/login-page-2/powered-by/powered-by';
+
+
+import
+{
+    LoginPageFooterComponent as
+    LoginPage2FooterComponent
+}
+from '../../shared/components/login-page-2/footer/footer';
+
+
+//===============================================================
+// Login Page 3 Components
+//===============================================================
+
+
+import
+{
+    LoginPageBackgroundComponent as
+    LoginPage3BackgroundComponent
+}
+from '../../shared/components/login-page-3/background/background';
+
+
+import
+{
+    LoginPageBrandingComponent as
+    LoginPage3BrandingComponent
+}
+from '../../shared/components/login-page-3/branding/branding';
+
+
+import
+{
+    LoginPagePromotionalPanelComponent as
+    LoginPage3PromotionalPanelComponent
+}
+from '../../shared/components/login-page-3/promotional-panel/promotional-panel';
+
+
+import
+{
+    LoginPagePromotionalImageComponent as
+    LoginPage3PromotionalImageComponent
+}
+from '../../shared/components/login-page-3/promotional-image/promotional-image';
+
+
+import
+{
+    LoginPageClientLogoComponent as
+    LoginPage3ClientLogoComponent
+}
+from '../../shared/components/login-page-3/client-logo/client-logo';
+
+
+import
+{
+    LoginPageLoginPanelComponent as
+    LoginPage3LoginPanelComponent
+}
+from '../../shared/components/login-page-3/login-panel/login-panel';
+
+
+import
+{
+    LoginPageNotificationPanelComponent as
+    LoginPage3NotificationPanelComponent
+}
+from '../../shared/components/login-page-3/notification-panel/notification-panel';
+
+
+import
+{
+    LoginPagePoweredByComponent as
+    LoginPage3PoweredByComponent
+}
+from '../../shared/components/login-page-3/powered-by/powered-by';
+
+
+import
+{
+    LoginPageFooterComponent as
+    LoginPage3FooterComponent
+}
+from '../../shared/components/login-page-3/footer/footer';
 
 
 //===============================================================
@@ -387,7 +580,7 @@ implements
         >
     =
     {
-        
+
         //===============================================================
         // Login Page 1 Components
         //===============================================================
@@ -401,11 +594,90 @@ implements
         'login-page-1-promotional-panel':
             LoginPagePromotionalPanelComponent,
 
+        'login-page-1-promotional-image':
+            LoginPagePromotionalImageComponent,
+
         'login-page-1-login-panel':
             LoginPageLoginPanelComponent,
 
+        'login-page-1-notification-panel':
+            LoginPageNotificationPanelComponent,
+
         'login-page-1-powered-by':
             LoginPagePoweredByComponent,
+
+        'login-page-1-footer':
+            LoginPageFooterComponent,
+
+        'login-page-1-client-logo':
+            LoginPageClientLogoComponent,
+
+
+        //===============================================================
+        // Login Page 2 Components
+        //===============================================================
+
+        'login-page-2-background':
+            LoginPage2BackgroundComponent,
+
+        'login-page-2-branding':
+            LoginPage2BrandingComponent,
+
+        'login-page-2-promotional-panel':
+            LoginPage2PromotionalPanelComponent,
+
+        'login-page-2-promotional-image-light':
+            LoginPage2PromotionalImageLightComponent,
+
+        'login-page-2-promotional-image-deep':
+            LoginPage2PromotionalImageDeepComponent,
+
+        'login-page-2-login-panel':
+            LoginPage2LoginPanelComponent,
+
+        'login-page-2-notification-panel':
+            LoginPage2NotificationPanelComponent,
+
+        'login-page-2-powered-by':
+            LoginPage2PoweredByComponent,
+
+        'login-page-2-footer':
+            LoginPage2FooterComponent,
+
+        'login-page-2-client-logo':
+            LoginPage2ClientLogoComponent,
+
+
+        //===============================================================
+        // Login Page 3 Components
+        //===============================================================
+
+        'login-page-3-background':
+            LoginPage3BackgroundComponent,
+
+        'login-page-3-branding':
+            LoginPage3BrandingComponent,
+
+        'login-page-3-promotional-panel':
+            LoginPage3PromotionalPanelComponent,
+
+        'login-page-3-promotional-image':
+            LoginPage3PromotionalImageComponent,
+
+        'login-page-3-login-panel':
+            LoginPage3LoginPanelComponent,
+
+        'login-page-3-notification-panel':
+            LoginPage3NotificationPanelComponent,
+
+        'login-page-3-powered-by':
+            LoginPage3PoweredByComponent,
+
+        'login-page-3-footer':
+            LoginPage3FooterComponent,
+
+        'login-page-3-client-logo':
+            LoginPage3ClientLogoComponent,
 
 
         //=======================================================

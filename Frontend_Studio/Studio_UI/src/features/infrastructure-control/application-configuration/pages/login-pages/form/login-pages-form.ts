@@ -398,7 +398,7 @@ implements OnInit
 
         subtitle:'',
 
-        status:true,
+        status:false,
 
         remarks:''
     };
@@ -428,6 +428,18 @@ implements OnInit
         boolean
     {
         return true;
+    }
+
+
+
+    //===========================================================
+    // Status Disabled
+    //===========================================================
+
+    get isStatusDisabled():
+        boolean
+    {
+        return this.isAddMode;
     }
 
 
@@ -550,7 +562,7 @@ implements OnInit
 
             subtitle:'',
 
-            status:true,
+            status:false,
 
             remarks:''
         };
@@ -880,7 +892,7 @@ implements OnInit
                     this.entity.subtitle,
 
                 status:
-                    this.entity.status,
+                    false,
 
                 remarks:
                     this.entity.remarks

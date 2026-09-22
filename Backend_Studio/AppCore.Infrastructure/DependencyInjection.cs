@@ -67,6 +67,15 @@ using AppCore.Infrastructure.Platform.Common;
 
 
 //===============================================================
+// Platform Authentication
+//===============================================================
+
+using AppCore.Application.Platform.Authentication.Interfaces;
+
+using AppCore.Infrastructure.Platform.Authentication;
+
+
+//===============================================================
 // Module Synchronization Engines
 //===============================================================
 
@@ -140,17 +149,6 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
-// AUTO-BEGIN : LoginComponent1
-
-using AppCore.Application.InfrastructureControl.LoginComponents;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
-
-// AUTO-END : LoginComponent1
-
-
-
-
-
 // AUTO-BEGIN : LoginComponent3
 
 using AppCore.Application.InfrastructureControl.LoginComponents;
@@ -164,6 +162,19 @@ using AppCore.Application.InfrastructureControl.LoginComponents;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
 
 // AUTO-END : LoginComponent2
+
+// AUTO-BEGIN : LoginComponent1
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : LoginComponent1
+
+
+
+
+
+
 
 
 // AUTO-BEGIN : LoginPages
@@ -415,6 +426,17 @@ public static class DependencyInjection
 
 
         //=======================================================
+        // Authentication Repository
+        //=======================================================
+
+        services.AddScoped
+        <
+            IAuthenticationRepository,
+            AuthenticationRepository
+        >();
+
+
+        //=======================================================
         // Navigation Management Repositories
         //=======================================================
 
@@ -496,20 +518,6 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
-        // AUTO-BEGIN : LoginComponent1
-
-        services.AddScoped
-        <
-            ILoginComponent1Repository,
-            LoginComponent1Repository
-        >();
-
-        // AUTO-END : LoginComponent1
-
-
-
-
-
         // AUTO-BEGIN : LoginComponent3
 
         services.AddScoped
@@ -529,6 +537,22 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : LoginComponent2
+
+        // AUTO-BEGIN : LoginComponent1
+
+        services.AddScoped
+        <
+            ILoginComponent1Repository,
+            LoginComponent1Repository
+        >();
+
+        // AUTO-END : LoginComponent1
+
+
+
+
+
+
 
 
         // AUTO-BEGIN : LoginPages

@@ -1,0 +1,526 @@
+<!-- ==========================================================
+     LOGIN PAGE — BACKGROUND
+     ----------------------------------------------------------
+     Premium Aurora Flow Background
+
+     Visual Language:
+
+     - Soft white / ice-blue foundation
+     - Premium cyan / AppCore blue
+     - Layered flowing ribbons
+     - Fine contour details
+     - Soft atmospheric glow
+     - Restrained highlight accents
+     - Large negative-space areas
+     - No logos
+     - No promotional content
+     - No login controls
+
+     This component owns ONLY the visual background.
+=========================================================== -->
+
+
+<div
+    class="login-page-background"
+
+    [class.background-solid]="
+        config.type === 'solid'
+    "
+
+    [class.background-gradient]="
+        config.type === 'gradient'
+    "
+
+    [class.background-image]="
+        config.type === 'image'
+    "
+
+    [class.background-image-overlay]="
+        config.type === 'image-overlay'
+    ">
+
+
+    <!-- =====================================================
+         PRIMARY BACKGROUND
+         -----------------------------------------------------
+         Clean foundation underneath the entire visual system.
+    ====================================================== -->
+
+    <div
+        class="background-layer"
+
+        [style.background]="
+            backgroundValue
+        "
+
+        [style.background-position]="
+            config.imagePosition
+        "
+
+        [style.background-size]="
+            config.imageSize
+        "
+
+        [style.background-repeat]="
+            'no-repeat'
+        ">
+    </div>
+
+
+
+    <!-- =====================================================
+         ATMOSPHERIC LIGHT
+         -----------------------------------------------------
+         Large soft illumination creating depth.
+    ====================================================== -->
+
+    <div
+        class="background-atmosphere"
+        aria-hidden="true">
+
+        <span
+            class="atmosphere-glow atmosphere-glow-left">
+        </span>
+
+        <span
+            class="atmosphere-glow atmosphere-glow-center">
+        </span>
+
+        <span
+            class="atmosphere-glow atmosphere-glow-right">
+        </span>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         PREMIUM FLOW SYSTEM
+         -----------------------------------------------------
+         Main visual structure.
+
+         The forms are intentionally oversized and extend
+         beyond the viewport to create a natural flowing
+         composition.
+    ====================================================== -->
+
+    <div
+        *ngIf="
+            config.decorativeElementsEnabled
+        "
+
+        class="premium-flow-system"
+
+        aria-hidden="true">
+
+
+
+        <!-- =================================================
+             LARGE LEFT AURORA FORM
+             -------------------------------------------------
+             Creates the soft curved mass visible on the
+             left side of the reference artwork.
+        ================================================== -->
+
+        <div
+            class="aurora-form aurora-form-left">
+
+            <span
+                class="aurora-surface">
+            </span>
+
+            <span
+                class="aurora-glow">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             MAIN FLOWING RIBBON
+             -------------------------------------------------
+             Primary blue/cyan orbital structure.
+        ================================================== -->
+
+        <div
+            class="flow-ribbon flow-ribbon-main">
+
+            <span
+                class="flow-ribbon-surface">
+            </span>
+
+            <span
+                class="flow-ribbon-highlight">
+            </span>
+
+            <span
+                class="flow-ribbon-edge">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             SECONDARY FLOWING RIBBON
+             -------------------------------------------------
+             Creates the overlapping wave movement.
+        ================================================== -->
+
+        <div
+            class="flow-ribbon flow-ribbon-secondary">
+
+            <span
+                class="flow-ribbon-surface">
+            </span>
+
+            <span
+                class="flow-ribbon-highlight">
+            </span>
+
+            <span
+                class="flow-ribbon-edge">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             UPPER RIGHT FLOW
+             -------------------------------------------------
+             Large sweeping form inspired by the reference.
+        ================================================== -->
+
+        <div
+            class="flow-ribbon flow-ribbon-upper">
+
+            <span
+                class="upper-flow-surface">
+            </span>
+
+            <span
+                class="upper-flow-highlight">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             CENTRAL WHITE FLOW
+             -------------------------------------------------
+             Creates the premium glass-like separation
+             between the blue flowing structures.
+        ================================================== -->
+
+        <div
+            class="glass-flow glass-flow-main">
+
+            <span
+                class="glass-flow-surface">
+            </span>
+
+            <span
+                class="glass-flow-highlight">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             CENTRAL LIGHT STREAM
+             -------------------------------------------------
+             Thin luminous stream crossing the main flow.
+        ================================================== -->
+
+        <div
+            class="light-stream light-stream-main">
+        </div>
+
+
+
+        <div
+            class="light-stream light-stream-secondary">
+        </div>
+
+
+
+        <!-- =================================================
+             CONTOUR FIELD
+             -------------------------------------------------
+             Fine technical lines.
+
+             These give the background a more sophisticated
+             architectural / technology character.
+        ================================================== -->
+
+        <div
+            class="contour-field">
+
+            <span
+                class="contour contour-01">
+            </span>
+
+            <span
+                class="contour contour-02">
+            </span>
+
+            <span
+                class="contour contour-03">
+            </span>
+
+            <span
+                class="contour contour-04">
+            </span>
+
+            <span
+                class="contour contour-05">
+            </span>
+
+            <span
+                class="contour contour-06">
+            </span>
+
+            <span
+                class="contour contour-07">
+            </span>
+
+            <span
+                class="contour contour-08">
+            </span>
+
+            <span
+                class="contour contour-09">
+            </span>
+
+            <span
+                class="contour contour-10">
+            </span>
+
+            <span
+                class="contour contour-11">
+            </span>
+
+            <span
+                class="contour contour-12">
+            </span>
+
+            <span
+                class="contour contour-13">
+            </span>
+
+            <span
+                class="contour contour-14">
+            </span>
+
+            <span
+                class="contour contour-15">
+            </span>
+
+            <span
+                class="contour contour-16">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             MICRO CONTOUR FIELD
+             -------------------------------------------------
+             Very fine lines concentrated around the upper
+             right flow.
+        ================================================== -->
+
+        <div
+            class="micro-contour-field">
+
+            <span
+                class="micro-contour micro-contour-01">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-02">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-03">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-04">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-05">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-06">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-07">
+            </span>
+
+            <span
+                class="micro-contour micro-contour-08">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             LOWER FLOW SYSTEM
+             -------------------------------------------------
+             Soft waves crossing the bottom portion.
+        ================================================== -->
+
+        <div
+            class="lower-flow-system">
+
+            <span
+                class="lower-flow lower-flow-01">
+            </span>
+
+            <span
+                class="lower-flow lower-flow-02">
+            </span>
+
+            <span
+                class="lower-flow lower-flow-03">
+            </span>
+
+            <span
+                class="lower-flow lower-flow-04">
+            </span>
+
+            <span
+                class="lower-flow lower-flow-05">
+            </span>
+
+            <span
+                class="lower-flow lower-flow-06">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             ORBITAL EDGE
+             -------------------------------------------------
+             Very subtle high-precision edge line.
+        ================================================== -->
+
+        <div
+            class="orbital-edge orbital-edge-main">
+        </div>
+
+
+
+        <!-- =================================================
+             PREMIUM LIGHT ACCENT
+             -------------------------------------------------
+             Restrained highlight used to give the artwork
+             a polished technology aesthetic.
+        ================================================== -->
+
+        <div
+            class="premium-light-accent">
+
+            <span
+                class="premium-light-core">
+            </span>
+
+            <span
+                class="premium-light-glow">
+            </span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             SOFT CYAN PARTICLES
+             -------------------------------------------------
+             Extremely restrained atmospheric points.
+        ================================================== -->
+
+        <div
+            class="ambient-particles">
+
+            <span
+                class="ambient-particle particle-01">
+            </span>
+
+            <span
+                class="ambient-particle particle-02">
+            </span>
+
+            <span
+                class="ambient-particle particle-03">
+            </span>
+
+            <span
+                class="ambient-particle particle-04">
+            </span>
+
+            <span
+                class="ambient-particle particle-05">
+            </span>
+
+            <span
+                class="ambient-particle particle-06">
+            </span>
+
+        </div>
+
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         OPTIONAL CONFIGURED OVERLAY
+         -----------------------------------------------------
+         Controlled by the background configuration.
+    ====================================================== -->
+
+    <div
+        *ngIf="
+            config.overlayEnabled
+        "
+
+        class="background-overlay"
+
+        [style.background]="
+            overlayValue
+        ">
+    </div>
+
+
+
+    <!-- =====================================================
+         BACKGROUND CONTENT SLOT
+         -----------------------------------------------------
+         Future child content can be rendered above the
+         background visual system.
+
+         This component itself does NOT define page layout.
+    ====================================================== -->
+
+    <div
+        class="background-content">
+
+        <ng-content></ng-content>
+
+    </div>
+
+
+</div>

@@ -1,0 +1,400 @@
+<!-- ===========================================================
+     LOGIN PAGE 1
+     REGISTRATION PAGE
+=========================================================== -->
+
+<div
+    class="registration-page"
+>
+
+
+    <!-- =======================================================
+         REGISTRATION PAGE HEADER
+    ======================================================== -->
+
+    <div
+        class="registration-page-header"
+    >
+
+        <div
+            class="registration-page-heading"
+        >
+
+            <h2>
+                {{ config.heading }}
+            </h2>
+
+            <p>
+                {{ config.subtitle }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =======================================================
+         REGISTRATION FORM
+    ======================================================== -->
+
+    <div
+        class="registration-page-form"
+    >
+
+
+        <!-- ===================================================
+             USER NAME
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.userNameLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-user"
+                >
+                </i>
+
+                <input
+                    type="text"
+
+                    [value]="userName"
+
+                    [placeholder]="config.userNamePlaceholder"
+
+                    (input)="onUserNameChange($any($event.target).value)"
+                >
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             DISPLAY NAME
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.displayNameLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-id-card"
+                >
+                </i>
+
+                <input
+                    type="text"
+
+                    [value]="displayName"
+
+                    [placeholder]="config.displayNamePlaceholder"
+
+                    (input)="onDisplayNameChange($any($event.target).value)"
+                >
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             FULL NAME
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.fullNameLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-user-tag"
+                >
+                </i>
+
+                <input
+                    type="text"
+
+                    [value]="fullName"
+
+                    [placeholder]="config.fullNamePlaceholder"
+
+                    (input)="onFullNameChange($any($event.target).value)"
+                >
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             EMAIL
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.emailLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-envelope"
+                >
+                </i>
+
+                <input
+                    type="email"
+
+                    [value]="email"
+
+                    [placeholder]="config.emailPlaceholder"
+
+                    (input)="onEmailChange($any($event.target).value)"
+                >
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             MOBILE NUMBER
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.mobileNoLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-mobile-screen-button"
+                >
+                </i>
+
+                <input
+                    type="tel"
+
+                    [value]="mobileNo"
+
+                    [placeholder]="config.mobileNoPlaceholder"
+
+                    (input)="onMobileNoChange($any($event.target).value)"
+                >
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             PASSWORD
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.passwordLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-lock"
+                >
+                </i>
+
+                <input
+                    [type]="passwordVisible ? 'text' : 'password'"
+
+                    [value]="password"
+
+                    [placeholder]="config.passwordPlaceholder"
+
+                    (input)="onPasswordChange($any($event.target).value)"
+                >
+
+                <button
+                    type="button"
+
+                    class="registration-page-password-toggle"
+
+                    (click)="togglePasswordVisibility()"
+                >
+
+                    <i
+                        [class]="
+                            passwordVisible
+                                ? 'fas fa-eye-slash'
+                                : 'fas fa-eye'
+                        "
+                    >
+                    </i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             CONFIRM PASSWORD
+        ==================================================== -->
+
+        <div
+            class="registration-page-field"
+        >
+
+            <label>
+                {{ config.confirmPasswordLabel }}
+            </label>
+
+            <div
+                class="registration-page-input"
+            >
+
+                <i
+                    class="fas fa-lock"
+                >
+                </i>
+
+                <input
+                    [type]="
+                        confirmPasswordVisible
+                            ? 'text'
+                            : 'password'
+                    "
+
+                    [value]="confirmPassword"
+
+                    [placeholder]="config.confirmPasswordPlaceholder"
+
+                    (input)="onConfirmPasswordChange($any($event.target).value)"
+                >
+
+                <button
+                    type="button"
+
+                    class="registration-page-password-toggle"
+
+                    (click)="toggleConfirmPasswordVisibility()"
+                >
+
+                    <i
+                        [class]="
+                            confirmPasswordVisible
+                                ? 'fas fa-eye-slash'
+                                : 'fas fa-eye'
+                        "
+                    >
+                    </i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             CREATE ACCOUNT
+        ==================================================== -->
+
+        <button
+            type="button"
+
+            class="registration-page-register-button"
+
+            (click)="onRegister()"
+        >
+
+            <span>
+                {{ config.registrationButtonText }}
+            </span>
+
+            <i
+                [class]="config.registrationButtonIcon"
+            >
+            </i>
+
+        </button>
+
+
+
+        <!-- ===================================================
+             BACK TO LOGIN
+        ==================================================== -->
+
+        <button
+            *ngIf="config.backToLoginVisible"
+
+            type="button"
+
+            class="registration-page-back-button"
+
+            (click)="onBackToLogin()"
+        >
+
+            <i
+                [class]="config.backToLoginIcon"
+            >
+            </i>
+
+            <span>
+                {{ config.backToLoginText }}
+            </span>
+
+        </button>
+
+
+    </div>
+
+</div>

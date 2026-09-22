@@ -1,0 +1,147 @@
+<!-- ===========================================================
+     APPCORE CLIENT LOGO
+     -----------------------------------------------------------
+     PURPOSE:
+
+         Premium client identity display.
+
+     LOCATION:
+
+         Login Page 1
+         Business Area
+         AppCore Clients section
+
+     VISUAL STRUCTURE:
+
+         ┌───────────────────────────────────────────────────┐
+         │                                                   │
+         │    CLIENT LOGO       │       MOTO ZONE            │
+         │       3D             │                            │
+         │                      │                            │
+         └───────────────────────────────────────────────────┘
+
+     IMPORTANT:
+
+         This component controls ONLY the visual client
+         identity area.
+
+         No:
+         - Client management logic
+         - API logic
+         - Client selection logic
+         - Carousel logic
+         - Login logic
+         - Page composition
+=========================================================== -->
+
+
+<!-- ===========================================================
+     CLIENT LOGO ROOT
+=========================================================== -->
+
+<div
+    class="login-page-client-logo"
+    *ngIf="config.visible"
+>
+
+
+    <!-- =======================================================
+         CLIENT IDENTITY STAGE
+         -------------------------------------------------------
+         Main visual area containing:
+
+             1. Logo
+             2. Vertical separator
+             3. Client name
+    ======================================================== -->
+
+    <div
+        class="client-logo-holder"
+    >
+
+
+        <!-- ===================================================
+             CLIENT LOGO AREA
+             ---------------------------------------------------
+             Left side of the identity block.
+        ==================================================== -->
+
+        <div
+            class="client-logo-visual"
+        >
+
+            <div
+                class="client-logo-image-holder"
+            >
+
+                <img
+                    *ngIf="config.logoUrl"
+                    class="client-logo-image"
+                    [src]="config.logoUrl"
+                    [style]="logoStyle"
+                    [alt]="config.clientName"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ===================================================
+             VERTICAL SEPARATOR
+             ---------------------------------------------------
+             Premium visual divider between logo and
+             client identity.
+        ==================================================== -->
+
+        <div
+            class="client-logo-separator"
+            aria-hidden="true"
+        >
+
+            <span
+                class="client-logo-separator-line"
+            >
+            </span>
+
+        </div>
+
+
+        <!-- ===================================================
+             CLIENT NAME AREA
+             ---------------------------------------------------
+             Right side of the identity block.
+
+             IMPORTANT:
+
+                 No "CLIENT" label.
+
+                 Only the actual configured client name
+                 is displayed.
+        ==================================================== -->
+
+        <div
+            class="client-logo-name-area"
+            *ngIf="config.clientName"
+        >
+
+            <div
+                class="client-logo-name"
+            >
+                {{ config.clientName }}
+            </div>
+
+
+            <div
+                class="client-logo-name-accent"
+                aria-hidden="true"
+            >
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+</div>

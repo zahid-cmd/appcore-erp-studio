@@ -1,19 +1,47 @@
+//===============================================================
+// Namespaces
+//===============================================================
+
 using Microsoft.Extensions.DependencyInjection;
+
+using AppCore.Application.Platform.Authentication.Interfaces;
+using AppCore.Application.Platform.Authentication.Service;
+
+
+//===============================================================
+// Namespace
+//===============================================================
 
 namespace AppCore.Application;
 
+
+//===============================================================
+// Dependency Injection
+//===============================================================
+
 public static class DependencyInjection
 {
-    //===============================================================
+    //===========================================================
     // Register Application Services
-    //===============================================================
+    //===========================================================
+
     public static IServiceCollection AddApplication(
         this IServiceCollection services)
     {
-        //===============================================================
-        // Register Application Services
-        //===============================================================
-        // Services will be registered here in the future.
+        //=======================================================
+        // Authentication Services
+        //=======================================================
+
+        services.AddScoped
+        <
+            IAuthenticationService,
+            AuthenticationService
+        >();
+
+
+        //=======================================================
+        // Return Services
+        //=======================================================
 
         return services;
     }

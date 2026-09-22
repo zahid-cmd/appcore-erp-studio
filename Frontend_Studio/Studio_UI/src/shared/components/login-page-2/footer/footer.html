@@ -1,0 +1,100 @@
+<!-- ===========================================================
+     LOGIN PAGE FOOTER
+=========================================================== -->
+
+<div
+    class="login-page-footer"
+    *ngIf="config.visible">
+
+
+    <!-- =======================================================
+         FOOTER CONTENT
+    ======================================================== -->
+
+    <div class="login-page-footer-content">
+
+
+        <!-- ===================================================
+             FOOTER LINKS
+        ==================================================== -->
+
+        <div
+            class="login-page-footer-links"
+            *ngIf="
+                config.linksVisible
+                &&
+                hasVisibleLinks
+            ">
+
+            <ng-container
+                *ngFor="
+                    let link of visibleLinks;
+                    let i = index;
+                    trackBy: trackLink
+                ">
+
+
+                <!-- ===========================================
+                     FOOTER LINK
+                ============================================ -->
+
+                <a
+                    class="login-page-footer-link"
+                    [href]="link.url"
+                    [target]="
+                        link.openInNewTab
+                            ? '_blank'
+                            : '_self'
+                    "
+                    [rel]="
+                        link.openInNewTab
+                            ? 'noopener noreferrer'
+                            : null
+                    ">
+
+                    {{ link.label }}
+
+                </a>
+
+
+                <!-- ===========================================
+                     LINK SEPARATOR
+                ============================================ -->
+
+                <span
+                    class="login-page-footer-separator"
+                    *ngIf="
+                        i < visibleLinks.length - 1
+                    ">
+
+                    {{ config.separator }}
+
+                </span>
+
+
+            </ng-container>
+
+        </div>
+
+
+        <!-- ===================================================
+             COPYRIGHT
+        ==================================================== -->
+
+        <div
+            class="login-page-footer-copyright"
+            *ngIf="
+                config.copyrightVisible
+                &&
+                config.copyrightText
+            ">
+
+            {{ config.copyrightText }}
+
+        </div>
+
+
+    </div>
+
+
+</div>

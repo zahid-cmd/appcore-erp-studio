@@ -1,16 +1,52 @@
 <!-- ===========================================================
      LOGIN PAGE 1
-============================================================ -->
+     -----------------------------------------------------------
+     LOGIN PAGE 1 COMPOSITION
+
+     PAGE
+     │
+     ├── BACKGROUND
+     │   └── APPCORE LOGIN PAGE BACKGROUND
+     │
+     ├── MAIN BODY
+     │
+     │   ├── BUSINESS AREA - LEFT 30%
+     │   │   ├── APPCORE BRANDING   - TOP 15%
+     │   │   ├── APPCORE PANEL      - CENTER 65%
+     │   │   └── APPCORE CLIENTS    - BOTTOM 20%
+     │   │
+     │   ├── DESIGN AREA - CENTER 40%
+     │   │   ├── APPCORE IMAGE      - TOP 80%
+     │   │   └── APPCORE BUSINESS   - BOTTOM 20%
+     │   │
+     │   └── LOGIN AREA - RIGHT 30%
+     │       ├── APPCORE LOGIN         - TOP 90%
+     │       └── APPCORE NOTIFICATION  - BOTTOM 10%
+     │
+     └── FOOTER
+
+     IMPORTANT:
+
+         This file controls ONLY page-level composition.
+
+         Individual child visual styling remains inside
+         each child component's own CSS.
+=========================================================== -->
+
+
+<!-- ===========================================================
+     LOGIN PAGE 1 ROOT
+=========================================================== -->
 
 <div
-    class="login-page-1">
+    class="login-page-1"
+>
 
 
     <!-- =======================================================
-         LOGIN PAGE BACKGROUND
+         LOGIN PAGE 1 BACKGROUND
          -------------------------------------------------------
-         The Background component owns the complete visual
-         background layer.
+         Covers the complete Login Page 1 background.
     ======================================================== -->
 
     <app-login-page-background>
@@ -18,57 +54,269 @@
 
 
     <!-- =======================================================
-         LOGIN PAGE CONTENT
+         MAIN BODY
          -------------------------------------------------------
-         Components placed here render above the Background.
-
-         Current:
-         - Branding
-         - Promotional Panel
-         - Login Panel
-         - Powered By
-
-         Registration and Password Recovery remain part of
-         the Login Panel.
+         Occupies the complete page height except the Footer.
     ======================================================== -->
 
-    <div
-        class="login-page-1-content">
+    <main
+        class="login-page-1-main"
+    >
 
 
         <!-- ===================================================
-             BRANDING
+             BUSINESS AREA
+             ---------------------------------------------------
+             LEFT 30%
+
+             Internal structure:
+
+                 AppCore Branding  = 15%
+                 AppCore Panel     = 65%
+                 AppCore Clients   = 20%
         ==================================================== -->
 
-        <app-login-page-branding>
-        </app-login-page-branding>
+        <section
+            class="login-page-1-business-area"
+        >
+
+
+            <!-- ===============================================
+                 APPCORE BRANDING
+                 -----------------------------------------------
+                 Height = 15%
+
+                 REAL CHILD COMPONENT
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-branding"
+            >
+
+                <app-login-page-branding>
+                </app-login-page-branding>
+
+            </div>
+
+
+            <!-- ===============================================
+                 APPCORE PANEL
+                 -----------------------------------------------
+                 Height = 65%
+
+                 REAL CHILD COMPONENT
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-panel"
+            >
+
+                <app-login-page-promotional-panel>
+                </app-login-page-promotional-panel>
+
+            </div>
+
+
+            <!-- ===============================================
+                 APPCORE CLIENTS
+                 -----------------------------------------------
+                 Height = 20%
+
+                 REAL CHILD COMPONENT
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-clients"
+            >
+
+                <app-login-page-client-logo>
+                </app-login-page-client-logo>
+
+            </div>
+
+
+        </section>
 
 
         <!-- ===================================================
-             PROMOTIONAL PANEL
+             DESIGN AREA
+             ---------------------------------------------------
+             CENTER 40%
+
+             Internal structure:
+
+                 AppCore Image     = 80%
+                 AppCore Business  = 20%
         ==================================================== -->
 
-        <app-login-page-promotional-panel>
-        </app-login-page-promotional-panel>
+        <section
+            class="login-page-1-design-area"
+        >
+
+
+            <!-- ===============================================
+                 APPCORE IMAGE
+                 -----------------------------------------------
+                 Height = 80%
+
+                 REAL CHILD COMPONENT
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-image"
+            >
+
+                <app-login-page-promotional-image>
+                </app-login-page-promotional-image>
+
+            </div>
+
+
+            <!-- ===============================================
+                 APPCORE BUSINESS
+                 -----------------------------------------------
+                 Height = 20%
+
+                 REAL CHILD COMPONENT
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-business"
+            >
+
+                <app-login-page-powered-by>
+                </app-login-page-powered-by>
+
+            </div>
+
+
+        </section>
 
 
         <!-- ===================================================
-             LOGIN PANEL
+             LOGIN AREA
+             ---------------------------------------------------
+             RIGHT 30%
+
+             Internal structure:
+
+                 AppCore Login         = 90%
+                 AppCore Notification  = 10%
         ==================================================== -->
 
-        <app-login-page-login-panel>
-        </app-login-page-login-panel>
+        <section
+            class="login-page-1-login-area"
+        >
 
 
-        <!-- ===================================================
-             POWERED BY
-        ==================================================== -->
+            <!-- ===============================================
+                 APPCORE LOGIN
+                 -----------------------------------------------
+                 Height = 90%
 
-        <app-login-page-powered-by>
-        </app-login-page-powered-by>
+                 Login Panel and Registration Page share
+                 this same page-level area.
+
+                 Login Page 1 controls which one is visible.
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-login"
+            >
 
 
-    </div>
+                <!-- ===========================================
+                     EXISTING LOGIN PANEL
+                     -----------------------------------------
+                     PRESERVED EXACTLY.
+
+                     Register event is handled by Login Page 1.
+                ============================================ -->
+
+                @if
+                (
+                    !isRegistrationPage
+                )
+                {
+
+                    <app-login-page-login-panel
+
+                        (signIn)="onSignIn($event)"
+
+                        (forgotPassword)="onForgotPassword()"
+
+                        (register)="onRegister()"
+
+                    >
+                    </app-login-page-login-panel>
+
+                }
+
+
+                <!-- ===========================================
+                     REGISTRATION PAGE
+                     -----------------------------------------
+                     Displayed by Login Page 1 after the
+                     Login Panel emits the register event.
+                ============================================ -->
+
+                @if
+                (
+                    isRegistrationPage
+                )
+                {
+
+                    <app-login-page-registration-page
+
+                        (backToLogin)="onBackToLogin()"
+
+                    >
+                    </app-login-page-registration-page>
+
+                }
+
+
+            </div>
+
+
+            <!-- ===============================================
+                 APPCORE NOTIFICATION
+                 -----------------------------------------------
+                 Height = 10%
+
+                 REAL CHILD COMPONENT
+            ================================================= -->
+
+            <div
+                class="login-page-1-appcore-notification"
+            >
+
+                <app-login-page-notification-panel>
+                </app-login-page-notification-panel>
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+    <!-- =======================================================
+         FOOTER
+         -------------------------------------------------------
+         REAL CHILD COMPONENT
+    ======================================================== -->
+
+    <footer
+        class="login-page-1-footer"
+    >
+
+        <app-login-page-footer>
+        </app-login-page-footer>
+
+    </footer>
 
 
 </div>
