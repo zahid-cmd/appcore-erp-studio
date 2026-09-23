@@ -1,40 +1,40 @@
 /* ===============================================================
    LOGIN PAGE LOGIN PANEL
    ---------------------------------------------------------------
-   FITTED PREMIUM LOGIN PANEL
+   FINAL PREMIUM LOGIN PANEL
 
-   MASTER GEOMETRY:
+   FINAL MASTER GEOMETRY
+   ---------------------------------------------------------------
 
-       Width  = 590px
-       Height = 600px
+       WIDTH:
+           590px
+
+       HEIGHT:
+           Flexible based on available page height.
+
+       TOP SPACE:
+           Reserved for Theme Selector.
+
+       BOTTOM SPACE:
+           Reserved for Footer.
 
    IMPORTANT:
 
-       The Login Card dimensions are controlled ONLY by:
+       This CSS controls ONLY the Login Panel.
 
-           --login-card-width
-           --login-card-height
+       The following remain outside this component:
 
-       Current approved values:
+           - Background
+           - Branding
+           - Promotional Image
+           - Client Logo
+           - Powered By
+           - Theme Selector
+           - Footer
 
-           Width  = 590px
-           Height = 600px
-
-   DESIGN OBJECTIVE:
-
-       The complete login content is vertically distributed
-       across the available 600px card height.
-
-       The card must NOT contain a large unused white area
-       at the bottom.
-
-   PAGE-LEVEL LAYOUT:
-
-       30% Business
-       40% Design
-       30% Login
-
-       remains controlled by login-page-1.css.
+       Login / Registration / Reset Password will use the same
+       panel geometry so they visually swap without changing
+       the surrounding page.
 ================================================================ */
 
 
@@ -71,17 +71,15 @@
 
 
 /* ===============================================================
-   LOGIN PANEL MASTER GEOMETRY
+   MASTER GEOMETRY
    ---------------------------------------------------------------
-   SINGLE MASTER WIDTH + HEIGHT CONTROL
+   FINAL WIDTH:
 
-   APPROVED MASTER SIZE:
+       590px
 
-       Width  = 590px
-       Height = 600px
-
-   INTERNAL SPACING HAS BEEN BALANCED SPECIFICALLY FOR THIS
-   590px × 600px LOGIN CARD.
+   The height is intentionally shorter than the complete viewport
+   so the page-level Theme Selector and Footer have their own
+   visual space.
 ================================================================ */
 
 :host
@@ -90,31 +88,60 @@
         590px;
 
     --login-card-height:
-        590px;
+        calc(
+            100vh
+            -
+            150px
+        );
 
     --login-card-max-width:
         calc(
             100%
             -
-            20px
+            40px
         );
 
+    --login-card-max-height:
+        calc(
+            100vh
+            -
+            150px
+        );
+
+
+    /* =========================================================
+       CARD INTERNAL PADDING
+    ========================================================== */
+
     --login-card-padding-top:
-        26px;
+        34px;
 
     --login-card-padding-right:
-        30px;
+        38px;
 
     --login-card-padding-bottom:
-        22px;
+        28px;
 
     --login-card-padding-left:
-        30px;
+        38px;
 }
 
 
 /* ===============================================================
-   LOGIN PANEL
+   MAIN LOGIN PANEL
+   ---------------------------------------------------------------
+   SPACE RESERVED:
+
+       TOP:
+           ~75px
+
+       BOTTOM:
+           ~75px
+
+   This creates room for:
+
+       Theme Selector
+       Footer
 ================================================================ */
 
 .login-page-login-panel
@@ -128,6 +155,12 @@
     flex-direction:
         column;
 
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
     width:
         100%;
 
@@ -144,7 +177,7 @@
         0;
 
     padding:
-        0;
+        75px 0;
 
     box-sizing:
         border-box;
@@ -155,165 +188,7 @@
 
 
 /* ===============================================================
-   LOGIN PANEL META
-   ---------------------------------------------------------------
-   LANGUAGE SELECTOR
-================================================================ */
-
-.login-panel-meta
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        flex-end;
-
-    flex:
-        0 0 34px;
-
-    width:
-        100%;
-
-    height:
-        34px;
-
-    margin:
-        0;
-
-    padding:
-        0 8px 0 0;
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   LANGUAGE
-================================================================ */
-
-.login-panel-language
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        8px;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    color:
-        #14264d;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    font-size:
-        12px;
-
-    font-weight:
-        600;
-
-    line-height:
-        1;
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   LANGUAGE ICON
-================================================================ */
-
-.language-icon
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    color:
-        #6079a7;
-
-    font-size:
-        18px;
-}
-
-
-/* ===============================================================
-   LANGUAGE TEXT
-================================================================ */
-
-.language-text
-{
-    display:
-        block;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    white-space:
-        nowrap;
-}
-
-
-/* ===============================================================
-   LANGUAGE ARROW
-================================================================ */
-
-.language-arrow
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    margin:
-        0 0 0 1px;
-
-    padding:
-        0;
-
-    color:
-        #6079a7;
-
-    font-size:
-        9px;
-}
-
-
-/* ===============================================================
-   LOGIN PANEL CONTENT
+   PANEL CONTENT
 ================================================================ */
 
 .login-panel-content
@@ -321,27 +196,17 @@
     display:
         flex;
 
-    flex-direction:
-        column;
-
     align-items:
         center;
 
     justify-content:
-        flex-start;
-
-    flex:
-        1 1 auto;
+        center;
 
     width:
         100%;
 
     height:
-        calc(
-            100%
-            -
-            34px
-        );
+        100%;
 
     min-width:
         0;
@@ -364,111 +229,26 @@
 
 
 /* ===============================================================
-   TOPLINE
-   ---------------------------------------------------------------
-   LANGUAGE → TOPLINE GAP:
-
-       28px
-
-   Balanced specifically for the 600px card.
-================================================================ */
-
-.login-panel-topline
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    gap:
-        16px;
-
-    flex:
-        0 0 auto;
-
-    width:
-        100%;
-
-    margin:
-        28px 0 18px 0;
-
-    padding:
-        0;
-
-    color:
-        #6077a4;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    font-size:
-        9px;
-
-    font-weight:
-        600;
-
-    line-height:
-        1.3;
-
-    letter-spacing:
-        4px;
-
-    text-transform:
-        uppercase;
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   TOPLINE SEPARATOR
-================================================================ */
-
-.topline-separator
-{
-    color:
-        #a7b8d5;
-
-    font-weight:
-        400;
-}
-
-
-/* ===============================================================
    LOGIN CARD
    ---------------------------------------------------------------
-   MASTER WIDTH:
+   FINAL WIDTH:
 
        590px
 
-   MASTER HEIGHT:
+   FINAL HEIGHT:
 
-       600px
+       Viewport height - 150px
 
-   IMPORTANT:
-
-       No flex stretching.
-       No max-height restriction.
-       No automatic height calculation.
-
-   The internal content spacing is intentionally increased so
-   the card does not visually collapse toward the top.
+   This is the MASTER SIZE for all three panels.
 ================================================================ */
 
 .login-card
 {
     display:
-        block;
+        flex;
 
-    flex:
-        0 0 auto;
+    flex-direction:
+        column;
 
     width:
         var(
@@ -485,6 +265,11 @@
             --login-card-max-width
         );
 
+    max-height:
+        var(
+            --login-card-max-height
+        );
+
     margin:
         0;
 
@@ -495,33 +280,34 @@
         var(--login-card-padding-left);
 
     border:
-        1px solid rgba(
-            210,
+        1px solid
+        rgba(
+            208,
             222,
-            241,
-            .62
+            243,
+            .78
         );
 
     border-radius:
-        18px;
+        20px;
 
     background:
         rgba(
             255,
             255,
             255,
-            .94
+            .96
         );
 
     box-shadow:
         0
-        18px
-        48px
+        20px
+        55px
         rgba(
-            56,
-            91,
-            145,
-            .08
+            52,
+            86,
+            142,
+            .12
         );
 
     box-sizing:
@@ -533,7 +319,7 @@
 
 
 /* ===============================================================
-   LOGIN CARD HEADER
+   CARD HEADER
 ================================================================ */
 
 .login-card-header
@@ -541,14 +327,11 @@
     display:
         flex;
 
-    align-items:
-        flex-start;
+    flex-direction:
+        column;
 
-    justify-content:
-        space-between;
-
-    gap:
-        14px;
+    flex:
+        0 0 auto;
 
     width:
         100%;
@@ -568,7 +351,108 @@
 
 
 /* ===============================================================
-   LOGIN CARD HEADING AREA
+   TOP META
+================================================================ */
+
+.login-card-top-meta
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    gap:
+        13px;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #6d81a6;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        3.8px;
+
+    text-transform:
+        uppercase;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   TOP META SEPARATOR
+================================================================ */
+
+.topline-separator
+{
+    color:
+        #a9b8d0;
+
+    font-weight:
+        400;
+}
+
+
+/* ===============================================================
+   BLUE ACCENT
+================================================================ */
+
+.login-card-accent
+{
+    display:
+        block;
+
+    width:
+        42px;
+
+    height:
+        3px;
+
+    margin:
+        20px 0 18px 0;
+
+    padding:
+        0;
+
+    border-radius:
+        999px;
+
+    background:
+        #147cf3;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   HEADING AREA
 ================================================================ */
 
 .login-card-heading-area
@@ -576,11 +460,8 @@
     display:
         block;
 
-    flex:
-        1 1 auto;
-
-    min-width:
-        0;
+    width:
+        100%;
 
     margin:
         0;
@@ -597,9 +478,7 @@
 
 
 /* ===============================================================
-   LOGIN CARD HEADING
-   ---------------------------------------------------------------
-   LEFT ALIGNED
+   HEADING
 ================================================================ */
 
 .login-card-heading
@@ -617,7 +496,7 @@
         0;
 
     color:
-        #10234a;
+        #0d2149;
 
     font-family:
         Arial,
@@ -625,7 +504,7 @@
         sans-serif;
 
     font-size:
-        34px;
+        36px;
 
     font-weight:
         700;
@@ -634,7 +513,7 @@
         1.08;
 
     letter-spacing:
-        -0.8px;
+        -1px;
 
     box-sizing:
         border-box;
@@ -645,9 +524,7 @@
 
 
 /* ===============================================================
-   LOGIN CARD SUBTITLE
-   ---------------------------------------------------------------
-   LEFT ALIGNED
+   SUBTITLE
 ================================================================ */
 
 .login-card-subtitle
@@ -658,14 +535,17 @@
     width:
         100%;
 
+    max-width:
+        470px;
+
     margin:
-        7px 0 0 0;
+        9px 0 0 0;
 
     padding:
         0;
 
     color:
-        #637aa7;
+        #667ba2;
 
     font-family:
         Arial,
@@ -679,7 +559,7 @@
         400;
 
     line-height:
-        1.35;
+        1.45;
 
     box-sizing:
         border-box;
@@ -690,131 +570,37 @@
 
 
 /* ===============================================================
-   SECURE LOGIN BADGE
-================================================================ */
-
-.secure-login-badge
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        6px;
-
-    flex:
-        0 0 auto;
-
-    margin:
-        0;
-
-    padding:
-        8px 11px;
-
-    border:
-        1px solid rgba(
-            211,
-            225,
-            246,
-            .75
-        );
-
-    border-radius:
-        9px;
-
-    background:
-        #edf4ff;
-
-    color:
-        #46638e;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    font-size:
-        10px;
-
-    font-weight:
-        500;
-
-    line-height:
-        1;
-
-    white-space:
-        nowrap;
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   SECURE LOGIN ICON
-================================================================ */
-
-.secure-login-icon
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    color:
-        #1874ed;
-
-    font-size:
-        12px;
-}
-
-
-/* ===============================================================
-   SECURE LOGIN TEXT
-================================================================ */
-
-.secure-login-text
-{
-    display:
-        block;
-
-    margin:
-        0;
-
-    padding:
-        0;
-}
-
-
-/* ===============================================================
    LOGIN FORM
    ---------------------------------------------------------------
-   IMPORTANT:
+   The form occupies the available middle area.
 
-       The form remains natural-height.
-
-       No flex:1.
-
-       Vertical spacing is deliberately increased to distribute
-       the content more evenly inside the 600px card.
+   This distributes the fields naturally while keeping the
+   registration section and footer-meta anchored toward the
+   bottom of the card.
 ================================================================ */
 
 .login-form
 {
     display:
-        block;
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        1 1 auto;
 
     width:
         100%;
 
+    min-width:
+        0;
+
+    min-height:
+        0;
+
     margin:
-        26px 0 0 0;
+        32px 0 0 0;
 
     padding:
         0;
@@ -825,15 +611,16 @@
 
 
 /* ===============================================================
-   LOGIN FORM FIELD
-   ---------------------------------------------------------------
-   Increased spacing between Login ID and Password.
+   FORM FIELD
 ================================================================ */
 
 .login-form-field
 {
     display:
-        block;
+        flex;
+
+    flex-direction:
+        column;
 
     width:
         100%;
@@ -850,9 +637,7 @@
 
 
 /* ===============================================================
-   LOGIN FORM LABEL
-   ---------------------------------------------------------------
-   LEFT ALIGNED
+   FORM LABEL
 ================================================================ */
 
 .login-form-label
@@ -861,7 +646,7 @@
         block;
 
     margin:
-        0 0 7px 0;
+        0 0 8px 0;
 
     padding:
         0;
@@ -892,7 +677,7 @@
 
 
 /* ===============================================================
-   LOGIN INPUT WRAPPER
+   INPUT WRAPPER
 ================================================================ */
 
 .login-input-wrapper
@@ -910,19 +695,20 @@
         100%;
 
     height:
-        52px;
+        55px;
 
     margin:
         0;
 
     padding:
-        0 14px;
+        0 16px;
 
     border:
-        1px solid #cdd9eb;
+        1px solid
+        #cdd9eb;
 
     border-radius:
-        10px;
+        11px;
 
     background:
         #ffffff;
@@ -932,35 +718,39 @@
 
     transition:
         border-color .18s ease,
-        box-shadow .18s ease;
+        box-shadow .18s ease,
+        background .18s ease;
 }
 
 
 /* ===============================================================
-   LOGIN INPUT WRAPPER FOCUS
+   INPUT FOCUS
 ================================================================ */
 
 .login-input-wrapper:focus-within
 {
     border-color:
-        #2375ee;
+        #1879ed;
+
+    background:
+        #ffffff;
 
     box-shadow:
         0
         0
         0
-        3px
+        4px
         rgba(
-            35,
-            117,
-            238,
-            .10
+            24,
+            121,
+            237,
+            .09
         );
 }
 
 
 /* ===============================================================
-   LOGIN INPUT ICON
+   INPUT ICON
 ================================================================ */
 
 .login-input-icon
@@ -975,27 +765,27 @@
         center;
 
     flex:
-        0 0 26px;
+        0 0 28px;
 
     width:
-        26px;
+        28px;
 
     margin:
-        0 10px 0 0;
+        0 11px 0 0;
 
     padding:
         0;
 
     color:
-        #6880aa;
+        #6379a3;
 
     font-size:
-        17px;
+        18px;
 }
 
 
 /* ===============================================================
-   LOGIN FORM INPUT
+   INPUT
 ================================================================ */
 
 .login-form-input
@@ -1028,7 +818,7 @@
         transparent;
 
     color:
-        #14264d;
+        #172b52;
 
     font-family:
         Arial,
@@ -1050,13 +840,13 @@
 
 
 /* ===============================================================
-   LOGIN FORM INPUT PLACEHOLDER
+   PLACEHOLDER
 ================================================================ */
 
 .login-form-input::placeholder
 {
     color:
-        #7890b7;
+        #7b8eaf;
 
     opacity:
         1;
@@ -1070,12 +860,12 @@
 .login-password-input
 {
     padding-right:
-        38px;
+        42px;
 }
 
 
 /* ===============================================================
-   PASSWORD VISIBILITY BUTTON
+   PASSWORD VISIBILITY
 ================================================================ */
 
 .password-visibility-button
@@ -1096,13 +886,13 @@
         50%;
 
     right:
-        10px;
+        11px;
 
     width:
-        28px;
+        30px;
 
     height:
-        28px;
+        30px;
 
     margin:
         0;
@@ -1120,7 +910,7 @@
         transparent;
 
     color:
-        #6880aa;
+        #6479a1;
 
     font-size:
         16px;
@@ -1133,22 +923,15 @@
 }
 
 
-/* ===============================================================
-   PASSWORD VISIBILITY BUTTON HOVER
-================================================================ */
-
 .password-visibility-button:hover
 {
     color:
-        #2375ee;
+        #147cf3;
 }
 
 
 /* ===============================================================
-   LOGIN FORM OPTIONS
-   ---------------------------------------------------------------
-   The options remain visually separated from the Password
-   field and the Sign In button.
+   LOGIN OPTIONS
 ================================================================ */
 
 .login-form-options
@@ -1169,7 +952,7 @@
         100%;
 
     margin:
-        2px 0 24px 0;
+        0 0 25px 0;
 
     padding:
         0;
@@ -1195,7 +978,7 @@
         center;
 
     gap:
-        8px;
+        9px;
 
     margin:
         0;
@@ -1204,7 +987,7 @@
         0;
 
     color:
-        #263a60;
+        #273b61;
 
     font-family:
         Arial,
@@ -1229,7 +1012,7 @@
 
 
 /* ===============================================================
-   REMEMBER ME NATIVE CHECKBOX
+   HIDDEN NATIVE CHECKBOX
 ================================================================ */
 
 .remember-me input
@@ -1269,7 +1052,7 @@
 
 
 /* ===============================================================
-   REMEMBER CHECKBOX
+   CUSTOM CHECKBOX
 ================================================================ */
 
 .remember-checkbox
@@ -1290,7 +1073,8 @@
         0;
 
     border:
-        2px solid #9aacc8;
+        2px solid
+        #9bacc7;
 
     border-radius:
         4px;
@@ -1300,30 +1084,36 @@
 
     box-sizing:
         border-box;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease;
 }
 
 
 /* ===============================================================
-   REMEMBER CHECKBOX CHECKED
+   CHECKED
 ================================================================ */
 
 .remember-me input:checked
-+ .remember-checkbox
++
+.remember-checkbox
 {
     border-color:
-        #2375ee;
+        #147cf3;
 
     background:
-        #2375ee;
+        #147cf3;
 }
 
 
 /* ===============================================================
-   REMEMBER CHECKBOX CHECK MARK
+   CHECK MARK
 ================================================================ */
 
 .remember-me input:checked
-+ .remember-checkbox::after
++
+.remember-checkbox::after
 {
     content:
         '';
@@ -1341,13 +1131,19 @@
         1px 0 0 5px;
 
     border:
-        solid #ffffff;
+        solid
+        #ffffff;
 
     border-width:
-        0 2px 2px 0;
+        0
+        2px
+        2px
+        0;
 
     transform:
-        rotate(45deg);
+        rotate(
+            45deg
+        );
 
     box-sizing:
         border-box;
@@ -1372,7 +1168,7 @@
 
 
 /* ===============================================================
-   FORGOT PASSWORD BUTTON
+   FORGOT PASSWORD
 ================================================================ */
 
 .forgot-password-button
@@ -1420,10 +1216,6 @@
 }
 
 
-/* ===============================================================
-   FORGOT PASSWORD HOVER
-================================================================ */
-
 .forgot-password-button:hover
 {
     text-decoration:
@@ -1453,7 +1245,7 @@
         100%;
 
     height:
-        54px;
+        57px;
 
     margin:
         0;
@@ -1465,13 +1257,13 @@
         0;
 
     border-radius:
-        10px;
+        11px;
 
     background:
         linear-gradient(
             90deg,
-            #287ff2 0%,
-            #1767d8 100%
+            #238af4 0%,
+            #126be0 100%
         );
 
     color:
@@ -1496,13 +1288,13 @@
 
     box-shadow:
         0
-        8px
-        20px
+        10px
+        24px
         rgba(
-            35,
+            30,
             117,
-            238,
-            .18
+            237,
+            .20
         );
 
     box-sizing:
@@ -1510,12 +1302,13 @@
 
     transition:
         transform .18s ease,
-        box-shadow .18s ease;
+        box-shadow .18s ease,
+        filter .18s ease;
 }
 
 
 /* ===============================================================
-   SIGN IN BUTTON HOVER
+   SIGN IN HOVER
 ================================================================ */
 
 .sign-in-button:hover
@@ -1523,15 +1316,20 @@
     transform:
         translateY(-1px);
 
+    filter:
+        brightness(
+            1.03
+        );
+
     box-shadow:
         0
-        11px
-        24px
+        13px
+        28px
         rgba(
-            35,
+            30,
             117,
-            238,
-            .24
+            237,
+            .27
         );
 }
 
@@ -1617,11 +1415,14 @@
     align-items:
         center;
 
+    flex:
+        0 0 auto;
+
     width:
         100%;
 
     margin:
-        18px 0;
+        23px 0;
 
     padding:
         0;
@@ -1673,13 +1474,13 @@
         0 0 auto;
 
     margin:
-        0 14px;
+        0 15px;
 
     padding:
         0;
 
     color:
-        #667da6;
+        #687da4;
 
     font-family:
         Arial,
@@ -1690,7 +1491,7 @@
         11px;
 
     font-weight:
-        500;
+        600;
 
     line-height:
         1;
@@ -1702,12 +1503,6 @@
 
 /* ===============================================================
    REGISTRATION AREA
-   ---------------------------------------------------------------
-   Balanced lower section.
-
-   The registration block is intentionally larger than the
-   previous version so the bottom portion of the 600px card
-   does not become visually empty.
 ================================================================ */
 
 .registration-area
@@ -1718,28 +1513,32 @@
     align-items:
         center;
 
+    flex:
+        0 0 auto;
+
     width:
         100%;
 
     min-height:
-        82px;
+        86px;
 
     margin:
         0;
 
     padding:
-        10px 13px;
+        12px 14px;
 
     border:
-        1px solid rgba(
-            218,
-            228,
-            242,
-            .72
+        1px solid
+        rgba(
+            211,
+            225,
+            244,
+            .82
         );
 
     border-radius:
-        11px;
+        12px;
 
     background:
         #f3f7fd;
@@ -1765,16 +1564,16 @@
         center;
 
     flex:
-        0 0 46px;
+        0 0 48px;
 
     width:
-        46px;
+        48px;
 
     height:
-        46px;
+        48px;
 
     margin:
-        0 13px 0 0;
+        0 14px 0 0;
 
     padding:
         0;
@@ -1783,13 +1582,13 @@
         50%;
 
     background:
-        #e2edff;
+        #e1edff;
 
     color:
-        #1475ef;
+        #1178ef;
 
     font-size:
-        20px;
+        21px;
 
     box-sizing:
         border-box;
@@ -1838,7 +1637,7 @@
         0;
 
     color:
-        #14264d;
+        #12264d;
 
     font-family:
         Arial,
@@ -1866,7 +1665,7 @@
 .registration-description
 {
     max-width:
-        220px;
+        250px;
 
     margin:
         4px 0 0 0;
@@ -1875,7 +1674,7 @@
         0;
 
     color:
-        #647ba4;
+        #667da5;
 
     font-family:
         Arial,
@@ -1889,7 +1688,7 @@
         400;
 
     line-height:
-        1.4;
+        1.45;
 
     box-sizing:
         border-box;
@@ -1918,22 +1717,23 @@
         0 0 auto;
 
     min-width:
-        108px;
+        116px;
 
     height:
-        40px;
+        42px;
 
     margin:
-        0 0 0 11px;
+        0 0 0 14px;
 
     padding:
-        0 13px;
+        0 15px;
 
     border:
-        1px solid #1674ee;
+        1px solid
+        #1478ef;
 
     border-radius:
-        8px;
+        9px;
 
     background:
         #ffffff;
@@ -1963,7 +1763,8 @@
 
     transition:
         background .18s ease,
-        color .18s ease;
+        color .18s ease,
+        box-shadow .18s ease;
 }
 
 
@@ -1974,10 +1775,95 @@
 .registration-button:hover
 {
     background:
-        #1674ee;
+        #1478ef;
 
     color:
         #ffffff;
+
+    box-shadow:
+        0
+        6px
+        14px
+        rgba(
+            20,
+            120,
+            239,
+            .18
+        );
+}
+
+
+/* ===============================================================
+   BOTTOM META
+   ---------------------------------------------------------------
+   Small visual anchor inside the card.
+================================================================ */
+
+.login-card-bottom-meta
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        12px;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    margin:
+        20px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #7285a6;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        9px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        3px;
+
+    text-transform:
+        uppercase;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   BOTTOM META SEPARATOR
+================================================================ */
+
+.bottom-meta-separator
+{
+    color:
+        #aab8ce;
+
+    font-weight:
+        400;
 }
 
 
@@ -1996,70 +1882,51 @@
             540px;
 
         --login-card-height:
-            560px;
+            calc(
+                100vh
+                -
+                130px
+            );
 
         --login-card-max-width:
             calc(
                 100%
                 -
-                20px
+                40px
+            );
+
+        --login-card-max-height:
+            calc(
+                100vh
+                -
+                130px
             );
 
         --login-card-padding-top:
-            24px;
+            30px;
 
         --login-card-padding-right:
-            26px;
+            30px;
 
         --login-card-padding-bottom:
-            20px;
+            24px;
 
         --login-card-padding-left:
-            26px;
+            30px;
     }
 
 
-    .login-panel-meta
+    .login-page-login-panel
     {
-        flex-basis:
-            34px;
-
-        height:
-            34px;
-    }
-
-
-    .login-panel-content
-    {
-        height:
-            calc(
-                100%
-                -
-                34px
-            );
-    }
-
-
-    .login-panel-topline
-    {
-        margin:
-            24px 0 14px 0;
-
-        gap:
-            13px;
-
-        font-size:
-            9px;
-
-        letter-spacing:
-            3.5px;
+        padding:
+            65px 20px;
     }
 
 
     .login-card-heading
     {
         font-size:
-            31px;
+            32px;
     }
 
 
@@ -2073,87 +1940,21 @@
     .login-form
     {
         margin-top:
-            22px;
-    }
-
-
-    .login-form-field
-    {
-        margin-bottom:
-            18px;
+            28px;
     }
 
 
     .login-input-wrapper
     {
         height:
-            48px;
-    }
-
-
-    .login-form-options
-    {
-        margin-bottom:
-            20px;
+            53px;
     }
 
 
     .sign-in-button
     {
         height:
-            50px;
-
-        font-size:
-            17px;
-    }
-
-
-    .login-or-separator
-    {
-        margin:
-            15px 0;
-    }
-
-
-    .registration-area
-    {
-        min-height:
-            72px;
-
-        padding:
-            9px 11px;
-    }
-
-
-    .registration-icon
-    {
-        flex-basis:
-            42px;
-
-        width:
-            42px;
-
-        height:
-            42px;
-
-        margin-right:
-            10px;
-
-        font-size:
-            18px;
-    }
-
-
-    .registration-button
-    {
-        min-width:
-            102px;
-
-        height:
-            36px;
-
-        padding:
-            0 11px;
+            55px;
     }
 }
 
@@ -2173,19 +1974,34 @@
             100%;
 
         --login-card-height:
-            auto;
+            calc(
+                100vh
+                -
+                90px
+            );
 
         --login-card-max-width:
-            100%;
+            calc(
+                100%
+                -
+                20px
+            );
+
+        --login-card-max-height:
+            calc(
+                100vh
+                -
+                90px
+            );
 
         --login-card-padding-top:
-            28px;
+            25px;
 
         --login-card-padding-right:
             20px;
 
         --login-card-padding-bottom:
-            24px;
+            20px;
 
         --login-card-padding-left:
             20px;
@@ -2194,66 +2010,20 @@
 
     .login-page-login-panel
     {
-        height:
-            auto;
-
-        min-height:
-            100%;
+        padding:
+            45px 10px;
     }
 
 
-    .login-panel-meta
+    .login-card
     {
-        flex-basis:
-            36px;
-
-        height:
-            36px;
-
-        padding-right:
-            0;
+        border-radius:
+            16px;
     }
 
 
-    .login-panel-language
+    .login-card-top-meta
     {
-        gap:
-            7px;
-
-        font-size:
-            12px;
-    }
-
-
-    .language-icon
-    {
-        font-size:
-            18px;
-    }
-
-
-    .login-panel-content
-    {
-        height:
-            auto;
-
-        min-height:
-            calc(
-                100%
-                -
-                36px
-            );
-
-        overflow:
-            visible;
-    }
-
-
-    .login-panel-topline
-    {
-        margin:
-            28px 0 18px 0;
-
         gap:
             9px;
 
@@ -2261,40 +2031,20 @@
             8px;
 
         letter-spacing:
-            2.8px;
+            2.5px;
     }
 
 
-    .login-card
+    .login-card-accent
     {
-        flex:
-            0 0 auto;
-
         width:
-            var(
-                --login-card-width
-            );
+            36px;
 
         height:
-            auto;
+            3px;
 
-        max-width:
-            var(
-                --login-card-max-width
-            );
-
-        border-radius:
-            15px;
-    }
-
-
-    .login-card-header
-    {
-        flex-direction:
-            column;
-
-        gap:
-            14px;
+        margin:
+            17px 0 16px 0;
     }
 
 
@@ -2307,28 +2057,15 @@
 
     .login-card-subtitle
     {
-        margin-top:
-            7px;
-
         font-size:
-            15px;
-    }
-
-
-    .secure-login-badge
-    {
-        padding:
-            8px 12px;
-
-        font-size:
-            11px;
+            14px;
     }
 
 
     .login-form
     {
         margin-top:
-            22px;
+            25px;
     }
 
 
@@ -2339,107 +2076,24 @@
     }
 
 
-    .login-form-label
-    {
-        font-size:
-            13px;
-    }
-
-
     .login-input-wrapper
     {
         height:
-            50px;
-
-        padding:
-            0 12px;
-    }
-
-
-    .login-input-icon
-    {
-        flex-basis:
-            25px;
-
-        width:
-            25px;
-
-        margin-right:
-            9px;
-
-        font-size:
-            17px;
-    }
-
-
-    .login-form-input
-    {
-        font-size:
-            14px;
+            51px;
     }
 
 
     .login-form-options
     {
-        gap:
-            10px;
-
-        margin:
-            3px 0 20px 0;
-    }
-
-
-    .remember-me
-    {
-        font-size:
-            12px;
-    }
-
-
-    .remember-checkbox
-    {
-        width:
-            18px;
-
-        height:
-            18px;
-    }
-
-
-    .forgot-password-button
-    {
-        font-size:
-            12px;
+        margin-bottom:
+            20px;
     }
 
 
     .sign-in-button
     {
         height:
-            52px;
-
-        padding:
-            0 28px;
-
-        font-size:
-            17px;
-    }
-
-
-    .sign-in-icon
-    {
-        margin-right:
-            12px;
-
-        font-size:
-            17px;
-    }
-
-
-    .sign-in-arrow
-    {
-        margin-left:
-            14px;
+            53px;
 
         font-size:
             16px;
@@ -2453,66 +2107,32 @@
     }
 
 
-    .separator-text
-    {
-        margin:
-            0 12px;
-
-        font-size:
-            12px;
-    }
-
-
     .registration-area
     {
-        align-items:
-            flex-start;
-
-        flex-wrap:
-            wrap;
-
         min-height:
-            auto;
+            80px;
 
         padding:
-            14px;
+            10px;
     }
 
 
     .registration-icon
     {
         flex-basis:
-            46px;
+            42px;
 
         width:
-            46px;
+            42px;
 
         height:
-            46px;
+            42px;
 
         margin-right:
-            11px;
+            10px;
 
         font-size:
             18px;
-    }
-
-
-    .registration-content
-    {
-        flex:
-            1 1 calc(
-                100%
-                -
-                57px
-            );
-    }
-
-
-    .registration-heading
-    {
-        font-size:
-            13px;
     }
 
 
@@ -2522,26 +2142,157 @@
             100%;
 
         font-size:
-            11px;
+            10px;
     }
 
 
     .registration-button
     {
-        flex:
-            1 1 100%;
-
-        width:
-            100%;
-
         min-width:
-            0;
+            105px;
 
         height:
-            44px;
+            38px;
 
+        padding:
+            0 11px;
+    }
+
+
+    .login-card-bottom-meta
+    {
+        margin-top:
+            16px;
+
+        font-size:
+            8px;
+
+        letter-spacing:
+            2.3px;
+    }
+}
+
+
+/* ===============================================================
+   SHORT HEIGHT SCREENS
+================================================================ */
+
+@media
+(
+    max-height:700px
+)
+{
+    :host
+    {
+        --login-card-height:
+            calc(
+                100vh
+                -
+                100px
+            );
+
+        --login-card-max-height:
+            calc(
+                100vh
+                -
+                100px
+            );
+
+        --login-card-padding-top:
+            22px;
+
+        --login-card-padding-bottom:
+            18px;
+    }
+
+
+    .login-page-login-panel
+    {
+        padding:
+            50px 0;
+    }
+
+
+    .login-card-accent
+    {
         margin:
-            12px 0 0 0;
+            13px 0 11px 0;
+    }
+
+
+    .login-card-heading
+    {
+        font-size:
+            31px;
+    }
+
+
+    .login-form
+    {
+        margin-top:
+            21px;
+    }
+
+
+    .login-form-field
+    {
+        margin-bottom:
+            14px;
+    }
+
+
+    .login-input-wrapper
+    {
+        height:
+            48px;
+    }
+
+
+    .login-form-options
+    {
+        margin-bottom:
+            16px;
+    }
+
+
+    .sign-in-button
+    {
+        height:
+            50px;
+    }
+
+
+    .login-or-separator
+    {
+        margin:
+            13px 0;
+    }
+
+
+    .registration-area
+    {
+        min-height:
+            68px;
+    }
+
+
+    .registration-icon
+    {
+        width:
+            38px;
+
+        height:
+            38px;
+
+        flex-basis:
+            38px;
+    }
+
+
+    .login-card-bottom-meta
+    {
+        margin-top:
+            12px;
     }
 }
 
@@ -2557,7 +2308,8 @@
 {
     .login-input-wrapper,
     .sign-in-button,
-    .registration-button
+    .registration-button,
+    .remember-checkbox
     {
         transition:
             none;

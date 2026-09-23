@@ -1,132 +1,127 @@
 <!-- ===========================================================
      LOGIN PAGE LOGIN PANEL
+     -----------------------------------------------------------
+     FINAL PREMIUM LOGIN PANEL
+
+     MASTER GEOMETRY:
+
+         Width:
+             590px
+
+         Height:
+             Available panel height
+             with 20px top + 20px bottom breathing space.
+
+     IMPORTANT:
+
+         This panel controls ONLY the login form.
+
+         No:
+         - Language selector
+         - Logo
+         - Google login
+         - Microsoft login
+         - Background artwork
+
+         Background and page-level layout remain controlled by
+         the Login Page itself.
 ============================================================ -->
+
 
 <div
     class="login-page-login-panel"
-    *ngIf="config.visible">
-
-
-    <!-- =======================================================
-         LANGUAGE / TOP META
-         -------------------------------------------------------
-         Placement is controlled by the Login Page layout.
-    ======================================================== -->
-
-    <div class="login-panel-meta">
-
-        <div class="login-panel-language">
-
-            <span class="language-icon">
-                <i
-                    class="fas fa-globe"
-                    aria-hidden="true">
-                </i>
-            </span>
-
-            <span class="language-text">
-                English
-            </span>
-
-            <span class="language-arrow">
-                <i
-                    class="fas fa-chevron-down"
-                    aria-hidden="true">
-                </i>
-            </span>
-
-        </div>
-
-    </div>
+    *ngIf="config.visible"
+>
 
 
     <!-- =======================================================
          LOGIN PANEL CONTENT
     ======================================================== -->
 
-    <div class="login-panel-content">
-
-
-        <!-- ===================================================
-             PANEL TOP META
-        ==================================================== -->
-
-        <div class="login-panel-topline">
-
-            <span>
-                SIMPLE
-            </span>
-
-            <span class="topline-separator">
-                |
-            </span>
-
-            <span>
-                SECURE
-            </span>
-
-            <span class="topline-separator">
-                |
-            </span>
-
-            <span>
-                SCALABLE
-            </span>
-
-        </div>
+    <div
+        class="login-panel-content"
+    >
 
 
         <!-- ===================================================
              LOGIN CARD
         ==================================================== -->
 
-        <div class="login-card">
+        <div
+            class="login-card"
+        >
 
 
             <!-- ===============================================
                  CARD HEADER
             ================================================ -->
 
-            <div class="login-card-header">
+            <div
+                class="login-card-header"
+            >
 
 
                 <!-- ===========================================
-                     Heading Area
+                     TOP META
                 ============================================ -->
 
-                <div class="login-card-heading-area">
+                <div
+                    class="login-card-top-meta"
+                >
 
-                    <h2 class="login-card-heading">
-                        {{ config.heading }}
-                    </h2>
+                    <span>
+                        SIMPLE
+                    </span>
 
-                    <p class="login-card-subtitle">
-                        {{ config.subtitle }}
-                    </p>
+                    <span class="topline-separator">
+                        |
+                    </span>
+
+                    <span>
+                        SECURE
+                    </span>
+
+                    <span class="topline-separator">
+                        |
+                    </span>
+
+                    <span>
+                        SCALABLE
+                    </span>
 
                 </div>
 
 
                 <!-- ===========================================
-                     Secure Login Badge
+                     BLUE ACCENT
                 ============================================ -->
 
                 <div
-                    class="secure-login-badge"
-                    *ngIf="config.secureLoginVisible">
+                    class="login-card-accent"
+                >
+                </div>
 
-                    <span class="secure-login-icon">
 
-                        <i
-                            class="fas fa-shield-halved"
-                            aria-hidden="true">
-                        </i>
+                <!-- ===========================================
+                     HEADING AREA
+                ============================================ -->
 
-                    </span>
+                <div
+                    class="login-card-heading-area"
+                >
 
-                    <span class="secure-login-text">
-                        {{ config.secureLoginText }}
-                    </span>
+                    <h2
+                        class="login-card-heading"
+                    >
+                        {{ config.heading }}
+                    </h2>
+
+
+                    <p
+                        class="login-card-subtitle"
+                    >
+                        {{ config.subtitle }}
+                    </p>
 
                 </div>
 
@@ -141,31 +136,40 @@
             <form
                 class="login-form"
                 (ngSubmit)="onSignIn()"
-                autocomplete="on">
+                autocomplete="on"
+            >
 
 
                 <!-- ===========================================
                      LOGIN ID
                 ============================================ -->
 
-                <div class="login-form-field">
+                <div
+                    class="login-form-field"
+                >
 
                     <label
                         class="login-form-label"
-                        for="login-page-login-id">
+                        for="login-page-login-id"
+                    >
 
                         {{ config.loginIdLabel }}
 
                     </label>
 
 
-                    <div class="login-input-wrapper">
+                    <div
+                        class="login-input-wrapper"
+                    >
 
-                        <span class="login-input-icon">
+                        <span
+                            class="login-input-icon"
+                        >
 
                             <i
                                 class="fas fa-user"
-                                aria-hidden="true">
+                                aria-hidden="true"
+                            >
                             </i>
 
                         </span>
@@ -195,24 +199,32 @@
                      PASSWORD
                 ============================================ -->
 
-                <div class="login-form-field">
+                <div
+                    class="login-form-field"
+                >
 
                     <label
                         class="login-form-label"
-                        for="login-page-password">
+                        for="login-page-password"
+                    >
 
                         {{ config.passwordLabel }}
 
                     </label>
 
 
-                    <div class="login-input-wrapper">
+                    <div
+                        class="login-input-wrapper"
+                    >
 
-                        <span class="login-input-icon">
+                        <span
+                            class="login-input-icon"
+                        >
 
                             <i
                                 class="fas fa-lock"
-                                aria-hidden="true">
+                                aria-hidden="true"
+                            >
                             </i>
 
                         </span>
@@ -244,7 +256,8 @@
                             aria-label="Show or hide password"
                             (click)="
                                 togglePasswordVisibility()
-                            ">
+                            "
+                        >
 
                             <i
                                 [class]="
@@ -252,7 +265,8 @@
                                         ? 'fas fa-eye'
                                         : 'fas fa-eye-slash'
                                 "
-                                aria-hidden="true">
+                                aria-hidden="true"
+                            >
                             </i>
 
                         </button>
@@ -266,16 +280,19 @@
                      LOGIN OPTIONS
                 ============================================ -->
 
-                <div class="login-form-options">
+                <div
+                    class="login-form-options"
+                >
 
 
                     <!-- =======================================
-                         Remember Me
+                         REMEMBER ME
                     ======================================== -->
 
                     <label
                         class="remember-me"
-                        *ngIf="config.rememberMeVisible">
+                        *ngIf="config.rememberMeVisible"
+                    >
 
                         <input
                             type="checkbox"
@@ -288,10 +305,14 @@
                             "
                         />
 
-                        <span class="remember-checkbox">
+                        <span
+                            class="remember-checkbox"
+                        >
                         </span>
 
-                        <span class="remember-text">
+                        <span
+                            class="remember-text"
+                        >
                             {{ config.rememberMeText }}
                         </span>
 
@@ -299,14 +320,15 @@
 
 
                     <!-- =======================================
-                         Forgot Password
+                         FORGOT PASSWORD
                     ======================================== -->
 
                     <button
                         type="button"
                         class="forgot-password-button"
                         *ngIf="config.forgotPasswordVisible"
-                        (click)="onForgotPassword()">
+                        (click)="onForgotPassword()"
+                    >
 
                         {{ config.forgotPasswordText }}
 
@@ -322,29 +344,37 @@
 
                 <button
                     type="submit"
-                    class="sign-in-button">
+                    class="sign-in-button"
+                >
 
-
-                    <span class="sign-in-icon">
+                    <span
+                        class="sign-in-icon"
+                    >
 
                         <i
                             [class]="config.signInButtonIcon"
-                            aria-hidden="true">
+                            aria-hidden="true"
+                        >
                         </i>
 
                     </span>
 
 
-                    <span class="sign-in-text">
+                    <span
+                        class="sign-in-text"
+                    >
                         {{ config.signInButtonText }}
                     </span>
 
 
-                    <span class="sign-in-arrow">
+                    <span
+                        class="sign-in-arrow"
+                    >
 
                         <i
                             [class]="config.signInButtonArrowIcon"
-                            aria-hidden="true">
+                            aria-hidden="true"
+                        >
                         </i>
 
                     </span>
@@ -359,16 +389,26 @@
                  OR SEPARATOR
             ================================================== -->
 
-            <div class="login-or-separator">
+            <div
+                class="login-or-separator"
+            >
 
-                <span class="separator-line">
+                <span
+                    class="separator-line"
+                >
                 </span>
 
-                <span class="separator-text">
+
+                <span
+                    class="separator-text"
+                >
                     {{ config.orText }}
                 </span>
 
-                <span class="separator-line">
+
+                <span
+                    class="separator-line"
+                >
                 </span>
 
             </div>
@@ -380,34 +420,45 @@
 
             <div
                 class="registration-area"
-                *ngIf="config.registrationVisible">
+                *ngIf="config.registrationVisible"
+            >
 
 
                 <!-- =============================================
-                     Registration Icon
+                     REGISTRATION ICON
                 ============================================== -->
 
-                <div class="registration-icon">
+                <div
+                    class="registration-icon"
+                >
 
                     <i
                         [class]="config.registrationIcon"
-                        aria-hidden="true">
+                        aria-hidden="true"
+                    >
                     </i>
 
                 </div>
 
 
                 <!-- =============================================
-                     Registration Content
+                     REGISTRATION CONTENT
                 ============================================== -->
 
-                <div class="registration-content">
+                <div
+                    class="registration-content"
+                >
 
-                    <div class="registration-heading">
+                    <div
+                        class="registration-heading"
+                    >
                         {{ config.registrationHeading }}
                     </div>
 
-                    <div class="registration-description">
+
+                    <div
+                        class="registration-description"
+                    >
                         {{ config.registrationDescription }}
                     </div>
 
@@ -415,18 +466,52 @@
 
 
                 <!-- =============================================
-                     Registration Button
+                     REGISTRATION BUTTON
                 ============================================== -->
 
                 <button
                     type="button"
                     class="registration-button"
-                    (click)="onRegister()">
+                    (click)="onRegister()"
+                >
 
                     {{ config.registrationButtonText }}
 
                 </button>
 
+
+            </div>
+
+
+            <!-- =================================================
+                 BOTTOM META
+                 -------------------------------------------------
+                 Keeps the panel visually balanced.
+            ================================================== -->
+
+            <div
+                class="login-card-bottom-meta"
+            >
+
+                <span>
+                    SIMPLE
+                </span>
+
+                <span class="bottom-meta-separator">
+                    |
+                </span>
+
+                <span>
+                    SECURE
+                </span>
+
+                <span class="bottom-meta-separator">
+                    |
+                </span>
+
+                <span>
+                    SCALABLE
+                </span>
 
             </div>
 

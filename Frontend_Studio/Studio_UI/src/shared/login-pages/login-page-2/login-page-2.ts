@@ -38,6 +38,7 @@ import
 }
 from '../../../core/authentication/authentication.model';
 
+
 //===============================================================
 // Login Page 2 Background
 //===============================================================
@@ -47,6 +48,7 @@ import
     LoginPageBackgroundComponent
 }
 from '../../components/login-page-2/background/background';
+
 
 //===============================================================
 // Login Page 2 Promotional Image Light
@@ -58,6 +60,7 @@ import
 }
 from '../../components/login-page-2/promotional-image-light/promotional-image-light';
 
+
 //===============================================================
 // Login Page 2 Promotional Image Deep
 //===============================================================
@@ -67,6 +70,7 @@ import
     LoginPagePromotionalImageDeepComponent
 }
 from '../../components/login-page-2/promotional-image-deep/promotional-image-deep';
+
 
 //===============================================================
 // Login Page 2 Client Logo
@@ -78,6 +82,7 @@ import
 }
 from '../../components/login-page-2/client-logo/client-logo';
 
+
 //===============================================================
 // Login Page 2 Powered By
 //===============================================================
@@ -87,6 +92,7 @@ import
     LoginPagePoweredByComponent
 }
 from '../../components/login-page-2/powered-by/powered-by';
+
 
 //===============================================================
 // Login Page 2 Login Panel
@@ -180,6 +186,7 @@ export class LoginPage2
             true;
 
 
+
     //===========================================================
     // Constructor
     //===========================================================
@@ -207,6 +214,7 @@ export class LoginPage2
     }
 
 
+
     //===========================================================
     // Theme Selector
     //===========================================================
@@ -221,6 +229,7 @@ export class LoginPage2
         this.isLightTheme =
             isLightTheme;
     }
+
 
 
     //===========================================================
@@ -318,6 +327,7 @@ export class LoginPage2
     }
 
 
+
     //===========================================================
     // Forgot Password
     //===========================================================
@@ -330,6 +340,7 @@ export class LoginPage2
     }
 
 
+
     //===========================================================
     // Registration
     //===========================================================
@@ -340,6 +351,7 @@ export class LoginPage2
         this.loginError =
             '';
     }
+
 
 
     //===========================================================

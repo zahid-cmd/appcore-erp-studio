@@ -19,6 +19,13 @@
        The Powered By section is NOT part of this component.
 
        The Login Panel is NOT part of this component.
+
+   WIDTH / HEIGHT RULE:
+
+       This component must completely occupy the area assigned
+       to it by its parent.
+
+       It must not introduce its own width restriction.
 ================================================================ */
 
 
@@ -30,6 +37,12 @@
 {
     display:
         block;
+
+    flex:
+        1 1 auto;
+
+    align-self:
+        stretch;
 
     width:
         100%;
@@ -43,6 +56,12 @@
     min-height:
         0;
 
+    max-width:
+        none;
+
+    max-height:
+        none;
+
     margin:
         0;
 
@@ -51,6 +70,18 @@
 
     box-sizing:
         border-box;
+
+    overflow:
+        visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
 }
 
 
@@ -66,10 +97,19 @@
     display:
         flex;
 
+    flex:
+        1 1 auto;
+
+    align-self:
+        stretch;
+
     flex-direction:
         column;
 
     align-items:
+        flex-start;
+
+    justify-content:
         flex-start;
 
     width:
@@ -84,6 +124,12 @@
     min-height:
         0;
 
+    max-width:
+        none;
+
+    max-height:
+        none;
+
     margin:
         0;
 
@@ -95,6 +141,15 @@
 
     overflow:
         visible;
+
+    background:
+        transparent;
+
+    border:
+        0;
+
+    box-shadow:
+        none;
 }
 
 
@@ -113,11 +168,20 @@
     display:
         block;
 
+    flex:
+        0 0 auto;
+
+    align-self:
+        stretch;
+
     width:
         100%;
 
     max-width:
-        100%;
+        none;
+
+    min-width:
+        0;
 
     margin:
         0;
@@ -165,6 +229,15 @@
 
 .promotional-eyebrow
 {
+    display:
+        block;
+
+    width:
+        100%;
+
+    max-width:
+        100%;
+
     margin:
         0 0 22px 0;
 
@@ -196,6 +269,9 @@
 
     white-space:
         nowrap;
+
+    box-sizing:
+        border-box;
 }
 
 
@@ -226,6 +302,9 @@
 
     max-width:
         100%;
+
+    min-width:
+        0;
 
     margin:
         0;
@@ -273,6 +352,12 @@
 
     width:
         100%;
+
+    max-width:
+        100%;
+
+    min-width:
+        0;
 
     margin:
         0;
@@ -357,6 +442,9 @@
     max-width:
         100%;
 
+    min-width:
+        0;
+
     margin:
         20px 0 0 0;
 
@@ -403,8 +491,14 @@
     display:
         flex;
 
+    flex:
+        0 0 auto;
+
     flex-direction:
         column;
+
+    align-items:
+        stretch;
 
     gap:
         18px;
@@ -414,6 +508,9 @@
 
     max-width:
         100%;
+
+    min-width:
+        0;
 
     margin:
         34px 0 0 0;
@@ -426,6 +523,9 @@
 
     overflow:
         visible;
+
+    background:
+        transparent;
 }
 
 
@@ -480,6 +580,12 @@
         56px;
 
     height:
+        56px;
+
+    min-width:
+        56px;
+
+    min-height:
         56px;
 
     margin:
@@ -598,6 +704,12 @@
     min-width:
         0;
 
+    width:
+        auto;
+
+    max-width:
+        none;
+
     margin:
         0;
 
@@ -615,6 +727,12 @@
 
 .feature-title
 {
+    display:
+        block;
+
+    width:
+        100%;
+
     margin:
         0;
 
@@ -640,6 +758,9 @@
 
     white-space:
         normal;
+
+    box-sizing:
+        border-box;
 }
 
 
@@ -649,11 +770,17 @@
 
 .feature-description
 {
+    display:
+        block;
+
     width:
         100%;
 
     max-width:
         100%;
+
+    min-width:
+        0;
 
     margin:
         5px 0 0 0;
@@ -692,6 +819,50 @@
     max-width:1024px
 )
 {
+    :host
+    {
+        width:
+            100%;
+
+        height:
+            100%;
+
+        min-width:
+            0;
+
+        min-height:
+            0;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+    }
+
+
+    .login-page-promotional-panel
+    {
+        width:
+            100%;
+
+        height:
+            100%;
+
+        min-width:
+            0;
+
+        min-height:
+            0;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+    }
+
+
     .promotional-ribbon
     {
         width:
@@ -759,6 +930,12 @@
         height:
             48px;
 
+        min-width:
+            48px;
+
+        min-height:
+            48px;
+
         margin-right:
             12px;
 
@@ -797,6 +974,31 @@
     max-width:768px
 )
 {
+    :host
+    {
+        display:
+            block;
+
+        width:
+            100%;
+
+        height:
+            auto;
+
+        min-width:
+            0;
+
+        min-height:
+            0;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
+    }
+
+
     .login-page-promotional-panel
     {
         display:
@@ -805,14 +1007,26 @@
         flex-direction:
             column;
 
+        align-items:
+            flex-start;
+
         width:
             100%;
 
         height:
             auto;
 
+        min-width:
+            0;
+
         min-height:
             0;
+
+        max-width:
+            none;
+
+        max-height:
+            none;
 
         overflow:
             visible;
@@ -822,6 +1036,9 @@
     .promotional-header
     {
         width:
+            100%;
+
+        max-width:
             100%;
     }
 
@@ -863,6 +1080,9 @@
         width:
             100%;
 
+        max-width:
+            100%;
+
         font-size:
             28px;
 
@@ -895,7 +1115,6 @@
 
 
     .heading-primary,
-
     .heading-highlight
     {
         display:
@@ -945,6 +1164,9 @@
     {
         width:
             100%;
+
+        min-width:
+            0;
     }
 
 
@@ -959,6 +1181,12 @@
         height:
             48px;
 
+        min-width:
+            48px;
+
+        min-height:
+            48px;
+
         margin-right:
             12px;
 
@@ -967,6 +1195,16 @@
 
         font-size:
             18px;
+    }
+
+
+    .feature-content
+    {
+        min-width:
+            0;
+
+        width:
+            auto;
     }
 
 
@@ -998,7 +1236,6 @@
 )
 {
     .feature-icon,
-
     .feature-icon i
     {
         transition:

@@ -25,49 +25,71 @@ from '@angular/common';
 
 export interface LoginPageLoginPanelConfig
 {
-    visible: boolean;
+    visible:
+        boolean;
 
-    heading: string;
+    heading:
+        string;
 
-    subtitle: string;
+    subtitle:
+        string;
 
-    secureLoginVisible: boolean;
+    secureLoginVisible:
+        boolean;
 
-    secureLoginText: string;
+    secureLoginText:
+        string;
 
-    loginIdLabel: string;
+    loginIdLabel:
+        string;
 
-    loginIdPlaceholder: string;
+    loginIdPlaceholder:
+        string;
 
-    passwordLabel: string;
+    passwordLabel:
+        string;
 
-    passwordPlaceholder: string;
+    passwordPlaceholder:
+        string;
 
-    rememberMeVisible: boolean;
+    rememberMeVisible:
+        boolean;
 
-    rememberMeText: string;
+    rememberMeText:
+        string;
 
-    forgotPasswordVisible: boolean;
+    forgotPasswordVisible:
+        boolean;
 
-    forgotPasswordText: string;
+    forgotPasswordText:
+        string;
 
-    signInButtonText: string;
+    signInButtonText:
+        string;
 
-    signInButtonIcon: string;
+    signInButtonIcon:
+        string;
 
-    signInButtonArrowIcon: string;
+    signInButtonArrowIcon:
+        string;
 
-    orText: string;
+    orText:
+        string;
 
-    registrationVisible: boolean;
+    registrationVisible:
+        boolean;
 
-    registrationIcon: string;
+    registrationIcon:
+        string;
 
-    registrationHeading: string;
+    registrationHeading:
+        string;
 
-    registrationDescription: string;
+    registrationDescription:
+        string;
 
-    registrationButtonText: string;
+    registrationButtonText:
+        string;
 }
 
 
@@ -75,8 +97,8 @@ export interface LoginPageLoginPanelConfig
 // Login Page 1 Login Panel Component
 //===============================================================
 
-@Component(
-{
+@Component
+({
     selector:
         'app-login-page-login-panel',
 
@@ -116,7 +138,7 @@ export class LoginPageLoginPanelComponent
             'Sign In',
 
         subtitle:
-            'Access your AppCore workspace',
+            'Access your AppCore workspace and continue building a better tomorrow.',
 
         secureLoginVisible:
             true,
@@ -208,7 +230,8 @@ export class LoginPageLoginPanelComponent
     // Configuration Update
     //===========================================================
 
-    updateConfig(
+    updateConfig
+    (
         changes:
             Partial<LoginPageLoginPanelConfig>
     ):
@@ -243,7 +266,8 @@ export class LoginPageLoginPanelComponent
     // Login ID Change
     //===========================================================
 
-    onLoginIdChange(
+    onLoginIdChange
+    (
         value:
             string
     ):
@@ -258,7 +282,8 @@ export class LoginPageLoginPanelComponent
     // Password Change
     //===========================================================
 
-    onPasswordChange(
+    onPasswordChange
+    (
         value:
             string
     ):
@@ -273,7 +298,8 @@ export class LoginPageLoginPanelComponent
     // Remember Me Change
     //===========================================================
 
-    onRememberMeChange(
+    onRememberMeChange
+    (
         value:
             boolean
     ):
