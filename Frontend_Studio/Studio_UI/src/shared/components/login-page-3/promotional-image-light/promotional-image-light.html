@@ -1,9 +1,9 @@
 <!-- ===========================================================
-     LOGIN PAGE 2 — PROMOTIONAL IMAGE DEEP
+     LOGIN PAGE 2 — PROMOTIONAL IMAGE LIGHT
      -----------------------------------------------------------
      PURPOSE:
 
-         Clean deep promotional image container.
+         Clean light promotional image container.
 
      IMPORTANT:
 
@@ -18,7 +18,7 @@
          - Additional content
 
          Image sizing and positioning are controlled exclusively
-         by promotional-image-deep.css.
+         by promotional-image-light.css.
 
          The CSS master controls:
 
@@ -33,7 +33,7 @@
 
 
 <div
-    class="login-page-promotional-image-deep"
+    class="login-page-promotional-image-light"
     *ngIf="config.visible"
 >
 
@@ -44,7 +44,7 @@
 
     <img
         *ngIf="config.imageUrl"
-        class="promotional-image-deep"
+        class="promotional-image-light"
         [src]="config.imageUrl"
         [style]="imageStyle"
         [alt]="config.altText"
@@ -57,7 +57,7 @@
 
     <div
         *ngIf="!config.imageUrl"
-        class="promotional-image-deep-empty"
+        class="promotional-image-light-empty"
     >
     </div>
 

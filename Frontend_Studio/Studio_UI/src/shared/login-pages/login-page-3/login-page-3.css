@@ -1,5 +1,5 @@
 /* =============================================================
-   LOGIN PAGE 2
+   LOGIN PAGE 3
    -------------------------------------------------------------
    FINAL DESKTOP LAYOUT
 
@@ -49,7 +49,7 @@
    ROOT PAGE
 ============================================================= */
 
-.login-page-2
+.login-page-3
 {
     position:
         fixed;
@@ -77,7 +77,7 @@
    layout grid.
 ============================================================= */
 
-.login-page-2-promotional-area
+.login-page-3-promotional-area
 {
     position:
         fixed;
@@ -103,10 +103,10 @@
    PROMOTIONAL IMAGE COMPONENTS
 ============================================================= */
 
-.login-page-2-promotional-area >
+.login-page-3-promotional-area >
 app-login-page-promotional-image-light,
 
-.login-page-2-promotional-area >
+.login-page-3-promotional-area >
 app-login-page-promotional-image-deep
 {
     position:
@@ -138,7 +138,7 @@ app-login-page-promotional-image-deep
        100%
 ============================================================= */
 
-.login-page-2-layout
+.login-page-3-layout
 {
     position:
         relative;
@@ -174,7 +174,7 @@ app-login-page-promotional-image-deep
        15%
 ============================================================= */
 
-.login-page-2-left-area
+.login-page-3-left-area
 {
     display:
         grid;
@@ -205,7 +205,7 @@ app-login-page-promotional-image-deep
        the complete 15% area.
 ============================================================= */
 
-.login-page-2-left-top
+.login-page-3-left-top
 {
     display:
         flex;
@@ -246,7 +246,7 @@ app-login-page-promotional-image-deep
    LEFT CENTER
 ============================================================= */
 
-.login-page-2-left-center
+.login-page-3-left-center
 {
     width:
         100%;
@@ -274,7 +274,7 @@ app-login-page-promotional-image-deep
    component from this page-level container.
 ============================================================= */
 
-.login-page-2-left-bottom
+.login-page-3-left-bottom
 {
     display:
         flex;
@@ -309,7 +309,7 @@ app-login-page-promotional-image-deep
    absolute left edge of the 45% Left Bottom area.
 ============================================================= */
 
-.login-page-2-left-bottom >
+.login-page-3-left-bottom >
 app-login-page-powered-by
 {
     display:
@@ -346,7 +346,7 @@ app-login-page-powered-by
        15%
 ============================================================= */
 
-.login-page-2-middle-area
+.login-page-3-middle-area
 {
     display:
         grid;
@@ -366,7 +366,7 @@ app-login-page-powered-by
    MIDDLE TOP
 ============================================================= */
 
-.login-page-2-middle-top
+.login-page-3-middle-top
 {
     display:
         flex;
@@ -398,7 +398,7 @@ app-login-page-powered-by
    MIDDLE CENTER
 ============================================================= */
 
-.login-page-2-middle-center
+.login-page-3-middle-center
 {
     width:
         100%;
@@ -415,7 +415,7 @@ app-login-page-powered-by
    MIDDLE BOTTOM
 ============================================================= */
 
-.login-page-2-middle-bottom
+.login-page-3-middle-bottom
 {
     display:
         flex;
@@ -456,7 +456,7 @@ app-login-page-powered-by
        vertical divisions of the left and middle areas.
 ============================================================= */
 
-.login-page-2-right-area
+.login-page-3-right-area
 {
     display:
         grid;
@@ -485,7 +485,7 @@ app-login-page-powered-by
    RESERVED FOR THE FUTURE THEME SELECTOR.
 ============================================================= */
 
-.login-page-2-right-top
+.login-page-3-right-top
 {
     width:
         100%;
@@ -506,7 +506,7 @@ app-login-page-powered-by
        REMAINING HEIGHT
 ============================================================= */
 
-.login-page-2-right-center
+.login-page-3-right-center
 {
     display:
         flex;
@@ -536,7 +536,7 @@ app-login-page-powered-by
    This page only controls its position inside the 35% area.
 ============================================================= */
 
-.login-page-2-right-center >
+.login-page-3-right-center >
 app-login-page-login-panel
 {
     display:
@@ -560,7 +560,7 @@ app-login-page-login-panel
    FOOTER AREA
 ============================================================= */
 
-.login-page-2-right-bottom
+.login-page-3-right-bottom
 {
     display:
         flex;
@@ -610,7 +610,7 @@ app-login-page-login-panel
        into a large 15% page-area rectangle.
 ============================================================= */
 
-.login-page-2-left-top >
+.login-page-3-left-top >
 app-login-page-branding
 {
     display:
@@ -639,7 +639,10 @@ app-login-page-branding
 
     padding:
         0;
-padding-top: 80px;
+
+    padding-top:
+        80px;
+
     box-sizing:
         border-box;
 
@@ -668,7 +671,7 @@ padding-top: 80px;
    The component remains intrinsically sized.
 ============================================================= */
 
-.login-page-2-middle-bottom >
+.login-page-3-middle-bottom >
 app-login-page-client-logo
 {
     display:

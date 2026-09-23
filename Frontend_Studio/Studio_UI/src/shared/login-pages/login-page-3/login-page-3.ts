@@ -1,5 +1,5 @@
 //===============================================================
-// Login Page 2
+// Login Page 3
 //===============================================================
 
 import
@@ -40,101 +40,101 @@ from '../../../core/authentication/authentication.model';
 
 
 //===============================================================
-// Login Page 2 Promotional Image Light
+// Login Page 3 Promotional Image Light
 //===============================================================
 
 import
 {
     LoginPagePromotionalImageLightComponent
 }
-from '../../components/login-page-2/promotional-image-light/promotional-image-light';
+from '../../components/login-page-3/promotional-image-light/promotional-image-light';
 
 
 //===============================================================
-// Login Page 2 Promotional Image Deep
+// Login Page 3 Promotional Image Deep
 //===============================================================
 
 import
 {
     LoginPagePromotionalImageDeepComponent
 }
-from '../../components/login-page-2/promotional-image-deep/promotional-image-deep';
+from '../../components/login-page-3/promotional-image-deep/promotional-image-deep';
 
 
 //===============================================================
-// Login Page 2 Branding
+// Login Page 3 Branding
 //===============================================================
 
 import
 {
     LoginPageBrandingComponent
 }
-from '../../components/login-page-2/branding/branding';
+from '../../components/login-page-3/branding/branding';
 
 
 //===============================================================
-// Login Page 2 Powered By
+// Login Page 3 Powered By
 //===============================================================
 
 import
 {
     LoginPagePoweredByComponent
 }
-from '../../components/login-page-2/powered-by/powered-by';
+from '../../components/login-page-3/powered-by/powered-by';
 
 
 //===============================================================
-// Login Page 2 Login Panel
+// Login Page 3 Login Panel
 //===============================================================
 
 import
 {
     LoginPageLoginPanelComponent
 }
-from '../../components/login-page-2/login-panel/login-panel';
+from '../../components/login-page-3/login-panel/login-panel';
 
 
 //===============================================================
-// Login Page 2 Registration Panel
+// Login Page 3 Registration Panel
 //===============================================================
 
 import
 {
     LoginPageRegistrationPanelComponent
 }
-from '../../components/login-page-2/registration-panel/registration-panel';
+from '../../components/login-page-3/registration-panel/registration-panel';
 
 
 //===============================================================
-// Login Page 2 Forget Password Panel
+// Login Page 3 Forget Password Panel
 //===============================================================
 
 import
 {
     LoginPageForgetPasswordPanelComponent
 }
-from '../../components/login-page-2/forget-password/forget-password';
+from '../../components/login-page-3/forget-password/forget-password';
 
 
 //===============================================================
-// Login Page 2 Theme Selector
+// Login Page 3 Theme Selector
 //===============================================================
 
 import
 {
     LoginPageThemeSelectorComponent
 }
-from '../../components/login-page-2/theme-selector/theme-selector';
+from '../../components/login-page-3/theme-selector/theme-selector';
 
 
 //===============================================================
-// Login Page 2 Component
+// Login Page 3 Component
 //===============================================================
 
 @Component
 ({
     selector:
-        'app-login-page-2',
+        'app-login-page-3',
 
     standalone:
         true,
@@ -161,20 +161,20 @@ from '../../components/login-page-2/theme-selector/theme-selector';
     ],
 
     templateUrl:
-        './login-page-2.html',
+        './login-page-3.html',
 
     styleUrls:
     [
-        './login-page-2.css'
+        './login-page-3.css'
     ]
 })
 
 
 //===============================================================
-// Login Page 2
+// Login Page 3
 //===============================================================
 
-export class LoginPage2
+export class LoginPage3
 {
     //===========================================================
     // Authentication

@@ -37,6 +37,12 @@ import
 }
 from '../../login-pages/login-page-2/login-page-2';
 
+import
+{
+    LoginPage3
+}
+from '../../login-pages/login-page-3/login-page-3';
+
 
 
 //===============================================================
@@ -57,7 +63,9 @@ from '../../login-pages/login-page-2/login-page-2';
 
         LoginPage1,
 
-        LoginPage2
+        LoginPage2,
+
+        LoginPage3
     ],
 
     templateUrl:
@@ -194,6 +202,19 @@ implements OnInit
 
 
     //===========================================================
+    // Login Page 3
+    //===========================================================
+
+    get isLoginPage3():
+        boolean
+    {
+        return this.loginPageId ===
+            3;
+    }
+
+
+
+    //===========================================================
     // Login Page Available
     //===========================================================
 
@@ -202,7 +223,9 @@ implements OnInit
     {
         return this.isLoginPage1
             ||
-            this.isLoginPage2;
+            this.isLoginPage2
+            ||
+            this.isLoginPage3;
     }
 
 

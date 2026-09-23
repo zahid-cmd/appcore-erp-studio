@@ -24,10 +24,10 @@
 
    IMPORTANT:
    -----------------------------------------------------------
-   The Powered By content is CENTER ALIGNED.
+   The Powered By content starts with a minimum LEFT PADDING
+   of 15px.
 
-   The six-logo row remains centered inside the available
-   Powered By area.
+   The POWERED BY label and first logo remain aligned.
 
    No left-side clipping.
    No right-side clipping.
@@ -49,12 +49,11 @@
     --powered-by-logo-size:
         100px;
 
-    /* =======================================================
-       GAP BETWEEN LOGOS ONLY
-    ======================================================== */
-
     --powered-by-gap:
         15px;
+
+    --powered-by-left-padding:
+        40px;
 
 
     /* =======================================================
@@ -133,6 +132,8 @@
 
 /* ===========================================================
    MAIN CONTAINER
+   -----------------------------------------------------------
+   The Powered By presentation starts 15px from the left edge.
 =========================================================== */
 
 .login-page-powered-by
@@ -147,16 +148,20 @@
         column;
 
     align-items:
-        center;
+        flex-start;
 
     justify-content:
         center;
 
     width:
-        100%;
+        675px;
 
     max-width:
-        var(--powered-by-width);
+        calc(
+            100vw
+            -
+            var(--powered-by-left-padding)
+        );
 
     height:
         100%;
@@ -168,10 +173,13 @@
         0;
 
     margin:
-        0 auto;
+        0;
 
     padding:
-        0;
+        0
+        0
+        0
+        var(--powered-by-left-padding);
 
     box-sizing:
         border-box;
@@ -189,11 +197,11 @@
 /* ===========================================================
    POWERED BY LABEL
    -----------------------------------------------------------
-   HIGH VISIBILITY VERSION
+   The label aligns exactly with the first logo.
 
-       POWERED BY
+   LEFT EDGE:
 
-       [1] [2] [3] [4] [5] [6]
+       15px
 =========================================================== */
 
 .powered-by-heading
@@ -205,7 +213,10 @@
         block;
 
     width:
-        100%;
+        675px;
+
+    max-width:
+        675px;
 
     margin:
         0 0 12px 0;
@@ -213,11 +224,8 @@
     padding:
         0;
 
-    box-sizing:
-        border-box;
-
     color:
-        #243f70;
+        #ffffff !important;
 
     font-size:
         16px;
@@ -300,10 +308,10 @@
         center;
 
     width:
-        100%;
+        675px;
 
     max-width:
-        var(--powered-by-width);
+        675px;
 
     height:
         150px;
@@ -312,7 +320,7 @@
         0;
 
     margin:
-        0 auto;
+        0;
 
     padding:
         0;
@@ -998,12 +1006,18 @@
 
         max-width:
             100%;
+
+        padding-left:
+            var(--powered-by-left-padding);
     }
 
 
     .powered-by-heading
     {
         width:
+            100%;
+
+        max-width:
             100%;
 
         margin:
@@ -1013,7 +1027,7 @@
             0;
 
         color:
-            #243f70;
+            #ffffff !important;
 
         font-size:
             13px;
@@ -1025,7 +1039,7 @@
             2.2px;
 
         text-align:
-            center;
+            left;
 
         opacity:
             1;
@@ -1076,7 +1090,7 @@
             );
 
         transform-origin:
-            center center;
+            left center;
     }
 
 
@@ -1105,6 +1119,9 @@
         min-height:
             105px;
 
+        padding-left:
+            var(--powered-by-left-padding);
+
         overflow:
             visible;
     }
@@ -1115,6 +1132,9 @@
         width:
             100%;
 
+        max-width:
+            100%;
+
         margin:
             0 0 9px 0;
 
@@ -1122,7 +1142,7 @@
             0;
 
         color:
-            #243f70;
+            #ffffff !important;
 
         font-size:
             11px;
@@ -1134,7 +1154,7 @@
             1.8px;
 
         text-align:
-            center;
+            left;
 
         opacity:
             1;
@@ -1189,7 +1209,7 @@
             );
 
         transform-origin:
-            top center;
+            top left;
     }
 
 
