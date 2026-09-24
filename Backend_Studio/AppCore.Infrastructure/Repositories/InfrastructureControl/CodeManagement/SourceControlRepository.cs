@@ -5535,15 +5535,22 @@ public class SourceControlRepository
     private static string
         CombineGitOutput
     (
-        params GitCommandResult[] results
+        params GitCommandResult?[] results
     )
     {
         return string.Join(
             Environment.NewLine,
 
             results
+                .Where(
+                    x =>
+                        x is not null
+                )
                 .Select(
-                    NormalizeGitOutput
+                    x =>
+                        NormalizeGitOutput(
+                            x!
+                        )
                 )
                 .Where(
                     x =>
