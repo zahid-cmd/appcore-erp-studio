@@ -1,0 +1,301 @@
+<div
+    class="confirmation-dialog-overlay"
+>
+    <div
+        class="confirmation-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-dialog-title"
+    >
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <div
+            class="confirmation-dialog-header"
+        >
+
+            <div
+                class="confirmation-dialog-icon"
+            >
+                <i
+                    class="fa-solid fa-circle-check"
+                    aria-hidden="true"
+                ></i>
+            </div>
+
+
+            <div
+                class="confirmation-dialog-heading"
+            >
+
+                <h2
+                    id="confirmation-dialog-title"
+                >
+                    Account Created Successfully
+                </h2>
+
+                <p>
+                    Your Login Gateway to Access your Workspace
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="confirmation-dialog-close-button"
+                aria-label="Close"
+                (click)="onOkay()"
+            >
+                <i
+                    class="fa-solid fa-xmark"
+                    aria-hidden="true"
+                ></i>
+            </button>
+
+        </div>
+
+
+        <!-- =====================================================
+             BODY
+        ====================================================== -->
+
+        <div
+            class="confirmation-dialog-content"
+        >
+
+            <div
+                class="confirmation-dialog-details"
+            >
+
+                <!-- =================================================
+                     FULL NAME
+                ================================================== -->
+
+                <div
+                    class="confirmation-dialog-detail"
+                >
+
+                    <div
+                        class="confirmation-dialog-detail-icon"
+                    >
+                        <i
+                            class="fa-solid fa-user"
+                            aria-hidden="true"
+                        ></i>
+                    </div>
+
+
+                    <span
+                        class="confirmation-dialog-label"
+                    >
+                        Full Name
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-separator"
+                    >
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-value"
+                    >
+                        {{ fullName }}
+                    </span>
+
+                </div>
+
+
+                <!-- =================================================
+                     DISPLAY NAME
+                ================================================== -->
+
+                <div
+                    class="confirmation-dialog-detail"
+                >
+
+                    <div
+                        class="confirmation-dialog-detail-icon"
+                    >
+                        <i
+                            class="fa-solid fa-id-badge"
+                            aria-hidden="true"
+                        ></i>
+                    </div>
+
+
+                    <span
+                        class="confirmation-dialog-label"
+                    >
+                        Display Name
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-separator"
+                    >
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-value"
+                    >
+                        {{ displayName }}
+                    </span>
+
+                </div>
+
+
+                <!-- =================================================
+                     LOGIN ID
+                ================================================== -->
+
+                <div
+                    class="confirmation-dialog-detail confirmation-dialog-login-id"
+                >
+
+                    <div
+                        class="confirmation-dialog-detail-icon"
+                    >
+                        <i
+                            class="fa-solid fa-at"
+                            aria-hidden="true"
+                        ></i>
+                    </div>
+
+
+                    <span
+                        class="confirmation-dialog-label"
+                    >
+                        Login ID
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-separator"
+                    >
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-value"
+                    >
+                        {{ loginId }}
+                    </span>
+
+                </div>
+
+
+                <!-- =================================================
+                     MOBILE NO.
+                ================================================== -->
+
+                <div
+                    class="confirmation-dialog-detail"
+                >
+
+                    <div
+                        class="confirmation-dialog-detail-icon"
+                    >
+                        <i
+                            class="fa-solid fa-mobile-screen-button"
+                            aria-hidden="true"
+                        ></i>
+                    </div>
+
+
+                    <span
+                        class="confirmation-dialog-label"
+                    >
+                        Mobile No.
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-separator"
+                    >
+                    </span>
+
+
+                    <span
+                        class="confirmation-dialog-value"
+                    >
+                        {{ mobileNo }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 ADMINISTRATOR APPROVAL NOTICE
+            ====================================================== -->
+
+            <div
+                class="confirmation-dialog-notice"
+            >
+
+                <div
+                    class="confirmation-dialog-notice-icon"
+                >
+                    <i
+                        class="fa-solid fa-circle-info"
+                        aria-hidden="true"
+                    ></i>
+                </div>
+
+
+                <div
+                    class="confirmation-dialog-notice-content"
+                >
+
+                    <strong>
+                        Account Pending For Administrator Approval
+                    </strong>
+
+                    <span>
+                        You can login to the workspace after your account
+                        has been approved.
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             FOOTER
+        ====================================================== -->
+
+        <div
+            class="confirmation-dialog-footer"
+        >
+
+            <button
+                type="button"
+                class="confirmation-dialog-okay-button"
+                (click)="onOkay()"
+            >
+
+                <i
+                    class="fa-solid fa-check"
+                    aria-hidden="true"
+                ></i>
+
+                <span>
+                    OKAY
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+</div>

@@ -84,36 +84,36 @@ from '../../components/login-page-2/powered-by/powered-by';
 
 
 //===============================================================
-// Login Page 2 Login Panel
+// Central Login Panel
 //===============================================================
 
 import
 {
     LoginPageLoginPanelComponent
 }
-from '../../components/login-page-2/login-panel/login-panel';
+from '../../components/login-credentials/login-panel/login-panel';
 
 
 //===============================================================
-// Login Page 2 Registration Panel
+// Central Registration Panel
 //===============================================================
 
 import
 {
     LoginPageRegistrationPanelComponent
 }
-from '../../components/login-page-2/registration-panel/registration-panel';
+from '../../components/login-credentials/registration-panel/registration-panel';
 
 
 //===============================================================
-// Login Page 2 Forget Password Panel
+// Central Forget Password Panel
 //===============================================================
 
 import
 {
     LoginPageForgetPasswordPanelComponent
 }
-from '../../components/login-page-2/forget-password/forget-password';
+from '../../components/login-credentials/forget-password/forget-password';
 
 
 //===============================================================
@@ -357,6 +357,7 @@ export class LoginPage2
                             ]
                         );
                     },
+
 
                 error:
                     error =>

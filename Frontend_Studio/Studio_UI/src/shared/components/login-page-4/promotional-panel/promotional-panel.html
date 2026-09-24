@@ -1,0 +1,192 @@
+<!-- =========================================================
+     LOGIN PAGE PROMOTIONAL PANEL
+     ---------------------------------------------------------
+     INTERNAL STRUCTURE:
+
+         PROMOTIONAL PANEL
+         │
+         └── PROMOTIONAL CONTENT
+             ├── Header
+             └── Features
+
+     The Promotional ERP image is NOT part of this component.
+
+     Powered By is NOT part of this component.
+
+     Login Panel is NOT part of this component.
+========================================================= -->
+
+
+<div
+    class="login-page-promotional-panel"
+    *ngIf="config.visible"
+>
+
+
+    <!-- =======================================================
+         PROMOTIONAL HEADER
+    ======================================================== -->
+
+    <div
+        class="promotional-header"
+    >
+
+
+        <!-- ===================================================
+             HEADER RIBBON
+        ==================================================== -->
+
+        <div
+            class="promotional-ribbon"
+            aria-hidden="true"
+        >
+        </div>
+
+
+        <!-- ===================================================
+             EYEBROW
+        ==================================================== -->
+
+        <div
+            class="promotional-eyebrow"
+        >
+            {{ config.eyebrow }}
+        </div>
+
+
+        <!-- ===================================================
+             PROMOTIONAL HEADING
+             ---------------------------------------------------
+             Line 01:
+                 One Platform
+
+             Line 02:
+                 Infinite Possibilities
+
+             "Infinite" remains highlighted in blue.
+        ==================================================== -->
+
+        <h1
+            class="promotional-heading"
+        >
+
+            <span
+                class="heading-line heading-line-primary"
+            >
+
+                <span
+                    class="heading-primary"
+                >
+                    {{ config.heading }}
+                </span>
+
+            </span>
+
+
+            <span
+                class="heading-line heading-line-secondary"
+            >
+
+                <span
+                    class="heading-highlight"
+                >
+                    {{ config.highlightedHeading }}
+                </span>
+
+                <span
+                    class="heading-primary"
+                >
+                    {{ config.headingSuffix }}
+                </span>
+
+            </span>
+
+        </h1>
+
+
+        <!-- ===================================================
+             DESCRIPTION
+        ==================================================== -->
+
+        <p
+            class="promotional-description"
+        >
+            {{ config.description }}
+        </p>
+
+
+    </div>
+
+
+    <!-- =======================================================
+         PROMOTIONAL FEATURES
+         -------------------------------------------------------
+         All feature content remains inside this component.
+    ======================================================== -->
+
+    <div
+        class="promotional-features"
+        *ngIf="visibleFeatures.length > 0"
+    >
+
+
+        <!-- ===================================================
+             FEATURE
+        ==================================================== -->
+
+        <div
+            class="promotional-feature"
+            *ngFor="
+                let feature of visibleFeatures;
+                let i = index
+            "
+        >
+
+
+            <!-- ===============================================
+                 FEATURE ICON
+            ================================================ -->
+
+            <div
+                class="feature-icon"
+            >
+
+                <i
+                    [class]="feature.icon"
+                    aria-hidden="true"
+                >
+                </i>
+
+            </div>
+
+
+            <!-- ===============================================
+                 FEATURE CONTENT
+            ================================================ -->
+
+            <div
+                class="feature-content"
+            >
+
+                <div
+                    class="feature-title"
+                >
+                    {{ feature.title }}
+                </div>
+
+                <div
+                    class="feature-description"
+                >
+                    {{ feature.description }}
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

@@ -1,210 +1,144 @@
-/* ===========================================================
+/* =============================================================
    LOGIN PAGE 1
-   -----------------------------------------------------------
-   PAGE LAYOUT ARCHITECTURE
+   -------------------------------------------------------------
+   FINAL DESKTOP LAYOUT
 
-   PAGE
-   │
-   ├── BACKGROUND
-   │   └── Full Login Page 1 Background
-   │
-   ├── MAIN BODY
-   │
-   │   ├── BUSINESS AREA - LEFT 30%
-   │   │   ├── APPCORE BRANDING - TOP 15%
-   │   │   ├── APPCORE PANEL    - CENTER 65%
-   │   │   └── APPCORE CLIENTS  - BOTTOM 20%
-   │   │
-   │   ├── DESIGN AREA - CENTER 40%
-   │   │   ├── APPCORE IMAGE    - TOP 80%
-   │   │   └── APPCORE BUSINESS - BOTTOM 20%
-   │   │
-   │   └── LOGIN AREA - RIGHT 30%
-   │       ├── APPCORE LOGIN         - TOP 75%
-   │       └── APPCORE NOTIFICATION  - BOTTOM 25%
-   │
-   └── FOOTER 70px
+   FULL VIEWPORT
 
-   This stylesheet contains ONLY the page geometry.
+       LEFT   = 30%
+       MIDDLE = 35%
+       RIGHT  = 35%
 
-   The Background component is responsible for the complete
-   visual background.
+   LEFT / MIDDLE:
 
-   Layout sections are transparent so the Background remains
-   visible underneath them.
+       TOP    = 15%
+       CENTER = REST
+       BOTTOM = 15%
+
+   RIGHT:
+
+       TOP    = 30px
+       CENTER = REST
+       BOTTOM = 30px
 
    IMPORTANT:
 
-       The Promotional Image is allowed to extend beyond the
-       AppCore Image section so its CSS-controlled width and
-       height can actually render at larger values.
+       DESKTOP ONLY.
 
-   IMPORTANT:
+       Tablet and mobile layouts are intentionally not included
+       at this stage.
 
-       The Promotional Panel is positioned above the
-       Promotional Image and is allowed to extend from the
-       Business Area into the Design Area.
+   IMPORTANT BRANDING RULE:
 
-   IMPORTANT:
+       The Login Page controls the POSITION of the Branding
+       component.
 
-       The Client Logo host area is intentionally larger and
-       allows overflow so 3D hover effects are not clipped.
+       The Branding component itself controls its own
+       intrinsic width and height.
 
-================================================================ */
+       Therefore the page MUST NOT force:
+
+           width: 100%;
+           height: 100%;
+
+       on the Branding component.
+============================================================= */
 
 
-/* ===========================================================
-   PAGE ROOT
-================================================================ */
+/* =============================================================
+   ROOT PAGE
+============================================================= */
 
 .login-page-1
 {
     position:
-        relative;
+        fixed;
 
-    display:
-        flex;
-
-    flex-direction:
-        column;
+    inset:
+        0;
 
     width:
-        100%;
+        100vw;
 
     height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
+        100vh;
 
     overflow:
         hidden;
-
-    background:
-        transparent;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
 }
 
 
-/* ===========================================================
-   MAIN BODY
-   -----------------------------------------------------------
-   HEIGHT:
+/* =============================================================
+   PROMOTIONAL IMAGE
+   -------------------------------------------------------------
+   FULL VIEWPORT
 
-       calc(100% - 70px)
+   This layer remains completely independent from the desktop
+   layout grid.
+============================================================= */
 
-   HORIZONTAL STRUCTURE:
-
-       Business Area = 30%
-       Design Area   = 40%
-       Login Area    = 30%
-
-   IMPORTANT:
-
-       This layer sits above the Background component.
-
-       Its own background remains transparent.
-================================================================ */
-
-.login-page-1-main
+.login-page-1-promotional-area
 {
     position:
-        relative;
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden;
 
     z-index:
-        1;
+        0;
+}
+
+
+/* =============================================================
+   PROMOTIONAL IMAGE COMPONENTS
+============================================================= */
+
+.login-page-1-promotional-area >
+app-login-page-promotional-image-light,
+
+.login-page-1-promotional-area >
+app-login-page-promotional-image-deep
+{
+    position:
+        absolute;
+
+    inset:
+        0;
 
     display:
-        flex;
-
-    flex-direction:
-        row;
-
-    flex:
-        0 0 calc(
-            100%
-            -
-            70px
-        );
+        block;
 
     width:
         100%;
 
     height:
-        calc(
-            100%
-            -
-            70px
-        );
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        hidden;
-
-    background:
-        transparent;
+        100%;
 }
 
 
-/* ===========================================================
-   BUSINESS AREA
-   -----------------------------------------------------------
-   POSITION:
+/* =============================================================
+   MAIN DESKTOP LAYOUT
+   -------------------------------------------------------------
+   FULL WIDTH:
 
-       LEFT
+       30% | 35% | 35%
 
-   WIDTH:
+   FULL HEIGHT:
 
-       30%
+       100%
+============================================================= */
 
-   INTERNAL STRUCTURE:
-
-       AppCore Branding = 15%
-       AppCore Panel    = 65%
-       AppCore Clients  = 20%
-
-   IMPORTANT:
-
-       Transparent so the Background remains visible.
-
-   OVERLAP:
-
-       The Business Area is positioned above the Design Area
-       so the Promotional Panel can overlap the Promotional
-       Image.
-================================================================ */
-
-.login-page-1-business-area
+.login-page-1-layout
 {
     position:
         relative;
@@ -213,737 +147,77 @@
         10;
 
     display:
-        flex;
+        grid;
 
-    flex-direction:
-        column;
-
-    flex:
-        0 0 30%;
-
-    width:
-        30%;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-
-    background:
-        transparent;
-}
-
-
-/* ===========================================================
-   APPCORE BRANDING
-   -----------------------------------------------------------
-   LOCATION:
-
-       Business Area
-       Top
-
-   HEIGHT:
-
-       15%
-
-   ALIGNMENT:
-
-       Left aligned.
-================================================================ */
-
-.login-page-1-appcore-branding
-{
-    position:
-        relative;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        flex-start;
-
-    flex:
-        0 0 15%;
+    grid-template-columns:
+        30% 35% 35%;
 
     width:
         100%;
 
     height:
-        15%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        16px 22px;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        hidden;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    text-align:
-        left;
+        100%;
 }
 
 
-/* ===========================================================
-   APPCORE BRANDING CHILD
-================================================================ */
-
-.login-page-1-appcore-branding
-> app-login-page-branding
-{
-    display:
-        block;
-
-    flex:
-        0 0 auto;
-
-    width:
-        auto;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    transform:
-        scale(0.82);
-
-    transform-origin:
-        left center;
-}
-
-
-/* ===========================================================
-   APPCORE PANEL
-   -----------------------------------------------------------
-   LOCATION:
-
-       Business Area
-       Center
-
-   HEIGHT:
-
-       65%
-
-   PURPOSE:
-
-       Hosts the AppCore Promotional Panel.
-
-   IMPORTANT:
-
-       The Promotional Panel intentionally extends beyond
-       the 30% Business Area and overlaps the 40% Design Area.
-
-       The Promotional Image remains underneath the panel.
-================================================================ */
-
-.login-page-1-appcore-panel
-{
-    position:
-        relative;
-
-    z-index:
-        20;
-
-    display:
-        flex;
-
-    align-items:
-        stretch;
-
-    justify-content:
-        flex-start;
-
-    flex:
-        0 0 65%;
-
-    width:
-        160%;
-
-    height:
-        65%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        24px 28px;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    text-align:
-        left;
-}
-
-
-/* ===========================================================
-   APPCORE CLIENTS
-   -----------------------------------------------------------
-   LOCATION:
-
-       Business Area
-       Bottom 20%
-
-   PURPOSE:
-
-       Hosts the AppCore Client Logo component.
-
-   ALIGNMENT:
-
-       Left aligned.
-
-   IMPORTANT:
-
-       Increased left padding provides additional visual
-       breathing room for the client identity block.
-
-       Overflow is visible so the Client Logo 3D hover
-       effect can extend outside its normal visual bounds.
-================================================================ */
-
-.login-page-1-appcore-clients
-{
-    position:
-        relative;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        flex-start;
-
-    flex:
-        0 0 20%;
-
-    width:
-        100%;
-
-    height:
-        20%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        10px 18px 10px 32px;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    text-align:
-        left;
-}
-
-
-/* ===========================================================
-   CLIENT LOGO COMPONENT
-   -----------------------------------------------------------
-   HOST AREA:
-
-       Full available client section width.
-
-   IMPORTANT:
-
-       The previous host used:
-
-           width:auto;
-           overflow:hidden;
-
-       This caused the Client Logo's 3D hover transform
-       to be clipped.
-
-       The host now provides the complete available width
-       and allows visual overflow.
-
-       This is intentionally a page-level host rule.
-       The Client Logo component itself remains untouched.
-================================================================ */
-
-.login-page-1-appcore-clients
-> app-login-page-client-logo
-{
-    display:
-        block;
-
-    flex:
-        0 0 100%;
-
-    width:
-        100%;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-}
-
-
-/* ===========================================================
-   DESIGN AREA
-   -----------------------------------------------------------
-   POSITION:
-
-       CENTER
-
-   WIDTH:
-
-       40%
-
-   INTERNAL STRUCTURE:
-
-       AppCore Image    = 80%
-       AppCore Business = 20%
-
-   IMPORTANT:
-
-       Transparent so the Background remains visible.
-
-   IMPORTANT FOR PROMOTIONAL IMAGE:
-
-       Overflow is visible so a larger Promotional Image is
-       not clipped by the Design Area.
-
-       The Design Area remains underneath the Promotional Panel.
-================================================================ */
-
-.login-page-1-design-area
-{
-    position:
-        relative;
-
-    z-index:
-        1;
-
-    display:
-        flex;
-
-    flex-direction:
-        column;
-
-    flex:
-        0 0 40%;
-
-    width:
-        40%;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-
-    background:
-        transparent;
-}
-
-
-/* ===========================================================
-   APPCORE IMAGE
-   -----------------------------------------------------------
-   LOCATION:
-
-       Design Area
-       Top
-
-   HEIGHT:
-
-       80%
-
-   IMPORTANT:
-
-       Overflow is intentionally visible.
-
-       This allows the Promotional Image component to use
-       larger CSS-controlled dimensions.
-
-   STACKING:
-
-       The Promotional Image remains below the Promotional
-       Panel because the Design Area has a lower z-index.
-================================================================ */
-
-.login-page-1-appcore-image
-{
-    position:
-        relative;
-
-    z-index:
-        1;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex:
-        0 0 80%;
-
-    width:
-        100%;
-
-    height:
-        80%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        16px;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        15px;
-
-    font-weight:
-        700;
-
-    text-align:
-        center;
-}
-
-
-/* ===========================================================
-   PROMOTIONAL IMAGE CHILD
-================================================================ */
-
-.login-page-1-appcore-image
-> app-login-page-promotional-image
-{
-    display:
-        block;
-
-    flex:
-        0 0 auto;
-
-    width:
-        100%;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-}
-
-
-/* ===========================================================
-   APPCORE BUSINESS
-   -----------------------------------------------------------
-   LOCATION:
-
-       Design Area
-       Bottom
-
-   HEIGHT:
-
-       20%
-
-   ALIGNMENT:
-
-       CENTER
-================================================================ */
-
-.login-page-1-appcore-business
-{
-    position:
-        relative;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex:
-        0 0 20%;
-
-    width:
-        100%;
-
-    height:
-        20%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        16px;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        hidden;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    text-align:
-        center;
-}
-
-
-/* ===========================================================
-   POWERED BY CHILD
-   -----------------------------------------------------------
-   Explicitly centered inside the AppCore Business section.
-================================================================ */
-
-.login-page-1-appcore-business
-> app-login-page-powered-by
-{
-    display:
-        block;
-
-    flex:
-        0 0 auto;
-
-    width:
-        auto;
-
-    height:
-        100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0 auto;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===========================================================
-   LOGIN AREA
-   -----------------------------------------------------------
-   POSITION:
-
-       RIGHT
-
+/* =============================================================
+   LEFT AREA
+   -------------------------------------------------------------
    WIDTH:
 
        30%
 
-   INTERNAL STRUCTURE:
+   ROWS:
 
-       AppCore Login        = 75%
-       AppCore Notification = 25%
+       15%
+       REST
+       15%
+============================================================= */
 
-   PURPOSE:
-
-       The Login Panel remains the primary element while the
-       Notification Area receives a larger lower section.
-================================================================ */
-
-.login-page-1-login-area
+.login-page-1-left-area
 {
-    position:
-        relative;
+    display:
+        grid;
 
+    grid-template-rows:
+        15% 70% 15%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   LEFT TOP
+   -------------------------------------------------------------
+   HEIGHT:
+
+       15%
+
+   IMPORTANT:
+
+       This section provides POSITIONING ONLY.
+
+       It does NOT force the Branding component to fill
+       the complete 15% area.
+============================================================= */
+
+.login-page-1-left-top
+{
     display:
         flex;
 
-    flex-direction:
-        column;
+    align-items:
+        center;
 
-    flex:
-        0 0 30%;
+    justify-content:
+        flex-start;
 
     width:
-        30%;
+        100%;
 
     height:
         100%;
@@ -964,40 +238,276 @@
         border-box;
 
     overflow:
-        hidden;
-
-    background:
-        transparent;
+        visible;
 }
 
 
-/* ===========================================================
-   APPCORE LOGIN
-   -----------------------------------------------------------
-   LOCATION:
+/* =============================================================
+   LEFT CENTER
+============================================================= */
 
-       Login Area
-       Top
+.login-page-1-left-center
+{
+    width:
+        100%;
 
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LEFT BOTTOM
+   -------------------------------------------------------------
+   POWERED BY IS ALIGNED DIRECTLY TO THE LEFT EDGE.
+
+   No horizontal centering is applied to the Powered By
+   component from this page-level container.
+============================================================= */
+
+.login-page-1-left-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   POWERED BY POSITION
+   -------------------------------------------------------------
+   Force the Powered By component itself to begin from the
+   absolute left edge of the 30% Left Bottom area.
+============================================================= */
+
+.login-page-1-left-bottom >
+app-login-page-powered-by
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    transform:
+        none;
+}
+
+
+/* =============================================================
+   MIDDLE AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       15%
+       REST
+       15%
+============================================================= */
+
+.login-page-1-middle-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        15% 70% 15%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   MIDDLE TOP
+============================================================= */
+
+.login-page-1-middle-top
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE CENTER
+============================================================= */
+
+.login-page-1-middle-center
+{
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE BOTTOM
+============================================================= */
+
+.login-page-1-middle-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       30px
+       REST
+       30px
+
+   IMPORTANT:
+
+       The right area is completely independent from the
+       vertical divisions of the left and middle areas.
+============================================================= */
+
+.login-page-1-right-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        30px minmax(0, 1fr) 30px;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT TOP
+   -------------------------------------------------------------
    HEIGHT:
 
-       75%
+       EXACTLY 30px
 
-   CHANGE:
+   RESERVED FOR THE THEME SELECTOR.
+============================================================= */
 
-       80% → 75%
-
-   PURPOSE:
-
-       Provides the Login Panel with 75% of the Login Area
-       while leaving 25% for Notifications.
-================================================================ */
-
-.login-page-1-appcore-login
+.login-page-1-right-top
 {
-    position:
-        relative;
+    width:
+        100%;
 
+    height:
+        30px;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT CENTER
+   -------------------------------------------------------------
+   HEIGHT:
+
+       REMAINING HEIGHT
+============================================================= */
+
+.login-page-1-right-center
+{
     display:
         flex;
 
@@ -1007,77 +517,51 @@
     justify-content:
         center;
 
-    flex:
-        0 0 75%;
+    width:
+        100%;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LOGIN PANEL
+   -------------------------------------------------------------
+   The existing Login Panel owns its own internal design.
+
+   This page only controls its position inside the 35% area.
+============================================================= */
+
+.login-page-1-right-center >
+app-login-page-login-panel
+{
+    display:
+        block;
 
     width:
         100%;
 
     height:
-        75%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        16px;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        hidden;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        15px;
-
-    font-weight:
-        700;
-
-    text-align:
-        center;
+        100%;
 }
 
 
-/* ===========================================================
-   APPCORE NOTIFICATION
-   -----------------------------------------------------------
-   LOCATION:
-
-       Login Area
-       Bottom
-
+/* =============================================================
+   RIGHT BOTTOM
+   -------------------------------------------------------------
    HEIGHT:
 
-       25%
+       EXACTLY 30px
 
-   CHANGE:
+   FOOTER AREA
+============================================================= */
 
-       20% → 25%
-
-   PURPOSE:
-
-       Gives the Notification Area additional vertical room
-       without changing the Business or Design Areas.
-================================================================ */
-
-.login-page-1-appcore-notification
+.login-page-1-right-bottom
 {
-    position:
-        relative;
-
     display:
         flex;
 
@@ -1087,378 +571,145 @@
     justify-content:
         center;
 
-    flex:
-        0 0 25%;
-
     width:
         100%;
 
     height:
-        25%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        16px;
-
-    box-sizing:
-        border-box;
+        30px;
 
     overflow:
         hidden;
-
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    text-align:
-        center;
 }
 
 
-/* ===========================================================
-   FOOTER
-   -----------------------------------------------------------
-   POSITION:
+/* =============================================================
+   BRANDING
+   -------------------------------------------------------------
+   IMPORTANT:
 
-       PAGE BOTTOM
+       The parent Login Page ONLY positions the Branding
+       component.
 
-   HEIGHT:
+       The Branding component controls its own:
 
-       70px
-================================================================ */
+           width
+           height
+           padding
+           background
+           border
+           radius
 
-.login-page-1-footer
+       DO NOT use:
+
+           width: 100%;
+           height: 100%;
+
+       here.
+
+       The Branding component is positioned directly against
+       the LEFT edge of the 30% Left Top area.
+
+       No horizontal centering is applied.
+============================================================= */
+
+.login-page-1-left-top >
+app-login-page-branding
 {
-    position:
-        relative;
-
-    z-index:
-        1;
-
     display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex:
-        0 0 70px;
+        block;
 
     width:
-        100%;
+        fit-content;
 
     height:
-        70px;
+        fit-content;
 
     min-width:
         0;
 
     min-height:
-        70px;
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
 
     margin:
         0;
 
     padding:
-        12px 16px;
+        0;
+
+    padding-top:
+        5px;
+
+    padding-left:
+        0;
 
     box-sizing:
         border-box;
 
     overflow:
-        hidden;
+        visible;
 
-    background:
-        transparent;
-
-    color:
-        #36547c;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    text-align:
+    align-self:
         center;
+
+    flex:
+        0 0 auto;
 }
 
 
-/* ===========================================================
-   TABLET
-================================================================ */
+/* =============================================================
+   CLIENT LOGO
+   -------------------------------------------------------------
+   CURRENT PAGE ARCHITECTURE:
 
-@media
-(
-    max-width:1024px
-)
+       Client Logo is placed in the MIDDLE TOP area.
+
+       The component remains intrinsically sized.
+
+       The page only controls its position.
+============================================================= */
+
+.login-page-1-middle-top >
+app-login-page-client-logo
 {
-    .login-page-1-main
-    {
-        flex:
-            0 0 calc(
-                100%
-                -
-                70px
-            );
+    display:
+        block;
 
-        height:
-            calc(
-                100%
-                -
-                70px
-            );
-    }
+    width:
+        fit-content;
 
+    height:
+        fit-content;
 
-    /* =======================================================
-       BUSINESS AREA - TABLET
-    ======================================================== */
+    min-width:
+        0;
 
-    .login-page-1-business-area
-    {
-        flex-basis:
-            30%;
+    min-height:
+        0;
 
-        width:
-            30%;
+    max-width:
+        none;
 
-        overflow:
-            visible;
-    }
+    max-height:
+        none;
 
+    margin:
+        0;
 
-    /* =======================================================
-       DESIGN AREA - TABLET
-    ======================================================== */
+    padding:
+        0;
 
-    .login-page-1-design-area
-    {
-        flex-basis:
-            40%;
+    box-sizing:
+        border-box;
 
-        width:
-            40%;
+    overflow:
+        visible;
 
-        overflow:
-            visible;
-    }
-
-
-    /* =======================================================
-       APPCORE IMAGE - TABLET
-    ======================================================== */
-
-    .login-page-1-appcore-image
-    {
-        overflow:
-            visible;
-    }
-
-
-    /* =======================================================
-       CLIENT AREA - TABLET
-       -------------------------------------------------------
-       Keep the enlarged hover-safe host area.
-    ======================================================== */
-
-    .login-page-1-appcore-clients
-    {
-        overflow:
-            visible;
-    }
-
-
-    .login-page-1-appcore-clients
-    > app-login-page-client-logo
-    {
-        width:
-            100%;
-
-        height:
-            100%;
-
-        overflow:
-            visible;
-    }
-
-
-    /* =======================================================
-       LOGIN AREA - TABLET
-    ======================================================== */
-
-    .login-page-1-login-area
-    {
-        flex-basis:
-            30%;
-
-        width:
-            30%;
-    }
-
-
-    /* =======================================================
-       TEMPORARY LABEL SIZE - TABLET
-    ======================================================== */
-
-    .login-page-1-appcore-branding,
-    .login-page-1-appcore-panel,
-    .login-page-1-appcore-clients,
-    .login-page-1-appcore-image,
-    .login-page-1-appcore-business,
-    .login-page-1-appcore-login,
-    .login-page-1-appcore-notification,
-    .login-page-1-footer
-    {
-        font-size:
-            12px;
-    }
-}
-
-
-/* ===========================================================
-   MOBILE
-   -----------------------------------------------------------
-   The approved architecture remains unchanged.
-================================================================ */
-
-@media
-(
-    max-width:768px
-)
-{
-    .login-page-1
-    {
-        min-width:
-            0;
-
-        min-height:
-            100%;
-
-        overflow:
-            auto;
-    }
-
-
-    /* =======================================================
-       MAIN BODY - MOBILE ARCHITECTURE TEST
-    ======================================================== */
-
-    .login-page-1-main
-    {
-        flex:
-            0 0 calc(
-                100%
-                -
-                70px
-            );
-
-        width:
-            100%;
-
-        height:
-            calc(
-                100%
-                -
-                70px
-            );
-
-        min-width:
-            900px;
-
-        min-height:
-            0;
-
-        overflow:
-            hidden;
-    }
-
-
-    /* =======================================================
-       DESIGN AREA - MOBILE
-    ======================================================== */
-
-    .login-page-1-design-area
-    {
-        overflow:
-            visible;
-    }
-
-
-    /* =======================================================
-       APPCORE IMAGE - MOBILE
-    ======================================================== */
-
-    .login-page-1-appcore-image
-    {
-        overflow:
-            visible;
-    }
-
-
-    /* =======================================================
-       CLIENT AREA - MOBILE
-       -------------------------------------------------------
-       Keep the Client Logo hover area open.
-    ======================================================== */
-
-    .login-page-1-appcore-clients
-    {
-        overflow:
-            visible;
-    }
-
-
-    .login-page-1-appcore-clients
-    > app-login-page-client-logo
-    {
-        width:
-            100%;
-
-        height:
-            100%;
-
-        overflow:
-            visible;
-    }
-
-
-    /* =======================================================
-       FOOTER - MOBILE
-    ======================================================== */
-
-    .login-page-1-footer
-    {
-        flex:
-            0 0 70px;
-
-        width:
-            100%;
-
-        height:
-            70px;
-
-        min-height:
-            70px;
-    }
+    flex:
+        0 0 auto;
 }

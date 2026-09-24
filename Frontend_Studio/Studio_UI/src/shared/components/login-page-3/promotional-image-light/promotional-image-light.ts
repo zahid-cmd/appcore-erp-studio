@@ -103,7 +103,7 @@ export class LoginPagePromotionalImageLightComponent
             true,
 
         imageUrl:
-            '/assets/promotional-panel/Promo_Image2_Light.png',
+            '/assets/promotional-panel/Promo_Image3_Light.png',
 
         altText:
             'AppCore Technologies',

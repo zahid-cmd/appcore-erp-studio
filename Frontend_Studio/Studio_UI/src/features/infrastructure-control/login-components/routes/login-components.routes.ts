@@ -111,6 +111,32 @@ Routes =
 
                 // AUTO-END : SUB-002-006-003
 
+            // AUTO-BEGIN : SUB-002-006-004
+
+                //===========================================================
+                // Login Component 4
+                //===========================================================
+
+                {
+                    path:'login-component-4',
+
+                    data:
+                    {
+                        breadcrumb:'Login Component 4'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './login-component-4.routes'
+                        )
+                        .then(
+                            m =>
+                                m.LoginComponent4Routes
+                        )
+                },
+
+                // AUTO-END : SUB-002-006-004
+
         ]
 
     }

@@ -1,0 +1,459 @@
+<div class="app-form-page"> 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE HEADER 
+    ====================================================== --> 
+ 
+ 
+    <app-page-header 
+ 
+        icon="fas fa-list" 
+ 
+        [title]="pageTitle" 
+ 
+        subtitle="Manage login component 4"> 
+ 
+        <app-command-center 
+ 
+            pageHeaderRight 
+ 
+            [command1Text]="saveButtonText" 
+ 
+            command1Icon="fas fa-floppy-disk" 
+ 
+            (command1Click)="onSave()" 
+ 
+            [command1Visible]="!isViewMode" 
+ 
+            command2Text="Clear" 
+ 
+            command2Icon="fas fa-broom" 
+ 
+            (command2Click)="onClear()" 
+ 
+            [command2Visible]="!isViewMode" 
+ 
+            [command3Visible]="false" 
+ 
+            rightCommandIcon="fas fa-arrow-left" 
+ 
+            (rightCommandClick)="onBackToList()"> 
+ 
+        </app-command-center> 
+ 
+    </app-page-header> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE TOOLBAR 
+    ====================================================== --> 
+ 
+ 
+    <app-page-toolbar> 
+ 
+        <app-control-tabs 
+ 
+            pageToolbarLeft 
+ 
+            [tabs]="tabs" 
+ 
+            [(selectedTab)]="selectedTab"> 
+ 
+        </app-control-tabs> 
+ 
+    </app-page-toolbar> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE CANVAS 
+    ====================================================== --> 
+ 
+ 
+    <app-page-canvas> 
+ 
+        <app-form-grid 
+ 
+            canvasBody 
+ 
+            [columns]="4"> 
+ 
+ 
+            <!-- ============================================= 
+                 SECTION 1 
+                 GENERAL INFORMATION 
+            ============================================== --> 
+ 
+            <app-form-section 
+ 
+                title="General Information" 
+ 
+                icon="fas fa-circle-info"> 
+ 
+ 
+                <!-- Code --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Code" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.code" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Name --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Name" 
+ 
+                    placeholder="Enter component name" 
+ 
+                    [(value)]="entity.name" 
+ 
+                    (valueChange)="onValueChange()" 
+ 
+                    [disabled]="isViewMode" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Tab Name --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Tab Name" 
+ 
+                    placeholder="Enter tab name" 
+ 
+                    [(value)]="entity.tabName" 
+ 
+                    (valueChange)="onValueChange()" 
+ 
+                    [disabled]="isViewMode" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Icon --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Icon" 
+ 
+                    placeholder="Enter component icon" 
+ 
+                    [(value)]="entity.icon" 
+ 
+                    (valueChange)="onValueChange()" 
+ 
+                    [disabled]="isViewMode"> 
+ 
+                </app-textbox> 
+ 
+ 
+            </app-form-section> 
+ 
+ 
+ 
+            <!-- ============================================= 
+                 SECTION 2 
+                 COMPONENT INFORMATION 
+            ============================================== --> 
+ 
+ 
+            <app-form-section 
+ 
+                title="Component Information" 
+ 
+                icon="fas fa-puzzle-piece"> 
+ 
+ 
+                <!-- Folder Name --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Folder Name" 
+ 
+                    placeholder="Enter folder name" 
+ 
+                    [(value)]="entity.folderName" 
+ 
+                    (valueChange)="onFolderNameChange()" 
+ 
+                    [readonly]="isFolderNameReadonly" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Feature Folder --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Feature Folder" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.featureFolder" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Feature Sub Folder --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Feature Sub Folder" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.featureSubFolder" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Component Path --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Component Path" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.componentPath" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+            </app-form-section> 
+ 
+ 
+ 
+            <!-- ============================================= 
+                 SECTION 3 
+                 FILE & REGISTRATION INFORMATION 
+            ============================================== --> 
+ 
+ 
+            <app-form-section 
+ 
+                title="File & Registration Information" 
+ 
+                icon="fas fa-folder-tree"> 
+ 
+ 
+                <!-- Registration File Path --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Registration File Path" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.registrationFilePath" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- HTML File Path --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="HTML File Path" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.htmlFilePath" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- TS File Path --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="TS File Path" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.tsFilePath" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- CSS File Path --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="CSS File Path" 
+ 
+                    placeholder="Auto generated" 
+ 
+                    [(value)]="entity.cssFilePath" 
+ 
+                    [readonly]="true" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+            </app-form-section> 
+ 
+ 
+ 
+            <!-- ============================================= 
+                 SECTION 4 
+                 STATUS & ADDITIONAL INFORMATION 
+            ============================================== --> 
+ 
+            <app-form-section 
+ 
+                title="Status & Additional Information" 
+ 
+                icon="fas fa-clipboard-check"> 
+ 
+ 
+                <!-- Display Order --> 
+ 
+ 
+                <app-textbox 
+ 
+                    label="Display Order" 
+ 
+                    placeholder="Enter display order" 
+ 
+                    [(value)]="entity.displayOrder" 
+ 
+                    (valueChange)="onValueChange()" 
+ 
+                    [disabled]="isViewMode" 
+ 
+                    [required]="true"> 
+ 
+                </app-textbox> 
+ 
+ 
+ 
+                <!-- Status --> 
+ 
+ 
+                <app-dropdown 
+ 
+                    label="Status" 
+ 
+                    [items]="statusItems" 
+ 
+                    labelField="text" 
+ 
+                    valueField="value" 
+ 
+                    [(value)]="entity.status" 
+ 
+                    (valueChange)="onValueChange()" 
+ 
+                    [disabled]="isViewMode" 
+ 
+                    [required]="true"> 
+ 
+                </app-dropdown> 
+ 
+ 
+ 
+                <!-- Remarks --> 
+ 
+ 
+                <app-textarea 
+ 
+                    label="Remarks" 
+ 
+                    placeholder="Enter remarks" 
+ 
+                    [(value)]="entity.remarks" 
+ 
+                    (valueChange)="onValueChange()" 
+ 
+                    [disabled]="isViewMode"> 
+ 
+                </app-textarea> 
+ 
+ 
+            </app-form-section> 
+ 
+ 
+        </app-form-grid> 
+ 
+    </app-page-canvas> 
+ 
+</div> 
+ 
+ 
+ 
+<!-- ===================================================== 
+     UTILITIES 
+====================================================== --> 
+ 
+ 
+<app-toast></app-toast> 
+ 
+<app-confirm-dialog></app-confirm-dialog>

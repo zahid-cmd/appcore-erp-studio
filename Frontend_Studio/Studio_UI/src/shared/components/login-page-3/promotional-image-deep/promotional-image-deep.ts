@@ -103,7 +103,7 @@ export class LoginPagePromotionalImageDeepComponent
             true,
 
         imageUrl:
-            '/assets/promotional-panel/Promo_Image2_Deep.png',
+            '/assets/promotional-panel/Promo_Image3_Deep.png',
 
         altText:
             'AppCore Technologies',

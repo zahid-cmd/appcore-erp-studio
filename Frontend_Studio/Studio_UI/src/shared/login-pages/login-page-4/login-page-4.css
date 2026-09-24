@@ -1,0 +1,717 @@
+/* =============================================================
+   LOGIN PAGE 4
+   -------------------------------------------------------------
+   FINAL DESKTOP LAYOUT
+
+   FULL VIEWPORT
+
+       LEFT   = 30%
+       MIDDLE = 35%
+       RIGHT  = 35%
+
+   LEFT / MIDDLE:
+
+       TOP    = 15%
+       CENTER = REST
+       BOTTOM = 15%
+
+   RIGHT:
+
+       TOP    = 30px
+       CENTER = REST
+       BOTTOM = 30px
+
+   IMPORTANT:
+
+       DESKTOP ONLY.
+
+       Tablet and mobile layouts are intentionally not included
+       at this stage.
+
+   IMPORTANT BRANDING RULE:
+
+       The Login Page controls the POSITION of the Branding
+       component.
+
+       The Branding component itself controls its own
+       intrinsic width and height.
+
+       Therefore the page MUST NOT force:
+
+           width: 100%;
+           height: 100%;
+
+       on the Branding component.
+============================================================= */
+
+
+/* =============================================================
+   ROOT PAGE
+============================================================= */
+
+.login-page-4
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   PROMOTIONAL IMAGE
+   -------------------------------------------------------------
+   FULL VIEWPORT
+
+   This layer remains completely independent from the desktop
+   layout grid.
+============================================================= */
+
+.login-page-4-promotional-area
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden;
+
+    z-index:
+        0;
+}
+
+
+/* =============================================================
+   PROMOTIONAL IMAGE COMPONENTS
+============================================================= */
+
+.login-page-4-promotional-area >
+app-login-page-promotional-image-light,
+
+.login-page-4-promotional-area >
+app-login-page-promotional-image-deep
+{
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   MAIN DESKTOP LAYOUT
+   -------------------------------------------------------------
+   FULL WIDTH:
+
+       30% | 35% | 35%
+
+   FULL HEIGHT:
+
+       100%
+============================================================= */
+
+.login-page-4-layout
+{
+    position:
+        relative;
+
+    z-index:
+        10;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        30% 35% 35%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   LEFT AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       30%
+
+   ROWS:
+
+       15%
+       REST
+       15%
+============================================================= */
+
+.login-page-4-left-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        15% 70% 15%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   LEFT TOP
+   -------------------------------------------------------------
+   HEIGHT:
+
+       15%
+
+   IMPORTANT:
+
+       This section provides POSITIONING ONLY.
+
+       It does NOT force the Branding component to fill
+       the complete 15% area.
+============================================================= */
+
+.login-page-4-left-top
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* =============================================================
+   LEFT CENTER
+============================================================= */
+
+.login-page-4-left-center
+{
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LEFT BOTTOM
+   -------------------------------------------------------------
+   POWERED BY IS ALIGNED DIRECTLY TO THE LEFT EDGE.
+
+   No horizontal centering is applied to the Powered By
+   component from this page-level container.
+============================================================= */
+
+.login-page-4-left-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   POWERED BY POSITION
+   -------------------------------------------------------------
+   Force the Powered By component itself to begin from the
+   absolute left edge of the 30% Left Bottom area.
+============================================================= */
+
+.login-page-4-left-bottom >
+app-login-page-powered-by
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    transform:
+        none;
+}
+
+
+/* =============================================================
+   MIDDLE AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       15%
+       REST
+       15%
+============================================================= */
+
+.login-page-4-middle-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        15% 70% 15%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   MIDDLE TOP
+============================================================= */
+
+.login-page-4-middle-top
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE CENTER
+============================================================= */
+
+.login-page-4-middle-center
+{
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE BOTTOM
+============================================================= */
+
+.login-page-4-middle-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       30px
+       REST
+       30px
+
+   IMPORTANT:
+
+       The right area is completely independent from the
+       vertical divisions of the left and middle areas.
+============================================================= */
+
+.login-page-4-right-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        30px minmax(0, 1fr) 30px;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT TOP
+   -------------------------------------------------------------
+   HEIGHT:
+
+       EXACTLY 30px
+
+   RESERVED FOR THE FUTURE THEME SELECTOR.
+============================================================= */
+
+.login-page-4-right-top
+{
+    width:
+        100%;
+
+    height:
+        30px;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT CENTER
+   -------------------------------------------------------------
+   HEIGHT:
+
+       REMAINING HEIGHT
+============================================================= */
+
+.login-page-4-right-center
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LOGIN PANEL
+   -------------------------------------------------------------
+   The existing Login Panel owns its own internal design.
+
+   This page only controls its position inside the 35% area.
+============================================================= */
+
+.login-page-4-right-center >
+app-login-page-login-panel
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   RIGHT BOTTOM
+   -------------------------------------------------------------
+   HEIGHT:
+
+       EXACTLY 30px
+
+   FOOTER AREA
+============================================================= */
+
+.login-page-4-right-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        30px;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   BRANDING
+   -------------------------------------------------------------
+   IMPORTANT:
+
+       The parent Login Page ONLY positions the Branding
+       component.
+
+       The Branding component controls its own:
+
+           width
+           height
+           padding
+           background
+           border
+           radius
+
+       DO NOT use:
+
+           width: 100%;
+           height: 100%;
+
+       here.
+
+       The Branding component is positioned directly against
+       the LEFT edge of the 30% Left Top area.
+
+       No horizontal centering is applied.
+============================================================= */
+
+.login-page-4-left-top >
+app-login-page-branding
+{
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    height:
+        fit-content;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    padding-top:
+        5px;
+
+    padding-left:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    align-self:
+        center;
+
+    flex:
+        0 0 auto;
+}
+
+
+/* =============================================================
+   CLIENT LOGO
+   -------------------------------------------------------------
+   CURRENT PAGE ARCHITECTURE:
+
+       Client Logo is NOT part of the Branding area.
+
+       This rule is retained only for the existing middle-area
+       architecture if the Client Logo component is still present
+       in the page HTML.
+
+   The component remains intrinsically sized.
+============================================================= */
+
+.login-page-4-middle-bottom >
+app-login-page-client-logo
+{
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    height:
+        fit-content;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    flex:
+        0 0 auto;
+}

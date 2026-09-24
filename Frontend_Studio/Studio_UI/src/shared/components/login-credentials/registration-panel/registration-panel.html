@@ -1,0 +1,1389 @@
+<!-- ===========================================================
+     LOGIN PAGE REGISTRATION PANEL
+     -----------------------------------------------------------
+     FINAL PREMIUM REGISTRATION PANEL
+
+     MASTER GEOMETRY:
+
+         Width:
+             590px
+
+         Height:
+             Available panel height.
+
+     VALIDATION:
+
+         - Every field is mandatory
+         - Full Name:
+             2–100 characters
+             Letters and spaces only
+
+         - Display Name:
+             3–10 letters only
+             No spaces, numbers or special characters
+
+         - Email:
+             Valid email address
+
+         - Mobile Number:
+             7–20 digits only
+             No spaces or special characters
+
+         - Login ID:
+             4–20 characters
+             Must start with a letter
+             Letters, numbers and underscore only
+
+         - Password:
+             8–32 characters
+             Uppercase letter
+             Lowercase letter
+             Number
+             Special character
+             No spaces
+
+         - Confirm Password:
+             Must match Password
+
+         - Terms:
+             Must be accepted
+
+     UX:
+
+         - Field rules are shown through info tooltips
+         - Validation errors appear below the relevant field
+         - Password rules are shown through a dedicated tooltip
+         - No permanent rule text is added to the form
+         - Existing premium geometry is preserved
+
+     IMPORTANT:
+
+         This panel controls ONLY the registration form.
+
+         Registration data is saved directly through the
+         Authentication API.
+
+         No:
+         - Client Logo
+         - Client Branding
+         - Language selector
+         - Background artwork
+         - Powered By
+         - Footer
+
+============================================================ -->
+
+
+<div
+    class="registration-page-registration-panel"
+    *ngIf="config.visible"
+>
+
+
+    <!-- =======================================================
+         REGISTRATION PANEL CONTENT
+    ======================================================== -->
+
+    <div
+        class="registration-panel-content"
+    >
+
+
+        <!-- ===================================================
+             REGISTRATION CARD
+        ==================================================== -->
+
+        <div
+            class="registration-card"
+        >
+
+
+            <!-- ===============================================
+                 CARD HEADER
+            ================================================ -->
+
+            <div
+                class="registration-card-header"
+            >
+
+
+                <!-- ===========================================
+                     TOP META
+                ============================================ -->
+
+                <div
+                    class="registration-card-top-meta"
+                >
+
+                    <span>
+                        SIMPLE
+                    </span>
+
+                    <span
+                        class="topline-separator"
+                    >
+                        |
+                    </span>
+
+                    <span>
+                        SECURE
+                    </span>
+
+                    <span
+                        class="topline-separator"
+                    >
+                        |
+                    </span>
+
+                    <span>
+                        SCALABLE
+                    </span>
+
+                </div>
+
+
+                <!-- ===========================================
+                     BLUE ACCENT
+                ============================================ -->
+
+                <div
+                    class="registration-card-accent"
+                >
+                </div>
+
+
+                <!-- ===========================================
+                     HEADING AREA
+                ============================================ -->
+
+                <div
+                    class="registration-card-heading-area"
+                >
+
+                    <h2
+                        class="registration-card-heading"
+                    >
+                        {{ config.heading }}
+                    </h2>
+
+
+                    <p
+                        class="registration-card-subtitle"
+                    >
+                        {{ config.subtitle }}
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ===============================================
+                 REGISTRATION FORM
+            ================================================ -->
+
+            <form
+                class="registration-form"
+                (ngSubmit)="onRegister()"
+                autocomplete="on"
+            >
+
+
+                <!-- ===========================================
+                     FULL NAME
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        fullNameTouched &&
+                        fullNameError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-full-name"
+                        >
+                            {{ config.fullNameLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info"
+                            tabindex="0"
+                            aria-label="Full Name validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Full Name
+                                </strong>
+
+                                <span>
+                                    2–100 characters.
+                                </span>
+
+                                <span>
+                                    Letters and spaces only.
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-full-name"
+                            class="registration-form-input"
+                            type="text"
+                            name="fullName"
+                            [value]="fullName"
+                            [placeholder]="config.fullNamePlaceholder"
+                            autocomplete="name"
+                            (input)="
+                                onFullNameChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onFullNameBlur()
+                            "
+                        />
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            fullNameTouched &&
+                            fullNameError
+                        "
+                    >
+                        {{ fullNameError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     DISPLAY NAME
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        displayNameTouched &&
+                        displayNameError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-display-name"
+                        >
+                            {{ config.displayNameLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info"
+                            tabindex="0"
+                            aria-label="Display Name validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Display Name
+                                </strong>
+
+                                <span>
+                                    3–10 letters only.
+                                </span>
+
+                                <span>
+                                    No spaces, numbers or special characters.
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-display-name"
+                            class="registration-form-input"
+                            type="text"
+                            name="displayName"
+                            [value]="displayName"
+                            [placeholder]="config.displayNamePlaceholder"
+                            autocomplete="nickname"
+                            maxlength="10"
+                            (input)="
+                                onDisplayNameChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onDisplayNameBlur()
+                            "
+                        />
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            displayNameTouched &&
+                            displayNameError
+                        "
+                    >
+                        {{ displayNameError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     EMAIL ADDRESS
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        emailTouched &&
+                        emailError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-email"
+                        >
+                            {{ config.emailLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info"
+                            tabindex="0"
+                            aria-label="Email validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Email Address
+                                </strong>
+
+                                <span>
+                                    Enter a valid email address.
+                                </span>
+
+                                <span>
+                                    Example: name@example.com
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-envelope"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-email"
+                            class="registration-form-input"
+                            type="email"
+                            name="email"
+                            [value]="email"
+                            [placeholder]="config.emailPlaceholder"
+                            autocomplete="email"
+                            (input)="
+                                onEmailChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onEmailBlur()
+                            "
+                        />
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            emailTouched &&
+                            emailError
+                        "
+                    >
+                        {{ emailError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     MOBILE NUMBER
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        mobileNoTouched &&
+                        mobileNoError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-mobile-no"
+                        >
+                            {{ config.mobileNoLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info"
+                            tabindex="0"
+                            aria-label="Mobile Number validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Mobile Number
+                                </strong>
+
+                                <span>
+                                    7–20 digits only.
+                                </span>
+
+                                <span>
+                                    No spaces or special characters.
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-mobile-screen-button"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-mobile-no"
+                            class="registration-form-input"
+                            type="tel"
+                            name="mobileNo"
+                            [value]="mobileNo"
+                            [placeholder]="config.mobileNoPlaceholder"
+                            autocomplete="tel"
+                            inputmode="numeric"
+                            maxlength="20"
+                            (input)="
+                                onMobileNoChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onMobileNoBlur()
+                            "
+                        />
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            mobileNoTouched &&
+                            mobileNoError
+                        "
+                    >
+                        {{ mobileNoError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LOGIN ID
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        loginIdTouched &&
+                        loginIdError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-login-id"
+                        >
+                            {{ config.loginIdLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info"
+                            tabindex="0"
+                            aria-label="Login ID validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Login ID
+                                </strong>
+
+                                <span>
+                                    4–20 characters.
+                                </span>
+
+                                <span>
+                                    Must start with a letter.
+                                </span>
+
+                                <span>
+                                    Letters, numbers and underscore only.
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-login-id"
+                            class="registration-form-input"
+                            type="text"
+                            name="loginId"
+                            [value]="loginId"
+                            [placeholder]="config.loginIdPlaceholder"
+                            autocomplete="username"
+                            maxlength="20"
+                            (input)="
+                                onLoginIdChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onLoginIdBlur()
+                            "
+                        />
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            loginIdTouched &&
+                            loginIdError
+                        "
+                    >
+                        {{ loginIdError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     PASSWORD
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        passwordTouched &&
+                        passwordError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-password"
+                        >
+                            {{ config.passwordLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info registration-password-info"
+                            tabindex="0"
+                            aria-label="Password validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Password Requirements
+                                </strong>
+
+                                <span>
+                                    8–32 characters
+                                </span>
+
+                                <span>
+                                    At least one uppercase letter
+                                </span>
+
+                                <span>
+                                    At least one lowercase letter
+                                </span>
+
+                                <span>
+                                    At least one number
+                                </span>
+
+                                <span>
+                                    At least one special character
+                                </span>
+
+                                <span>
+                                    No spaces
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-lock"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-password"
+                            class="registration-form-input registration-password-input"
+                            [type]="
+                                passwordVisible
+                                    ? 'text'
+                                    : 'password'
+                            "
+                            name="password"
+                            [value]="password"
+                            [placeholder]="config.passwordPlaceholder"
+                            autocomplete="new-password"
+                            maxlength="32"
+                            (input)="
+                                onPasswordChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onPasswordBlur()
+                            "
+                        />
+
+
+                        <button
+                            type="button"
+                            class="password-visibility-button"
+                            aria-label="Show or hide password"
+                            (click)="
+                                togglePasswordVisibility()
+                            "
+                        >
+
+                            <i
+                                [class]="
+                                    passwordVisible
+                                        ? 'fas fa-eye'
+                                        : 'fas fa-eye-slash'
+                                "
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            passwordTouched &&
+                            passwordError
+                        "
+                    >
+                        {{ passwordError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     CONFIRM PASSWORD
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                    [class.registration-field-invalid]="
+                        confirmPasswordTouched &&
+                        confirmPasswordError
+                    "
+                >
+
+                    <div
+                        class="registration-label-row"
+                    >
+
+                        <label
+                            class="registration-form-label"
+                            for="registration-page-confirm-password"
+                        >
+                            {{ config.confirmPasswordLabel }}
+                        </label>
+
+
+                        <span
+                            class="registration-field-info"
+                            tabindex="0"
+                            aria-label="Confirm Password validation rules"
+                        >
+
+                            <i
+                                class="fas fa-circle-info"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+
+                            <span
+                                class="registration-field-tooltip"
+                            >
+
+                                <strong>
+                                    Confirm Password
+                                </strong>
+
+                                <span>
+                                    Must exactly match your Password.
+                                </span>
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-lock"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-confirm-password"
+                            class="registration-form-input registration-password-input"
+                            [type]="
+                                confirmPasswordVisible
+                                    ? 'text'
+                                    : 'password'
+                            "
+                            name="confirmPassword"
+                            [value]="confirmPassword"
+                            [placeholder]="config.confirmPasswordPlaceholder"
+                            autocomplete="new-password"
+                            maxlength="32"
+                            (input)="
+                                onConfirmPasswordChange(
+                                    $any($event.target).value
+                                )
+                            "
+                            (blur)="
+                                onConfirmPasswordBlur()
+                            "
+                        />
+
+
+                        <button
+                            type="button"
+                            class="password-visibility-button"
+                            aria-label="Show or hide password"
+                            (click)="
+                                toggleConfirmPasswordVisibility()
+                            "
+                        >
+
+                            <i
+                                [class]="
+                                    confirmPasswordVisible
+                                        ? 'fas fa-eye'
+                                        : 'fas fa-eye-slash'
+                                "
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="registration-field-error"
+                        *ngIf="
+                            confirmPasswordTouched &&
+                            confirmPasswordError
+                        "
+                    >
+                        {{ confirmPasswordError }}
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     TERMS AND PRIVACY
+                ============================================ -->
+
+                <label
+                    class="registration-terms"
+                    [class.registration-terms-invalid]="
+                        termsTouched &&
+                        termsError
+                    "
+                >
+
+                    <input
+                        type="checkbox"
+                        name="termsAccepted"
+                        [checked]="termsAccepted"
+                        (change)="
+                            onTermsAcceptedChange(
+                                $any($event.target).checked
+                            )
+                        "
+                        (blur)="
+                            onTermsBlur()
+                        "
+                    />
+
+
+                    <span
+                        class="registration-terms-checkbox"
+                    >
+                    </span>
+
+
+                    <span
+                        class="registration-terms-text"
+                    >
+
+                        {{ config.termsPrefixText }}
+
+                        <button
+                            type="button"
+                            class="registration-terms-link"
+                            (click)="onTermsOfService()"
+                        >
+                            {{ config.termsText }}
+                        </button>
+
+                        {{ config.termsMiddleText }}
+
+                        <button
+                            type="button"
+                            class="registration-terms-link"
+                            (click)="onPrivacyPolicy()"
+                        >
+                            {{ config.privacyText }}
+                        </button>
+
+                    </span>
+
+                </label>
+
+
+                <!-- ===========================================
+                     TERMS ERROR
+                ============================================ -->
+
+                <div
+                    class="registration-terms-error"
+                    *ngIf="
+                        termsTouched &&
+                        termsError
+                    "
+                >
+
+                    {{ termsError }}
+
+                </div>
+
+
+                <!-- ===========================================
+                     REGISTRATION ERROR
+                ============================================ -->
+
+                <div
+                    class="registration-error"
+                    *ngIf="registrationError"
+                >
+
+                    {{ registrationError }}
+
+                </div>
+
+
+                <!-- ===========================================
+                     REGISTRATION SUCCESS
+                ============================================ -->
+
+                <div
+                    class="registration-success"
+                    *ngIf="registrationSuccess"
+                >
+
+                    {{ registrationSuccess }}
+
+                </div>
+
+
+                <!-- ===========================================
+                     CREATE ACCOUNT BUTTON
+                ============================================ -->
+
+                <button
+                    type="submit"
+                    class="create-account-button"
+                    [disabled]="isRegistering"
+                >
+
+                    <span
+                        class="create-account-icon"
+                    >
+
+                        <i
+                            [class]="config.createAccountButtonIcon"
+                            aria-hidden="true"
+                        >
+                        </i>
+
+                    </span>
+
+
+                    <span
+                        class="create-account-text"
+                    >
+                        {{
+                            isRegistering
+                                ? 'Creating Account...'
+                                : config.createAccountButtonText
+                        }}
+                    </span>
+
+
+                    <span
+                        class="create-account-arrow"
+                    >
+
+                        <i
+                            [class]="config.createAccountButtonArrowIcon"
+                            aria-hidden="true"
+                        >
+                        </i>
+
+                    </span>
+
+                </button>
+
+
+            </form>
+
+
+            <!-- =================================================
+                 OR SEPARATOR
+            ================================================== -->
+
+            <div
+                class="registration-or-separator"
+            >
+
+                <span
+                    class="separator-line"
+                >
+                </span>
+
+
+                <span
+                    class="separator-text"
+                >
+                    {{ config.orText }}
+                </span>
+
+
+                <span
+                    class="separator-line"
+                >
+                </span>
+
+            </div>
+
+
+            <!-- =================================================
+                 BACK TO LOGIN
+            ================================================== -->
+
+            <div
+                class="login-registration-area"
+                *ngIf="config.loginVisible"
+            >
+
+
+                <!-- =============================================
+                     LOGIN ICON
+                ============================================== -->
+
+                <div
+                    class="login-registration-icon"
+                >
+
+                    <i
+                        [class]="config.loginIcon"
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                </div>
+
+
+                <!-- =============================================
+                     LOGIN CONTENT
+                ============================================== -->
+
+                <div
+                    class="login-registration-content"
+                >
+
+                    <div
+                        class="login-registration-heading"
+                    >
+                        {{ config.loginHeading }}
+                    </div>
+
+
+                    <div
+                        class="login-registration-description"
+                    >
+                        {{ config.loginDescription }}
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     LOGIN BUTTON
+                ============================================== -->
+
+                <button
+                    type="button"
+                    class="login-registration-button"
+                    (click)="onBackToLogin()"
+                >
+
+                    {{ config.loginButtonText }}
+
+                </button>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 BOTTOM META
+            ================================================== -->
+
+            <div
+                class="registration-card-bottom-meta"
+            >
+
+                <span>
+                    SIMPLE
+                </span>
+
+                <span
+                    class="topline-separator"
+                >
+                    |
+                </span>
+
+                <span>
+                    SECURE
+                </span>
+
+                <span
+                    class="topline-separator"
+                >
+                    |
+                </span>
+
+                <span>
+                    SCALABLE
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =======================================================
+         REGISTRATION ORBIT LOADER
+         -------------------------------------------------------
+         Displayed while the registration operation is being
+         completed and remains visible for the minimum loader
+         duration before the confirmation dialog is opened.
+    ======================================================== -->
+
+    <app-orbit-loader
+        *ngIf="showRegistrationLoader"
+
+        title="Creating Account"
+
+        message="Please wait while your account is being created."
+
+        size="medium"
+
+        [showMessage]="true"
+
+        [overlay]="true"
+    >
+    </app-orbit-loader>
+
+
+    <!-- =======================================================
+         CONFIRMATION DIALOG
+         -------------------------------------------------------
+         Displayed only after successful registration and after
+         the minimum Orbit Loader duration has completed.
+    ======================================================== -->
+
+    <app-confirmation-dialog
+        *ngIf="showConfirmationDialog"
+
+        [fullName]="confirmationFullName"
+
+        [displayName]="confirmationDisplayName"
+
+        [mobileNo]="confirmationMobileNo"
+
+        [loginId]="confirmationLoginId"
+
+        (okay)="onConfirmationOkay()"
+    >
+    </app-confirmation-dialog>
+
+
+</div>

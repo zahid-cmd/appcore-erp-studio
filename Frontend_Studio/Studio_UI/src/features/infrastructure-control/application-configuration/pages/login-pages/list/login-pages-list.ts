@@ -524,7 +524,7 @@ implements
                 'status',
 
             width:
-                '120px',
+                '180px',
 
             align:
                 'center'

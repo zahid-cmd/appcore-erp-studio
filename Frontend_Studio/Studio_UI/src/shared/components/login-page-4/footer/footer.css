@@ -1,0 +1,358 @@
+/* ============================================================
+   LOGIN PAGE FOOTER
+============================================================ */
+
+/* ============================================================
+   HOST
+============================================================ */
+
+:host
+{
+    position:relative;
+
+    display:block;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    box-sizing:border-box;
+}
+
+
+/* ============================================================
+   FOOTER ROOT
+============================================================ */
+
+.login-page-footer
+{
+    position:absolute;
+
+    left:0;
+
+    right:0;
+
+    bottom:0;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    align-items:flex-end;
+
+    justify-content:center;
+
+    padding:
+        0
+        48px
+        34px
+        48px;
+
+    background:transparent;
+
+    pointer-events:none;
+}
+
+
+/* ============================================================
+   FOOTER CONTENT
+============================================================ */
+
+.login-page-footer-content
+{
+    width:100%;
+
+    min-width:0;
+
+    display:flex;
+
+    align-items:flex-end;
+
+    justify-content:space-between;
+
+    gap:40px;
+
+    box-sizing:border-box;
+}
+
+
+/* ============================================================
+   FOOTER LINKS
+============================================================ */
+
+.login-page-footer-links
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-start;
+
+    flex-wrap:nowrap;
+
+    min-width:0;
+
+    gap:12px;
+
+    color:#526b91;
+
+    font-size:14px;
+
+    font-weight:400;
+
+    line-height:1.4;
+
+    white-space:nowrap;
+
+    text-align:left;
+}
+
+
+/* ============================================================
+   FOOTER LINK
+============================================================ */
+
+.login-page-footer-link
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin:0;
+
+    padding:0;
+
+    color:#526b91;
+
+    font-size:14px;
+
+    font-weight:400;
+
+    line-height:1.4;
+
+    text-decoration:underline;
+
+    text-decoration-thickness:1px;
+
+    text-underline-offset:2px;
+
+    white-space:nowrap;
+
+    pointer-events:auto;
+
+    cursor:pointer;
+
+    transition:
+
+        color .18s ease,
+
+        opacity .18s ease;
+}
+
+
+.login-page-footer-link:hover
+{
+    color:#1769e0;
+
+    opacity:.92;
+}
+
+
+/* ============================================================
+   FOOTER SEPARATOR
+============================================================ */
+
+.login-page-footer-separator
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    color:#7c8da8;
+
+    font-size:13px;
+
+    font-weight:400;
+
+    line-height:1;
+
+    user-select:none;
+}
+
+
+/* ============================================================
+   COPYRIGHT
+============================================================ */
+
+.login-page-footer-copyright
+{
+    flex:0 0 auto;
+
+    max-width:420px;
+
+    margin:0;
+
+    color:#526b91;
+
+    font-size:14px;
+
+    font-weight:400;
+
+    line-height:1.55;
+
+    text-align:right;
+
+    white-space:normal;
+}
+
+
+/* ============================================================
+   DISABLED / HIDDEN STATE
+============================================================ */
+
+.login-page-footer[hidden]
+{
+    display:none;
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media
+(
+    max-width:900px
+)
+{
+    .login-page-footer
+    {
+        padding:
+            0
+            32px
+            28px
+            32px;
+    }
+
+
+    .login-page-footer-content
+    {
+        gap:24px;
+    }
+
+
+    .login-page-footer-links
+    {
+        gap:9px;
+
+        font-size:12px;
+    }
+
+
+    .login-page-footer-link
+    {
+        font-size:12px;
+    }
+
+
+    .login-page-footer-separator
+    {
+        font-size:12px;
+    }
+
+
+    .login-page-footer-copyright
+    {
+        max-width:320px;
+
+        font-size:12px;
+    }
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media
+(
+    max-width:600px
+)
+{
+    .login-page-footer
+    {
+        height:auto;
+
+        min-height:0;
+
+        padding:
+            0
+            24px
+            22px
+            24px;
+    }
+
+
+    .login-page-footer-content
+    {
+        flex-direction:column;
+
+        align-items:center;
+
+        justify-content:flex-end;
+
+        gap:10px;
+
+        text-align:center;
+    }
+
+
+    .login-page-footer-links
+    {
+        justify-content:center;
+
+        flex-wrap:wrap;
+
+        gap:7px;
+
+        font-size:11px;
+
+        text-align:center;
+    }
+
+
+    .login-page-footer-link
+    {
+        font-size:11px;
+    }
+
+
+    .login-page-footer-separator
+    {
+        font-size:11px;
+    }
+
+
+    .login-page-footer-copyright
+    {
+        max-width:100%;
+
+        font-size:11px;
+
+        text-align:center;
+    }
+}

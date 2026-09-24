@@ -456,6 +456,18 @@ public class AppDbContext
 
     // AUTO-END : LoginComponent3
 
+
+    // AUTO-BEGIN : LoginComponent4
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent4>
+    LoginComponent4s
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LoginComponent4
+
     // AUTO-END : AUTO REGISTER DBSETS
 
     //===========================================================

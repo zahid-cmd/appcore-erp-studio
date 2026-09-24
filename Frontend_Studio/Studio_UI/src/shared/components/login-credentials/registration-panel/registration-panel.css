@@ -1,0 +1,4126 @@
+/* ===============================================================
+   LOGIN PAGE REGISTRATION PANEL
+   ---------------------------------------------------------------
+   FINAL PREMIUM REGISTRATION PANEL
+
+   MASTER GEOMETRY:
+
+       Width:
+           590px
+
+       Height:
+           Available panel height.
+
+   HEIGHT OPTIMIZATION:
+
+       - Reduced header vertical footprint
+       - Reduced accent spacing
+       - Reduced form top spacing
+       - Reduced input heights
+       - Reduced field gaps
+       - Reduced terms spacing
+       - Reduced Create Account button height
+       - Reduced OR separator spacing
+       - Reduced bottom login section height
+       - Reduced bottom meta spacing
+
+   DESIGN:
+
+       - Premium blue transparent glass
+       - Same geometry as Login Panel
+       - Same typography language
+       - Same input styling
+       - Same button styling
+       - No client logo area
+       - No language selector
+       - No background artwork
+       - No Powered By
+       - No footer
+
+   REGISTRATION:
+
+       Full Name
+       Display Name
+       Email Address
+       Mobile Number
+       Login ID
+       Password
+       Confirm Password
+       Terms & Privacy
+       Create Account
+       OR
+       Already Have An Account
+
+   IMPORTANT:
+
+       CSS class names are aligned directly with the
+       current registration-panel.html.
+
+   IMPORTANT HEIGHT RULE:
+
+       The card uses the complete available height.
+
+       The header and bottom login section are intentionally
+       compact so the seven registration fields can remain
+       visible without vertical scrolling.
+
+       Input fields use a controlled compact height rather
+       than expanding excessively with the available space.
+================================================================ */
+
+
+/* ===============================================================
+   HOST
+=============================================================== */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   MASTER VARIABLES
+=============================================================== */
+
+:host
+{
+    --registration-card-width:
+        590px;
+
+    --registration-card-height:
+        100%;
+
+    --registration-card-max-width:
+        calc(
+            100%
+            -
+            36px
+        );
+
+    --registration-card-max-height:
+        100%;
+
+    --registration-card-padding-top:
+        20px;
+
+    --registration-card-padding-right:
+        32px;
+
+    --registration-card-padding-bottom:
+        10px;
+
+    --registration-card-padding-left:
+        32px;
+}
+
+
+
+/* ===============================================================
+   MAIN REGISTRATION PANEL
+=============================================================== */
+
+.registration-page-registration-panel
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        5px 0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+}
+
+
+
+/* ===============================================================
+   PANEL CONTENT
+=============================================================== */
+
+.registration-panel-content
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+
+/* ===============================================================
+   REGISTRATION CARD
+   ---------------------------------------------------------------
+   MASTER GLASS CARD
+=============================================================== */
+
+.registration-card
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    width:
+        var(
+            --registration-card-width
+        );
+
+    height:
+        var(
+            --registration-card-height
+        );
+
+    max-width:
+        var(
+            --registration-card-max-width
+        );
+
+    max-height:
+        var(
+            --registration-card-max-height
+        );
+
+    margin:
+        0;
+
+    padding:
+        var(--registration-card-padding-top)
+        var(--registration-card-padding-right)
+        var(--registration-card-padding-bottom)
+        var(--registration-card-padding-left);
+
+    border:
+        1px solid
+        rgba(
+            235,
+            246,
+            255,
+            .72
+        );
+
+    border-radius:
+        22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                82,
+                153,
+                241,
+                .48
+            )
+            0%,
+            rgba(
+                91,
+                146,
+                235,
+                .39
+            )
+            42%,
+            rgba(
+                151,
+                184,
+                224,
+                .29
+            )
+            100%
+        );
+
+    box-shadow:
+        0
+        22px
+        60px
+        rgba(
+            10,
+            43,
+            91,
+            .20
+        ),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .22
+        );
+
+    backdrop-filter:
+        blur(
+            18px
+        );
+
+    -webkit-backdrop-filter:
+        blur(
+            18px
+        );
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+
+/* ===============================================================
+   CARD HEADER
+=============================================================== */
+
+.registration-card-header
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   TOP META
+=============================================================== */
+
+.registration-card-top-meta
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    gap:
+        12px;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        rgba(
+            241,
+            248,
+            255,
+            .94
+        );
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        9px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        3.5px;
+
+    text-transform:
+        uppercase;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   TOP META SEPARATOR
+=============================================================== */
+
+.topline-separator
+{
+    color:
+        rgba(
+            235,
+            246,
+            255,
+            .68
+        );
+
+    font-weight:
+        400;
+
+    letter-spacing:
+        0;
+}
+
+
+
+/* ===============================================================
+   BLUE ACCENT
+=============================================================== */
+
+.registration-card-accent
+{
+    display:
+        block;
+
+    width:
+        62px;
+
+    height:
+        4px;
+
+    margin:
+        10px 0 11px 0;
+
+    padding:
+        0;
+
+    border-radius:
+        999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #3d83ef 0%,
+            #5d9cff 100%
+        );
+
+    box-shadow:
+        0
+        4px
+        14px
+        rgba(
+            20,
+            124,
+            243,
+            .30
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   HEADING AREA
+=============================================================== */
+
+.registration-card-heading-area
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   HEADING
+=============================================================== */
+
+.registration-card-heading
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #071a48;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        32px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.05;
+
+    letter-spacing:
+        -1.3px;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   SUBTITLE
+=============================================================== */
+
+.registration-card-subtitle
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    max-width:
+        490px;
+
+    margin:
+        4px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        rgba(
+            239,
+            247,
+            255,
+            .94
+        );
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.35;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+
+    text-shadow:
+        0
+        1px
+        2px
+        rgba(
+            19,
+            57,
+            105,
+            .10
+        );
+}
+
+
+
+/* ===============================================================
+   REGISTRATION FORM
+   ---------------------------------------------------------------
+   The form consumes the available middle area.
+
+   The individual fields are compact and controlled so that
+   all seven fields remain visible without forcing overflow.
+=============================================================== */
+
+.registration-form
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        1 1 auto;
+
+    justify-content:
+        space-between;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        9px 0 0 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+
+/* ===============================================================
+   FORM FIELD
+=============================================================== */
+
+.registration-form-field
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0 0 5px 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   LAST FORM FIELD
+=============================================================== */
+
+.registration-form-field:last-of-type
+{
+    margin-bottom:
+        10px;
+}
+
+
+
+/* ===============================================================
+   FORM LABEL
+=============================================================== */
+
+.registration-form-label
+{
+    display:
+        block;
+
+    flex:
+        0 0 auto;
+
+    margin:
+        0 0 5px 0;
+
+    padding:
+        0;
+
+    color:
+        #071a48;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.15;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   LABEL ROW
+=============================================================== */
+
+.registration-label-row
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        0 0 3px 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   FIELD INFO / TOOLTIP
+=============================================================== */
+
+.registration-field-info
+{
+    position:
+        relative;
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 18px;
+
+    width:
+        18px;
+
+    height:
+        18px;
+
+    margin:
+        0 0 0 6px;
+
+    padding:
+        0;
+
+    color:
+        #4d6f9f;
+
+    font-size:
+        15px;
+
+    line-height:
+        1;
+
+    cursor:
+        help;
+
+    outline:
+        none;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+.registration-field-tooltip
+{
+    position:
+        absolute;
+
+    top:
+        calc(
+            100%
+            +
+            5px
+        );
+
+    right:
+        0;
+
+    z-index:
+        100;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        3px;
+
+    width:
+        320px;
+
+    min-width:
+        320px;
+
+    max-width:
+        320px;
+
+    margin:
+        0;
+
+    padding:
+        10px 12px;
+
+    border:
+        1px solid
+        rgba(
+            190,
+            220,
+            255,
+            .72
+        );
+
+    border-radius:
+        7px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #061a3d 0%,
+            #0b2d5c 45%,
+            #174a82 72%,
+            #2b6da8 100%
+        );
+
+    color:
+        #ffffff;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        12px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.45;
+
+    text-align:
+        left;
+
+    box-shadow:
+        0
+        10px
+        28px
+        rgba(
+            3,
+            18,
+            45,
+            .38
+        ),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .22
+        );
+
+    opacity:
+        0;
+
+    visibility:
+        hidden;
+
+    pointer-events:
+        none;
+
+    transform:
+        translateY(
+            -3px
+        );
+
+    transition:
+        opacity .16s ease,
+        visibility .16s ease,
+        transform .16s ease;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+.registration-field-tooltip strong
+{
+    display:
+        block;
+
+    margin:
+        0 0 5px 0;
+
+    padding:
+        0;
+
+    color:
+        #ffffff;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.3;
+
+    font-weight:
+        700;
+}
+
+
+
+.registration-field-tooltip span
+{
+    display:
+        block;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #dcecff;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.45;
+}
+
+
+
+.registration-field-info:hover
+.registration-field-tooltip,
+
+.registration-field-info:focus
+.registration-field-tooltip,
+
+.registration-field-info:focus-visible
+.registration-field-tooltip
+{
+    opacity:
+        1;
+
+    visibility:
+        visible;
+
+    transform:
+        translateY(
+            0
+        );
+}
+
+
+
+/* ===============================================================
+   FIELD VALIDATION ERROR
+=============================================================== */
+
+.registration-field-error
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    min-height:
+        0;
+
+    margin:
+        3px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #a51f2f;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    text-align:
+        left;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+.registration-field-invalid
+.registration-input-wrapper
+{
+    border-color:
+        rgba(
+            165,
+            31,
+            47,
+            .72
+        );
+
+    box-shadow:
+        0
+        0
+        0
+        2px
+        rgba(
+            165,
+            31,
+            47,
+            .07
+        );
+}
+
+
+
+.registration-field-invalid
+.registration-input-wrapper:focus-within
+{
+    border-color:
+        rgba(
+            165,
+            31,
+            47,
+            .86
+        );
+
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            165,
+            31,
+            47,
+            .10
+        );
+}
+
+
+
+/* ===============================================================
+   TERMS VALIDATION
+=============================================================== */
+
+.registration-terms-invalid
+{
+    color:
+        #8f1d2b;
+}
+
+
+
+.registration-terms-invalid
+.registration-terms-checkbox
+{
+    border-color:
+        #a51f2f;
+
+    box-shadow:
+        0
+        0
+        0
+        2px
+        rgba(
+            165,
+            31,
+            47,
+            .08
+        );
+}
+
+
+
+.registration-terms-error
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin:
+        -4px 0 5px 0;
+
+    padding:
+        0;
+
+    color:
+        #a51f2f;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        8px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.2;
+
+    text-align:
+        left;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   INPUT WRAPPER
+   ---------------------------------------------------------------
+   Compact fixed geometry keeps all fields inside the card.
+=============================================================== */
+
+.registration-input-wrapper
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    flex:
+        0 0 38px;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    height:
+        38px;
+
+    min-height:
+        38px;
+
+    margin:
+        0;
+
+    padding:
+        0 13px;
+
+    border:
+        1px solid
+        rgba(
+            228,
+            241,
+            255,
+            .78
+        );
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(
+                237,
+                247,
+                255,
+                .43
+            )
+            0%,
+            rgba(
+                220,
+                235,
+                250,
+                .31
+            )
+            100%
+        );
+
+    box-shadow:
+        inset
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .58
+        );
+
+    box-sizing:
+        border-box;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease,
+        transform .18s ease;
+}
+
+
+
+/* ===============================================================
+   INPUT HOVER
+=============================================================== */
+
+.registration-input-wrapper:hover
+{
+    border-color:
+        rgba(
+            239,
+            248,
+            255,
+            .94
+        );
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(
+                242,
+                249,
+                255,
+                .48
+            )
+            0%,
+            rgba(
+                225,
+                239,
+                253,
+                .35
+            )
+            100%
+        );
+}
+
+
+
+/* ===============================================================
+   INPUT FOCUS
+=============================================================== */
+
+.registration-input-wrapper:focus-within
+{
+    border-color:
+        rgba(
+            20,
+            124,
+            243,
+            .82
+        );
+
+    background:
+        rgba(
+            241,
+            249,
+            255,
+            .56
+        );
+
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            20,
+            124,
+            243,
+            .11
+        ),
+        inset
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .70
+        );
+}
+
+
+
+/* ===============================================================
+   INPUT ICON
+=============================================================== */
+
+.registration-input-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 26px;
+
+    width:
+        26px;
+
+    height:
+        26px;
+
+    margin:
+        0 10px 0 0;
+
+    padding:
+        0;
+
+    color:
+        #536b9d;
+
+    font-size:
+        16px;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   INPUT
+=============================================================== */
+
+.registration-form-input
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        0;
+
+    outline:
+        none;
+
+    background:
+        transparent;
+
+    color:
+        #132b58;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        14px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   PLACEHOLDER
+=============================================================== */
+
+.registration-form-input::placeholder
+{
+    color:
+        #7185aa;
+
+    opacity:
+        .96;
+}
+
+
+
+/* ===============================================================
+   PASSWORD INPUT
+=============================================================== */
+
+.registration-password-input
+{
+    padding-right:
+        42px;
+}
+
+
+
+/* ===============================================================
+   PASSWORD VISIBILITY BUTTON
+=============================================================== */
+
+.password-visibility-button
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    position:
+        absolute;
+
+    top:
+        50%;
+
+    right:
+        7px;
+
+    width:
+        30px;
+
+    height:
+        30px;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    transform:
+        translateY(
+            -50%
+        );
+
+    border:
+        0;
+
+    border-radius:
+        7px;
+
+    background:
+        transparent;
+
+    color:
+        #5e719d;
+
+    font-size:
+        15px;
+
+    cursor:
+        pointer;
+
+    box-sizing:
+        border-box;
+
+    transition:
+        background .18s ease,
+        color .18s ease;
+}
+
+
+
+.password-visibility-button:hover
+{
+    background:
+        rgba(
+            20,
+            124,
+            243,
+            .08
+        );
+
+    color:
+        #147cf3;
+}
+
+
+
+/* ===============================================================
+   TERMS AREA
+=============================================================== */
+
+.registration-terms
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        3px 0 8px 0;
+
+    padding:
+        0;
+
+    color:
+        #172d57;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        12px;
+
+    font-weight:
+        500;
+
+    line-height:
+        1.25;
+
+    box-sizing:
+        border-box;
+
+    cursor:
+        pointer;
+}
+
+
+
+/* ===============================================================
+   HIDDEN NATIVE CHECKBOX
+=============================================================== */
+
+.registration-terms input
+{
+    position:
+        absolute;
+
+    width:
+        1px;
+
+    height:
+        1px;
+
+    margin:
+        -1px;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+
+    clip:
+        rect(
+            0,
+            0,
+            0,
+            0
+        );
+
+    white-space:
+        nowrap;
+
+    border:
+        0;
+}
+
+
+
+/* ===============================================================
+   TERMS CHECKBOX
+=============================================================== */
+
+.registration-terms-checkbox
+{
+    display:
+        block;
+
+    flex:
+        0 0 18px;
+
+    width:
+        18px;
+
+    height:
+        18px;
+
+    margin:
+        0 8px 0 0;
+
+    padding:
+        0;
+
+    border:
+        1.5px solid
+        #147cf3;
+
+    border-radius:
+        4px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .48
+        );
+
+    box-sizing:
+        border-box;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+
+
+/* ===============================================================
+   TERMS CHECKBOX FOCUS
+=============================================================== */
+
+.registration-terms input:focus-visible
++
+.registration-terms-checkbox
+{
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            20,
+            124,
+            243,
+            .12
+        );
+}
+
+
+
+/* ===============================================================
+   TERMS CHECKED
+=============================================================== */
+
+.registration-terms input:checked
++
+.registration-terms-checkbox
+{
+    border-color:
+        #147cf3;
+
+    background:
+        #147cf3;
+
+    box-shadow:
+        0
+        3px
+        9px
+        rgba(
+            20,
+            124,
+            243,
+            .18
+        );
+}
+
+
+
+/* ===============================================================
+   TERMS CHECK MARK
+=============================================================== */
+
+.registration-terms input:checked
++
+.registration-terms-checkbox::after
+{
+    content:
+        '';
+
+    display:
+        block;
+
+    width:
+        5px;
+
+    height:
+        9px;
+
+    margin:
+        1px 0 0 5px;
+
+    border:
+        solid
+        #ffffff;
+
+    border-width:
+        0
+        2px
+        2px
+        0;
+
+    transform:
+        rotate(
+            45deg
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   TERMS TEXT
+=============================================================== */
+
+.registration-terms-text
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        3px;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #172d57;
+
+    line-height:
+        1.3;
+}
+
+
+
+/* ===============================================================
+   TERMS LINK
+=============================================================== */
+
+.registration-terms-link
+{
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    margin:
+        0;
+
+    padding:
+        1px 4px;
+
+    border:
+        0;
+
+    border-radius:
+        4px;
+
+    background:
+        transparent;
+
+    color:
+        #0879f5;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        inherit;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.3;
+
+    cursor:
+        pointer;
+
+    box-sizing:
+        border-box;
+
+    transition:
+        background .18s ease,
+        color .18s ease;
+}
+
+
+
+.registration-terms-link:hover
+{
+    background:
+        rgba(
+            20,
+            124,
+            243,
+            .08
+        );
+
+    color:
+        #0568d4;
+
+    text-decoration:
+        underline;
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT BUTTON
+=============================================================== */
+
+.create-account-button
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    position:
+        relative;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    height:
+        44px;
+
+    min-height:
+        44px;
+
+    margin:
+        0;
+
+    padding:
+        0 30px;
+
+    border:
+        0;
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #168cf7 0%,
+            #086be7 100%
+        );
+
+    color:
+        #ffffff;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        16px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        0
+        10px
+        25px
+        rgba(
+            16,
+            116,
+            239,
+            .25
+        );
+
+    box-sizing:
+        border-box;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT HOVER
+=============================================================== */
+
+.create-account-button:hover
+{
+    transform:
+        translateY(
+            -1px
+        );
+
+    filter:
+        brightness(
+            1.035
+        );
+
+    box-shadow:
+        0
+        14px
+        30px
+        rgba(
+            16,
+            116,
+            239,
+            .30
+        );
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT ACTIVE
+=============================================================== */
+
+.create-account-button:active
+{
+    transform:
+        translateY(
+            0
+        );
+
+    box-shadow:
+        0
+        7px
+        18px
+        rgba(
+            16,
+            116,
+            239,
+            .22
+        );
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT DISABLED
+=============================================================== */
+
+.create-account-button:disabled
+{
+    opacity:
+        .70;
+
+    cursor:
+        not-allowed;
+
+    transform:
+        none;
+
+    filter:
+        none;
+
+    box-shadow:
+        none;
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT ICON
+=============================================================== */
+
+.create-account-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    margin:
+        0 12px 0 0;
+
+    padding:
+        0;
+
+    font-size:
+        17px;
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT TEXT
+=============================================================== */
+
+.create-account-text
+{
+    display:
+        block;
+
+    margin:
+        0;
+
+    padding:
+        0;
+}
+
+
+
+/* ===============================================================
+   CREATE ACCOUNT ARROW
+=============================================================== */
+
+.create-account-arrow
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    margin:
+        0 0 0 14px;
+
+    padding:
+        0;
+
+    font-size:
+        17px;
+}
+
+
+
+/* ===============================================================
+   ERROR MESSAGE
+=============================================================== */
+
+.registration-error
+{
+    display:
+        block;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    margin:
+        5px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #a51f2f;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.25;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   SUCCESS MESSAGE
+=============================================================== */
+
+.registration-success
+{
+    display:
+        block;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    margin:
+        5px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #08743b;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.25;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   OR SEPARATOR
+=============================================================== */
+
+.registration-or-separator
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    margin:
+        8px 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   SEPARATOR LINE
+=============================================================== */
+
+.separator-line
+{
+    display:
+        block;
+
+    flex:
+        1 1 auto;
+
+    height:
+        1px;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(
+                220,
+                235,
+                255,
+                .64
+            ) 50%,
+            transparent 100%
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   SEPARATOR TEXT
+=============================================================== */
+
+.separator-text
+{
+    display:
+        block;
+
+    flex:
+        0 0 auto;
+
+    margin:
+        0 12px;
+
+    padding:
+        0;
+
+    color:
+        rgba(
+            239,
+            247,
+            255,
+            .92
+        );
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        10px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   BACK TO LOGIN AREA
+   ---------------------------------------------------------------
+   Compact bottom section.
+=============================================================== */
+
+.login-registration-area
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    flex:
+        0 0 auto;
+
+    width:
+        100%;
+
+    min-height:
+        52px;
+
+    height:
+        52px;
+
+    margin:
+        0;
+
+    padding:
+        7px 10px;
+
+    border:
+        1px solid
+        rgba(
+            218,
+            235,
+            255,
+            .64
+        );
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(
+                231,
+                243,
+                255,
+                .34
+            )
+            0%,
+            rgba(
+                217,
+                233,
+                250,
+                .24
+            )
+            100%
+        );
+
+    box-shadow:
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .32
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   LOGIN ICON
+=============================================================== */
+
+.login-registration-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 40px;
+
+    width:
+        40px;
+
+    height:
+        40px;
+
+    margin:
+        0 10px 0 0;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(
+            225,
+            240,
+            255,
+            .60
+        );
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(
+            218,
+            234,
+            255,
+            .70
+        );
+
+    color:
+        #0878f2;
+
+    font-size:
+        18px;
+
+    box-shadow:
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .42
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   LOGIN CONTENT
+=============================================================== */
+
+.login-registration-content
+{
+    display:
+        block;
+
+    flex:
+        1 1 auto;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   LOGIN HEADING
+=============================================================== */
+
+.login-registration-heading
+{
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #10264f;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.25;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   LOGIN DESCRIPTION
+=============================================================== */
+
+.login-registration-description
+{
+    max-width:
+        270px;
+
+    margin:
+        2px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #647ba4;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        9px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.25;
+
+    box-sizing:
+        border-box;
+
+    text-align:
+        left;
+}
+
+
+
+/* ===============================================================
+   LOGIN BUTTON
+=============================================================== */
+
+.login-registration-button
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 auto;
+
+    min-width:
+        98px;
+
+    height:
+        36px;
+
+    margin:
+        0 0 0 10px;
+
+    padding:
+        0 12px;
+
+    border:
+        1.5px solid
+        #1478ef;
+
+    border-radius:
+        9px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .46
+        );
+
+    color:
+        #0874ef;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        11px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1;
+
+    cursor:
+        pointer;
+
+    box-sizing:
+        border-box;
+
+    transition:
+        background .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+
+
+/* ===============================================================
+   LOGIN BUTTON HOVER
+=============================================================== */
+
+.login-registration-button:hover
+{
+    background:
+        #1478ef;
+
+    color:
+        #ffffff;
+
+    transform:
+        translateY(
+            -1px
+        );
+
+    box-shadow:
+        0
+        7px
+        16px
+        rgba(
+            20,
+            120,
+            239,
+            .20
+        );
+}
+
+
+
+/* ===============================================================
+   LOGIN BUTTON ACTIVE
+=============================================================== */
+
+.login-registration-button:active
+{
+    transform:
+        translateY(
+            0
+        );
+
+    box-shadow:
+        0
+        4px
+        10px
+        rgba(
+            20,
+            120,
+            239,
+            .16
+        );
+}
+
+
+
+/* ===============================================================
+   BOTTOM META
+=============================================================== */
+
+.registration-card-bottom-meta
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 auto;
+
+    gap:
+        9px;
+
+    width:
+        100%;
+
+    margin:
+        7px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        rgba(
+            231,
+            242,
+            255,
+            .76
+        );
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        6px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        2.2px;
+
+    text-transform:
+        uppercase;
+
+    box-sizing:
+        border-box;
+}
+
+
+
+/* ===============================================================
+   BOTTOM META SEPARATOR
+=============================================================== */
+
+.registration-card-bottom-meta
+.topline-separator
+{
+    color:
+        rgba(
+            231,
+            242,
+            255,
+            .50
+        );
+
+    letter-spacing:
+        0;
+}
+
+/* ===============================================================
+   REGISTRATION ORBIT LOADER
+   ---------------------------------------------------------------
+   The loader is a true overlay and must NEVER participate in the
+   registration panel's normal flex layout.
+
+   IMPORTANT:
+
+       The registration card must remain completely unchanged
+       while the loader is visible.
+
+       The loader is positioned absolutely against the
+       registration panel itself and is removed from normal
+       flex sizing and flex reflow.
+
+       !important is intentionally used here so that the
+       Orbit Loader host geometry cannot override the overlay
+       positioning from its own component styles.
+=============================================================== */
+
+.registration-page-registration-panel
+>
+app-orbit-loader
+{
+    position:
+        absolute !important;
+
+    top:
+        0 !important;
+
+    right:
+        0 !important;
+
+    bottom:
+        0 !important;
+
+    left:
+        0 !important;
+
+    inset:
+        0 !important;
+
+    width:
+        100% !important;
+
+    height:
+        100% !important;
+
+    min-width:
+        0 !important;
+
+    min-height:
+        0 !important;
+
+    max-width:
+        none !important;
+
+    max-height:
+        none !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        block !important;
+
+    flex:
+        none !important;
+
+    flex-grow:
+        0 !important;
+
+    flex-shrink:
+        0 !important;
+
+    flex-basis:
+        auto !important;
+
+    align-self:
+        auto !important;
+
+    box-sizing:
+        border-box !important;
+
+    z-index:
+        1500 !important;
+
+    pointer-events:
+        auto;
+}
+
+
+/* ===============================================================
+   TABLET
+=============================================================== */
+
+@media
+(
+    max-width:1024px
+)
+{
+    :host
+    {
+        --registration-card-padding-top:
+            23px;
+
+        --registration-card-padding-right:
+            30px;
+
+        --registration-card-padding-bottom:
+            14px;
+
+        --registration-card-padding-left:
+            30px;
+    }
+
+
+
+    .registration-card-heading
+    {
+        font-size:
+            34px;
+    }
+
+
+
+    .registration-card-subtitle
+    {
+        font-size:
+            13px;
+    }
+
+
+
+    .registration-form
+    {
+        margin-top:
+            11px;
+    }
+
+
+
+    .registration-input-wrapper
+    {
+        height:
+            40px;
+
+        min-height:
+            40px;
+
+        flex-basis:
+            40px;
+    }
+
+
+
+    .create-account-button
+    {
+        height:
+            46px;
+
+        min-height:
+            46px;
+    }
+
+
+
+    .login-registration-area
+    {
+        height:
+            58px;
+
+        min-height:
+            58px;
+    }
+}
+
+
+
+/* ===============================================================
+   MOBILE
+=============================================================== */
+
+@media
+(
+    max-width:768px
+)
+{
+    :host
+    {
+        --registration-card-max-width:
+            calc(
+                100%
+                -
+                20px
+            );
+
+        --registration-card-padding-top:
+            20px;
+
+        --registration-card-padding-right:
+            20px;
+
+        --registration-card-padding-bottom:
+            13px;
+
+        --registration-card-padding-left:
+            20px;
+    }
+
+
+
+    .registration-page-registration-panel
+    {
+        padding:
+            7px 0;
+    }
+
+
+
+    .registration-card
+    {
+        border-radius:
+            17px;
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(
+                    73,
+                    151,
+                    241,
+                    .42
+                )
+                0%,
+                rgba(
+                    73,
+                    139,
+                    235,
+                    .34
+                )
+                50%,
+                rgba(
+                    91,
+                    158,
+                    238,
+                    .28
+                )
+                100%
+            );
+    }
+
+
+
+    .registration-card-top-meta
+    {
+        gap:
+            8px;
+
+        font-size:
+            8px;
+
+        letter-spacing:
+            2.3px;
+    }
+
+
+
+    .registration-card-accent
+    {
+        width:
+            48px;
+
+        height:
+            3px;
+
+        margin:
+            12px 0 14px 0;
+    }
+
+
+
+    .registration-card-heading
+    {
+        font-size:
+            30px;
+
+        letter-spacing:
+            -.8px;
+    }
+
+
+
+    .registration-card-subtitle
+    {
+        font-size:
+            12px;
+
+        margin-top:
+            5px;
+    }
+
+
+
+    .registration-form
+    {
+        margin-top:
+            10px;
+    }
+
+
+
+    .registration-form-field
+    {
+        margin-bottom:
+            3px;
+    }
+
+
+
+    .registration-form-label
+    {
+        margin-bottom:
+            2px;
+
+        font-size:
+            10px;
+    }
+
+
+
+    .registration-input-wrapper
+    {
+        height:
+            38px;
+
+        min-height:
+            38px;
+
+        flex-basis:
+            38px;
+
+        padding:
+            0 12px;
+
+        border-radius:
+            10px;
+    }
+
+
+
+    .registration-input-icon
+    {
+        flex-basis:
+            25px;
+
+        width:
+            25px;
+
+        height:
+            25px;
+
+        margin-right:
+            8px;
+
+        font-size:
+            15px;
+    }
+
+
+
+    .registration-form-input
+    {
+        font-size:
+            13px;
+    }
+
+
+
+    .password-visibility-button
+    {
+        right:
+            6px;
+
+        width:
+            29px;
+
+        height:
+            29px;
+
+        font-size:
+            15px;
+    }
+
+
+
+    .registration-terms
+    {
+        margin:
+            2px 0 7px 0;
+
+        font-size:
+            9px;
+    }
+
+
+
+    .registration-terms-checkbox
+    {
+        flex-basis:
+            17px;
+
+        width:
+            17px;
+
+        height:
+            17px;
+
+        margin-right:
+            7px;
+    }
+
+
+
+    .registration-terms input:checked
+    +
+    .registration-terms-checkbox::after
+    {
+        width:
+            5px;
+
+        height:
+            9px;
+
+        margin:
+            1px 0 0 4px;
+    }
+
+
+
+    .registration-terms-text
+    {
+        gap:
+            2px;
+    }
+
+
+
+    .registration-terms-link
+    {
+        padding:
+            1px 3px;
+    }
+
+
+
+    .create-account-button
+    {
+        height:
+            44px;
+
+        min-height:
+            44px;
+
+        padding:
+            0 20px;
+
+        border-radius:
+            10px;
+
+        font-size:
+            15px;
+    }
+
+
+
+    .create-account-icon
+    {
+        margin-right:
+            10px;
+
+        font-size:
+            16px;
+    }
+
+
+
+    .create-account-arrow
+    {
+        margin-left:
+            12px;
+
+        font-size:
+            16px;
+    }
+
+
+
+    .registration-or-separator
+    {
+        margin:
+            7px 0;
+    }
+
+
+
+    .separator-text
+    {
+        margin:
+            0 10px;
+
+        font-size:
+            10px;
+    }
+
+
+
+    .login-registration-area
+    {
+        height:
+            56px;
+
+        min-height:
+            56px;
+
+        padding:
+            6px 8px;
+    }
+
+
+
+    .login-registration-icon
+    {
+        flex-basis:
+            38px;
+
+        width:
+            38px;
+
+        height:
+            38px;
+
+        margin-right:
+            8px;
+
+        font-size:
+            17px;
+    }
+
+
+
+    .login-registration-heading
+    {
+        font-size:
+            11px;
+    }
+
+
+
+    .login-registration-description
+    {
+        font-size:
+            9px;
+    }
+
+
+
+    .login-registration-button
+    {
+        min-width:
+            90px;
+
+        height:
+            34px;
+
+        margin-left:
+            8px;
+
+        padding:
+            0 9px;
+
+        font-size:
+            10px;
+    }
+
+
+
+    .registration-card-bottom-meta
+    {
+        gap:
+            7px;
+
+        margin-top:
+            5px;
+
+        font-size:
+            6px;
+
+        letter-spacing:
+            1.7px;
+    }
+}
+
+
+
+/* ===============================================================
+   MOBILE TOOLTIP
+=============================================================== */
+
+@media
+(
+    max-width:768px
+)
+{
+    .registration-field-tooltip
+    {
+        width:
+            220px;
+
+        min-width:
+            160px;
+
+        max-width:
+            220px;
+
+        padding:
+            7px 8px;
+
+        font-size:
+            8px;
+    }
+
+
+
+    .registration-field-tooltip strong
+    {
+        font-size:
+            8px;
+    }
+
+
+
+    .registration-field-tooltip span
+    {
+        font-size:
+            8px;
+    }
+
+
+
+    .registration-field-error,
+
+    .registration-terms-error
+    {
+        font-size:
+            7px;
+    }
+}
+
+
+
+/* ===============================================================
+   SHORT HEIGHT
+=============================================================== */
+
+@media
+(
+    max-height:700px
+)
+{
+    :host
+    {
+        --registration-card-padding-top:
+            17px;
+
+        --registration-card-padding-bottom:
+            12px;
+    }
+
+
+
+    .registration-card-accent
+    {
+        margin:
+            10px 0 12px 0;
+    }
+
+
+
+    .registration-card-heading
+    {
+        font-size:
+            34px;
+    }
+
+
+
+    .registration-card-subtitle
+    {
+        margin-top:
+            5px;
+
+        font-size:
+            13px;
+    }
+
+
+
+    .registration-form
+    {
+        margin-top:
+            9px;
+    }
+
+
+
+    .registration-form-field
+    {
+        margin-bottom:
+            3px;
+    }
+
+
+
+    .registration-form-label
+    {
+        margin-bottom:
+            2px;
+
+        font-size:
+            10px;
+    }
+
+
+
+    .registration-input-wrapper
+    {
+        height:
+            37px;
+
+        min-height:
+            37px;
+
+        flex-basis:
+            37px;
+    }
+
+
+
+    .registration-terms
+    {
+        margin:
+            2px 0 6px 0;
+    }
+
+
+
+    .create-account-button
+    {
+        height:
+            43px;
+
+        min-height:
+            43px;
+    }
+
+
+
+    .registration-or-separator
+    {
+        margin:
+            6px 0;
+    }
+
+
+
+    .login-registration-area
+    {
+        height:
+            54px;
+
+        min-height:
+            54px;
+
+        padding:
+            6px 8px;
+    }
+
+
+
+    .login-registration-icon
+    {
+        width:
+            36px;
+
+        height:
+            36px;
+
+        flex-basis:
+            36px;
+    }
+
+
+
+    .registration-card-bottom-meta
+    {
+        margin-top:
+            4px;
+    }
+}
+
+
+
+/* ===============================================================
+   VERY SHORT HEIGHT
+   ---------------------------------------------------------------
+   Keeps the complete registration panel usable on smaller
+   desktop/laptop viewport heights.
+=============================================================== */
+
+@media
+(
+    max-height:620px
+)
+{
+    :host
+    {
+        --registration-card-padding-top:
+            11px;
+
+        --registration-card-padding-bottom:
+            9px;
+    }
+
+
+
+    .registration-card-top-meta
+    {
+        font-size:
+            8px;
+    }
+
+
+
+    .registration-card-accent
+    {
+        width:
+            52px;
+
+        height:
+            3px;
+
+        margin:
+            7px 0 9px 0;
+    }
+
+
+
+    .registration-card-heading
+    {
+        font-size:
+            30px;
+    }
+
+
+
+    .registration-card-subtitle
+    {
+        font-size:
+            11px;
+
+        margin-top:
+            4px;
+    }
+
+
+
+    .registration-form
+    {
+        margin-top:
+            7px;
+    }
+
+
+
+    .registration-form-field
+    {
+        margin-bottom:
+            2px;
+    }
+
+
+
+    .registration-form-label
+    {
+        margin-bottom:
+            1px;
+
+        font-size:
+            9px;
+    }
+
+
+
+    .registration-input-wrapper
+    {
+        height:
+            32px;
+
+        min-height:
+            32px;
+
+        flex-basis:
+            32px;
+
+        border-radius:
+            9px;
+    }
+
+
+
+    .registration-input-icon
+    {
+        flex-basis:
+            22px;
+
+        width:
+            22px;
+
+        height:
+            22px;
+
+        margin-right:
+            7px;
+
+        font-size:
+            14px;
+    }
+
+
+
+    .registration-form-input
+    {
+        font-size:
+            12px;
+    }
+
+
+
+    .password-visibility-button
+    {
+        width:
+            27px;
+
+        height:
+            27px;
+
+        font-size:
+            14px;
+    }
+
+
+
+    .registration-terms
+    {
+        margin:
+            1px 0 4px 0;
+
+        font-size:
+            8px;
+    }
+
+
+
+    .registration-terms-checkbox
+    {
+        width:
+            16px;
+
+        height:
+            16px;
+
+        flex-basis:
+            16px;
+
+        margin-right:
+            6px;
+    }
+
+
+
+    .registration-terms input:checked
+    +
+    .registration-terms-checkbox::after
+    {
+        width:
+            4px;
+
+        height:
+            8px;
+
+        margin:
+            1px 0 0 4px;
+    }
+
+
+
+    .create-account-button
+    {
+        height:
+            39px;
+
+        min-height:
+            39px;
+
+        border-radius:
+            9px;
+
+        font-size:
+            14px;
+    }
+
+
+
+    .create-account-icon
+    {
+        margin-right:
+            8px;
+
+        font-size:
+            15px;
+    }
+
+
+
+    .create-account-arrow
+    {
+        margin-left:
+            10px;
+
+        font-size:
+            15px;
+    }
+
+
+
+    .registration-or-separator
+    {
+        margin:
+            5px 0;
+    }
+
+
+
+    .separator-text
+    {
+        margin:
+            0 9px;
+
+        font-size:
+            9px;
+    }
+
+
+
+    .login-registration-area
+    {
+        height:
+            49px;
+
+        min-height:
+            49px;
+
+        padding:
+            5px 7px;
+
+        border-radius:
+            9px;
+    }
+
+
+
+    .login-registration-icon
+    {
+        width:
+            32px;
+
+        height:
+            32px;
+
+        flex-basis:
+            32px;
+
+        margin-right:
+            7px;
+
+        font-size:
+            15px;
+    }
+
+
+
+    .login-registration-heading
+    {
+        font-size:
+            10px;
+    }
+
+
+
+    .login-registration-description
+    {
+        margin-top:
+            1px;
+
+        font-size:
+            8px;
+    }
+
+
+
+    .login-registration-button
+    {
+        min-width:
+            82px;
+
+        height:
+            30px;
+
+        margin-left:
+            7px;
+
+        padding:
+            0 8px;
+
+        border-radius:
+            8px;
+
+        font-size:
+            9px;
+    }
+
+
+
+    .registration-card-bottom-meta
+    {
+        margin-top:
+            3px;
+
+        font-size:
+            5px;
+
+        letter-spacing:
+            1.5px;
+    }
+}
+
+
+
+/* ===============================================================
+   CONFIRMATION DIALOG
+   ---------------------------------------------------------------
+   The dialog is rendered by the child component and owns its
+   own visual styling. This panel only provides the stacking
+   context required for the fixed confirmation overlay.
+=============================================================== */
+
+.registration-page-registration-panel
+{
+    isolation:
+        isolate;
+}
+
+
+
+/* ===============================================================
+   REDUCED MOTION
+=============================================================== */
+
+@media
+(
+    prefers-reduced-motion:
+        reduce
+)
+{
+    .registration-input-wrapper,
+
+    .password-visibility-button,
+
+    .registration-terms-checkbox,
+
+    .registration-terms-link,
+
+    .create-account-button,
+
+    .login-registration-button
+    {
+        transition:
+            none;
+    }
+}

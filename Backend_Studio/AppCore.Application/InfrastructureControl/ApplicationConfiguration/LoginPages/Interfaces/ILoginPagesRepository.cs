@@ -41,6 +41,15 @@ public interface ILoginPagesRepository
 
 
     //===========================================================
+    // Get Active
+    //===========================================================
+
+    Task<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.LoginPages?>
+        GetActiveAsync();
+
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 

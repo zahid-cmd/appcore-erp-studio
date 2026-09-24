@@ -1,0 +1,1139 @@
+/* ===========================================================
+   LOGIN PAGE — BACKGROUND
+   -----------------------------------------------------------
+   AppCore Premium Orbital Flow
+
+   Responsive proportional design:
+   - Artwork scales with the component width
+   - Same visual composition in 16:9 preview
+   - Same visual composition in fullscreen
+   - No fixed 980px / 1180px artwork dimensions
+=========================================================== */
+
+
+/* ===========================================================
+   COMPONENT HOST
+=========================================================== */
+
+:host
+{
+    position:absolute;
+
+    inset:0;
+
+    display:block;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+
+    z-index:0;
+}
+
+
+/* ===========================================================
+   ROOT
+   -----------------------------------------------------------
+   The Background component becomes the sizing reference for
+   all decorative artwork.
+=========================================================== */
+
+.login-page-background
+{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    margin:0;
+
+    padding:0;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    isolation:isolate;
+
+    pointer-events:none;
+
+    background:#ffffff;
+
+    container-type:size;
+}
+
+
+/* ===========================================================
+   PRIMARY BACKGROUND
+=========================================================== */
+
+.background-layer
+{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    z-index:0;
+
+    background-color:#ffffff;
+
+    box-sizing:border-box;
+
+    transition:
+        background .30s ease,
+        background-position .30s ease,
+        background-size .30s ease;
+}
+
+
+/* ===========================================================
+   DEFAULT GRADIENT
+=========================================================== */
+
+.background-gradient .background-layer
+{
+    background:
+
+        radial-gradient(
+            ellipse 75% 85% at 12% 50%,
+            rgba(232,243,255,0.90) 0%,
+            rgba(244,249,255,0.72) 34%,
+            rgba(255,255,255,0) 72%
+        ),
+
+        radial-gradient(
+            ellipse 60% 70% at 86% 44%,
+            rgba(226,239,255,0.55) 0%,
+            rgba(248,251,255,0.30) 42%,
+            rgba(255,255,255,0) 76%
+        ),
+
+        linear-gradient(
+            108deg,
+            #ffffff 0%,
+            #f8fbff 46%,
+            #eef5ff 100%
+        );
+
+    background-repeat:no-repeat;
+
+    background-position:center;
+
+    background-size:cover;
+}
+
+
+/* ===========================================================
+   ATMOSPHERIC LIGHT
+=========================================================== */
+
+.background-atmosphere
+{
+    position:absolute;
+
+    inset:0;
+
+    z-index:1;
+
+    pointer-events:none;
+
+    background:
+
+        radial-gradient(
+            ellipse 52% 92% at 48% 50%,
+            rgba(255,255,255,0.92) 0%,
+            rgba(255,255,255,0.68) 34%,
+            rgba(255,255,255,0) 74%
+        );
+
+    opacity:.92;
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   ORBITAL SYSTEM
+=========================================================== */
+
+.orbital-system
+{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    z-index:2;
+
+    overflow:hidden;
+
+    pointer-events:none;
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   MAIN ORBITAL RIBBON
+   -----------------------------------------------------------
+   Dimensions are now proportional to the Background width.
+
+   This is the key change that makes the artwork scale
+   consistently between preview and fullscreen.
+=========================================================== */
+
+.orbital-ribbon
+{
+    position:absolute;
+
+    display:block;
+
+    pointer-events:none;
+
+    box-sizing:border-box;
+
+    transform-origin:center;
+}
+
+
+/* ===========================================================
+   MAIN RIBBON
+=========================================================== */
+
+.orbital-ribbon-main
+{
+    width:64cqw;
+
+    height:47cqw;
+
+    left:31cqw;
+
+    top:12cqw;
+
+    border-radius:
+        54% 46% 62% 38% /
+        42% 55% 45% 58%;
+
+    transform:
+        rotate(-23deg)
+        skewX(-9deg);
+
+    background:
+
+        linear-gradient(
+            112deg,
+            rgba(221,238,255,0.10) 0%,
+            rgba(176,215,255,0.34) 24%,
+            rgba(119,174,241,0.18) 43%,
+            rgba(255,255,255,0.05) 63%,
+            rgba(89,151,226,0.20) 82%,
+            rgba(255,255,255,0) 100%
+        );
+
+    border:
+        1px solid
+        rgba(89,148,221,0.19);
+
+    box-shadow:
+
+        inset
+        18cqw 0 34cqw
+        rgba(255,255,255,0.28),
+
+        inset
+        -20cqw 0 38cqw
+        rgba(47,119,207,0.08),
+
+        0 20cqw 70cqw
+        rgba(65,128,207,0.06);
+
+    filter:
+        blur(.15px);
+}
+
+
+/* ===========================================================
+   MAIN RIBBON SURFACE
+=========================================================== */
+
+.orbital-ribbon-main .ribbon-surface
+{
+    position:absolute;
+
+    left:-8%;
+
+    top:24%;
+
+    width:116%;
+
+    height:54%;
+
+    display:block;
+
+    border-radius:50%;
+
+    background:
+
+        linear-gradient(
+            96deg,
+            rgba(255,255,255,0) 0%,
+            rgba(255,255,255,0.32) 20%,
+            rgba(207,230,255,0.30) 43%,
+            rgba(255,255,255,0.08) 68%,
+            rgba(255,255,255,0) 100%
+        );
+
+    transform:
+        rotate(-4deg);
+
+    filter:
+        blur(.30cqw);
+
+    opacity:.82;
+}
+
+
+/* ===========================================================
+   MAIN RIBBON EDGE
+=========================================================== */
+
+.orbital-ribbon-main .ribbon-edge
+{
+    position:absolute;
+
+    left:4%;
+
+    top:48%;
+
+    width:92%;
+
+    height:1px;
+
+    display:block;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(63,126,212,0),
+            rgba(70,139,224,0.32) 20%,
+            rgba(54,126,218,0.48) 48%,
+            rgba(70,139,224,0.20) 76%,
+            rgba(63,126,212,0)
+        );
+
+    box-shadow:
+        0 0 12px
+        rgba(57,128,221,0.16);
+
+    transform:
+        rotate(-3deg);
+}
+
+
+/* ===========================================================
+   SECONDARY RIBBON
+=========================================================== */
+
+.orbital-ribbon-secondary
+{
+    width:69cqw;
+
+    height:37cqw;
+
+    left:12cqw;
+
+    top:37cqw;
+
+    border-radius:
+        70% 30% 44% 56% /
+        48% 64% 36% 52%;
+
+    transform:
+        rotate(-34deg)
+        skewX(-16deg);
+
+    background:
+
+        linear-gradient(
+            112deg,
+            rgba(255,255,255,0) 0%,
+            rgba(229,241,255,0.16) 18%,
+            rgba(161,204,250,0.23) 36%,
+            rgba(255,255,255,0.12) 55%,
+            rgba(128,180,237,0.16) 72%,
+            rgba(255,255,255,0) 100%
+        );
+
+    border:
+        1px solid
+        rgba(94,148,213,0.12);
+
+    box-shadow:
+
+        inset
+        0 1cqw 2.5cqw
+        rgba(255,255,255,0.26),
+
+        inset
+        0 -2cqw 3.8cqw
+        rgba(52,117,199,0.06);
+}
+
+
+/* ===========================================================
+   SECONDARY RIBBON SURFACE
+=========================================================== */
+
+.orbital-ribbon-secondary .ribbon-surface
+{
+    position:absolute;
+
+    left:-4%;
+
+    top:30%;
+
+    width:110%;
+
+    height:48%;
+
+    display:block;
+
+    border-radius:50%;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,0),
+            rgba(226,240,255,0.30) 24%,
+            rgba(255,255,255,0.18) 50%,
+            rgba(190,219,249,0.16) 74%,
+            rgba(255,255,255,0)
+        );
+
+    filter:
+        blur(.45cqw);
+
+    opacity:.72;
+}
+
+
+/* ===========================================================
+   SECONDARY RIBBON EDGE
+=========================================================== */
+
+.orbital-ribbon-secondary .ribbon-edge
+{
+    position:absolute;
+
+    left:2%;
+
+    top:50%;
+
+    width:96%;
+
+    height:1px;
+
+    display:block;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(75,133,207,0),
+            rgba(75,133,207,0.20) 25%,
+            rgba(75,133,207,0.34) 48%,
+            rgba(75,133,207,0.14) 74%,
+            rgba(75,133,207,0)
+        );
+}
+
+
+/* ===========================================================
+   CONTOUR FIELD
+=========================================================== */
+
+.contour-field
+{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    overflow:hidden;
+
+    pointer-events:none;
+}
+
+
+/* ===========================================================
+   CONTOUR BASE
+=========================================================== */
+
+.contour
+{
+    position:absolute;
+
+    display:block;
+
+    width:77cqw;
+
+    height:45cqw;
+
+    left:20cqw;
+
+    top:22cqw;
+
+    border:
+        1px solid
+        rgba(105,122,143,0.105);
+
+    border-radius:
+        58% 42% 65% 35% /
+        46% 58% 42% 54%;
+
+    transform:
+        rotate(-25deg)
+        skewX(-12deg);
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   CONTOUR SERIES
+=========================================================== */
+
+.contour-01
+{
+    opacity:.72;
+
+    transform:
+        translate(0,0)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-02
+{
+    opacity:.62;
+
+    transform:
+        translate(1.4cqw,0.5cqw)
+        scale(.985)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-03
+{
+    opacity:.54;
+
+    transform:
+        translate(2.9cqw,1cqw)
+        scale(.970)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-04
+{
+    opacity:.47;
+
+    transform:
+        translate(4.3cqw,1.6cqw)
+        scale(.955)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-05
+{
+    opacity:.40;
+
+    transform:
+        translate(5.7cqw,2.1cqw)
+        scale(.940)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-06
+{
+    opacity:.34;
+
+    transform:
+        translate(7.1cqw,2.6cqw)
+        scale(.925)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-07
+{
+    opacity:.29;
+
+    transform:
+        translate(8.6cqw,3.1cqw)
+        scale(.910)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-08
+{
+    opacity:.25;
+
+    transform:
+        translate(10cqw,3.7cqw)
+        scale(.895)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-09
+{
+    opacity:.21;
+
+    transform:
+        translate(11.4cqw,4.2cqw)
+        scale(.880)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-10
+{
+    opacity:.18;
+
+    transform:
+        translate(12.9cqw,4.7cqw)
+        scale(.865)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-11
+{
+    opacity:.15;
+
+    transform:
+        translate(14.3cqw,5.2cqw)
+        scale(.850)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+.contour-12
+{
+    opacity:.12;
+
+    transform:
+        translate(15.7cqw,5.8cqw)
+        scale(.835)
+        rotate(-25deg)
+        skewX(-12deg);
+}
+
+
+/* ===========================================================
+   ORANGE ACCENT
+=========================================================== */
+
+.orbital-orange-accent
+{
+    position:absolute;
+
+    width:40cqw;
+
+    height:15.5cqw;
+
+    right:5cqw;
+
+    top:42cqw;
+
+    pointer-events:none;
+
+    transform:
+        rotate(-25deg)
+        skewX(-10deg);
+
+    border-radius:
+        70% 30% 50% 50%;
+
+    opacity:.78;
+}
+
+
+/* ===========================================================
+   ORANGE EDGE
+=========================================================== */
+
+.orange-edge
+{
+    position:absolute;
+
+    left:12%;
+
+    top:52%;
+
+    width:76%;
+
+    height:2px;
+
+    display:block;
+
+    border-radius:50%;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(242,142,52,0),
+            rgba(242,142,52,0.08) 18%,
+            rgba(239,130,43,0.40) 48%,
+            rgba(242,142,52,0.16) 72%,
+            rgba(242,142,52,0)
+        );
+
+    box-shadow:
+        0 0 10px
+        rgba(239,130,43,0.12);
+
+    filter:
+        blur(.2px);
+}
+
+
+/* ===========================================================
+   CENTRAL FLOW HIGHLIGHT
+=========================================================== */
+
+.orbital-highlight
+{
+    position:absolute;
+
+    width:49cqw;
+
+    height:30cqw;
+
+    left:38cqw;
+
+    top:30cqw;
+
+    pointer-events:none;
+
+    border-radius:50%;
+
+    background:
+
+        radial-gradient(
+            ellipse,
+            rgba(255,255,255,0.55) 0%,
+            rgba(255,255,255,0.25) 32%,
+            rgba(255,255,255,0) 72%
+        );
+
+    filter:
+        blur(1.4cqw);
+
+    transform:
+        rotate(-20deg);
+
+    opacity:.72;
+}
+
+
+/* ===========================================================
+   LOWER FLOW
+=========================================================== */
+
+.orbital-lower-flow
+{
+    position:absolute;
+
+    left:-8cqw;
+
+    bottom:-12cqw;
+
+    width:76cqw;
+
+    height:38cqw;
+
+    pointer-events:none;
+
+    transform:
+        rotate(-18deg);
+}
+
+
+/* ===========================================================
+   LOWER FLOW LINES
+=========================================================== */
+
+.lower-flow-line
+{
+    position:absolute;
+
+    left:0;
+
+    width:100%;
+
+    height:1px;
+
+    display:block;
+
+    border-radius:50%;
+
+    background:
+
+        linear-gradient(
+            90deg,
+            rgba(112,128,146,0),
+            rgba(112,128,146,0.10) 28%,
+            rgba(74,126,190,0.18) 52%,
+            rgba(112,128,146,0)
+        );
+}
+
+
+.lower-flow-01
+{
+    top:28%;
+
+    transform:
+        rotate(-2deg);
+}
+
+
+.lower-flow-02
+{
+    top:34%;
+
+    opacity:.78;
+
+    transform:
+        rotate(-3deg);
+}
+
+
+.lower-flow-03
+{
+    top:40%;
+
+    opacity:.58;
+
+    transform:
+        rotate(-4deg);
+}
+
+
+.lower-flow-04
+{
+    top:46%;
+
+    opacity:.42;
+
+    transform:
+        rotate(-5deg);
+}
+
+
+.lower-flow-05
+{
+    top:52%;
+
+    opacity:.30;
+
+    transform:
+        rotate(-6deg);
+}
+
+
+/* ===========================================================
+   IMAGE MODE
+=========================================================== */
+
+.background-image .background-layer,
+.background-image-overlay .background-layer
+{
+    background-repeat:no-repeat;
+}
+
+
+/* ===========================================================
+   OVERLAY
+=========================================================== */
+
+.background-overlay
+{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    z-index:8;
+
+    pointer-events:none;
+
+    box-sizing:border-box;
+
+    transition:
+        background .25s ease;
+}
+
+
+/* ===========================================================
+   CONTENT SLOT
+=========================================================== */
+
+.background-content
+{
+    position:relative;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    z-index:10;
+
+    box-sizing:border-box;
+
+    pointer-events:auto;
+}
+
+
+/* ===========================================================
+   TABLET
+   -----------------------------------------------------------
+   Keep proportional scaling.
+   No fixed artwork dimensions.
+=========================================================== */
+
+@media (max-width:1024px)
+{
+    .orbital-ribbon-main
+    {
+        width:64cqw;
+
+        height:47cqw;
+
+        left:27cqw;
+
+        top:16cqw;
+    }
+
+
+    .orbital-ribbon-secondary
+    {
+        width:69cqw;
+
+        height:37cqw;
+
+        left:7cqw;
+
+        top:40cqw;
+    }
+
+
+    .contour
+    {
+        width:77cqw;
+
+        height:45cqw;
+
+        left:15cqw;
+
+        top:25cqw;
+    }
+
+
+    .orbital-orange-accent
+    {
+        width:40cqw;
+
+        right:-4cqw;
+    }
+
+
+    .orbital-highlight
+    {
+        width:49cqw;
+
+        height:30cqw;
+
+        left:32cqw;
+    }
+
+
+    .orbital-lower-flow
+    {
+        width:84cqw;
+    }
+}
+
+
+/* ===========================================================
+   MOBILE
+=========================================================== */
+
+@media (max-width:768px)
+{
+    .orbital-ribbon-main
+    {
+        width:64cqw;
+
+        height:54cqw;
+
+        left:14cqw;
+
+        top:17cqw;
+
+        transform:
+            rotate(-26deg)
+            skewX(-9deg);
+    }
+
+
+    .orbital-ribbon-secondary
+    {
+        width:70cqw;
+
+        height:41cqw;
+
+        left:-10cqw;
+
+        top:44cqw;
+    }
+
+
+    .contour
+    {
+        width:75cqw;
+
+        height:48cqw;
+
+        left:-8cqw;
+
+        top:30cqw;
+    }
+
+
+    .contour-07,
+    .contour-08,
+    .contour-09,
+    .contour-10,
+    .contour-11,
+    .contour-12
+    {
+        display:none;
+    }
+
+
+    .orbital-orange-accent
+    {
+        width:40cqw;
+
+        height:20cqw;
+
+        right:-12cqw;
+
+        top:48cqw;
+    }
+
+
+    .orbital-highlight
+    {
+        width:48cqw;
+
+        height:31cqw;
+
+        left:18cqw;
+
+        top:34cqw;
+    }
+
+
+    .orbital-lower-flow
+    {
+        left:-15cqw;
+
+        width:105cqw;
+
+        height:30cqw;
+    }
+}
+
+
+/* ===========================================================
+   REDUCED MOTION
+=========================================================== */
+
+@media (prefers-reduced-motion:reduce)
+{
+    .background-layer,
+    .background-overlay
+    {
+        transition:none;
+    }
+}

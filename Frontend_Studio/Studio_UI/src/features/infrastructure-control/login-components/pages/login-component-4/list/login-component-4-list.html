@@ -1,0 +1,312 @@
+<div class="app-list-page"> 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE HEADER 
+    ====================================================== --> 
+ 
+ 
+    <app-page-header 
+ 
+        title="Login Component 4" 
+ 
+        subtitle="Manage login component 4" 
+ 
+        icon="fas fa-list"> 
+ 
+ 
+        <div pageHeaderRight> 
+ 
+            <app-command-center 
+ 
+                command1Text="Add" 
+ 
+                command1Icon="fas fa-plus" 
+ 
+                (command1Click)="add()" 
+ 
+                command2Text="Refresh" 
+ 
+                command2Icon="fas fa-rotate-right" 
+ 
+                (command2Click)="refresh()" 
+ 
+                command3Text="Restore" 
+ 
+                command3Icon="fas fa-trash-arrow-up" 
+ 
+                (command3Click)="restore()" 
+ 
+                rightCommandIcon="fas fa-clock-rotate-left" 
+ 
+                (rightCommandClick)="openHistory()"> 
+ 
+            </app-command-center> 
+ 
+        </div> 
+ 
+    </app-page-header> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         PAGE TOOLBAR 
+    ====================================================== --> 
+ 
+ 
+    <app-page-toolbar> 
+ 
+        <app-control-tabs 
+ 
+            pageToolbarLeft 
+ 
+            [tabs]="tabs" 
+ 
+            [(selectedTab)]="selectedTab" 
+ 
+            (selectedTabChange)="onTabChange($event)"> 
+ 
+        </app-control-tabs> 
+ 
+    </app-page-toolbar> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         COMPONENT CONTENT 
+    ====================================================== --> 
+ 
+ 
+    <div 
+ 
+        class="component-canvas" 
+ 
+        *ngIf="selectedComponent && !loading"> 
+ 
+ 
+        <!-- ================================================= 
+             COMPONENT SECTION HEADER 
+        ================================================== --> 
+ 
+ 
+        <div class="component-section-header"> 
+ 
+ 
+            <!-- ============================================= 
+                 COMPONENT ICON 
+            ============================================== --> 
+ 
+ 
+            <div class="component-section-icon"> 
+ 
+                <i 
+ 
+                    [class]=" 
+ 
+                        selectedComponent.icon 
+ 
+                        || 'fas fa-puzzle-piece' 
+ 
+                    "> 
+ 
+                </i> 
+ 
+            </div> 
+ 
+ 
+ 
+            <!-- ============================================= 
+                 COMPONENT NAME 
+            ============================================== --> 
+ 
+ 
+            <div class="component-section-name"> 
+ 
+                {{ selectedComponent.name }} 
+ 
+            </div> 
+ 
+ 
+ 
+            <!-- ============================================= 
+                 EDIT 
+            ============================================== --> 
+ 
+ 
+            <button 
+ 
+                type="button" 
+ 
+                class="component-edit-button" 
+ 
+                (click)="edit(selectedComponent)" 
+ 
+                title="Edit Login Component 4"> 
+ 
+                <i class="fas fa-pen"></i> 
+ 
+                <span>Edit</span> 
+ 
+            </button> 
+ 
+ 
+ 
+            <!-- ============================================= 
+                 DELETE 
+            ============================================== --> 
+ 
+ 
+            <button 
+ 
+                type="button" 
+ 
+                class="component-delete-button" 
+ 
+                (click)="delete(selectedComponent)" 
+ 
+                title="Delete Login Component 4"> 
+ 
+                <i class="fas fa-trash"></i> 
+ 
+                <span>Delete</span> 
+ 
+            </button> 
+ 
+ 
+        </div> 
+ 
+ 
+ 
+        <!-- ================================================= 
+             COMPONENT PREVIEW 
+        ================================================== --> 
+ 
+ 
+        <div class="component-preview-content"> 
+ 
+            <app-component-renderer 
+ 
+                [componentKey]=" 
+                    getRendererKey( 
+                        selectedComponent.componentPath 
+                    ) 
+                "> 
+ 
+            </app-component-renderer> 
+ 
+        </div> 
+ 
+ 
+    </div> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         NO COMPONENT SELECTED 
+    ====================================================== --> 
+ 
+ 
+    <div 
+ 
+        class="component-empty" 
+ 
+        *ngIf="!selectedComponent && !loading"> 
+ 
+ 
+        <i class="fas fa-puzzle-piece"></i> 
+ 
+ 
+        <span> 
+ 
+            No login component 4 available. 
+ 
+        </span> 
+ 
+ 
+    </div> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         LOADING 
+    ====================================================== --> 
+ 
+ 
+    <div 
+ 
+        class="component-loading" 
+ 
+        *ngIf="loading"> 
+ 
+ 
+        <i class="fas fa-spinner fa-spin"></i> 
+ 
+ 
+        <span> 
+ 
+            Loading login component 4... 
+ 
+        </span> 
+ 
+ 
+    </div> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         LOAD ERROR 
+    ====================================================== --> 
+ 
+ 
+    <div 
+ 
+        class="component-error" 
+ 
+        *ngIf="loadFailed && !loading"> 
+ 
+ 
+        <i class="fas fa-triangle-exclamation"></i> 
+ 
+ 
+        <span> 
+ 
+            Unable to load login component 4. 
+ 
+        </span> 
+ 
+ 
+    </div> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         HISTORY 
+    ====================================================== --> 
+ 
+ 
+    <app-history-drawer 
+ 
+        [opened]="historyOpened" 
+ 
+        [title]="historyTitle" 
+ 
+        [items]="historyItems" 
+ 
+        (closed)="closeHistory()"> 
+ 
+    </app-history-drawer> 
+ 
+ 
+ 
+    <!-- ===================================================== 
+         UTILITIES 
+    ====================================================== --> 
+ 
+ 
+    <app-toast></app-toast> 
+ 
+ 
+    <app-confirm-dialog></app-confirm-dialog> 
+ 
+ 
+</div>

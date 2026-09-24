@@ -38,19 +38,12 @@
 /* ===============================================================
    BRANDING CONTAINER
    ---------------------------------------------------------------
-   The branding area is intentionally DOUBLE the normal
-   available width.
+   CENTER ALIGNED.
 
-       Normal:
-           100%
+   The branding container keeps the existing full geometry.
 
-       Current:
-           200%
-
-   The logo itself is NOT stretched.
-
-   The parent Login Page continues to control the outer
-   layout geometry.
+   The visual logo is horizontally centered inside the available
+   Branding area.
 ================================================================ */
 
 .login-page-branding
@@ -62,7 +55,7 @@
         center;
 
     justify-content:
-        flex-start;
+        center;
 
     width:
         100%;
@@ -106,7 +99,7 @@
         flex-start;
 
     justify-content:
-        flex-start;
+        center;
 
     width:
         fit-content;
@@ -128,11 +121,28 @@
 
     box-sizing:
         border-box;
+
+    overflow:
+        visible;
 }
 
 
 /* ===============================================================
    BRANDING LOGO
+   ---------------------------------------------------------------
+   VISUAL SIZE:
+
+       55% of the original rendered logo.
+
+   IMPORTANT:
+
+       Do NOT use percentage width here.
+
+       The logo keeps its natural dimensions and is visually
+       scaled using transform.
+
+       The transform origin is now CENTER CENTER so the logo
+       remains properly anchored to the center.
 ================================================================ */
 
 .branding-logo
@@ -169,6 +179,14 @@
 
     vertical-align:
         middle;
+
+    transform:
+        scale(
+            .55
+        );
+
+    transform-origin:
+        center center;
 }
 
 
@@ -178,12 +196,21 @@
 
 @media
 (
-    prefers-reduced-motion: reduce
+    prefers-reduced-motion:
+        reduce
 )
 {
     .branding-logo
     {
         transition:
             none;
+
+        transform:
+            scale(
+                .55
+            );
+
+        transform-origin:
+            center center;
     }
 }

@@ -1,128 +1,62 @@
 <!-- ===========================================================
      LOGIN PAGE 3
      -----------------------------------------------------------
-     CLONED FROM LOGIN PAGE 2
-
      FINAL DESKTOP PAGE COMPOSITION
 
      FULL VIEWPORT
+
      │
-     ├── LEFT 45%
-     │   ├── TOP 15%
-     │   │   └── BRANDING 1
+     ├── LEFT 35%
+     │   ├── TOP 30px
+     │   │   └── THEME SELECTOR
      │   │
      │   ├── CENTER
-     │   │   └── EMPTY
+     │   │   ├── LOGIN PANEL
+     │   │   ├── REGISTRATION PANEL
+     │   │   └── FORGET PASSWORD PANEL
      │   │
-     │   └── BOTTOM 15%
-     │       └── POWERED BY
-     │
-     ├── MIDDLE 20%
-     │   ├── TOP 15%
-     │   │   └── CLIENT LOGO
-     │   │
-     │   ├── CENTER
-     │   │   └── EMPTY
-     │   │
-     │   └── BOTTOM 15%
+     │   └── BOTTOM 30px
      │       └── EMPTY
      │
-     └── RIGHT 35%
-         ├── TOP 50px
-         │   └── THEME SELECTOR
+     ├── MIDDLE 20%
+     │   ├── TOP
+     │   │   └── EMPTY
+     │   │
+     │   ├── CENTER
+     │   │   └── BRANDING
+     │   │
+     │   └── BOTTOM
+     │       └── EMPTY
+     │
+     └── RIGHT 45%
+         ├── TOP 15%
+         │   └── EMPTY
          │
          ├── CENTER
-         │   ├── LOGIN PANEL
-         │   ├── REGISTRATION PANEL
-         │   └── FORGET PASSWORD PANEL
+         │   └── EMPTY
          │
-         └── BOTTOM 50px
-             └── EMPTY FOOTER AREA
+         └── BOTTOM 15%
+             └── POWERED BY
 
      IMPORTANT:
 
-         The Promotional Image remains completely independent
-         from this layout.
+         This page is intentionally mirrored horizontally
+         compared with Login Page 2.
 
-         It occupies the FULL VIEWPORT behind all sections.
+         LEFT  ↔  RIGHT
 
-         Branding 2 has been completely removed.
+         The promotional image remains completely independent
+         from the desktop layout.
 
-         The Client Logo has been moved to the
-         MIDDLE TOP area.
+         BRANDING IS IN THE MIDDLE 20% AREA.
 
-         Powered By remains only in the
-         LEFT BOTTOM area.
-
-         Theme Selector is placed in the
-         RIGHT TOP area.
-
-         Theme Selector controls:
-
-             LIGHT
-                 ↓
-             Promotional Image Light
-
-             DEEP
-                 ↓
-             Promotional Image Deep
-
-         This version is DESKTOP ONLY.
-
-         Tablet and mobile layouts will be implemented later.
-
-         REGISTER NOW EVENT:
-
-             Login Panel emits the register event.
-
-             This page receives the event through onRegister().
-
-             isRegistrationMode becomes TRUE.
-
-             Login Panel is hidden.
-
-             Registration Panel is displayed.
-
-         FORGOT PASSWORD EVENT:
-
-             Login Panel emits the forgotPassword event.
-
-             This page receives the event through onForgotPassword().
-
-             isForgetPasswordMode becomes TRUE.
-
-             Login Panel is hidden.
-
-             Forget Password Panel is displayed.
-
-         BACK TO LOGIN EVENT:
-
-             Registration Panel or Forget Password Panel emits
-             the backToLogin event.
-
-             This page receives the event through
-             onBackToLogin().
-
-             Both panel states become FALSE.
-
-             Login Panel is displayed.
-
-         THEME CHANGE EVENT:
-
-             Theme Selector emits themeChange.
-
-             This page receives the event through
-             onThemeChange().
-
-             isLightTheme becomes TRUE or FALSE.
-
-             Promotional Image changes accordingly.
-=========================================================== -->
+         POWERED BY IS IN THE RIGHT 45% AREA.
+============================================================ -->
 
 
 <!-- ===========================================================
-     LOGIN PAGE 3 ROOT
-============================================================ -->
+     LOGIN PAGE 3
+=========================================================== -->
 
 <div
     class="login-page-3"
@@ -130,29 +64,14 @@
 
 
     <!-- =======================================================
-         FULL VIEWPORT PROMOTIONAL IMAGE
+         PROMOTIONAL IMAGE AREA
          -------------------------------------------------------
-         This layer remains completely independent from the
-         45% / 20% / 35% page structure.
-
-         It occupies:
-
-             Width  = 100vw
-             Height = 100vh
+         FULL VIEWPORT BACKGROUND
     ======================================================== -->
 
     <section
         class="login-page-3-promotional-area"
     >
-
-
-        <!-- ===================================================
-             LIGHT PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = true
-        ==================================================== -->
 
         <app-login-page-promotional-image-light
             *ngIf="isLightTheme"
@@ -160,31 +79,22 @@
         </app-login-page-promotional-image-light>
 
 
-        <!-- ===================================================
-             DEEP PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = false
-        ==================================================== -->
-
         <app-login-page-promotional-image-deep
             *ngIf="!isLightTheme"
         >
         </app-login-page-promotional-image-deep>
 
-
     </section>
 
 
     <!-- =======================================================
-         DESKTOP PAGE LAYOUT
+         MAIN DESKTOP LAYOUT
          -------------------------------------------------------
-         FULL WIDTH SPLIT:
+         MIRRORED STRUCTURE
 
-             LEFT   = 45%
+             LEFT   = 35%
              MIDDLE = 20%
-             RIGHT  = 35%
+             RIGHT  = 45%
     ======================================================== -->
 
     <main
@@ -197,13 +107,12 @@
              ---------------------------------------------------
              WIDTH:
 
-                 45%
+                 35%
 
-             VERTICAL STRUCTURE:
+             CONTENT:
 
-                 TOP    = 15%
-                 CENTER = REST
-                 BOTTOM = 15%
+                 Theme Selector
+                 Login / Registration / Forget Password
         ==================================================== -->
 
         <section
@@ -214,171 +123,11 @@
             <!-- ===============================================
                  LEFT TOP
                  -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     BRANDING 1
-            ================================================= -->
+                 THEME SELECTOR
+            ================================================ -->
 
             <section
                 class="login-page-3-left-top"
-            >
-
-                <app-login-page-branding>
-                </app-login-page-branding>
-
-            </section>
-
-
-            <!-- ===============================================
-                 LEFT CENTER
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     REST
-
-                 Promotional image remains visible underneath.
-            ================================================= -->
-
-            <section
-                class="login-page-3-left-center"
-            >
-
-            </section>
-
-
-            <!-- ===============================================
-                 LEFT BOTTOM
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     POWERED BY
-            ================================================= -->
-
-            <section
-                class="login-page-3-left-bottom"
-            >
-
-                <app-login-page-powered-by>
-                </app-login-page-powered-by>
-
-            </section>
-
-
-        </section>
-
-
-        <!-- ===================================================
-             MIDDLE AREA
-             ---------------------------------------------------
-             WIDTH:
-
-                 20%
-
-             VERTICAL STRUCTURE:
-
-                 TOP    = 15%
-                 CENTER = REST
-                 BOTTOM = 15%
-        ==================================================== -->
-
-        <section
-            class="login-page-3-middle-area"
-        >
-
-
-            <!-- ===============================================
-                 MIDDLE CENTER
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     REST
-
-                 Promotional image remains visible underneath.
-            ================================================= -->
-
-            <section
-                class="login-page-3-middle-center"
-            >
-
-            </section>
-
-
-            <!-- ===============================================
-                 MIDDLE BOTTOM
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     EMPTY
-            ================================================= -->
-
-            <section
-                class="login-page-3-middle-bottom"
-            >
-
-            </section>
-
-
-        </section>
-
-
-        <!-- ===================================================
-             RIGHT AREA
-             ---------------------------------------------------
-             WIDTH:
-
-                 35%
-
-             VERTICAL STRUCTURE:
-
-                 TOP    = 50px
-                 CENTER = REST
-                 BOTTOM = 50px
-        ==================================================== -->
-
-        <section
-            class="login-page-3-right-area"
-        >
-
-
-            <!-- ===============================================
-                 RIGHT TOP
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     50px
-
-                 CONTENT:
-
-                     THEME SELECTOR
-
-                 Theme Selector emits:
-
-                     true
-                         ↓
-                     LIGHT THEME
-
-                     false
-                         ↓
-                     DEEP THEME
-
-                 Page 3 remains the owner of the
-                 isLightTheme state.
-            ================================================= -->
-
-            <section
-                class="login-page-3-right-top"
             >
 
                 <app-login-page-theme-selector
@@ -391,33 +140,18 @@
 
 
             <!-- ===============================================
-                 RIGHT CENTER
+                 LEFT CENTER
                  -----------------------------------------------
-                 HEIGHT:
-
-                     REST
-
-                 CONTENT:
-
-                     LOGIN / REGISTRATION /
-                     FORGET PASSWORD PANEL
-            ================================================= -->
+                 LOGIN / REGISTRATION / FORGET PASSWORD
+            ================================================ -->
 
             <section
-                class="login-page-3-right-center"
+                class="login-page-3-left-center"
             >
 
 
                 <!-- ===========================================
                      LOGIN PANEL
-                     -------------------------------------------
-                     DISPLAYED WHEN:
-
-                         isRegistrationMode = false
-
-                         AND
-
-                         isForgetPasswordMode = false
                 ============================================ -->
 
                 <app-login-page-login-panel
@@ -435,10 +169,6 @@
 
                 <!-- ===========================================
                      REGISTRATION PANEL
-                     -------------------------------------------
-                     DISPLAYED WHEN:
-
-                         isRegistrationMode = true
                 ============================================ -->
 
                 <app-login-page-registration-panel
@@ -450,10 +180,6 @@
 
                 <!-- ===========================================
                      FORGET PASSWORD PANEL
-                     -------------------------------------------
-                     DISPLAYED WHEN:
-
-                         isForgetPasswordMode = true
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
@@ -462,31 +188,141 @@
                 >
                 </app-login-page-forget-password-panel>
 
+            </section>
 
+
+            <!-- ===============================================
+                 LEFT BOTTOM
+                 -----------------------------------------------
+                 EMPTY
+            ================================================ -->
+
+            <section
+                class="login-page-3-left-bottom"
+            >
+            </section>
+
+        </section>
+
+
+        <!-- ===================================================
+             MIDDLE AREA
+             ---------------------------------------------------
+             WIDTH:
+
+                 20%
+
+             CONTENT:
+
+                 Branding
+
+             The Branding component is positioned in the
+             Middle Center area.
+        ==================================================== -->
+
+        <section
+            class="login-page-3-middle-area"
+        >
+
+
+            <!-- ===============================================
+                 MIDDLE TOP
+                 -----------------------------------------------
+                 EMPTY
+            ================================================ -->
+
+            <section
+                class="login-page-3-middle-top"
+            >
+
+                <app-login-page-branding>
+                </app-login-page-branding>
+                
+            </section>
+
+
+            <!-- ===============================================
+                 MIDDLE CENTER
+                 -----------------------------------------------
+                 BRANDING
+            ================================================ -->
+
+            <section
+                class="login-page-3-middle-center"
+            >
+
+            </section>
+
+
+            <!-- ===============================================
+                 MIDDLE BOTTOM
+                 -----------------------------------------------
+                 EMPTY
+            ================================================ -->
+
+            <section
+                class="login-page-3-middle-bottom"
+            >
+                <app-login-page-powered-by>
+                </app-login-page-powered-by>
+
+            </section>
+
+        </section>
+
+
+        <!-- ===================================================
+             RIGHT AREA
+             ---------------------------------------------------
+             WIDTH:
+
+                 45%
+
+             CONTENT:
+
+                 Powered By
+        ==================================================== -->
+
+        <section
+            class="login-page-3-right-area"
+        >
+
+
+            <!-- ===============================================
+                 RIGHT TOP
+                 -----------------------------------------------
+                 EMPTY
+            ================================================ -->
+
+            <section
+                class="login-page-3-right-top"
+            >
+            </section>
+
+
+            <!-- ===============================================
+                 RIGHT CENTER
+                 -----------------------------------------------
+                 EMPTY
+            ================================================ -->
+
+            <section
+                class="login-page-3-right-center"
+            >
             </section>
 
 
             <!-- ===============================================
                  RIGHT BOTTOM
                  -----------------------------------------------
-                 HEIGHT:
-
-                     50px
-
-                 CONTENT:
-
-                     EMPTY FOOTER AREA
-
-                 Powered By has been completely removed from
-                 this section.
-            ================================================= -->
+                 POWERED BY
+            ================================================ -->
 
             <section
                 class="login-page-3-right-bottom"
             >
 
             </section>
-
 
         </section>
 

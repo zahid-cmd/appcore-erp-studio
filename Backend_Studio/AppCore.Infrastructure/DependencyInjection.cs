@@ -149,6 +149,14 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : LoginComponent4
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : LoginComponent4
+
+
 // AUTO-BEGIN : LoginComponent3
 
 using AppCore.Application.InfrastructureControl.LoginComponents;
@@ -517,6 +525,17 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : LoginComponent4
+
+        services.AddScoped
+        <
+            ILoginComponent4Repository,
+            LoginComponent4Repository
+        >();
+
+        // AUTO-END : LoginComponent4
+
 
         // AUTO-BEGIN : LoginComponent3
 

@@ -1,162 +1,11 @@
 /* ===============================================================
    LOGIN PAGE BRANDING
-   ---------------------------------------------------------------
-   BLUE / WHITE APPCORE BRANDING
-   ---------------------------------------------------------------
-
-   PURPOSE:
-
-       Displays the AppCore blue / white branding logo inside
-       a premium, highly transparent blue-white surface.
-
-   IMPORTANT:
-
-       This component controls ONLY:
-
-           - Branding width
-           - Branding height
-           - Logo presentation
-           - Logo scale
-           - Branding background surface
-
-       The visible background surface MUST wrap only the logo.
-
-       It must NOT fill the complete top area.
-
-   =============================================================== */
-
-
-/* ===============================================================
-   SINGLE SOURCE OF TRUTH
-   ---------------------------------------------------------------
-   CHANGE ONLY THESE VALUES TO CONTROL THE BRANDING.
-
-       --branding-width
-           Controls the available branding width.
-
-       --branding-height
-           Controls the branding height.
-
-       --branding-logo-scale
-           Controls the actual visual size of the AppCore logo.
-
-           1    = 100%
-           .75  = 75%
-           .50  = 50%
-           .40  = 40%
-================================================================= */
-
-:host
-{
-    --branding-width:
-        30%;
-
-    --branding-height:
-        auto;
-
-    --branding-logo-scale:
-        .50;
-
-
-    /* ===========================================================
-       BLUE / WHITE BRANDING SURFACE
-       -----------------------------------------------------------
-       Premium transparent blue-white gradient.
-
-       The surface remains subtle so the promotional image
-       remains visible underneath.
-    ============================================================ */
-
-    --branding-background:
-        linear-gradient(
-            135deg,
-            rgba(
-                255,
-                255,
-                255,
-                .20
-            ) 0%,
-
-            rgba(
-                235,
-                245,
-                255,
-                .15
-            ) 45%,
-
-            rgba(
-                59,
-                130,
-                246,
-                .12
-            ) 100%
-        );
-
-
-    /* ===========================================================
-       BLUE / WHITE BORDER
-       -----------------------------------------------------------
-       Very soft blue-white edge.
-    ============================================================ */
-
-    --branding-border:
-        rgba(
-            191,
-            219,
-            254,
-            .24
-        );
-
-
-    /* ===========================================================
-       VERY SOFT BLUE SHADOW
-    ============================================================ */
-
-    --branding-shadow:
-        0
-        3px
-        12px
-        rgba(
-            15,
-            59,
-            120,
-            .06
-        );
-
-
-    /* ===========================================================
-       ROUNDED CORNER
-    ============================================================ */
-
-    --branding-radius:
-        8px;
-
-
-    /* ===========================================================
-       BRANDING SURFACE PADDING
-       -----------------------------------------------------------
-       Keep the surface tightly fitted around the logo.
-    ============================================================ */
-
-    --branding-padding-top:
-        4px;
-
-    --branding-padding-right:
-        10px;
-
-    --branding-padding-bottom:
-        4px;
-
-    --branding-padding-left:
-        10px;
-}
+================================================================ */
 
 
 /* ===============================================================
    HOST
-   ---------------------------------------------------------------
-   The host itself remains completely transparent.
-================================================================= */
+================================================================ */
 
 :host
 {
@@ -164,22 +13,16 @@
         block;
 
     width:
-        var(--branding-width);
+        100%;
 
     height:
-        auto;
+        100%;
 
     min-width:
         0;
 
     min-height:
         0;
-
-    max-width:
-        none;
-
-    max-height:
-        none;
 
     margin:
         0;
@@ -189,23 +32,27 @@
 
     box-sizing:
         border-box;
-
-    overflow:
-        visible;
-
-    background:
-        transparent;
 }
 
 
 /* ===============================================================
    BRANDING CONTAINER
    ---------------------------------------------------------------
-   Actual visible blue-white branding surface.
+   The branding area is intentionally DOUBLE the normal
+   available width.
 
-   The surface follows the scaled logo and does NOT fill the
-   complete top section.
-================================================================= */
+       Normal:
+           100%
+
+       Current:
+           200%
+
+   IMPORTANT:
+
+       The outer Branding geometry is NOT changed.
+
+       Only the visual size of the logo is reduced.
+================================================================ */
 
 .login-page-branding
 {
@@ -219,74 +66,37 @@
         flex-start;
 
     width:
-        fit-content;
+        100%;
 
     min-width:
-        0;
+        100%;
 
     max-width:
         none;
 
     height:
-        fit-content;
+        100%;
 
     min-height:
         0;
-
-    max-height:
-        none;
 
     margin:
         0;
 
     padding:
-        var(--branding-padding-top)
-        var(--branding-padding-right)
-        var(--branding-padding-bottom)
-        var(--branding-padding-left);
+        0;
 
     box-sizing:
         border-box;
 
     overflow:
         visible;
-
-    background:
-        var(--branding-background);
-
-    border:
-        1px solid
-        var(--branding-border);
-
-    border-radius:
-        var(--branding-radius);
-
-    box-shadow:
-        var(--branding-shadow);
-
-    backdrop-filter:
-        blur(
-            4px
-        );
-
-    -webkit-backdrop-filter:
-        blur(
-            4px
-        );
 }
 
 
 /* ===============================================================
    BRANDING CONTENT
-   ---------------------------------------------------------------
-   Content remains intrinsic.
-
-   No artificial width.
-   No artificial height.
-   No stretching.
-
-   The zoom reduces the complete branding geometry together.
-================================================================= */
+================================================================ */
 
 .branding-content
 {
@@ -311,12 +121,6 @@
     min-height:
         0;
 
-    max-width:
-        none;
-
-    max-height:
-        none;
-
     margin:
         0;
 
@@ -328,28 +132,26 @@
 
     overflow:
         visible;
-
-    background:
-        transparent;
-
-    zoom:
-        var(--branding-logo-scale);
 }
 
 
 /* ===============================================================
    BRANDING LOGO
    ---------------------------------------------------------------
+   VISUAL SIZE:
+
+       55% of the original rendered logo.
+
    IMPORTANT:
 
-       The blue-white logo keeps its natural aspect ratio.
+       Do NOT use percentage width here.
 
-       It is NOT stretched.
+       The logo keeps its natural dimensions and is visually
+       scaled using transform.
 
-       The complete branding content is reduced through:
-
-           --branding-logo-scale
-================================================================= */
+       This preserves the existing Branding container
+       geometry and Login Page positioning.
+================================================================ */
 
 .branding-logo
 {
@@ -366,12 +168,9 @@
         auto;
 
     max-height:
-        none;
+        100%;
 
     min-width:
-        0;
-
-    min-height:
         0;
 
     margin:
@@ -383,137 +182,25 @@
     border:
         0;
 
-    outline:
-        none;
-
     box-sizing:
         border-box;
-
-    object-fit:
-        contain;
-
-    object-position:
-        left center;
 
     vertical-align:
         middle;
 
-    background:
-        transparent;
-}
+    transform:
+        scale(
+            .55
+        );
 
-
-/* ===============================================================
-   TABLET
-================================================================= */
-
-@media
-(
-    max-width:1024px
-)
-{
-    :host
-    {
-        --branding-padding-top:
-            3px;
-
-        --branding-padding-right:
-            8px;
-
-        --branding-padding-bottom:
-            3px;
-
-        --branding-padding-left:
-            8px;
-
-        --branding-radius:
-            7px;
-    }
-
-
-    .login-page-branding
-    {
-        width:
-            fit-content;
-
-        height:
-            fit-content;
-    }
-
-
-    .branding-content
-    {
-        zoom:
-            var(--branding-logo-scale);
-    }
-}
-
-
-/* ===============================================================
-   MOBILE
-================================================================= */
-
-@media
-(
-    max-width:768px
-)
-{
-    :host
-    {
-        --branding-width:
-            100%;
-
-        --branding-padding-top:
-            3px;
-
-        --branding-padding-right:
-            7px;
-
-        --branding-padding-bottom:
-            3px;
-
-        --branding-padding-left:
-            7px;
-
-        --branding-radius:
-            6px;
-    }
-
-
-    .login-page-branding
-    {
-        width:
-            fit-content;
-
-        height:
-            fit-content;
-
-        max-width:
-            100%;
-    }
-
-
-    .branding-content
-    {
-        zoom:
-            var(--branding-logo-scale);
-    }
-
-
-    .branding-logo
-    {
-        max-width:
-            none;
-
-        height:
-            auto;
-    }
+    transform-origin:
+        left center;
 }
 
 
 /* ===============================================================
    REDUCED MOTION
-================================================================= */
+================================================================ */
 
 @media
 (
@@ -525,5 +212,10 @@
     {
         transition:
             none;
+
+        transform:
+            scale(
+                .55
+            );
     }
 }

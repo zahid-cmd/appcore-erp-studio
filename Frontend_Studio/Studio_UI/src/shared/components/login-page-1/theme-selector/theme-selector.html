@@ -1,0 +1,104 @@
+<!-- ===========================================================
+     LOGIN PAGE 2
+     THEME SELECTOR
+     -----------------------------------------------------------
+     LIGHT / DEEP THEME SWITCHER
+=========================================================== -->
+
+
+<section
+    class="login-page-theme-selector"
+>
+
+    <!-- =======================================================
+         Theme Selector
+    ======================================================== -->
+
+    <div
+        class="theme-selector"
+    >
+
+        <!-- ===================================================
+             Light Theme
+        ==================================================== -->
+
+        <button
+            type="button"
+            class="theme-option theme-option-light"
+            [class.active]="isLightTheme"
+            (click)="selectLightTheme()"
+            aria-label="Select Light Theme"
+        >
+
+            <i
+                class="fas fa-sun theme-option-icon"
+            >
+            </i>
+
+            <span
+                class="theme-option-label"
+            >
+                Light
+            </span>
+
+        </button>
+
+
+        <!-- ===================================================
+             Theme Toggle
+        ==================================================== -->
+
+        <button
+            type="button"
+            class="theme-toggle"
+            [class.deep]="!isLightTheme"
+            (click)="toggleTheme()"
+            [attr.aria-label]="
+                isLightTheme
+                    ? 'Switch to Deep Theme'
+                    : 'Switch to Light Theme'
+            "
+        >
+
+            <span
+                class="theme-toggle-track"
+            >
+
+                <span
+                    class="theme-toggle-thumb"
+                >
+                </span>
+
+            </span>
+
+        </button>
+
+
+        <!-- ===================================================
+             Deep Theme
+        ==================================================== -->
+
+        <button
+            type="button"
+            class="theme-option theme-option-deep"
+            [class.active]="!isLightTheme"
+            (click)="selectDeepTheme()"
+            aria-label="Select Deep Theme"
+        >
+
+            <i
+                class="fas fa-moon theme-option-icon"
+            >
+            </i>
+
+            <span
+                class="theme-option-label"
+            >
+                Deep
+            </span>
+
+        </button>
+
+    </div>
+
+</section>

@@ -10,6 +10,12 @@ from '@angular/core';
 
 import
 {
+    CommonModule
+}
+from '@angular/common';
+
+import
+{
     Router
 }
 from '@angular/router';
@@ -34,14 +40,25 @@ from '../../../core/authentication/authentication.model';
 
 
 //===============================================================
-// Login Page 1 Background
+// Login Page 1 Promotional Image Light
 //===============================================================
 
 import
 {
-    LoginPageBackgroundComponent
+    LoginPagePromotionalImageLightComponent
 }
-from '../../components/login-page-1/background/background';
+from '../../components/login-page-1/promotional-image-light/promotional-image-light';
+
+
+//===============================================================
+// Login Page 1 Promotional Image Deep
+//===============================================================
+
+import
+{
+    LoginPagePromotionalImageDeepComponent
+}
+from '../../components/login-page-1/promotional-image-deep/promotional-image-deep';
 
 
 //===============================================================
@@ -56,61 +73,6 @@ from '../../components/login-page-1/branding/branding';
 
 
 //===============================================================
-// Login Page 1 Promotional Panel
-//===============================================================
-
-import
-{
-    LoginPagePromotionalPanelComponent
-}
-from '../../components/login-page-1/promotional-panel/promotional-panel';
-
-
-//===============================================================
-// Login Page 1 Promotional Image
-//===============================================================
-
-import
-{
-    LoginPagePromotionalImageComponent
-}
-from '../../components/login-page-1/promotional-image/promotional-image';
-
-
-//===============================================================
-// Login Page 1 Client Logo
-//===============================================================
-
-import
-{
-    LoginPageClientLogoComponent
-}
-from '../../components/login-page-1/client-logo/client-logo';
-
-
-//===============================================================
-// Login Page 1 Login Panel
-//===============================================================
-
-import
-{
-    LoginPageLoginPanelComponent
-}
-from '../../components/login-page-1/login-panel/login-panel';
-
-
-//===============================================================
-// Login Page 1 Registration Page
-//===============================================================
-
-import
-{
-    RegistrationPageComponent
-}
-from '../../components/login-page-1/registration-page/registration-page';
-
-
-//===============================================================
 // Login Page 1 Powered By
 //===============================================================
 
@@ -122,25 +84,47 @@ from '../../components/login-page-1/powered-by/powered-by';
 
 
 //===============================================================
-// Login Page 1 Notification Panel
+// Central Login Panel
 //===============================================================
 
 import
 {
-    LoginPageNotificationPanelComponent
+    LoginPageLoginPanelComponent
 }
-from '../../components/login-page-1/notification-panel/notification-panel';
+from '../../components/login-credentials/login-panel/login-panel';
 
 
 //===============================================================
-// Login Page 1 Footer
+// Central Registration Panel
 //===============================================================
 
 import
 {
-    LoginPageFooterComponent
+    LoginPageRegistrationPanelComponent
 }
-from '../../components/login-page-1/footer/footer';
+from '../../components/login-credentials/registration-panel/registration-panel';
+
+
+//===============================================================
+// Central Forget Password Panel
+//===============================================================
+
+import
+{
+    LoginPageForgetPasswordPanelComponent
+}
+from '../../components/login-credentials/forget-password/forget-password';
+
+
+//===============================================================
+// Login Page 1 Theme Selector
+//===============================================================
+
+import
+{
+    LoginPageThemeSelectorComponent
+}
+from '../../components/login-page-1/theme-selector/theme-selector';
 
 
 //===============================================================
@@ -157,25 +141,23 @@ from '../../components/login-page-1/footer/footer';
 
     imports:
     [
-        LoginPageBackgroundComponent,
+        CommonModule,
+
+        LoginPagePromotionalImageLightComponent,
+
+        LoginPagePromotionalImageDeepComponent,
 
         LoginPageBrandingComponent,
 
-        LoginPagePromotionalPanelComponent,
-
-        LoginPagePromotionalImageComponent,
-
-        LoginPageClientLogoComponent,
-
         LoginPagePoweredByComponent,
-
-        LoginPageNotificationPanelComponent,
-
-        LoginPageFooterComponent,
 
         LoginPageLoginPanelComponent,
 
-        RegistrationPageComponent
+        LoginPageRegistrationPanelComponent,
+
+        LoginPageForgetPasswordPanelComponent,
+
+        LoginPageThemeSelectorComponent
     ],
 
     templateUrl:
@@ -222,13 +204,36 @@ export class LoginPage1
 
 
     //===========================================================
-    // Registration State
+    // Panel State
+    // ----------------------------------------------------------
+    // false = Login Panel
+    // true  = Registration Panel
     //===========================================================
 
-    isRegistrationPage:
+    isRegistrationMode:
         boolean =
             false;
 
+
+    //===========================================================
+    // Forget Password State
+    // ----------------------------------------------------------
+    // false = Normal Login / Registration State
+    // true  = Forget Password Panel
+    //===========================================================
+
+    isForgetPasswordMode:
+        boolean =
+            false;
+
+
+    //===========================================================
+    // Theme State
+    //===========================================================
+
+    isLightTheme:
+        boolean =
+            true;
 
 
     //===========================================================
@@ -257,6 +262,21 @@ export class LoginPage1
             router;
     }
 
+
+    //===========================================================
+    // Theme Selector
+    //===========================================================
+
+    onThemeChange
+    (
+        isLightTheme:
+            boolean
+    ):
+        void
+    {
+        this.isLightTheme =
+            isLightTheme;
+    }
 
 
     //===========================================================
@@ -338,6 +358,7 @@ export class LoginPage1
                         );
                     },
 
+
                 error:
                     error =>
                     {
@@ -354,7 +375,6 @@ export class LoginPage1
     }
 
 
-
     //===========================================================
     // Forgot Password
     //===========================================================
@@ -363,9 +383,14 @@ export class LoginPage1
         void
     {
         this.loginError =
-            'Forgot Password is not available yet.';
-    }
+            '';
 
+        this.isRegistrationMode =
+            false;
+
+        this.isForgetPasswordMode =
+            true;
+    }
 
 
     //===========================================================
@@ -378,10 +403,12 @@ export class LoginPage1
         this.loginError =
             '';
 
-        this.isRegistrationPage =
+        this.isForgetPasswordMode =
+            false;
+
+        this.isRegistrationMode =
             true;
     }
-
 
 
     //===========================================================
@@ -394,7 +421,10 @@ export class LoginPage1
         this.loginError =
             '';
 
-        this.isRegistrationPage =
+        this.isRegistrationMode =
+            false;
+
+        this.isForgetPasswordMode =
             false;
     }
 }

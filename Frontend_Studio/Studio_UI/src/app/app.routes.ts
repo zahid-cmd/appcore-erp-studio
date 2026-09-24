@@ -18,9 +18,9 @@ from '../core/dashboard/dashboard';
 
 import
 {
-    LoginPage1
+    LoginPageLoader
 }
-from '../shared/login-pages/login-page-1/login-page-1';
+from '../core/login-page-loader/login-page-loader';
 
 
 
@@ -35,7 +35,7 @@ export const routes:
         path:'login',
 
         component:
-            LoginPage1
+            LoginPageLoader
     },
 
 

@@ -1,0 +1,2261 @@
+/* =====================================================
+   OVERLAY
+===================================================== */
+
+.confirmation-dialog-overlay
+{
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:20px;
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            .18
+        );
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    z-index:2000;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   DIALOG BOX
+===================================================== */
+
+.confirmation-dialog
+{
+    width:
+        min(
+            680px,
+            100%
+        );
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:calc(100vh - 40px);
+
+    display:flex;
+
+    flex-direction:column;
+
+    background:#ffffff;
+
+    border:
+        1px solid #cbdcf2;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0
+        24px
+        55px
+        rgba(
+            15,
+            23,
+            42,
+            .20
+        );
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.confirmation-dialog-header
+{
+    position:relative;
+
+    width:100%;
+
+    min-height:108px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    padding:
+        20px
+        72px
+        20px
+        24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b3978 0%,
+            #0757b9 48%,
+            #1683ef 100%
+        );
+
+    color:#ffffff;
+
+    box-sizing:border-box;
+
+    flex:none;
+
+    overflow:hidden;
+}
+
+
+
+.confirmation-dialog-header::after
+{
+    content:"";
+
+    position:absolute;
+
+    right:-90px;
+
+    top:-115px;
+
+    width:380px;
+
+    height:250px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .20
+        );
+
+    border-radius:50%;
+
+    transform:
+        rotate(
+            18deg
+        );
+
+    pointer-events:none;
+}
+
+
+
+.confirmation-dialog-header::before
+{
+    content:"";
+
+    position:absolute;
+
+    right:-120px;
+
+    bottom:-145px;
+
+    width:430px;
+
+    height:240px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .13
+        );
+
+    border-radius:50%;
+
+    transform:
+        rotate(
+            -12deg
+        );
+
+    pointer-events:none;
+}
+
+
+
+/* =====================================================
+   HEADER ICON
+===================================================== */
+
+.confirmation-dialog-icon
+{
+    position:relative;
+
+    z-index:1;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:58px;
+
+    height:58px;
+
+    min-width:58px;
+
+    min-height:58px;
+
+    max-width:58px;
+
+    max-height:58px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .48
+        );
+
+    border-radius:50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #39bfff,
+            #0876ef
+        );
+
+    color:#ffffff;
+
+    box-shadow:
+        0
+        0
+        0
+        5px
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        ),
+        0
+        8px
+        22px
+        rgba(
+            0,
+            32,
+            96,
+            .28
+        );
+
+    flex:none;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   HEADER FONT AWESOME ICON
+===================================================== */
+
+.confirmation-dialog-icon
+.fa-solid,
+.confirmation-dialog-icon
+.fa-regular
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:36px;
+
+    line-height:1;
+
+    color:#ffffff;
+}
+
+
+
+/* =====================================================
+   HEADER CONTENT
+===================================================== */
+
+.confirmation-dialog-heading
+{
+    position:relative;
+
+    z-index:1;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    gap:5px;
+
+    min-width:0;
+
+    flex:1;
+
+    overflow:hidden;
+}
+
+
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.confirmation-dialog-heading h2
+{
+    color:#ffffff;
+
+    font-size:28px;
+
+    font-weight:700;
+
+    line-height:1.2;
+
+    letter-spacing:.1px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    margin:0;
+
+    padding:0;
+}
+
+
+
+.confirmation-dialog-heading p
+{
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            .78
+        );
+
+    font-size:15px;
+
+    font-weight:400;
+
+    line-height:1.35;
+
+    margin:0;
+
+    padding:0;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+
+/* =====================================================
+   CLOSE BUTTON
+===================================================== */
+
+.confirmation-dialog-close-button
+{
+    position:absolute;
+
+    top:20px;
+
+    right:20px;
+
+    z-index:2;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:40px;
+
+    height:40px;
+
+    min-width:40px;
+
+    min-height:40px;
+
+    padding:0;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .30
+        );
+
+    border-radius:50%;
+
+    background:
+        rgba(
+            7,
+            44,
+            91,
+            .30
+        );
+
+    color:#ffffff;
+
+    cursor:pointer;
+
+    box-sizing:border-box;
+
+    transition:
+        all .18s ease;
+}
+
+
+
+.confirmation-dialog-close-button
+.fa-solid,
+.confirmation-dialog-close-button
+.fa-regular
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:18px;
+
+    line-height:1;
+
+    color:#ffffff;
+}
+
+
+
+.confirmation-dialog-close-button:hover
+{
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .16
+        );
+
+    border-color:
+        rgba(
+            255,
+            255,
+            255,
+            .55
+        );
+
+    transform:
+        translateY(-1px);
+}
+
+
+
+.confirmation-dialog-close-button:active
+{
+    transform:
+        translateY(0);
+}
+
+
+
+.confirmation-dialog-close-button:focus-visible
+{
+    outline:
+        2px solid
+        #93c5fd;
+
+    outline-offset:2px;
+}
+
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.confirmation-dialog-content
+{
+    width:100%;
+
+    padding:
+        22px
+        26px
+        20px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #ffffff 100%
+        );
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:flex-start;
+
+    gap:18px;
+
+    flex:1;
+
+    min-height:0;
+
+    overflow:auto;
+}
+
+
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+.confirmation-dialog-message
+{
+    display:flex;
+
+    align-items:center;
+
+    width:100%;
+
+    margin:0;
+
+    padding:
+        0
+        2px;
+}
+
+
+
+.confirmation-dialog-message span
+{
+    color:#334e75;
+
+    font-size:18px;
+
+    font-weight:600;
+
+    line-height:1.45;
+
+    margin:0;
+
+    padding:0;
+}
+
+
+
+/* =====================================================
+   DETAILS
+===================================================== */
+
+.confirmation-dialog-details
+{
+    display:flex;
+
+    flex-direction:column;
+
+    width:100%;
+
+    margin:0;
+
+    padding:0;
+
+    overflow:hidden;
+
+    border:
+        1px solid #d7e4f4;
+
+    border-radius:14px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f5f9ff 100%
+        );
+
+    box-shadow:
+        0
+        4px
+        12px
+        rgba(
+            30,
+            64,
+            175,
+            .05
+        );
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   DETAIL ROW
+===================================================== */
+
+.confirmation-dialog-detail
+{
+    display:grid;
+
+    grid-template-columns:
+        42px
+        minmax(
+            105px,
+            180px
+        )
+        1px
+        minmax(
+            0,
+            1fr
+        );
+
+    align-items:center;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:80px;
+
+    margin:0;
+
+    padding:
+        8px
+        14px;
+
+    box-sizing:border-box;
+
+    border-bottom:
+        1px solid #e6eef8;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .76
+        );
+
+    transition:
+        background .18s ease;
+}
+
+
+
+.confirmation-dialog-detail:last-child
+{
+    border-bottom:none;
+}
+
+
+
+.confirmation-dialog-detail:hover
+{
+    background:#f8fbff;
+}
+
+
+
+/* =====================================================
+   DETAIL ICON
+===================================================== */
+
+.confirmation-dialog-detail-icon
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:48px;
+
+    height:48px;
+
+    min-width:48px;
+
+    min-height:48px;
+
+    max-width:48px;
+
+    max-height:48px;
+
+    margin:
+        0
+        14px
+        0
+        0;
+
+    border:
+        1px solid #c7ddf8;
+
+    border-radius:11px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #e5f2ff,
+            #d4e9ff
+        );
+
+    color:#1769d1;
+
+    box-sizing:border-box;
+
+    flex:none;
+}
+
+
+
+.confirmation-dialog-detail-icon
+.fa-solid,
+.confirmation-dialog-detail-icon
+.fa-regular
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:26px;
+
+    line-height:1;
+
+    color:#1769d1;
+}
+
+
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.confirmation-dialog-label
+{
+    min-width:0;
+
+    margin:0;
+
+    padding:0;
+
+    color:#58739d;
+
+    font-size:18px;
+
+    font-weight:800;
+
+    padding-left: 30px;
+
+    line-height:1.35;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+
+/* =====================================================
+   SEPARATOR
+===================================================== */
+
+.confirmation-dialog-separator
+{
+    width:1px;
+
+    height:24px;
+
+    min-width:1px;
+
+    margin:
+        0
+        18px;
+
+    background:#c9dbf1;
+
+    flex:none;
+}
+
+
+
+/* =====================================================
+   VALUE
+===================================================== */
+
+.confirmation-dialog-value
+{
+    min-width:0;
+
+    margin:0;
+
+    padding:0;
+
+    overflow:hidden;
+
+    color:#102d5a;
+
+    font-size:20px;
+
+    font-weight:700;
+
+    line-height:1.35;
+
+    text-align:left;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+
+/* =====================================================
+   LOGIN ID — FOCUSED
+===================================================== */
+
+.confirmation-dialog-login-id
+{
+    background:
+        linear-gradient(
+            90deg,
+            #eef7ff 0%,
+            #e3f1ff 100%
+        );
+
+    border-top:
+        1px solid #9dccff;
+
+    border-bottom:
+        1px solid #9dccff;
+
+    box-shadow:
+        inset
+        4px
+        0
+        0
+        #1683ef;
+}
+
+
+
+.confirmation-dialog-login-id
+.confirmation-dialog-detail-icon
+{
+    border-color:#9ebeff;
+
+    background:
+        linear-gradient(
+            145deg,
+            #dfe8ff,
+            #cfdcff
+        );
+
+    color:#2457d6;
+}
+
+
+
+.confirmation-dialog-login-id
+.confirmation-dialog-detail-icon
+.fa-solid,
+.confirmation-dialog-login-id
+.confirmation-dialog-detail-icon
+.fa-regular
+{
+    color:#2457d6;
+}
+
+
+
+.confirmation-dialog-login-id
+.confirmation-dialog-label
+{
+    color:#2457a6;
+font-size: 20px;
+    font-weight:700;
+}
+
+
+
+.confirmation-dialog-login-id
+.confirmation-dialog-value
+{
+    color:#064fc4;
+
+    font-size:26px;
+
+    font-weight:700;
+
+    letter-spacing:.1.5px;
+}
+
+
+
+/* =====================================================
+   ADMINISTRATOR APPROVAL NOTICE
+===================================================== */
+
+.confirmation-dialog-notice
+{
+    display:flex;
+
+    align-items:flex-start;
+
+    width:100%;
+
+    margin:
+        2px
+        0
+        0;
+
+    padding:
+        12px
+        14px;
+
+    border:
+        1px solid #f4cf8b;
+
+    border-left:
+        4px solid #f59e0b;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fffaf0 0%,
+            #fff6e5 100%
+        );
+
+    box-shadow:
+        0
+        3px
+        10px
+        rgba(
+            245,
+            158,
+            11,
+            .06
+        );
+
+    box-sizing:border-box;
+
+    flex:none;
+}
+
+
+
+/* =====================================================
+   NOTICE ICON
+===================================================== */
+
+.confirmation-dialog-notice-icon
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:32px;
+
+    height:32px;
+
+    min-width:32px;
+
+    min-height:32px;
+
+    max-width:32px;
+
+    max-height:32px;
+
+    margin:
+        0
+        12px
+        0
+        0;
+
+    border-radius:50%;
+
+    background:#f59e0b;
+
+    color:#ffffff;
+
+    box-sizing:border-box;
+
+    flex:none;
+}
+
+
+
+.confirmation-dialog-notice-icon
+.fa-solid,
+.confirmation-dialog-notice-icon
+.fa-regular
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:16px;
+
+    line-height:1;
+
+    color:#ffffff;
+}
+
+
+
+/* =====================================================
+   NOTICE CONTENT
+===================================================== */
+
+.confirmation-dialog-notice-content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    gap:2px;
+
+    min-width:0;
+
+    flex:1;
+
+    padding:
+        0
+        2px;
+}
+
+
+
+.confirmation-dialog-notice-content strong
+{
+    margin:0;
+
+    padding:0;
+
+    color:#92400e;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    line-height:1.4;
+}
+
+
+
+.confirmation-dialog-notice-content span
+{
+    margin:0;
+
+    padding:0;
+
+    color:#5f6f85;
+
+    font-size:15px;
+
+    font-weight:500;
+
+    line-height:1.4;
+}
+
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.confirmation-dialog-footer
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+    min-height:68px;
+
+    padding:
+        14px
+        26px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef6ff 100%
+        );
+
+    box-sizing:border-box;
+
+    border-top:
+        1px solid #dce8f5;
+
+    flex:none;
+}
+
+
+
+/* =====================================================
+   OKAY BUTTON
+===================================================== */
+
+.confirmation-dialog-okay-button
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:9px;
+
+    min-width:128px;
+
+    height:48px;
+
+    padding:
+        0
+        22px;
+
+    border:
+        1px solid #2196f3;
+
+    border-radius:10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #168ef5 0%,
+            #0875ed 55%,
+            #075edb 100%
+        );
+
+    color:#ffffff;
+
+    box-shadow:
+        0
+        6px
+        16px
+        rgba(
+            37,
+            99,
+            235,
+            .22
+        );
+
+    font-size:13px;
+
+    font-weight:700;
+
+    letter-spacing:.2px;
+
+    cursor:pointer;
+
+    transition:
+        all .18s ease;
+
+    box-sizing:border-box;
+}
+
+
+
+.confirmation-dialog-okay-button
+.fa-solid,
+.confirmation-dialog-okay-button
+.fa-regular
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:16px;
+
+    line-height:1;
+
+    color:#ffffff;
+}
+
+
+
+.confirmation-dialog-okay-button:hover
+{
+    background:
+        linear-gradient(
+            135deg,
+            #2499fa 0%,
+            #087cf4 55%,
+            #0666e6 100%
+        );
+
+    box-shadow:
+        0
+        8px
+        20px
+        rgba(
+            37,
+            99,
+            235,
+            .28
+        );
+
+    transform:
+        translateY(-1px);
+}
+
+
+
+.confirmation-dialog-okay-button:active
+{
+    transform:
+        translateY(0);
+}
+
+
+
+.confirmation-dialog-okay-button:focus-visible
+{
+    outline:
+        2px solid #60a5fa;
+
+    outline-offset:3px;
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 600px
+===================================================== */
+
+@media
+(
+    max-width:600px
+)
+{
+    .confirmation-dialog-overlay
+    {
+        padding:12px;
+    }
+
+
+
+    .confirmation-dialog
+    {
+        width:100%;
+
+        max-width:680px;
+
+        max-height:calc(100vh - 24px);
+
+        border-radius:15px;
+    }
+
+
+
+    .confirmation-dialog-header
+    {
+        min-height:94px;
+
+        padding:
+            16px
+            60px
+            16px
+            18px;
+
+        gap:12px;
+    }
+
+
+
+    .confirmation-dialog-icon
+    {
+        width:48px;
+
+        height:48px;
+
+        min-width:48px;
+
+        min-height:48px;
+
+        max-width:48px;
+
+        max-height:48px;
+    }
+
+
+
+    .confirmation-dialog-icon
+    .fa-solid,
+    .confirmation-dialog-icon
+    .fa-regular
+    {
+        font-size:24px;
+    }
+
+
+
+    .confirmation-dialog-heading h2
+    {
+        font-size:17px;
+    }
+
+
+
+    .confirmation-dialog-heading p
+    {
+        font-size:10.5px;
+    }
+
+
+
+    .confirmation-dialog-close-button
+    {
+        top:16px;
+
+        right:16px;
+
+        width:34px;
+
+        height:34px;
+
+        min-width:34px;
+
+        min-height:34px;
+
+        max-width:34px;
+
+        max-height:34px;
+    }
+
+
+
+    .confirmation-dialog-close-button
+    .fa-solid,
+    .confirmation-dialog-close-button
+    .fa-regular
+    {
+        font-size:16px;
+    }
+
+
+
+    .confirmation-dialog-content
+    {
+        padding:
+            16px
+            16px
+            14px;
+
+        gap:10px;
+    }
+
+
+
+    .confirmation-dialog-message
+    {
+        padding:
+            0
+            1px;
+    }
+
+
+
+    .confirmation-dialog-message span
+    {
+        font-size:12px;
+    }
+
+
+
+    .confirmation-dialog-detail
+    {
+        grid-template-columns:
+            36px
+            minmax(
+                88px,
+                105px
+            )
+            1px
+            minmax(
+                0,
+                1fr
+            );
+
+        min-height:58px;
+
+        padding:
+            8px
+            10px;
+    }
+
+
+
+    .confirmation-dialog-detail-icon
+    {
+        width:36px;
+
+        height:36px;
+
+        min-width:36px;
+
+        min-height:36px;
+
+        max-width:36px;
+
+        max-height:36px;
+
+        margin-right:10px;
+    }
+
+
+
+    .confirmation-dialog-detail-icon
+    .fa-solid,
+    .confirmation-dialog-detail-icon
+    .fa-regular
+    {
+        font-size:17px;
+    }
+
+
+
+    .confirmation-dialog-label
+    {
+        font-size:11.5px;
+    }
+
+
+
+    .confirmation-dialog-separator
+    {
+        height:20px;
+
+        margin:
+            0
+            10px;
+    }
+
+
+
+    .confirmation-dialog-value
+    {
+        font-size:12px;
+    }
+
+
+
+    .confirmation-dialog-login-id
+    .confirmation-dialog-value
+    {
+        font-size:13px;
+    }
+
+
+
+    .confirmation-dialog-notice
+    {
+        padding:
+            10px
+            11px;
+    }
+
+
+
+    .confirmation-dialog-notice-icon
+    {
+        width:29px;
+
+        height:29px;
+
+        min-width:29px;
+
+        min-height:29px;
+
+        max-width:29px;
+
+        max-height:29px;
+
+        margin-right:9px;
+    }
+
+
+
+    .confirmation-dialog-notice-icon
+    .fa-solid,
+    .confirmation-dialog-notice-icon
+    .fa-regular
+    {
+        font-size:14px;
+    }
+
+
+
+    .confirmation-dialog-notice-content strong
+    {
+        font-size:11.5px;
+    }
+
+
+
+    .confirmation-dialog-notice-content span
+    {
+        font-size:10.5px;
+    }
+
+
+
+    .confirmation-dialog-footer
+    {
+        min-height:64px;
+
+        padding:
+            11px
+            16px;
+    }
+
+
+
+    .confirmation-dialog-okay-button
+    {
+        min-width:112px;
+
+        height:38px;
+
+        padding:
+            0
+            18px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 420px
+===================================================== */
+
+@media
+(
+    max-width:420px
+)
+{
+    .confirmation-dialog-header
+    {
+        min-height:88px;
+
+        padding:
+            14px
+            54px
+            14px
+            14px;
+
+        gap:10px;
+    }
+
+
+
+    .confirmation-dialog-icon
+    {
+        width:43px;
+
+        height:43px;
+
+        min-width:43px;
+
+        min-height:43px;
+
+        max-width:43px;
+
+        max-height:43px;
+    }
+
+
+
+    .confirmation-dialog-icon
+    .fa-solid,
+    .confirmation-dialog-icon
+    .fa-regular
+    {
+        font-size:21px;
+    }
+
+
+
+    .confirmation-dialog-heading h2
+    {
+        font-size:15px;
+    }
+
+
+
+    .confirmation-dialog-heading p
+    {
+        font-size:9.5px;
+    }
+
+
+
+    .confirmation-dialog-content
+    {
+        padding:
+            14px
+            12px
+            12px;
+    }
+
+
+
+    .confirmation-dialog-detail
+    {
+        grid-template-columns:
+            32px
+            minmax(
+                76px,
+                88px
+            )
+            1px
+            minmax(
+                0,
+                1fr
+            );
+
+        min-height:54px;
+
+        padding:
+            7px
+            8px;
+    }
+
+
+
+    .confirmation-dialog-detail-icon
+    {
+        width:32px;
+
+        height:32px;
+
+        min-width:32px;
+
+        min-height:32px;
+
+        max-width:32px;
+
+        max-height:32px;
+
+        margin-right:8px;
+
+        border-radius:9px;
+    }
+
+
+
+    .confirmation-dialog-detail-icon
+    .fa-solid,
+    .confirmation-dialog-detail-icon
+    .fa-regular
+    {
+        font-size:15px;
+    }
+
+
+
+    .confirmation-dialog-label
+    {
+        font-size:10.5px;
+    }
+
+
+
+    .confirmation-dialog-separator
+    {
+        height:18px;
+
+        margin:
+            0
+            7px;
+    }
+
+
+
+    .confirmation-dialog-value
+    {
+        font-size:11px;
+    }
+
+
+
+    .confirmation-dialog-login-id
+    .confirmation-dialog-value
+    {
+        font-size:12px;
+    }
+
+
+
+    .confirmation-dialog-notice-content strong
+    {
+        font-size:10.5px;
+    }
+
+
+
+    .confirmation-dialog-notice-content span
+    {
+        font-size:9.5px;
+    }
+
+
+
+    .confirmation-dialog-footer
+    {
+        justify-content:center;
+    }
+
+
+
+    .confirmation-dialog-okay-button
+    {
+        width:100%;
+
+        max-width:180px;
+    }
+}
+
+
+
+/* =====================================================
+   SHORT HEIGHT
+===================================================== */
+
+@media
+(
+    max-height:600px
+)
+and
+(
+    min-width:601px
+)
+{
+    .confirmation-dialog
+    {
+        max-height:calc(100vh - 20px);
+    }
+
+
+
+    .confirmation-dialog-header
+    {
+        min-height:88px;
+
+        padding:
+            15px
+            70px
+            15px
+            20px;
+    }
+
+
+
+    .confirmation-dialog-content
+    {
+        padding:
+            14px
+            22px
+            12px;
+
+        gap:8px;
+    }
+
+
+
+    .confirmation-dialog-detail
+    {
+        min-height:52px;
+
+        padding:
+            6px
+            12px;
+    }
+
+
+
+    .confirmation-dialog-detail-icon
+    {
+        width:36px;
+
+        height:36px;
+
+        min-width:36px;
+
+        min-height:36px;
+
+        max-width:36px;
+
+        max-height:36px;
+    }
+
+
+
+    .confirmation-dialog-footer
+    {
+        min-height:60px;
+
+        padding:
+            10px
+            22px;
+    }
+}
+
+
+
+/* =====================================================
+   PREVIEW MODE
+===================================================== */
+
+.confirmation-dialog-overlay.preview-mode
+{
+    position:relative;
+
+    inset:auto;
+
+    width:100%;
+
+    height:420px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:20px;
+
+    background:transparent;
+
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    z-index:1;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+}
+
+
+
+.confirmation-dialog-overlay.preview-mode
+.confirmation-dialog
+{
+    animation:none;
+
+    width:
+        min(
+            680px,
+            100%
+        );
+
+    max-height:100%;
+}
+
+
+
+/* =====================================================
+   PREVIEW — COMPACT WIDTH
+===================================================== */
+
+@media
+(
+    max-width:600px
+)
+{
+    .confirmation-dialog-overlay.preview-mode
+    {
+        padding:8px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog
+    {
+        width:100%;
+
+        max-width:100%;
+
+        border-radius:12px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-header
+    {
+        min-height:72px;
+
+        padding:
+            10px
+            42px
+            10px
+            12px;
+
+        gap:8px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-icon
+    {
+        width:36px;
+
+        height:36px;
+
+        min-width:36px;
+
+        min-height:36px;
+
+        max-width:36px;
+
+        max-height:36px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-icon
+    .fa-solid,
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-icon
+    .fa-regular
+    {
+        font-size:17px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-heading h2
+    {
+        font-size:11px;
+
+        line-height:1.2;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-heading p
+    {
+        font-size:7px;
+
+        line-height:1.2;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-close-button
+    {
+        top:9px;
+
+        right:9px;
+
+        width:25px;
+
+        height:25px;
+
+        min-width:25px;
+
+        min-height:25px;
+
+        max-width:25px;
+
+        max-height:25px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-close-button
+    .fa-solid,
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-close-button
+    .fa-regular
+    {
+        font-size:11px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-content
+    {
+        padding:
+            9px
+            10px
+            8px;
+
+        gap:6px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-message span
+    {
+        font-size:7px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-detail
+    {
+        grid-template-columns:
+            26px
+            minmax(
+                60px,
+                78px
+            )
+            1px
+            minmax(
+                0,
+                1fr
+            );
+
+        min-height:38px;
+
+        padding:
+            4px
+            6px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-detail-icon
+    {
+        width:26px;
+
+        height:26px;
+
+        min-width:26px;
+
+        min-height:26px;
+
+        max-width:26px;
+
+        max-height:26px;
+
+        margin-right:6px;
+
+        border-radius:7px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-detail-icon
+    .fa-solid,
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-detail-icon
+    .fa-regular
+    {
+        font-size:12px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-label
+    {
+        font-size:7px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-separator
+    {
+        height:14px;
+
+        margin:
+            0
+            5px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-value
+    {
+        font-size:7.5px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-login-id
+    .confirmation-dialog-value
+    {
+        font-size:8.5px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-notice
+    {
+        padding:
+            6px
+            7px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-notice-icon
+    {
+        width:21px;
+
+        height:21px;
+
+        min-width:21px;
+
+        min-height:21px;
+
+        max-width:21px;
+
+        max-height:21px;
+
+        margin-right:6px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-notice-icon
+    .fa-solid,
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-notice-icon
+    .fa-regular
+    {
+        font-size:10px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-notice-content strong
+    {
+        font-size:7px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-notice-content span
+    {
+        font-size:6px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-footer
+    {
+        min-height:42px;
+
+        padding:
+            7px
+            10px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-okay-button
+    {
+        width:auto;
+
+        min-width:82px;
+
+        max-width:none;
+
+        height:27px;
+
+        padding:
+            0
+            11px;
+
+        gap:5px;
+
+        border-radius:7px;
+
+        font-size:8px;
+    }
+
+
+
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-okay-button
+    .fa-solid,
+    .confirmation-dialog-overlay.preview-mode
+    .confirmation-dialog-okay-button
+    .fa-regular
+    {
+        font-size:10px;
+    }
+}

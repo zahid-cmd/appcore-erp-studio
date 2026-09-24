@@ -24,10 +24,10 @@
 
    IMPORTANT:
    -----------------------------------------------------------
-   The Powered By content is CENTER ALIGNED.
+   The complete Powered By presentation is CENTER ALIGNED.
 
-   The six-logo row remains centered inside the available
-   Powered By area.
+   The POWERED BY label and logo row share the same
+   horizontal center.
 
    No left-side clipping.
    No right-side clipping.
@@ -49,12 +49,11 @@
     --powered-by-logo-size:
         100px;
 
-    /* =======================================================
-       GAP BETWEEN LOGOS ONLY
-    ======================================================== */
-
     --powered-by-gap:
         15px;
+
+    --powered-by-left-padding:
+        40px;
 
 
     /* =======================================================
@@ -134,7 +133,8 @@
 /* ===========================================================
    MAIN CONTAINER
    -----------------------------------------------------------
-   The complete Powered By content is centered.
+   The complete Powered By presentation is horizontally
+   CENTER ALIGNED.
 =========================================================== */
 
 .login-page-powered-by
@@ -155,10 +155,14 @@
         center;
 
     width:
-        100%;
+        675px;
 
     max-width:
-        var(--powered-by-width);
+        calc(
+            100vw
+            -
+            var(--powered-by-left-padding)
+        );
 
     height:
         100%;
@@ -189,25 +193,91 @@
 
 
 /* ===========================================================
+   POWERED BY LABEL
+   -----------------------------------------------------------
+   CENTER ALIGNED WITH THE LOGO ROW.
+=========================================================== */
+
+.powered-by-heading
+{
+    position:
+        relative;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    max-width:
+        100%;
+
+    margin:
+        0 0 12px 0;
+
+    padding:
+        0;
+
+    color:
+        #ffffff !important;
+
+    font-size:
+        16px;
+
+    font-weight:
+        800;
+
+    line-height:
+        1.25;
+
+    letter-spacing:
+        3px;
+
+    text-transform:
+        uppercase;
+
+    text-align:
+        center;
+
+    white-space:
+        nowrap;
+
+    opacity:
+        1;
+
+    visibility:
+        visible;
+
+    text-shadow:
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        ),
+
+        0
+        2px
+        4px
+        rgba(
+            35,
+            55,
+            90,
+            .24
+        );
+
+    z-index:
+        20;
+}
+
+
+/* ===========================================================
    LOGO AREA
    -----------------------------------------------------------
-   SIX ACTUAL LOGO POSITIONS.
-
-   Logo size:
-       100px
-
-   Gap:
-       15px
-
-   Actual six-logo content width:
-
-       100 × 6
-       +
-       15 × 5
-
-       = 675px
-
-   The complete row is centered.
+   SIX LOGOS REMAIN CENTERED AS ONE GROUP.
 =========================================================== */
 
 .powered-by-logo-area
@@ -234,10 +304,10 @@
         center;
 
     width:
-        100%;
+        675px;
 
     max-width:
-        var(--powered-by-width);
+        675px;
 
     height:
         150px;
@@ -246,7 +316,7 @@
         0;
 
     margin:
-        0 auto;
+        0;
 
     padding:
         0;
@@ -261,9 +331,6 @@
 
 /* ===========================================================
    LOGO SLOT
-   -----------------------------------------------------------
-   EACH SLOT:
-       100px
 =========================================================== */
 
 .powered-by-logo-slot
@@ -308,11 +375,6 @@
 
 /* ===========================================================
    LOGO
-   -----------------------------------------------------------
-   GLASS CARD
-
-   Actual logo card size:
-       100px × 100px
 =========================================================== */
 
 .powered-by-logo
@@ -928,62 +990,6 @@
 
 
 /* ===========================================================
-   POWERED BY LABEL
-   -----------------------------------------------------------
-   The label remains ABOVE the logo area.
-
-       POWERED BY
-
-       [1] [2] [3] [4] [5] [6]
-=========================================================== */
-
-.powered-by-heading
-{
-    position:
-        relative;
-
-    display:
-        block;
-
-    width:
-        100%;
-
-    margin:
-        0 0 8px 0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    color:
-        #647ba4;
-
-    font-size:
-        10px;
-
-    font-weight:
-        600;
-
-    line-height:
-        1.2;
-
-    letter-spacing:
-        2.2px;
-
-    text-transform:
-        uppercase;
-
-    text-align:
-        left;
-
-    white-space:
-        nowrap;
-}
-
-
-/* ===========================================================
    TABLET
 =========================================================== */
 
@@ -996,6 +1002,76 @@
 
         max-width:
             100%;
+
+        padding-left:
+            0;
+
+        padding-right:
+            0;
+
+        margin:
+            0 auto;
+
+        align-items:
+            center;
+    }
+
+
+    .powered-by-heading
+    {
+        width:
+            100%;
+
+        max-width:
+            100%;
+
+        margin:
+            0 0 9px 0;
+
+        padding:
+            0;
+
+        color:
+            #ffffff !important;
+
+        font-size:
+            13px;
+
+        font-weight:
+            800;
+
+        letter-spacing:
+            2.2px;
+
+        text-align:
+            center;
+
+        opacity:
+            1;
+
+        visibility:
+            visible;
+
+        text-shadow:
+            0
+            1px
+            0
+            rgba(
+                255,
+                255,
+                255,
+                .95
+            ),
+
+            0
+            2px
+            4px
+            rgba(
+                35,
+                55,
+                90,
+                .24
+            );
     }
 
 
@@ -1023,28 +1099,6 @@
     }
 
 
-    .powered-by-heading
-    {
-        width:
-            100%;
-
-        margin:
-            0 0 7px 0;
-
-        padding:
-            0;
-
-        font-size:
-            9px;
-
-        letter-spacing:
-            1.8px;
-
-        text-align:
-            center;
-    }
-
-
     .powered-by-logo
     {
         border-radius:
@@ -1055,9 +1109,6 @@
 
 /* ===========================================================
    MOBILE
-   -----------------------------------------------------------
-   Mobile keeps the fixed six-logo geometry but scales the
-   complete logo area to the available viewport width.
 =========================================================== */
 
 @media(max-width:768px)
@@ -1073,8 +1124,78 @@
         min-height:
             105px;
 
+        padding-left:
+            0;
+
+        padding-right:
+            0;
+
+        margin:
+            0 auto;
+
+        align-items:
+            center;
+
         overflow:
             visible;
+    }
+
+
+    .powered-by-heading
+    {
+        width:
+            100%;
+
+        max-width:
+            100%;
+
+        margin:
+            0 0 9px 0;
+
+        padding:
+            0;
+
+        color:
+            #ffffff !important;
+
+        font-size:
+            11px;
+
+        font-weight:
+            800;
+
+        letter-spacing:
+            1.8px;
+
+        text-align:
+            center;
+
+        opacity:
+            1;
+
+        visibility:
+            visible;
+
+        text-shadow:
+            0
+            1px
+            0
+            rgba(
+                255,
+                255,
+                255,
+                .95
+            ),
+
+            0
+            2px
+            4px
+            rgba(
+                35,
+                55,
+                90,
+                .24
+            );
     }
 
 
@@ -1103,28 +1224,6 @@
 
         transform-origin:
             top center;
-    }
-
-
-    .powered-by-heading
-    {
-        width:
-            100%;
-
-        margin:
-            0 0 8px 0;
-
-        padding:
-            0;
-
-        font-size:
-            8px;
-
-        letter-spacing:
-            1.5px;
-
-        text-align:
-            center;
     }
 
 

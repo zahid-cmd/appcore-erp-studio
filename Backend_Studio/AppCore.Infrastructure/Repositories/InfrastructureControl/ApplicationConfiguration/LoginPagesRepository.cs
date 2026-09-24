@@ -101,6 +101,26 @@ public class LoginPagesRepository
 
 
     //===========================================================
+    // Get Active
+    //===========================================================
+
+    public async Task<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.LoginPages?>
+        GetActiveAsync()
+    {
+        return await _context
+            .Set<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.LoginPages>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x =>
+                    !x.IsDeleted
+                    &&
+                    x.Status
+            );
+    }
+
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
