@@ -670,16 +670,55 @@ implements OnInit
             ||
             '';
 
+        const message =
+            result?.message
+            ||
+            '';
 
         this.mergeConflicts =
             this.extractMergeConflicts(
                 output
             );
 
+        const normalizedMessage =
+            message
+                .trim()
+                .toLowerCase();
 
+        /*
+         * IMPORTANT:
+         * The backend GetMergeConflicts endpoint returns the
+         * unresolved file names directly from:
+         *
+         *     git diff --name-only --diff-filter=U
+         *
+         * Therefore Output can contain:
+         *
+         *     Promo_Image_2_Light.png
+         *
+         * rather than a `UU` status prefix.
+         *
+         * The merge state itself is reported by the backend
+         * Message, so the UI must not determine merge activity
+         * from the conflict-file count alone.
+         */
+        /*
+         * IMPORTANT:
+         * The merge-resolution UI is only required when there
+         * are unresolved files.
+         *
+         * The backend can legitimately report that a merge is
+         * still technically in progress while zero unresolved
+         * files remain. That state must NOT keep the conflict
+         * resolution UI visible.
+         *
+         * Therefore the UI merge-active state is driven by the
+         * actual unresolved conflict list.
+         */
         this.isMergeActive =
             this.mergeConflicts.length > 0;
     }
+
 
 
     //===========================================================
@@ -701,7 +740,6 @@ implements OnInit
             return [];
         }
 
-
         const lines =
             output
                 .split(/\r?\n/)
@@ -714,8 +752,23 @@ implements OnInit
                         !!line
                 );
 
-
-        const conflicts =
+        /*
+         * Support both:
+         *
+         * 1. `git status --short` conflict output:
+         *      UU path/to/file
+         *
+         * 2. The current backend merge-state output:
+         *      path/to/file
+         *
+         * The backend currently uses:
+         *
+         *      git diff --name-only --diff-filter=U
+         *
+         * so unresolved conflict files are returned without
+         * a two-character status prefix.
+         */
+        const statusConflicts =
             lines.filter(
                 line =>
                     line.startsWith(
@@ -747,14 +800,26 @@ implements OnInit
                     )
             );
 
+        if
+        (
+            statusConflicts.length > 0
+        )
+        {
+            return statusConflicts.map(
+                line =>
+                    line.substring(
+                        3
+                    ).trim()
+            );
+        }
 
-        return conflicts.map(
-            line =>
-                line.substring(
-                    3
-                ).trim()
-        );
+        /*
+         * With `git diff --name-only --diff-filter=U`, every
+         * non-empty output line is an unresolved conflict path.
+         */
+        return lines;
     }
+
 
 
     //===========================================================
@@ -1590,6 +1655,17 @@ implements OnInit
                         this.progressDialog.close();
 
 
+                        /*
+                         * Clear the merge UI immediately after a
+                         * successful merge completion.
+                         */
+                        this.mergeConflicts =
+                            [];
+
+                        this.isMergeActive =
+                            false;
+
+
                         this.operationCompleted(
                             result,
 
@@ -1705,6 +1781,20 @@ implements OnInit
 
 
                         this.progressDialog.close();
+
+
+                        /*
+                         * Clear the merge UI immediately.
+                         *
+                         * This prevents the previous merge state
+                         * from remaining visible while repository
+                         * status is being reloaded.
+                         */
+                        this.mergeConflicts =
+                            [];
+
+                        this.isMergeActive =
+                            false;
 
 
                         this.operationCompleted(
