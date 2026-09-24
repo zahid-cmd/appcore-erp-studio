@@ -294,6 +294,18 @@ implements OnInit
 
 
     //===========================================================
+    // Merge State Request Sequence
+    //
+    // Prevents an older asynchronous merge-state response from
+    // overwriting a newer authoritative repository state.
+    //===========================================================
+
+    private mergeStateRequestId:
+        number =
+        0;
+
+
+    //===========================================================
     // Page State
     //===========================================================
 
@@ -600,6 +612,10 @@ implements OnInit
         }
 
 
+        const requestId =
+            ++this.mergeStateRequestId;
+
+
         this.isCheckingMerge =
             true;
 
@@ -613,6 +629,23 @@ implements OnInit
                 next:
                     result =>
                     {
+                        /*
+                         * Ignore stale responses.
+                         *
+                         * Multiple repository refresh calls can overlap.
+                         * Only the latest merge-state response is allowed
+                         * to update the resolver state.
+                         */
+                        if
+                        (
+                            requestId !==
+                            this.mergeStateRequestId
+                        )
+                        {
+                            return;
+                        }
+
+
                         this.applyMergeConflictResult(
                             result
                         );
@@ -629,6 +662,16 @@ implements OnInit
                 error:
                     error =>
                     {
+                        if
+                        (
+                            requestId !==
+                            this.mergeStateRequestId
+                        )
+                        {
+                            return;
+                        }
+
+
                         console.error(
                             'Git Merge Conflict Check Error',
 
@@ -675,15 +718,43 @@ implements OnInit
             ||
             '';
 
-        this.mergeConflicts =
-            this.extractMergeConflicts(
-                output
-            );
-
         const normalizedMessage =
             message
                 .trim()
                 .toLowerCase();
+
+
+        /*
+         * IMPORTANT:
+         * If the backend explicitly reports that no Git merge is
+         * currently active, that response is authoritative.
+         *
+         * Clear the resolver immediately. Do not allow the previous
+         * isMergeActive value to survive a refresh.
+         */
+        if
+        (
+            this.isNoActiveMergeResult(
+                result
+            )
+        )
+        {
+            this.mergeConflicts =
+                [];
+
+
+            this.isMergeActive =
+                false;
+
+
+            return;
+        }
+
+
+        this.mergeConflicts =
+            this.extractMergeConflicts(
+                output
+            );
 
         /*
          * IMPORTANT:
@@ -745,8 +816,6 @@ implements OnInit
             ||
             this.mergeConflicts.length > 0;
     }
-
-
 
 
     //===========================================================
@@ -1499,7 +1568,7 @@ implements OnInit
                                 true;
 
 
-                            this.loadGitStatus();
+                            this.loadMergeConflicts();
 
 
                             this.cdr.detectChanges();
@@ -1587,7 +1656,7 @@ implements OnInit
                                 true;
 
 
-                            this.loadGitStatus();
+                            this.loadMergeConflicts();
 
 
                             this.cdr.detectChanges();
@@ -2144,6 +2213,49 @@ implements OnInit
                         this.progressDialog.close();
 
 
+                        if
+                        (
+                            this.isNoActiveMergeError(
+                                error
+                            )
+                        )
+                        {
+                            this.mergeStateRequestId++;
+
+
+                            this.mergeConflicts =
+                                [];
+
+
+                            this.isMergeActive =
+                                false;
+
+
+                            this.isOperating =
+                                false;
+
+
+                            this.currentOperation =
+                                '';
+
+
+                            this.toast.success(
+                                'Merge Status Updated',
+
+                                'The Git merge is no longer active. The conflict resolver has been closed.'
+                            );
+
+
+                            this.loadGitStatus();
+
+
+                            this.cdr.detectChanges();
+
+
+                            return;
+                        }
+
+
                         this.operationFailed(
                             error,
 
@@ -2195,6 +2307,127 @@ implements OnInit
         );
     }
 
+
+
+    //===========================================================
+    // Is No Active Merge Result
+    //===========================================================
+
+    private isNoActiveMergeResult
+    (
+        result:
+            GitOperationResultDto
+    ):
+        boolean
+    {
+        if
+        (
+            !result
+        )
+        {
+            return false;
+        }
+
+
+        const candidates =
+            [
+                result?.message,
+
+                result?.output
+            ]
+                .filter(
+                    value =>
+                        typeof value ===
+                        'string'
+                )
+                .join(
+                    '\n'
+                )
+                .toLowerCase();
+
+
+        return (
+            candidates.includes(
+                'there is no git merge currently in progress'
+            )
+            ||
+            candidates.includes(
+                'no git merge is currently in progress'
+            )
+            ||
+            candidates.includes(
+                'there is no active merge'
+            )
+            ||
+            candidates.includes(
+                'no active merge'
+            )
+        );
+    }
+
+
+
+    //===========================================================
+    // Is No Active Merge Error
+    //===========================================================
+
+    private isNoActiveMergeError
+    (
+        error:
+            any
+    ):
+        boolean
+    {
+        if
+        (
+            !error
+        )
+        {
+            return false;
+        }
+
+
+        const candidates =
+            [
+                error?.message,
+
+                error?.error?.message,
+
+                error?.error?.output,
+
+                error?.error?.error,
+
+                error?.error?.details,
+
+                error?.error?.title
+            ]
+                .filter(
+                    value =>
+                        typeof value ===
+                        'string'
+                )
+                .join(
+                    '\n'
+                )
+                .toLowerCase();
+
+
+            return candidates.includes(
+                'there is no git merge currently in progress'
+            )
+                ||
+                candidates.includes(
+                    'no git merge is currently in progress'
+                )
+                ||
+                candidates.includes(
+                    'there is no active merge'
+                )
+                ||
+                candidates.includes(
+                    'no active merge'
+                );
+    }
 
 
     //===========================================================
@@ -2290,6 +2523,9 @@ implements OnInit
                          * Clear the merge UI immediately after a
                          * successful merge completion.
                          */
+                        this.mergeStateRequestId++;
+
+
                         this.mergeConflicts =
                             [];
 
@@ -2311,6 +2547,49 @@ implements OnInit
                     error =>
                     {
                         this.progressDialog.close();
+
+
+                        if
+                        (
+                            this.isNoActiveMergeError(
+                                error
+                            )
+                        )
+                        {
+                            this.mergeStateRequestId++;
+
+
+                            this.mergeConflicts =
+                                [];
+
+
+                            this.isMergeActive =
+                                false;
+
+
+                            this.isOperating =
+                                false;
+
+
+                            this.currentOperation =
+                                '';
+
+
+                            this.toast.success(
+                                'Merge Status',
+
+                                'The Git merge is no longer active. The repository merge state has been refreshed.'
+                            );
+
+
+                            this.loadGitStatus();
+
+
+                            this.cdr.detectChanges();
+
+
+                            return;
+                        }
 
 
                         this.operationFailed(
@@ -2421,6 +2700,9 @@ implements OnInit
                          * from remaining visible while repository
                          * status is being reloaded.
                          */
+                        this.mergeStateRequestId++;
+
+
                         this.mergeConflicts =
                             [];
 
@@ -2442,6 +2724,49 @@ implements OnInit
                     error =>
                     {
                         this.progressDialog.close();
+
+
+                        if
+                        (
+                            this.isNoActiveMergeError(
+                                error
+                            )
+                        )
+                        {
+                            this.mergeStateRequestId++;
+
+
+                            this.mergeConflicts =
+                                [];
+
+
+                            this.isMergeActive =
+                                false;
+
+
+                            this.isOperating =
+                                false;
+
+
+                            this.currentOperation =
+                                '';
+
+
+                            this.toast.success(
+                                'Merge Status',
+
+                                'The Git merge is no longer active. The resolver has been closed.'
+                            );
+
+
+                            this.loadGitStatus();
+
+
+                            this.cdr.detectChanges();
+
+
+                            return;
+                        }
 
 
                         this.operationFailed(
