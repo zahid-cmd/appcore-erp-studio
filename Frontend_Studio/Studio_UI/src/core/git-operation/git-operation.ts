@@ -1415,6 +1415,62 @@ implements OnInit
                 next:
                     result =>
                     {
+                        /*
+                         * IMPORTANT:
+                         * A Git merge conflict is an expected intermediate
+                         * synchronization state. It is not a final
+                         * synchronization failure.
+                         *
+                         * Return the user to the existing conflict
+                         * resolution state and show a warning toast.
+                         */
+                        if
+                        (
+                            this.isSynchronizationConflict(
+                                result
+                            )
+                        )
+                        {
+                            this.progressDialog.update(
+                                100,
+
+                                'Synchronization paused. Merge conflict detected.'
+                            );
+
+
+                            this.progressDialog.close();
+
+
+                            this.isOperating =
+                                false;
+
+
+                            this.currentOperation =
+                                '';
+
+
+                            this.toast.warning(
+                                'Synchronization Paused',
+
+                                'Remote changes could not be integrated automatically. A merge conflict was detected. Please resolve the conflict and choose Continue Merge or Abort Merge.'
+                            );
+
+
+                            /*
+                             * Reload the repository state so the existing
+                             * Merge Conflict Resolution section displays
+                             * the current unresolved files.
+                             */
+                            this.reloadRepositoryData();
+
+
+                            this.cdr.detectChanges();
+
+
+                            return;
+                        }
+
+
                         this.progressDialog.update(
                             100,
 
@@ -1450,6 +1506,82 @@ implements OnInit
                         );
                     }
             });
+    }
+
+
+    //===========================================================
+    // Is Synchronization Conflict
+    //===========================================================
+    //
+    // Full Repository Synchronization can stop at the remote
+    // integration stage because Git detected a merge conflict.
+    //
+    // That result is intentionally handled differently from a
+    // normal Git/API failure:
+    //
+    // - show a warning toast;
+    // - reload the repository state;
+    // - return to the existing conflict-resolution UI.
+    //
+    //===========================================================
+
+    private isSynchronizationConflict
+    (
+        result:
+            GitOperationResultDto
+    ):
+        boolean
+    {
+        if
+        (
+            !result
+        )
+        {
+            return false;
+        }
+
+
+        const message =
+            (
+                result.message
+                ||
+                ''
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const output =
+            (
+                result.output
+                ||
+                ''
+            )
+                .trim()
+                .toLowerCase();
+
+
+        return (
+            message.includes(
+                'synchronization conflict'
+            )
+            ||
+            message.includes(
+                'could not be integrated'
+            )
+            ||
+            message.includes(
+                'merge conflict'
+            )
+            ||
+            output.includes(
+                'cannot merge binary files'
+            )
+            ||
+            output.includes(
+                'merge conflict'
+            )
+        );
     }
 
 
