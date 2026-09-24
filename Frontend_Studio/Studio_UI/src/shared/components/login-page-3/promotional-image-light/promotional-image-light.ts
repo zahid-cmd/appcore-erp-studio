@@ -1,5 +1,5 @@
 //===============================================================
-// Login Page 2 — Promotional Image Deep
+// Login Page 2 — Promotional Image Light
 //===============================================================
 
 import
@@ -20,10 +20,10 @@ from '@angular/common';
 
 
 //===============================================================
-// PROMOTIONAL IMAGE DEEP CONFIGURATION
+// PROMOTIONAL IMAGE LIGHT CONFIGURATION
 //===============================================================
 
-export interface LoginPagePromotionalImageDeepConfig
+export interface LoginPagePromotionalImageLightConfig
 {
     visible:
         boolean;
@@ -70,7 +70,7 @@ export interface LoginPagePromotionalImageDeepConfig
 @Component
 ({
     selector:
-        'app-login-page-promotional-image-deep',
+        'app-login-page-promotional-image-light',
 
     standalone:
         true,
@@ -81,15 +81,15 @@ export interface LoginPagePromotionalImageDeepConfig
     ],
 
     templateUrl:
-        './promotional-image-deep.html',
+        './promotional-image-light.html',
 
     styleUrl:
-        './promotional-image-deep.css',
+        './promotional-image-light.css',
 
     changeDetection:
         ChangeDetectionStrategy.OnPush
 })
-export class LoginPagePromotionalImageDeepComponent
+export class LoginPagePromotionalImageLightComponent
 {
     /* ===========================================================
        CONFIGURATION
@@ -97,13 +97,13 @@ export class LoginPagePromotionalImageDeepComponent
 
     @Input()
     config:
-        LoginPagePromotionalImageDeepConfig =
+        LoginPagePromotionalImageLightConfig =
     {
         visible:
             true,
 
         imageUrl:
-            '/assets/promotional-panel/Promo_Image2_Deep.png',
+            '/assets/promotional-panel/Promo_Image2_Light.png',
 
         altText:
             'AppCore Technologies',
@@ -131,8 +131,8 @@ export class LoginPagePromotionalImageDeepComponent
 
     @Output()
     configChange:
-        EventEmitter<LoginPagePromotionalImageDeepConfig> =
-            new EventEmitter<LoginPagePromotionalImageDeepConfig>();
+        EventEmitter<LoginPagePromotionalImageLightConfig> =
+        new EventEmitter<LoginPagePromotionalImageLightConfig>();
 
 
     /* ===========================================================
@@ -142,8 +142,8 @@ export class LoginPagePromotionalImageDeepComponent
 
            Width and Height are intentionally NOT included here.
 
-           Promotional Image Deep size is controlled exclusively
-           by promotional-image-deep.css.
+           Promotional Image Light size is controlled exclusively
+           by promotional-image-light.css.
 
            Object Fit and Object Position are ALSO intentionally
            NOT included here.
@@ -182,7 +182,7 @@ export class LoginPagePromotionalImageDeepComponent
     updateConfig
     (
         changes:
-            Partial<LoginPagePromotionalImageDeepConfig>
+            Partial<LoginPagePromotionalImageLightConfig>
     ):
         void
     {

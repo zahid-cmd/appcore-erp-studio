@@ -1,7 +1,7 @@
 <!-- ===========================================================
-     LOGIN PAGE FORGET PASSWORD PANEL
+     LOGIN PAGE REGISTRATION PANEL
      -----------------------------------------------------------
-     FINAL PREMIUM FORGET PASSWORD PANEL
+     FINAL PREMIUM REGISTRATION PANEL
 
      MASTER GEOMETRY:
 
@@ -14,7 +14,7 @@
 
      IMPORTANT:
 
-         This panel controls ONLY the forget password form.
+         This panel controls ONLY the registration form.
 
          No:
          - Client Logo
@@ -24,42 +24,32 @@
          - Powered By
          - Footer
 
-         The forget password panel uses the same master
-         geometry and visual language as the Registration
-         Panel and Login Panel.
-
-     FORGET PASSWORD:
-
-         Login ID
-         New Password
-         Confirm New Password
-         Reset Password
-         OR
-         Back To Sign In
+         The registration panel uses the same master geometry
+         and visual language as the Login Panel.
 ============================================================ -->
 
 
 <div
-    class="forget-password-page-forget-password-panel"
+    class="registration-page-registration-panel"
     *ngIf="config.visible"
 >
 
 
     <!-- =======================================================
-         FORGET PASSWORD PANEL CONTENT
+         REGISTRATION PANEL CONTENT
     ======================================================== -->
 
     <div
-        class="forget-password-panel-content"
+        class="registration-panel-content"
     >
 
 
         <!-- ===================================================
-             FORGET PASSWORD CARD
+             REGISTRATION CARD
         ==================================================== -->
 
         <div
-            class="forget-password-card"
+            class="registration-card"
         >
 
 
@@ -68,7 +58,7 @@
             ================================================ -->
 
             <div
-                class="forget-password-card-header"
+                class="registration-card-header"
             >
 
 
@@ -77,7 +67,7 @@
                 ============================================ -->
 
                 <div
-                    class="forget-password-card-top-meta"
+                    class="registration-card-top-meta"
                 >
 
                     <span>
@@ -112,7 +102,7 @@
                 ============================================ -->
 
                 <div
-                    class="forget-password-card-accent"
+                    class="registration-card-accent"
                 >
                 </div>
 
@@ -122,18 +112,18 @@
                 ============================================ -->
 
                 <div
-                    class="forget-password-card-heading-area"
+                    class="registration-card-heading-area"
                 >
 
                     <h2
-                        class="forget-password-card-heading"
+                        class="registration-card-heading"
                     >
                         {{ config.heading }}
                     </h2>
 
 
                     <p
-                        class="forget-password-card-subtitle"
+                        class="registration-card-subtitle"
                     >
                         {{ config.subtitle }}
                     </p>
@@ -145,40 +135,40 @@
 
 
             <!-- ===============================================
-                 FORGET PASSWORD FORM
+                 REGISTRATION FORM
             ================================================ -->
 
             <form
-                class="forget-password-form"
-                (ngSubmit)="onResetPassword()"
+                class="registration-form"
+                (ngSubmit)="onRegister()"
                 autocomplete="on"
             >
 
 
                 <!-- ===========================================
-                     LOGIN ID
+                     FULL NAME
                 ============================================ -->
 
                 <div
-                    class="forget-password-form-field"
+                    class="registration-form-field"
                 >
 
                     <label
-                        class="forget-password-form-label"
-                        for="forget-password-page-login-id"
+                        class="registration-form-label"
+                        for="registration-page-full-name"
                     >
 
-                        {{ config.loginIdLabel }}
+                        {{ config.fullNameLabel }}
 
                     </label>
 
 
                     <div
-                        class="forget-password-input-wrapper"
+                        class="registration-input-wrapper"
                     >
 
                         <span
-                            class="forget-password-input-icon"
+                            class="registration-input-icon"
                         >
 
                             <i
@@ -191,8 +181,173 @@
 
 
                         <input
-                            id="forget-password-page-login-id"
-                            class="forget-password-form-input"
+                            id="registration-page-full-name"
+                            class="registration-form-input"
+                            type="text"
+                            name="fullName"
+                            [value]="fullName"
+                            [placeholder]="config.fullNamePlaceholder"
+                            autocomplete="name"
+                            (input)="
+                                onFullNameChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     DISPLAY NAME
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                >
+
+                    <label
+                        class="registration-form-label"
+                        for="registration-page-display-name"
+                    >
+
+                        {{ config.displayNameLabel }}
+
+                    </label>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-display-name"
+                            class="registration-form-input"
+                            type="text"
+                            name="displayName"
+                            [value]="displayName"
+                            [placeholder]="config.displayNamePlaceholder"
+                            autocomplete="nickname"
+                            (input)="
+                                onDisplayNameChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     EMAIL ADDRESS
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                >
+
+                    <label
+                        class="registration-form-label"
+                        for="registration-page-email"
+                    >
+
+                        {{ config.emailLabel }}
+
+                    </label>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-envelope"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-email"
+                            class="registration-form-input"
+                            type="email"
+                            name="email"
+                            [value]="email"
+                            [placeholder]="config.emailPlaceholder"
+                            autocomplete="email"
+                            (input)="
+                                onEmailChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LOGIN ID
+                ============================================ -->
+
+                <div
+                    class="registration-form-field"
+                >
+
+                    <label
+                        class="registration-form-label"
+                        for="registration-page-login-id"
+                    >
+
+                        {{ config.loginIdLabel }}
+
+                    </label>
+
+
+                    <div
+                        class="registration-input-wrapper"
+                    >
+
+                        <span
+                            class="registration-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="registration-page-login-id"
+                            class="registration-form-input"
                             type="text"
                             name="loginId"
                             [value]="loginId"
@@ -211,29 +366,29 @@
 
 
                 <!-- ===========================================
-                     NEW PASSWORD
+                     PASSWORD
                 ============================================ -->
 
                 <div
-                    class="forget-password-form-field"
+                    class="registration-form-field"
                 >
 
                     <label
-                        class="forget-password-form-label"
-                        for="forget-password-page-new-password"
+                        class="registration-form-label"
+                        for="registration-page-password"
                     >
 
-                        {{ config.newPasswordLabel }}
+                        {{ config.passwordLabel }}
 
                     </label>
 
 
                     <div
-                        class="forget-password-input-wrapper"
+                        class="registration-input-wrapper"
                     >
 
                         <span
-                            class="forget-password-input-icon"
+                            class="registration-input-icon"
                         >
 
                             <i
@@ -246,19 +401,19 @@
 
 
                         <input
-                            id="forget-password-page-new-password"
-                            class="forget-password-form-input forget-password-password-input"
+                            id="registration-page-password"
+                            class="registration-form-input registration-password-input"
                             [type]="
-                                newPasswordVisible
+                                passwordVisible
                                     ? 'text'
                                     : 'password'
                             "
-                            name="newPassword"
-                            [value]="newPassword"
-                            [placeholder]="config.newPasswordPlaceholder"
+                            name="password"
+                            [value]="password"
+                            [placeholder]="config.passwordPlaceholder"
                             autocomplete="new-password"
                             (input)="
-                                onNewPasswordChange(
+                                onPasswordChange(
                                     $any($event.target).value
                                 )
                             "
@@ -267,16 +422,16 @@
 
                         <button
                             type="button"
-                            class="forget-password-visibility-button"
-                            aria-label="Show or hide new password"
+                            class="password-visibility-button"
+                            aria-label="Show or hide password"
                             (click)="
-                                toggleNewPasswordVisibility()
+                                togglePasswordVisibility()
                             "
                         >
 
                             <i
                                 [class]="
-                                    newPasswordVisible
+                                    passwordVisible
                                         ? 'fas fa-eye'
                                         : 'fas fa-eye-slash'
                                 "
@@ -292,16 +447,16 @@
 
 
                 <!-- ===========================================
-                     CONFIRM NEW PASSWORD
+                     CONFIRM PASSWORD
                 ============================================ -->
 
                 <div
-                    class="forget-password-form-field"
+                    class="registration-form-field"
                 >
 
                     <label
-                        class="forget-password-form-label"
-                        for="forget-password-page-confirm-password"
+                        class="registration-form-label"
+                        for="registration-page-confirm-password"
                     >
 
                         {{ config.confirmPasswordLabel }}
@@ -310,11 +465,11 @@
 
 
                     <div
-                        class="forget-password-input-wrapper"
+                        class="registration-input-wrapper"
                     >
 
                         <span
-                            class="forget-password-input-icon"
+                            class="registration-input-icon"
                         >
 
                             <i
@@ -327,8 +482,8 @@
 
 
                         <input
-                            id="forget-password-page-confirm-password"
-                            class="forget-password-form-input forget-password-password-input"
+                            id="registration-page-confirm-password"
+                            class="registration-form-input registration-password-input"
                             [type]="
                                 confirmPasswordVisible
                                     ? 'text'
@@ -348,8 +503,8 @@
 
                         <button
                             type="button"
-                            class="forget-password-visibility-button"
-                            aria-label="Show or hide confirm password"
+                            class="password-visibility-button"
+                            aria-label="Show or hide password"
                             (click)="
                                 toggleConfirmPasswordVisibility()
                             "
@@ -373,20 +528,75 @@
 
 
                 <!-- ===========================================
-                     RESET PASSWORD BUTTON
+                     TERMS AND PRIVACY
+                ============================================ -->
+
+                <label
+                    class="registration-terms"
+                >
+
+                    <input
+                        type="checkbox"
+                        name="termsAccepted"
+                        [checked]="termsAccepted"
+                        (change)="
+                            onTermsAcceptedChange(
+                                $any($event.target).checked
+                            )
+                        "
+                    />
+
+
+                    <span
+                        class="registration-terms-checkbox"
+                    >
+                    </span>
+
+
+                    <span
+                        class="registration-terms-text"
+                    >
+
+                        {{ config.termsPrefixText }}
+
+                        <button
+                            type="button"
+                            class="registration-terms-link"
+                            (click)="onTermsOfService()"
+                        >
+                            {{ config.termsText }}
+                        </button>
+
+                        {{ config.termsMiddleText }}
+
+                        <button
+                            type="button"
+                            class="registration-terms-link"
+                            (click)="onPrivacyPolicy()"
+                        >
+                            {{ config.privacyText }}
+                        </button>
+
+                    </span>
+
+                </label>
+
+
+                <!-- ===========================================
+                     CREATE ACCOUNT BUTTON
                 ============================================ -->
 
                 <button
                     type="submit"
-                    class="reset-password-button"
+                    class="create-account-button"
                 >
 
                     <span
-                        class="reset-password-icon"
+                        class="create-account-icon"
                     >
 
                         <i
-                            [class]="config.resetPasswordButtonIcon"
+                            [class]="config.createAccountButtonIcon"
                             aria-hidden="true"
                         >
                         </i>
@@ -395,18 +605,18 @@
 
 
                     <span
-                        class="reset-password-text"
+                        class="create-account-text"
                     >
-                        {{ config.resetPasswordButtonText }}
+                        {{ config.createAccountButtonText }}
                     </span>
 
 
                     <span
-                        class="reset-password-arrow"
+                        class="create-account-arrow"
                     >
 
                         <i
-                            [class]="config.resetPasswordButtonArrowIcon"
+                            [class]="config.createAccountButtonArrowIcon"
                             aria-hidden="true"
                         >
                         </i>
@@ -424,7 +634,7 @@
             ================================================== -->
 
             <div
-                class="forget-password-or-separator"
+                class="registration-or-separator"
             >
 
                 <span
@@ -449,25 +659,25 @@
 
 
             <!-- =================================================
-                 BACK TO SIGN IN
+                 BACK TO LOGIN
             ================================================== -->
 
             <div
-                class="sign-in-registration-area"
-                *ngIf="config.signInVisible"
+                class="login-registration-area"
+                *ngIf="config.loginVisible"
             >
 
 
                 <!-- =============================================
-                     SIGN IN ICON
+                     LOGIN ICON
                 ============================================== -->
 
                 <div
-                    class="sign-in-registration-icon"
+                    class="login-registration-icon"
                 >
 
                     <i
-                        [class]="config.signInIcon"
+                        [class]="config.loginIcon"
                         aria-hidden="true"
                     >
                     </i>
@@ -476,40 +686,40 @@
 
 
                 <!-- =============================================
-                     SIGN IN CONTENT
+                     LOGIN CONTENT
                 ============================================== -->
 
                 <div
-                    class="sign-in-registration-content"
+                    class="login-registration-content"
                 >
 
                     <div
-                        class="sign-in-registration-heading"
+                        class="login-registration-heading"
                     >
-                        {{ config.signInHeading }}
+                        {{ config.loginHeading }}
                     </div>
 
 
                     <div
-                        class="sign-in-registration-description"
+                        class="login-registration-description"
                     >
-                        {{ config.signInDescription }}
+                        {{ config.loginDescription }}
                     </div>
 
                 </div>
 
 
                 <!-- =============================================
-                     SIGN IN BUTTON
+                     LOGIN BUTTON
                 ============================================== -->
 
                 <button
                     type="button"
-                    class="sign-in-registration-button"
+                    class="login-registration-button"
                     (click)="onBackToLogin()"
                 >
 
-                    {{ config.signInButtonText }}
+                    {{ config.loginButtonText }}
 
                 </button>
 
@@ -520,11 +730,11 @@
             <!-- =================================================
                  BOTTOM META
                  -------------------------------------------------
-                 Forget Password panel only
+                 Registration panel only
             ================================================== -->
 
             <div
-                class="forget-password-card-bottom-meta"
+                class="registration-card-bottom-meta"
             >
 
                 <span>

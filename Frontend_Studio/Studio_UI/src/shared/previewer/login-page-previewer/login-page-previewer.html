@@ -38,11 +38,28 @@
 
 
         <!-- ===================================================
+             LOGIN PAGE 3
+        ==================================================== -->
+
+        <app-login-page-3
+            *ngIf="isLoginPage3">
+
+        </app-login-page-3>
+
+
+
+        <!-- ===================================================
              PAGE NOT AVAILABLE
         ==================================================== -->
 
         <div
-            *ngIf="!isLoginPage1 && !isLoginPage2"
+            *ngIf="
+                !isLoginPage1
+                &&
+                !isLoginPage2
+                &&
+                !isLoginPage3
+            "
             class="login-page-previewer-message">
 
             Login Page Preview is not available.

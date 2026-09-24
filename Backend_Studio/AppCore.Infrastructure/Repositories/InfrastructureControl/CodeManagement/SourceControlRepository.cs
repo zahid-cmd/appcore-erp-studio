@@ -3122,6 +3122,477 @@ public class SourceControlRepository
 
 
     //===========================================================
+    // Resolve Merge Conflict
+    //
+    // resolution:
+    //   LOCAL  = keep the current/local branch version
+    //   REMOTE = keep the incoming/remote branch version
+    //
+    // This method is intentionally file-specific. It is designed
+    // for both text and binary conflicts, including image files.
+    // Master_ERP is never allowed to be resolved through the
+    // AppCore parent-repository Git operations.
+    //===========================================================
+
+    public async Task<GitOperationResultDto>
+        ResolveMergeConflictAsync
+    (
+        long sourceControlId,
+
+        string filePath,
+
+        string resolution
+    )
+    {
+        try
+        {
+            var sourceControl =
+                await GetSourceControlForGitAsync(
+                    sourceControlId
+                );
+
+
+            if
+            (
+                sourceControl is null
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    "Source Control repository was not found."
+                );
+            }
+
+
+            var validation =
+                ValidateRepository(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !validation.Success
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    validation.Message
+                );
+            }
+
+
+            var branchResult =
+                await EnsureCurrentBranchAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !branchResult.Success
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    branchResult.Message
+                );
+            }
+
+
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                !mergeStateResult.IsInProgress
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    "There is no Git merge currently in progress."
+                );
+            }
+
+
+            if
+            (
+                !TryNormalizeMergeConflictPath(
+                    sourceControl.RepositoryPath,
+
+                    filePath,
+
+                    out var normalizedPath,
+
+                    out var pathError
+                )
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    pathError
+                );
+            }
+
+
+            var normalizedResolution =
+                (resolution ?? string.Empty)
+                    .Trim()
+                    .ToUpperInvariant();
+
+
+            string gitSide;
+
+
+            if
+            (
+                normalizedResolution ==
+                "LOCAL"
+                ||
+                normalizedResolution ==
+                "OURS"
+            )
+            {
+                gitSide =
+                    "ours";
+            }
+            else if
+            (
+                normalizedResolution ==
+                "REMOTE"
+                ||
+                normalizedResolution ==
+                "THEIRS"
+            )
+            {
+                gitSide =
+                    "theirs";
+            }
+            else
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    "Resolution must be LOCAL or REMOTE."
+                );
+            }
+
+
+            //=======================================================
+            // Confirm that the requested file is actually unresolved.
+            //=======================================================
+
+            var unresolvedResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "ls-files",
+
+                    "-u",
+
+                    "--",
+
+                    normalizedPath
+                );
+
+
+            if
+            (
+                !unresolvedResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to determine whether the selected file has an unresolved merge conflict.",
+
+                        unresolvedResult
+                    );
+
+
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    message,
+
+                    unresolvedResult.Output
+                );
+            }
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    unresolvedResult.Output
+                )
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    $"The selected file is not currently an unresolved merge conflict: {normalizedPath}"
+                );
+            }
+
+
+            //=======================================================
+            // Select the requested side.
+            //
+            // --ours   = current/local branch version
+            // --theirs = incoming/remote branch version
+            //
+            // The command is safe for binary files because Git copies
+            // the selected blob directly into the working tree.
+            //=======================================================
+
+            var checkoutResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "checkout",
+
+                    $"--{gitSide}",
+
+                    "--",
+
+                    normalizedPath
+                );
+
+
+            if
+            (
+                !checkoutResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        $"Unable to keep the {normalizedResolution} version of the selected conflict file.",
+
+                        checkoutResult
+                    );
+
+
+                await TryCreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Conflict Resolution Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    message,
+
+                    checkoutResult.Output
+                );
+            }
+
+
+            //=======================================================
+            // Stage only the resolved file.
+            //
+            // Do not stage unrelated working-tree changes and do not
+            // touch Master_ERP.
+            //=======================================================
+
+            var addResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "add",
+
+                    "--",
+
+                    normalizedPath
+                );
+
+
+            if
+            (
+                !addResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "The selected conflict was resolved in the working tree, but Git could not stage the resolved file.",
+
+                        addResult
+                    );
+
+
+                await TryCreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Conflict Resolution Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    message,
+
+                    addResult.Output
+                );
+            }
+
+
+            //=======================================================
+            // Recheck the merge state after staging.
+            //=======================================================
+
+            var remainingConflictResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !remainingConflictResult.Success
+            )
+            {
+                return GitFailure(
+                    "Resolve Merge Conflict Failed",
+
+                    remainingConflictResult.Message,
+
+                    remainingConflictResult.Output
+                );
+            }
+
+
+            var remainingOutput =
+                remainingConflictResult.Output?.Trim()
+                ??
+                string.Empty;
+
+
+            var resolvedMessage =
+                normalizedResolution == "LOCAL"
+                ||
+                normalizedResolution == "OURS"
+                    ? "local"
+                    : "remote";
+
+
+            var activityDescription =
+                string.IsNullOrWhiteSpace(
+                    remainingOutput
+                )
+                ? $"Merge conflict '{normalizedPath}' was resolved using the {resolvedMessage} version. No unresolved merge conflicts remain."
+                : $"Merge conflict '{normalizedPath}' was resolved using the {resolvedMessage} version. Remaining unresolved conflicts: {remainingOutput}";
+
+
+            await CreateGitHistoryAsync(
+                sourceControlId,
+
+                "MERGE",
+
+                "Merge Conflict Resolved",
+
+                activityDescription,
+
+                "SUCCESS"
+            );
+
+
+            var output =
+                CombineGitOutput(
+                    checkoutResult,
+
+                    addResult
+                );
+
+
+            return new GitOperationResultDto
+            {
+                Success =
+                    true,
+
+                Message =
+                    string.IsNullOrWhiteSpace(
+                        remainingOutput
+                    )
+                    ? $"Merge conflict resolved successfully using the {resolvedMessage} version. You can now continue the merge."
+                    : $"Merge conflict resolved successfully using the {resolvedMessage} version. Resolve the remaining conflict(s) before continuing the merge.",
+
+                Output =
+                    string.IsNullOrWhiteSpace(
+                        output
+                    )
+                    ? remainingOutput
+                    : string.IsNullOrWhiteSpace(
+                        remainingOutput
+                    )
+                        ? output
+                        : $"{output}{Environment.NewLine}{Environment.NewLine}Remaining conflicts:{Environment.NewLine}{remainingOutput}"
+            };
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            await TryCreateGitHistoryAsync(
+                sourceControlId,
+
+                "MERGE",
+
+                "Merge Conflict Resolution Failed",
+
+                exception.Message,
+
+                "FAILED"
+            );
+
+
+            return GitFailure(
+                "Resolve Merge Conflict Failed",
+
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
     // Continue Merge
     //===========================================================
 
@@ -4569,6 +5040,254 @@ public class SourceControlRepository
 
 
         return statuses;
+    }
+
+
+
+    //===========================================================
+    // Normalize Merge Conflict Path
+    //
+    // Only repository-relative files are accepted. This prevents
+    // arbitrary filesystem paths from being passed to Git.
+    //===========================================================
+
+    private static bool
+        TryNormalizeMergeConflictPath
+    (
+        string repositoryPath,
+
+        string filePath,
+
+        out string normalizedPath,
+
+        out string errorMessage
+    )
+    {
+        normalizedPath =
+            string.Empty;
+
+        errorMessage =
+            string.Empty;
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                repositoryPath
+            )
+        )
+        {
+            errorMessage =
+                "Repository path is not configured.";
+
+            return false;
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                filePath
+            )
+        )
+        {
+            errorMessage =
+                "A merge conflict file path is required.";
+
+            return false;
+        }
+
+
+        var candidate =
+            filePath
+                .Trim()
+                .Trim('"')
+                .Replace(
+                    '\\',
+                    '/'
+                );
+
+
+        while
+        (
+            candidate.StartsWith(
+                "./",
+                StringComparison.Ordinal
+            )
+        )
+        {
+            candidate =
+                candidate[2..];
+        }
+
+
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                candidate
+            )
+        )
+        {
+            errorMessage =
+                "The merge conflict file path is empty.";
+
+            return false;
+        }
+
+
+        if
+        (
+            Path.IsPathRooted(
+                candidate
+            )
+            ||
+            candidate.StartsWith(
+                "/",
+                StringComparison.Ordinal
+            )
+            ||
+            candidate.Contains(
+                ":",
+                StringComparison.Ordinal
+            )
+        )
+        {
+            errorMessage =
+                "Only repository-relative merge conflict paths are allowed.";
+
+            return false;
+        }
+
+
+        var segments =
+            candidate.Split(
+                '/',
+                StringSplitOptions.RemoveEmptyEntries
+            );
+
+
+        if
+        (
+            segments.Any(
+                x =>
+                    x == ".."
+            )
+        )
+        {
+            errorMessage =
+                "Parent-directory traversal is not allowed in a merge conflict path.";
+
+            return false;
+        }
+
+
+        if
+        (
+            segments.Any(
+                x =>
+                    x == "."
+            )
+        )
+        {
+            errorMessage =
+                "Invalid repository-relative merge conflict path.";
+
+            return false;
+        }
+
+
+        if
+        (
+            segments.Length == 0
+        )
+        {
+            errorMessage =
+                "The merge conflict file path is invalid.";
+
+            return false;
+        }
+
+
+        if
+        (
+            string.Equals(
+                segments[0],
+                "Master_ERP",
+                OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal
+            )
+        )
+        {
+            errorMessage =
+                "Master_ERP is excluded from AppCore parent-repository merge operations.";
+
+            return false;
+        }
+
+
+        var relativePath =
+            string.Join(
+                "/",
+                segments
+            );
+
+
+        var repositoryFullPath =
+            Path.GetFullPath(
+                repositoryPath
+            );
+
+
+        var fileFullPath =
+            Path.GetFullPath(
+                Path.Combine(
+                    repositoryFullPath,
+
+                    relativePath.Replace(
+                        '/',
+                        Path.DirectorySeparatorChar
+                    )
+                )
+            );
+
+
+        var repositoryPrefix =
+            repositoryFullPath.TrimEnd(
+                Path.DirectorySeparatorChar,
+
+                Path.AltDirectorySeparatorChar
+            )
+            +
+            Path.DirectorySeparatorChar;
+
+
+        var comparison =
+            OperatingSystem.IsWindows()
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+
+
+        if
+        (
+            !fileFullPath.StartsWith(
+                repositoryPrefix,
+                comparison
+            )
+        )
+        {
+            errorMessage =
+                "The merge conflict path is outside the configured repository.";
+
+            return false;
+        }
+
+
+        normalizedPath =
+            relativePath;
+
+
+        return true;
     }
 
 

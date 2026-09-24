@@ -185,6 +185,20 @@ public interface ISourceControlRepository
 
 
     //===========================================================
+    // Git Resolve Merge Conflict
+    //===========================================================
+
+    Task<GitOperationResultDto>
+        ResolveMergeConflictAsync
+    (
+        long sourceControlId,
+        string filePath,
+        string resolution
+    );
+
+
+
+    //===========================================================
     // Git Continue Merge
     //===========================================================
 

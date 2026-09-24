@@ -1901,6 +1901,8 @@
 
 .merge-conflict-section
 {
+    position:relative;
+
     width:100%;
 
     min-width:0;
@@ -1909,15 +1911,52 @@
 
     border:1px solid #fecaca;
 
-    border-radius:12px;
+    border-radius:14px;
 
     background:#ffffff;
 
     overflow:hidden;
 
     flex-shrink:0;
+
+    box-shadow:
+        0 8px 24px rgba(15,23,42,.045);
 }
 
+
+/* =====================================================
+   CONFLICT TOP ACCENT
+===================================================== */
+
+.merge-conflict-section::before
+{
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    width:100%;
+
+    height:3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #dc2626 0%,
+            #ef4444 45%,
+            #f97316 100%
+        );
+
+    z-index:2;
+}
+
+
+/* =====================================================
+   CONFLICT HEADER
+===================================================== */
 
 .merge-conflict-header
 {
@@ -1929,17 +1968,17 @@
 
     gap:16px;
 
-    padding:14px 18px;
-
     min-width:0;
+
+    padding:15px 18px 14px;
 
     border-bottom:1px solid #fee2e2;
 
     background:
         linear-gradient(
             180deg,
-            #fffafa,
-            #fff7f7
+            #fffafa 0%,
+            #fff7f7 100%
         );
 
     box-sizing:border-box;
@@ -1966,6 +2005,8 @@
 
     font-size:14px;
 
+    line-height:19px;
+
     font-weight:700;
 
     color:#991b1b;
@@ -1974,7 +2015,25 @@
 
 .merge-conflict-title i
 {
+    width:28px;
+
+    height:28px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:8px;
+
+    background:#fee2e2;
+
     color:#dc2626;
+
+    font-size:13px;
 }
 
 
@@ -1982,7 +2041,7 @@
 {
     margin-top:4px;
 
-    padding-left:23px;
+    padding-left:37px;
 
     font-size:11px;
 
@@ -1996,11 +2055,23 @@
 {
     flex-shrink:0;
 
-    padding:7px 11px;
+    min-width:72px;
 
-    border-radius:8px;
+    height:30px;
 
-    background:#fee2e2;
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:0 11px;
+
+    border-radius:9px;
+
+    border:1px solid #fecaca;
+
+    background:#fff1f2;
 
     color:#b91c1c;
 
@@ -2009,8 +2080,17 @@
     font-weight:700;
 
     white-space:nowrap;
+
+    box-sizing:border-box;
+
+    box-shadow:
+        0 2px 7px rgba(220,38,38,.06);
 }
 
+
+/* =====================================================
+   CONFLICT BODY
+===================================================== */
 
 .merge-conflict-body
 {
@@ -2020,19 +2100,25 @@
 
     gap:12px;
 
-    padding:14px 18px;
+    padding:14px 18px 15px;
 
     box-sizing:border-box;
+
+    background:#ffffff;
 }
 
+
+/* =====================================================
+   CONFLICT WARNING
+===================================================== */
 
 .merge-conflict-warning
 {
     display:flex;
 
-    align-items:flex-start;
+    align-items:center;
 
-    gap:10px;
+    gap:11px;
 
     width:100%;
 
@@ -2044,17 +2130,25 @@
 
     border-radius:10px;
 
-    background:#fff7ed;
+    background:
+        linear-gradient(
+            90deg,
+            #fff7ed 0%,
+            #fffaf5 100%
+        );
 
     border:1px solid #fed7aa;
+
+    box-shadow:
+        0 2px 8px rgba(234,88,12,.035);
 }
 
 
 .merge-conflict-warning-icon
 {
-    width:28px;
+    width:30px;
 
-    height:28px;
+    height:30px;
 
     display:flex;
 
@@ -2108,25 +2202,34 @@
 }
 
 
+/* =====================================================
+   CONFLICT FILE CONTAINER
+===================================================== */
+
 .merge-conflict-files
 {
     width:100%;
 
     min-width:0;
 
-    border:1px solid #e2e8f0;
+    border:1px solid #dbe3ee;
 
-    border-radius:10px;
+    border-radius:11px;
+
+    background:#ffffff;
 
     overflow:hidden;
 
     box-sizing:border-box;
+
+    box-shadow:
+        0 3px 10px rgba(15,23,42,.025);
 }
 
 
 .merge-conflict-files-header
 {
-    height:36px;
+    height:38px;
 
     display:flex;
 
@@ -2134,9 +2237,16 @@
 
     justify-content:space-between;
 
-    padding:0 12px;
+    gap:10px;
 
-    background:#f8fafc;
+    padding:0 13px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fafc,
+            #f4f7fb
+        );
 
     border-bottom:1px solid #e2e8f0;
 
@@ -2144,7 +2254,35 @@
 
     font-weight:700;
 
+    color:#334155;
+
+    box-sizing:border-box;
+}
+
+
+.merge-conflict-files-header span:last-child
+{
+    min-width:24px;
+
+    height:22px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:0 7px;
+
+    border-radius:7px;
+
+    background:#e2e8f0;
+
     color:#475569;
+
+    font-size:10px;
+
+    font-weight:700;
 }
 
 
@@ -2154,11 +2292,19 @@
 
     flex-direction:column;
 
-    max-height:160px;
+    width:100%;
+
+    max-height:190px;
 
     overflow:auto;
+
+    box-sizing:border-box;
 }
 
+
+/* =====================================================
+   CONFLICT FILE ROW
+===================================================== */
 
 .merge-conflict-file
 {
@@ -2166,21 +2312,27 @@
 
     align-items:center;
 
-    gap:9px;
+    justify-content:space-between;
+
+    gap:14px;
+
+    width:100%;
 
     min-width:0;
 
-    min-height:34px;
+    min-height:52px;
 
-    padding:6px 12px;
+    padding:8px 10px 8px 13px;
 
-    border-bottom:1px solid #f1f5f9;
+    border-bottom:1px solid #eef2f7;
+
+    background:#ffffff;
 
     box-sizing:border-box;
 
-    font-size:11px;
-
-    color:#475569;
+    transition:
+        background .18s ease,
+        box-shadow .18s ease;
 }
 
 
@@ -2190,9 +2342,50 @@
 }
 
 
-.merge-conflict-file i
+.merge-conflict-file:hover
 {
+    background:#fbfdff;
+
+    box-shadow:
+        inset 3px 0 0 #ef4444;
+}
+
+
+/* =====================================================
+   CONFLICT FILE INFORMATION
+===================================================== */
+
+.merge-conflict-file-information
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:9px;
+
+    min-width:0;
+
+    flex:1;
+}
+
+
+.merge-conflict-file-information i
+{
+    width:30px;
+
+    height:30px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
     flex-shrink:0;
+
+    border-radius:8px;
+
+    background:#fff1f2;
 
     color:#dc2626;
 
@@ -2200,7 +2393,7 @@
 }
 
 
-.merge-conflict-file span
+.merge-conflict-file-information span
 {
     min-width:0;
 
@@ -2209,8 +2402,203 @@
     text-overflow:ellipsis;
 
     white-space:nowrap;
+
+    font-size:11px;
+
+    line-height:16px;
+
+    font-weight:600;
+
+    color:#475569;
 }
 
+
+/* =====================================================
+   CONFLICT FILE ACTIONS
+===================================================== */
+
+.merge-conflict-file-actions
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:7px;
+
+    flex-shrink:0;
+}
+
+
+/* =====================================================
+   KEEP LOCAL / KEEP REMOTE COMMON BUTTON
+===================================================== */
+
+.merge-keep-local-button,
+.merge-keep-remote-button
+{
+    height:34px;
+
+    min-width:108px;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:7px;
+
+    padding:0 12px;
+
+    border-radius:9px;
+
+    font-family:inherit;
+
+    font-size:10px;
+
+    line-height:1;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    box-sizing:border-box;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        background .18s ease,
+        border-color .18s ease;
+
+    white-space:nowrap;
+}
+
+
+.merge-keep-local-button i,
+.merge-keep-remote-button i
+{
+    font-size:11px;
+}
+
+
+/* =====================================================
+   KEEP LOCAL
+===================================================== */
+
+.merge-keep-local-button
+{
+    border:1px solid #bfdbfe;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eff6ff 100%
+        );
+
+    color:#1d4ed8;
+
+    box-shadow:
+        0 3px 8px rgba(37,99,235,.06);
+}
+
+
+.merge-keep-local-button:hover
+{
+    transform:translateY(-1px);
+
+    border-color:#93c5fd;
+
+    background:
+        linear-gradient(
+            180deg,
+            #eff6ff 0%,
+            #dbeafe 100%
+        );
+
+    color:#1e40af;
+
+    box-shadow:
+        0 7px 15px rgba(37,99,235,.12);
+}
+
+
+.merge-keep-local-button:active
+{
+    transform:scale(.98);
+}
+
+
+/* =====================================================
+   KEEP REMOTE
+===================================================== */
+
+.merge-keep-remote-button
+{
+    border:1px solid #bbf7d0;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f7fff9 0%,
+            #f0fdf4 100%
+        );
+
+    color:#15803d;
+
+    box-shadow:
+        0 3px 8px rgba(22,163,74,.06);
+}
+
+
+.merge-keep-remote-button:hover
+{
+    transform:translateY(-1px);
+
+    border-color:#86efac;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f0fdf4 0%,
+            #dcfce7 100%
+        );
+
+    color:#166534;
+
+    box-shadow:
+        0 7px 15px rgba(22,163,74,.12);
+}
+
+
+.merge-keep-remote-button:active
+{
+    transform:scale(.98);
+}
+
+
+/* =====================================================
+   FILE ACTION DISABLED
+===================================================== */
+
+.merge-keep-local-button:disabled,
+.merge-keep-remote-button:disabled
+{
+    cursor:not-allowed;
+
+    opacity:.5;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
+
+/* =====================================================
+   MERGE ACTIONS
+===================================================== */
 
 .merge-conflict-actions
 {
@@ -2220,9 +2608,11 @@
 
     justify-content:flex-end;
 
-    gap:10px;
+    gap:9px;
 
     width:100%;
+
+    padding-top:1px;
 }
 
 
@@ -2230,6 +2620,8 @@
 .merge-abort-button
 {
     height:38px;
+
+    min-width:126px;
 
     padding:0 16px;
 
@@ -2247,7 +2639,7 @@
 
     font-family:inherit;
 
-    font-size:12px;
+    font-size:11px;
 
     font-weight:700;
 
@@ -2256,51 +2648,106 @@
     transition:
         transform .2s ease,
         box-shadow .2s ease,
-        background .2s ease;
+        background .2s ease,
+        border-color .2s ease;
 }
 
+
+/* =====================================================
+   CONTINUE MERGE
+===================================================== */
 
 .merge-continue-button
 {
     border:1px solid #86efac;
 
-    background:#f0fdf4;
+    background:
+        linear-gradient(
+            180deg,
+            #f0fdf4 0%,
+            #ecfdf5 100%
+        );
 
     color:#15803d;
+
+    box-shadow:
+        0 3px 9px rgba(22,163,74,.06);
 }
 
 
-.merge-continue-button:hover
+.merge-continue-button:hover:not(:disabled)
 {
     transform:translateY(-1px);
 
-    background:#dcfce7;
+    border-color:#4ade80;
+
+    background:
+        linear-gradient(
+            180deg,
+            #dcfce7 0%,
+            #bbf7d0 100%
+        );
 
     box-shadow:
-        0 6px 14px rgba(22,163,74,.10);
+        0 7px 16px rgba(22,163,74,.13);
 }
 
+
+.merge-continue-button:active:not(:disabled)
+{
+    transform:scale(.98);
+}
+
+
+/* =====================================================
+   ABORT MERGE
+===================================================== */
 
 .merge-abort-button
 {
     border:1px solid #fca5a5;
 
-    background:#fff1f2;
+    background:
+        linear-gradient(
+            180deg,
+            #fff7f7 0%,
+            #fff1f2 100%
+        );
 
     color:#dc2626;
+
+    box-shadow:
+        0 3px 9px rgba(239,68,68,.05);
 }
 
 
-.merge-abort-button:hover
+.merge-abort-button:hover:not(:disabled)
 {
     transform:translateY(-1px);
 
-    background:#ffe4e6;
+    border-color:#f87171;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffe4e6 0%,
+            #fecdd3 100%
+        );
 
     box-shadow:
-        0 6px 14px rgba(239,68,68,.10);
+        0 7px 16px rgba(239,68,68,.12);
 }
 
+
+.merge-abort-button:active:not(:disabled)
+{
+    transform:scale(.98);
+}
+
+
+/* =====================================================
+   MERGE ACTION DISABLED
+===================================================== */
 
 .merge-continue-button:disabled,
 .merge-abort-button:disabled
@@ -2314,6 +2761,248 @@
     box-shadow:none;
 }
 
+
+/* Continue is intentionally muted while
+   unresolved conflicts remain. */
+
+.merge-continue-button:disabled
+{
+    border-color:#d1d5db;
+
+    background:#f8fafc;
+
+    color:#94a3b8;
+}
+
+
+/* =====================================================
+   CONFLICT SCROLLBAR
+===================================================== */
+
+.merge-conflict-file-list::-webkit-scrollbar
+{
+    width:6px;
+
+    height:6px;
+}
+
+
+.merge-conflict-file-list::-webkit-scrollbar-track
+{
+    background:#f8fafc;
+}
+
+
+.merge-conflict-file-list::-webkit-scrollbar-thumb
+{
+    border-radius:10px;
+
+    background:#cbd5e1;
+}
+
+
+.merge-conflict-file-list::-webkit-scrollbar-thumb:hover
+{
+    background:#94a3b8;
+}
+
+
+/* =====================================================
+   TABLET / SMALL DESKTOP CONFLICT LAYOUT
+===================================================== */
+
+@media(max-width:1000px)
+{
+
+    .merge-conflict-file
+    {
+        align-items:flex-start;
+
+        flex-direction:column;
+
+        gap:9px;
+    }
+
+
+    .merge-conflict-file-information
+    {
+        width:100%;
+    }
+
+
+    .merge-conflict-file-actions
+    {
+        width:100%;
+
+        justify-content:flex-end;
+    }
+
+}
+
+
+/* =====================================================
+   SMALL TABLET CONFLICT LAYOUT
+===================================================== */
+
+@media(max-width:700px)
+{
+
+    .merge-conflict-header
+    {
+        align-items:flex-start;
+
+        flex-direction:column;
+
+        gap:10px;
+
+        padding:13px 14px;
+    }
+
+
+    .merge-conflict-subtitle
+    {
+        padding-left:0;
+    }
+
+
+    .merge-conflict-count
+    {
+        align-self:flex-start;
+    }
+
+
+    .merge-conflict-body
+    {
+        padding:12px;
+    }
+
+
+    .merge-conflict-file-actions
+    {
+        justify-content:stretch;
+
+        width:100%;
+    }
+
+
+    .merge-keep-local-button,
+    .merge-keep-remote-button
+    {
+        flex:1;
+
+        min-width:0;
+    }
+
+
+    .merge-conflict-actions
+    {
+        justify-content:stretch;
+
+        flex-direction:column;
+
+        gap:8px;
+    }
+
+
+    .merge-continue-button,
+    .merge-abort-button
+    {
+        width:100%;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE CONFLICT LAYOUT
+===================================================== */
+
+@media(max-width:600px)
+{
+
+    .merge-conflict-warning
+    {
+        align-items:flex-start;
+
+        padding:9px 10px;
+    }
+
+
+    .merge-conflict-warning-text
+    {
+        font-size:10px;
+
+        line-height:15px;
+    }
+
+
+    .merge-conflict-file
+    {
+        padding:9px 10px;
+    }
+
+
+    .merge-conflict-file-information span
+    {
+        font-size:10px;
+    }
+
+
+    .merge-keep-local-button,
+    .merge-keep-remote-button
+    {
+        height:36px;
+
+        font-size:10px;
+    }
+
+}
+
+
+/* =====================================================
+   VERY SMALL MOBILE CONFLICT LAYOUT
+===================================================== */
+
+@media(max-width:420px)
+{
+
+    .merge-conflict-title
+    {
+        font-size:13px;
+    }
+
+
+    .merge-conflict-title i
+    {
+        width:26px;
+
+        height:26px;
+    }
+
+
+    .merge-conflict-files-header
+    {
+        padding:0 10px;
+    }
+
+
+    .merge-conflict-file-actions
+    {
+        flex-direction:column;
+
+        gap:6px;
+    }
+
+
+    .merge-keep-local-button,
+    .merge-keep-remote-button
+    {
+        width:100%;
+
+        flex:0 0 auto;
+    }
+
+}
 
 /* =====================================================
    REPOSITORY HEALTH

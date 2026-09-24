@@ -698,26 +698,54 @@ implements OnInit
          *
          * rather than a `UU` status prefix.
          *
-         * The merge state itself is reported by the backend
-         * Message, so the UI must not determine merge activity
-         * from the conflict-file count alone.
+         * The merge state itself is also reported by the backend
+         * Message. The UI therefore uses BOTH signals:
+         *
+         * 1. unresolved conflict files;
+         * 2. an explicit Git merge-in-progress message.
+         *
+         * This is important immediately after Full Repository
+         * Synchronization is blocked by an already-active merge.
          */
+        const mergeIsReportedAsActive =
+            normalizedMessage.includes(
+                'git merge is currently in progress'
+            )
+            ||
+            normalizedMessage.includes(
+                'git merge is in progress'
+            )
+            ||
+            normalizedMessage.includes(
+                'merge is currently in progress'
+            )
+            ||
+            normalizedMessage.includes(
+                'merge is in progress'
+            );
+
         /*
          * IMPORTANT:
-         * The merge-resolution UI is only required when there
-         * are unresolved files.
+         * A synchronization conflict can reach this method before
+         * the repository reload has completed. If the backend has
+         * already confirmed that a Git merge is active, the resolver
+         * section must remain open while the unresolved file list
+         * is being refreshed.
          *
-         * The backend can legitimately report that a merge is
-         * still technically in progress while zero unresolved
-         * files remain. That state must NOT keep the conflict
-         * resolution UI visible.
+         * This prevents the UI from showing:
          *
-         * Therefore the UI merge-active state is driven by the
-         * actual unresolved conflict list.
+         *     Merge Status: No Active Merge
+         *
+         * while the backend is simultaneously reporting:
+         *
+         *     Git merge is currently in progress.
          */
         this.isMergeActive =
+            mergeIsReportedAsActive
+            ||
             this.mergeConflicts.length > 0;
     }
+
 
 
 
@@ -1457,11 +1485,21 @@ implements OnInit
 
 
                             /*
-                             * Reload the repository state so the existing
-                             * Merge Conflict Resolution section displays
-                             * the current unresolved files.
+                             * Mark the merge as active immediately.
+                             *
+                             * The synchronization API has already confirmed
+                             * that Git is paused in a merge. Do not wait for
+                             * the repository page reload before opening the
+                             * resolver section.
+                             *
+                             * Refresh Git status next. loadGitStatus()
+                             * will also refresh the unresolved merge files.
                              */
-                            this.reloadRepositoryData();
+                            this.isMergeActive =
+                                true;
+
+
+                            this.loadGitStatus();
 
 
                             this.cdr.detectChanges();
@@ -1497,6 +1535,68 @@ implements OnInit
                         this.progressDialog.close();
 
 
+                        /*
+                         * IMPORTANT:
+                         * Angular HttpClient places an unsuccessful API
+                         * response in the error callback. Git merge conflicts
+                         * are therefore not guaranteed to arrive through
+                         * the normal `next` callback.
+                         *
+                         * A binary merge conflict such as:
+                         *
+                         *   Cannot merge binary files:
+                         *   HEAD vs origin/main
+                         *
+                         * is an expected synchronization pause, not a
+                         * completed synchronization failure.
+                         */
+                        if
+                        (
+                            this.isSynchronizationConflictError(
+                                error
+                            )
+                        )
+                        {
+                            this.isOperating =
+                                false;
+
+
+                            this.currentOperation =
+                                '';
+
+
+                            this.toast.warning(
+                                'Synchronization Paused',
+
+                                'Remote changes could not be integrated automatically because a Git merge conflict was detected. Resolve the conflict, then choose Continue Merge or Abort Merge.'
+                            );
+
+
+                            /*
+                             * Mark the merge as active immediately.
+                             *
+                             * The synchronization API has already confirmed
+                             * that Git is paused in a merge. Do not wait for
+                             * the repository page reload before opening the
+                             * resolver section.
+                             *
+                             * Refresh Git status next. loadGitStatus()
+                             * will also refresh the unresolved merge files.
+                             */
+                            this.isMergeActive =
+                                true;
+
+
+                            this.loadGitStatus();
+
+
+                            this.cdr.detectChanges();
+
+
+                            return;
+                        }
+
+
                         this.operationFailed(
                             error,
 
@@ -1506,6 +1606,100 @@ implements OnInit
                         );
                     }
             });
+    }
+
+
+    //===========================================================
+    // Is Synchronization Conflict Error
+    //===========================================================
+    //
+    // Angular HttpClient sends HTTP 4xx/5xx responses through the
+    // `error` callback. The backend can still provide a GitOperation
+    // result containing the actual Git merge-conflict message.
+    //
+    // This method inspects the common HttpErrorResponse shapes
+    // without changing the service contract.
+    //
+    //===========================================================
+
+    private isSynchronizationConflictError
+    (
+        error:
+            any
+    ):
+        boolean
+    {
+        if
+        (
+            !error
+        )
+        {
+            return false;
+        }
+
+
+        const candidates =
+            [
+                error?.message,
+
+                error?.error?.message,
+
+                error?.error?.output,
+
+                error?.error?.error,
+
+                error?.error?.details,
+
+                error?.error?.title
+            ]
+                .filter(
+                    value =>
+                        typeof value ===
+                        'string'
+                )
+                .join(
+                    '\n'
+                )
+                .toLowerCase();
+
+
+        return (
+            candidates.includes(
+                'cannot merge binary files'
+            )
+            ||
+            candidates.includes(
+                'merge conflict'
+            )
+            ||
+            candidates.includes(
+                'unresolved conflict'
+            )
+            ||
+            candidates.includes(
+                'could not be integrated'
+            )
+            ||
+            candidates.includes(
+                'automatic merge failed'
+            )
+            ||
+            candidates.includes(
+                'git merge is currently in progress'
+            )
+            ||
+            candidates.includes(
+                'git merge is in progress'
+            )
+            ||
+            candidates.includes(
+                'synchronization was blocked because a git merge'
+            )
+            ||
+            candidates.includes(
+                'synchronization blocked because a git merge'
+            )
+        );
     }
 
 
@@ -1572,6 +1766,22 @@ implements OnInit
             ||
             message.includes(
                 'merge conflict'
+            )
+            ||
+            message.includes(
+                'git merge is currently in progress'
+            )
+            ||
+            message.includes(
+                'git merge is in progress'
+            )
+            ||
+            message.includes(
+                'synchronization was blocked because a git merge'
+            )
+            ||
+            message.includes(
+                'synchronization blocked because a git merge'
             )
             ||
             output.includes(
@@ -1696,6 +1906,295 @@ implements OnInit
                     }
             });
     }
+
+
+    //===========================================================
+    // Resolve Merge Conflict
+    //===========================================================
+
+    resolveMergeConflict
+    (
+        filePath:
+            string,
+        resolution:
+            'LOCAL'
+            |
+            'REMOTE'
+    ):
+        void
+    {
+        if
+        (
+            this.sourceControlId <= 0
+        )
+        {
+            this.toast.error(
+                'Resolve Merge Conflict',
+
+                'Invalid Source Control repository.'
+            );
+
+            return;
+        }
+
+
+        if
+        (
+            !filePath
+            ||
+            !filePath.trim()
+        )
+        {
+            this.toast.error(
+                'Resolve Merge Conflict',
+
+                'A valid conflict file is required.'
+            );
+
+            return;
+        }
+
+
+        if
+        (
+            !this.isMergeActive
+        )
+        {
+            this.toast.error(
+                'Resolve Merge Conflict',
+
+                'There is no active merge requiring conflict resolution.'
+            );
+
+            return;
+        }
+
+
+        const normalizedPath =
+            filePath.trim();
+
+
+        const resolutionLabel =
+            resolution ===
+            'LOCAL'
+                ? 'Keep Local'
+                : 'Keep Remote';
+
+
+        this.confirmDialog.open(
+            resolutionLabel,
+            `Are you sure you want to ${resolutionLabel.toLowerCase()} for '${normalizedPath}'? The selected version will replace the current conflicted file and the file will be staged as resolved.`,
+
+            () =>
+            {
+                this.executeResolveMergeConflict(
+                    normalizedPath,
+                    resolution
+                );
+            },
+
+            resolutionLabel,
+
+            'Cancel',
+
+            resolution ===
+            'LOCAL'
+                ? 'primary'
+                : 'danger'
+        );
+    }
+
+
+
+    //===========================================================
+    // Execute Resolve Merge Conflict
+    //===========================================================
+
+    private executeResolveMergeConflict
+    (
+        filePath:
+            string,
+        resolution:
+            'LOCAL'
+            |
+            'REMOTE'
+    ):
+        void
+    {
+        this.isOperating =
+            true;
+
+
+        this.currentOperation =
+            resolution ===
+            'LOCAL'
+                ? 'resolve-local'
+                : 'resolve-remote';
+
+
+        this.progressDialog.show(
+            'Resolve Merge Conflict',
+
+            resolution ===
+            'LOCAL'
+                ? 'Keeping the local version of the conflicted file...'
+                : 'Keeping the remote version of the conflicted file...'
+        );
+
+
+        this.progressDialog.update(
+            25,
+
+            'Applying the selected conflict resolution...'
+        );
+
+
+        this.sourcecontrolservice
+            .resolveMergeConflict(
+                this.sourceControlId,
+
+                filePath,
+
+                resolution
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.progressDialog.update(
+                            100,
+
+                            'Merge conflict resolution completed.'
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        if
+                        (
+                            !result
+                            ||
+                            result.success !== true
+                        )
+                        {
+                            this.isOperating =
+                                false;
+
+
+                            this.currentOperation =
+                                '';
+
+
+                            this.toast.error(
+                                'Resolve Merge Conflict Failed',
+
+                                result?.message
+                                ||
+                                'Failed to resolve the selected merge conflict.'
+                            );
+
+
+                            this.reloadRepositoryData();
+
+
+                            this.cdr.detectChanges();
+
+
+                            return;
+                        }
+
+
+                        this.toast.success(
+                            'Conflict Resolved',
+
+                            result.message
+                            ||
+                            `${filePath} was resolved using ${resolution === 'LOCAL' ? 'the local' : 'the remote'} version.`
+                        );
+
+
+                        /*
+                         * Reload the repository state immediately after
+                         * resolving the selected file.
+                         *
+                         * The backend stages the selected file, so the
+                         * unresolved conflict list must be refreshed before
+                         * Continue Merge is used.
+                         */
+                        this.reloadRepositoryData();
+
+
+                        this.isOperating =
+                            false;
+
+
+                        this.currentOperation =
+                            '';
+
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        this.progressDialog.close();
+
+
+                        this.operationFailed(
+                            error,
+
+                            'Resolve Merge Conflict Failed',
+
+                            'Failed to resolve the selected merge conflict.'
+                        );
+                    }
+            });
+    }
+
+
+
+    //===========================================================
+    // Keep Local Version
+    //===========================================================
+
+    keepLocalConflict
+    (
+        filePath:
+            string
+    ):
+        void
+    {
+        this.resolveMergeConflict(
+            filePath,
+
+            'LOCAL'
+        );
+    }
+
+
+
+    //===========================================================
+    // Keep Remote Version
+    //===========================================================
+
+    keepRemoteConflict
+    (
+        filePath:
+            string
+    ):
+        void
+    {
+        this.resolveMergeConflict(
+            filePath,
+
+            'REMOTE'
+        );
+    }
+
 
 
     //===========================================================

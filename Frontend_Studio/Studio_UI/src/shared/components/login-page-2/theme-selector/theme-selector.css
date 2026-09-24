@@ -1,0 +1,757 @@
+/* ===============================================================
+   LOGIN PAGE 2
+   THEME SELECTOR
+   ---------------------------------------------------------------
+   Light / Deep theme switcher
+================================================================ */
+
+
+/* ===============================================================
+   ROOT
+================================================================ */
+
+.login-page-theme-selector
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   THEME SELECTOR
+================================================================ */
+
+.theme-selector
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        10px;
+
+    min-width:
+        190px;
+
+    height:
+        44px;
+
+    padding:
+        4px 8px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
+
+    border-radius:
+        24px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        );
+
+    box-shadow:
+        0
+        8px
+        24px
+        rgba(
+            0,
+            0,
+            0,
+            .10
+        );
+
+    backdrop-filter:
+        blur(
+            14px
+        );
+
+    -webkit-backdrop-filter:
+        blur(
+            14px
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ===============================================================
+   THEME OPTION
+================================================================ */
+
+.theme-option
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        6px;
+
+    height:
+        34px;
+
+    padding:
+        0
+        7px;
+
+    border:
+        0;
+
+    outline:
+        none;
+
+    background:
+        transparent;
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            .68
+        );
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:
+        11px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        .2px;
+
+    cursor:
+        pointer;
+
+    transition:
+        color
+        .2s
+        ease;
+}
+
+
+/* ===============================================================
+   THEME OPTION ICON
+================================================================ */
+
+.theme-option-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        16px;
+
+    height:
+        16px;
+
+    font-size:
+        13px;
+
+    transition:
+        color
+        .2s
+        ease,
+
+        transform
+        .2s
+        ease;
+}
+
+
+/* ===============================================================
+   LIGHT ICON
+================================================================ */
+
+.theme-option-light .theme-option-icon
+{
+    color:
+        #f7c948;
+}
+
+
+/* ===============================================================
+   DEEP ICON
+================================================================ */
+
+.theme-option-deep .theme-option-icon
+{
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            .78
+        );
+}
+
+
+/* ===============================================================
+   ACTIVE OPTION
+================================================================ */
+
+.theme-option.active
+{
+    color:
+        #ffffff;
+}
+
+
+/* ===============================================================
+   ACTIVE ICON
+================================================================ */
+
+.theme-option.active .theme-option-icon
+{
+    transform:
+        scale(
+            1.08
+        );
+}
+
+
+/* ===============================================================
+   THEME TOGGLE
+================================================================ */
+
+.theme-toggle
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        40px;
+
+    height:
+        24px;
+
+    padding:
+        0;
+
+    border:
+        0;
+
+    outline:
+        none;
+
+    background:
+        transparent;
+
+    cursor:
+        pointer;
+}
+
+
+/* ===============================================================
+   TOGGLE TRACK
+================================================================ */
+
+.theme-toggle-track
+{
+    position:
+        relative;
+
+    display:
+        block;
+
+    width:
+        40px;
+
+    height:
+        22px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .28
+        );
+
+    border-radius:
+        20px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
+
+    box-shadow:
+        inset
+        0
+        1px
+        2px
+        rgba(
+            0,
+            0,
+            0,
+            .10
+        );
+
+    box-sizing:
+        border-box;
+
+    transition:
+        background
+        .22s
+        ease,
+
+        border-color
+        .22s
+        ease;
+}
+
+
+/* ===============================================================
+   TOGGLE THUMB
+================================================================ */
+
+.theme-toggle-thumb
+{
+    position:
+        absolute;
+
+    top:
+        2px;
+
+    left:
+        2px;
+
+    width:
+        16px;
+
+    height:
+        16px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .75
+        );
+
+    border-radius:
+        50%;
+
+    background:
+        #ffffff;
+
+    box-shadow:
+        0
+        2px
+        6px
+        rgba(
+            0,
+            0,
+            0,
+            .22
+        );
+
+    box-sizing:
+        border-box;
+
+    transition:
+        left
+        .22s
+        ease,
+
+        background
+        .22s
+        ease;
+}
+
+
+/* ===============================================================
+   DEEP TOGGLE STATE
+================================================================ */
+
+.theme-toggle.deep .theme-toggle-track
+{
+    border-color:
+        rgba(
+            37,
+            99,
+            235,
+            .70
+        );
+
+    background:
+        #2563eb;
+}
+
+
+/* ===============================================================
+   DEEP TOGGLE THUMB
+================================================================ */
+
+.theme-toggle.deep .theme-toggle-thumb
+{
+    left:
+        20px;
+
+    background:
+        #ffffff;
+}
+
+
+/* ===============================================================
+   HOVER
+================================================================ */
+
+.theme-option:hover
+{
+    color:
+        #ffffff;
+}
+
+
+.theme-option:hover .theme-option-icon
+{
+    transform:
+        scale(
+            1.08
+        );
+}
+
+
+.theme-toggle:hover .theme-toggle-track
+{
+    border-color:
+        rgba(
+            37,
+            99,
+            235,
+            .70
+        );
+}
+
+
+/* ===============================================================
+   FOCUS
+================================================================ */
+
+.theme-option:focus-visible,
+.theme-toggle:focus-visible
+{
+    outline:
+        2px solid
+        rgba(
+            96,
+            165,
+            250,
+            .85
+        );
+
+    outline-offset:
+        2px;
+
+    border-radius:
+        6px;
+}
+
+
+/* ===============================================================
+   LIGHT THEME SUPPORT
+   ---------------------------------------------------------------
+   When the selector is displayed over a light background,
+   use dark text while keeping the same selector geometry.
+================================================================ */
+
+:host-context(.login-page-2-light)
+.theme-selector
+{
+    border-color:
+        rgba(
+            15,
+            23,
+            42,
+            .10
+        );
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .72
+        );
+
+    box-shadow:
+        0
+        8px
+        24px
+        rgba(
+            15,
+            23,
+            42,
+            .08
+        );
+}
+
+
+:host-context(.login-page-2-light)
+.theme-option
+{
+    color:
+        rgba(
+            15,
+            23,
+            42,
+            .58
+        );
+}
+
+
+:host-context(.login-page-2-light)
+.theme-option.active
+{
+    color:
+        #0f172a;
+}
+
+
+:host-context(.login-page-2-light)
+.theme-option-deep .theme-option-icon
+{
+    color:
+        #64748b;
+}
+
+
+:host-context(.login-page-2-light)
+.theme-toggle-track
+{
+    border-color:
+        rgba(
+            15,
+            23,
+            42,
+            .14
+        );
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            .08
+        );
+}
+
+
+/* ===============================================================
+   RESPONSIVE
+================================================================ */
+
+@media
+(
+    max-width:
+        768px
+)
+{
+    .theme-selector
+    {
+        min-width:
+            176px;
+
+        height:
+            42px;
+
+        gap:
+            7px;
+    }
+
+
+    .theme-option
+    {
+        font-size:
+            10px;
+    }
+
+
+    .theme-option-icon
+    {
+        font-size:
+            12px;
+    }
+
+
+    .theme-toggle
+    {
+        width:
+            38px;
+    }
+
+
+    .theme-toggle-track
+    {
+        width:
+            38px;
+    }
+
+
+    .theme-toggle.deep .theme-toggle-thumb
+    {
+        left:
+            19px;
+    }
+}
+
+
+@media
+(
+    max-width:
+        480px
+)
+{
+    .theme-selector
+    {
+        min-width:
+            166px;
+
+        height:
+            40px;
+
+        padding:
+            3px
+            6px;
+
+        gap:
+            5px;
+    }
+
+
+    .theme-option
+    {
+        height:
+            32px;
+
+        padding:
+            0
+            5px;
+
+        gap:
+            5px;
+
+        font-size:
+            9px;
+    }
+
+
+    .theme-option-icon
+    {
+        width:
+            14px;
+
+        height:
+            14px;
+
+        font-size:
+            11px;
+    }
+
+
+    .theme-toggle
+    {
+        width:
+            36px;
+
+        height:
+            22px;
+    }
+
+
+    .theme-toggle-track
+    {
+        width:
+            36px;
+
+        height:
+            21px;
+    }
+
+
+    .theme-toggle-thumb
+    {
+        width:
+            15px;
+
+        height:
+            15px;
+
+        top:
+            2px;
+
+        left:
+            2px;
+    }
+
+
+    .theme-toggle.deep .theme-toggle-thumb
+    {
+        left:
+            18px;
+    }
+}

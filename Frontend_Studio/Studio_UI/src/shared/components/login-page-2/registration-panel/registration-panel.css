@@ -1,33 +1,47 @@
 /* ===============================================================
-   LOGIN PAGE LOGIN PANEL
+   LOGIN PAGE REGISTRATION PANEL
    ---------------------------------------------------------------
-   FINAL PREMIUM MOTO ZONE LOGIN PANEL
+   FINAL PREMIUM REGISTRATION PANEL
 
    MASTER GEOMETRY:
 
-       WIDTH:
+       Width:
            590px
 
-       HEIGHT:
-           100% of available parent height
+       Height:
+           Available panel height
+           with 20px top + 20px bottom breathing space.
 
    DESIGN:
 
-       - Blue transparent glass panel
-       - Moto Zone branding inside panel
-       - Larger Moto Zone logo
-       - Smaller Moto Zone client name
-       - Stronger background visibility
+       - Premium blue transparent glass
+       - Same geometry as Login Panel
+       - Same typography language
+       - Same input styling
+       - Same button styling
+       - No client logo area
        - No language selector
-       - No AppCore logo
        - No background artwork
-       - No footer
        - No Powered By
+       - No footer
 
-   LOGIN / REGISTRATION / RESET PASSWORD:
+   REGISTRATION:
 
-       All panels use the same master geometry so they can
-       visually swap without changing the surrounding page.
+       Full Name
+       Display Name
+       Email Address
+       Login ID
+       Password
+       Confirm Password
+       Terms & Privacy
+       Create Account
+       OR
+       Already Have An Account
+
+   IMPORTANT:
+
+       CSS class names are aligned directly with the
+       current registration-panel.html.
 ================================================================ */
 
 
@@ -69,41 +83,41 @@
 
 :host
 {
-    --login-card-width:
+    --registration-card-width:
         590px;
 
-    --login-card-height:
+    --registration-card-height:
         100%;
 
-    --login-card-max-width:
+    --registration-card-max-width:
         calc(
             100%
             -
             40px
         );
 
-    --login-card-max-height:
+    --registration-card-max-height:
         100%;
 
-    --login-card-padding-top:
+    --registration-card-padding-top:
         34px;
 
-    --login-card-padding-right:
+    --registration-card-padding-right:
         38px;
 
-    --login-card-padding-bottom:
-        28px;
+    --registration-card-padding-bottom:
+        26px;
 
-    --login-card-padding-left:
+    --registration-card-padding-left:
         38px;
 }
 
 
 /* ===============================================================
-   MAIN LOGIN PANEL
+   MAIN REGISTRATION PANEL
 ================================================================ */
 
-.login-page-login-panel
+.registration-page-registration-panel
 {
     position:
         relative;
@@ -147,7 +161,7 @@
    PANEL CONTENT
 ================================================================ */
 
-.login-panel-content
+.registration-panel-content
 {
     display:
         flex;
@@ -185,13 +199,16 @@
 
 
 /* ===============================================================
-   LOGIN CARD
+   REGISTRATION CARD
    ---------------------------------------------------------------
-   BLUE TRANSPARENT GLASS
+   MASTER GLASS CARD
 ================================================================ */
 
-.login-card
+.registration-card
 {
+    position:
+        relative;
+
     display:
         flex;
 
@@ -200,38 +217,38 @@
 
     width:
         var(
-            --login-card-width
+            --registration-card-width
         );
 
     height:
         var(
-            --login-card-height
+            --registration-card-height
         );
 
     max-width:
         var(
-            --login-card-max-width
+            --registration-card-max-width
         );
 
     max-height:
         var(
-            --login-card-max-height
+            --registration-card-max-height
         );
 
     margin:
         0;
 
     padding:
-        var(--login-card-padding-top)
-        var(--login-card-padding-right)
-        var(--login-card-padding-bottom)
-        var(--login-card-padding-left);
+        var(--registration-card-padding-top)
+        var(--registration-card-padding-right)
+        var(--registration-card-padding-bottom)
+        var(--registration-card-padding-left);
 
     border:
         1px solid
         rgba(
-            225,
-            240,
+            235,
+            246,
             255,
             .72
         );
@@ -243,24 +260,24 @@
         linear-gradient(
             145deg,
             rgba(
-                73,
-                151,
+                82,
+                153,
                 241,
-                .46
+                .48
             )
             0%,
             rgba(
-                73,
-                139,
-                235,
-                .38
-            )
-            48%,
-            rgba(
                 91,
-                158,
-                238,
-                .30
+                146,
+                235,
+                .39
+            )
+            42%,
+            rgba(
+                151,
+                184,
+                224,
+                .29
             )
             100%
         );
@@ -270,20 +287,30 @@
         22px
         60px
         rgba(
-            16,
-            62,
-            125,
-            .18
+            10,
+            43,
+            91,
+            .20
+        ),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .22
         );
 
     backdrop-filter:
         blur(
-            14px
+            18px
         );
 
     -webkit-backdrop-filter:
         blur(
-            14px
+            18px
         );
 
     box-sizing:
@@ -298,7 +325,7 @@
    CARD HEADER
 ================================================================ */
 
-.login-card-header
+.registration-card-header
 {
     display:
         flex;
@@ -330,7 +357,7 @@
    TOP META
 ================================================================ */
 
-.login-card-top-meta
+.registration-card-top-meta
 {
     display:
         flex;
@@ -354,7 +381,12 @@
         0;
 
     color:
-        #dceaff;
+        rgba(
+            241,
+            248,
+            255,
+            .94
+        );
 
     font-family:
         Arial,
@@ -383,20 +415,27 @@
 
 /* ===============================================================
    TOP META SEPARATOR
+   ---------------------------------------------------------------
+   HTML CLASS:
+
+       topline-separator
 ================================================================ */
 
 .topline-separator
 {
     color:
         rgba(
-            225,
-            239,
+            235,
+            246,
             255,
-            .75
+            .68
         );
 
     font-weight:
         400;
+
+    letter-spacing:
+        0;
 }
 
 
@@ -404,7 +443,7 @@
    BLUE ACCENT
 ================================================================ */
 
-.login-card-accent
+.registration-card-accent
 {
     display:
         block;
@@ -416,7 +455,7 @@
         5px;
 
     margin:
-        24px 0 30px 0;
+        24px 0 27px 0;
 
     padding:
         0;
@@ -425,408 +464,21 @@
         999px;
 
     background:
-        #147cf3;
+        linear-gradient(
+            90deg,
+            #3d83ef 0%,
+            #5d9cff 100%
+        );
 
     box-shadow:
         0
         4px
-        12px
+        14px
         rgba(
             20,
             124,
             243,
-            .28
-        );
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   CLIENT BRANDING
-   ---------------------------------------------------------------
-   Moto Zone logo + separator + client name
-================================================================ */
-
-.login-card-client-branding
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        flex-start;
-
-    width:
-        100%;
-
-    min-height:
-        120px;
-
-    margin:
-        0 0 26px 0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-}
-
-
-/* ===============================================================
-   CLIENT LOGO AREA
-   ---------------------------------------------------------------
-   LARGE MOTO ZONE LOGO AREA
-================================================================ */
-
-.login-client-logo-area
-{
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        flex-start;
-
-    flex:
-        0 0 auto;
-
-    width:
-        260px;
-
-    height:
-        120px;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    overflow:
-        visible;
-}
-
-
-/* ===============================================================
-   CLIENT LOGO
-   ---------------------------------------------------------------
-   100% LARGER THAN PREVIOUS VISUAL SIZE
-================================================================ */
-
-.login-client-logo
-{
-    display:
-        block;
-
-    width:
-        570px;
-
-    height:
-        auto;
-
-    max-width:
-        none;
-
-    max-height:
-        200px;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    padding-left:
-        40px;
-
-    object-fit:
-        contain;
-
-    object-position:
-        left center;
-
-    box-sizing:
-        border-box;
-
-    transform:
-        none;
-
-    transform-origin:
-        left center;
-}
-
-
-/* ===============================================================
-   CLIENT SEPARATOR
-================================================================ */
-
-.login-client-separator
-{
-    display:
-        flex;
-
-    flex-direction:
-        column;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex:
-        0 0 18px;
-
-    width:
-        18px;
-
-    height:
-        104px;
-
-    margin:
-        0 22px 0 2px;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    position:
-        relative;
-
-    z-index:
-        2;
-}
-
-
-/* ===============================================================
-   CLIENT SEPARATOR LINE
-================================================================ */
-
-.login-client-separator-line
-{
-    display:
-        block;
-
-    width:
-        3px;
-
-    height:
-        62px;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    border-radius:
-        999px;
-
-    background:
-        #147cf3;
-
-    box-shadow:
-        0
-        0
-        8px
-        rgba(
-            20,
-            124,
-            243,
-            .28
-        );
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   CLIENT SEPARATOR DOT
-================================================================ */
-
-.login-client-separator-dot
-{
-    display:
-        block;
-
-    flex:
-        0 0 11px;
-
-    width:
-        11px;
-
-    height:
-        11px;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    border-radius:
-        50%;
-
-    background:
-        #147cf3;
-
-    box-shadow:
-        0
-        0
-        8px
-        rgba(
-            20,
-            124,
-            243,
-            .28
-        );
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   CLIENT NAME AREA
-================================================================ */
-
-.login-client-name-area
-{
-    display:
-        flex;
-
-    flex-direction:
-        column;
-
-    align-items:
-        flex-start;
-
-    justify-content:
-        center;
-
-    flex:
-        1 1 auto;
-
-    min-width:
-        0;
-
-    height:
-        100%;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    position:
-        relative;
-
-    z-index:
-        3;
-}
-
-
-/* ===============================================================
-   CLIENT NAME
-   ---------------------------------------------------------------
-   REDUCED SIZE
-================================================================ */
-
-.login-client-name
-{
-    display:
-        block;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    color:
-        #071b4d;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    font-size:
-        31px;
-
-    font-weight:
-        700;
-
-    line-height:
-        1.05;
-
-    letter-spacing:
-        -.8px;
-
-    white-space:
-        nowrap;
-
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   CLIENT NAME ACCENT
-================================================================ */
-
-.login-client-name-accent
-{
-    display:
-        block;
-
-    width:
-        64px;
-
-    height:
-        4px;
-
-    margin:
-        13px 0 0 0;
-
-    padding:
-        0;
-
-    border-radius:
-        999px;
-
-    background:
-        #147cf3;
-
-    box-shadow:
-        0
-        3px
-        9px
-        rgba(
-            20,
-            124,
-            243,
-            .25
+            .30
         );
 
     box-sizing:
@@ -838,7 +490,7 @@
    HEADING AREA
 ================================================================ */
 
-.login-card-heading-area
+.registration-card-heading-area
 {
     display:
         block;
@@ -864,7 +516,7 @@
    HEADING
 ================================================================ */
 
-.login-card-heading
+.registration-card-heading
 {
     display:
         block;
@@ -896,7 +548,7 @@
         1.05;
 
     letter-spacing:
-        -1.4px;
+        -1.5px;
 
     box-sizing:
         border-box;
@@ -910,7 +562,7 @@
    SUBTITLE
 ================================================================ */
 
-.login-card-subtitle
+.registration-card-subtitle
 {
     display:
         block;
@@ -922,13 +574,18 @@
         490px;
 
     margin:
-        12px 0 0 0;
+        11px 0 0 0;
 
     padding:
         0;
 
     color:
-        #d8e7ff;
+        rgba(
+            239,
+            247,
+            255,
+            .94
+        );
 
     font-family:
         Arial,
@@ -942,21 +599,32 @@
         400;
 
     line-height:
-        1.5;
+        1.45;
 
     box-sizing:
         border-box;
 
     text-align:
         left;
+
+    text-shadow:
+        0
+        1px
+        2px
+        rgba(
+            19,
+            57,
+            105,
+            .10
+        );
 }
 
 
 /* ===============================================================
-   LOGIN FORM
+   REGISTRATION FORM
 ================================================================ */
 
-.login-form
+.registration-form
 {
     display:
         flex;
@@ -977,7 +645,7 @@
         0;
 
     margin:
-        34px 0 0 0;
+        25px 0 0 0;
 
     padding:
         0;
@@ -991,7 +659,7 @@
    FORM FIELD
 ================================================================ */
 
-.login-form-field
+.registration-form-field
 {
     display:
         flex;
@@ -999,11 +667,14 @@
     flex-direction:
         column;
 
+    flex:
+        0 0 auto;
+
     width:
         100%;
 
     margin:
-        0 0 24px 0;
+        0 0 12px 0;
 
     padding:
         0;
@@ -1017,13 +688,13 @@
    FORM LABEL
 ================================================================ */
 
-.login-form-label
+.registration-form-label
 {
     display:
         block;
 
     margin:
-        0 0 9px 0;
+        0 0 6px 0;
 
     padding:
         0;
@@ -1057,7 +728,7 @@
    INPUT WRAPPER
 ================================================================ */
 
-.login-input-wrapper
+.registration-input-wrapper
 {
     position:
         relative;
@@ -1072,32 +743,43 @@
         100%;
 
     height:
-        58px;
+        52px;
 
     margin:
         0;
 
     padding:
-        0 17px;
+        0 16px;
 
     border:
         1px solid
         rgba(
-            221,
-            236,
+            228,
+            241,
             255,
-            .76
+            .78
         );
 
     border-radius:
-        12px;
+        13px;
 
     background:
-        rgba(
-            229,
-            241,
-            255,
-            .38
+        linear-gradient(
+            135deg,
+            rgba(
+                237,
+                247,
+                255,
+                .43
+            )
+            0%,
+            rgba(
+                220,
+                235,
+                250,
+                .31
+            )
+            100%
         );
 
     box-shadow:
@@ -1109,7 +791,7 @@
             255,
             255,
             255,
-            .55
+            .58
         );
 
     box-sizing:
@@ -1118,7 +800,43 @@
     transition:
         border-color .18s ease,
         box-shadow .18s ease,
-        background .18s ease;
+        background .18s ease,
+        transform .18s ease;
+}
+
+
+/* ===============================================================
+   INPUT HOVER
+================================================================ */
+
+.registration-input-wrapper:hover
+{
+    border-color:
+        rgba(
+            239,
+            248,
+            255,
+            .94
+        );
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(
+                242,
+                249,
+                255,
+                .48
+            )
+            0%,
+            rgba(
+                225,
+                239,
+                253,
+                .35
+            )
+            100%
+        );
 }
 
 
@@ -1126,15 +844,20 @@
    INPUT FOCUS
 ================================================================ */
 
-.login-input-wrapper:focus-within
+.registration-input-wrapper:focus-within
 {
     border-color:
-        #147cf3;
+        rgba(
+            20,
+            124,
+            243,
+            .82
+        );
 
     background:
         rgba(
-            239,
-            248,
+            241,
+            249,
             255,
             .56
         );
@@ -1143,12 +866,22 @@
         0
         0
         0
-        4px
+        3px
         rgba(
             20,
             124,
             243,
-            .10
+            .11
+        ),
+        inset
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .70
         );
 }
 
@@ -1157,7 +890,7 @@
    INPUT ICON
 ================================================================ */
 
-.login-input-icon
+.registration-input-icon
 {
     display:
         flex;
@@ -1174,8 +907,11 @@
     width:
         30px;
 
+    height:
+        30px;
+
     margin:
-        0 13px 0 0;
+        0 12px 0 0;
 
     padding:
         0;
@@ -1184,7 +920,10 @@
         #536b9d;
 
     font-size:
-        19px;
+        18px;
+
+    box-sizing:
+        border-box;
 }
 
 
@@ -1192,7 +931,7 @@
    INPUT
 ================================================================ */
 
-.login-form-input
+.registration-form-input
 {
     display:
         block;
@@ -1247,13 +986,13 @@
    PLACEHOLDER
 ================================================================ */
 
-.login-form-input::placeholder
+.registration-form-input::placeholder
 {
     color:
         #7185aa;
 
     opacity:
-        1;
+        .96;
 }
 
 
@@ -1261,7 +1000,7 @@
    PASSWORD INPUT
 ================================================================ */
 
-.login-password-input
+.registration-password-input
 {
     padding-right:
         45px;
@@ -1270,6 +1009,10 @@
 
 /* ===============================================================
    PASSWORD VISIBILITY BUTTON
+   ---------------------------------------------------------------
+   HTML CLASS:
+
+       password-visibility-button
 ================================================================ */
 
 .password-visibility-button
@@ -1290,13 +1033,13 @@
         50%;
 
     right:
-        12px;
+        10px;
 
     width:
-        32px;
+        34px;
 
     height:
-        32px;
+        34px;
 
     margin:
         0;
@@ -1310,6 +1053,9 @@
     border:
         0;
 
+    border-radius:
+        7px;
+
     background:
         transparent;
 
@@ -1317,75 +1063,55 @@
         #5e719d;
 
     font-size:
-        18px;
+        17px;
 
     cursor:
         pointer;
 
     box-sizing:
         border-box;
+
+    transition:
+        background .18s ease,
+        color .18s ease;
 }
 
 
 .password-visibility-button:hover
 {
+    background:
+        rgba(
+            20,
+            124,
+            243,
+            .08
+        );
+
     color:
         #147cf3;
 }
 
 
 /* ===============================================================
-   LOGIN OPTIONS
+   TERMS AREA
 ================================================================ */
 
-.login-form-options
+.registration-terms
 {
     display:
         flex;
 
     align-items:
         center;
-
-    justify-content:
-        space-between;
-
-    gap:
-        20px;
 
     width:
         100%;
 
-    margin:
-        0 0 25px 0;
-
-    padding:
+    min-width:
         0;
 
-    box-sizing:
-        border-box;
-}
-
-
-/* ===============================================================
-   REMEMBER ME
-================================================================ */
-
-.remember-me
-{
-    position:
-        relative;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        10px;
-
     margin:
-        0;
+        1px 0 17px 0;
 
     padding:
         0;
@@ -1399,7 +1125,7 @@
         sans-serif;
 
     font-size:
-        14px;
+        13px;
 
     font-weight:
         500;
@@ -1407,11 +1133,11 @@
     line-height:
         1.3;
 
-    cursor:
-        pointer;
-
     box-sizing:
         border-box;
+
+    cursor:
+        pointer;
 }
 
 
@@ -1419,7 +1145,7 @@
    HIDDEN NATIVE CHECKBOX
 ================================================================ */
 
-.remember-me input
+.registration-terms input
 {
     position:
         absolute;
@@ -1456,13 +1182,16 @@
 
 
 /* ===============================================================
-   CUSTOM CHECKBOX
+   TERMS CHECKBOX
 ================================================================ */
 
-.remember-checkbox
+.registration-terms-checkbox
 {
     display:
         block;
+
+    flex:
+        0 0 21px;
 
     width:
         21px;
@@ -1471,7 +1200,7 @@
         21px;
 
     margin:
-        0;
+        0 10px 0 0;
 
     padding:
         0;
@@ -1481,7 +1210,7 @@
         #147cf3;
 
     border-radius:
-        4px;
+        5px;
 
     background:
         rgba(
@@ -1496,33 +1225,67 @@
 
     transition:
         background .18s ease,
-        border-color .18s ease;
+        border-color .18s ease,
+        box-shadow .18s ease;
 }
 
 
 /* ===============================================================
-   CHECKED
+   TERMS CHECKBOX FOCUS
 ================================================================ */
 
-.remember-me input:checked
+.registration-terms input:focus-visible
 +
-.remember-checkbox
+.registration-terms-checkbox
+{
+    box-shadow:
+        0
+        0
+        0
+        3px
+        rgba(
+            20,
+            124,
+            243,
+            .12
+        );
+}
+
+
+/* ===============================================================
+   TERMS CHECKED
+================================================================ */
+
+.registration-terms input:checked
++
+.registration-terms-checkbox
 {
     border-color:
         #147cf3;
 
     background:
         #147cf3;
+
+    box-shadow:
+        0
+        3px
+        9px
+        rgba(
+            20,
+            124,
+            243,
+            .18
+        );
 }
 
 
 /* ===============================================================
-   CHECK MARK
+   TERMS CHECK MARK
 ================================================================ */
 
-.remember-me input:checked
+.registration-terms input:checked
 +
-.remember-checkbox::after
+.registration-terms-checkbox::after
 {
     content:
         '';
@@ -1560,39 +1323,68 @@
 
 
 /* ===============================================================
-   REMEMBER TEXT
+   TERMS TEXT
 ================================================================ */
 
-.remember-text
+.registration-terms-text
 {
     display:
-        block;
+        flex;
+
+    align-items:
+        center;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        4px;
+
+    min-width:
+        0;
 
     margin:
         0;
 
     padding:
         0;
+
+    color:
+        #172d57;
+
+    line-height:
+        1.4;
 }
 
 
 /* ===============================================================
-   FORGOT PASSWORD
+   TERMS LINK
+   ---------------------------------------------------------------
+   HTML uses BUTTON elements.
 ================================================================ */
 
-.forgot-password-button
+.registration-terms-link
 {
     display:
-        block;
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
 
     margin:
         0;
 
     padding:
-        0;
+        2px 6px;
 
     border:
         0;
+
+    border-radius:
+        4px;
 
     background:
         transparent;
@@ -1606,10 +1398,10 @@
         sans-serif;
 
     font-size:
-        14px;
+        inherit;
 
     font-weight:
-        600;
+        700;
 
     line-height:
         1.3;
@@ -1617,26 +1409,38 @@
     cursor:
         pointer;
 
-    white-space:
-        nowrap;
-
     box-sizing:
         border-box;
+
+    transition:
+        background .18s ease,
+        color .18s ease;
 }
 
 
-.forgot-password-button:hover
+.registration-terms-link:hover
 {
+    background:
+        rgba(
+            20,
+            124,
+            243,
+            .08
+        );
+
+    color:
+        #0568d4;
+
     text-decoration:
         underline;
 }
 
 
 /* ===============================================================
-   SIGN IN BUTTON
+   CREATE ACCOUNT BUTTON
 ================================================================ */
 
-.sign-in-button
+.create-account-button
 {
     display:
         flex;
@@ -1650,11 +1454,14 @@
     position:
         relative;
 
+    flex:
+        0 0 auto;
+
     width:
         100%;
 
     height:
-        60px;
+        58px;
 
     margin:
         0;
@@ -1666,7 +1473,7 @@
         0;
 
     border-radius:
-        12px;
+        13px;
 
     background:
         linear-gradient(
@@ -1684,7 +1491,7 @@
         sans-serif;
 
     font-size:
-        19px;
+        18px;
 
     font-weight:
         700;
@@ -1717,17 +1524,19 @@
 
 
 /* ===============================================================
-   SIGN IN HOVER
+   CREATE ACCOUNT HOVER
 ================================================================ */
 
-.sign-in-button:hover
+.create-account-button:hover
 {
     transform:
-        translateY(-1px);
+        translateY(
+            -1px
+        );
 
     filter:
         brightness(
-            1.03
+            1.035
         );
 
     box-shadow:
@@ -1744,10 +1553,34 @@
 
 
 /* ===============================================================
-   SIGN IN ICON
+   CREATE ACCOUNT ACTIVE
 ================================================================ */
 
-.sign-in-icon
+.create-account-button:active
+{
+    transform:
+        translateY(
+            0
+        );
+
+    box-shadow:
+        0
+        7px
+        18px
+        rgba(
+            16,
+            116,
+            239,
+            .22
+        );
+}
+
+
+/* ===============================================================
+   CREATE ACCOUNT ICON
+================================================================ */
+
+.create-account-icon
 {
     display:
         flex;
@@ -1759,7 +1592,7 @@
         center;
 
     margin:
-        0 16px 0 0;
+        0 15px 0 0;
 
     padding:
         0;
@@ -1770,10 +1603,10 @@
 
 
 /* ===============================================================
-   SIGN IN TEXT
+   CREATE ACCOUNT TEXT
 ================================================================ */
 
-.sign-in-text
+.create-account-text
 {
     display:
         block;
@@ -1787,10 +1620,10 @@
 
 
 /* ===============================================================
-   SIGN IN ARROW
+   CREATE ACCOUNT ARROW
 ================================================================ */
 
-.sign-in-arrow
+.create-account-arrow
 {
     display:
         flex;
@@ -1816,7 +1649,7 @@
    OR SEPARATOR
 ================================================================ */
 
-.login-or-separator
+.registration-or-separator
 {
     display:
         flex;
@@ -1831,7 +1664,7 @@
         100%;
 
     margin:
-        24px 0;
+        15px 0;
 
     padding:
         0;
@@ -1843,6 +1676,10 @@
 
 /* ===============================================================
    SEPARATOR LINE
+   ---------------------------------------------------------------
+   HTML CLASS:
+
+       separator-line
 ================================================================ */
 
 .separator-line
@@ -1863,11 +1700,16 @@
         0;
 
     background:
-        rgba(
-            220,
-            235,
-            255,
-            .55
+        linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(
+                220,
+                235,
+                255,
+                .64
+            ) 50%,
+            transparent 100%
         );
 
     box-sizing:
@@ -1877,6 +1719,10 @@
 
 /* ===============================================================
    SEPARATOR TEXT
+   ---------------------------------------------------------------
+   HTML CLASS:
+
+       separator-text
 ================================================================ */
 
 .separator-text
@@ -1888,13 +1734,18 @@
         0 0 auto;
 
     margin:
-        0 18px;
+        0 16px;
 
     padding:
         0;
 
     color:
-        #d8e7ff;
+        rgba(
+            239,
+            247,
+            255,
+            .92
+        );
 
     font-family:
         Arial,
@@ -1902,10 +1753,10 @@
         sans-serif;
 
     font-size:
-        13px;
+        12px;
 
     font-weight:
-        600;
+        700;
 
     line-height:
         1;
@@ -1916,10 +1767,14 @@
 
 
 /* ===============================================================
-   REGISTRATION AREA
+   BACK TO LOGIN AREA
+   ---------------------------------------------------------------
+   HTML CLASS:
+
+       login-registration-area
 ================================================================ */
 
-.registration-area
+.login-registration-area
 {
     display:
         flex;
@@ -1934,32 +1789,55 @@
         100%;
 
     min-height:
-        94px;
+        78px;
 
     margin:
         0;
 
     padding:
-        14px 15px;
+        10px 13px;
 
     border:
         1px solid
         rgba(
-            213,
-            231,
+            218,
+            235,
             255,
-            .62
+            .64
         );
 
     border-radius:
         13px;
 
     background:
+        linear-gradient(
+            135deg,
+            rgba(
+                231,
+                243,
+                255,
+                .34
+            )
+            0%,
+            rgba(
+                217,
+                233,
+                250,
+                .24
+            )
+            100%
+        );
+
+    box-shadow:
+        inset
+        0
+        1px
+        0
         rgba(
-            224,
-            239,
             255,
-            .34
+            255,
+            255,
+            .32
         );
 
     box-sizing:
@@ -1968,10 +1846,10 @@
 
 
 /* ===============================================================
-   REGISTRATION ICON
+   LOGIN ICON
 ================================================================ */
 
-.registration-icon
+.login-registration-icon
 {
     display:
         flex;
@@ -1983,36 +1861,57 @@
         center;
 
     flex:
-        0 0 52px;
+        0 0 48px;
 
     width:
-        52px;
+        48px;
 
     height:
-        52px;
+        48px;
 
     margin:
-        0 16px 0 0;
+        0 14px 0 0;
 
     padding:
         0;
+
+    border:
+        1px solid
+        rgba(
+            225,
+            240,
+            255,
+            .60
+        );
 
     border-radius:
         50%;
 
     background:
         rgba(
-            213,
-            229,
+            218,
+            234,
             255,
-            .76
+            .70
         );
 
     color:
         #0878f2;
 
     font-size:
-        23px;
+        21px;
+
+    box-shadow:
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .42
+        );
 
     box-sizing:
         border-box;
@@ -2020,10 +1919,10 @@
 
 
 /* ===============================================================
-   REGISTRATION CONTENT
+   LOGIN CONTENT
 ================================================================ */
 
-.registration-content
+.login-registration-content
 {
     display:
         block;
@@ -2049,10 +1948,10 @@
 
 
 /* ===============================================================
-   REGISTRATION HEADING
+   LOGIN HEADING
 ================================================================ */
 
-.registration-heading
+.login-registration-heading
 {
     margin:
         0;
@@ -2083,16 +1982,16 @@
 
 
 /* ===============================================================
-   REGISTRATION DESCRIPTION
+   LOGIN DESCRIPTION
 ================================================================ */
 
-.registration-description
+.login-registration-description
 {
     max-width:
         270px;
 
     margin:
-        5px 0 0 0;
+        4px 0 0 0;
 
     padding:
         0;
@@ -2112,7 +2011,7 @@
         400;
 
     line-height:
-        1.45;
+        1.4;
 
     box-sizing:
         border-box;
@@ -2123,10 +2022,10 @@
 
 
 /* ===============================================================
-   REGISTRATION BUTTON
+   LOGIN BUTTON
 ================================================================ */
 
-.registration-button
+.login-registration-button
 {
     display:
         flex;
@@ -2141,16 +2040,16 @@
         0 0 auto;
 
     min-width:
-        128px;
+        116px;
 
     height:
-        48px;
+        44px;
 
     margin:
-        0 0 0 16px;
+        0 0 0 14px;
 
     padding:
-        0 17px;
+        0 16px;
 
     border:
         1.5px solid
@@ -2199,10 +2098,10 @@
 
 
 /* ===============================================================
-   REGISTRATION BUTTON HOVER
+   LOGIN BUTTON HOVER
 ================================================================ */
 
-.registration-button:hover
+.login-registration-button:hover
 {
     background:
         #1478ef;
@@ -2229,12 +2128,41 @@
 
 
 /* ===============================================================
-   BOTTOM META
-   ---------------------------------------------------------------
-   Login panel footer meta
+   LOGIN BUTTON ACTIVE
 ================================================================ */
 
-.login-card-bottom-meta
+.login-registration-button:active
+{
+    transform:
+        translateY(
+            0
+        );
+
+    box-shadow:
+        0
+        4px
+        10px
+        rgba(
+            20,
+            120,
+            239,
+            .16
+        );
+}
+
+
+/* ===============================================================
+   BOTTOM META
+   ---------------------------------------------------------------
+   HTML CLASS:
+
+       registration-card-bottom-meta
+
+   This was missing from the previous CSS and was therefore
+   appearing as unstyled plain text in the screenshot.
+================================================================ */
+
+.registration-card-bottom-meta
 {
     display:
         flex;
@@ -2249,32 +2177,23 @@
         0 0 auto;
 
     gap:
-        8px;
+        12px;
 
     width:
         100%;
 
     margin:
-        18px 0 0 0;
+        14px 0 0 0;
 
     padding:
-        12px 0 0 0;
-
-    border-top:
-        1px solid
-        rgba(
-            220,
-            235,
-            255,
-            .28
-        );
+        0;
 
     color:
         rgba(
+            231,
+            242,
             255,
-            255,
-            255,
-            .45
+            .76
         );
 
     font-family:
@@ -2283,16 +2202,16 @@
         sans-serif;
 
     font-size:
-        9px;
+        8px;
 
     font-weight:
-        600;
+        700;
 
     line-height:
         1.2;
 
     letter-spacing:
-        2px;
+        3px;
 
     text-transform:
         uppercase;
@@ -2306,18 +2225,18 @@
    BOTTOM META SEPARATOR
 ================================================================ */
 
-.login-card-bottom-meta .topline-separator
+.registration-card-bottom-meta .topline-separator
 {
     color:
         rgba(
-            225,
-            239,
+            231,
+            242,
             255,
-            .45
+            .50
         );
 
-    font-weight:
-        400;
+    letter-spacing:
+        0;
 }
 
 
@@ -2332,109 +2251,69 @@
 {
     :host
     {
-        --login-card-width:
+        --registration-card-width:
             540px;
 
-        --login-card-padding-top:
+        --registration-card-padding-top:
             30px;
 
-        --login-card-padding-right:
+        --registration-card-padding-right:
             30px;
 
-        --login-card-padding-bottom:
-            24px;
+        --registration-card-padding-bottom:
+            23px;
 
-        --login-card-padding-left:
+        --registration-card-padding-left:
             30px;
     }
 
 
-    .login-card-client-branding
-    {
-        min-height:
-            96px;
-
-        margin-bottom:
-            22px;
-    }
-
-
-    .login-client-logo-area
-    {
-        width:
-            250px;
-
-        height:
-            88px;
-    }
-
-
-    .login-client-logo
-    {
-        width:
-            470px;
-
-        max-height:
-            88px;
-    }
-
-
-    .login-client-separator
-    {
-        margin-right:
-            16px;
-    }
-
-
-    .login-client-name
-    {
-        font-size:
-            27px;
-    }
-
-
-    .login-client-name-accent
-    {
-        width:
-            56px;
-
-        height:
-            4px;
-    }
-
-
-    .login-card-heading
+    .registration-card-heading
     {
         font-size:
             36px;
     }
 
 
-    .login-card-subtitle
+    .registration-card-subtitle
     {
         font-size:
             14px;
     }
 
 
-    .login-form
+    .registration-form
     {
         margin-top:
-            28px;
+            22px;
     }
 
 
-    .login-input-wrapper
+    .registration-form-field
     {
-        height:
-            54px;
+        margin-bottom:
+            11px;
     }
 
 
-    .sign-in-button
+    .registration-input-wrapper
     {
         height:
-            56px;
+            50px;
+    }
+
+
+    .create-account-button
+    {
+        height:
+            55px;
+    }
+
+
+    .login-registration-area
+    {
+        min-height:
+            74px;
     }
 }
 
@@ -2450,41 +2329,41 @@
 {
     :host
     {
-        --login-card-width:
+        --registration-card-width:
             100%;
 
-        --login-card-height:
+        --registration-card-height:
             100%;
 
-        --login-card-max-width:
+        --registration-card-max-width:
             calc(
                 100%
                 -
                 20px
             );
 
-        --login-card-padding-top:
+        --registration-card-padding-top:
             25px;
 
-        --login-card-padding-right:
+        --registration-card-padding-right:
             20px;
 
-        --login-card-padding-bottom:
+        --registration-card-padding-bottom:
             20px;
 
-        --login-card-padding-left:
+        --registration-card-padding-left:
             20px;
     }
 
 
-    .login-page-login-panel
+    .registration-page-registration-panel
     {
         padding:
             10px 0;
     }
 
 
-    .login-card
+    .registration-card
     {
         border-radius:
             17px;
@@ -2496,28 +2375,28 @@
                     73,
                     151,
                     241,
-                    .40
+                    .42
                 )
                 0%,
                 rgba(
                     73,
                     139,
                     235,
-                    .32
+                    .34
                 )
                 50%,
                 rgba(
                     91,
                     158,
                     238,
-                    .26
+                    .28
                 )
                 100%
             );
     }
 
 
-    .login-card-top-meta
+    .registration-card-top-meta
     {
         gap:
             9px;
@@ -2530,7 +2409,7 @@
     }
 
 
-    .login-card-accent
+    .registration-card-accent
     {
         width:
             48px;
@@ -2539,273 +2418,280 @@
             4px;
 
         margin:
-            18px 0 22px 0;
+            18px 0 20px 0;
     }
 
 
-    .login-card-client-branding
-    {
-        min-height:
-            82px;
-
-        margin-bottom:
-            20px;
-    }
-
-
-    .login-client-logo-area
-    {
-        width:
-            50%;
-
-        height:
-            75px;
-    }
-
-
-    .login-client-logo
-    {
-        width:
-            100%;
-
-        max-width:
-            none;
-
-        max-height:
-            75px;
-
-        transform:
-            scale(
-                1
-            );
-
-        transform-origin:
-            left center;
-    }
-
-
-    .login-client-separator
-    {
-        flex-basis:
-            12px;
-
-        width:
-            12px;
-
-        height:
-            78px;
-
-        margin:
-            0 10px 0 3px;
-    }
-
-
-    .login-client-separator-line
-    {
-        width:
-            2px;
-
-        height:
-            48px;
-    }
-
-
-    .login-client-separator-dot
-    {
-        width:
-            8px;
-
-        height:
-            8px;
-
-        flex-basis:
-            8px;
-    }
-
-
-    .login-client-name
-    {
-        font-size:
-            22px;
-
-        letter-spacing:
-            -.6px;
-    }
-
-
-    .login-client-name-accent
-    {
-        width:
-            44px;
-
-        height:
-            3px;
-
-        margin-top:
-            8px;
-    }
-
-
-    .login-card-heading
+    .registration-card-heading
     {
         font-size:
             32px;
+
+        letter-spacing:
+            -1px;
     }
 
 
-    .login-card-subtitle
+    .registration-card-subtitle
     {
         font-size:
             14px;
     }
 
 
-    .login-form
+    .registration-form
     {
         margin-top:
-            25px;
-    }
-
-
-    .login-form-field
-    {
-        margin-bottom:
-            18px;
-    }
-
-
-    .login-input-wrapper
-    {
-        height:
-            52px;
-    }
-
-
-    .login-form-input
-    {
-        font-size:
-            14px;
-    }
-
-
-    .login-form-options
-    {
-        margin-bottom:
             20px;
     }
 
 
-    .remember-me
+    .registration-form-field
     {
+        margin-bottom:
+            11px;
+    }
+
+
+    .registration-form-label
+    {
+        margin-bottom:
+            5px;
+
         font-size:
             12px;
     }
 
 
-    .forgot-password-button
-    {
-        font-size:
-            12px;
-    }
-
-
-    .sign-in-button
+    .registration-input-wrapper
     {
         height:
-            54px;
+            48px;
+
+        padding:
+            0 14px;
+    }
+
+
+    .registration-input-icon
+    {
+        flex-basis:
+            28px;
+
+        width:
+            28px;
+
+        margin-right:
+            10px;
 
         font-size:
             17px;
     }
 
 
-    .login-or-separator
+    .registration-form-input
     {
-        margin:
-            18px 0;
+        font-size:
+            14px;
     }
 
 
-    .registration-area
+    .password-visibility-button
     {
-        min-height:
-            82px;
-
-        padding:
-            10px;
-
-        background:
-            rgba(
-                224,
-                239,
-                255,
-                .30
-            );
-    }
-
-
-    .registration-icon
-    {
-        flex-basis:
-            44px;
+        right:
+            8px;
 
         width:
-            44px;
+            32px;
 
         height:
-            44px;
-
-        margin-right:
-            10px;
+            32px;
 
         font-size:
-            19px;
+            16px;
     }
 
 
-    .registration-heading
+    .registration-terms
     {
-        font-size:
-            12px;
-    }
-
-
-    .registration-description
-    {
-        font-size:
-            10px;
-    }
-
-
-    .registration-button
-    {
-        min-width:
-            105px;
-
-        height:
-            40px;
-
-        padding:
-            0 11px;
+        margin:
+            2px 0 14px 0;
 
         font-size:
             11px;
     }
 
 
-    .login-card-bottom-meta
+    .registration-terms-checkbox
     {
-        margin-top:
-            14px;
+        flex-basis:
+            19px;
 
-        padding-top:
+        width:
+            19px;
+
+        height:
+            19px;
+
+        margin-right:
+            8px;
+    }
+
+
+    .registration-terms input:checked
+    +
+    .registration-terms-checkbox::after
+    {
+        width:
+            5px;
+
+        height:
             10px;
 
+        margin:
+            1px 0 0 5px;
+    }
+
+
+    .registration-terms-text
+    {
+        gap:
+            2px;
+    }
+
+
+    .registration-terms-link
+    {
+        padding:
+            1px 4px;
+    }
+
+
+    .create-account-button
+    {
+        height:
+            54px;
+
+        padding:
+            0 25px;
+
         font-size:
+            17px;
+    }
+
+
+    .create-account-icon
+    {
+        margin-right:
+            12px;
+
+        font-size:
+            17px;
+    }
+
+
+    .create-account-arrow
+    {
+        margin-left:
+            14px;
+
+        font-size:
+            17px;
+    }
+
+
+    .registration-or-separator
+    {
+        margin:
+            14px 0;
+    }
+
+
+    .separator-text
+    {
+        margin:
+            0 12px;
+
+        font-size:
+            11px;
+    }
+
+
+    .login-registration-area
+    {
+        min-height:
+            72px;
+
+        padding:
+            9px;
+    }
+
+
+    .login-registration-icon
+    {
+        flex-basis:
+            42px;
+
+        width:
+            42px;
+
+        height:
+            42px;
+
+        margin-right:
+            9px;
+
+        font-size:
+            18px;
+    }
+
+
+    .login-registration-heading
+    {
+        font-size:
+            12px;
+    }
+
+
+    .login-registration-description
+    {
+        font-size:
+            10px;
+    }
+
+
+    .login-registration-button
+    {
+        min-width:
+            100px;
+
+        height:
+            40px;
+
+        margin-left:
+            9px;
+
+        padding:
+            0 10px;
+
+        font-size:
+            11px;
+    }
+
+
+    .registration-card-bottom-meta
+    {
+        gap:
             8px;
 
+        margin-top:
+            11px;
+
+        font-size:
+            7px;
+
         letter-spacing:
-            1.7px;
+            2px;
     }
 }
 
@@ -2821,133 +2707,323 @@
 {
     :host
     {
-        --login-card-padding-top:
-            24px;
+        --registration-card-padding-top:
+            23px;
 
-        --login-card-padding-bottom:
-            20px;
-    }
-
-
-    .login-card-accent
-    {
-        margin:
-            18px 0 20px 0;
-    }
-
-
-    .login-card-client-branding
-    {
-        min-height:
-            82px;
-
-        margin-bottom:
+        --registration-card-padding-bottom:
             18px;
     }
 
 
-    .login-client-logo-area
+    .registration-card-accent
     {
-        height:
-            76px;
+        margin:
+            16px 0 18px 0;
     }
 
 
-    .login-client-logo
+    .registration-card-subtitle
     {
-        width:
-            530px;
-
-        max-width:
-            none;
-
-        max-height:
-            76px;
-
-        transform:
-            scale(
-                .5
-            );
-
-        transform-origin:
-            left center;
+        margin-top:
+            8px;
     }
 
 
-    .login-client-separator
+    .registration-form
     {
-        height:
-            78px;
+        margin-top:
+            17px;
     }
 
 
-    .login-client-separator-line
+    .registration-form-field
+    {
+        margin-bottom:
+            8px;
+    }
+
+
+    .registration-form-label
+    {
+        margin-bottom:
+            5px;
+    }
+
+
+    .registration-input-wrapper
     {
         height:
             46px;
     }
 
 
-    .login-client-name
-    {
-        font-size:
-            29px;
-    }
-
-
-    .login-card-heading
-    {
-        font-size:
-            36px;
-    }
-
-
-    .login-form
-    {
-        margin-top:
-            24px;
-    }
-
-
-    .login-form-field
+    .registration-terms
     {
         margin-bottom:
-            17px;
+            10px;
     }
 
 
-    .login-input-wrapper
+    .create-account-button
     {
         height:
-            52px;
+            50px;
     }
 
 
-    .login-form-options
+    .registration-or-separator
+    {
+        margin:
+            11px 0;
+    }
+
+
+    .login-registration-area
+    {
+        min-height:
+            66px;
+
+        padding:
+            8px 10px;
+    }
+
+
+    .login-registration-icon
+    {
+        width:
+            40px;
+
+        height:
+            40px;
+
+        flex-basis:
+            40px;
+    }
+
+
+    .registration-card-bottom-meta
+    {
+        margin-top:
+            9px;
+    }
+}
+
+
+/* ===============================================================
+   VERY SHORT HEIGHT
+   ---------------------------------------------------------------
+   Keeps the complete registration panel usable on smaller
+   desktop/laptop viewport heights.
+================================================================ */
+
+@media
+(
+    max-height:620px
+)
+{
+    :host
+    {
+        --registration-card-padding-top:
+            18px;
+
+        --registration-card-padding-bottom:
+            14px;
+    }
+
+
+    .registration-card-accent
+    {
+        width:
+            58px;
+
+        height:
+            4px;
+
+        margin:
+            12px 0 14px 0;
+    }
+
+
+    .registration-card-heading
+    {
+        font-size:
+            34px;
+    }
+
+
+    .registration-card-subtitle
+    {
+        font-size:
+            13px;
+
+        margin-top:
+            6px;
+    }
+
+
+    .registration-form
+    {
+        margin-top:
+            13px;
+    }
+
+
+    .registration-form-field
     {
         margin-bottom:
+            6px;
+    }
+
+
+    .registration-form-label
+    {
+        margin-bottom:
+            3px;
+
+        font-size:
+            12px;
+    }
+
+
+    .registration-input-wrapper
+    {
+        height:
+            42px;
+
+        border-radius:
+            10px;
+    }
+
+
+    .registration-input-icon
+    {
+        font-size:
+            16px;
+    }
+
+
+    .registration-form-input
+    {
+        font-size:
+            14px;
+    }
+
+
+    .registration-terms
+    {
+        margin:
+            1px 0 7px 0;
+
+        font-size:
+            10px;
+    }
+
+
+    .registration-terms-checkbox
+    {
+        width:
+            18px;
+
+        height:
+            18px;
+
+        flex-basis:
             18px;
     }
 
 
-    .sign-in-button
+    .create-account-button
     {
         height:
-            54px;
+            45px;
+
+        border-radius:
+            10px;
+
+        font-size:
+            15px;
     }
 
 
-    .login-or-separator
+    .registration-or-separator
     {
         margin:
-            17px 0;
+            8px 0;
     }
 
 
-    .registration-area
+    .login-registration-area
     {
         min-height:
-            78px;
+            56px;
+
+        border-radius:
+            10px;
+    }
+
+
+    .login-registration-icon
+    {
+        width:
+            34px;
+
+        height:
+            34px;
+
+        flex-basis:
+            34px;
+
+        margin-right:
+            8px;
+
+        font-size:
+            16px;
+    }
+
+
+    .login-registration-heading
+    {
+        font-size:
+            11px;
+    }
+
+
+    .login-registration-description
+    {
+        margin-top:
+            2px;
+
+        font-size:
+            9px;
+    }
+
+
+    .login-registration-button
+    {
+        min-width:
+            90px;
+
+        height:
+            34px;
+
+        margin-left:
+            8px;
+
+        font-size:
+            10px;
+    }
+
+
+    .registration-card-bottom-meta
+    {
+        margin-top:
+            6px;
+
+        font-size:
+            6px;
+
+        letter-spacing:
+            1.8px;
     }
 }
 
@@ -2962,10 +3038,12 @@
         reduce
 )
 {
-    .login-input-wrapper,
-    .sign-in-button,
-    .registration-button,
-    .remember-checkbox
+    .registration-input-wrapper,
+    .password-visibility-button,
+    .registration-terms-checkbox,
+    .registration-terms-link,
+    .create-account-button,
+    .login-registration-button
     {
         transition:
             none;

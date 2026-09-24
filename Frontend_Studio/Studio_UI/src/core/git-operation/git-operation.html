@@ -896,7 +896,7 @@
 
                                     <div class="merge-conflict-warning-text">
 
-                                        Full Repository Synchronization detected unresolved conflicts. Resolve the files locally, then continue the merge.
+                                        Full Repository Synchronization detected unresolved conflicts. Resolve each file by keeping the local or remote version, then continue the merge.
 
                                     </div>
 
@@ -937,14 +937,80 @@
                                         class="merge-conflict-file"
                                         *ngFor="let file of mergeConflicts">
 
-                                        <i class="fas fa-file-circle-exclamation"></i>
 
-                                        <span
-                                            [title]="file">
+                                        <!-- FILE -->
 
-                                            {{ file }}
+                                        <div class="merge-conflict-file-information">
 
-                                        </span>
+                                            <i class="fas fa-file-circle-exclamation"></i>
+
+                                            <span
+                                                [title]="file">
+
+                                                {{ file }}
+
+                                            </span>
+
+                                        </div>
+
+
+
+                                        <!-- FILE RESOLUTION ACTIONS -->
+
+                                        <div class="merge-conflict-file-actions">
+
+
+                                            <!-- KEEP LOCAL -->
+
+                                            <button
+
+                                                type="button"
+
+                                                class="merge-keep-local-button"
+
+                                                [disabled]="isLoading || isOperating"
+
+                                                (click)="keepLocalConflict(file)"
+
+                                                title="Keep the local version of this file">
+
+                                                <i class="fas fa-laptop-code"></i>
+
+                                                <span>
+
+                                                    Keep Local
+
+                                                </span>
+
+                                            </button>
+
+
+
+                                            <!-- KEEP REMOTE -->
+
+                                            <button
+
+                                                type="button"
+
+                                                class="merge-keep-remote-button"
+
+                                                [disabled]="isLoading || isOperating"
+
+                                                (click)="keepRemoteConflict(file)"
+
+                                                title="Keep the remote version of this file">
+
+                                                <i class="fas fa-cloud-arrow-down"></i>
+
+                                                <span>
+
+                                                    Keep Remote
+
+                                                </span>
+
+                                            </button>
+
+                                        </div>
 
                                     </div>
 
@@ -961,13 +1027,15 @@
                             <div class="merge-conflict-actions">
 
 
+                                <!-- CONTINUE MERGE -->
+
                                 <button
 
                                     type="button"
 
                                     class="merge-continue-button"
 
-                                    [disabled]="isLoading || isOperating"
+                                    [disabled]="isLoading || isOperating || mergeConflicts.length > 0"
 
                                     (click)="onOperation('continue-merge')">
 
@@ -982,6 +1050,8 @@
                                 </button>
 
 
+
+                                <!-- ABORT MERGE -->
 
                                 <button
 

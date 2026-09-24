@@ -1166,6 +1166,186 @@ public class SourceControlController
 
 
     //===========================================================
+    // Resolve Merge Conflict
+    //===========================================================
+
+    [HttpPost("{id:long}/resolve-merge-conflict")]
+
+    public async Task<IActionResult>
+        ResolveMergeConflict
+    (
+        long id,
+
+        [FromBody]
+        ResolveMergeConflictRequest request
+    )
+    {
+        try
+        {
+            if
+            (
+                request is null
+            )
+            {
+                return BadRequest(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Merge conflict resolution data is required."
+                    }
+                );
+            }
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    request.FilePath
+                )
+            )
+            {
+                return BadRequest(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Conflict file path is required."
+                    }
+                );
+            }
+
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    request.Resolution
+                )
+            )
+            {
+                return BadRequest(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Resolution is required. Use LOCAL or REMOTE."
+                    }
+                );
+            }
+
+
+            var resolution =
+                request.Resolution
+                    .Trim()
+                    .ToUpperInvariant();
+
+
+            if
+            (
+                resolution != "LOCAL"
+                &&
+                resolution != "OURS"
+                &&
+                resolution != "REMOTE"
+                &&
+                resolution != "THEIRS"
+            )
+            {
+                return BadRequest(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Resolution must be LOCAL or REMOTE."
+                    }
+                );
+            }
+
+
+            var entity =
+                await _repository
+                    .GetByIdAsync(
+                        id
+                    );
+
+
+            if
+            (
+                entity is null
+            )
+            {
+                return NotFound(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Source Control repository not found."
+                    }
+                );
+            }
+
+
+            var result =
+                await _repository
+                    .ResolveMergeConflictAsync(
+                        id,
+
+                        request.FilePath.Trim(),
+
+                        resolution
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest(
+                    result
+                );
+            }
+
+
+            return Ok(
+                result
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Git merge conflict resolution failed.",
+
+                    output =
+                        ex.Message
+                }
+            );
+        }
+    }
+
+
+
+    //===========================================================
     // Continue Merge
     //===========================================================
 
@@ -1416,5 +1596,33 @@ public class SourceControlController
                 }
             );
         }
+    }
+
+
+
+    //===========================================================
+    // Resolve Merge Conflict Request
+    //===========================================================
+
+    public sealed class ResolveMergeConflictRequest
+    {
+        public string FilePath
+        {
+            get;
+
+            set;
+        } =
+
+            string.Empty;
+
+
+        public string Resolution
+        {
+            get;
+
+            set;
+        } =
+
+            string.Empty;
     }
 }

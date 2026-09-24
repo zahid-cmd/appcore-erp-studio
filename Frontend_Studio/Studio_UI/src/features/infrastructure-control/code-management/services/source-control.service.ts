@@ -432,6 +432,42 @@ export class SourceControlService
 
 
     //===========================================================
+    // Resolve Merge Conflict
+    //===========================================================
+
+    resolveMergeConflict
+    (
+        sourceControlId:
+            number,
+
+        filePath:
+            string,
+
+        resolution:
+            string
+    ):
+        Observable<GitOperationResultDto>
+    {
+        const model =
+        {
+            filePath:
+                filePath,
+
+            resolution:
+                resolution
+        };
+
+
+        return this.http.post<GitOperationResultDto>(
+            `${this.apiUrl}/${sourceControlId}/resolve-merge-conflict`,
+
+            model
+        );
+    }
+
+
+
+    //===========================================================
     // Continue Merge
     //===========================================================
 

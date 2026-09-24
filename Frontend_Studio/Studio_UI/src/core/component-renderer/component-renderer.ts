@@ -150,6 +150,22 @@ from '../../shared/components/login-page-2/login-panel/login-panel';
 
 import
 {
+    LoginPageRegistrationPanelComponent as
+    LoginPage2RegistrationPanelComponent
+}
+from '../../shared/components/login-page-2/registration-panel/registration-panel';
+
+
+import
+{
+    LoginPageForgetPasswordPanelComponent as
+    LoginPage2ForgetPasswordPanelComponent
+}
+from '../../shared/components/login-page-2/forget-password/forget-password';
+
+
+import
+{
     LoginPageNotificationPanelComponent as
     LoginPage2NotificationPanelComponent
 }
@@ -162,6 +178,14 @@ import
     LoginPage2PoweredByComponent
 }
 from '../../shared/components/login-page-2/powered-by/powered-by';
+
+
+import
+{
+    LoginPageThemeSelectorComponent as
+    LoginPage2ThemeSelectorComponent
+}
+from '../../shared/components/login-page-2/theme-selector/theme-selector';
 
 
 import
@@ -203,10 +227,18 @@ from '../../shared/components/login-page-3/promotional-panel/promotional-panel';
 
 import
 {
-    LoginPagePromotionalImageComponent as
-    LoginPage3PromotionalImageComponent
+    LoginPagePromotionalImageLightComponent as
+    LoginPage3PromotionalImageLightComponent
 }
-from '../../shared/components/login-page-3/promotional-image/promotional-image';
+from '../../shared/components/login-page-3/promotional-image-light/promotional-image-light';
+
+
+import
+{
+    LoginPagePromotionalImageDeepComponent as
+    LoginPage3PromotionalImageDeepComponent
+}
+from '../../shared/components/login-page-3/promotional-image-deep/promotional-image-deep';
 
 
 import
@@ -227,6 +259,22 @@ from '../../shared/components/login-page-3/login-panel/login-panel';
 
 import
 {
+    LoginPageRegistrationPanelComponent as
+    LoginPage3RegistrationPanelComponent
+}
+from '../../shared/components/login-page-3/registration-panel/registration-panel';
+
+
+import
+{
+    LoginPageForgetPasswordPanelComponent as
+    LoginPage3ForgetPasswordPanelComponent
+}
+from '../../shared/components/login-page-3/forget-password/forget-password';
+
+
+import
+{
     LoginPageNotificationPanelComponent as
     LoginPage3NotificationPanelComponent
 }
@@ -239,6 +287,14 @@ import
     LoginPage3PoweredByComponent
 }
 from '../../shared/components/login-page-3/powered-by/powered-by';
+
+
+import
+{
+    LoginPageThemeSelectorComponent as
+    LoginPage3ThemeSelectorComponent
+}
+from '../../shared/components/login-page-3/theme-selector/theme-selector';
 
 
 import
@@ -635,11 +691,20 @@ implements
         'login-page-2-login-panel':
             LoginPage2LoginPanelComponent,
 
+        'login-page-2-registration-panel':
+            LoginPage2RegistrationPanelComponent,
+
+        'login-page-2-forget-password':
+            LoginPage2ForgetPasswordPanelComponent,
+
         'login-page-2-notification-panel':
             LoginPage2NotificationPanelComponent,
 
         'login-page-2-powered-by':
             LoginPage2PoweredByComponent,
+
+        'login-page-2-theme-selector':
+            LoginPage2ThemeSelectorComponent,
 
         'login-page-2-footer':
             LoginPage2FooterComponent,
@@ -661,17 +726,29 @@ implements
         'login-page-3-promotional-panel':
             LoginPage3PromotionalPanelComponent,
 
-        'login-page-3-promotional-image':
-            LoginPage3PromotionalImageComponent,
+        'login-page-3-promotional-image-light':
+            LoginPage3PromotionalImageLightComponent,
+
+        'login-page-3-promotional-image-deep':
+            LoginPage3PromotionalImageDeepComponent,
 
         'login-page-3-login-panel':
             LoginPage3LoginPanelComponent,
+
+        'login-page-3-registration-panel':
+            LoginPage3RegistrationPanelComponent,
+
+        'login-page-3-forget-password':
+            LoginPage3ForgetPasswordPanelComponent,
 
         'login-page-3-notification-panel':
             LoginPage3NotificationPanelComponent,
 
         'login-page-3-powered-by':
             LoginPage3PoweredByComponent,
+
+        'login-page-3-theme-selector':
+            LoginPage3ThemeSelectorComponent,
 
         'login-page-3-footer':
             LoginPage3FooterComponent,
