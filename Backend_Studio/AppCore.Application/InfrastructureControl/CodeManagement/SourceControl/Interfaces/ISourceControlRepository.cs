@@ -170,4 +170,52 @@ public interface ISourceControlRepository
         GitCommitDto dto
     );
 
+
+
+    //===========================================================
+    // Git Merge Conflicts
+    //===========================================================
+
+    Task<GitOperationResultDto>
+        GetMergeConflictsAsync
+    (
+        long sourceControlId
+    );
+
+
+
+    //===========================================================
+    // Git Continue Merge
+    //===========================================================
+
+    Task<GitOperationResultDto>
+        ContinueMergeAsync
+    (
+        long sourceControlId
+    );
+
+
+
+    //===========================================================
+    // Git Abort Merge
+    //===========================================================
+
+    Task<GitOperationResultDto>
+        AbortMergeAsync
+    (
+        long sourceControlId
+    );
+
+
+
+    //===========================================================
+    // Git Reset To Remote
+    //===========================================================
+
+    Task<GitOperationResultDto>
+        ResetToRemoteAsync
+    (
+        long sourceControlId
+    );
+
 }

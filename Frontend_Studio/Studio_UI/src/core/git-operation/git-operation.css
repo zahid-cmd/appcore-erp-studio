@@ -992,7 +992,7 @@
     display:grid;
 
     grid-template-columns:
-        repeat(4,minmax(0,1fr))
+        repeat(5,minmax(0,1fr))
         minmax(0,2.3fr);
 
     gap:16px;
@@ -1282,6 +1282,343 @@
 
 
 /* =====================================================
+   RESET TO REMOTE
+===================================================== */
+
+.reset-banner
+{
+    position:relative;
+
+    width:100%;
+
+    min-width:0;
+
+    height:132px;
+
+    min-height:132px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:12px;
+
+    border-radius:16px;
+
+    border:1px solid rgba(226,232,240,.85);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.97),
+            rgba(248,250,252,.94)
+        );
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    transition:
+        transform .22s ease,
+        border-color .22s ease,
+        box-shadow .22s ease;
+
+    box-shadow:
+        0 5px 14px rgba(15,23,42,.05);
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   RESET TOP ACCENT
+===================================================== */
+
+.reset-banner::before
+{
+    content:"";
+
+    position:absolute;
+
+    left:16px;
+
+    right:16px;
+
+    top:0;
+
+    height:4px;
+
+    border-radius:0 0 12px 12px;
+
+    background:#ef4444;
+
+    opacity:.15;
+
+    transition:opacity .25s ease;
+}
+
+
+/* =====================================================
+   RESET HOVER
+===================================================== */
+
+.reset-banner:hover
+{
+    transform:translateY(-3px);
+
+    border-color:#fecaca;
+
+    box-shadow:
+        0 12px 26px rgba(239,68,68,.08);
+}
+
+
+.reset-banner:hover::before
+{
+    opacity:1;
+}
+
+
+/* =====================================================
+   RESET LEFT
+===================================================== */
+
+.reset-left
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    width:100%;
+
+    min-width:0;
+
+    z-index:1;
+}
+
+
+/* =====================================================
+   RESET ICON
+===================================================== */
+
+.reset-icon
+{
+    width:48px;
+
+    height:48px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:15px;
+
+    background:#fff1f2;
+
+    color:#dc2626;
+
+    font-size:19px;
+
+    transition:transform .22s ease;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+
+.reset-banner:hover .reset-icon
+{
+    transform:scale(1.08);
+}
+
+
+/* =====================================================
+   RESET CONTENT
+===================================================== */
+
+.reset-content
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:3px;
+
+    min-width:0;
+
+    width:100%;
+
+    text-align:center;
+}
+
+
+/* =====================================================
+   RESET TITLE
+===================================================== */
+
+.reset-title
+{
+    width:100%;
+
+    max-width:100%;
+
+    font-size:13px;
+
+    line-height:17px;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+    text-align:center;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   RESET DESCRIPTION
+===================================================== */
+
+.reset-description
+{
+    width:100%;
+
+    max-width:150px;
+
+    font-size:10px;
+
+    line-height:14px;
+
+    color:#64748b;
+
+    text-align:center;
+
+    overflow:hidden;
+}
+
+
+/* =====================================================
+   RESET BUTTON
+===================================================== */
+
+.reset-button
+{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+
+    height:100%;
+
+    padding:0;
+
+    border:none;
+
+    border-radius:16px;
+
+    background:transparent;
+
+    color:transparent;
+
+    cursor:pointer;
+
+    font-size:0;
+
+    z-index:2;
+
+    box-sizing:border-box;
+}
+
+
+.reset-button span,
+.reset-button i
+{
+    display:none;
+}
+
+
+.reset-button:hover
+{
+    transform:none;
+
+    border:none;
+
+    background:transparent;
+
+    color:transparent;
+
+    box-shadow:none;
+}
+
+
+.reset-button:active
+{
+    transform:none;
+}
+
+
+.reset-button:disabled
+{
+    cursor:not-allowed;
+
+    opacity:.55;
+
+    transform:none;
+
+    background:transparent;
+
+    box-shadow:none;
+}
+
+
+/* =====================================================
+   RESET DISABLED
+===================================================== */
+
+.reset-banner:has(.reset-button:disabled)
+{
+    cursor:not-allowed;
+
+    opacity:.55;
+
+    transform:none;
+
+    box-shadow:
+        0 5px 14px rgba(15,23,42,.03);
+}
+
+
+.reset-banner:has(.reset-button:disabled)::before
+{
+    opacity:.08;
+}
+
+
+/* =====================================================
    SYNCHRONIZATION CARD
 ===================================================== */
 
@@ -1559,6 +1896,426 @@
 
 
 /* =====================================================
+   MERGE CONFLICT SECTION
+===================================================== */
+
+.merge-conflict-section
+{
+    width:100%;
+
+    min-width:0;
+
+    box-sizing:border-box;
+
+    border:1px solid #fecaca;
+
+    border-radius:12px;
+
+    background:#ffffff;
+
+    overflow:hidden;
+
+    flex-shrink:0;
+}
+
+
+.merge-conflict-header
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:16px;
+
+    padding:14px 18px;
+
+    min-width:0;
+
+    border-bottom:1px solid #fee2e2;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fffafa,
+            #fff7f7
+        );
+
+    box-sizing:border-box;
+}
+
+
+.merge-conflict-title-wrapper
+{
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+}
+
+
+.merge-conflict-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:9px;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    color:#991b1b;
+}
+
+
+.merge-conflict-title i
+{
+    color:#dc2626;
+}
+
+
+.merge-conflict-subtitle
+{
+    margin-top:4px;
+
+    padding-left:23px;
+
+    font-size:11px;
+
+    line-height:16px;
+
+    color:#64748b;
+}
+
+
+.merge-conflict-count
+{
+    flex-shrink:0;
+
+    padding:7px 11px;
+
+    border-radius:8px;
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+}
+
+
+.merge-conflict-body
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+    padding:14px 18px;
+
+    box-sizing:border-box;
+}
+
+
+.merge-conflict-warning
+{
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:10px;
+
+    width:100%;
+
+    min-width:0;
+
+    padding:10px 12px;
+
+    box-sizing:border-box;
+
+    border-radius:10px;
+
+    background:#fff7ed;
+
+    border:1px solid #fed7aa;
+}
+
+
+.merge-conflict-warning-icon
+{
+    width:28px;
+
+    height:28px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:8px;
+
+    background:#ffedd5;
+
+    color:#ea580c;
+
+    font-size:13px;
+}
+
+
+.merge-conflict-warning-content
+{
+    min-width:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:2px;
+}
+
+
+.merge-conflict-warning-title
+{
+    font-size:12px;
+
+    line-height:17px;
+
+    font-weight:700;
+
+    color:#9a3412;
+}
+
+
+.merge-conflict-warning-text
+{
+    font-size:11px;
+
+    line-height:16px;
+
+    color:#7c2d12;
+}
+
+
+.merge-conflict-files
+{
+    width:100%;
+
+    min-width:0;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:10px;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+}
+
+
+.merge-conflict-files-header
+{
+    height:36px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 12px;
+
+    background:#f8fafc;
+
+    border-bottom:1px solid #e2e8f0;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    color:#475569;
+}
+
+
+.merge-conflict-file-list
+{
+    display:flex;
+
+    flex-direction:column;
+
+    max-height:160px;
+
+    overflow:auto;
+}
+
+
+.merge-conflict-file
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:9px;
+
+    min-width:0;
+
+    min-height:34px;
+
+    padding:6px 12px;
+
+    border-bottom:1px solid #f1f5f9;
+
+    box-sizing:border-box;
+
+    font-size:11px;
+
+    color:#475569;
+}
+
+
+.merge-conflict-file:last-child
+{
+    border-bottom:none;
+}
+
+
+.merge-conflict-file i
+{
+    flex-shrink:0;
+
+    color:#dc2626;
+
+    font-size:13px;
+}
+
+
+.merge-conflict-file span
+{
+    min-width:0;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+.merge-conflict-actions
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:10px;
+
+    width:100%;
+}
+
+
+.merge-continue-button,
+.merge-abort-button
+{
+    height:38px;
+
+    padding:0 16px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    box-sizing:border-box;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+}
+
+
+.merge-continue-button
+{
+    border:1px solid #86efac;
+
+    background:#f0fdf4;
+
+    color:#15803d;
+}
+
+
+.merge-continue-button:hover
+{
+    transform:translateY(-1px);
+
+    background:#dcfce7;
+
+    box-shadow:
+        0 6px 14px rgba(22,163,74,.10);
+}
+
+
+.merge-abort-button
+{
+    border:1px solid #fca5a5;
+
+    background:#fff1f2;
+
+    color:#dc2626;
+}
+
+
+.merge-abort-button:hover
+{
+    transform:translateY(-1px);
+
+    background:#ffe4e6;
+
+    box-shadow:
+        0 6px 14px rgba(239,68,68,.10);
+}
+
+
+.merge-continue-button:disabled,
+.merge-abort-button:disabled
+{
+    cursor:not-allowed;
+
+    opacity:.55;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
+
+/* =====================================================
    REPOSITORY HEALTH
 ===================================================== */
 
@@ -1695,11 +2452,26 @@
 
     height:100%;
 
-    display:flex;
+    display:grid;
 
-    flex-direction:column;
+    grid-template-columns:
+        minmax(0,1fr)
+        minmax(0,1fr);
 
-    padding:16px;
+    grid-template-rows:
+        auto
+        1px
+        42px
+        42px
+        auto
+        1px
+        minmax(0,1fr);
+
+    column-gap:10px;
+
+    row-gap:0;
+
+    padding:12px 14px;
 
     background:#ffffff;
 
@@ -1715,16 +2487,22 @@
 
 .health-counter-grid
 {
+    grid-column:1 / -1;
+
+    grid-row:1;
+
     display:grid;
 
     grid-template-columns:
         repeat(4,minmax(0,1fr));
 
-    gap:8px;
+    gap:6px;
 
     width:100%;
 
     min-width:0;
+
+    min-height:100px;
 
     flex-shrink:0;
 }
@@ -1738,7 +2516,7 @@
 {
     min-width:0;
 
-    height:92px;
+    height:90px;
 
     display:flex;
 
@@ -1748,13 +2526,13 @@
 
     justify-content:center;
 
-    padding:8px 4px;
+    padding:6px 4px;
 
     box-sizing:border-box;
 
     border:1px solid #e2e8f0;
 
-    border-radius:12px;
+    border-radius:10px;
 
     background:
         linear-gradient(
@@ -1774,9 +2552,9 @@
 
 .health-counter-value
 {
-    font-size:27px;
+    font-size:24px;
 
-    line-height:32px;
+    line-height:28px;
 
     font-weight:700;
 
@@ -1792,13 +2570,13 @@
 
 .health-counter-label
 {
-    margin-top:6px;
+    margin-top:3px;
 
     width:100%;
 
-    font-size:11px;
+    font-size:10px;
 
-    line-height:14px;
+    line-height:13px;
 
     font-weight:600;
 
@@ -1824,12 +2602,25 @@
 
     height:1px;
 
-    margin:
-        16px 0;
+    margin:0;
 
     flex-shrink:0;
 
     background:#e2e8f0;
+}
+
+
+/* =====================================================
+   FIRST HEALTH DIVIDER
+===================================================== */
+
+.repository-health-body > .health-divider:nth-child(2)
+{
+    grid-column:1 / -1;
+
+    grid-row:2;
+
+    align-self:center;
 }
 
 
@@ -1847,6 +2638,8 @@
 
     width:100%;
 
+    padding-top: 35px;
+
     min-width:0;
 
     flex-shrink:0;
@@ -1854,14 +2647,49 @@
 
 
 /* =====================================================
-   WORKING TREE ICON
+   WORKING TREE POSITION
+===================================================== */
+
+.repository-health-body > .health-status-block:nth-child(3)
+{
+    grid-column:1;
+
+    grid-row:3;
+}
+
+
+/* =====================================================
+   MERGE STATUS POSITION
+===================================================== */
+
+.repository-health-body > .health-status-block:nth-child(5)
+{
+    grid-column:2;
+
+    grid-row:3;
+}
+
+
+/* =====================================================
+   HIDE DIVIDER BETWEEN WORKING TREE
+   AND MERGE STATUS
+===================================================== */
+
+.repository-health-body > .health-divider:nth-child(4)
+{
+    display:none;
+}
+
+
+/* =====================================================
+   WORKING TREE / MERGE STATUS ICON
 ===================================================== */
 
 .health-status-icon
 {
-    width:42px;
+    width:38px;
 
-    height:42px;
+    height:38px;
 
     display:flex;
 
@@ -1871,18 +2699,30 @@
 
     flex-shrink:0;
 
-    border-radius:12px;
+    border-radius:10px;
 
     background:#ecfdf5;
 
     color:#16a34a;
 
-    font-size:18px;
+    font-size:16px;
 }
 
 
 /* =====================================================
-   WORKING TREE CONTENT
+   MERGE STATUS ICON
+===================================================== */
+
+.repository-health-body > .health-status-block:nth-child(5) .health-status-icon
+{
+    background:#ecfdf5;
+
+    color:#16a34a;
+}
+
+
+/* =====================================================
+   HEALTH STATUS CONTENT
 ===================================================== */
 
 .health-status-content
@@ -1892,18 +2732,26 @@
     flex-direction:column;
 
     min-width:0;
+
+    flex:1;
 }
 
 
 .health-status-title
 {
-    font-size:13px;
+    font-size:12px;
 
-    line-height:18px;
+    line-height:16px;
 
     font-weight:700;
 
     color:#0f172a;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
 }
 
 
@@ -1913,15 +2761,21 @@
 
     align-items:center;
 
-    gap:8px;
+    gap:7px;
 
-    margin-top:4px;
+    margin-top:2px;
 
-    font-size:12px;
+    font-size:11px;
 
-    line-height:18px;
+    line-height:16px;
 
     font-weight:700;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
 }
 
 
@@ -1943,9 +2797,9 @@
 
 .health-status-dot
 {
-    width:10px;
+    width:8px;
 
-    height:10px;
+    height:8px;
 
     flex-shrink:0;
 
@@ -1965,8 +2819,12 @@
    TOTAL CHANGES
 ===================================================== */
 
-.health-total-row
+.repository-health-body > .health-total-row
 {
+    grid-column:1 / -1;
+
+    grid-row:5;
+
     display:flex;
 
     align-items:center;
@@ -1977,7 +2835,9 @@
 
     min-width:0;
 
-    min-height:48px;
+    min-height:50px;
+
+    height:50px;
 
     flex-shrink:0;
 }
@@ -1989,9 +2849,9 @@
 
 .health-total-icon
 {
-    width:42px;
+    width:36px;
 
-    height:42px;
+    height:36px;
 
     display:flex;
 
@@ -2001,13 +2861,13 @@
 
     flex-shrink:0;
 
-    border-radius:12px;
+    border-radius:10px;
 
     background:#ecfdf5;
 
     color:#16a34a;
 
-    font-size:18px;
+    font-size:15px;
 }
 
 
@@ -2021,7 +2881,7 @@
 
     min-width:0;
 
-    font-size:13px;
+    font-size:14px;
 
     font-weight:600;
 
@@ -2037,9 +2897,9 @@
 {
     flex-shrink:0;
 
-    font-size:20px;
+    font-size:18px;
 
-    line-height:24px;
+    line-height:22px;
 
     font-weight:700;
 
@@ -2050,22 +2910,46 @@
 
 
 /* =====================================================
+   SECOND HEALTH DIVIDER
+===================================================== */
+
+.repository-health-body > .health-divider:nth-child(7)
+{
+    grid-column:1 / -1;
+
+    grid-row:6;
+
+    align-self:center;
+}
+
+
+/* =====================================================
    LAST COMMIT
 ===================================================== */
 
 .health-last-commit
 {
+    grid-column:1 / -1;
+
+    grid-row:7;
+
     display:flex;
 
-    align-items:flex-start;
+    align-items:center;
 
-    gap:12px;
+    gap:10px;
 
     width:100%;
 
     min-width:0;
 
+    min-height:0;
+
+    height:100%;
+
     flex-shrink:0;
+
+    box-sizing:border-box;
 }
 
 
@@ -2075,9 +2959,9 @@
 
 .health-last-commit-icon
 {
-    width:42px;
+    width:38px;
 
-    height:42px;
+    height:38px;
 
     display:flex;
 
@@ -2087,13 +2971,13 @@
 
     flex-shrink:0;
 
-    border-radius:12px;
+    border-radius:10px;
 
     background:#eff6ff;
 
     color:#4f46e5;
 
-    font-size:18px;
+    font-size:16px;
 }
 
 
@@ -2107,9 +2991,15 @@
 
     flex-direction:column;
 
+    justify-content:center;
+
     min-width:0;
 
     flex:1;
+
+    height:100%;
+
+    overflow:hidden;
 }
 
 
@@ -2119,13 +3009,19 @@
 
 .health-last-commit-title
 {
-    font-size:13px;
+    font-size:18px;
 
     line-height:18px;
 
     font-weight:700;
 
     color:#0f172a;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
 }
 
 
@@ -2135,13 +3031,13 @@
 
 .health-last-commit-hash
 {
-    margin-top:7px;
+    margin-top:10px;
 
     width:100%;
 
-    font-size:11px;
+    font-size:14px;
 
-    line-height:16px;
+    line-height:15px;
 
     font-weight:600;
 
@@ -2161,17 +3057,43 @@
 
 .health-last-commit-message
 {
-    margin-top:3px;
+    margin-top:10px;
 
     width:100%;
 
-    font-size:11px;
+    font-size:15px;
 
-    line-height:18px;
+    line-height:22px;
 
     color:#4f46e5;
 
-    font-weight: 700;
+    font-weight:700;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   LAST COMMIT DATE
+===================================================== */
+
+.health-last-commit-date
+{
+    margin-top:5px;
+
+    width:100%;
+
+    font-size:15px;
+
+    line-height:18px;
+
+    color:#293444;
+
+    font-weight:600;
 
     overflow:hidden;
 
@@ -2199,6 +3121,10 @@
     .repository-action-row
     {
         gap:14px;
+
+        grid-template-columns:
+            repeat(5,minmax(0,1fr))
+            minmax(0,2.2fr);
     }
 
 
@@ -2220,19 +3146,28 @@
 
     .repository-health-body
     {
-        padding:14px;
+        padding:
+            10px 12px;
     }
 
 
     .health-counter-grid
     {
-        gap:6px;
+        gap:5px;
     }
 
 
     .health-counter
     {
-        height:88px;
+        height:64px;
+    }
+
+
+    .health-counter-value
+    {
+        font-size:22px;
+
+        line-height:26px;
     }
 
 }
@@ -2292,6 +3227,19 @@
         min-height:350px;
     }
 
+
+    .repository-health-body
+    {
+        grid-template-rows:
+            auto
+            1px
+            42px
+            42px
+            auto
+            1px
+            minmax(0,1fr);
+    }
+
 }
 
 
@@ -2331,6 +3279,14 @@
     }
 
 
+    .reset-banner
+    {
+        height:132px;
+
+        min-height:132px;
+    }
+
+
     .sync-banner
     {
         grid-column:
@@ -2344,7 +3300,7 @@
 
     .health-counter
     {
-        height:86px;
+        height:64px;
     }
 
 }
@@ -2399,6 +3355,14 @@
     }
 
 
+    .reset-banner
+    {
+        height:132px;
+
+        min-height:132px;
+    }
+
+
     .sync-banner
     {
         grid-column:auto;
@@ -2410,6 +3374,48 @@
         height:auto;
 
         min-height:150px;
+    }
+
+
+    .reset-left
+    {
+        flex-direction:column;
+
+        justify-content:center;
+
+        align-items:center;
+
+        width:100%;
+    }
+
+
+    .reset-content
+    {
+        align-items:center;
+
+        text-align:center;
+    }
+
+
+    .reset-description
+    {
+        max-width:150px;
+
+        text-align:center;
+    }
+
+
+    .reset-button
+    {
+        position:absolute;
+
+        inset:0;
+
+        width:100%;
+
+        height:100%;
+
+        max-width:none;
     }
 
 
@@ -2425,15 +3431,106 @@
     }
 
 
+    .repository-health-body
+    {
+        display:flex;
+
+        flex-direction:column;
+
+        gap:0;
+
+        overflow:auto;
+    }
+
+
     .health-counter-grid
     {
         gap:8px;
+
+        flex-shrink:0;
     }
 
 
     .health-counter
     {
-        height:86px;
+        height:72px;
+    }
+
+
+    .health-divider
+    {
+        margin:
+            8px 0;
+
+        flex-shrink:0;
+    }
+
+
+    .repository-health-body > .health-status-block:nth-child(3),
+    .repository-health-body > .health-status-block:nth-child(5)
+    {
+        width:100%;
+
+        height:42px;
+
+        flex-shrink:0;
+    }
+
+
+    .repository-health-body > .health-divider:nth-child(4)
+    {
+        display:none;
+    }
+
+
+    .repository-health-body > .health-total-row
+    {
+        width:100%;
+
+        height:42px;
+
+        min-height:42px;
+
+        flex-shrink:0;
+    }
+
+
+    .health-last-commit
+    {
+        min-height:72px;
+
+        height:72px;
+
+        flex-shrink:0;
+    }
+
+
+    .merge-conflict-header
+    {
+        align-items:flex-start;
+
+        flex-direction:column;
+    }
+
+
+    .merge-conflict-count
+    {
+        align-self:flex-start;
+    }
+
+
+    .merge-conflict-actions
+    {
+        justify-content:stretch;
+
+        flex-direction:column;
+    }
+
+
+    .merge-continue-button,
+    .merge-abort-button
+    {
+        width:100%;
     }
 
 }
@@ -2505,7 +3602,63 @@
 
     .health-counter
     {
-        height:92px;
+        height:76px;
+    }
+
+
+    .health-status-block
+    {
+        gap:8px;
+    }
+
+
+    .health-status-icon
+    {
+        width:36px;
+
+        height:36px;
+
+        border-radius:9px;
+    }
+
+
+    .health-status-title
+    {
+        font-size:11px;
+    }
+
+
+    .health-status-value
+    {
+        font-size:10px;
+    }
+
+
+    .health-last-commit
+    {
+        min-height:76px;
+
+        height:76px;
+    }
+
+
+    .health-last-commit-icon
+    {
+        width:36px;
+
+        height:36px;
+    }
+
+
+    .merge-conflict-body
+    {
+        padding:12px;
+    }
+
+
+    .merge-conflict-header
+    {
+        padding:12px 14px;
     }
 
 }
@@ -2607,7 +3760,7 @@
 
     .repository-health-body
     {
-        padding:12px;
+        padding:10px;
     }
 
 
@@ -2622,14 +3775,168 @@
 
     .health-counter
     {
-        height:86px;
+        height:72px;
     }
 
 
     .health-divider
     {
         margin:
-            12px 0;
+            8px 0;
+    }
+
+
+    .health-status-block
+    {
+        height:40px;
+
+        min-height:40px;
+    }
+
+
+    .health-status-icon
+    {
+        width:34px;
+
+        height:34px;
+
+        font-size:14px;
+    }
+
+
+    .health-status-title
+    {
+        font-size:10px;
+
+        line-height:14px;
+    }
+
+
+    .health-status-value
+    {
+        font-size:9px;
+
+        line-height:13px;
+    }
+
+
+    .health-total-row
+    {
+        min-height:40px;
+
+        height:40px;
+    }
+
+
+    .health-total-icon
+    {
+        width:34px;
+
+        height:34px;
+    }
+
+
+    .health-total-label
+    {
+        font-size:10px;
+    }
+
+
+    .health-total-value
+    {
+        font-size:16px;
+    }
+
+
+    .health-last-commit
+    {
+        min-height:72px;
+
+        height:72px;
+    }
+
+
+    .health-last-commit-icon
+    {
+        width:34px;
+
+        height:34px;
+
+        font-size:14px;
+    }
+
+
+    .health-last-commit-title
+    {
+        font-size:10px;
+
+        line-height:14px;
+    }
+
+
+    .health-last-commit-hash
+    {
+        font-size:8px;
+
+        line-height:11px;
+    }
+
+
+    .health-last-commit-message
+    {
+        font-size:9px;
+
+        line-height:12px;
+    }
+
+
+    .health-last-commit-date
+    {
+        font-size:8px;
+
+        line-height:11px;
+    }
+
+
+    .reset-banner
+    {
+        padding:10px;
+    }
+
+
+    .reset-icon
+    {
+        width:44px;
+
+        height:44px;
+
+        font-size:18px;
+    }
+
+
+    .reset-title
+    {
+        font-size:11px;
+    }
+
+
+    .reset-description
+    {
+        font-size:8px;
+
+        line-height:12px;
+    }
+
+
+    .merge-conflict-title
+    {
+        font-size:13px;
+    }
+
+
+    .merge-conflict-subtitle
+    {
+        padding-left:0;
     }
 
 }

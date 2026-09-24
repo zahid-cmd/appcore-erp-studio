@@ -1077,4 +1077,344 @@ public class SourceControlController
             );
         }
     }
+
+
+
+    //===========================================================
+    // Get Merge Conflicts
+    //===========================================================
+
+    [HttpGet("{id:long}/merge-conflicts")]
+
+    public async Task<IActionResult>
+        GetMergeConflicts
+    (
+        long id
+    )
+    {
+        try
+        {
+            var entity =
+                await _repository
+                    .GetByIdAsync(
+                        id
+                    );
+
+
+            if
+            (
+                entity is null
+            )
+            {
+                return NotFound(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Source Control repository not found."
+                    }
+                );
+            }
+
+
+            var result =
+                await _repository
+                    .GetMergeConflictsAsync(
+                        id
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest(
+                    result
+                );
+            }
+
+
+            return Ok(
+                result
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Failed to load Git merge conflicts.",
+
+                    output =
+                        ex.Message
+                }
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Continue Merge
+    //===========================================================
+
+    [HttpPost("{id:long}/continue-merge")]
+
+    public async Task<IActionResult>
+        ContinueMerge
+    (
+        long id
+    )
+    {
+        try
+        {
+            var entity =
+                await _repository
+                    .GetByIdAsync(
+                        id
+                    );
+
+
+            if
+            (
+                entity is null
+            )
+            {
+                return NotFound(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Source Control repository not found."
+                    }
+                );
+            }
+
+
+            var result =
+                await _repository
+                    .ContinueMergeAsync(
+                        id
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest(
+                    result
+                );
+            }
+
+
+            return Ok(
+                result
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Git merge continuation failed.",
+
+                    output =
+                        ex.Message
+                }
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Abort Merge
+    //===========================================================
+
+    [HttpPost("{id:long}/abort-merge")]
+
+    public async Task<IActionResult>
+        AbortMerge
+    (
+        long id
+    )
+    {
+        try
+        {
+            var entity =
+                await _repository
+                    .GetByIdAsync(
+                        id
+                    );
+
+
+            if
+            (
+                entity is null
+            )
+            {
+                return NotFound(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Source Control repository not found."
+                    }
+                );
+            }
+
+
+            var result =
+                await _repository
+                    .AbortMergeAsync(
+                        id
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest(
+                    result
+                );
+            }
+
+
+            return Ok(
+                result
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Git merge abort operation failed.",
+
+                    output =
+                        ex.Message
+                }
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Reset To Remote
+    //===========================================================
+
+    [HttpPost("{id:long}/reset-to-remote")]
+
+    public async Task<IActionResult>
+        ResetToRemote
+    (
+        long id
+    )
+    {
+        try
+        {
+            var entity =
+                await _repository
+                    .GetByIdAsync(
+                        id
+                    );
+
+
+            if
+            (
+                entity is null
+            )
+            {
+                return NotFound(
+                    new
+                    {
+                        success =
+                            false,
+
+                        message =
+                            "Source Control repository not found."
+                    }
+                );
+            }
+
+
+            var result =
+                await _repository
+                    .ResetToRemoteAsync(
+                        id
+                    );
+
+
+            if
+            (
+                !result.Success
+            )
+            {
+                return BadRequest(
+                    result
+                );
+            }
+
+
+            return Ok(
+                result
+            );
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    success =
+                        false,
+
+                    message =
+                        "Git Reset to Remote operation failed.",
+
+                    output =
+                        ex.Message
+                }
+            );
+        }
+    }
 }

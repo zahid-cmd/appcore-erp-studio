@@ -862,6 +862,48 @@ public class SourceControlRepository
             }
 
 
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Pull Blocked",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                mergeStateResult.IsInProgress
+            )
+            {
+                var message =
+                    "Pull was blocked because a Git merge is currently in progress. "
+                    +
+                    "Resolve the conflicts, then use Continue Merge, or use Abort Merge.";
+
+
+                return GitFailure(
+                    "Pull Blocked",
+
+                    message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
             var remoteResult =
                 await EnsureRemoteAsync(
                     sourceControl
@@ -926,6 +968,103 @@ public class SourceControlRepository
             }
 
 
+            var workingTreeResult =
+                await GetWorkingTreeStatusAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !workingTreeResult.Success
+            )
+            {
+                return GitFailure(
+                    "Pull Failed",
+
+                    workingTreeResult.Message,
+
+                    workingTreeResult.Output
+                );
+            }
+
+
+            if
+            (
+                workingTreeResult.HasChanges
+            )
+            {
+                var message =
+                    "Pull was stopped because this repository has local changes. "
+                    +
+                    "Commit or synchronize the local changes before pulling remote changes.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "PULL",
+
+                    "Pull Blocked",
+
+                    message,
+
+                    "BLOCKED"
+                );
+
+
+                return GitFailure(
+                    "Pull Blocked",
+
+                    message,
+
+                    workingTreeResult.Output
+                );
+            }
+
+
+            var fetchResult =
+                await FetchOriginAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !fetchResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to fetch the latest remote changes.",
+
+                        fetchResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "PULL",
+
+                    "Pull Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Pull Failed",
+
+                    message,
+
+                    fetchResult.Output
+                );
+            }
+
+
             var pullResult =
                 await ExecuteGitCommandAsync(
                     sourceControl.RepositoryPath,
@@ -934,13 +1073,11 @@ public class SourceControlRepository
 
                     "submodule.recurse=false",
 
-                    "pull",
+                    "merge",
 
                     "--ff-only",
 
-                    "origin",
-
-                    sourceControl.DefaultBranch
+                    $"origin/{sourceControl.DefaultBranch}"
                 );
 
 
@@ -951,7 +1088,11 @@ public class SourceControlRepository
             {
                 var message =
                     BuildGitFailureMessage(
-                        "Pull failed.",
+                        "Pull could not be completed as a fast-forward update. "
+                        +
+                        "The local branch may have diverged from the remote. "
+                        +
+                        "Use Full Synchronization to integrate local and remote work.",
 
                         pullResult
                     );
@@ -981,7 +1122,9 @@ public class SourceControlRepository
 
 
             var output =
-                NormalizeGitOutput(
+                CombineGitOutput(
+                    fetchResult,
+
                     pullResult
                 );
 
@@ -996,7 +1139,7 @@ public class SourceControlRepository
                 string.IsNullOrWhiteSpace(
                     output
                 )
-                ? "Latest changes downloaded from the remote repository."
+                ? "Latest remote changes were applied successfully."
                 : output,
 
                 "SUCCESS"
@@ -1009,7 +1152,7 @@ public class SourceControlRepository
                     true,
 
                 Message =
-                    "Latest repository changes downloaded successfully.",
+                    "Latest repository changes were pulled successfully.",
 
                 Output =
                     output
@@ -1467,6 +1610,48 @@ public class SourceControlRepository
             }
 
 
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Push Blocked",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                mergeStateResult.IsInProgress
+            )
+            {
+                var message =
+                    "Push was blocked because a Git merge is currently in progress. "
+                    +
+                    "Resolve the conflicts and complete the merge before pushing.";
+
+
+                return GitFailure(
+                    "Push Blocked",
+
+                    message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
             var remoteResult =
                 await EnsureRemoteAsync(
                     sourceControl
@@ -1478,19 +1663,6 @@ public class SourceControlRepository
                 !remoteResult.Success
             )
             {
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "PUSH",
-
-                    "Push Failed",
-
-                    remoteResult.Message,
-
-                    "FAILED"
-                );
-
-
                 return GitFailure(
                     "Push Failed",
 
@@ -1510,6 +1682,88 @@ public class SourceControlRepository
                 !branchResult.Success
             )
             {
+                return GitFailure(
+                    "Push Failed",
+
+                    branchResult.Message
+                );
+            }
+
+
+            var workingTreeResult =
+                await GetWorkingTreeStatusAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !workingTreeResult.Success
+            )
+            {
+                return GitFailure(
+                    "Push Failed",
+
+                    workingTreeResult.Message,
+
+                    workingTreeResult.Output
+                );
+            }
+
+
+            if
+            (
+                workingTreeResult.HasChanges
+            )
+            {
+                var message =
+                    "Push was stopped because the working tree contains uncommitted changes. "
+                    +
+                    "Commit the local changes before pushing.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "PUSH",
+
+                    "Push Blocked",
+
+                    message,
+
+                    "BLOCKED"
+                );
+
+
+                return GitFailure(
+                    "Push Blocked",
+
+                    message,
+
+                    workingTreeResult.Output
+                );
+            }
+
+
+            var fetchResult =
+                await FetchOriginAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !fetchResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to fetch the latest remote changes before push.",
+
+                        fetchResult
+                    );
+
+
                 await CreateGitHistoryAsync(
                     sourceControlId,
 
@@ -1517,7 +1771,7 @@ public class SourceControlRepository
 
                     "Push Failed",
 
-                    branchResult.Message,
+                    message,
 
                     "FAILED"
                 );
@@ -1526,8 +1780,105 @@ public class SourceControlRepository
                 return GitFailure(
                     "Push Failed",
 
-                    branchResult.Message
+                    message,
+
+                    fetchResult.Output
                 );
+            }
+
+
+            var aheadBehindResult =
+                await GetAheadBehindAsync(
+                    sourceControl.RepositoryPath,
+
+                    sourceControl.DefaultBranch
+                );
+
+
+            if
+            (
+                !aheadBehindResult.Success
+            )
+            {
+                return GitFailure(
+                    "Push Failed",
+
+                    aheadBehindResult.Message,
+
+                    aheadBehindResult.Output
+                );
+            }
+
+
+            if
+            (
+                aheadBehindResult.Behind > 0
+            )
+            {
+                var message =
+                    "Push was blocked because the remote repository contains "
+                    +
+                    $"{aheadBehindResult.Behind} commit(s) not present on this machine. "
+                    +
+                    "Synchronize with the remote repository before pushing.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "PUSH",
+
+                    "Push Blocked",
+
+                    message,
+
+                    "BLOCKED"
+                );
+
+
+                return GitFailure(
+                    "Push Blocked",
+
+                    message,
+
+                    aheadBehindResult.Output
+                );
+            }
+
+
+            if
+            (
+                aheadBehindResult.Ahead == 0
+            )
+            {
+                var message =
+                    "There are no local commits to publish.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "PUSH",
+
+                    "Push Completed",
+
+                    message,
+
+                    "SUCCESS"
+                );
+
+
+                return new GitOperationResultDto
+                {
+                    Success =
+                        true,
+
+                    Message =
+                        message,
+
+                    Output =
+                        message
+                };
             }
 
 
@@ -1584,7 +1935,9 @@ public class SourceControlRepository
 
 
             var output =
-                NormalizeGitOutput(
+                CombineGitOutput(
+                    fetchResult,
+
                     pushResult
                 );
 
@@ -1612,7 +1965,7 @@ public class SourceControlRepository
                     true,
 
                 Message =
-                    "Repository changes published successfully.",
+                    "Repository changes were published successfully.",
 
                 Output =
                     output
@@ -1730,6 +2083,48 @@ public class SourceControlRepository
             }
 
 
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Synchronization Blocked",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                mergeStateResult.IsInProgress
+            )
+            {
+                var message =
+                    "Synchronization was blocked because a Git merge is currently in progress. "
+                    +
+                    "Resolve the conflicts and use Continue Merge, or use Abort Merge.";
+
+
+                return GitFailure(
+                    "Synchronization Blocked",
+
+                    message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
             var remoteResult =
                 await EnsureRemoteAsync(
                     sourceControl
@@ -1768,19 +2163,181 @@ public class SourceControlRepository
             }
 
 
-            var pullResult =
-                await ExecuteGitCommandAsync(
+            //=======================================================
+            // Fetch first.
+            //
+            // The remote is always inspected before local work is
+            // committed or integrated.
+            //=======================================================
+
+            var initialFetchResult =
+                await FetchOriginAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !initialFetchResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Synchronization fetch phase failed.",
+
+                        initialFetchResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    message,
+
+                    initialFetchResult.Output
+                );
+            }
+
+
+            //=======================================================
+            // Commit local AppCore changes before integrating remote
+            // changes. This preserves the local work as a Git commit
+            // before another machine's commits are merged.
+            //=======================================================
+
+            var workingTreeResult =
+                await GetWorkingTreeStatusAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !workingTreeResult.Success
+            )
+            {
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    workingTreeResult.Message,
+
+                    workingTreeResult.Output
+                );
+            }
+
+
+            GitOperationResultDto commitResult;
+
+
+            if
+            (
+                workingTreeResult.HasChanges
+            )
+            {
+                commitResult =
+                    await CommitAsync(
+                        sourceControlId,
+
+                        dto
+                    );
+
+
+                if
+                (
+                    !commitResult.Success
+                )
+                {
+                    return GitFailure(
+                        "Synchronization Failed",
+
+                        "Local changes could not be committed. "
+                        +
+                        commitResult.Message,
+
+                        commitResult.Output
+                    );
+                }
+            }
+            else
+            {
+                commitResult =
+                    new GitOperationResultDto
+                    {
+                        Success =
+                            true,
+
+                        Message =
+                            "No local AppCore changes required a commit.",
+
+                        Output =
+                            "Working tree is clean."
+                    };
+            }
+
+
+            //=======================================================
+            // Fetch again because another machine may have pushed
+            // while this machine was committing local work.
+            //=======================================================
+
+            var finalFetchResult =
+                await FetchOriginAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !finalFetchResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Synchronization could not refresh the remote state.",
+
+                        finalFetchResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    message,
+
+                    finalFetchResult.Output
+                );
+            }
+
+
+            var aheadBehindResult =
+                await GetAheadBehindAsync(
                     sourceControl.RepositoryPath,
-
-                    "-c",
-
-                    "submodule.recurse=false",
-
-                    "pull",
-
-                    "--ff-only",
-
-                    "origin",
 
                     sourceControl.DefaultBranch
                 );
@@ -1788,130 +2345,38 @@ public class SourceControlRepository
 
             if
             (
-                !pullResult.Success
+                !aheadBehindResult.Success
             )
             {
-                var message =
-                    BuildGitFailureMessage(
-                        "Synchronization pull phase failed.",
-
-                        pullResult
-                    );
-
-
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "SYNC",
-
-                    "Synchronization Failed",
-
-                    message,
-
-                    "FAILED"
-                );
-
-
                 return GitFailure(
                     "Synchronization Failed",
 
-                    message,
+                    aheadBehindResult.Message,
 
-                    pullResult.Output
+                    aheadBehindResult.Output
                 );
             }
 
 
-            var addResult =
-                await ExecuteGitCommandAsync(
-                    sourceControl.RepositoryPath,
-
-                    "add",
-
-                    "-A",
-
-                    "--",
-
-                    ".",
-
-                    ":(exclude)Master_ERP"
-                );
-
-
-            if
-            (
-                !addResult.Success
-            )
-            {
-                var message =
-                    BuildGitFailureMessage(
-                        "Synchronization staging phase failed.",
-
-                        addResult
-                    );
-
-
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "SYNC",
-
-                    "Synchronization Failed",
-
-                    message,
-
-                    "FAILED"
-                );
-
-
-                return GitFailure(
-                    "Synchronization Failed",
-
-                    message,
-
-                    addResult.Output
-                );
-            }
-
-
-            //===================================================
-            // Check whether AppCore-managed files were staged.
+            //=======================================================
+            // Integrate remote commits.
             //
-            // Master_ERP is intentionally excluded from staging.
-            // If it is the only changed area, there is nothing for
-            // the parent repository to commit.
-            //===================================================
+            // 0 / 0 = synchronized.
+            // Ahead only = local commits can be pushed.
+            // Behind only = fast-forward to remote.
+            // Ahead + behind = merge remote into local.
+            //=======================================================
 
-            var stagedResult =
-                await ExecuteGitCommandAsync(
-                    sourceControl.RepositoryPath,
-
-                    "diff",
-
-                    "--cached",
-
-                    "--quiet"
-                );
+            GitCommandResult? mergeResult =
+                null;
 
 
             if
             (
-                stagedResult.ExitCode == 0
+                aheadBehindResult.Behind > 0
             )
             {
-                var message =
-                    "No AppCore repository changes were found to commit. "
-                    +
-                    "Master_ERP is excluded from AppCore Git operations.";
-
-
-                //===================================================
-                // Nothing needs to be committed. Continue to push
-                // the parent repository so existing local commits
-                // can still be published.
-                //===================================================
-
-                var pushResultNoCommit =
+                mergeResult =
                     await ExecuteGitCommandAsync(
                         sourceControl.RepositoryPath,
 
@@ -1919,24 +2384,26 @@ public class SourceControlRepository
 
                         "submodule.recurse=false",
 
-                        "push",
+                        "merge",
 
-                        "origin",
+                        "--no-edit",
 
-                        sourceControl.DefaultBranch
+                        $"origin/{sourceControl.DefaultBranch}"
                     );
 
 
                 if
                 (
-                    !pushResultNoCommit.Success
+                    !mergeResult.Success
                 )
                 {
-                    var pushMessage =
+                    var message =
                         BuildGitFailureMessage(
-                            "Synchronization push phase failed.",
+                            "Synchronization stopped because remote changes could not be integrated. "
+                            +
+                            "Resolve the Git conflicts, complete the merge, then run Synchronization again.",
 
-                            pushResultNoCommit
+                            mergeResult
                         );
 
 
@@ -1945,32 +2412,125 @@ public class SourceControlRepository
 
                         "SYNC",
 
-                        "Synchronization Failed",
+                        "Synchronization Conflict",
 
-                        pushMessage,
+                        message,
 
-                        "FAILED"
+                        "CONFLICT"
                     );
 
 
                     return GitFailure(
-                        "Synchronization Failed",
+                        "Synchronization Conflict",
 
-                        pushMessage,
+                        message,
 
-                        pushResultNoCommit.Output
+                        mergeResult.Output
                     );
                 }
+            }
 
 
-                var noCommitOutput =
+            //=======================================================
+            // Recalculate the relationship after integration.
+            // This prevents a remote update during synchronization
+            // from being missed.
+            //=======================================================
+
+            var finalAheadBehindResult =
+                await GetAheadBehindAsync(
+                    sourceControl.RepositoryPath,
+
+                    sourceControl.DefaultBranch
+                );
+
+
+            if
+            (
+                !finalAheadBehindResult.Success
+            )
+            {
+                return GitFailure(
+                    "Synchronization Failed",
+
+                    finalAheadBehindResult.Message,
+
+                    finalAheadBehindResult.Output
+                );
+            }
+
+
+            //=======================================================
+            // If remote moved again while synchronization was
+            // running, do not push. The next synchronization must
+            // integrate the newer remote commit.
+            //=======================================================
+
+            if
+            (
+                finalAheadBehindResult.Behind > 0
+            )
+            {
+                var message =
+                    "Synchronization stopped because the remote repository "
+                    +
+                    "received newer commits while synchronization was running. "
+                    +
+                    "Run Synchronization again to integrate the latest remote changes.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Blocked",
+
+                    message,
+
+                    "BLOCKED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Blocked",
+
+                    message,
+
+                    finalAheadBehindResult.Output
+                );
+            }
+
+
+            if
+            (
+                finalAheadBehindResult.Ahead == 0
+            )
+            {
+                var output =
                     CombineGitOutput(
-                        pullResult,
+                        initialFetchResult,
 
-                        stagedResult,
+                        commitResult.Output is null
+                            ? GitCommandResult.Failure(
+                                0,
+                                string.Empty
+                            )
+                            : GitCommandResult.Failure(
+                                0,
+                                commitResult.Output
+                            ),
 
-                        pushResultNoCommit
+                        finalFetchResult,
+
+                        mergeResult
                     );
+
+
+                var message =
+                    "Full repository synchronization completed successfully. "
+                    +
+                    "The local repository is synchronized with the remote repository.";
 
 
                 await CreateGitHistoryAsync(
@@ -1981,10 +2541,10 @@ public class SourceControlRepository
                     "Synchronization Completed",
 
                     string.IsNullOrWhiteSpace(
-                        noCommitOutput
+                        output
                     )
                     ? message
-                    : noCommitOutput,
+                    : output,
 
                     "SUCCESS"
                 );
@@ -1996,124 +2556,18 @@ public class SourceControlRepository
                         true,
 
                     Message =
-                        "Full repository synchronization completed successfully. "
-                        +
-                        "No new AppCore changes required a commit.",
+                        message,
 
                     Output =
-                        noCommitOutput
+                        output
                 };
             }
 
 
-            if
-            (
-                stagedResult.ExitCode != 1
-            )
-            {
-                var message =
-                    BuildGitFailureMessage(
-                        "Synchronization staging verification failed.",
-
-                        stagedResult
-                    );
-
-
-                await CreateGitHistoryAsync(
-                    sourceControlId,
-
-                    "SYNC",
-
-                    "Synchronization Failed",
-
-                    message,
-
-                    "FAILED"
-                );
-
-
-                return GitFailure(
-                    "Synchronization Failed",
-
-                    message,
-
-                    stagedResult.Output
-                );
-            }
-
-
-            var commitResult =
-                await ExecuteGitCommandAsync(
-                    sourceControl.RepositoryPath,
-
-                    "commit",
-
-                    "-m",
-
-                    dto.Message.Trim()
-                );
-
-
-            if
-            (
-                !commitResult.Success
-            )
-            {
-                var normalizedCommitOutput =
-                    NormalizeGitOutput(
-                        commitResult
-                    );
-
-
-                //===================================================
-                // "nothing to commit" is not an operational failure.
-                // Continue to push the existing local commits.
-                //===================================================
-
-                var nothingToCommit =
-                    normalizedCommitOutput
-                        .Contains(
-                            "nothing to commit",
-                            StringComparison.OrdinalIgnoreCase
-                        );
-
-
-                if
-                (
-                    !nothingToCommit
-                )
-                {
-                    var message =
-                        BuildGitFailureMessage(
-                            "Synchronization commit phase failed.",
-
-                            commitResult
-                        );
-
-
-                    await CreateGitHistoryAsync(
-                        sourceControlId,
-
-                        "SYNC",
-
-                        "Synchronization Failed",
-
-                        message,
-
-                        "FAILED"
-                    );
-
-
-                    return GitFailure(
-                        "Synchronization Failed",
-
-                        message,
-
-                        commitResult.Output
-                    );
-                }
-            }
-
+            //=======================================================
+            // Push only after local work has been committed and the
+            // remote branch has been fully integrated.
+            //=======================================================
 
             var pushResult =
                 await ExecuteGitCommandAsync(
@@ -2167,11 +2621,13 @@ public class SourceControlRepository
             }
 
 
-            var output =
+            var outputAfterPush =
                 CombineGitOutput(
-                    pullResult,
+                    initialFetchResult,
 
-                    commitResult,
+                    finalFetchResult,
+
+                    mergeResult,
 
                     pushResult
                 );
@@ -2185,10 +2641,10 @@ public class SourceControlRepository
                 "Synchronization Completed",
 
                 string.IsNullOrWhiteSpace(
-                    output
+                    outputAfterPush
                 )
-                ? "Pull, commit, and push completed successfully."
-                : output,
+                ? "Local work was committed, remote work was integrated, and the synchronized repository was pushed successfully."
+                : outputAfterPush,
 
                 "SUCCESS"
             );
@@ -2203,7 +2659,7 @@ public class SourceControlRepository
                     "Full repository synchronization completed successfully.",
 
                 Output =
-                    output
+                    outputAfterPush
             };
         }
         catch
@@ -2230,6 +2686,1343 @@ public class SourceControlRepository
                 exception.Message
             );
         }
+    }
+    //===========================================================
+    // Reset To Remote
+    //===========================================================
+
+    public async Task<GitOperationResultDto>
+        ResetToRemoteAsync
+    (
+        long sourceControlId
+    )
+    {
+        try
+        {
+            var sourceControl =
+                await GetSourceControlForGitAsync(
+                    sourceControlId
+                );
+
+
+            if
+            (
+                sourceControl is null
+            )
+            {
+                return GitFailure(
+                    "Reset to Remote Failed",
+
+                    "Source Control repository was not found."
+                );
+            }
+
+
+            var validation =
+                ValidateRepository(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !validation.Success
+            )
+            {
+                return GitFailure(
+                    "Reset to Remote Failed",
+
+                    validation.Message
+                );
+            }
+
+
+            var remoteResult =
+                await EnsureRemoteAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !remoteResult.Success
+            )
+            {
+                return GitFailure(
+                    "Reset to Remote Failed",
+
+                    remoteResult.Message
+                );
+            }
+
+
+            var branchResult =
+                await EnsureCurrentBranchAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !branchResult.Success
+            )
+            {
+                return GitFailure(
+                    "Reset to Remote Failed",
+
+                    branchResult.Message
+                );
+            }
+
+
+            var fetchResult =
+                await FetchOriginAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !fetchResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to fetch the latest remote repository state.",
+
+                        fetchResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "RESET",
+
+                    "Reset to Remote Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Reset to Remote Failed",
+
+                    message,
+
+                    fetchResult.Output
+                );
+            }
+
+
+            var resetResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "-c",
+
+                    "submodule.recurse=false",
+
+                    "reset",
+
+                    "--hard",
+
+                    $"origin/{sourceControl.DefaultBranch}"
+                );
+
+
+            if
+            (
+                !resetResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to reset the local repository to the remote branch.",
+
+                        resetResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "RESET",
+
+                    "Reset to Remote Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Reset to Remote Failed",
+
+                    message,
+
+                    resetResult.Output
+                );
+            }
+
+
+            //=======================================================
+            // Remove untracked files and directories from the parent
+            // repository. Master_ERP remains excluded because it is
+            // intentionally outside AppCore parent-repository
+            // operations.
+            //=======================================================
+
+            var cleanResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "clean",
+
+                    "-fd",
+
+                    "--",
+
+                    ".",
+
+                    ":(exclude)Master_ERP"
+                );
+
+
+            if
+            (
+                !cleanResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Repository reset completed, but untracked AppCore files could not be cleaned.",
+
+                        cleanResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "RESET",
+
+                    "Reset to Remote Completed With Warning",
+
+                    message,
+
+                    "WARNING"
+                );
+
+
+                return new GitOperationResultDto
+                {
+                    Success =
+                        false,
+
+                    Message =
+                        message,
+
+                    Output =
+                        CombineGitOutput(
+                            fetchResult,
+
+                            resetResult,
+
+                            cleanResult
+                        )
+                };
+            }
+
+
+            var output =
+                CombineGitOutput(
+                    fetchResult,
+
+                    resetResult,
+
+                    cleanResult
+                );
+
+
+            await CreateGitHistoryAsync(
+                sourceControlId,
+
+                "RESET",
+
+                "Reset to Remote Completed",
+
+                string.IsNullOrWhiteSpace(
+                    output
+                )
+                ? "Local repository was reset to the remote branch."
+                : output,
+
+                "SUCCESS"
+            );
+
+
+            return new GitOperationResultDto
+            {
+                Success =
+                    true,
+
+                Message =
+                    "Local repository was reset to the remote repository successfully.",
+
+                Output =
+                    output
+            };
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            await TryCreateGitHistoryAsync(
+                sourceControlId,
+
+                "RESET",
+
+                "Reset to Remote Failed",
+
+                exception.Message,
+
+                "FAILED"
+            );
+
+
+            return GitFailure(
+                "Reset to Remote Failed",
+
+                exception.Message
+            );
+        }
+    }
+    //===========================================================
+    // Get Merge Conflicts
+    //===========================================================
+
+    public async Task<GitOperationResultDto>
+        GetMergeConflictsAsync
+    (
+        long sourceControlId
+    )
+    {
+        try
+        {
+            var sourceControl =
+                await GetSourceControlForGitAsync(
+                    sourceControlId
+                );
+
+
+            if
+            (
+                sourceControl is null
+            )
+            {
+                return GitFailure(
+                    "Merge Conflict Check Failed",
+
+                    "Source Control repository was not found."
+                );
+            }
+
+
+            var validation =
+                ValidateRepository(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !validation.Success
+            )
+            {
+                return GitFailure(
+                    "Merge Conflict Check Failed",
+
+                    validation.Message
+                );
+            }
+
+
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Merge Conflict Check Failed",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                !mergeStateResult.IsInProgress
+            )
+            {
+                return new GitOperationResultDto
+                {
+                    Success =
+                        true,
+
+                    Message =
+                        "No Git merge is currently in progress.",
+
+                    Output =
+                        string.Empty
+                };
+            }
+
+
+            return new GitOperationResultDto
+            {
+                Success =
+                    true,
+
+                Message =
+                    mergeStateResult.HasConflicts
+                        ? "Git merge is in progress and unresolved conflicts remain."
+                        : "Git merge is in progress and no unresolved conflicts were detected.",
+
+                Output =
+                    mergeStateResult.Output
+            };
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            return GitFailure(
+                "Merge Conflict Check Failed",
+
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Continue Merge
+    //===========================================================
+
+    public async Task<GitOperationResultDto>
+        ContinueMergeAsync
+    (
+        long sourceControlId
+    )
+    {
+        try
+        {
+            var sourceControl =
+                await GetSourceControlForGitAsync(
+                    sourceControlId
+                );
+
+
+            if
+            (
+                sourceControl is null
+            )
+            {
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    "Source Control repository was not found."
+                );
+            }
+
+
+            var validation =
+                ValidateRepository(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !validation.Success
+            )
+            {
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    validation.Message
+                );
+            }
+
+
+            var branchResult =
+                await EnsureCurrentBranchAsync(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !branchResult.Success
+            )
+            {
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    branchResult.Message
+                );
+            }
+
+
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                !mergeStateResult.IsInProgress
+            )
+            {
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    "There is no Git merge currently in progress."
+                );
+            }
+
+
+            if
+            (
+                mergeStateResult.HasConflicts
+            )
+            {
+                var message =
+                    "The Git merge still contains unresolved conflicts. "
+                    +
+                    "Resolve every conflict before continuing the merge.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Continue Blocked",
+
+                    message,
+
+                    "BLOCKED"
+                );
+
+
+                return GitFailure(
+                    "Continue Merge Blocked",
+
+                    message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            var addResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "add",
+
+                    "-A",
+
+                    "--",
+
+                    ".",
+
+                    ":(exclude)Master_ERP"
+                );
+
+
+            if
+            (
+                !addResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to stage the resolved merge changes.",
+
+                        addResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Continue Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    message,
+
+                    addResult.Output
+                );
+            }
+
+
+            var remainingConflictResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !remainingConflictResult.Success
+            )
+            {
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    remainingConflictResult.Message,
+
+                    remainingConflictResult.Output
+                );
+            }
+
+
+            if
+            (
+                remainingConflictResult.HasConflicts
+            )
+            {
+                var message =
+                    "The Git merge still contains unresolved conflicts after staging. "
+                    +
+                    "Resolve every conflict before continuing the merge.";
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Continue Blocked",
+
+                    message,
+
+                    "BLOCKED"
+                );
+
+
+                return GitFailure(
+                    "Continue Merge Blocked",
+
+                    message,
+
+                    remainingConflictResult.Output
+                );
+            }
+
+
+            var commitResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "commit",
+
+                    "--no-edit"
+                );
+
+
+            if
+            (
+                !commitResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to complete the Git merge commit.",
+
+                        commitResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Continue Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Continue Merge Failed",
+
+                    message,
+
+                    commitResult.Output
+                );
+            }
+
+
+            var mergeOutput =
+                CombineGitOutput(
+                    addResult,
+
+                    commitResult
+                );
+
+
+            await CreateGitHistoryAsync(
+                sourceControlId,
+
+                "MERGE",
+
+                "Merge Completed",
+
+                string.IsNullOrWhiteSpace(
+                    mergeOutput
+                )
+                ? "The resolved Git merge was completed successfully."
+                : mergeOutput,
+
+                "SUCCESS"
+            );
+
+
+            //=======================================================
+            // Continue the synchronization after the merge.
+            //
+            // PushAsync performs the final safety checks:
+            // - blocks an unfinished merge,
+            // - requires a clean working tree,
+            // - fetches the latest remote state,
+            // - blocks when the remote is ahead,
+            // - never force-pushes.
+            //=======================================================
+
+            var pushResult =
+                await PushAsync(
+                    sourceControlId
+                );
+
+
+            if
+            (
+                !pushResult.Success
+            )
+            {
+                var message =
+                    "The Git merge was completed, but the synchronized result "
+                    +
+                    "could not be pushed to the remote repository. "
+                    +
+                    "Review the Push result and synchronize again if required.";
+
+
+                await TryCreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "SYNC",
+
+                    "Synchronization Push Failed",
+
+                    message
+                    +
+                    Environment.NewLine
+                    +
+                    pushResult.Message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Synchronization Push Failed",
+
+                    message
+                    +
+                    Environment.NewLine
+                    +
+                    pushResult.Message,
+
+                    pushResult.Output
+                );
+            }
+
+
+            var output =
+                CombineGitOutput(
+                    addResult,
+
+                    commitResult,
+
+                    GitCommandResult.Failure(
+                        0,
+
+                        pushResult.Output ??
+                        string.Empty
+                    )
+                );
+
+
+            await CreateGitHistoryAsync(
+                sourceControlId,
+
+                "SYNC",
+
+                "Synchronization Completed",
+
+                string.IsNullOrWhiteSpace(
+                    output
+                )
+                ? "The resolved Git merge was completed and the synchronized repository was pushed successfully."
+                : output,
+
+                "SUCCESS"
+            );
+
+
+            return new GitOperationResultDto
+            {
+                Success =
+                    true,
+
+                Message =
+                    "The resolved Git merge was completed and the synchronized repository was pushed successfully.",
+
+                Output =
+                    output
+            };
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            await TryCreateGitHistoryAsync(
+                sourceControlId,
+
+                "MERGE",
+
+                "Merge Continue Failed",
+
+                exception.Message,
+
+                "FAILED"
+            );
+
+
+            return GitFailure(
+                "Continue Merge Failed",
+
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Abort Merge
+    //===========================================================
+
+    public async Task<GitOperationResultDto>
+        AbortMergeAsync
+    (
+        long sourceControlId
+    )
+    {
+        try
+        {
+            var sourceControl =
+                await GetSourceControlForGitAsync(
+                    sourceControlId
+                );
+
+
+            if
+            (
+                sourceControl is null
+            )
+            {
+                return GitFailure(
+                    "Abort Merge Failed",
+
+                    "Source Control repository was not found."
+                );
+            }
+
+
+            var validation =
+                ValidateRepository(
+                    sourceControl
+                );
+
+
+            if
+            (
+                !validation.Success
+            )
+            {
+                return GitFailure(
+                    "Abort Merge Failed",
+
+                    validation.Message
+                );
+            }
+
+
+            var mergeStateResult =
+                await GetMergeStateAsync(
+                    sourceControl.RepositoryPath
+                );
+
+
+            if
+            (
+                !mergeStateResult.Success
+            )
+            {
+                return GitFailure(
+                    "Abort Merge Failed",
+
+                    mergeStateResult.Message,
+
+                    mergeStateResult.Output
+                );
+            }
+
+
+            if
+            (
+                !mergeStateResult.IsInProgress
+            )
+            {
+                return GitFailure(
+                    "Abort Merge Failed",
+
+                    "There is no Git merge currently in progress."
+                );
+            }
+
+
+            var abortResult =
+                await ExecuteGitCommandAsync(
+                    sourceControl.RepositoryPath,
+
+                    "merge",
+
+                    "--abort"
+                );
+
+
+            if
+            (
+                !abortResult.Success
+            )
+            {
+                var message =
+                    BuildGitFailureMessage(
+                        "Unable to abort the Git merge.",
+
+                        abortResult
+                    );
+
+
+                await CreateGitHistoryAsync(
+                    sourceControlId,
+
+                    "MERGE",
+
+                    "Merge Abort Failed",
+
+                    message,
+
+                    "FAILED"
+                );
+
+
+                return GitFailure(
+                    "Abort Merge Failed",
+
+                    message,
+
+                    abortResult.Output
+                );
+            }
+
+
+            var output =
+                NormalizeGitOutput(
+                    abortResult
+                );
+
+
+            await CreateGitHistoryAsync(
+                sourceControlId,
+
+                "MERGE",
+
+                "Merge Aborted",
+
+                string.IsNullOrWhiteSpace(
+                    output
+                )
+                ? "The Git merge was aborted and the repository was returned to its pre-merge state."
+                : output,
+
+                "SUCCESS"
+            );
+
+
+            return new GitOperationResultDto
+            {
+                Success =
+                    true,
+
+                Message =
+                    "Git merge was aborted successfully.",
+
+                Output =
+                    output
+            };
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            await TryCreateGitHistoryAsync(
+                sourceControlId,
+
+                "MERGE",
+
+                "Merge Abort Failed",
+
+                exception.Message,
+
+                "FAILED"
+            );
+
+
+            return GitFailure(
+                "Abort Merge Failed",
+
+                exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Fetch Origin
+    //===========================================================
+
+    private static async Task<GitCommandResult>
+        FetchOriginAsync
+    (
+        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.SourceControl sourceControl
+    )
+    {
+        return await ExecuteGitCommandAsync(
+            sourceControl.RepositoryPath,
+
+            "-c",
+
+            "submodule.recurse=false",
+
+            "fetch",
+
+            "origin",
+
+            sourceControl.DefaultBranch
+        );
+    }
+
+
+
+    //===========================================================
+    // Get Merge State
+    //===========================================================
+
+    private static async Task<MergeStateResult>
+        GetMergeStateAsync
+    (
+        string repositoryPath
+    )
+    {
+        var mergeHeadResult =
+            await ExecuteGitCommandAsync(
+                repositoryPath,
+
+                "rev-parse",
+
+                "-q",
+
+                "--verify",
+
+                "MERGE_HEAD"
+            );
+
+
+        if
+        (
+            mergeHeadResult.Success
+        )
+        {
+            var conflictResult =
+                await ExecuteGitCommandAsync(
+                    repositoryPath,
+
+                    "diff",
+
+                    "--name-only",
+
+                    "--diff-filter=U",
+
+                    "--",
+
+                    ".",
+
+                    ":(exclude)Master_ERP"
+                );
+
+
+            if
+            (
+                !conflictResult.Success
+            )
+            {
+                return MergeStateResult.Failure(
+                    "Unable to determine the current Git merge conflict state.",
+
+                    conflictResult.Output
+                );
+            }
+
+
+            return MergeStateResult.SuccessResult(
+                true,
+
+                !string.IsNullOrWhiteSpace(
+                    conflictResult.Output
+                ),
+
+                conflictResult.Output
+            );
+        }
+
+
+        if
+        (
+            mergeHeadResult.ExitCode != 128
+            &&
+            mergeHeadResult.ExitCode != 1
+        )
+        {
+            return MergeStateResult.Failure(
+                "Unable to determine whether a Git merge is currently in progress.",
+
+                NormalizeGitOutput(
+                    mergeHeadResult
+                )
+            );
+        }
+
+
+        return MergeStateResult.SuccessResult(
+            false,
+
+            false,
+
+            string.Empty
+        );
+    }
+
+
+
+    //===========================================================
+    // Get Working Tree Status
+    //===========================================================
+
+    private static async Task<WorkingTreeStatusResult>
+        GetWorkingTreeStatusAsync
+    (
+        string repositoryPath
+    )
+    {
+        var statusResult =
+            await ExecuteGitCommandAsync(
+                repositoryPath,
+
+                "status",
+
+                "--short",
+
+                "--ignore-submodules=all",
+
+                "--",
+
+                ".",
+
+                ":(exclude)Master_ERP"
+            );
+
+
+        if
+        (
+            !statusResult.Success
+        )
+        {
+            return WorkingTreeStatusResult.Failure(
+                "Unable to determine the local repository working-tree state.",
+
+                statusResult.Output
+            );
+        }
+
+
+        return WorkingTreeStatusResult.SuccessResult(
+            !string.IsNullOrWhiteSpace(
+                statusResult.Output
+            ),
+
+            statusResult.Output
+        );
+    }
+
+
+
+    //===========================================================
+    // Get Ahead / Behind
+    //===========================================================
+
+    private static async Task<AheadBehindResult>
+        GetAheadBehindAsync
+    (
+        string repositoryPath,
+
+        string defaultBranch
+    )
+    {
+        var result =
+            await ExecuteGitCommandAsync(
+                repositoryPath,
+
+                "rev-list",
+
+                "--left-right",
+
+                "--count",
+
+                $"HEAD...origin/{defaultBranch}"
+            );
+
+
+        if
+        (
+            !result.Success
+        )
+        {
+            return AheadBehindResult.Failure(
+                "Unable to determine the local and remote repository relationship.",
+
+                result.Output
+            );
+        }
+
+
+        var values =
+            result.Output
+                .Trim()
+                .Split(
+                    new[]
+                    {
+                        ' ',
+                        '\t'
+                    },
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+
+        if
+        (
+            values.Length < 2
+            ||
+            !int.TryParse(
+                values[0],
+                out var ahead
+            )
+            ||
+            !int.TryParse(
+                values[1],
+                out var behind
+            )
+        )
+        {
+            return AheadBehindResult.Failure(
+                "Unable to parse the local and remote repository relationship.",
+
+                result.Output
+            );
+        }
+
+
+        return AheadBehindResult.SuccessResult(
+            ahead,
+
+            behind,
+
+            result.Output
+        );
     }
 
 
@@ -3249,6 +5042,311 @@ public class SourceControlRepository
             // Git operation result must not be replaced by a
             // history persistence failure.
             //===================================================
+        }
+    }
+    //===========================================================
+    // Merge State Result
+    //===========================================================
+
+    private sealed class MergeStateResult
+    {
+        public bool Success
+        {
+            get;
+
+            private init;
+        }
+
+
+        public bool IsInProgress
+        {
+            get;
+
+            private init;
+        }
+
+
+        public bool HasConflicts
+        {
+            get;
+
+            private init;
+        }
+
+
+        public string Message
+        {
+            get;
+
+            private init;
+        } =
+            string.Empty;
+
+
+        public string Output
+        {
+            get;
+
+            private init;
+        } =
+            string.Empty;
+
+
+        public static MergeStateResult
+            SuccessResult
+        (
+            bool isInProgress,
+
+            bool hasConflicts,
+
+            string output
+        )
+        {
+            return new MergeStateResult
+            {
+                Success =
+                    true,
+
+                IsInProgress =
+                    isInProgress,
+
+                HasConflicts =
+                    hasConflicts,
+
+                Message =
+                    string.Empty,
+
+                Output =
+                    output
+            };
+        }
+
+
+        public static MergeStateResult
+            Failure
+        (
+            string message,
+
+            string output
+        )
+        {
+            return new MergeStateResult
+            {
+                Success =
+                    false,
+
+                IsInProgress =
+                    false,
+
+                HasConflicts =
+                    false,
+
+                Message =
+                    message,
+
+                Output =
+                    output
+            };
+        }
+    }
+
+
+
+    //===========================================================
+    // Working Tree Status Result
+    //===========================================================
+
+    private sealed class WorkingTreeStatusResult
+    {
+        public bool Success
+        {
+            get;
+
+            private init;
+        }
+
+
+        public bool HasChanges
+        {
+            get;
+
+            private init;
+        }
+
+
+        public string Message
+        {
+            get;
+
+            private init;
+        } =
+            string.Empty;
+
+
+        public string Output
+        {
+            get;
+
+            private init;
+        } =
+            string.Empty;
+
+
+        public static WorkingTreeStatusResult
+            SuccessResult
+        (
+            bool hasChanges,
+
+            string output
+        )
+        {
+            return new WorkingTreeStatusResult
+            {
+                Success =
+                    true,
+
+                HasChanges =
+                    hasChanges,
+
+                Message =
+                    string.Empty,
+
+                Output =
+                    output
+            };
+        }
+
+
+        public static WorkingTreeStatusResult
+            Failure
+        (
+            string message,
+
+            string output
+        )
+        {
+            return new WorkingTreeStatusResult
+            {
+                Success =
+                    false,
+
+                HasChanges =
+                    false,
+
+                Message =
+                    message,
+
+                Output =
+                    output
+            };
+        }
+    }
+
+
+
+    //===========================================================
+    // Ahead / Behind Result
+    //===========================================================
+
+    private sealed class AheadBehindResult
+    {
+        public bool Success
+        {
+            get;
+
+            private init;
+        }
+
+
+        public int Ahead
+        {
+            get;
+
+            private init;
+        }
+
+
+        public int Behind
+        {
+            get;
+
+            private init;
+        }
+
+
+        public string Message
+        {
+            get;
+
+            private init;
+        } =
+            string.Empty;
+
+
+        public string Output
+        {
+            get;
+
+            private init;
+        } =
+            string.Empty;
+
+
+        public static AheadBehindResult
+            SuccessResult
+        (
+            int ahead,
+
+            int behind,
+
+            string output
+        )
+        {
+            return new AheadBehindResult
+            {
+                Success =
+                    true,
+
+                Ahead =
+                    ahead,
+
+                Behind =
+                    behind,
+
+                Message =
+                    string.Empty,
+
+                Output =
+                    output
+            };
+        }
+
+
+        public static AheadBehindResult
+            Failure
+        (
+            string message,
+
+            string output
+        )
+        {
+            return new AheadBehindResult
+            {
+                Success =
+                    false,
+
+                Ahead =
+                    0,
+
+                Behind =
+                    0,
+
+                Message =
+                    message,
+
+                Output =
+                    output
+            };
         }
     }
 

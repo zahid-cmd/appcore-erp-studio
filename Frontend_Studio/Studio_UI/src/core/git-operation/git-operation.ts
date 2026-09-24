@@ -275,6 +275,25 @@ implements OnInit
 
 
     //===========================================================
+    // Merge State
+    //===========================================================
+
+    mergeConflicts:
+        string[] =
+        [];
+
+
+    isMergeActive:
+        boolean =
+        false;
+
+
+    isCheckingMerge:
+        boolean =
+        false;
+
+
+    //===========================================================
     // Page State
     //===========================================================
 
@@ -476,6 +495,14 @@ implements OnInit
                             null;
 
 
+                        this.mergeConflicts =
+                            [];
+
+
+                        this.isMergeActive =
+                            false;
+
+
                         this.isLoading =
                             false;
 
@@ -522,6 +549,9 @@ implements OnInit
                             status;
 
 
+                        this.loadMergeConflicts();
+
+
                         this.cdr.detectChanges();
                     },
 
@@ -540,9 +570,190 @@ implements OnInit
                             null;
 
 
+                        this.mergeConflicts =
+                            [];
+
+
+                        this.isMergeActive =
+                            false;
+
+
                         this.cdr.detectChanges();
                     }
             });
+    }
+
+
+    //===========================================================
+    // Load Merge Conflicts
+    //===========================================================
+
+    private loadMergeConflicts():
+        void
+    {
+        if
+        (
+            this.sourceControlId <= 0
+        )
+        {
+            return;
+        }
+
+
+        this.isCheckingMerge =
+            true;
+
+
+        this.sourcecontrolservice
+            .getMergeConflicts(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.applyMergeConflictResult(
+                            result
+                        );
+
+
+                        this.isCheckingMerge =
+                            false;
+
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        console.error(
+                            'Git Merge Conflict Check Error',
+
+                            error
+                        );
+
+
+                        this.mergeConflicts =
+                            [];
+
+
+                        this.isMergeActive =
+                            false;
+
+
+                        this.isCheckingMerge =
+                            false;
+
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+
+    //===========================================================
+    // Apply Merge Conflict Result
+    //===========================================================
+
+    private applyMergeConflictResult
+    (
+        result:
+            GitOperationResultDto
+    ):
+        void
+    {
+        const output =
+            result?.output
+            ||
+            '';
+
+
+        this.mergeConflicts =
+            this.extractMergeConflicts(
+                output
+            );
+
+
+        this.isMergeActive =
+            this.mergeConflicts.length > 0;
+    }
+
+
+    //===========================================================
+    // Extract Merge Conflicts
+    //===========================================================
+
+    private extractMergeConflicts
+    (
+        output:
+            string
+    ):
+        string[]
+    {
+        if
+        (
+            !output
+        )
+        {
+            return [];
+        }
+
+
+        const lines =
+            output
+                .split(/\r?\n/)
+                .map(
+                    line =>
+                        line.trim()
+                )
+                .filter(
+                    line =>
+                        !!line
+                );
+
+
+        const conflicts =
+            lines.filter(
+                line =>
+                    line.startsWith(
+                        'UU '
+                    )
+                    ||
+                    line.startsWith(
+                        'AA '
+                    )
+                    ||
+                    line.startsWith(
+                        'DD '
+                    )
+                    ||
+                    line.startsWith(
+                        'AU '
+                    )
+                    ||
+                    line.startsWith(
+                        'UA '
+                    )
+                    ||
+                    line.startsWith(
+                        'DU '
+                    )
+                    ||
+                    line.startsWith(
+                        'UD '
+                    )
+            );
+
+
+        return conflicts.map(
+            line =>
+                line.substring(
+                    3
+                ).trim()
+        );
     }
 
 
@@ -617,6 +828,27 @@ implements OnInit
             case 'sync':
 
                 this.synchronizeRepository();
+
+                break;
+
+
+            case 'continue-merge':
+
+                this.continueMerge();
+
+                break;
+
+
+            case 'abort-merge':
+
+                this.abortMerge();
+
+                break;
+
+
+            case 'reset-to-remote':
+
+                this.resetToRemote();
 
                 break;
 
@@ -1157,6 +1389,455 @@ implements OnInit
 
 
     //===========================================================
+    // Get Merge Conflicts
+    //===========================================================
+
+    private getMergeConflicts():
+        void
+    {
+        if
+        (
+            this.sourceControlId <= 0
+        )
+        {
+            return;
+        }
+
+
+        this.isOperating =
+            true;
+
+
+        this.currentOperation =
+            'merge-conflicts';
+
+
+        this.progressDialog.show(
+            'Resolve Merge Conflicts',
+
+            'Checking the repository for unresolved merge conflicts...'
+        );
+
+
+        this.progressDialog.update(
+            25,
+
+            'Reading repository merge state...'
+        );
+
+
+        this.sourcecontrolservice
+            .getMergeConflicts(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.applyMergeConflictResult(
+                            result
+                        );
+
+
+                        this.progressDialog.update(
+                            100,
+
+                            'Merge conflict check completed.'
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        this.isOperating =
+                            false;
+
+
+                        this.currentOperation =
+                            '';
+
+
+                        if
+                        (
+                            this.isMergeActive
+                        )
+                        {
+                            this.toast.error(
+                                'Merge Conflicts',
+
+                                `${this.mergeConflicts.length} unresolved merge conflict(s) found.`
+                            );
+                        }
+                        else
+                        {
+                            this.toast.success(
+                                'Merge Status',
+
+                                'No unresolved merge conflicts were found.'
+                            );
+                        }
+
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        this.progressDialog.close();
+
+
+                        this.operationFailed(
+                            error,
+
+                            'Merge Conflict Check Failed',
+
+                            'Failed to check repository merge conflicts.'
+                        );
+                    }
+            });
+    }
+
+
+    //===========================================================
+    // Continue Merge
+    //===========================================================
+
+    private continueMerge():
+        void
+    {
+        if
+        (
+            !this.isMergeActive
+        )
+        {
+            this.toast.error(
+                'Continue Merge',
+
+                'There is no active merge requiring continuation.'
+            );
+
+            return;
+        }
+
+
+        this.confirmDialog.open(
+            'Continue Merge',
+
+            'Have all merge conflicts been resolved? The resolved changes will be staged, the merge will be completed, and the synchronization will continue.',
+
+            () =>
+            {
+                this.executeContinueMerge();
+            },
+
+            'Continue Merge',
+
+            'Cancel',
+
+            'primary'
+        );
+    }
+
+
+    //===========================================================
+    // Execute Continue Merge
+    //===========================================================
+
+    private executeContinueMerge():
+        void
+    {
+        this.isOperating =
+            true;
+
+
+        this.currentOperation =
+            'continue-merge';
+
+
+        this.progressDialog.show(
+            'Continue Merge',
+
+            'Preparing to complete the resolved merge...'
+        );
+
+
+        this.progressDialog.update(
+            25,
+
+            'Checking resolved merge files...'
+        );
+
+
+        this.sourcecontrolservice
+            .continueMerge(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.progressDialog.update(
+                            100,
+
+                            'Merge completed and synchronization continued.'
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        this.operationCompleted(
+                            result,
+
+                            'Merge Completed',
+
+                            'The merge was completed and repository synchronization continued.'
+                        );
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        this.progressDialog.close();
+
+
+                        this.operationFailed(
+                            error,
+
+                            'Continue Merge Failed',
+
+                            'Failed to continue the repository merge.'
+                        );
+                    }
+            });
+    }
+
+
+    //===========================================================
+    // Abort Merge
+    //===========================================================
+
+    private abortMerge():
+        void
+    {
+        if
+        (
+            !this.isMergeActive
+        )
+        {
+            this.toast.error(
+                'Abort Merge',
+
+                'There is no active merge to abort.'
+            );
+
+            return;
+        }
+
+
+        this.confirmDialog.open(
+            'Abort Merge',
+
+            'Are you sure you want to abort the active merge? The repository will be returned to the state before the merge started.',
+
+            () =>
+            {
+                this.executeAbortMerge();
+            },
+
+            'Abort Merge',
+
+            'Cancel',
+
+            'danger'
+        );
+    }
+
+
+    //===========================================================
+    // Execute Abort Merge
+    //===========================================================
+
+    private executeAbortMerge():
+        void
+    {
+        this.isOperating =
+            true;
+
+
+        this.currentOperation =
+            'abort-merge';
+
+
+        this.progressDialog.show(
+            'Abort Merge',
+
+            'Aborting the active repository merge...'
+        );
+
+
+        this.progressDialog.update(
+            50,
+
+            'Restoring repository merge state...'
+        );
+
+
+        this.sourcecontrolservice
+            .abortMerge(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.progressDialog.update(
+                            100,
+
+                            'Merge has been aborted.'
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        this.operationCompleted(
+                            result,
+
+                            'Merge Aborted',
+
+                            'The active merge has been aborted.'
+                        );
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        this.progressDialog.close();
+
+
+                        this.operationFailed(
+                            error,
+
+                            'Abort Merge Failed',
+
+                            'Failed to abort the active repository merge.'
+                        );
+                    }
+            });
+    }
+
+
+    //===========================================================
+    // Reset To Remote
+    //===========================================================
+
+    private resetToRemote():
+        void
+    {
+        this.confirmDialog.open(
+            'Reset Repository To Remote',
+
+            'This will discard local repository changes and reset the repository to the current remote branch. This action cannot be undone. Do you want to continue?',
+
+            () =>
+            {
+                this.executeResetToRemote();
+            },
+
+            'Reset To Remote',
+
+            'Cancel',
+
+            'danger'
+        );
+    }
+
+
+    //===========================================================
+    // Execute Reset To Remote
+    //===========================================================
+
+    private executeResetToRemote():
+        void
+    {
+        this.isOperating =
+            true;
+
+
+        this.currentOperation =
+            'reset-to-remote';
+
+
+        this.progressDialog.show(
+            'Reset Repository To Remote',
+
+            'Preparing to reset the local repository to the remote branch...'
+        );
+
+
+        this.progressDialog.update(
+            25,
+
+            'Fetching the latest remote repository state...'
+        );
+
+
+        this.sourcecontrolservice
+            .resetToRemote(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.progressDialog.update(
+                            100,
+
+                            'Repository reset completed.'
+                        );
+
+
+                        this.progressDialog.close();
+
+
+                        this.operationCompleted(
+                            result,
+
+                            'Reset Completed',
+
+                            'The local repository has been reset to the remote branch.'
+                        );
+                    },
+
+
+                error:
+                    error =>
+                    {
+                        this.progressDialog.close();
+
+
+                        this.operationFailed(
+                            error,
+
+                            'Reset Failed',
+
+                            'Failed to reset the repository to the remote branch.'
+                        );
+                    }
+            });
+    }
+
+
+    //===========================================================
     // Refresh Status
     //
     // This is the ACTION-CARD refresh.
@@ -1239,6 +1920,9 @@ implements OnInit
                     {
                         this.gitStatus =
                             status;
+
+
+                        this.loadMergeConflicts();
 
 
                         this.cdr.detectChanges();
@@ -1881,6 +2565,32 @@ implements OnInit
 
 
         return !this.gitStatus.isClean;
+    }
+
+
+    //===========================================================
+    // Has Merge Conflicts
+    //===========================================================
+
+    get hasMergeConflicts():
+        boolean
+    {
+        return (
+            this.isMergeActive
+            &&
+            this.mergeConflicts.length > 0
+        );
+    }
+
+
+    //===========================================================
+    // Merge Conflict Count
+    //===========================================================
+
+    get mergeConflictCount():
+        number
+    {
+        return this.mergeConflicts.length;
     }
 
 

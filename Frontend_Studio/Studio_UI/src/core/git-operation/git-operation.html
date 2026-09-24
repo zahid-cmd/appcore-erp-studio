@@ -562,7 +562,7 @@
 
                             class="action-card"
 
-                            [disabled]="isLoading || !repository"
+                            [disabled]="isLoading || isOperating || !repository"
 
                             (click)="onOperation('pull')">
 
@@ -582,7 +582,7 @@
 
                             <div class="action-description">
 
-                                Download latest from remote repository
+                                Download latest from remote
 
                             </div>
 
@@ -598,7 +598,7 @@
 
                             class="action-card"
 
-                            [disabled]="isLoading || !repository"
+                            [disabled]="isLoading || isOperating || !repository"
 
                             (click)="onOperation('commit')">
 
@@ -634,7 +634,7 @@
 
                             class="action-card"
 
-                            [disabled]="isLoading || !repository"
+                            [disabled]="isLoading || isOperating || !repository"
 
                             (click)="onOperation('push')">
 
@@ -654,7 +654,7 @@
 
                             <div class="action-description">
 
-                                Publish commits to remote repository
+                                Publish commits to remote
 
                             </div>
 
@@ -670,7 +670,7 @@
 
                             class="action-card"
 
-                            [disabled]="isLoading"
+                            [disabled]="isLoading || isOperating"
 
                             (click)="onOperation('refresh')">
 
@@ -695,6 +695,66 @@
                             </div>
 
                         </button>
+
+
+
+                        <!-- =====================================
+                             RESET TO REMOTE
+                        ====================================== -->
+
+                        <div class="reset-banner">
+
+                            <div class="reset-left">
+
+                                <div class="reset-icon">
+
+                                    <i class="fas fa-rotate-left"></i>
+
+                                </div>
+
+
+                                <div class="reset-content">
+
+                                    <div class="reset-title">
+
+                                        Reset Repository To Remote
+
+                                    </div>
+
+
+                                    <div class="reset-description">
+
+                                        Discard local changes
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+
+                                type="button"
+
+                                class="reset-button"
+
+                                [disabled]="isLoading || isOperating || !repository"
+
+                                (click)="onOperation('reset-to-remote')">
+
+                                <span>
+
+                                    Reset To Remote
+
+                                </span>
+
+
+                                <i class="fas fa-triangle-exclamation"></i>
+
+                            </button>
+
+                        </div>
 
 
 
@@ -737,7 +797,7 @@
 
                                 class="sync-button"
 
-                                [disabled]="isLoading || !repository"
+                                [disabled]="isLoading || isOperating || !repository"
 
                                 (click)="onOperation('sync')">
 
@@ -751,6 +811,199 @@
                                 <i class="fas fa-angles-right"></i>
 
                             </button>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- =============================================
+                         MERGE CONFLICT RESOLUTION
+                    ============================================== -->
+
+                    <div
+                        class="merge-conflict-section"
+                        *ngIf="isMergeActive">
+
+
+                        <!-- =========================================
+                             CONFLICT HEADER
+                        ========================================== -->
+
+                        <div class="merge-conflict-header">
+
+                            <div class="merge-conflict-title-wrapper">
+
+                                <div class="merge-conflict-title">
+
+                                    <i class="fas fa-triangle-exclamation"></i>
+
+                                    Merge Conflict Resolution
+
+                                </div>
+
+
+                                <div class="merge-conflict-subtitle">
+
+                                    Resolve the listed files before continuing the repository synchronization
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="merge-conflict-count">
+
+                                {{ mergeConflictCount }}
+
+                                {{
+                                    mergeConflictCount === 1
+                                        ? 'Conflict'
+                                        : 'Conflicts'
+                                }}
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- =========================================
+                             CONFLICT INFORMATION
+                        ========================================== -->
+
+                        <div class="merge-conflict-body">
+
+
+                            <div class="merge-conflict-warning">
+
+                                <div class="merge-conflict-warning-icon">
+
+                                    <i class="fas fa-circle-exclamation"></i>
+
+                                </div>
+
+
+                                <div class="merge-conflict-warning-content">
+
+                                    <div class="merge-conflict-warning-title">
+
+                                        Repository synchronization is paused
+
+                                    </div>
+
+
+                                    <div class="merge-conflict-warning-text">
+
+                                        Full Repository Synchronization detected unresolved conflicts. Resolve the files locally, then continue the merge.
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- =====================================
+                                 CONFLICT FILES
+                            ====================================== -->
+
+                            <div class="merge-conflict-files">
+
+
+                                <div class="merge-conflict-files-header">
+
+                                    <span>
+
+                                        Unresolved Files
+
+                                    </span>
+
+
+                                    <span>
+
+                                        {{ mergeConflictCount }}
+
+                                    </span>
+
+                                </div>
+
+
+                                <div class="merge-conflict-file-list">
+
+                                    <div
+                                        class="merge-conflict-file"
+                                        *ngFor="let file of mergeConflicts">
+
+                                        <i class="fas fa-file-circle-exclamation"></i>
+
+                                        <span
+                                            [title]="file">
+
+                                            {{ file }}
+
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- =====================================
+                                 MERGE ACTIONS
+                            ====================================== -->
+
+                            <div class="merge-conflict-actions">
+
+
+                                <button
+
+                                    type="button"
+
+                                    class="merge-continue-button"
+
+                                    [disabled]="isLoading || isOperating"
+
+                                    (click)="onOperation('continue-merge')">
+
+                                    <i class="fas fa-check"></i>
+
+                                    <span>
+
+                                        Continue Merge
+
+                                    </span>
+
+                                </button>
+
+
+
+                                <button
+
+                                    type="button"
+
+                                    class="merge-abort-button"
+
+                                    [disabled]="isLoading || isOperating"
+
+                                    (click)="onOperation('abort-merge')">
+
+                                    <i class="fas fa-xmark"></i>
+
+                                    <span>
+
+                                        Abort Merge
+
+                                    </span>
+
+                                </button>
+
+                            </div>
 
                         </div>
 
@@ -925,6 +1178,52 @@
                                             workspaceStatus === 'Clean'
                                                 ? 'Clean'
                                                 : 'Changes Detected'
+                                        }}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- MERGE STATUS -->
+
+                            <div class="health-divider">
+                            </div>
+
+
+                            <div class="health-status-block">
+
+                                <div class="health-status-icon">
+
+                                    <i class="fas fa-code-merge"></i>
+
+                                </div>
+
+
+                                <div class="health-status-content">
+
+                                    <div class="health-status-title">
+
+                                        Merge Status
+
+                                    </div>
+
+
+                                    <div
+                                        class="health-status-value"
+                                        [class.clean]="!isMergeActive"
+                                        [class.changed]="isMergeActive">
+
+                                        <span class="health-status-dot">
+                                        </span>
+
+                                        {{
+                                            isMergeActive
+                                                ? 'Conflict Resolution Required'
+                                                : 'No Active Merge'
                                         }}
 
                                     </div>

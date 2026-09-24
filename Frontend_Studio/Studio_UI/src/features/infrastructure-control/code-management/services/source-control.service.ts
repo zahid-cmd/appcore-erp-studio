@@ -411,4 +411,82 @@ export class SourceControlService
         );
     }
 
+
+
+    //===========================================================
+    // Get Merge Conflicts
+    //===========================================================
+
+    getMergeConflicts
+    (
+        sourceControlId:
+            number
+    ):
+        Observable<GitOperationResultDto>
+    {
+        return this.http.get<GitOperationResultDto>(
+            `${this.apiUrl}/${sourceControlId}/merge-conflicts`
+        );
+    }
+
+
+
+    //===========================================================
+    // Continue Merge
+    //===========================================================
+
+    continueMerge
+    (
+        sourceControlId:
+            number
+    ):
+        Observable<GitOperationResultDto>
+    {
+        return this.http.post<GitOperationResultDto>(
+            `${this.apiUrl}/${sourceControlId}/continue-merge`,
+
+            {}
+        );
+    }
+
+
+
+    //===========================================================
+    // Abort Merge
+    //===========================================================
+
+    abortMerge
+    (
+        sourceControlId:
+            number
+    ):
+        Observable<GitOperationResultDto>
+    {
+        return this.http.post<GitOperationResultDto>(
+            `${this.apiUrl}/${sourceControlId}/abort-merge`,
+
+            {}
+        );
+    }
+
+
+
+    //===========================================================
+    // Reset To Remote
+    //===========================================================
+
+    resetToRemote
+    (
+        sourceControlId:
+            number
+    ):
+        Observable<GitOperationResultDto>
+    {
+        return this.http.post<GitOperationResultDto>(
+            `${this.apiUrl}/${sourceControlId}/reset-to-remote`,
+
+            {}
+        );
+    }
+
 }
