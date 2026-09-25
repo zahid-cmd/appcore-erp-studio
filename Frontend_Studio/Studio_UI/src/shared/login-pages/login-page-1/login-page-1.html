@@ -5,37 +5,44 @@
 
      FULL VIEWPORT
      │
-     ├── LEFT 30%
-     │   ├── TOP 15%
-     │   │   └── BRANDING 1
-     │   │
-     │   ├── CENTER
-     │   │   └── EMPTY
-     │   │
-     │   └── BOTTOM 15%
-     │       └── POWERED BY
+     ├── FLOATING NOTIFICATION CONTROL
+     │   └── Notification Button + Counter + Popover
      │
-     ├── MIDDLE 35%
-     │   ├── TOP 15%
-     │   │   └── CLIENT LOGO
-     │   │
-     │   ├── CENTER
-     │   │   └── EMPTY
-     │   │
-     │   └── BOTTOM 15%
-     │       └── EMPTY
+     ├── FULL VIEWPORT PROMOTIONAL IMAGE
      │
-     └── RIGHT 35%
-         ├── TOP 50px
-         │   └── THEME SELECTOR
+     └── DESKTOP PAGE LAYOUT
          │
-         ├── CENTER
-         │   ├── LOGIN PANEL
-         │   ├── REGISTRATION PANEL
-         │   └── FORGET PASSWORD PANEL
+         ├── LEFT 30%
+         │   ├── TOP 15%
+         │   │   └── BRANDING 1
+         │   │
+         │   ├── CENTER
+         │   │   └── EMPTY
+         │   │
+         │   └── BOTTOM 15%
+         │       └── EMPTY
          │
-         └── BOTTOM 50px
-             └── EMPTY FOOTER AREA
+         ├── MIDDLE 35%
+         │   ├── TOP 15%
+         │   │   └── CLIENT LOGO
+         │   │
+         │   ├── CENTER
+         │   │   └── EMPTY
+         │   │
+         │   └── BOTTOM 15%
+         │       └── POWERED BY
+         │
+         └── RIGHT 35%
+             ├── TOP 50px
+             │   └── THEME SELECTOR
+             │
+             ├── CENTER
+             │   ├── LOGIN PANEL
+             │   ├── REGISTRATION PANEL
+             │   └── FORGET PASSWORD PANEL
+             │
+             └── BOTTOM 50px
+                 └── EMPTY FOOTER AREA
 
      IMPORTANT:
 
@@ -44,16 +51,24 @@
 
          It occupies the FULL VIEWPORT behind all sections.
 
+         The Notification Panel is also independent from the
+         page layout and therefore consumes NO physical layout
+         space.
+
+         The Notification Panel is a floating page-level control.
+
          Branding 2 has been completely removed.
 
          The Client Logo is placed in the
          MIDDLE TOP area.
 
          Powered By remains only in the
-         LEFT BOTTOM area.
+         MIDDLE BOTTOM area.
 
          Theme Selector is placed in the
          RIGHT TOP area.
+
+         Notification Button is floating at the page level.
 
          Theme Selector controls:
 
@@ -93,6 +108,33 @@
 
              Forget Password Panel is displayed.
 
+         PASSWORD RESET SUCCESS EVENT:
+
+             Forget Password Panel emits the
+             passwordResetSuccess event.
+
+             This page receives the event through
+             onPasswordResetSuccess().
+
+             The Notification Panel receives:
+
+                 Password Changed
+
+             The notification remains unread.
+
+             The Notification Panel automatically opens
+             for 3 seconds.
+
+             The Notification Panel then closes automatically.
+
+             The unread counter remains visible.
+
+             The Forget Password Panel is immediately replaced
+             by the Login Panel.
+
+             The notification becomes read only when the user
+             manually opens/interacts with the Notification Panel.
+
          BACK TO LOGIN EVENT:
 
              Registration Panel or Forget Password Panel emits
@@ -125,6 +167,34 @@
 <div
     class="login-page-1"
 >
+
+
+    <!-- =======================================================
+         FLOATING NOTIFICATION PANEL
+         -------------------------------------------------------
+         IMPORTANT:
+
+             This is a PAGE-LEVEL component.
+
+             It does NOT belong to:
+
+                 - Login Panel
+                 - Registration Panel
+                 - Forget Password Panel
+
+             It also does NOT occupy any physical space in the
+             30% / 35% / 35% layout.
+
+             The component itself uses fixed positioning.
+
+             #notificationPanel provides an explicit template
+             reference for the Login Page 1 @ViewChild.
+    ======================================================== -->
+
+    <app-login-page-notification-panel
+        #notificationPanel
+    >
+    </app-login-page-notification-panel>
 
 
     <!-- =======================================================
@@ -183,6 +253,11 @@
              LEFT   = 30%
              MIDDLE = 35%
              RIGHT  = 35%
+
+         IMPORTANT:
+
+             Notification Panel is NOT inside this layout.
+             Therefore it cannot affect these dimensions.
     ======================================================== -->
 
     <main
@@ -257,7 +332,7 @@
 
                  CONTENT:
 
-                     POWERED BY
+                     EMPTY
             ================================================= -->
 
             <section
@@ -300,17 +375,13 @@
 
                      CLIENT LOGO
 
-                 The Client Logo is positioned independently
-                 from the Branding component.
-
-                 The Client Logo component controls its own
-                 intrinsic width and height.
+                 The Client Logo component can be placed here
+                 independently when required.
             ================================================= -->
 
             <section
                 class="login-page-1-middle-top"
             >
-
 
             </section>
 
@@ -341,7 +412,7 @@
 
                  CONTENT:
 
-                     EMPTY
+                     POWERED BY
             ================================================= -->
 
             <section
@@ -350,7 +421,7 @@
 
                 <app-login-page-powered-by>
                 </app-login-page-powered-by>
-                
+
             </section>
 
 
@@ -386,19 +457,6 @@
                  CONTENT:
 
                      THEME SELECTOR
-
-                 Theme Selector emits:
-
-                     true
-                         ↓
-                     LIGHT THEME
-
-                     false
-                         ↓
-                     DEEP THEME
-
-                 Page 1 remains the owner of the
-                 isLightTheme state.
             ================================================= -->
 
             <section
@@ -450,8 +508,11 @@
                         &&
                         !isForgetPasswordMode
                     "
+
                     (register)="onRegister()"
+
                     (forgotPassword)="onForgotPassword()"
+
                     (signIn)="onSignIn($event)"
                 >
                 </app-login-page-login-panel>
@@ -467,6 +528,7 @@
 
                 <app-login-page-registration-panel
                     *ngIf="isRegistrationMode"
+
                     (backToLogin)="onBackToLogin()"
                 >
                 </app-login-page-registration-panel>
@@ -478,11 +540,35 @@
                      DISPLAYED WHEN:
 
                          isForgetPasswordMode = true
+
+                     SUCCESS:
+
+                         passwordResetSuccess is emitted by
+                         the Forget Password Panel.
+
+                         onPasswordResetSuccess() then:
+
+                             1. Returns to Login Panel.
+                             2. Creates Password Changed
+                                notification.
+                             3. Keeps notification unread.
+                             4. Opens Notification Panel
+                                automatically.
+                             5. Keeps it open for 3 seconds.
+                             6. Closes automatically.
+                             7. Leaves unread counter visible.
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
                     *ngIf="isForgetPasswordMode"
-                    (backToLogin)="onBackToLogin()"
+
+                    (passwordResetSuccess)="
+                        onPasswordResetSuccess()
+                    "
+
+                    (backToLogin)="
+                        onBackToLogin()
+                    "
                 >
                 </app-login-page-forget-password-panel>
 

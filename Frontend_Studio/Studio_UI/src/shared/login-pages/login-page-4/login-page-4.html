@@ -5,6 +5,9 @@
 
      FULL VIEWPORT
      │
+     ├── FLOATING NOTIFICATION CONTROL
+     │   └── Notification Button + Counter + Popover
+     │
      ├── LEFT 45%
      │   ├── TOP 15%
      │   │   └── BRANDING 1
@@ -55,15 +58,17 @@
          Theme Selector is placed in the
          RIGHT TOP area.
 
-         Theme Selector controls:
+         Notification Panel:
 
-             LIGHT
-                 ↓
-             Promotional Image Light
+             The Notification Panel is PAGE-LEVEL.
 
-             DEEP
-                 ↓
-             Promotional Image Deep
+             It does NOT participate in the
+             45% / 20% / 35% layout.
+
+             It occupies NO physical layout space.
+
+             It floats above the page through its own
+             notification-panel.css.
 
          This version is DESKTOP ONLY.
 
@@ -92,6 +97,33 @@
              Login Panel is hidden.
 
              Forget Password Panel is displayed.
+
+         PASSWORD RESET SUCCESS EVENT:
+
+             Forget Password Panel emits the
+             passwordResetSuccess event.
+
+             This page receives the event through
+             onPasswordResetSuccess().
+
+             The Notification Panel receives:
+
+                 Password Changed
+
+             The notification remains unread.
+
+             The Notification Panel automatically opens
+             for 5 seconds.
+
+             The Notification Panel then closes automatically.
+
+             The unread counter remains visible.
+
+             The Forget Password Panel is immediately replaced
+             by the Login Panel.
+
+             The notification becomes read only when the user
+             manually opens/interacts with the Notification Panel.
 
          BACK TO LOGIN EVENT:
 
@@ -125,6 +157,32 @@
 <div
     class="login-page-4"
 >
+
+
+    <!-- =======================================================
+         PAGE-LEVEL NOTIFICATION PANEL
+         -------------------------------------------------------
+         This component is intentionally outside the main
+         desktop layout.
+
+         It does NOT consume any layout space.
+
+         Its own component CSS controls:
+
+             Bell Button
+             Unread Counter
+             Floating Popover
+             Outside Click
+             Notification Position
+
+         #notificationPanel provides an explicit template
+         reference for the Login Page 4 @ViewChild.
+    ======================================================== -->
+
+    <app-login-page-notification-panel
+        #notificationPanel
+    >
+    </app-login-page-notification-panel>
 
 
     <!-- =======================================================
@@ -183,6 +241,9 @@
              LEFT   = 45%
              MIDDLE = 20%
              RIGHT  = 35%
+
+         Notification Panel is intentionally NOT included
+         inside this layout.
     ======================================================== -->
 
     <main
@@ -449,8 +510,11 @@
                         &&
                         !isForgetPasswordMode
                     "
+
                     (register)="onRegister()"
+
                     (forgotPassword)="onForgotPassword()"
+
                     (signIn)="onSignIn($event)"
                 >
                 </app-login-page-login-panel>
@@ -466,6 +530,7 @@
 
                 <app-login-page-registration-panel
                     *ngIf="isRegistrationMode"
+
                     (backToLogin)="onBackToLogin()"
                 >
                 </app-login-page-registration-panel>
@@ -477,11 +542,35 @@
                      DISPLAYED WHEN:
 
                          isForgetPasswordMode = true
+
+                     SUCCESS:
+
+                         passwordResetSuccess is emitted by
+                         the Forget Password Panel.
+
+                         onPasswordResetSuccess() then:
+
+                             1. Returns to Login Panel.
+                             2. Creates Password Changed
+                                notification.
+                             3. Keeps notification unread.
+                             4. Opens Notification Panel
+                                automatically.
+                             5. Keeps it open for 5 seconds.
+                             6. Closes automatically.
+                             7. Leaves unread counter visible.
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
                     *ngIf="isForgetPasswordMode"
-                    (backToLogin)="onBackToLogin()"
+
+                    (passwordResetSuccess)="
+                        onPasswordResetSuccess()
+                    "
+
+                    (backToLogin)="
+                        onBackToLogin()
+                    "
                 >
                 </app-login-page-forget-password-panel>
 

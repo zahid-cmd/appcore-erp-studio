@@ -1698,6 +1698,25 @@ export class LoginPageRegistrationPanelComponent
 
 
         //=======================================================
+        // Clear Any Previous Loader Timer
+        //=======================================================
+
+        if
+        (
+            this.registrationLoaderTimer !==
+            null
+        )
+        {
+            clearTimeout(
+                this.registrationLoaderTimer
+            );
+
+            this.registrationLoaderTimer =
+                null;
+        }
+
+
+        //=======================================================
         // Registration State
         //=======================================================
 
@@ -1706,6 +1725,9 @@ export class LoginPageRegistrationPanelComponent
 
         this.showRegistrationLoader =
             true;
+
+        this.showConfirmationDialog =
+            false;
 
         this.registrationLoaderStartedAt =
             Date.now();
@@ -1823,7 +1845,7 @@ export class LoginPageRegistrationPanelComponent
 
                         const minimumLoaderDuration:
                             number =
-                                10000;
+                                5000;
 
                         const remainingTime:
                             number =

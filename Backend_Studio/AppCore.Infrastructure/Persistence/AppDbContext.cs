@@ -154,6 +154,14 @@ public class AppDbContext
         } = null!;
 
 
+    public DbSet<PasswordResetVerification>
+        PasswordResetVerifications
+        {
+            get;
+            set;
+        } = null!;
+
+
     //===========================================================
     // AUTO REGISTER DBSETS
     //===========================================================

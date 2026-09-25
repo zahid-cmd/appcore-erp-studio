@@ -5,7 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using AppCore.Application.Platform.Authentication.Interfaces;
-using AppCore.Application.Platform.Authentication.Service;
+using AppCore.Application.Platform.Authentication.Services;
 
 
 //===============================================================

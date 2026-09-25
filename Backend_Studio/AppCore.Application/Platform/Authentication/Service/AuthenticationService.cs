@@ -1,5 +1,5 @@
 //===============================================================
-// Namespaces
+// Usings
 //===============================================================
 
 using System.IdentityModel.Tokens.Jwt;
@@ -12,7 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Application.Platform.Authentication.DTOs;
 using AppCore.Application.Platform.Authentication.Interfaces;
-
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Platform.Authentication;
 
@@ -21,583 +20,778 @@ using AppCore.Domain.Platform.Authentication;
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Platform.Authentication.Service;
+namespace AppCore.Application.Platform.Authentication.Services;
 
 
 //===============================================================
 // Authentication Service
 //===============================================================
 
-public class AuthenticationService
-    : IAuthenticationService
+public class AuthenticationService : IAuthenticationService
 {
     //===========================================================
-    // Private Fields
+    // Fields
     //===========================================================
 
-    private readonly IAuthenticationRepository
-        _authenticationRepository;
-
-    private readonly IConfiguration
-        _configuration;
+    private readonly IAuthenticationRepository _authenticationRepository;
+    private readonly IConfiguration _configuration;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public AuthenticationService
-    (
+    public AuthenticationService(
         IAuthenticationRepository authenticationRepository,
-
-        IConfiguration configuration
-    )
+        IConfiguration configuration)
     {
-        _authenticationRepository =
-            authenticationRepository;
-
-        _configuration =
-            configuration;
+        _authenticationRepository = authenticationRepository;
+        _configuration = configuration;
     }
 
 
-    //===========================================================
+    //===============================================================
     // Login
-    //===========================================================
+    //===============================================================
 
-    public async Task<LoginResponseDto>
-        LoginAsync(
-            LoginRequestDto request)
+    public async Task<LoginResponseDto> LoginAsync(
+        LoginRequestDto request)
     {
-        if
-        (
-            request ==
-            null
-        )
+        //===========================================================
+        // Validate Request
+        //===========================================================
+
+        if (request == null)
         {
             return CreateFailureResponse(
-                "Login request is required."
-            );
+                "Invalid login request.");
         }
 
+
+        //===========================================================
+        // Normalize User Name
+        //===========================================================
 
         string userName =
-            request.UserName?.Trim()
-            ??
-            string.Empty;
-
-        string password =
-            request.Password
-            ??
-            string.Empty;
+            request.UserName?.Trim() ?? string.Empty;
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                userName)
-        )
+        //===========================================================
+        // Validate User Name
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(userName))
         {
             return CreateFailureResponse(
-                "Login ID is required."
-            );
+                "Login ID is required.");
         }
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                password)
-        )
+        //===========================================================
+        // Validate Password
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(request.Password))
         {
             return CreateFailureResponse(
-                "Password is required."
-            );
+                "Password is required.");
         }
 
+
+        //===========================================================
+        // Get User Profile
+        //===========================================================
 
         UserProfile? userProfile =
             await _authenticationRepository
-                .GetUserProfileByUserNameAsync(
-                    userName
-                );
+                .GetUserProfileByUserNameAsync(userName);
 
 
-        if
-        (
-            userProfile ==
-            null
-        )
+        //===========================================================
+        // User Not Found
+        //===========================================================
+
+        if (userProfile == null)
         {
             return CreateFailureResponse(
-                "Invalid Login ID or password."
-            );
+                "Invalid Login ID or password.");
         }
 
 
-        if
-        (
-            userProfile.IsDeleted
-        )
+        //===========================================================
+        // Deleted User
+        //===========================================================
+
+        if (userProfile.IsDeleted)
         {
             return CreateFailureResponse(
-                "This user account is no longer available."
-            );
+                "Invalid Login ID or password.");
         }
 
 
-        if
-        (
-            !userProfile.IsActive
-        )
+        //===========================================================
+        // Inactive User
+        //===========================================================
+
+        if (!userProfile.IsActive)
         {
             return CreateFailureResponse(
-                "This user account is not active."
-            );
+                "Your Login ID is inactive. Please contact the administrator for activation.");
         }
 
+
+        //===========================================================
+        // Get User Credential
+        //===========================================================
 
         UserCredential? credential =
             await _authenticationRepository
                 .GetUserCredentialByUserProfileIdAsync(
-                    userProfile.UserProfileId
-                );
+                    userProfile.UserProfileId);
 
 
-        if
-        (
-            credential ==
-            null
-            ||
-            string.IsNullOrWhiteSpace(
-                credential.PasswordHash)
-        )
+        //===========================================================
+        // Credential Not Found
+        //===========================================================
+
+        if (credential == null ||
+            string.IsNullOrWhiteSpace(credential.PasswordHash))
         {
             return CreateFailureResponse(
-                "Login credentials are not configured for this user."
-            );
+                "Login credentials are not configured.");
         }
 
+
+        //===========================================================
+        // Verify Password
+        //===========================================================
 
         bool passwordValid =
             VerifyPassword(
-                password,
-                credential.PasswordHash
-            );
+                request.Password,
+                credential.PasswordHash);
 
 
-        if
-        (
-            !passwordValid
-        )
+        //===========================================================
+        // Invalid Password
+        //===========================================================
+
+        if (!passwordValid)
         {
             return CreateFailureResponse(
-                "Invalid Login ID or password."
-            );
+                "Invalid Login ID or password.");
         }
 
 
-        string token =
-            GenerateToken(
-                userProfile
-            );
+        //===========================================================
+        // Generate Token
+        //===========================================================
 
+        string token =
+            GenerateToken(userProfile);
+
+
+        //===========================================================
+        // Login Success
+        //===========================================================
 
         return new LoginResponseDto
         {
-            Success =
-                true,
-
-            Message =
-                "Login successful.",
-
-            Token =
-                token,
-
-            UserProfileId =
-                userProfile.UserProfileId,
-
-            UserName =
-                userProfile.UserName,
-
-            DisplayName =
-                userProfile.DisplayName
+            Success = true,
+            Message = "Login successful.",
+            Token = token,
+            UserProfileId = userProfile.UserProfileId,
+            UserName = userProfile.UserName,
+            DisplayName = userProfile.DisplayName
         };
     }
 
 
-    //===========================================================
+    //===============================================================
     // Register
-    //===========================================================
+    //===============================================================
 
-    public async Task<LoginResponseDto>
-        RegisterAsync(
-            RegisterRequestDto request)
+    public async Task<LoginResponseDto> RegisterAsync(
+        RegisterRequestDto request)
     {
-        if
-        (
-            request ==
-            null
-        )
+        //===========================================================
+        // Validate Request
+        //===========================================================
+
+        if (request == null)
         {
             return CreateFailureResponse(
-                "Registration request is required."
-            );
+                "Invalid registration request.");
         }
 
+
+        //===========================================================
+        // Normalize User Name
+        //===========================================================
 
         string userName =
-            request.UserName?.Trim()
-            ??
-            string.Empty;
-
-        string displayName =
-            request.DisplayName?.Trim()
-            ??
-            string.Empty;
-
-        string fullName =
-            request.FullName?.Trim()
-            ??
-            string.Empty;
-
-        string email =
-            request.Email?.Trim()
-            ??
-            string.Empty;
-
-        string mobileNo =
-            request.MobileNo?.Trim()
-            ??
-            string.Empty;
-
-        string password =
-            request.Password
-            ??
-            string.Empty;
+            request.UserName?.Trim() ?? string.Empty;
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                userName)
-        )
+        //===========================================================
+        // Validate User Name
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(userName))
         {
             return CreateFailureResponse(
-                "User Name is required."
-            );
+                "Login ID is required.");
         }
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                displayName)
-        )
+        //===========================================================
+        // Validate Password
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(request.Password))
         {
             return CreateFailureResponse(
-                "Display Name is required."
-            );
+                "Password is required.");
         }
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                fullName)
-        )
+        //===========================================================
+        // Password Length
+        //===========================================================
+
+        if (request.Password.Length < 8)
         {
             return CreateFailureResponse(
-                "Full Name is required."
-            );
+                "Password must be at least 8 characters long.");
         }
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                email)
-        )
-        {
-            return CreateFailureResponse(
-                "Email is required."
-            );
-        }
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                mobileNo)
-        )
-        {
-            return CreateFailureResponse(
-                "Mobile Number is required."
-            );
-        }
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                password)
-        )
-        {
-            return CreateFailureResponse(
-                "Password is required."
-            );
-        }
-
-
-        if
-        (
-            password.Length <
-            8
-        )
-        {
-            return CreateFailureResponse(
-                "Password must contain at least 8 characters."
-            );
-        }
-
+        //===========================================================
+        // Check Existing User
+        //===========================================================
 
         UserProfile? existingUser =
             await _authenticationRepository
-                .GetUserProfileByUserNameAsync(
-                    userName
-                );
+                .GetUserProfileByUserNameAsync(userName);
 
 
-        if
-        (
-            existingUser !=
-            null
-        )
+        //===========================================================
+        // Existing User
+        //===========================================================
+
+        if (existingUser != null)
         {
             return CreateFailureResponse(
-                "The Login ID is already registered."
-            );
+                "This Login ID is already registered.");
         }
 
 
-        UserProfile userProfile =
-            new UserProfile
-            {
-                ProfileCode =
-                    string.Empty,
+        //===========================================================
+        // Create User Profile
+        //===========================================================
 
-                UserName =
-                    userName,
-
-                DisplayName =
-                    displayName,
-
-                FullName =
-                    fullName,
-
-                Email =
-                    email,
-
-                MobileNo =
-                    mobileNo,
-
-                IsActive =
-                    false,
-
-                IsDeleted =
-                    false,
-
-                DeletedBy =
-                    null,
-
-                DeletedDate =
-                    null,
-
-                CreatedBy =
-                    0,
-
-                CreatedDate =
-                    DateTime.UtcNow,
-
-                ModifiedBy =
-                    null,
-
-                ModifiedDate =
-                    null
-            };
+        UserProfile userProfile = new UserProfile
+        {
+            UserName = userName,
+            DisplayName = request.DisplayName?.Trim() ?? string.Empty,
+            IsActive = false,
+            IsDeleted = false,
+            CreatedDate = DateTime.UtcNow
+        };
 
 
-        UserCredential userCredential =
-            new UserCredential
-            {
-                UserProfileId =
-                    0,
+        //===========================================================
+        // Create User Credential
+        //===========================================================
 
-                PasswordHash =
-                    HashPassword(
-                        password
-                    ),
+        UserCredential credential = new UserCredential
+        {
+            PasswordHash =
+                HashPassword(request.Password),
 
-                PasswordChangedDate =
-                    DateTime.UtcNow,
+            PasswordChangedDate =
+                DateTime.UtcNow,
 
-                CreatedDate =
-                    DateTime.UtcNow,
-
-                ModifiedDate =
-                    null
-            };
+            CreatedDate =
+                DateTime.UtcNow
+        };
 
 
-        await _authenticationRepository
-            .CreateRegistrationAsync(
-                userProfile,
-                userCredential
-            );
+        //===========================================================
+        // Create Registration
+        //===========================================================
 
+        long userProfileId =
+            await _authenticationRepository
+                .CreateRegistrationAsync(
+                    userProfile,
+                    credential);
+
+
+        //===========================================================
+        // Registration Success
+        //===========================================================
 
         return new LoginResponseDto
         {
-            Success =
-                true,
-
+            Success = true,
             Message =
-                "Registration submitted successfully. Your account is awaiting administrator activation.",
+                "User account created successfully. Please wait for administrator activation.",
 
-            Token =
-                string.Empty,
-
-            UserProfileId =
-                userProfile.UserProfileId,
-
-            UserName =
-                userProfile.UserName,
-
-            DisplayName =
-                userProfile.DisplayName
+            UserProfileId = userProfileId,
+            UserName = userProfile.UserName,
+            DisplayName = userProfile.DisplayName
         };
     }
 
 
-    //===========================================================
-    // Forgot Password
-    //===========================================================
+    //===============================================================
+    // Check Forgot Password
+    //===============================================================
 
-    public async Task<LoginResponseDto>
-        ForgotPasswordAsync(
-            ForgotPasswordRequestDto request)
+    public async Task<ForgotPasswordCheckResponseDto>
+        CheckForgotPasswordAsync(
+            ForgotPasswordCheckRequestDto request)
     {
-        if
-        (
-            request ==
-            null
-        )
+        //===========================================================
+        // Validate Request
+        //===========================================================
+
+        if (request == null)
         {
-            return CreateFailureResponse(
-                "Forgot password request is required."
-            );
+            return CreateForgotPasswordCheckFailureResponse(
+                "Invalid password recovery request.");
         }
 
+
+        //===========================================================
+        // Normalize User Name
+        //===========================================================
 
         string userName =
-            request.UserName?.Trim()
-            ??
-            string.Empty;
-
-        string newPassword =
-            request.NewPassword
-            ??
-            string.Empty;
+            request.UserName?.Trim() ?? string.Empty;
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                userName)
-        )
+        //===========================================================
+        // Validate User Name
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(userName))
         {
-            return CreateFailureResponse(
-                "Login ID is required."
-            );
+            return CreateForgotPasswordCheckFailureResponse(
+                "Login ID is required.");
         }
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                newPassword)
-        )
-        {
-            return CreateFailureResponse(
-                "New password is required."
-            );
-        }
-
-
-        if
-        (
-            newPassword.Length <
-            8
-        )
-        {
-            return CreateFailureResponse(
-                "Password must contain at least 8 characters."
-            );
-        }
-
+        //===========================================================
+        // Get User Profile
+        //===========================================================
 
         UserProfile? userProfile =
             await _authenticationRepository
-                .GetUserProfileByUserNameAsync(
-                    userName
-                );
+                .GetUserProfileByUserNameAsync(userName);
 
 
-        if
-        (
-            userProfile ==
-            null
-        )
+        //===========================================================
+        // User Not Found
+        //===========================================================
+
+        if (userProfile == null)
         {
-            return CreateFailureResponse(
-                "User account was not found."
-            );
+            return CreateForgotPasswordCheckFailureResponse(
+                "Unable to process the password recovery request. Please verify your Login ID.");
         }
 
 
-        if
-        (
-            userProfile.IsDeleted
-        )
+        //===========================================================
+        // Deleted User
+        //===========================================================
+
+        if (userProfile.IsDeleted)
         {
-            return CreateFailureResponse(
-                "This user account is no longer available."
-            );
+            return CreateForgotPasswordCheckFailureResponse(
+                "Unable to process the password recovery request. Please verify your Login ID.");
         }
 
 
-        if
-        (
-            !userProfile.IsActive
-        )
+        //===========================================================
+        // Inactive User
+        //===========================================================
+
+        if (!userProfile.IsActive)
         {
-            return CreateFailureResponse(
-                "This user account is not active."
-            );
+            return CreateForgotPasswordCheckFailureResponse(
+                "Your Login ID is inactive. Please contact the administrator for activation.");
         }
 
 
-        UserCredential credential =
+        //===========================================================
+        // Invalidate Previous Verification Codes
+        //===========================================================
+
+        await _authenticationRepository
+            .InvalidatePasswordResetVerificationsAsync(
+                userProfile.UserProfileId);
+
+
+        //===========================================================
+        // Generate Verification Code
+        //===========================================================
+
+        string verificationCode =
+            GenerateVerificationCode();
+
+
+        //===========================================================
+        // Verification Expiration
+        //===========================================================
+
+        DateTime now =
+            DateTime.UtcNow;
+
+        DateTime expiresAt =
+            now.AddMinutes(5);
+
+
+        //===========================================================
+        // Create Verification Entity
+        //===========================================================
+
+        PasswordResetVerification verification =
+            new PasswordResetVerification
+            {
+                UserProfileId =
+                    userProfile.UserProfileId,
+
+                CodeHash =
+                    HashPassword(verificationCode),
+
+                ExpiresAt =
+                    expiresAt,
+
+                UsedAt =
+                    null,
+
+                AttemptCount =
+                    0,
+
+                CreatedDate =
+                    now
+            };
+
+
+        //===========================================================
+        // Save Verification
+        //===========================================================
+
+        await _authenticationRepository
+            .CreatePasswordResetVerificationAsync(
+                verification);
+
+
+        //===========================================================
+        // Return Verification Code
+        //===========================================================
+        // The code is intentionally returned to the Forget Password
+        // panel according to the current internal ERP design.
+
+        return new ForgotPasswordCheckResponseDto
+        {
+            Success = true,
+
+            Message =
+                "Verification code generated successfully.",
+
+            VerificationCode =
+                verificationCode,
+
+            ExpiresAt =
+                expiresAt,
+
+            UserProfileId =
+                userProfile.UserProfileId
+        };
+    }
+
+
+    //===============================================================
+    // Confirm Forgot Password
+    //===============================================================
+
+    public async Task<LoginResponseDto>
+        ConfirmForgotPasswordAsync(
+            ForgotPasswordConfirmRequestDto request)
+    {
+        //===========================================================
+        // Validate Request
+        //===========================================================
+
+        if (request == null)
+        {
+            return CreateFailureResponse(
+                "Invalid password recovery request.");
+        }
+
+
+        //===========================================================
+        // Normalize User Name
+        //===========================================================
+
+        string userName =
+            request.UserName?.Trim() ?? string.Empty;
+
+
+        //===========================================================
+        // Normalize Verification Code
+        //===========================================================
+
+        string verificationCode =
+            request.VerificationCode?.Trim() ?? string.Empty;
+
+
+        //===========================================================
+        // Validate User Name
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return CreateFailureResponse(
+                "Login ID is required.");
+        }
+
+
+        //===========================================================
+        // Validate Verification Code
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(verificationCode))
+        {
+            return CreateFailureResponse(
+                "Verification code is required.");
+        }
+
+
+        //===========================================================
+        // Validate Verification Code Format
+        //===========================================================
+
+        if (verificationCode.Length != 6 ||
+            !verificationCode.All(char.IsDigit))
+        {
+            return CreateFailureResponse(
+                "Verification code must be a valid 6-digit code.");
+        }
+
+
+        //===========================================================
+        // Validate New Password
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return CreateFailureResponse(
+                "New password is required.");
+        }
+
+
+        //===========================================================
+        // Validate Password Length
+        //===========================================================
+
+        if (request.NewPassword.Length < 8)
+        {
+            return CreateFailureResponse(
+                "Password must be at least 8 characters long.");
+        }
+
+
+        //===========================================================
+        // Get User Profile
+        //===========================================================
+
+        UserProfile? userProfile =
             await _authenticationRepository
-                .EnsureUserCredentialAsync(
-                    userProfile.UserProfileId
-                );
+                .GetUserProfileByUserNameAsync(userName);
 
+
+        //===========================================================
+        // User Not Found
+        //===========================================================
+
+        if (userProfile == null)
+        {
+            return CreateFailureResponse(
+                "Unable to process the password recovery request.");
+        }
+
+
+        //===========================================================
+        // Deleted User
+        //===========================================================
+
+        if (userProfile.IsDeleted)
+        {
+            return CreateFailureResponse(
+                "Unable to process the password recovery request.");
+        }
+
+
+        //===========================================================
+        // Inactive User
+        //===========================================================
+
+        if (!userProfile.IsActive)
+        {
+            return CreateFailureResponse(
+                "Your Login ID is inactive. Please contact the administrator for activation.");
+        }
+
+
+        //===========================================================
+        // Get Active Verification
+        //===========================================================
+
+        PasswordResetVerification? verification =
+            await _authenticationRepository
+                .GetActivePasswordResetVerificationAsync(
+                    userProfile.UserProfileId);
+
+
+        //===========================================================
+        // Verification Not Found / Expired / Used
+        //===========================================================
+
+        if (verification == null)
+        {
+            return CreateFailureResponse(
+                "Verification code is invalid or expired. Please request a new code.");
+        }
+
+
+        //===========================================================
+        // Verify Expiration
+        //===========================================================
+
+        DateTime utcNow =
+            DateTime.UtcNow;
+
+
+        if
+        (
+            verification.ExpiresAt.ToUniversalTime() <=
+            utcNow
+        )
+        {
+            await _authenticationRepository
+                .MarkPasswordResetVerificationUsedAsync(
+                    verification);
+
+            return CreateFailureResponse(
+                "Verification code has expired. Please request a new code.");
+        }
+
+
+        //===========================================================
+        // Maximum Attempts
+        //===========================================================
+
+        if
+        (
+            verification.AttemptCount >=
+            3
+        )
+        {
+            await _authenticationRepository
+                .MarkPasswordResetVerificationUsedAsync(
+                    verification);
+
+            return CreateFailureResponse(
+                "Too many invalid verification attempts. Please request a new code.");
+        }
+
+
+        //===========================================================
+        // Verify Code
+        //===========================================================
+
+        bool verificationCodeValid =
+            VerifyPassword(
+                verificationCode,
+                verification.CodeHash);
+
+
+        //===========================================================
+        // Invalid Verification Code
+        //===========================================================
+
+        if (!verificationCodeValid)
+        {
+            await _authenticationRepository
+                .IncrementPasswordResetAttemptAsync(
+                    verification);
+
+
+            //=======================================================
+            // Maximum Attempts Reached
+            //=======================================================
+
+            if
+            (
+                verification.AttemptCount >=
+                3
+            )
+            {
+                await _authenticationRepository
+                    .MarkPasswordResetVerificationUsedAsync(
+                        verification);
+
+                return CreateFailureResponse(
+                    "Too many invalid verification attempts. Please request a new code.");
+            }
+
+
+            //=======================================================
+            // Remaining Attempts
+            //=======================================================
+
+            int remainingAttempts =
+                3 -
+                verification.AttemptCount;
+
+
+            return CreateFailureResponse(
+                $"Invalid verification code. {remainingAttempts} attempt(s) remaining.");
+        }
+
+
+        //===========================================================
+        // Get User Credential
+        //===========================================================
+
+        UserCredential? credential =
+            await _authenticationRepository
+                .GetUserCredentialByUserProfileIdAsync(
+                    userProfile.UserProfileId);
+
+
+        //===========================================================
+        // Credential Not Found
+        //===========================================================
+
+        if (credential == null)
+        {
+            return CreateFailureResponse(
+                "Login credentials are not configured.");
+        }
+
+
+        //===========================================================
+        // Hash New Password
+        //===========================================================
 
         credential.PasswordHash =
             HashPassword(
-                newPassword
-            );
+                request.NewPassword);
 
         credential.PasswordChangedDate =
             DateTime.UtcNow;
@@ -606,22 +800,34 @@ public class AuthenticationService
             DateTime.UtcNow;
 
 
+        //===========================================================
+        // Update Password
+        //===========================================================
+
         await _authenticationRepository
             .UpdateCredentialAsync(
-                credential
-            );
+                credential);
 
+
+        //===========================================================
+        // Mark Verification As Used
+        //===========================================================
+
+        await _authenticationRepository
+            .MarkPasswordResetVerificationUsedAsync(
+                verification);
+
+
+        //===========================================================
+        // Password Reset Success
+        //===========================================================
 
         return new LoginResponseDto
         {
-            Success =
-                true,
+            Success = true,
 
             Message =
                 "Password changed successfully.",
-
-            Token =
-                string.Empty,
 
             UserProfileId =
                 userProfile.UserProfileId,
@@ -635,29 +841,35 @@ public class AuthenticationService
     }
 
 
-    //===========================================================
-    // Password Hash
-    //===========================================================
+    //===============================================================
+    // Generate Verification Code
+    //===============================================================
 
-    private static string
-        HashPassword(
-            string password)
+    private static string GenerateVerificationCode()
     {
-        const int saltSize =
-            16;
+        int code =
+            RandomNumberGenerator.GetInt32(
+                100000,
+                1000000);
 
-        const int keySize =
-            32;
+        return code.ToString();
+    }
 
-        const int iterations =
-            100000;
 
+    //===============================================================
+    // Hash Password
+    //===============================================================
+
+    private static string HashPassword(
+        string password)
+    {
+        const int saltSize = 16;
+        const int keySize = 32;
+        const int iterations = 100000;
 
         byte[] salt =
             RandomNumberGenerator.GetBytes(
-                saltSize
-            );
-
+                saltSize);
 
         byte[] hash =
             Rfc2898DeriveBytes.Pbkdf2(
@@ -665,292 +877,265 @@ public class AuthenticationService
                 salt,
                 iterations,
                 HashAlgorithmName.SHA256,
-                keySize
-            );
-
+                keySize);
 
         return string.Join(
             '.',
-
             "PBKDF2",
-
             iterations.ToString(),
-
-            Convert.ToBase64String(
-                salt
-            ),
-
-            Convert.ToBase64String(
-                hash
-            )
-        );
+            Convert.ToBase64String(salt),
+            Convert.ToBase64String(hash));
     }
 
 
-    //===========================================================
-    // Password Verification
-    //===========================================================
+    //===============================================================
+    // Verify Password / Verification Code
+    //===============================================================
 
-    private static bool
-        VerifyPassword
-        (
-            string password,
-
-            string storedHash
-        )
+    private static bool VerifyPassword(
+        string password,
+        string storedHash)
     {
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                password)
-            ||
-            string.IsNullOrWhiteSpace(
-                storedHash)
-        )
-        {
-            return false;
-        }
-
-
-        string[] parts =
-            storedHash.Split(
-                '.'
-            );
-
-
-        if
-        (
-            parts.Length !=
-            4
-        )
-        {
-            return false;
-        }
-
-
-        if
-        (
-            !string.Equals(
-                parts[0],
-                "PBKDF2",
-                StringComparison.Ordinal
-            )
-        )
-        {
-            return false;
-        }
-
-
-        if
-        (
-            !int.TryParse(
-                parts[1],
-                out int iterations)
-        )
-        {
-            return false;
-        }
-
-
-        if
-        (
-            iterations <=
-            0
-        )
-        {
-            return false;
-        }
-
-
-        byte[] salt;
-
-        byte[] expectedHash;
-
-
         try
         {
-            salt =
-                Convert.FromBase64String(
-                    parts[2]
-                );
+            string[] parts =
+                storedHash.Split('.');
 
-            expectedHash =
+
+            if
+            (
+                parts.Length !=
+                4
+            )
+            {
+                return false;
+            }
+
+
+            //=======================================================
+            // Validate Algorithm
+            //=======================================================
+
+            if
+            (
+                !string.Equals(
+                    parts[0],
+                    "PBKDF2",
+                    StringComparison.Ordinal)
+            )
+            {
+                return false;
+            }
+
+
+            //=======================================================
+            // Parse Iterations
+            //=======================================================
+
+            if
+            (
+                !int.TryParse(
+                    parts[1],
+                    out int iterations)
+            )
+            {
+                return false;
+            }
+
+
+            //=======================================================
+            // Validate Iterations
+            //=======================================================
+
+            if
+            (
+                iterations <=
+                0
+            )
+            {
+                return false;
+            }
+
+
+            //=======================================================
+            // Decode Salt
+            //=======================================================
+
+            byte[] salt =
                 Convert.FromBase64String(
-                    parts[3]
-                );
+                    parts[2]);
+
+
+            //=======================================================
+            // Decode Stored Hash
+            //=======================================================
+
+            byte[] storedHashBytes =
+                Convert.FromBase64String(
+                    parts[3]);
+
+
+            //=======================================================
+            // Validate Stored Hash
+            //=======================================================
+
+            if
+            (
+                storedHashBytes.Length ==
+                0
+            )
+            {
+                return false;
+            }
+
+
+            //=======================================================
+            // Generate Computed Hash
+            //=======================================================
+
+            byte[] computedHash =
+                Rfc2898DeriveBytes.Pbkdf2(
+                    password,
+                    salt,
+                    iterations,
+                    HashAlgorithmName.SHA256,
+                    storedHashBytes.Length);
+
+
+            //=======================================================
+            // Fixed-Time Comparison
+            //=======================================================
+
+            return CryptographicOperations.FixedTimeEquals(
+                computedHash,
+                storedHashBytes);
         }
         catch
         {
             return false;
         }
-
-
-        byte[] actualHash =
-            Rfc2898DeriveBytes.Pbkdf2(
-                password,
-                salt,
-                iterations,
-                HashAlgorithmName.SHA256,
-                expectedHash.Length
-            );
-
-
-        return CryptographicOperations.FixedTimeEquals(
-            actualHash,
-            expectedHash
-        );
     }
 
 
-    //===========================================================
+    //===============================================================
     // Generate JWT Token
-    //===========================================================
+    //===============================================================
 
-    private string
-        GenerateToken(
-            UserProfile userProfile)
+    private string GenerateToken(
+        UserProfile userProfile)
     {
-        string jwtKey =
+        //===========================================================
+        // JWT Settings
+        //===========================================================
+
+        string secret =
             _configuration["Jwt:Key"]
-            ??
-            string.Empty;
+            ?? throw new InvalidOperationException(
+                "JWT configuration 'Jwt:Key' is not configured.");
 
-        string jwtIssuer =
+        string issuer =
             _configuration["Jwt:Issuer"]
-            ??
-            string.Empty;
+            ?? throw new InvalidOperationException(
+                "JWT issuer is not configured.");
 
-        string jwtAudience =
+        string audience =
             _configuration["Jwt:Audience"]
-            ??
-            string.Empty;
+            ?? throw new InvalidOperationException(
+                "JWT audience is not configured.");
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                jwtKey)
-        )
-        {
-            throw new InvalidOperationException(
-                "JWT configuration 'Jwt:Key' is not configured."
-            );
-        }
+        //===========================================================
+        // Security Key
+        //===========================================================
 
+        SymmetricSecurityKey key =
+            new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(secret));
+
+
+        //===========================================================
+        // Credentials
+        //===========================================================
+
+        SigningCredentials credentials =
+            new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha256);
+
+
+        //===========================================================
+        // Claims
+        //===========================================================
 
         List<Claim> claims =
             new List<Claim>
             {
                 new Claim(
                     JwtRegisteredClaimNames.Sub,
-                    userProfile.UserProfileId.ToString()
-                ),
+                    userProfile.UserProfileId.ToString()),
 
                 new Claim(
                     JwtRegisteredClaimNames.UniqueName,
-                    userProfile.UserName
-                ),
-
-                new Claim(
-                    ClaimTypes.NameIdentifier,
-                    userProfile.UserProfileId.ToString()
-                ),
-
-                new Claim(
-                    ClaimTypes.Name,
-                    userProfile.UserName
-                ),
+                    userProfile.UserName),
 
                 new Claim(
                     "displayName",
-                    userProfile.DisplayName
-                )
+                    userProfile.DisplayName ?? string.Empty)
             };
 
 
-        SymmetricSecurityKey securityKey =
-            new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(
-                    jwtKey
-                )
-            );
-
-
-        SigningCredentials credentials =
-            new SigningCredentials(
-                securityKey,
-                SecurityAlgorithms.HmacSha256
-            );
-
-
-        DateTime expires =
-            DateTime.UtcNow.AddHours(
-                8
-            );
-
+        //===========================================================
+        // Token
+        //===========================================================
 
         JwtSecurityToken token =
             new JwtSecurityToken(
-                issuer:
-                    string.IsNullOrWhiteSpace(
-                        jwtIssuer)
-                        ? null
-                        : jwtIssuer,
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: credentials);
 
-                audience:
-                    string.IsNullOrWhiteSpace(
-                        jwtAudience)
-                        ? null
-                        : jwtAudience,
 
-                claims:
-                    claims,
-
-                notBefore:
-                    DateTime.UtcNow,
-
-                expires:
-                    expires,
-
-                signingCredentials:
-                    credentials
-            );
-
+        //===========================================================
+        // Serialize Token
+        //===========================================================
 
         return new JwtSecurityTokenHandler()
-            .WriteToken(
-                token
-            );
+            .WriteToken(token);
     }
 
 
-    //===========================================================
-    // Failure Response
-    //===========================================================
+    //===============================================================
+    // Create Login Failure Response
+    //===============================================================
 
-    private static LoginResponseDto
-        CreateFailureResponse(
-            string message)
+    private static LoginResponseDto CreateFailureResponse(
+        string message)
     {
         return new LoginResponseDto
         {
-            Success =
-                false,
+            Success = false,
+            Message = message
+        };
+    }
 
-            Message =
-                message,
 
-            Token =
-                string.Empty,
+    //===============================================================
+    // Create Forgot Password Check Failure Response
+    //===============================================================
 
-            UserProfileId =
-                0,
-
-            UserName =
-                string.Empty,
-
-            DisplayName =
-                string.Empty
+    private static ForgotPasswordCheckResponseDto
+        CreateForgotPasswordCheckFailureResponse(
+            string message)
+    {
+        return new ForgotPasswordCheckResponseDto
+        {
+            Success = false,
+            Message = message,
+            VerificationCode = string.Empty,
+            ExpiresAt = null,
+            UserProfileId = 0
         };
     }
 }

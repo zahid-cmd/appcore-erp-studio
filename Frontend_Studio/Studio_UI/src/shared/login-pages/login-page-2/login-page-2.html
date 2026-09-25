@@ -5,6 +5,9 @@
 
      FULL VIEWPORT
      │
+     ├── FLOATING NOTIFICATION CONTROL
+     │   └── Notification Button + Counter + Popover
+     │
      ├── LEFT 45%
      │   ├── TOP 15%
      │   │   └── BRANDING 1
@@ -17,7 +20,7 @@
      │
      ├── MIDDLE 20%
      │   ├── TOP 15%
-     │   │   └── CLIENT LOGO
+     │   │   └── CLIENT LOGO AREA
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
@@ -44,9 +47,14 @@
 
          It occupies the FULL VIEWPORT behind all sections.
 
+         The Notification Panel is completely independent
+         from the page layout.
+
+         It consumes NO physical layout space.
+
          Branding 2 has been completely removed.
 
-         The Client Logo has been moved to the
+         The Client Logo area remains in the
          MIDDLE TOP area.
 
          Powered By remains only in the
@@ -54,6 +62,8 @@
 
          Theme Selector is placed in the
          RIGHT TOP area.
+
+         Notification Button is floating at page level.
 
          Theme Selector controls:
 
@@ -93,6 +103,33 @@
 
              Forget Password Panel is displayed.
 
+         PASSWORD RESET SUCCESS EVENT:
+
+             Forget Password Panel emits the
+             passwordResetSuccess event.
+
+             This page receives the event through
+             onPasswordResetSuccess().
+
+             The Notification Panel receives:
+
+                 Password Changed
+
+             The notification remains unread.
+
+             The Notification Panel automatically opens
+             for 5 seconds.
+
+             The Notification Panel then closes automatically.
+
+             The unread counter remains visible.
+
+             The Forget Password Panel is immediately replaced
+             by the Login Panel.
+
+             The notification becomes read only when the user
+             manually opens/interacts with the Notification Panel.
+
          BACK TO LOGIN EVENT:
 
              Registration Panel or Forget Password Panel emits
@@ -125,6 +162,39 @@
 <div
     class="login-page-2"
 >
+
+
+    <!-- =======================================================
+         FLOATING NOTIFICATION PANEL
+         -------------------------------------------------------
+         PAGE-LEVEL COMPONENT
+
+         IMPORTANT:
+
+             This component is intentionally placed OUTSIDE
+             the desktop layout.
+
+             It does NOT belong to:
+
+                 - Login Panel
+                 - Registration Panel
+                 - Forget Password Panel
+                 - Left Area
+                 - Middle Area
+                 - Right Area
+
+             It consumes NO physical layout space.
+
+             Its own CSS controls its fixed position.
+
+             #notificationPanel provides an explicit template
+             reference for the Login Page 2 @ViewChild.
+    ======================================================== -->
+
+    <app-login-page-notification-panel
+        #notificationPanel
+    >
+    </app-login-page-notification-panel>
 
 
     <!-- =======================================================
@@ -183,6 +253,13 @@
              LEFT   = 45%
              MIDDLE = 20%
              RIGHT  = 35%
+
+         IMPORTANT:
+
+             Notification Panel is NOT inside this layout.
+
+             Therefore it cannot affect the 45% / 20% / 35%
+             dimensions.
     ======================================================== -->
 
     <main
@@ -290,6 +367,29 @@
         <section
             class="login-page-2-middle-area"
         >
+
+
+            <!-- ===============================================
+                 MIDDLE TOP
+                 -----------------------------------------------
+                 HEIGHT:
+
+                     15%
+
+                 CONTENT:
+
+                     CLIENT LOGO AREA
+
+                 The Client Logo component can be placed here
+                 independently without affecting the rest of
+                 the page composition.
+            ================================================= -->
+
+            <section
+                class="login-page-2-middle-top"
+            >
+
+            </section>
 
 
             <!-- ===============================================
@@ -424,8 +524,11 @@
                         &&
                         !isForgetPasswordMode
                     "
+
                     (register)="onRegister()"
+
                     (forgotPassword)="onForgotPassword()"
+
                     (signIn)="onSignIn($event)"
                 >
                 </app-login-page-login-panel>
@@ -441,6 +544,7 @@
 
                 <app-login-page-registration-panel
                     *ngIf="isRegistrationMode"
+
                     (backToLogin)="onBackToLogin()"
                 >
                 </app-login-page-registration-panel>
@@ -452,11 +556,35 @@
                      DISPLAYED WHEN:
 
                          isForgetPasswordMode = true
+
+                     SUCCESS:
+
+                         passwordResetSuccess is emitted by
+                         the Forget Password Panel.
+
+                         onPasswordResetSuccess() then:
+
+                             1. Returns to Login Panel.
+                             2. Creates Password Changed
+                                notification.
+                             3. Keeps notification unread.
+                             4. Opens Notification Panel
+                                automatically.
+                             5. Keeps it open for 5 seconds.
+                             6. Closes automatically.
+                             7. Leaves unread counter visible.
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
                     *ngIf="isForgetPasswordMode"
-                    (backToLogin)="onBackToLogin()"
+
+                    (passwordResetSuccess)="
+                        onPasswordResetSuccess()
+                    "
+
+                    (backToLogin)="
+                        onBackToLogin()
+                    "
                 >
                 </app-login-page-forget-password-panel>
 
@@ -475,7 +603,7 @@
 
                      EMPTY FOOTER AREA
 
-                 Powered By has been completely removed from
+                 Powered By remains completely removed from
                  this section.
             ================================================= -->
 

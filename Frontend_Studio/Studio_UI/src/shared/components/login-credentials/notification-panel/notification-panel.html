@@ -1,0 +1,568 @@
+<!-- ===========================================================
+     LOGIN PAGE — NOTIFICATION PANEL
+     -----------------------------------------------------------
+     PURPOSE:
+
+         Compact floating notification control.
+
+     DESIGN:
+
+         - No permanent page space
+         - Notification bell button
+         - Unread counter
+         - Floating notification popover
+         - Premium glass-style appearance
+         - Reusable by Login Page 1 / 2 / 3 / 4
+
+     BEHAVIOUR:
+
+         MANUAL OPEN:
+
+             User clicks the notification bell.
+
+             The panel opens.
+
+             Visible unread notifications become READ.
+
+             Unread counter is cleared.
+
+         AUTOMATIC OPEN:
+
+             Application creates a real notification.
+
+             The panel opens automatically.
+
+             The notification remains UNREAD.
+
+             The unread counter remains visible.
+
+             The panel automatically closes after the
+             requested duration.
+
+             Automatic close does NOT mark the notification
+             as read.
+
+         IMPORTANT:
+
+             Automatic display is NOT acknowledgement.
+
+             Only the user's manual interaction with the
+             notification panel marks notifications as read.
+=========================================================== -->
+
+
+<!-- ===========================================================
+     NOTIFICATION CONTAINER
+=========================================================== -->
+
+<div
+    class="notification-container"
+>
+
+
+    <!-- =======================================================
+         NOTIFICATION BUTTON
+         -------------------------------------------------------
+         Always occupies only its own small floating area.
+
+         The button can be used at any time to manually open
+         or close the notification panel.
+    ======================================================== -->
+
+    <button
+        type="button"
+
+        class="notification-button"
+
+        [class.notification-button-active]="
+            isPanelOpen
+        "
+
+        [class.notification-button-unread]="
+            hasUnreadNotifications
+        "
+
+        aria-label="Notifications"
+
+        [attr.aria-expanded]="
+            isPanelOpen
+        "
+
+        (click)="
+            togglePanel();
+            $event.stopPropagation()
+        "
+    >
+
+
+        <!-- ===================================================
+             BELL ICON
+        ==================================================== -->
+
+        <i
+            class="fas fa-bell notification-bell-icon"
+
+            aria-hidden="true"
+        >
+        </i>
+
+
+        <!-- ===================================================
+             UNREAD COUNTER
+             ---------------------------------------------------
+             IMPORTANT:
+
+                 This counter remains visible after an
+                 automatic notification display.
+
+                 It is cleared only after the user manually
+                 opens the Notification Panel.
+        ==================================================== -->
+
+        <span
+            *ngIf="
+                hasUnreadNotifications
+            "
+
+            class="notification-counter"
+        >
+            {{
+                unreadNotificationCount > 99
+                    ? '99+'
+                    : unreadNotificationCount
+            }}
+        </span>
+
+
+    </button>
+
+
+    <!-- =======================================================
+         NOTIFICATION POPOVER
+         -------------------------------------------------------
+         IMPORTANT:
+
+             This popover can be opened in TWO ways:
+
+                 1. Manually by clicking the bell.
+                 2. Automatically by the application after
+                    a real notification event.
+
+             Automatic opening does NOT mark notifications
+             as read.
+    ======================================================== -->
+
+    <div
+        *ngIf="
+            isPanelOpen
+        "
+
+        class="notification-popover"
+
+        (click)="$event.stopPropagation()"
+    >
+
+
+        <!-- ===================================================
+             POPOVER HEADER
+        ==================================================== -->
+
+        <div
+            class="notification-header"
+        >
+
+
+            <!-- ===============================================
+                 HEADER TITLE
+            ================================================ -->
+
+            <div
+                class="notification-header-title"
+            >
+
+                <div
+                    class="notification-header-icon"
+                >
+
+                    <i
+                        class="fas fa-bell"
+
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                </div>
+
+
+                <div
+                    class="notification-header-text"
+                >
+
+                    <div
+                        class="notification-header-heading"
+                    >
+                        Notifications
+                    </div>
+
+
+                    <div
+                        class="notification-header-subtitle"
+                    >
+
+                        <!-- ===================================
+                             UNREAD STATE
+                        ==================================== -->
+
+                        <span
+                            *ngIf="
+                                hasUnreadNotifications
+                            "
+                        >
+
+                            {{
+                                unreadNotificationCount
+                            }}
+
+                            unread
+
+                        </span>
+
+
+                        <!-- ===================================
+                             ALL READ STATE
+                        ==================================== -->
+
+                        <span
+                            *ngIf="
+                                !hasUnreadNotifications
+                            "
+                        >
+
+                            You're all caught up
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ===============================================
+                 HEADER ACTIONS
+            ================================================ -->
+
+            <div
+                class="notification-header-actions"
+            >
+
+
+                <!-- ===========================================
+                     MARK ALL AS READ
+                ============================================ -->
+
+                <button
+                    *ngIf="
+                        hasUnreadNotifications
+                    "
+
+                    type="button"
+
+                    class="notification-mark-read"
+
+                    title="Mark all as read"
+
+                    aria-label="Mark all notifications as read"
+
+                    (click)="
+                        markAllAsRead();
+                        $event.stopPropagation()
+                    "
+                >
+
+                    <i
+                        class="fas fa-check-double"
+
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                </button>
+
+
+                <!-- ===========================================
+                     CLOSE BUTTON
+                ============================================ -->
+
+                <button
+                    type="button"
+
+                    class="notification-close"
+
+                    title="Close notifications"
+
+                    aria-label="Close notifications"
+
+                    (click)="
+                        closePanel();
+                        $event.stopPropagation()
+                    "
+                >
+
+                    <i
+                        class="fas fa-times"
+
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ===================================================
+             NOTIFICATION BODY
+        ==================================================== -->
+
+        <div
+            class="notification-body"
+        >
+
+
+            <!-- =================================================
+                 EMPTY STATE
+            ================================================== -->
+
+            <div
+                *ngIf="
+                    !hasVisibleNotifications
+                "
+
+                class="notification-empty"
+            >
+
+                <div
+                    class="notification-empty-icon"
+                >
+
+                    <i
+                        class="fas fa-check-circle"
+
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                </div>
+
+
+                <div
+                    class="notification-empty-heading"
+                >
+                    No notifications
+                </div>
+
+
+                <div
+                    class="notification-empty-message"
+                >
+                    You are all caught up.
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 NOTIFICATION LIST
+            ================================================== -->
+
+            <div
+                *ngIf="
+                    hasVisibleNotifications
+                "
+
+                class="notification-list"
+            >
+
+
+                <!-- =============================================
+                     NOTIFICATION ITEM
+                ============================================== -->
+
+                <div
+                    *ngFor="
+                        let notification of visibleNotifications;
+                        let index = index;
+                        trackBy: trackNotification
+                    "
+
+                    class="notification-item"
+
+                    [class.notification-unread]="
+                        !notification.isRead
+                    "
+
+                    [ngClass]="
+                        getNotificationTypeClass(
+                            notification
+                        )
+                    "
+
+                    (click)="
+                        markAsRead(index)
+                    "
+                >
+
+
+                    <!-- =========================================
+                         TYPE ICON
+                    ========================================== -->
+
+                    <div
+                        class="notification-icon"
+                    >
+
+                        <i
+                            [class]="
+                                getNotificationIcon(
+                                    notification
+                                )
+                            "
+
+                            aria-hidden="true"
+                        >
+                        </i>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         NOTIFICATION CONTENT
+                    ========================================== -->
+
+                    <div
+                        class="notification-content"
+                    >
+
+
+                        <!-- =====================================
+                             HEADING
+                        ====================================== -->
+
+                        <div
+                            *ngIf="
+                                notification.heading
+                            "
+
+                            class="notification-heading"
+                        >
+
+                            {{
+                                notification.heading
+                            }}
+
+                        </div>
+
+
+                        <!-- =====================================
+                             MESSAGE
+                        ====================================== -->
+
+                        <div
+                            *ngIf="
+                                notification.message
+                            "
+
+                            class="notification-message"
+                        >
+
+                            {{
+                                notification.message
+                            }}
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- =========================================
+                         UNREAD INDICATOR
+                    ========================================== -->
+
+                    <span
+                        *ngIf="
+                            !notification.isRead
+                        "
+
+                        class="notification-unread-dot"
+                    >
+                    </span>
+
+
+                    <!-- =========================================
+                         DISMISS BUTTON
+                    ========================================== -->
+
+                    <button
+                        *ngIf="
+                            notification.dismissible
+                        "
+
+                        type="button"
+
+                        class="notification-dismiss"
+
+                        aria-label="Dismiss notification"
+
+                        title="Dismiss"
+
+                        (click)="
+                            dismiss(index);
+                            $event.stopPropagation()
+                        "
+                    >
+
+                        <i
+                            class="fas fa-times"
+
+                            aria-hidden="true"
+                        >
+                        </i>
+
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ===================================================
+             POPOVER FOOTER
+        ==================================================== -->
+
+        <div
+            class="notification-footer"
+        >
+
+            <span>
+                AppCore Technologies
+            </span>
+
+        </div>
+
+
+    </div>
+
+
+</div>

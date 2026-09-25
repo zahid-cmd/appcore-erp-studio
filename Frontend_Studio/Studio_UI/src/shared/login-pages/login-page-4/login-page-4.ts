@@ -4,7 +4,8 @@
 
 import
 {
-    Component
+    Component,
+    ViewChild
 }
 from '@angular/core';
 
@@ -128,6 +129,17 @@ from '../../components/login-page-4/theme-selector/theme-selector';
 
 
 //===============================================================
+// Central Notification Panel
+//===============================================================
+
+import
+{
+    LoginPageNotificationPanelComponent
+}
+from '../../components/login-credentials/notification-panel/notification-panel';
+
+
+//===============================================================
 // Login Page 4 Component
 //===============================================================
 
@@ -157,7 +169,9 @@ from '../../components/login-page-4/theme-selector/theme-selector';
 
         LoginPageForgetPasswordPanelComponent,
 
-        LoginPageThemeSelectorComponent
+        LoginPageThemeSelectorComponent,
+
+        LoginPageNotificationPanelComponent
     ],
 
     templateUrl:
@@ -176,6 +190,19 @@ from '../../components/login-page-4/theme-selector/theme-selector';
 
 export class LoginPage4
 {
+    //===========================================================
+    // Notification Panel Reference
+    //===========================================================
+
+    @ViewChild(
+        LoginPageNotificationPanelComponent
+    )
+    private notificationPanel:
+        LoginPageNotificationPanelComponent
+        |
+        undefined;
+
+
     //===========================================================
     // Authentication
     //===========================================================
@@ -390,6 +417,95 @@ export class LoginPage4
 
         this.isForgetPasswordMode =
             true;
+    }
+
+
+    //===========================================================
+    // Password Reset Success
+    // ----------------------------------------------------------
+    // The Forget Password Panel does NOT display the successful
+    // password-reset message.
+    //
+    // Instead Login Page 4:
+    //
+    //     1. Returns immediately to Login Panel.
+    //     2. Creates a Password Changed notification.
+    //     3. Keeps the notification UNREAD.
+    //     4. Automatically opens the Notification Panel.
+    //     5. Keeps it open for 5 seconds.
+    //     6. Automatically closes the panel.
+    //     7. Keeps the unread counter visible.
+    //
+    // The notification becomes READ only when the user manually
+    // opens/interacts with the Notification Panel.
+    //===========================================================
+
+    onPasswordResetSuccess():
+        void
+    {
+        //=======================================================
+        // Return To Login Panel
+        //=======================================================
+
+        this.onBackToLogin();
+
+
+        //=======================================================
+        // Notification Panel Reference Check
+        //=======================================================
+
+        if(
+            !this.notificationPanel
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Add Password Changed Notification
+        // -------------------------------------------------------
+        // The second argument controls automatic opening.
+        //
+        // 5000 milliseconds = 5 seconds.
+        //
+        // The notification itself remains UNREAD after the
+        // automatic panel close.
+        //=======================================================
+
+        this.notificationPanel.addNotification
+        (
+            {
+                visible:
+                    true,
+
+                isRead:
+                    false,
+
+                heading:
+                    'Password Changed',
+
+                message:
+                    'Your password was changed successfully. You can now sign in using your new password.',
+
+                icon:
+                    'fas fa-key',
+
+                type:
+                    'success',
+
+                dismissible:
+                    true,
+
+                autoHide:
+                    false,
+
+                displayDuration:
+                    5000
+            },
+
+            5000
+        );
     }
 
 

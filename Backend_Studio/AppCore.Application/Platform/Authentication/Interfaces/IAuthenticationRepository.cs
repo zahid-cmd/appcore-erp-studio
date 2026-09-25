@@ -58,4 +58,46 @@ public interface IAuthenticationRepository
 
     Task<UserCredential> EnsureUserCredentialAsync(
         long userProfileId);
+
+
+    //===========================================================
+    // Invalidate Password Reset Verifications
+    //===========================================================
+
+    Task InvalidatePasswordResetVerificationsAsync(
+        long userProfileId);
+
+
+    //===========================================================
+    // Create Password Reset Verification
+    //===========================================================
+
+    Task<PasswordResetVerification>
+        CreatePasswordResetVerificationAsync(
+            PasswordResetVerification verification);
+
+
+    //===========================================================
+    // Get Active Password Reset Verification
+    //===========================================================
+
+    Task<PasswordResetVerification?>
+        GetActivePasswordResetVerificationAsync(
+            long userProfileId);
+
+
+    //===========================================================
+    // Increment Password Reset Attempt
+    //===========================================================
+
+    Task IncrementPasswordResetAttemptAsync(
+        PasswordResetVerification verification);
+
+
+    //===========================================================
+    // Mark Password Reset Verification Used
+    //===========================================================
+
+    Task MarkPasswordResetVerificationUsedAsync(
+        PasswordResetVerification verification);
 }

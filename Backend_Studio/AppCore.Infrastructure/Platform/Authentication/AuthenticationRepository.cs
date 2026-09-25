@@ -139,6 +139,7 @@ public class AuthenticationRepository
             );
         }
 
+
         if
         (
             userCredential ==
@@ -150,6 +151,7 @@ public class AuthenticationRepository
             );
         }
 
+
         if
         (
             string.IsNullOrWhiteSpace(
@@ -160,26 +162,33 @@ public class AuthenticationRepository
                 await GetNextProfileCodeAsync();
         }
 
+
         userProfile.IsActive =
             false;
+
 
         userProfile.IsDeleted =
             false;
 
+
         userProfile.CreatedDate =
             DateTime.UtcNow;
+
 
         userCredential.UserProfileId =
             0;
 
+
         userCredential.CreatedDate =
             DateTime.UtcNow;
+
 
         await using Microsoft.EntityFrameworkCore.Storage
             .IDbContextTransaction transaction =
                 await _context
                     .Database
                     .BeginTransactionAsync();
+
 
         try
         {
@@ -189,10 +198,13 @@ public class AuthenticationRepository
                     userProfile
                 );
 
+
             await _context.SaveChangesAsync();
+
 
             userCredential.UserProfileId =
                 userProfile.UserProfileId;
+
 
             _context
                 .Set<UserCredential>()
@@ -200,7 +212,9 @@ public class AuthenticationRepository
                     userCredential
                 );
 
+
             await _context.SaveChangesAsync();
+
 
             _context.ActivityHistories.Add(
 
@@ -235,9 +249,12 @@ public class AuthenticationRepository
                 }
             );
 
+
             await _context.SaveChangesAsync();
 
+
             await transaction.CommitAsync();
+
 
             return userProfile.UserProfileId;
         }
@@ -269,11 +286,59 @@ public class AuthenticationRepository
             );
         }
 
-        _context
-            .Set<UserCredential>()
-            .Update(
-                userCredential
+
+        //=======================================================
+        // Get Existing Credential
+        //=======================================================
+
+        UserCredential? existingCredential =
+
+            await _context
+                .Set<UserCredential>()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.UserCredentialId ==
+                        userCredential.UserCredentialId
+                );
+
+
+        if
+        (
+            existingCredential ==
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                $"User credential '{userCredential.UserCredentialId}' was not found."
             );
+        }
+
+
+        //=======================================================
+        // Update Password Authentication Fields
+        //=======================================================
+
+        existingCredential.PasswordHash =
+            userCredential.PasswordHash;
+
+
+        //=======================================================
+        // Update Password Audit Fields
+        //=======================================================
+
+        existingCredential.PasswordChangedDate =
+            userCredential.PasswordChangedDate;
+
+
+        existingCredential.ModifiedDate =
+            userCredential.ModifiedDate;
+
+
+        //=======================================================
+        // Save Changes
+        //=======================================================
 
         await _context.SaveChangesAsync();
     }
@@ -300,6 +365,7 @@ public class AuthenticationRepository
                         userProfileId
                 );
 
+
         if
         (
             credential !=
@@ -308,6 +374,7 @@ public class AuthenticationRepository
         {
             return credential;
         }
+
 
         credential =
             new UserCredential
@@ -328,15 +395,216 @@ public class AuthenticationRepository
                     null
             };
 
+
         _context
             .Set<UserCredential>()
             .Add(
                 credential
             );
 
+
         await _context.SaveChangesAsync();
 
+
         return credential;
+    }
+
+
+    //===========================================================
+    // Invalidate Password Reset Verifications
+    //===========================================================
+
+    public async Task
+        InvalidatePasswordResetVerificationsAsync(
+            long userProfileId)
+    {
+        List<PasswordResetVerification>
+            verifications =
+
+                await _context
+                    .Set<PasswordResetVerification>()
+                    .Where
+                    (
+                        x =>
+
+                            x.UserProfileId ==
+                            userProfileId
+
+                            &&
+
+                            x.UsedAt ==
+                            null
+                    )
+                    .ToListAsync();
+
+
+        if
+        (
+            verifications.Count ==
+            0
+        )
+        {
+            return;
+        }
+
+
+        DateTime now =
+            DateTime.UtcNow;
+
+
+        foreach
+        (
+            PasswordResetVerification verification
+                in verifications
+        )
+        {
+            verification.UsedAt =
+                now;
+        }
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Create Password Reset Verification
+    //===========================================================
+
+    public async Task<PasswordResetVerification>
+        CreatePasswordResetVerificationAsync(
+            PasswordResetVerification verification)
+    {
+        if
+        (
+            verification ==
+            null
+        )
+        {
+            throw new ArgumentNullException(
+                nameof(verification)
+            );
+        }
+
+
+        //=======================================================
+        // Ensure UTC DateTime Values
+        //=======================================================
+
+        verification.ExpiresAt =
+            verification.ExpiresAt.ToUniversalTime();
+
+
+        verification.CreatedDate =
+            verification.CreatedDate == default
+            ? DateTime.UtcNow
+            : verification.CreatedDate.ToUniversalTime();
+
+
+        _context
+            .Set<PasswordResetVerification>()
+            .Add(
+                verification
+            );
+
+
+        await _context.SaveChangesAsync();
+
+
+        return verification;
+    }
+
+
+    //===========================================================
+    // Get Active Password Reset Verification
+    //===========================================================
+
+    public async Task<PasswordResetVerification?>
+        GetActivePasswordResetVerificationAsync(
+            long userProfileId)
+    {
+        DateTime now =
+            DateTime.UtcNow;
+
+
+        return await _context
+            .Set<PasswordResetVerification>()
+            .FirstOrDefaultAsync
+            (
+                x =>
+
+                    x.UserProfileId ==
+                    userProfileId
+
+                    &&
+
+                    x.UsedAt ==
+                    null
+
+                    &&
+
+                    x.ExpiresAt >
+                    now
+            );
+    }
+
+
+    //===========================================================
+    // Increment Password Reset Attempt
+    //===========================================================
+
+    public async Task
+        IncrementPasswordResetAttemptAsync(
+            PasswordResetVerification verification)
+    {
+        if
+        (
+            verification ==
+            null
+        )
+        {
+            throw new ArgumentNullException(
+                nameof(verification)
+            );
+        }
+
+
+        //=======================================================
+        // Increment Attempt Count Exactly Once
+        //=======================================================
+
+        verification.AttemptCount++;
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Mark Password Reset Verification Used
+    //===========================================================
+
+    public async Task
+        MarkPasswordResetVerificationUsedAsync(
+            PasswordResetVerification verification)
+    {
+        if
+        (
+            verification ==
+            null
+        )
+        {
+            throw new ArgumentNullException(
+                nameof(verification)
+            );
+        }
+
+
+        verification.UsedAt =
+            DateTime.UtcNow;
+
+
+        await _context.SaveChangesAsync();
     }
 
 
@@ -368,8 +636,10 @@ public class AuthenticationRepository
 
                 .ToListAsync();
 
+
         int nextSequenceNo =
             1;
+
 
         while
         (
@@ -390,6 +660,7 @@ public class AuthenticationRepository
         {
             nextSequenceNo++;
         }
+
 
         return CodeGenerator.GenerateUserProfileCode(
             nextSequenceNo);

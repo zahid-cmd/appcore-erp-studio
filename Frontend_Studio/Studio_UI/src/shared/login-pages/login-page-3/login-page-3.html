@@ -6,6 +6,9 @@
      FULL VIEWPORT
 
      │
+     ├── FLOATING NOTIFICATION CONTROL
+     │   └── Notification Button + Counter + Popover
+     │
      ├── LEFT 35%
      │   ├── TOP 30px
      │   │   └── THEME SELECTOR
@@ -20,13 +23,13 @@
      │
      ├── MIDDLE 20%
      │   ├── TOP
-     │   │   └── EMPTY
-     │   │
-     │   ├── CENTER
      │   │   └── BRANDING
      │   │
+     │   ├── CENTER
+     │   │   └── EMPTY
+     │   │
      │   └── BOTTOM
-     │       └── EMPTY
+     │       └── POWERED BY
      │
      └── RIGHT 45%
          ├── TOP 15%
@@ -36,7 +39,7 @@
          │   └── EMPTY
          │
          └── BOTTOM 15%
-             └── POWERED BY
+             └── EMPTY
 
      IMPORTANT:
 
@@ -45,18 +48,111 @@
 
          LEFT  ↔  RIGHT
 
+         The Notification Panel is completely independent
+         from the desktop layout.
+
+         It consumes NO physical layout space.
+
          The promotional image remains completely independent
          from the desktop layout.
 
          BRANDING IS IN THE MIDDLE 20% AREA.
 
-         POWERED BY IS IN THE RIGHT 45% AREA.
+         POWERED BY IS CURRENTLY IN THE MIDDLE BOTTOM AREA.
+
+         Theme Selector controls:
+
+             LIGHT
+                 ↓
+             Promotional Image Light
+
+             DEEP
+                 ↓
+             Promotional Image Deep
+
+         This version is DESKTOP ONLY.
+
+         Tablet and mobile layouts will be implemented later.
+
+         REGISTER NOW EVENT:
+
+             Login Panel emits the register event.
+
+             This page receives the event through onRegister().
+
+             isRegistrationMode becomes TRUE.
+
+             Login Panel is hidden.
+
+             Registration Panel is displayed.
+
+         FORGOT PASSWORD EVENT:
+
+             Login Panel emits the forgotPassword event.
+
+             This page receives the event through onForgotPassword().
+
+             isForgetPasswordMode becomes TRUE.
+
+             Login Panel is hidden.
+
+             Forget Password Panel is displayed.
+
+         PASSWORD RESET SUCCESS EVENT:
+
+             Forget Password Panel emits the
+             passwordResetSuccess event.
+
+             This page receives the event through
+             onPasswordResetSuccess().
+
+             The Notification Panel receives:
+
+                 Password Changed
+
+             The notification remains unread.
+
+             The Notification Panel automatically opens
+             for 5 seconds.
+
+             The Notification Panel then closes automatically.
+
+             The unread counter remains visible.
+
+             The Forget Password Panel is immediately replaced
+             by the Login Panel.
+
+             The notification becomes read only when the user
+             manually opens/interacts with the Notification Panel.
+
+         BACK TO LOGIN EVENT:
+
+             Registration Panel or Forget Password Panel emits
+             the backToLogin event.
+
+             This page receives the event through
+             onBackToLogin().
+
+             Both panel states become FALSE.
+
+             Login Panel is displayed.
+
+         THEME CHANGE EVENT:
+
+             Theme Selector emits themeChange.
+
+             This page receives the event through
+             onThemeChange().
+
+             isLightTheme becomes TRUE or FALSE.
+
+             Promotional Image changes accordingly.
 ============================================================ -->
 
 
 <!-- ===========================================================
      LOGIN PAGE 3
-=========================================================== -->
+============================================================ -->
 
 <div
     class="login-page-3"
@@ -64,20 +160,72 @@
 
 
     <!-- =======================================================
+         FLOATING NOTIFICATION PANEL
+         -------------------------------------------------------
+         PAGE-LEVEL COMPONENT
+
+         IMPORTANT:
+
+             This component is intentionally outside the
+             35% / 20% / 45% desktop layout.
+
+             It does NOT belong to:
+
+                 - Login Panel
+                 - Registration Panel
+                 - Forget Password Panel
+                 - Left Area
+                 - Middle Area
+                 - Right Area
+
+             It consumes NO physical layout space.
+
+             Its own CSS controls its fixed position.
+
+             #notificationPanel provides an explicit template
+             reference for the Login Page 3 @ViewChild.
+    ======================================================== -->
+
+    <app-login-page-notification-panel
+        #notificationPanel
+    >
+    </app-login-page-notification-panel>
+
+
+    <!-- =======================================================
          PROMOTIONAL IMAGE AREA
          -------------------------------------------------------
          FULL VIEWPORT BACKGROUND
+
+         This layer remains completely independent from the
+         35% / 20% / 45% desktop layout.
     ======================================================== -->
 
     <section
         class="login-page-3-promotional-area"
     >
 
+        <!-- ===================================================
+             LIGHT PROMOTIONAL IMAGE
+             ---------------------------------------------------
+             DISPLAYED WHEN:
+
+                 isLightTheme = true
+        ==================================================== -->
+
         <app-login-page-promotional-image-light
             *ngIf="isLightTheme"
         >
         </app-login-page-promotional-image-light>
 
+
+        <!-- ===================================================
+             DEEP PROMOTIONAL IMAGE
+             ---------------------------------------------------
+             DISPLAYED WHEN:
+
+                 isLightTheme = false
+        ==================================================== -->
 
         <app-login-page-promotional-image-deep
             *ngIf="!isLightTheme"
@@ -95,6 +243,13 @@
              LEFT   = 35%
              MIDDLE = 20%
              RIGHT  = 45%
+
+         IMPORTANT:
+
+             Notification Panel is NOT inside this layout.
+
+             Therefore it cannot affect the
+             35% / 20% / 45% dimensions.
     ======================================================== -->
 
     <main
@@ -123,8 +278,14 @@
             <!-- ===============================================
                  LEFT TOP
                  -----------------------------------------------
-                 THEME SELECTOR
-            ================================================ -->
+                 HEIGHT:
+
+                     30px
+
+                 CONTENT:
+
+                     THEME SELECTOR
+            ================================================= -->
 
             <section
                 class="login-page-3-left-top"
@@ -142,8 +303,12 @@
             <!-- ===============================================
                  LEFT CENTER
                  -----------------------------------------------
-                 LOGIN / REGISTRATION / FORGET PASSWORD
-            ================================================ -->
+                 CONTENT:
+
+                     LOGIN /
+                     REGISTRATION /
+                     FORGET PASSWORD
+            ================================================= -->
 
             <section
                 class="login-page-3-left-center"
@@ -152,6 +317,14 @@
 
                 <!-- ===========================================
                      LOGIN PANEL
+                     -------------------------------------------
+                     DISPLAYED WHEN:
+
+                         isRegistrationMode = false
+
+                         AND
+
+                         isForgetPasswordMode = false
                 ============================================ -->
 
                 <app-login-page-login-panel
@@ -160,8 +333,11 @@
                         &&
                         !isForgetPasswordMode
                     "
+
                     (register)="onRegister()"
+
                     (forgotPassword)="onForgotPassword()"
+
                     (signIn)="onSignIn($event)"
                 >
                 </app-login-page-login-panel>
@@ -169,10 +345,15 @@
 
                 <!-- ===========================================
                      REGISTRATION PANEL
+                     -------------------------------------------
+                     DISPLAYED WHEN:
+
+                         isRegistrationMode = true
                 ============================================ -->
 
                 <app-login-page-registration-panel
                     *ngIf="isRegistrationMode"
+
                     (backToLogin)="onBackToLogin()"
                 >
                 </app-login-page-registration-panel>
@@ -180,13 +361,42 @@
 
                 <!-- ===========================================
                      FORGET PASSWORD PANEL
+                     -------------------------------------------
+                     DISPLAYED WHEN:
+
+                         isForgetPasswordMode = true
+
+                     SUCCESS:
+
+                         passwordResetSuccess is emitted by
+                         the Forget Password Panel.
+
+                         onPasswordResetSuccess() then:
+
+                             1. Returns to Login Panel.
+                             2. Creates Password Changed
+                                notification.
+                             3. Keeps notification unread.
+                             4. Opens Notification Panel
+                                automatically.
+                             5. Keeps it open for 5 seconds.
+                             6. Closes automatically.
+                             7. Leaves unread counter visible.
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
                     *ngIf="isForgetPasswordMode"
-                    (backToLogin)="onBackToLogin()"
+
+                    (passwordResetSuccess)="
+                        onPasswordResetSuccess()
+                    "
+
+                    (backToLogin)="
+                        onBackToLogin()
+                    "
                 >
                 </app-login-page-forget-password-panel>
+
 
             </section>
 
@@ -195,12 +405,14 @@
                  LEFT BOTTOM
                  -----------------------------------------------
                  EMPTY
-            ================================================ -->
+            ================================================= -->
 
             <section
                 class="login-page-3-left-bottom"
             >
+
             </section>
+
 
         </section>
 
@@ -214,10 +426,10 @@
 
              CONTENT:
 
-                 Branding
+                 BRANDING
+                 POWERED BY
 
-             The Branding component is positioned in the
-             Middle Center area.
+             Current component placement is preserved.
         ==================================================== -->
 
         <section
@@ -228,8 +440,10 @@
             <!-- ===============================================
                  MIDDLE TOP
                  -----------------------------------------------
-                 EMPTY
-            ================================================ -->
+                 CONTENT:
+
+                     BRANDING
+            ================================================= -->
 
             <section
                 class="login-page-3-middle-top"
@@ -237,15 +451,15 @@
 
                 <app-login-page-branding>
                 </app-login-page-branding>
-                
+
             </section>
 
 
             <!-- ===============================================
                  MIDDLE CENTER
                  -----------------------------------------------
-                 BRANDING
-            ================================================ -->
+                 EMPTY
+            ================================================= -->
 
             <section
                 class="login-page-3-middle-center"
@@ -257,16 +471,20 @@
             <!-- ===============================================
                  MIDDLE BOTTOM
                  -----------------------------------------------
-                 EMPTY
-            ================================================ -->
+                 CONTENT:
+
+                     POWERED BY
+            ================================================= -->
 
             <section
                 class="login-page-3-middle-bottom"
             >
+
                 <app-login-page-powered-by>
                 </app-login-page-powered-by>
 
             </section>
+
 
         </section>
 
@@ -280,7 +498,7 @@
 
              CONTENT:
 
-                 Powered By
+                 EMPTY
         ==================================================== -->
 
         <section
@@ -292,11 +510,12 @@
                  RIGHT TOP
                  -----------------------------------------------
                  EMPTY
-            ================================================ -->
+            ================================================= -->
 
             <section
                 class="login-page-3-right-top"
             >
+
             </section>
 
 
@@ -304,25 +523,27 @@
                  RIGHT CENTER
                  -----------------------------------------------
                  EMPTY
-            ================================================ -->
+            ================================================= -->
 
             <section
                 class="login-page-3-right-center"
             >
+
             </section>
 
 
             <!-- ===============================================
                  RIGHT BOTTOM
                  -----------------------------------------------
-                 POWERED BY
-            ================================================ -->
+                 EMPTY
+            ================================================= -->
 
             <section
                 class="login-page-3-right-bottom"
             >
 
             </section>
+
 
         </section>
 

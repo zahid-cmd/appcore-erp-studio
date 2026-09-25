@@ -1055,6 +1055,13 @@
 
 /* ===============================================================
    INPUT WRAPPER
+   ---------------------------------------------------------------
+   FIXED MASTER HEIGHT:
+       58px
+
+   The input wrapper is explicitly prevented from shrinking so
+   every input field contributes the same fixed height to the
+   form layout at every viewport size.
 ================================================================ */
 
 .login-input-wrapper
@@ -1068,10 +1075,19 @@
     align-items:
         center;
 
+    flex:
+        0 0 58px;
+
     width:
         100%;
 
     height:
+        58px;
+
+    min-height:
+        58px;
+
+    max-height:
         58px;
 
     margin:
@@ -1643,13 +1659,6 @@
 
 /* ===============================================================
    SIGN IN BUTTON
-   ---------------------------------------------------------------
-   FINAL MASTER HEIGHT:
-       60px
-
-   The button is intentionally fixed at 60px so the visual
-   weight matches the 58px input fields and no longer appears
-   thin inside the glass panel.
 ================================================================ */
 
 .sign-in-button
@@ -2454,7 +2463,16 @@
     .login-input-wrapper
     {
         height:
-            54px;
+            58px;
+
+        min-height:
+            58px;
+
+        max-height:
+            58px;
+
+        flex:
+            0 0 58px;
     }
 
 
@@ -2713,7 +2731,16 @@
     .login-input-wrapper
     {
         height:
-            52px;
+            58px;
+
+        min-height:
+            58px;
+
+        max-height:
+            58px;
+
+        flex:
+            0 0 58px;
     }
 
 
@@ -2964,7 +2991,16 @@
     .login-input-wrapper
     {
         height:
-            52px;
+            58px;
+
+        min-height:
+            58px;
+
+        max-height:
+            58px;
+
+        flex:
+            0 0 58px;
     }
 
 

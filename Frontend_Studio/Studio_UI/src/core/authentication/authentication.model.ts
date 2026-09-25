@@ -68,12 +68,51 @@ export interface RegisterRequest
 
 
 /* ============================================================
-   Forgot Password Request
+   Forgot Password Check Request
 ============================================================ */
 
-export interface ForgotPasswordRequest
+export interface ForgotPasswordCheckRequest
 {
     userName:
+        string;
+}
+
+
+
+/* ============================================================
+   Forgot Password Check Response
+============================================================ */
+
+export interface ForgotPasswordCheckResponse
+{
+    success:
+        boolean;
+
+    message:
+        string;
+
+    verificationCode:
+        string;
+
+    expiresAt:
+        string | null;
+
+    userProfileId:
+        number;
+}
+
+
+
+/* ============================================================
+   Forgot Password Confirm Request
+============================================================ */
+
+export interface ForgotPasswordConfirmRequest
+{
+    userName:
+        string;
+
+    verificationCode:
         string;
 
     newPassword:

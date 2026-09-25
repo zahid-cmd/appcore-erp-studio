@@ -28,6 +28,18 @@
        Tablet and mobile layouts are intentionally not included
        at this stage.
 
+   IMPORTANT NOTIFICATION RULE:
+
+       The Notification Panel is a PAGE-LEVEL floating component.
+
+       It does NOT participate in the 30% / 35% / 35% layout.
+
+       It consumes NO physical layout space.
+
+       Its own fixed positioning, notification button,
+       unread counter and floating popover are controlled
+       completely by notification-panel.css.
+
    IMPORTANT BRANDING RULE:
 
        The Login Page controls the POSITION of the Branding
@@ -136,6 +148,8 @@ app-login-page-promotional-image-deep
    FULL HEIGHT:
 
        100%
+
+   Notification Panel remains completely outside this grid.
 ============================================================= */
 
 .login-page-4-layout
@@ -170,7 +184,7 @@ app-login-page-promotional-image-deep
    ROWS:
 
        15%
-       REST
+       70%
        15%
 ============================================================= */
 
@@ -187,6 +201,15 @@ app-login-page-promotional-image-deep
 
     height:
         100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
 }
 
 
@@ -291,6 +314,12 @@ app-login-page-promotional-image-deep
     height:
         100%;
 
+    min-width:
+        0;
+
+    min-height:
+        0;
+
     margin:
         0;
 
@@ -305,8 +334,11 @@ app-login-page-promotional-image-deep
 /* =============================================================
    POWERED BY POSITION
    -------------------------------------------------------------
-   Force the Powered By component itself to begin from the
-   absolute left edge of the 30% Left Bottom area.
+   The Powered By component remains controlled by its own
+   internal design.
+
+   The page controls only its position within the
+   30% Left Bottom area.
 ============================================================= */
 
 .login-page-4-left-bottom >
@@ -316,10 +348,22 @@ app-login-page-powered-by
         block;
 
     width:
-        100%;
+        fit-content;
 
     height:
-        100%;
+        fit-content;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
 
     margin:
         0;
@@ -327,8 +371,17 @@ app-login-page-powered-by
     padding:
         0;
 
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
     transform:
         none;
+
+    flex:
+        0 0 auto;
 }
 
 
@@ -342,7 +395,7 @@ app-login-page-powered-by
    ROWS:
 
        15%
-       REST
+       70%
        15%
 ============================================================= */
 
@@ -359,6 +412,15 @@ app-login-page-powered-by
 
     height:
         100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
 }
 
 
@@ -389,6 +451,12 @@ app-login-page-powered-by
     min-height:
         0;
 
+    margin:
+        0;
+
+    padding:
+        0;
+
     overflow:
         hidden;
 }
@@ -405,6 +473,12 @@ app-login-page-powered-by
 
     height:
         100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
 
     overflow:
         hidden;
@@ -431,6 +505,18 @@ app-login-page-powered-by
 
     height:
         100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
 
     overflow:
         hidden;
@@ -470,6 +556,12 @@ app-login-page-powered-by
     height:
         100%;
 
+    min-width:
+        0;
+
+    min-height:
+        0;
+
     overflow:
         hidden;
 }
@@ -482,7 +574,7 @@ app-login-page-powered-by
 
        EXACTLY 30px
 
-   RESERVED FOR THE FUTURE THEME SELECTOR.
+   RESERVED FOR THE THEME SELECTOR.
 ============================================================= */
 
 .login-page-4-right-top
@@ -492,6 +584,18 @@ app-login-page-powered-by
 
     height:
         30px;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
 
     overflow:
         hidden;
@@ -520,6 +624,9 @@ app-login-page-powered-by
     width:
         100%;
 
+    min-width:
+        0;
+
     min-height:
         0;
 
@@ -547,6 +654,66 @@ app-login-page-login-panel
 
     height:
         100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+}
+
+
+/* =============================================================
+   REGISTRATION PANEL
+   -------------------------------------------------------------
+   The Registration Panel uses the same page-level positioning
+   area as the Login Panel.
+============================================================= */
+
+.login-page-4-right-center >
+app-login-page-registration-panel
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+}
+
+
+/* =============================================================
+   FORGET PASSWORD PANEL
+   -------------------------------------------------------------
+   The Forget Password Panel uses the same page-level
+   positioning area as the Login Panel.
+============================================================= */
+
+.login-page-4-right-center >
+app-login-page-forget-password-panel
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
 }
 
 
@@ -576,6 +743,18 @@ app-login-page-login-panel
 
     height:
         30px;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
 
     overflow:
         hidden;

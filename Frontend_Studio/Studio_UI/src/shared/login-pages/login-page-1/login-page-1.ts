@@ -4,7 +4,8 @@
 
 import
 {
-    Component
+    Component,
+    ViewChild
 }
 from '@angular/core';
 
@@ -128,6 +129,17 @@ from '../../components/login-page-1/theme-selector/theme-selector';
 
 
 //===============================================================
+// Login Page 1 Notification Panel
+//===============================================================
+
+import
+{
+    LoginPageNotificationPanelComponent
+}
+from '../../components/login-credentials/notification-panel/notification-panel';
+
+
+//===============================================================
 // Login Page 1 Component
 //===============================================================
 
@@ -157,7 +169,9 @@ from '../../components/login-page-1/theme-selector/theme-selector';
 
         LoginPageForgetPasswordPanelComponent,
 
-        LoginPageThemeSelectorComponent
+        LoginPageThemeSelectorComponent,
+
+        LoginPageNotificationPanelComponent
     ],
 
     templateUrl:
@@ -176,6 +190,27 @@ from '../../components/login-page-1/theme-selector/theme-selector';
 
 export class LoginPage1
 {
+    //===========================================================
+    // Notification Panel Reference
+    // ----------------------------------------------------------
+    // Used by Login Page 1 to create real application
+    // notifications.
+    //
+    // IMPORTANT:
+    //
+    // The Notification Panel remains completely independent
+    // from the Login / Registration / Forget Password panels.
+    //===========================================================
+
+    @ViewChild(
+        LoginPageNotificationPanelComponent
+    )
+    private notificationPanel:
+        LoginPageNotificationPanelComponent
+        |
+        undefined;
+
+
     //===========================================================
     // Authentication
     //===========================================================
@@ -390,6 +425,108 @@ export class LoginPage1
 
         this.isForgetPasswordMode =
             true;
+    }
+
+
+    //===========================================================
+    // Password Reset Success
+    // ----------------------------------------------------------
+    // The Forget Password Panel does NOT display the successful
+    // password-reset message.
+    //
+    // Instead Login Page 1:
+    //
+    //     1. Returns to Login Panel.
+    //     2. Creates a real notification.
+    //     3. Notification starts UNREAD.
+    //     4. Unread counter immediately becomes visible.
+    //     5. Notification Panel automatically opens.
+    //     6. Panel remains open for 3 seconds.
+    //     7. Panel automatically closes.
+    //     8. Unread counter REMAINS visible.
+    //
+    // The notification becomes READ only when the user manually
+    // opens/interacts with the Notification Panel.
+    //===========================================================
+
+    onPasswordResetSuccess():
+        void
+    {
+        //=======================================================
+        // Return To Login Panel
+        // -------------------------------------------------------
+        // Do this immediately so the user is returned to the
+        // normal Sign In screen after successful password reset.
+        //=======================================================
+
+        this.onBackToLogin();
+
+
+        //=======================================================
+        // Notification Panel Reference Check
+        //=======================================================
+
+        if(
+            !this.notificationPanel
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Add Password Changed Notification
+        // -------------------------------------------------------
+        // IMPORTANT:
+        //
+        // The second argument is 3000 milliseconds.
+        //
+        // Therefore the Notification Panel will:
+        //
+        //     OPEN IMMEDIATELY
+        //
+        //     remain OPEN for:
+        //
+        //         3000 ms = 3 seconds
+        //
+        //     then CLOSE automatically.
+        //
+        // The notification remains UNREAD.
+        //=======================================================
+
+        this.notificationPanel.addNotification
+        (
+            {
+                visible:
+                    true,
+
+                isRead:
+                    false,
+
+                heading:
+                    'Password Changed',
+
+                message:
+                    'Your password was changed successfully. You can now sign in using your new password.',
+
+                icon:
+                    'fas fa-key',
+
+                type:
+                    'success',
+
+                dismissible:
+                    true,
+
+                autoHide:
+                    false,
+
+                displayDuration:
+                    5000
+            },
+
+            5000
+        );
     }
 
 

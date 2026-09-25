@@ -29,7 +29,9 @@ from '../../environments/environment';
 
 import
 {
-    ForgotPasswordRequest,
+    ForgotPasswordCheckRequest,
+    ForgotPasswordCheckResponse,
+    ForgotPasswordConfirmRequest,
     LoginRequest,
     LoginResponse,
     RegisterRequest
@@ -99,19 +101,44 @@ export class AuthenticationService
 
 
     /* ========================================================
-       Forgot Password
+       Check Forgot Password
+    ========================================================
+       Step 1:
+       Login ID → Account Check → Verification Code
     ======================================================== */
 
-    forgotPassword
+    checkForgotPassword
     (
         request:
-            ForgotPasswordRequest
+            ForgotPasswordCheckRequest
+    ):
+        Observable<ForgotPasswordCheckResponse>
+    {
+        return this.http.post<ForgotPasswordCheckResponse>
+        (
+            `${this.apiUrl}/forgot-password/check`,
+            request
+        );
+    }
+
+
+    /* ========================================================
+       Confirm Forgot Password
+    ========================================================
+       Step 2:
+       Login ID + Verification Code + New Password
+    ======================================================== */
+
+    confirmForgotPassword
+    (
+        request:
+            ForgotPasswordConfirmRequest
     ):
         Observable<LoginResponse>
     {
         return this.http.post<LoginResponse>
         (
-            `${this.apiUrl}/forgot-password`,
+            `${this.apiUrl}/forgot-password/confirm`,
             request
         );
     }
