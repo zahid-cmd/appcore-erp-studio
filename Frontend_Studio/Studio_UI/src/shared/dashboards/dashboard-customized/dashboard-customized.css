@@ -1,0 +1,116 @@
+/* ===========================================================
+   DASHBOARD CUSTOMIZED
+=========================================================== */
+
+.dashboard-customized
+{
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    box-sizing:border-box;
+    background:#f3f6fa;
+    overflow:hidden;
+}
+
+
+/* ===========================================================
+   DASHBOARD CONTENT
+=========================================================== */
+
+.dashboard-customized-content
+{
+    flex:1 1 auto;
+    width:100%;
+    min-width:0;
+    min-height:0;
+    overflow:auto;
+    padding:18px 20px 24px;
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   DASHBOARD WIDGET WORKSPACE
+=========================================================== */
+
+.dashboard-widget-workspace
+{
+    width:100%;
+    min-width:0;
+    min-height:100%;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            12,
+            minmax(0,1fr)
+        );
+
+    grid-auto-rows:
+        minmax(
+            120px,
+            auto
+        );
+
+    gap:16px;
+
+    align-items:stretch;
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   RESPONSIVE
+=========================================================== */
+
+@media (max-width:1200px)
+{
+    .dashboard-widget-workspace
+    {
+        grid-template-columns:
+            repeat(
+                6,
+                minmax(0,1fr)
+            );
+    }
+}
+
+
+@media (max-width:800px)
+{
+    .dashboard-customized-content
+    {
+        padding:14px;
+    }
+
+
+    .dashboard-widget-workspace
+    {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0,1fr)
+            );
+    }
+}
+
+
+@media (max-width:520px)
+{
+    .dashboard-customized-content
+    {
+        padding:12px;
+    }
+
+
+    .dashboard-widget-workspace
+    {
+        grid-template-columns:
+            minmax(0,1fr);
+    }
+}

@@ -22,6 +22,7 @@
 }
 
 
+
 /* =====================================================
    PAGE HEADER
 ===================================================== */
@@ -34,6 +35,7 @@
 }
 
 
+
 /* =====================================================
    PAGE TOOLBAR
 ===================================================== */
@@ -44,6 +46,7 @@
 
     width:100%;
 }
+
 
 
 /* =====================================================
@@ -60,6 +63,7 @@
 
     overflow:hidden;
 }
+
 
 
 /* =====================================================
@@ -80,6 +84,7 @@
 
     overflow:auto;
 }
+
 
 
 /* =====================================================
@@ -105,6 +110,7 @@
 }
 
 
+
 /* =====================================================
    FORM GRID
    GRID ITEMS
@@ -120,6 +126,7 @@
 
     align-self:stretch;
 }
+
 
 
 /* =====================================================
@@ -140,6 +147,7 @@
 }
 
 
+
 /* =====================================================
    FORM SECTION
    INTERNAL HEIGHT
@@ -155,16 +163,36 @@
 }
 
 
+
 /* =====================================================
-   SEARCH DROPDOWN
-   FORM FIELD NORMALIZATION
+   FORM CONTROLS
+   GLOBAL FORM-PAGE NORMALIZATION
+   -----------------------------------------------------
+   Prevents individual form controls from stretching
+   vertically when placed inside Form Section/Grid.
+
+   Applies to:
+   - Textbox
+   - Dropdown
+   - Search Dropdown
+   - Textarea
 ===================================================== */
 
-.app-form-page ::ng-deep app-form-section app-search-dropdown
+.app-form-page ::ng-deep
+app-form-section app-textbox,
+
+.app-form-page ::ng-deep
+app-form-section app-dropdown,
+
+.app-form-page ::ng-deep
+app-form-section app-search-dropdown,
+
+.app-form-page ::ng-deep
+app-form-section app-textarea
 {
     display:block;
 
-    width:auto;
+    width:100%;
 
     height:auto;
 
@@ -176,45 +204,308 @@
 
     flex-basis:auto !important;
 
-    align-self:auto;
+    align-self:flex-start;
 
     margin-top:0;
 
     margin-bottom:0;
+
+    box-sizing:border-box;
 }
+
+
+
+/* =====================================================
+   DROPDOWN
+   FORM FIELD NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-dropdown .dropdown-container
+{
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+
+    margin-top:0;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   DROPDOWN
+   CONTROL NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-dropdown .dropdown
+{
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+}
+
+
+
+.app-form-page ::ng-deep
+app-form-section app-dropdown .dropdown-selector
+{
+    width:100%;
+
+    height:36px;
+
+    min-height:36px;
+
+    max-height:36px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN
+   FORM FIELD NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-search-dropdown
+{
+    display:block;
+
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+
+    flex:0 0 auto !important;
+
+    flex-basis:auto !important;
+
+    align-self:flex-start;
+
+    margin-top:0;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN
+   CONTAINER NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-search-dropdown .dropdown-container
+{
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+
+    margin-top:0;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN
+   CONTROL NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-search-dropdown .dropdown
+{
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+}
+
+
+
+.app-form-page ::ng-deep
+app-form-section app-search-dropdown .dropdown-selector
+{
+    width:100%;
+
+    height:36px;
+
+    min-height:36px;
+
+    max-height:36px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   TEXTAREA
+   FORM FIELD NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-textarea
+{
+    display:block;
+
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+
+    flex:0 0 auto !important;
+
+    flex-basis:auto !important;
+
+    align-self:flex-start;
+
+    margin-top:0;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   TEXTAREA
+   CONTAINER NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-textarea .textarea-container
+{
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    max-height:none;
+
+    margin-top:0;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   TEXTAREA
+   CONTROL NORMALIZATION
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-textarea .textarea
+{
+    width:100%;
+
+    height:115px;
+
+    min-height:115px;
+
+    max-height:115px;
+
+    box-sizing:border-box;
+}
+
+
+
+.app-form-page ::ng-deep
+app-form-section app-textarea textarea
+{
+    width:100%;
+
+    height:115px;
+
+    min-height:115px;
+
+    max-height:115px;
+
+    box-sizing:border-box;
+}
+
 
 
 /* =====================================================
    INPUT NORMALIZATION
 ===================================================== */
 
-:host ::ng-deep input,
+.app-form-page ::ng-deep
+input,
 
-:host ::ng-deep textarea,
+.app-form-page ::ng-deep
+textarea,
 
-:host ::ng-deep select
+.app-form-page ::ng-deep
+select
 {
     transition:
         border-color .20s ease,
+
         background .20s ease;
 }
 
 
-:host ::ng-deep input:hover,
 
-:host ::ng-deep textarea:hover,
+.app-form-page ::ng-deep
+input:hover,
 
-:host ::ng-deep select:hover
+.app-form-page ::ng-deep
+textarea:hover,
+
+.app-form-page ::ng-deep
+select:hover
 {
     border-color:#9fc2f7;
 }
 
 
-:host ::ng-deep input:focus,
 
-:host ::ng-deep textarea:focus,
+.app-form-page ::ng-deep
+input:focus,
 
-:host ::ng-deep select:focus
+.app-form-page ::ng-deep
+textarea:focus,
+
+.app-form-page ::ng-deep
+select:focus
 {
     border-color:#2563eb;
 
@@ -222,13 +513,16 @@
 }
 
 
+
 /* =====================================================
    READ ONLY
 ===================================================== */
 
-:host ::ng-deep input[readonly],
+.app-form-page ::ng-deep
+input[readonly],
 
-:host ::ng-deep textarea[readonly]
+.app-form-page ::ng-deep
+textarea[readonly]
 {
     background:#ffffff !important;
 
@@ -238,15 +532,19 @@
 }
 
 
+
 /* =====================================================
    DISABLED
 ===================================================== */
 
-:host ::ng-deep input:disabled,
+.app-form-page ::ng-deep
+input:disabled,
 
-:host ::ng-deep textarea:disabled,
+.app-form-page ::ng-deep
+textarea:disabled,
 
-:host ::ng-deep select:disabled
+.app-form-page ::ng-deep
+select:disabled
 {
     background:#ffffff !important;
 
@@ -256,6 +554,7 @@
 
     cursor:default;
 }
+
 
 
 /* =====================================================
@@ -284,6 +583,7 @@
 }
 
 
+
 .module-preview-icon i,
 
 .menu-preview-icon i,
@@ -294,6 +594,7 @@
 
     color:#2563eb;
 }
+
 
 
 .module-preview-title,
@@ -308,6 +609,7 @@
 }
 
 
+
 .module-preview-code,
 
 .menu-preview-code
@@ -318,9 +620,11 @@
 }
 
 
+
 /* =====================================================
    ONLY FOR PREVIEW ENABLED PAGES
 ===================================================== */
+
 
 
 /* =====================================================
@@ -345,6 +649,7 @@
 
     gap:10px;
 }
+
 
 
 /* =====================================================
@@ -379,12 +684,14 @@
 }
 
 
+
 .preview-icon i
 {
     font-size:30px;
 
     color:#2563eb;
 }
+
 
 
 /* =====================================================
@@ -401,6 +708,7 @@
 }
 
 
+
 /* =====================================================
    PREVIEW CODE
 ===================================================== */
@@ -413,6 +721,7 @@
 
     color:#64748b;
 }
+
 
 
 /* =====================================================
@@ -462,6 +771,7 @@
 }
 
 
+
 .preview-route i
 {
     flex-shrink:0;
@@ -472,12 +782,14 @@
 }
 
 
+
 .preview-route span
 {
     flex:1;
 
     text-align:left;
 }
+
 
 
 /* =====================================================
@@ -506,17 +818,20 @@
 }
 
 
+
 /* =====================================================
    RESPONSIVE
 ===================================================== */
 
 @media (max-width:1200px)
 {
-    .app-form-page ::ng-deep app-form-grid .form-grid
+    .app-form-page ::ng-deep
+    app-form-grid .form-grid
     {
         padding:16px;
     }
 }
+
 
 
 @media (max-width:768px)
@@ -527,8 +842,32 @@
     }
 
 
-    .app-form-page ::ng-deep app-form-grid .form-grid
+
+    .app-form-page ::ng-deep
+    app-form-grid .form-grid
     {
         padding:12px;
+    }
+
+
+
+    .app-form-page ::ng-deep
+    app-form-section app-dropdown .dropdown-selector,
+
+    .app-form-page ::ng-deep
+    app-form-section app-search-dropdown .dropdown-selector
+    {
+        width:100%;
+    }
+
+
+
+    .app-form-page ::ng-deep
+    app-form-section app-textarea .textarea,
+
+    .app-form-page ::ng-deep
+    app-form-section app-textarea textarea
+    {
+        width:100%;
     }
 }

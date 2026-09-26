@@ -448,6 +448,25 @@ from '../../shared/components/login-page-4/footer/footer';
 
 
 //===============================================================
+// Default Dashboard Components
+//===============================================================
+
+
+import
+{
+    WelcomeWidgetComponent
+}
+from '../../shared/components/default-dashboard/welcome-widget/welcome-widget';
+
+
+import
+{
+    QuickAccessWidgetComponent
+}
+from '../../shared/components/default-dashboard/quick-access-widget/quick-access-widget';
+
+
+//===============================================================
 // Shared Login Credential Components
 //===============================================================
 
@@ -979,6 +998,17 @@ implements
             ConfirmationDialogComponent,
 
 
+        //===============================================================
+        // Default Dashboard Components
+        //===============================================================
+
+        'welcome-widget':
+            WelcomeWidgetComponent,
+
+        'quick-access-widget':
+            QuickAccessWidgetComponent,
+
+
         //=======================================================
         // Control Components
         //=======================================================
@@ -1281,11 +1311,202 @@ implements
             .toLowerCase();
 
 
-        return this.componentRegistry[
+        if
+        (
+            !normalizedKey
+        )
+        {
+            return null;
+        }
+
+
+        //=======================================================
+        // Direct Registry Match
+        //=======================================================
+
+        const directComponent =
+            this.componentRegistry[
+                normalizedKey
+            ];
+
+
+        if
+        (
+            directComponent
+        )
+        {
+            return directComponent;
+        }
+
+
+        //=======================================================
+        // Normalize Path
+        //=======================================================
+
+        const normalizedPath =
             normalizedKey
-        ]
-        ??
-        null;
+                .replace(
+                    /\\/g,
+                    '/'
+                )
+                .replace(
+                    /\/+/g,
+                    '/'
+                )
+                .replace(
+                    /\/$/,
+                    ''
+                );
+
+
+        //=======================================================
+        // Extract Component Folder
+        //=======================================================
+
+        const pathParts =
+            normalizedPath
+                .split(
+                    '/'
+                )
+                .filter(
+                    part =>
+                        part.trim() !== ''
+                );
+
+
+        if
+        (
+            pathParts.length > 0
+        )
+        {
+            const lastPathPart =
+                pathParts[
+                    pathParts.length - 1
+                ]
+                .trim();
+
+
+            const pathComponent =
+                this.componentRegistry[
+                    lastPathPart
+                ];
+
+
+            if
+            (
+                pathComponent
+            )
+            {
+                return pathComponent;
+            }
+        }
+
+
+        //=======================================================
+        // Normalize Display Name
+        //=======================================================
+
+        const displayKey =
+            normalizedKey
+                .replace(
+                    /\\/g,
+                    '/'
+                )
+                .split(
+                    '/'
+                )
+                .pop()
+                ??
+                normalizedKey;
+
+
+        const componentName =
+            displayKey
+                .replace(
+                    /\.[^/.]+$/,
+                    ''
+                )
+                .replace(
+                    /[_\s]+/g,
+                    '-'
+                )
+                .replace(
+                    /-+/g,
+                    '-'
+                )
+                .trim()
+                .toLowerCase();
+
+
+        const displayComponent =
+            this.componentRegistry[
+                componentName
+            ];
+
+
+        if
+        (
+            displayComponent
+        )
+        {
+            return displayComponent;
+        }
+
+
+        //=======================================================
+        // Display Text Match
+        //=======================================================
+
+        const displayText =
+            displayKey
+                .replace(
+                    /[-_]+/g,
+                    ' '
+                )
+                .replace(
+                    /\s+/g,
+                    ' '
+                )
+                .trim()
+                .toLowerCase();
+
+
+        for
+        (
+            const registryKey of
+            Object.keys(
+                this.componentRegistry
+            )
+        )
+        {
+            const registryDisplayText =
+                registryKey
+                    .replace(
+                        /[-_]+/g,
+                        ' '
+                    )
+                    .replace(
+                        /\s+/g,
+                        ' '
+                    )
+                    .trim()
+                    .toLowerCase();
+
+
+            if
+            (
+                registryDisplayText ===
+                displayText
+            )
+            {
+                return this.componentRegistry[
+                    registryKey
+                ];
+            }
+        }
+
+
+        return null;
     }
 
 

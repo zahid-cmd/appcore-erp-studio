@@ -59,6 +59,58 @@ Routes =
 
                 // AUTO-END : SUB-002-005-001
 
+            // AUTO-BEGIN : SUB-002-005-002
+
+                //===========================================================
+                // Dashboards
+                //===========================================================
+
+                {
+                    path:'dashboards',
+
+                    data:
+                    {
+                        breadcrumb:'Dashboards'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './dashboards.routes'
+                        )
+                        .then(
+                            m =>
+                                m.DashboardsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-002-005-002
+
+            // AUTO-BEGIN : SUB-002-005-003
+
+                //===========================================================
+                // Widget Configuration
+                //===========================================================
+
+                {
+                    path:'widget-configuration',
+
+                    data:
+                    {
+                        breadcrumb:'Widget Configuration'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './widget-configuration.routes'
+                        )
+                        .then(
+                            m =>
+                                m.WidgetConfigurationRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-002-005-003
+
         ]
 
     }

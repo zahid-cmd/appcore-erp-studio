@@ -1,0 +1,612 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-table-cells-large"
+
+        [title]="pageTitle"
+
+        subtitle="Manage widget configurations.">
+
+        <app-record-counter
+
+            pageHeaderCenter
+
+            [sections]="recordCounterSections"
+
+            [compact]="true">
+
+        </app-record-counter>
+
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+        <div
+
+            pageToolbarLeft
+
+            class="widget-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab"
+
+                (selectedTabChange)="onTabChange($event)">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <div
+
+            pageToolbarRight
+
+            class="widget-toolbar-right">
+
+            <!-- =============================================
+                 DASHBOARD
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Dashboard"
+
+                [items]="dashboards"
+
+                labelField="name"
+
+                valueField="id"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    isDashboardLocked
+                "
+
+                [(value)]="selectedDashboardId"
+
+                (valueChange)="onDashboardChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 WIDGET
+            ============================================== -->
+
+            <app-search-dropdown
+
+                [placeholder]="
+                    isRowEditMode
+                        ?
+                        'Select Widget'
+                        :
+                        'Select Widget'
+                "
+
+                [items]="availableWidgets"
+
+                labelField="name"
+
+                valueField="id"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedWidgetId"
+
+                (valueChange)="onWidgetChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 WIDTH
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Width"
+
+                [items]="widthOptions"
+
+                labelField="text"
+
+                valueField="value"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedWidth"
+
+                (valueChange)="onWidthChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 ORDER
+            ============================================== -->
+
+            <app-search-dropdown
+
+                [placeholder]="
+                    selectedOrder !== null
+                        ?
+                        'Order ' + selectedOrder
+                        :
+                        'Select Order'
+                "
+
+                [items]="orderOptions"
+
+                labelField="text"
+
+                valueField="value"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedOrder"
+
+                (valueChange)="onOrderChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 ADD / UPDATE ROW
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="widget-add-button"
+
+                [disabled]="addDisabled"
+
+                (click)="
+                    isRowEditMode
+                        ?
+                        onUpdateRow()
+                        :
+                        onAddSelection()
+                ">
+
+                <i
+
+                    [class]="
+                        isRowEditMode
+                            ?
+                            'fas fa-pen-to-square'
+                            :
+                            'fas fa-plus'
+                    ">
+
+                </i>
+
+                <span>
+
+                    {{
+                        isRowEditMode
+                            ?
+                            'Update'
+                            :
+                            'Add'
+                    }}
+
+                </span>
+
+            </button>
+
+
+
+            <!-- =============================================
+                 RESET
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="widget-reset-button"
+
+                [disabled]="isViewMode"
+
+                (click)="onResetSelection()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>
+                    Reset
+                </span>
+
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <ng-container canvasBody>
+
+            <div
+
+                class="widget-configuration-table-container"
+
+                (dblclick)="
+                    $event.stopPropagation()
+                ">
+
+                <table class="widget-configuration-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th
+
+                                class="col-serial"
+
+                                [style.width]="columns[0].width">
+
+                                #
+
+                            </th>
+
+
+                            <th
+
+                                class="col-code"
+
+                                [style.width]="columns[1].width">
+
+                                Widget Code
+
+                            </th>
+
+
+                            <th class="col-name">
+
+                                Widget
+
+                            </th>
+
+
+                            <th
+
+                                class="col-width"
+
+                                [style.width]="columns[3].width">
+
+                                Width
+
+                            </th>
+
+
+                            <th
+
+                                class="col-order"
+
+                                [style.width]="columns[4].width">
+
+                                Order
+
+                            </th>
+
+
+                            <th
+
+                                class="col-action"
+
+                                [style.width]="columns[5].width">
+
+                                Actions
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        <tr
+
+                            *ngFor="
+                                let row of pagedWidgetConfigurationRows;
+                                let i = index
+                            "
+
+                            class="widget-data-row"
+
+                            [class.widget-row-editing]="
+                                isRowEditMode
+                                &&
+                                row.widgetConfigurationDetailId ===
+                                editingWidgetConfigurationDetailId
+                            "
+
+                            (dblclick)="onRowDoubleClick(row)">
+
+                            <td
+
+                                class="col-serial"
+
+                                [style.width]="columns[0].width">
+
+                                {{
+                                    (
+                                        (
+                                            currentPage - 1
+                                        )
+                                        *
+                                        pageSize
+                                    )
+                                    +
+                                    i
+                                    +
+                                    1
+                                }}
+
+                            </td>
+
+
+                            <td
+
+                                class="col-code"
+
+                                [style.width]="columns[1].width"
+
+                                [title]="row.widgetCode">
+
+                                {{
+                                    row.widgetCode
+                                    ||
+                                    '-'
+                                }}
+
+                            </td>
+
+
+                            <td
+
+                                class="col-name"
+
+                                [title]="row.widgetName">
+
+                                {{
+                                    row.widgetName
+                                    ||
+                                    '-'
+                                }}
+
+                            </td>
+
+
+                            <td
+
+                                class="col-width"
+
+                                [style.width]="columns[3].width">
+
+                                <span class="widget-width-badge">
+
+                                    <ng-container
+
+                                        [ngSwitch]="row.columnSpan">
+
+                                        <span *ngSwitchCase="12">
+                                            Full Width
+                                        </span>
+
+                                        <span *ngSwitchCase="8">
+                                            Two Thirds
+                                        </span>
+
+                                        <span *ngSwitchCase="6">
+                                            Half Width
+                                        </span>
+
+                                        <span *ngSwitchCase="4">
+                                            One Third
+                                        </span>
+
+                                        <span *ngSwitchCase="3">
+                                            Quarter Width
+                                        </span>
+
+                                        <span *ngSwitchDefault>
+                                            {{ row.columnSpan }}
+                                        </span>
+
+                                    </ng-container>
+
+                                </span>
+
+                            </td>
+
+
+                            <td
+
+                                class="col-order"
+
+                                [style.width]="columns[4].width">
+
+                                <span class="widget-order-badge">
+
+                                    {{
+                                        row.displayOrder
+                                    }}
+
+                                </span>
+
+                            </td>
+
+
+                            <td
+
+                                class="col-action"
+
+                                [style.width]="columns[5].width">
+
+                                <button
+
+                                    type="button"
+
+                                    class="widget-remove-button"
+
+                                    [disabled]="isViewMode"
+
+                                    title="Remove Widget"
+
+                                    (click)="
+                                        onRemoveConfiguration(row)
+                                    ">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr
+
+                            *ngIf="
+                                widgetConfigurationRows.length === 0
+                            "
+
+                            class="empty-row">
+
+                            <td
+
+                                colspan="6"
+
+                                class="empty-cell">
+
+                                <div class="widget-empty-state">
+
+                                    <i class="fas fa-table-cells-large"></i>
+
+                                    <div>
+
+                                        <strong>
+                                            No Widgets Configured
+                                        </strong>
+
+                                        <span>
+                                            Select a dashboard, widget, width and order, then click Add.
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </ng-container>
+
+
+        <ng-container canvasFooter>
+
+            <app-pagination
+
+                [totalRecords]="widgetConfigurationRows.length"
+
+                [currentPage]="currentPage"
+
+                [pageSize]="pageSize"
+
+                (pageChange)="onPageChange($event)"
+
+                (pageSizeChange)="onPageSizeChange($event)">
+
+            </app-pagination>
+
+        </ng-container>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =========================================================
+     UTILITIES
+========================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

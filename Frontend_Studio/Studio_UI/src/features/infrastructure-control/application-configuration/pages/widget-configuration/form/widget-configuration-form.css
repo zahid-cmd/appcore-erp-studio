@@ -1,0 +1,1854 @@
+/* =====================================================
+   APP FORM PAGE
+===================================================== */
+
+@import '../../../../../../shared/styles/app-form-page.css';
+
+
+
+/* =====================================================
+   WIDGET TOOLBAR — MASTER CONTROL
+===================================================== */
+
+.widget-toolbar-right
+{
+    --widget-dropdown-width:260px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    flex:1 1 auto;
+
+    width:auto;
+
+    min-width:0;
+
+    margin-left:10px;
+
+    gap:6px;
+
+    box-sizing:border-box;
+
+    overflow:visible;
+
+    position:relative;
+
+    z-index:100;
+}
+
+
+
+/* =====================================================
+   PAGE TOOLBAR — LEFT
+===================================================== */
+
+.widget-toolbar-left
+{
+    display:flex;
+
+    align-items:center;
+
+    flex:0 0 130px;
+
+    width:220px;
+
+    min-width:220px;
+
+    max-width:220px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — MASTER WIDTH
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+{
+    --dropdown-width:260px !important;
+
+    --dropdown-height:36px !important;
+
+    display:block !important;
+
+    flex:0 0 var(--widget-dropdown-width) !important;
+
+    width:var(--widget-dropdown-width) !important;
+
+    min-width:var(--widget-dropdown-width) !important;
+
+    max-width:var(--widget-dropdown-width) !important;
+
+    height:36px !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+
+    position:relative;
+
+    z-index:100;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — CONTAINER
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-container
+{
+    display:flex !important;
+
+    flex-direction:column !important;
+
+    width:var(--widget-dropdown-width) !important;
+
+    min-width:var(--widget-dropdown-width) !important;
+
+    max-width:var(--widget-dropdown-width) !important;
+
+    margin:0 !important;
+
+    padding:0 !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — ROOT
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown
+{
+    position:relative !important;
+
+    width:var(--widget-dropdown-width) !important;
+
+    min-width:var(--widget-dropdown-width) !important;
+
+    max-width:var(--widget-dropdown-width) !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SELECTOR
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-selector
+{
+    display:flex !important;
+
+    align-items:center !important;
+
+    justify-content:space-between !important;
+
+    width:var(--widget-dropdown-width) !important;
+
+    min-width:var(--widget-dropdown-width) !important;
+
+    max-width:var(--widget-dropdown-width) !important;
+
+    height:36px !important;
+
+    box-sizing:border-box !important;
+
+    padding:0 8px 0 12px !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SELECTED TEXT
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-selected-text,
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-placeholder
+{
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — PANEL
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-panel
+{
+    position:absolute !important;
+
+    left:0 !important;
+
+    width:var(--widget-dropdown-width) !important;
+
+    min-width:var(--widget-dropdown-width) !important;
+
+    max-width:var(--widget-dropdown-width) !important;
+
+    box-sizing:border-box !important;
+
+    z-index:1000 !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SEARCH
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-search
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    padding:8px !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — SEARCH INPUT
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-search input
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — OPTIONS
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-options
+{
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box !important;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN — OPTION LABEL
+===================================================== */
+
+:host ::ng-deep
+.widget-toolbar-right
+app-search-dropdown
+.dropdown-option-label
+{
+    min-width:0 !important;
+
+    max-width:100% !important;
+
+    overflow:hidden !important;
+
+    text-overflow:ellipsis !important;
+
+    white-space:nowrap !important;
+}
+
+
+
+/* =====================================================
+   DROPDOWN STACKING
+===================================================== */
+
+.widget-toolbar-right
+app-search-dropdown:nth-child(1)
+{
+    z-index:104;
+}
+
+
+.widget-toolbar-right
+app-search-dropdown:nth-child(2)
+{
+    z-index:103;
+}
+
+
+.widget-toolbar-right
+app-search-dropdown:nth-child(3)
+{
+    z-index:102;
+}
+
+
+.widget-toolbar-right
+app-search-dropdown:nth-child(4)
+{
+    z-index:101;
+}
+
+
+
+/* =====================================================
+   WIDGET ADD BUTTON
+===================================================== */
+
+.widget-add-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:6px;
+
+    flex:0 0 78px;
+
+    width:78px;
+
+    min-width:78px;
+
+    max-width:78px;
+
+    height:36px;
+
+    padding:0 8px;
+
+    margin:0;
+
+    border:none;
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+    color:#ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    box-shadow:
+        0 8px 18px rgba(37,99,235,.22),
+        inset 0 1px 1px rgba(255,255,255,.18);
+
+    transition:
+        background .22s ease,
+        color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.widget-add-button i
+{
+    width:14px;
+
+    text-align:center;
+
+    font-size:13px;
+
+    flex-shrink:0;
+}
+
+
+.widget-add-button span
+{
+    flex:1;
+
+    text-align:center;
+}
+
+
+.widget-add-button:hover:not(:disabled)
+{
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 10px 20px rgba(37,99,235,.28);
+}
+
+
+.widget-add-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:
+        inset 0 2px 4px rgba(0,0,0,.10);
+}
+
+
+.widget-add-button:disabled
+{
+    cursor:not-allowed;
+
+    color:#94a3b8;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fafc 0%,
+            #eef2f7 100%
+        );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95);
+
+    opacity:.8;
+}
+
+
+.widget-add-button:focus-visible
+{
+    outline:none;
+
+    box-shadow:
+        0 0 0 3px rgba(37,99,235,.14);
+}
+
+
+
+/* =====================================================
+   RESET BUTTON
+===================================================== */
+
+.widget-reset-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:5px;
+
+    flex:0 0 78px;
+
+    width:78px;
+
+    min-width:78px;
+
+    max-width:78px;
+
+    height:36px;
+
+    padding:0 8px;
+
+    margin:0;
+
+    border:1px solid #d9e2ef;
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f7f9fc 100%
+        );
+
+    color:#55667d;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.widget-reset-button:hover:not(:disabled)
+{
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4fb 100%
+        );
+
+    border-color:#c5d2e3;
+
+    color:#334155;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.08);
+
+    transform:translateY(-1px);
+}
+
+
+.widget-reset-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:none;
+}
+
+
+.widget-reset-button:disabled
+{
+    opacity:.55;
+
+    cursor:not-allowed;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
+
+.widget-reset-button i
+{
+    width:14px;
+
+    text-align:center;
+
+    font-size:12px;
+
+    flex-shrink:0;
+}
+
+
+
+/* =====================================================
+   WIDGET CONFIGURATION TABLE CONTAINER
+===================================================== */
+
+.widget-configuration-table-container
+{
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+
+    height:100%;
+
+    min-height:0;
+
+    margin:0;
+
+    padding:0;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+}
+
+
+
+/* =====================================================
+   WIDGET CONFIGURATION TABLE
+===================================================== */
+
+.widget-configuration-table
+{
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+
+    height:auto;
+
+    margin:0;
+
+    padding:0;
+
+    border:none;
+
+    border-collapse:collapse;
+
+    border-spacing:0;
+
+    table-layout:fixed;
+
+    background:#ffffff;
+
+    font-family:inherit;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   TABLE HEADER
+===================================================== */
+
+.widget-configuration-table thead
+{
+    display:table;
+
+    width:100%;
+
+    height:40px;
+
+    min-height:40px;
+
+    max-height:40px;
+
+    table-layout:fixed;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.widget-configuration-table thead tr
+{
+    display:table-row;
+
+    width:100%;
+
+    height:40px;
+
+    min-height:40px;
+
+    max-height:40px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfe 0%,
+            #f6f9fd 50%,
+            #f1f6fc 100%
+        );
+}
+
+
+.widget-configuration-table th
+{
+    display:table-cell;
+
+    position:relative;
+
+    height:40px;
+
+    min-height:40px;
+
+    max-height:40px;
+
+    padding:0 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfe 0%,
+            #f6f9fd 50%,
+            #f1f6fc 100%
+        );
+
+    border-top:1px solid #ffffff;
+
+    border-bottom:1px solid #dde7f3;
+
+    border-right:1px solid #edf2f7;
+
+    color:#55667d;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    vertical-align:middle;
+
+    box-sizing:border-box;
+
+    user-select:none;
+}
+
+
+.widget-configuration-table th:last-child
+{
+    border-right:none;
+}
+
+
+
+/* =====================================================
+   TABLE HEADER ALIGNMENT
+===================================================== */
+
+.widget-configuration-table th.col-serial,
+.widget-configuration-table th.col-width,
+.widget-configuration-table th.col-order,
+.widget-configuration-table th.col-action
+{
+    text-align:center;
+}
+
+
+.widget-configuration-table th.col-code,
+.widget-configuration-table th.col-name
+{
+    text-align:left;
+}
+
+
+
+/* =====================================================
+   TABLE BODY
+===================================================== */
+
+.widget-configuration-table tbody
+{
+    display:table;
+
+    width:100%;
+
+    height:auto;
+
+    min-height:0;
+
+    table-layout:fixed;
+
+    background:#ffffff;
+}
+
+
+
+/* =====================================================
+   TABLE BODY — NORMAL ROW
+===================================================== */
+
+.widget-configuration-table tbody tr:not(.empty-row)
+{
+    display:table-row;
+
+    width:100%;
+
+    height:40px;
+
+    min-height:40px;
+
+    max-height:40px;
+
+    background:#ffffff;
+
+    transition:
+        background-color .18s ease;
+}
+
+
+.widget-configuration-table tbody tr:nth-child(even)
+{
+    background:#fbfcfe;
+}
+
+
+.widget-configuration-table tbody tr:not(.empty-row):hover
+{
+    background:#eef5ff;
+}
+
+
+
+/* =====================================================
+   TABLE CELL
+===================================================== */
+
+.widget-configuration-table tbody td
+{
+    display:table-cell;
+
+    height:40px;
+
+    min-height:40px;
+
+    max-height:40px;
+
+    padding:0 16px;
+
+    border-bottom:1px solid #edf2f7;
+
+    border-right:1px solid #edf2f7;
+
+    color:#4b5d73;
+
+    font-size:15px;
+
+    font-weight:500;
+
+    line-height:40px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    vertical-align:middle;
+
+    box-sizing:border-box;
+}
+
+
+.widget-configuration-table tbody td:last-child
+{
+    border-right:none;
+}
+
+
+
+/* =====================================================
+   TABLE CELL ALIGNMENT
+===================================================== */
+
+.widget-configuration-table tbody td.col-serial,
+.widget-configuration-table tbody td.col-width,
+.widget-configuration-table tbody td.col-order,
+.widget-configuration-table tbody td.col-action
+{
+    text-align:center;
+}
+
+
+.widget-configuration-table tbody td.col-code,
+.widget-configuration-table tbody td.col-name
+{
+    text-align:left;
+}
+
+
+
+/* =====================================================
+   TABLE COLUMNS
+===================================================== */
+
+.widget-configuration-table .col-serial,
+.widget-configuration-table .col-code,
+.widget-configuration-table .col-name,
+.widget-configuration-table .col-width,
+.widget-configuration-table .col-order,
+.widget-configuration-table .col-action
+{
+    box-sizing:border-box;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+
+/* =====================================================
+   WIDTH BADGE
+===================================================== */
+
+.widget-width-badge
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:92px;
+
+    height:24px;
+
+    padding:0 10px;
+
+    border:1px solid #d8e3f3;
+
+    border-radius:999px;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4ff 100%
+        );
+
+    color:#49689f;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    line-height:1;
+
+    white-space:nowrap;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+
+
+/* =====================================================
+   ORDER BADGE
+===================================================== */
+
+.widget-order-badge
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:28px;
+
+    height:24px;
+
+    min-width:28px;
+
+    padding:0 7px;
+
+    border:1px solid #dbe4ef;
+
+    border-radius:7px;
+
+    box-sizing:border-box;
+
+    background:#f8fafc;
+
+    color:#53657c;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    line-height:1;
+
+    white-space:nowrap;
+}
+
+
+
+/* =====================================================
+   REMOVE BUTTON
+===================================================== */
+
+.widget-remove-button
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:26px;
+
+    height:26px;
+
+    padding:0;
+
+    margin:0;
+
+    border:none;
+
+    border-radius:8px;
+
+    box-sizing:border-box;
+
+    background:#ffecec;
+
+    color:#dc2626;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+
+.widget-remove-button:hover:not(:disabled)
+{
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+    box-shadow:
+        0 4px 10px rgba(220,38,38,.12);
+
+    transform:translateY(-1px);
+}
+
+
+.widget-remove-button:active:not(:disabled)
+{
+    transform:translateY(0);
+
+    box-shadow:none;
+}
+
+
+.widget-remove-button:disabled
+{
+    opacity:.45;
+
+    cursor:not-allowed;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
+
+.widget-remove-button i
+{
+    font-size:13px;
+
+    line-height:1;
+}
+
+
+
+/* =====================================================
+   EMPTY ROW
+===================================================== */
+
+.widget-configuration-table .empty-row
+{
+    display:table-row;
+
+    width:100%;
+
+    height:120px;
+
+    min-height:120px;
+
+    max-height:120px;
+
+    background:#ffffff !important;
+}
+
+
+.widget-configuration-table .empty-row:hover
+{
+    background:#ffffff !important;
+}
+
+
+
+/* =====================================================
+   EMPTY CELL
+===================================================== */
+
+.widget-configuration-table .empty-row .empty-cell
+{
+    display:table-cell;
+
+    position:relative;
+
+    width:100%;
+
+    height:120px;
+
+    min-height:120px;
+
+    max-height:120px;
+
+    padding:0 !important;
+
+    margin:0;
+
+    border:none !important;
+
+    text-align:center;
+
+    vertical-align:middle;
+
+    line-height:normal;
+
+    overflow:hidden;
+
+    background:#ffffff !important;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.widget-empty-state
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:100%;
+
+    height:420px;
+
+    min-height:420px;
+
+    max-height:420px;
+
+    margin:0;
+
+    padding:20px 24px;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    color:#64748b;
+
+    text-align:center;
+
+    overflow:hidden;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — ICON
+===================================================== */
+
+.widget-empty-state > i
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:64px;
+
+    height:64px;
+
+    min-width:64px;
+
+    min-height:64px;
+
+    max-width:64px;
+
+    max-height:64px;
+
+    margin:0 auto 16px;
+
+    border:1px solid #dce7f7;
+
+    border-radius:50%;
+
+    box-sizing:border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fbff 0%,
+            #eef4ff 100%
+        );
+
+    color:#5274d9;
+
+    font-size:24px;
+
+    line-height:1;
+
+    flex-shrink:0;
+
+    box-shadow:
+        0 8px 24px rgba(37,99,235,.08),
+        inset 0 1px 0 rgba(255,255,255,.95);
+
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — CONTENT
+===================================================== */
+
+.widget-empty-state > div
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:100%;
+
+    max-width:420px;
+
+    margin:0 auto;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    text-align:center;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — TITLE
+===================================================== */
+
+.widget-empty-state strong
+{
+    display:block;
+
+    margin:0 0 7px;
+
+    padding:0;
+
+    color:#17233d;
+
+    font-family:inherit;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    line-height:1.4;
+
+    letter-spacing:-.1px;
+
+    white-space:nowrap;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — DESCRIPTION
+===================================================== */
+
+.widget-empty-state span
+{
+    display:block;
+
+    max-width:360px;
+
+    margin:0 auto;
+
+    padding:0;
+
+    color:#7a899f;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:400;
+
+    line-height:1.6;
+
+    white-space:normal;
+
+    text-align:center;
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — HOVER
+===================================================== */
+
+.widget-empty-state:hover > i
+{
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 10px 28px rgba(37,99,235,.11),
+        inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+
+
+/* =====================================================
+   EMPTY STATE — TABLE PROTECTION
+===================================================== */
+
+.widget-configuration-table .empty-row .empty-cell,
+.widget-configuration-table .empty-row .widget-empty-state
+{
+    background:#ffffff !important;
+}
+
+
+
+/* =====================================================
+   PAGE HEADER ACTIONS
+===================================================== */
+
+.page-header-actions
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+
+
+/* =====================================================
+   CONFIGURATION LAYOUT
+===================================================== */
+
+.configuration-layout
+{
+    display:flex;
+
+    width:100%;
+
+    min-width:0;
+
+    gap:20px;
+
+    box-sizing:border-box;
+}
+
+
+.configuration-left
+{
+    flex:0 0 300px;
+
+    width:300px;
+
+    min-width:300px;
+
+    box-sizing:border-box;
+}
+
+
+.configuration-right
+{
+    flex:1 1 auto;
+
+    width:auto;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+.configuration-right app-form-grid
+{
+    width:100%;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 1400px
+===================================================== */
+
+@media (max-width:1400px)
+{
+    .widget-toolbar-right
+    {
+        --widget-dropdown-width:220px;
+
+        gap:5px;
+
+        margin-left:8px;
+    }
+
+
+    .widget-add-button,
+    .widget-reset-button
+    {
+        flex-basis:72px;
+
+        width:72px;
+
+        min-width:72px;
+
+        max-width:72px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 1200px
+===================================================== */
+
+@media (max-width:1200px)
+{
+    .widget-toolbar-left
+    {
+        flex-basis:130px;
+
+        width:130px;
+
+        min-width:130px;
+
+        max-width:130px;
+    }
+
+
+    .widget-toolbar-right
+    {
+        --widget-dropdown-width:180px;
+
+        gap:4px;
+
+        margin-left:6px;
+    }
+
+
+    .widget-add-button,
+    .widget-reset-button
+    {
+        flex-basis:68px;
+
+        width:68px;
+
+        min-width:68px;
+
+        max-width:68px;
+
+        padding:0 6px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 992px
+===================================================== */
+
+@media (max-width:992px)
+{
+    .widget-toolbar-left
+    {
+        flex:0 0 auto;
+
+        width:auto;
+
+        min-width:0;
+
+        max-width:none;
+    }
+
+
+    .widget-toolbar-right
+    {
+        --widget-dropdown-width:calc(50% - 4px);
+
+        flex-wrap:wrap;
+
+        justify-content:flex-start;
+
+        width:100%;
+
+        margin-left:0;
+
+        gap:8px;
+    }
+
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    {
+        flex:1 1 var(--widget-dropdown-width) !important;
+
+        width:var(--widget-dropdown-width) !important;
+
+        min-width:120px !important;
+
+        max-width:none !important;
+    }
+
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown-container,
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown,
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown-selector,
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown-panel
+    {
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    .widget-add-button,
+    .widget-reset-button
+    {
+        flex:1 1 90px;
+
+        width:auto;
+
+        min-width:90px;
+
+        max-width:none;
+    }
+
+
+    .configuration-layout
+    {
+        flex-direction:column;
+
+        height:auto;
+    }
+
+
+    .configuration-left
+    {
+        flex:none;
+
+        width:100%;
+
+        min-width:100%;
+
+        height:auto;
+    }
+
+
+    .configuration-right
+    {
+        width:100%;
+
+        height:auto;
+    }
+
+
+    .widget-empty-state
+    {
+        padding:20px;
+    }
+}
+
+
+
+/* =====================================================
+   RESPONSIVE — 600px
+===================================================== */
+
+@media (max-width:600px)
+{
+    .widget-toolbar-right
+    {
+        --widget-dropdown-width:100%;
+
+        flex-direction:column;
+
+        flex-wrap:nowrap;
+
+        width:100%;
+
+        gap:8px;
+    }
+
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    {
+        flex:0 0 auto !important;
+
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown-container,
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown,
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown-selector,
+
+    :host ::ng-deep
+    .widget-toolbar-right
+    app-search-dropdown
+    .dropdown-panel
+    {
+        width:100% !important;
+
+        min-width:100% !important;
+
+        max-width:100% !important;
+    }
+
+
+    .widget-add-button,
+    .widget-reset-button
+    {
+        flex:0 0 auto;
+
+        width:100%;
+
+        min-width:100%;
+
+        max-width:100%;
+    }
+
+
+    .widget-configuration-table-container
+    {
+        width:100%;
+
+        height:100%;
+
+        min-height:0;
+
+        overflow-x:auto;
+
+        overflow-y:hidden;
+    }
+
+
+    .widget-configuration-table
+    {
+        width:100%;
+
+        min-width:720px;
+
+        height:auto;
+    }
+
+
+    .widget-configuration-table thead
+    {
+        width:100%;
+
+        height:40px;
+
+        min-height:40px;
+
+        max-height:40px;
+    }
+
+
+    .widget-configuration-table tbody
+    {
+        width:100%;
+
+        height:auto;
+    }
+
+
+    .widget-configuration-table .empty-row
+    {
+        height:120px;
+
+        min-height:120px;
+
+        max-height:120px;
+    }
+
+
+    .widget-configuration-table .empty-row .empty-cell
+    {
+        height:120px;
+
+        min-height:120px;
+
+        max-height:120px;
+    }
+
+
+    .widget-empty-state
+    {
+        height:120px;
+
+        min-height:120px;
+
+        max-height:120px;
+
+        padding:20px 16px;
+
+        gap:0;
+    }
+
+
+    .widget-empty-state > i
+    {
+        width:56px;
+
+        height:56px;
+
+        min-width:56px;
+
+        min-height:56px;
+
+        max-width:56px;
+
+        max-height:56px;
+
+        margin-bottom:13px;
+
+        font-size:21px;
+    }
+
+
+    .widget-empty-state strong
+    {
+        font-size:14px;
+
+        line-height:1.4;
+    }
+
+
+    .widget-empty-state span
+    {
+        max-width:300px;
+
+        font-size:11px;
+
+        line-height:1.6;
+    }
+}

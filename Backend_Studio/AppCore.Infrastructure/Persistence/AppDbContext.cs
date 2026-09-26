@@ -476,6 +476,55 @@ public class AppDbContext
 
     // AUTO-END : LoginComponent4
 
+
+    // AUTO-BEGIN : Dashboards
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.Dashboards>
+    Dashboardss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Dashboards
+
+
+
+    // AUTO-BEGIN : DefaultDBComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.DashboardComponents.DefaultDBComponents>
+    DefaultDBComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : DefaultDBComponents
+
+    // AUTO-BEGIN : RoleBasedDBComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.DashboardComponents.RoleBasedDBComponents>
+    RoleBasedDBComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : RoleBasedDBComponents
+
+
+
+    // AUTO-BEGIN : WidgetConfiguration
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.WidgetConfiguration>
+    WidgetConfigurations
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : WidgetConfiguration
+
     // AUTO-END : AUTO REGISTER DBSETS
 
     //===========================================================

@@ -62,6 +62,34 @@ from '../../shared/login-pages/login-page-4/login-page-4';
 
 
 //===============================================================
+// Orbit Loader
+//===============================================================
+
+import
+{
+    OrbitLoaderComponent
+}
+from '../../shared/components/utilities/orbit-loader/orbit-loader';
+
+
+//===============================================================
+// Toast
+//===============================================================
+
+import
+{
+    ToastComponent
+}
+from '../../shared/components/utilities/toast/toast';
+
+import
+{
+    ToastService
+}
+from '../../shared/components/utilities/toast/toast.service';
+
+
+//===============================================================
 // Login Page Loader
 //===============================================================
 
@@ -76,6 +104,10 @@ from '../../shared/login-pages/login-page-4/login-page-4';
     imports:
     [
         CommonModule,
+
+        OrbitLoaderComponent,
+
+        ToastComponent,
 
         LoginPage1,
 
@@ -106,6 +138,9 @@ export class LoginPageLoader
     (
         private readonly loginPagesService:
             LoginPagesService,
+
+        private readonly toastService:
+            ToastService,
 
         private readonly changeDetectorRef:
             ChangeDetectorRef
@@ -233,12 +268,22 @@ export class LoginPageLoader
                                 this.loadError =
                                     'The active Login Page configuration is invalid.';
 
+                                this.toastService.error
+                                (
+                                    'Login Page',
+
+                                    this.loadError,
+
+                                    5000
+                                );
+
                                 break;
                         }
 
 
                         this.changeDetectorRef.detectChanges();
                     },
+
 
                 error:
                     (error: any) =>
@@ -247,6 +292,16 @@ export class LoginPageLoader
                             error?.error?.message
                             ||
                             'Unable to load the active login page.';
+
+
+                        this.toastService.error
+                        (
+                            'Login Page',
+
+                            this.loadError,
+
+                            5000
+                        );
 
 
                         this.changeDetectorRef.detectChanges();

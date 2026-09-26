@@ -1,0 +1,90 @@
+/* ============================================================
+   Widget Configuration
+============================================================ */
+
+export interface WidgetConfiguration
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Widget Configuration
+============================================================ */
+
+export interface CreateWidgetConfiguration
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Widget Configuration
+============================================================ */
+
+export interface UpdateWidgetConfiguration
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Widget Configuration Defaults
+============================================================ */
+
+export interface WidgetConfigurationDefaults
+{
+    code:
+        string;
+}

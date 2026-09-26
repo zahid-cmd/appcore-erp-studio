@@ -1,0 +1,90 @@
+/* ============================================================
+   Role Based DB Components
+============================================================ */
+
+export interface RoleBasedDbComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Role Based DB Components
+============================================================ */
+
+export interface CreateRoleBasedDbComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Role Based DB Components
+============================================================ */
+
+export interface UpdateRoleBasedDbComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Role Based DB Components Defaults
+============================================================ */
+
+export interface RoleBasedDbComponentsDefaults
+{
+    code:
+        string;
+}

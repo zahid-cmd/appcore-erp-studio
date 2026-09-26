@@ -1,0 +1,258 @@
+<!-- ===========================================================
+     QUICK ACCESS WIDGET
+=========================================================== -->
+
+<div
+    class="quick-access-widget">
+
+
+    <!-- =======================================================
+         MAIN CONTENT
+    ======================================================== -->
+
+    <div
+        class="quick-access-main">
+
+
+        <!-- ===================================================
+             HEADER
+        ==================================================== -->
+
+        <div
+            class="quick-access-header">
+
+
+            <!-- ===============================================
+                 HEADER CONTENT
+            ================================================ -->
+
+            <div
+                class="quick-access-header-content">
+
+
+                <!-- =========================================
+                     TITLE
+                ========================================== -->
+
+                <div
+                    class="quick-access-title-row">
+
+
+                    <div
+                        class="quick-access-title-icon">
+
+                        <i
+                            class="fas fa-bolt">
+                        </i>
+
+                    </div>
+
+
+                    <div
+                        class="quick-access-title-content">
+
+                        <div
+                            class="quick-access-title">
+
+                            {{ widgetTitle }}
+
+                        </div>
+
+
+                        <div
+                            class="quick-access-subtitle">
+
+                            {{ widgetSubtitle }}
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 VIEW ALL
+            ================================================== -->
+
+            <button
+                type="button"
+                class="quick-access-view-all"
+                (click)="onViewAll()">
+
+
+                <span>
+                    View All
+                </span>
+
+
+                <i
+                    class="fas fa-arrow-right">
+                </i>
+
+
+            </button>
+
+
+        </div>
+
+
+        <!-- ===================================================
+             HEADER DIVIDER
+        ==================================================== -->
+
+        <div
+            class="quick-access-divider">
+        </div>
+
+
+        <!-- ===================================================
+             QUICK ACCESS GRID
+        ==================================================== -->
+
+        <div
+            class="quick-access-grid">
+
+
+            <!-- =================================================
+                 QUICK ACCESS CARD
+            ================================================== -->
+
+            <button
+                type="button"
+                class="quick-access-card"
+                *ngFor="
+                    let item of quickAccessItems
+                "
+                [class]="
+                    'quick-access-card ' +
+                    item.iconClass
+                "
+                (click)="onQuickAccessClick(item)">
+
+
+                <!-- =============================================
+                     CARD ICON
+                ============================================== -->
+
+                <div
+                    class="quick-access-card-icon">
+
+
+                    <i
+                        [class]="item.icon">
+                    </i>
+
+
+                </div>
+
+
+                <!-- =============================================
+                     CARD CONTENT
+                ============================================== -->
+
+                <div
+                    class="quick-access-card-content">
+
+
+                    <div
+                        class="quick-access-card-title">
+
+                        {{ item.title }}
+
+                    </div>
+
+
+                    <div
+                        class="quick-access-card-subtitle">
+
+                        {{ item.subtitle }}
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =============================================
+                     CARD NUMBER
+                ============================================== -->
+
+                <div
+                    class="quick-access-card-number">
+
+                    {{ item.badge }}
+
+                </div>
+
+
+                <!-- =============================================
+                     CARD ARROW
+                ============================================== -->
+
+                <div
+                    class="quick-access-card-arrow">
+
+
+                    <i
+                        class="fas fa-arrow-right">
+                    </i>
+
+
+                </div>
+
+
+            </button>
+
+
+        </div>
+
+
+        <!-- ===================================================
+             FOOTER
+        ==================================================== -->
+
+        <div
+            class="quick-access-footer">
+
+
+            <div
+                class="quick-access-footer-indicator">
+
+
+                <span
+                    class="quick-access-footer-dot">
+                </span>
+
+
+                <span
+                    class="quick-access-footer-text">
+
+                    Frequently used applications
+
+                </span>
+
+
+            </div>
+
+
+            <div
+                class="quick-access-footer-count">
+
+                {{ quickAccessItems.length }}
+                Applications
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

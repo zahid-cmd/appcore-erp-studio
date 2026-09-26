@@ -271,4 +271,22 @@ public static class CodeGenerator
         return $"LP-{sequenceNo:D3}";
     }
 
+
+
+    //===============================================================
+    // Dashboards Code
+    //===============================================================
+
+    public static string GenerateDashboardsCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid dashboards sequence number.");
+        }
+
+        return $"DSB-{sequenceNo:D3}";
+    }
+
 }

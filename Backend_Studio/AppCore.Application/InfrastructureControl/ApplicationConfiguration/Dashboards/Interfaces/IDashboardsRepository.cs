@@ -1,0 +1,125 @@
+//===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.ActivityHistory.DTOs;
+
+
+//===============================================================
+// Namespace
+//===============================================================
+
+namespace AppCore.Application.InfrastructureControl.ApplicationConfiguration;
+
+
+//===============================================================
+// IDashboardsRepository
+//===============================================================
+
+public interface IDashboardsRepository
+{
+
+    //===========================================================
+    // Get All
+    //===========================================================
+
+    Task<IReadOnlyList<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.Dashboards>>
+        GetAllAsync();
+
+
+
+    //===========================================================
+    // Get By Id
+    //===========================================================
+
+    Task<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.Dashboards?>
+        GetByIdAsync
+    (
+        long id
+    );
+
+
+
+    //===========================================================
+    // Get Active
+    //===========================================================
+
+    Task<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.Dashboards?>
+        GetActiveAsync();
+
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<DashboardsDefaultsDto>
+        GetDefaultsAsync();
+
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    Task<long>
+        CreateAsync
+    (
+        global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.Dashboards entity
+    );
+
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    Task
+        UpdateAsync
+    (
+        global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.Dashboards entity
+    );
+
+
+
+    //===========================================================
+    // Delete
+    //===========================================================
+
+    Task
+        DeleteAsync
+    (
+        long id
+    );
+
+
+
+    //===========================================================
+    // Restore
+    //===========================================================
+
+    Task<bool>
+        RestoreAsync();
+
+
+
+    //===========================================================
+    // Get History
+    //===========================================================
+
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetHistoryAsync();
+
+
+
+    //===========================================================
+    // Get Entity History
+    //===========================================================
+
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetEntityHistoryAsync
+    (
+        long id
+    );
+
+}

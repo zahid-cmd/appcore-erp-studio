@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const DashboardsRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Dashboards'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/dashboards/list/dashboards-list'
+            )
+            .then(
+                m =>
+                    m.DashboardsList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Dashboards'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/dashboards/form/dashboards-form'
+            )
+            .then(
+                m =>
+                    m.DashboardsForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Dashboards'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/dashboards/form/dashboards-form'
+            )
+            .then(
+                m =>
+                    m.DashboardsForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Dashboards'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/dashboards/form/dashboards-form'
+            )
+            .then(
+                m =>
+                    m.DashboardsForm
+            )
+    }
+
+];

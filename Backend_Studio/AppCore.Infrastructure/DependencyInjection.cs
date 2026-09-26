@@ -149,6 +149,39 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : WidgetConfiguration
+
+using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfiguration;
+
+// AUTO-END : WidgetConfiguration
+
+
+
+// AUTO-BEGIN : RoleBasedDBComponents
+
+using AppCore.Application.InfrastructureControl.DashboardComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DashboardComponents;
+
+// AUTO-END : RoleBasedDBComponents
+
+// AUTO-BEGIN : DefaultDBComponents
+
+using AppCore.Application.InfrastructureControl.DashboardComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.DashboardComponents;
+
+// AUTO-END : DefaultDBComponents
+
+
+
+// AUTO-BEGIN : Dashboards
+
+using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfiguration;
+
+// AUTO-END : Dashboards
+
+
 // AUTO-BEGIN : LoginComponent4
 
 using AppCore.Application.InfrastructureControl.LoginComponents;
@@ -525,6 +558,51 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : WidgetConfiguration
+
+        services.AddScoped
+        <
+            IWidgetConfigurationRepository,
+            WidgetConfigurationRepository
+        >();
+
+        // AUTO-END : WidgetConfiguration
+
+
+
+        // AUTO-BEGIN : RoleBasedDBComponents
+
+        services.AddScoped
+        <
+            IRoleBasedDBComponentsRepository,
+            RoleBasedDBComponentsRepository
+        >();
+
+        // AUTO-END : RoleBasedDBComponents
+
+        // AUTO-BEGIN : DefaultDBComponents
+
+        services.AddScoped
+        <
+            IDefaultDBComponentsRepository,
+            DefaultDBComponentsRepository
+        >();
+
+        // AUTO-END : DefaultDBComponents
+
+
+
+        // AUTO-BEGIN : Dashboards
+
+        services.AddScoped
+        <
+            IDashboardsRepository,
+            DashboardsRepository
+        >();
+
+        // AUTO-END : Dashboards
+
 
         // AUTO-BEGIN : LoginComponent4
 

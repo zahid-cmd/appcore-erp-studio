@@ -1,0 +1,62 @@
+<!-- ===========================================================
+     DASHBOARD CUSTOMIZED
+=========================================================== -->
+
+<div class="dashboard-customized">
+
+
+    <!-- =======================================================
+         DASHBOARD HEADER
+    ======================================================== -->
+
+    <app-page-header
+        title="Dashboard"
+        subtitle="Welcome back. Here's what's happening across your ERP."
+        icon="fas fa-gauge-high">
+
+
+        <!-- ===================================================
+             DASHBOARD ACTIONS
+        ==================================================== -->
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Customize"
+                command1Icon="fas fa-sliders"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                rightCommandIcon="fas fa-arrow-left"
+                (rightCommandClick)="back()">
+            </app-command-center>
+
+        </div>
+
+
+    </app-page-header>
+
+
+    <!-- =======================================================
+         DASHBOARD CONTENT
+    ======================================================== -->
+
+    <div class="dashboard-customized-content">
+
+
+        <!-- ===================================================
+             DASHBOARD WORKSPACE
+             ---------------------------------------------------
+             Configured dashboard widgets will be rendered here.
+             This component remains a shell only.
+        ==================================================== -->
+
+        <div class="dashboard-widget-workspace">
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

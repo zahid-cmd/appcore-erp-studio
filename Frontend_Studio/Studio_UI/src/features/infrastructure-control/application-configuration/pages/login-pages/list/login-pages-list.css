@@ -1,5 +1,135 @@
 @import '../../../../../../shared/styles/app-list-page.css';
 
+
+/* ===========================================================
+   LOGIN PAGES — LIST TABLE HEIGHT
+   -----------------------------------------------------------
+   Page-specific override.
+   Makes the Login Pages table consume the complete available
+   Page Canvas body height.
+   
+   Does NOT modify the shared ListTableComponent.
+=========================================================== */
+
+
+/* ===========================================================
+   LOGIN PAGES — OPERATION TABLE WRAPPER
+=========================================================== */
+
+:host ::ng-deep
+.login-pages-operation-table
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   LOGIN PAGES — LIST TABLE HOST
+=========================================================== */
+
+:host ::ng-deep
+.login-pages-operation-table
+app-list-table
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   LOGIN PAGES — LIST TABLE ROOT
+=========================================================== */
+
+:host ::ng-deep
+.login-pages-operation-table
+.app-list-table
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   LOGIN PAGES — TABLE CONTAINER
+=========================================================== */
+
+:host ::ng-deep
+.login-pages-operation-table
+.table-container
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   LOGIN PAGES — EMPTY STATE
+   -----------------------------------------------------------
+   Makes the empty state occupy the complete available
+   vertical space of the table body.
+=========================================================== */
+
+:host ::ng-deep
+.login-pages-operation-table
+.empty-state
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+
+    box-sizing:border-box;
+}
+
+
 /* ===========================================================
    LOGIN PAGES — OPERATION ICON
    -----------------------------------------------------------

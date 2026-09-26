@@ -1,0 +1,171 @@
+<!-- ===========================================================
+     DASHBOARD DEFAULT
+=========================================================== -->
+
+<div
+    class="dashboard-default">
+
+
+    <!-- =======================================================
+         DASHBOARD HEADER
+    ======================================================== -->
+
+    <app-page-header
+        title="Dashboard"
+        subtitle="Welcome back. Here's what's happening across your ERP."
+        icon="fas fa-gauge-high">
+
+
+        <!-- ===================================================
+             DASHBOARD ACTIONS
+        ==================================================== -->
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Customize"
+                command1Icon="fas fa-sliders"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                rightCommandIcon="fas fa-arrow-left"
+                (rightCommandClick)="back()">
+            </app-command-center>
+
+        </div>
+
+
+    </app-page-header>
+
+
+    <!-- =======================================================
+         DASHBOARD CONTENT
+    ======================================================== -->
+
+    <div
+        class="dashboard-default-content">
+
+
+        <!-- ===================================================
+             DASHBOARD WORKSPACE
+        ==================================================== -->
+
+        <div
+            class="dashboard-widget-workspace">
+
+
+            <!-- =================================================
+                 CONFIGURED DASHBOARD WIDGETS
+            ================================================== -->
+
+            <div
+                class="dashboard-widget"
+                *ngFor="
+                    let widget of dashboardWidgets
+                "
+                [style.grid-column-start]="
+                    getWidgetGridColumnStart(
+                        widget
+                    )
+                "
+                [style.grid-column-end]="
+                    getWidgetGridColumnEnd(
+                        widget
+                    )
+                ">
+
+
+                <!-- =============================================
+                     WIDGET COMPONENT
+                ============================================== -->
+
+                <app-component-renderer
+                    [componentKey]="widget.componentPath">
+                </app-component-renderer>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 EMPTY DASHBOARD STATE
+            ================================================== -->
+
+            <div
+                class="dashboard-empty-state"
+                *ngIf="
+                    !loading &&
+                    !loadFailed &&
+                    dashboardWidgets.length === 0
+                ">
+
+
+                <i
+                    class="fas fa-table-columns">
+                </i>
+
+
+                <div
+                    class="dashboard-empty-title">
+
+                    No Widgets Configured
+
+                </div>
+
+
+                <div
+                    class="dashboard-empty-message">
+
+                    No active widgets are currently configured
+                    for this dashboard.
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 DASHBOARD LOAD FAILURE
+            ================================================== -->
+
+            <div
+                class="
+                    dashboard-empty-state
+                    dashboard-load-failed
+                "
+                *ngIf="
+                    loadFailed
+                ">
+
+
+                <i
+                    class="fas fa-triangle-exclamation">
+                </i>
+
+
+                <div
+                    class="dashboard-empty-title">
+
+                    Dashboard Could Not Be Loaded
+
+                </div>
+
+
+                <div
+                    class="dashboard-empty-message">
+
+                    The dashboard configuration could not be loaded.
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

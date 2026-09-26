@@ -1,0 +1,90 @@
+/* ============================================================
+   Default DB Components
+============================================================ */
+
+export interface DefaultDbComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Default DB Components
+============================================================ */
+
+export interface CreateDefaultDbComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Default DB Components
+============================================================ */
+
+export interface UpdateDefaultDbComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Default DB Components Defaults
+============================================================ */
+
+export interface DefaultDbComponentsDefaults
+{
+    code:
+        string;
+}

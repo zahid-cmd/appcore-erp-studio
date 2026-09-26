@@ -166,4 +166,30 @@ export const infrastructureControlRoutes:
 
     // AUTO-END : MNU-002-006
 
+    // AUTO-BEGIN : MNU-002-007
+
+    //===========================================================
+    // Dashboard Components
+    //===========================================================
+
+    {
+        path:'dashboard-components',
+
+        data:
+        {
+            breadcrumb:'Dashboard Components'
+        },
+
+        loadChildren:() =>
+            import(
+                '../dashboard-components/routes/dashboard-components.routes'
+            )
+            .then(
+                m =>
+                    m.mnu002007Routes
+            )
+    },
+
+    // AUTO-END : MNU-002-007
+
 ];

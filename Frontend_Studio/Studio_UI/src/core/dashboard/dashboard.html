@@ -1,5 +1,5 @@
 <!-- ===========================================================
-     DASHBOARD
+     DASHBOARD HOST
 =========================================================== -->
 
 <div class="dashboard">
@@ -7,11 +7,16 @@
 
     <!-- =======================================================
          DASHBOARD HEADER
+         -------------------------------------------------------
+         FIXED — NEVER SCROLLS
     ======================================================== -->
 
     <app-page-header
+
         title="Dashboard"
+
         subtitle="Welcome back. Here's what's happening across your ERP."
+
         icon="fas fa-gauge-high">
 
 
@@ -22,213 +27,260 @@
         <div pageHeaderRight>
 
             <app-command-center
-                [command1Text]="isCustomizeMode ? 'Done' : 'Customize'"
-                [command1Icon]="isCustomizeMode ? 'fas fa-check' : 'fas fa-sliders'"
+
+                [command1Text]="
+                    isCustomizeMode
+                        ? 'Done'
+                        : 'Customize'
+                "
+
+                [command1Icon]="
+                    isCustomizeMode
+                        ? 'fas fa-check'
+                        : 'fas fa-sliders'
+                "
+
                 [command1Visible]="true"
-                (command1Click)="toggleCustomizeMode()"
+
+                (command1Click)="
+                    toggleCustomizeMode()
+                "
 
                 [command2Text]="'Refresh'"
+
                 [command2Icon]="'fas fa-rotate-right'"
+
                 [command2Visible]="true"
-                (command2Click)="refreshDashboard()">
+
+                (command2Click)="
+                    refreshDashboard()
+                ">
+
             </app-command-center>
 
         </div>
 
-
     </app-page-header>
 
 
+
     <!-- =======================================================
-         DASHBOARD CONTENT
+         DASHBOARD SCROLL VIEWPORT
+         -------------------------------------------------------
+         ONLY THIS AREA SCROLLS.
     ======================================================== -->
 
-    <div class="dashboard-content">
+    <div class="dashboard-scroll-wrapper appcore-scrollbar">
 
 
         <!-- ===================================================
-             CUSTOMIZE MODE
+             DASHBOARD CONTENT
         ==================================================== -->
 
-        <div
-            class="dashboard-customize-bar"
-            *ngIf="isCustomizeMode">
-
-            <div class="dashboard-customize-info">
-
-                <div class="dashboard-customize-icon">
-                    <i class="fas fa-sliders"></i>
-                </div>
-
-                <div class="dashboard-customize-content">
-
-                    <div class="dashboard-customize-title">
-                        Customize Dashboard
-                    </div>
-
-                    <div class="dashboard-customize-subtitle">
-                        Arrange, resize, show or hide dashboard widgets.
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="dashboard-customize-status">
-
-                <i class="fas fa-grip"></i>
-
-                <span>
-                    Layout mode
-                </span>
-
-            </div>
-
-        </div>
+        <div class="dashboard-content">
 
 
-        <!-- ===================================================
-             WIDGET GRID
-        ==================================================== -->
-
-        <div class="dashboard-widget-grid">
-
-
-            <!-- =================================================
-                 WIDGET
-            ================================================== -->
+            <!-- ===============================================
+                 LOADING STATE
+            ================================================ -->
 
             <div
-                class="dashboard-widget"
-                *ngFor="let widget of visibleWidgets"
-                [style.grid-column]="'span ' + widget.columnSpan"
-                [style.grid-row]="'span ' + widget.rowSpan"
-                [attr.data-widget-key]="widget.widgetKey">
+                class="dashboard-state"
+                *ngIf="isLoading">
+
+                <div class="dashboard-state-icon">
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                </div>
+
+                <div class="dashboard-state-title">
+
+                    Loading Dashboard
+
+                </div>
+
+                <div class="dashboard-state-text">
+
+                    Preparing your dashboard widgets.
+
+                </div>
+
+            </div>
 
 
-                <!-- =============================================
-                     WIDGET HEADER
-                ============================================== -->
 
-                <div class="dashboard-widget-header">
+            <!-- ===============================================
+                 LOAD FAILURE
+            ================================================ -->
 
-                    <div class="dashboard-widget-title">
+            <div
+                class="dashboard-state dashboard-load-failed"
+                *ngIf="
+                    !isLoading &&
+                    loadFailed
+                ">
 
-                        <div class="dashboard-widget-icon">
+                <div class="dashboard-state-icon">
 
-                            <i
-                                [class]="widget.icon">
-                            </i>
+                    <i class="fas fa-triangle-exclamation"></i>
 
-                        </div>
+                </div>
 
-                        <span>
-                            {{ widget.title }}
-                        </span>
+                <div class="dashboard-state-title">
+
+                    Dashboard Could Not Be Loaded
+
+                </div>
+
+                <div class="dashboard-state-text">
+
+                    The dashboard could not be loaded at this time.
+
+                </div>
+
+                <button
+                    type="button"
+                    class="dashboard-state-button"
+                    (click)="refreshDashboard()">
+
+                    <i class="fas fa-rotate-right"></i>
+
+                    Retry
+
+                </button>
+
+            </div>
+
+
+
+            <!-- ===============================================
+                 DASHBOARD WIDGET AREA
+            ================================================ -->
+
+            <ng-container
+                *ngIf="
+                    !isLoading &&
+                    !loadFailed
+                ">
+
+
+                <!-- ===========================================
+                     EMPTY DASHBOARD
+                ============================================ -->
+
+                <div
+                    class="dashboard-empty"
+                    *ngIf="
+                        visibleWidgets.length === 0
+                    ">
+
+                    <div class="dashboard-empty-icon">
+
+                        <i class="fas fa-gauge-high"></i>
 
                     </div>
 
+                    <div class="dashboard-empty-title">
 
-                    <!-- =========================================
-                         WIDGET CONFIGURATION
-                    ========================================== -->
+                        No Dashboard Widgets
 
-                    <div
-                        class="dashboard-widget-actions"
-                        *ngIf="isCustomizeMode">
+                    </div>
 
-                        <button
-                            type="button"
-                            class="dashboard-widget-action"
-                            title="Hide widget"
-                            (click)="toggleWidgetVisibility(widget.id)">
+                    <div class="dashboard-empty-text">
 
-                            <i class="fas fa-eye-slash"></i>
-
-                        </button>
+                        No widgets are currently configured for this dashboard.
 
                     </div>
 
                 </div>
 
 
-                <!-- =============================================
-                     WIDGET CONTENT
-                ============================================== -->
 
-                <div class="dashboard-widget-content">
+                <!-- ===========================================
+                     WIDGET GRID
+                ============================================ -->
 
-                    <div class="dashboard-widget-placeholder">
+                <div
+                    class="dashboard-widget-grid"
+                    *ngIf="
+                        visibleWidgets.length > 0
+                    ">
 
-                        <div class="dashboard-widget-placeholder-icon">
 
-                            <i
-                                [class]="widget.icon">
-                            </i>
+                    <!-- =======================================
+                         CONFIGURED WIDGETS
+                    ======================================== -->
+
+                    <ng-container
+                        *ngFor="
+                            let widget of visibleWidgets;
+                            trackBy: trackByWidgetId
+                        ">
+
+
+                        <!-- ===================================
+                             DASHBOARD WIDGET
+                        ==================================== -->
+
+                        <div
+
+                            class="dashboard-widget"
+
+                            [style.grid-column]="
+                                'span ' +
+                                widget.columnSpan
+                            "
+
+                            [class.dashboard-widget-small]="
+                                widget.size === 'small'
+                            "
+
+                            [class.dashboard-widget-medium]="
+                                widget.size === 'medium'
+                            "
+
+                            [class.dashboard-widget-large]="
+                                widget.size === 'large'
+                            ">
+
+
+                            <!-- =============================
+                                 WIDGET CONTENT
+                            ============================== -->
+
+                            <div
+                                class="dashboard-widget-content">
+
+
+                                <app-component-renderer
+
+                                    [componentKey]="
+                                        widget.componentKey
+                                    ">
+
+                                </app-component-renderer>
+
+
+                            </div>
+
 
                         </div>
 
-                        <div class="dashboard-widget-placeholder-title">
 
-                            {{ widget.title }}
+                    </ng-container>
 
-                        </div>
-
-                        <div class="dashboard-widget-placeholder-text">
-
-                            {{ widget.widgetKey }}
-
-                        </div>
-
-                    </div>
 
                 </div>
 
 
-            </div>
+            </ng-container>
 
-
-        </div>
-
-
-        <!-- ===================================================
-             EMPTY DASHBOARD
-        ==================================================== -->
-
-        <div
-            class="dashboard-empty"
-            *ngIf="visibleWidgets.length === 0">
-
-            <div class="dashboard-empty-icon">
-
-                <i class="fas fa-table-cells-large"></i>
-
-            </div>
-
-            <div class="dashboard-empty-title">
-                No Widgets Available
-            </div>
-
-            <div class="dashboard-empty-text">
-                Your dashboard currently has no visible widgets.
-            </div>
-
-            <button
-                type="button"
-                class="dashboard-empty-button"
-                (click)="toggleCustomizeMode()">
-
-                <i class="fas fa-plus"></i>
-
-                <span>
-                    Customize Dashboard
-                </span>
-
-            </button>
 
         </div>
 
 
     </div>
+
 
 </div>

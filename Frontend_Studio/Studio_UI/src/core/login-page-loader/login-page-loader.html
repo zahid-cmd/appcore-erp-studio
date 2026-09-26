@@ -1,38 +1,46 @@
-<!--===============================================================
+<!--===========================================================
     Login Page Loader
-===============================================================-->
+============================================================-->
 
 <div
     class="login-page-loader"
 >
 
+
     <!--===========================================================
-        Loading
+        Orbit Loader
+        -----------------------------------------------------------
+        Displays while the active Login Page configuration is
+        being loaded.
     ============================================================-->
 
-    <div
-        class="login-page-loader-state"
+    <app-orbit-loader
         *ngIf="isLoading"
+
+        title="Loading Login Page"
+
+        message="Please wait while the login page is being loaded."
+
+        size="medium"
+
+        [showMessage]="true"
+
+        [overlay]="false"
     >
-        Loading Login Page...
-    </div>
+    </app-orbit-loader>
 
 
 
     <!--===========================================================
-        Error
+        Toast
+        -----------------------------------------------------------
+        Page-level Toast component.
+
+        ToastService controls the actual toast items.
     ============================================================-->
 
-    <div
-        class="login-page-loader-state login-page-loader-error"
-        *ngIf="
-            !isLoading
-            &&
-            loadError
-        "
-    >
-        {{ loadError }}
-    </div>
+    <app-toast>
+    </app-toast>
 
 
 
@@ -101,5 +109,6 @@
         "
     >
     </app-login-page-4>
+
 
 </div>

@@ -1,0 +1,498 @@
+<!-- ===========================================================
+     WELCOME WIDGET
+=========================================================== -->
+
+<div class="welcome-widget">
+
+
+    <!-- =======================================================
+         MAIN WIDGET CONTENT
+    ======================================================== -->
+
+    <div class="welcome-widget-main">
+
+
+        <!-- ===================================================
+             LEFT AREA
+        ==================================================== -->
+
+        <section class="welcome-area">
+
+
+            <!-- =================================================
+                 GREETING HEADER
+            ================================================== -->
+
+            <div class="greeting-header">
+
+
+                <!-- =============================================
+                     PROFILE AVATAR
+                ============================================== -->
+
+                <div class="profile-avatar">
+
+                    <div class="avatar-circle">
+
+                        <i class="fas fa-user">
+                        </i>
+
+                    </div>
+
+
+                    <span class="online-indicator">
+                    </span>
+
+                </div>
+
+
+                <!-- =============================================
+                     DIVIDER
+                ============================================== -->
+
+                <div class="greeting-divider">
+                </div>
+
+
+                <!-- =============================================
+                     GREETING CONTENT
+                ============================================== -->
+
+                <div class="greeting-content">
+
+
+                    <div class="greeting-line">
+
+                        <span class="greeting-icon">
+
+                            <i class="fas fa-sun">
+                            </i>
+
+                        </span>
+
+
+                        <span>
+                            {{ greeting }},
+                        </span>
+
+                    </div>
+
+
+                    <div class="user-name">
+
+                        <span class="user-name-first">
+                            {{ userFirstName }}
+                        </span>
+
+                        <span class="user-name-last">
+                            {{ userLastName }}
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 WELCOME MESSAGE
+            ================================================== -->
+
+            <div class="welcome-message">
+
+
+                <span class="message-line">
+                    We're glad to have you here.
+                </span>
+
+
+                <span class="message-line">
+
+                    Let's make today a
+
+                    <span>
+                        productive day!
+                    </span>
+
+                </span>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 WELCOME ACCENT
+            ================================================== -->
+
+            <div class="welcome-accent">
+
+
+                <span class="accent-line">
+                </span>
+
+
+                <span class="accent-dot">
+                </span>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 STATISTICS
+            ================================================== -->
+
+            <div class="statistics-grid">
+
+
+                <!-- =============================================
+                     TASKS
+                ============================================== -->
+
+                <div class="stat-card stat-tasks">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            [class]="statistics.tasks.icon">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-information">
+
+
+                        <div class="stat-value">
+                            {{ statistics.tasks.value }}
+                        </div>
+
+
+                        <div class="stat-label">
+                            {{ statistics.tasks.label }}
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="stat-arrow">
+
+                        <i class="fas fa-chevron-right">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-progress">
+
+                        <span
+                            [style.width.%]="
+                                statistics.tasks.progress
+                            ">
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =============================================
+                     MESSAGES
+                ============================================== -->
+
+                <div class="stat-card stat-messages">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            [class]="statistics.messages.icon">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-information">
+
+
+                        <div class="stat-value">
+                            {{ statistics.messages.value }}
+                        </div>
+
+
+                        <div class="stat-label">
+                            {{ statistics.messages.label }}
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="stat-arrow">
+
+                        <i class="fas fa-chevron-right">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-progress">
+
+                        <span
+                            [style.width.%]="
+                                statistics.messages.progress
+                            ">
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =============================================
+                     MEETINGS
+                ============================================== -->
+
+                <div class="stat-card stat-meetings">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            [class]="statistics.meetings.icon">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-information">
+
+
+                        <div class="stat-value">
+                            {{ statistics.meetings.value }}
+                        </div>
+
+
+                        <div class="stat-label">
+                            {{ statistics.meetings.label }}
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="stat-arrow">
+
+                        <i class="fas fa-chevron-right">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-progress">
+
+                        <span
+                            [style.width.%]="
+                                statistics.meetings.progress
+                            ">
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =============================================
+                     NOTIFICATIONS
+                ============================================== -->
+
+                <div class="stat-card stat-notifications">
+
+
+                    <div class="stat-icon">
+
+                        <i
+                            [class]="statistics.notifications.icon">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-information">
+
+
+                        <div class="stat-value">
+                            {{ statistics.notifications.value }}
+                        </div>
+
+
+                        <div class="stat-label">
+                            {{ statistics.notifications.label }}
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="stat-arrow">
+
+                        <i class="fas fa-chevron-right">
+                        </i>
+
+                    </div>
+
+
+                    <div class="stat-progress">
+
+                        <span
+                            [style.width.%]="
+                                statistics.notifications.progress
+                            ">
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ===================================================
+             RIGHT AREA
+        ==================================================== -->
+
+        <section class="right-area">
+
+
+            <!-- =================================================
+                 DATE
+            ================================================== -->
+
+            <div class="date-badge">
+
+
+                <div class="date-icon">
+
+                    <i class="fas fa-calendar-days">
+                    </i>
+
+                </div>
+
+
+                <div class="date-text">
+
+                    {{ formattedDate }}
+
+                </div>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 CURRENT TIME
+            ================================================== -->
+
+            <div class="current-time">
+
+
+                <span class="time-value">
+                    {{ timeValue }}
+                </span>
+
+
+                <span class="time-period">
+                    {{ timePeriod }}
+                </span>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 QUOTE
+            ================================================== -->
+
+            <div class="quote-card">
+
+
+                <!-- =============================================
+                     QUOTE DECORATIONS
+                ============================================== -->
+
+                <div
+                    class="quote-decoration quote-decoration-one">
+                </div>
+
+
+                <div
+                    class="quote-decoration quote-decoration-two">
+                </div>
+
+
+                <!-- =============================================
+                     QUOTE MARK
+                ============================================== -->
+
+                <div class="quote-mark">
+                    “
+                </div>
+
+
+                <!-- =============================================
+                     QUOTE TEXT
+                ============================================== -->
+
+                <div class="quote-text">
+
+                    {{ quoteText }}
+
+                    <span>
+                        {{ quoteHighlight }}
+                    </span>
+
+                </div>
+
+
+                <!-- =============================================
+                     QUOTE ACCENT
+                ============================================== -->
+
+                <div class="quote-accent">
+                </div>
+
+
+                <!-- =============================================
+                     QUOTE FOOTER
+                ============================================== -->
+
+                <div class="quote-footer">
+
+                    {{ quoteFooter }}
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+
+</div>

@@ -1,0 +1,307 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-table-columns"
+
+        [title]="pageTitle"
+
+        subtitle="Manage dashboards">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 1
+                 GENERAL INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="General Information"
+
+                icon="fas fa-circle-info">
+
+
+                <!-- Code -->
+
+                <app-textbox
+
+                    label="Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.code"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Name -->
+
+                <app-textbox
+
+                    label="Name"
+
+                    placeholder="Enter dashboard name"
+
+                    [(value)]="entity.name"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Dashboard Key -->
+
+                <app-textbox
+
+                    label="Dashboard Key"
+
+                    placeholder="Auto generated from name"
+
+                    [(value)]="entity.dashboardKey"
+
+                    [readonly]="isDashboardKeyReadonly"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 2
+                 DASHBOARD DEFINITION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Dashboard Definition"
+
+                icon="fas fa-table-columns">
+
+
+                <!-- Dashboard Type -->
+
+                <app-search-dropdown
+
+                    label="Dashboard Type"
+
+                    placeholder="Select Dashboard Type"
+
+                    [items]="dashboardTypeItems"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="entity.dashboardType"
+
+                    (valueChange)="onDashboardTypeChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+
+                <!-- Role Profile -->
+
+                <app-search-dropdown
+
+                    label="Role Profile"
+
+                    placeholder="Select Role Profile"
+
+                    [items]="roleProfileItems"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="entity.roleProfileId"
+
+                    (valueChange)="onRoleProfileChange()"
+
+                    [disabled]="isRoleProfileDisabled"
+
+                    [required]="
+                        entity.dashboardType === 'role-based'
+                    ">
+
+                </app-search-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 3
+                 STATUS INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status Information"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    labelField="text"
+
+                    valueField="value"
+
+                    [(value)]="entity.status"
+
+                    (valueChange)="onStatusChange()"
+
+                    [disabled]="isStatusDisabled"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 4
+                 ADDITIONAL INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Additional Information"
+
+                icon="fas fa-clipboard">
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [(value)]="entity.remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+
+<app-confirm-dialog></app-confirm-dialog>

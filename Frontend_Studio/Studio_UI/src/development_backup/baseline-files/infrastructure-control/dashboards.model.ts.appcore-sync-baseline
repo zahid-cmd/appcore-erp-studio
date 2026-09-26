@@ -1,0 +1,90 @@
+/* ============================================================
+   Dashboards
+============================================================ */
+
+export interface Dashboards
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Dashboards
+============================================================ */
+
+export interface CreateDashboards
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Dashboards
+============================================================ */
+
+export interface UpdateDashboards
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Dashboards Defaults
+============================================================ */
+
+export interface DashboardsDefaults
+{
+    code:
+        string;
+}

@@ -1,0 +1,174 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+
+/* ===========================================================
+   DASHBOARDS — LIST TABLE HEIGHT
+   -----------------------------------------------------------
+   Page-specific override.
+   Makes the dashboard table consume the complete available
+   Page Canvas body height.
+   
+   Does NOT modify the shared ListTableComponent.
+=========================================================== */
+
+
+/* ===========================================================
+   DASHBOARDS — OPERATION TABLE WRAPPER
+=========================================================== */
+
+:host ::ng-deep
+.dashboards-operation-table
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   DASHBOARDS — LIST TABLE HOST
+=========================================================== */
+
+:host ::ng-deep
+.dashboards-operation-table
+app-list-table
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   DASHBOARDS — LIST TABLE ROOT
+=========================================================== */
+
+:host ::ng-deep
+.dashboards-operation-table
+.app-list-table
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   DASHBOARDS — TABLE BODY
+   -----------------------------------------------------------
+   The header remains at the top and the body expands into
+   all remaining vertical space.
+=========================================================== */
+
+:host ::ng-deep
+.dashboards-operation-table
+.table-container
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+}
+
+
+/* ===========================================================
+   DASHBOARDS — EMPTY STATE
+   -----------------------------------------------------------
+   Empty state fills the complete available table body.
+=========================================================== */
+
+:host ::ng-deep
+.dashboards-operation-table
+.empty-state
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:0;
+
+    box-sizing:border-box;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-direction:column;
+}
+
+
+/* ===========================================================
+   DASHBOARDS — OPERATION ICON
+   -----------------------------------------------------------
+   Page-specific override.
+   Does NOT modify the shared ListTableComponent.
+=========================================================== */
+
+:host ::ng-deep
+.dashboards-operation-table
+.action-btn.sync
+{
+    font-size:0;
+}
+
+
+:host ::ng-deep
+.dashboards-operation-table
+.action-btn.sync
+i
+{
+    display:none;
+}
+
+
+:host ::ng-deep
+.dashboards-operation-table
+.action-btn.sync::before
+{
+    content:"\f06e";
+
+    font-family:"Font Awesome 6 Free";
+
+    font-weight:900;
+
+    font-size:14px;
+
+    line-height:1;
+
+    display:inline-block;
+}
