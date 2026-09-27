@@ -1,25 +1,79 @@
-<div class="layout"> 
- 
-    <app-topbar></app-topbar> 
- 
-    <div class="layout-body"> 
- 
-        <app-sidebar 
-            [class.sidebar-collapsed]="isSidebarCollapsed"> 
-        </app-sidebar> 
- 
-        <main class="content"> 
- 
-            <app-breadcrumb 
-                *ngIf="!isDashboard"> 
-            </app-breadcrumb> 
- 
-            <router-outlet></router-outlet> 
- 
-        </main> 
- 
-    </div> 
- 
-    <app-footer></app-footer> 
- 
+<div class="layout">
+
+
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
+
+    <app-topbar>
+    </app-topbar>
+
+
+
+    <!-- =====================================================
+         LAYOUT BODY
+    ====================================================== -->
+
+    <div class="layout-body">
+
+
+        <!-- =================================================
+             SIDEBAR
+        ================================================== -->
+
+        <app-sidebar
+            [class.sidebar-collapsed]="isSidebarCollapsed">
+        </app-sidebar>
+
+
+
+        <!-- =================================================
+             CONTENT
+        ================================================== -->
+
+        <main class="content">
+
+
+            <!-- =============================================
+                 BREADCRUMB
+            ============================================== -->
+
+            <app-breadcrumb
+                *ngIf="!isDashboard">
+            </app-breadcrumb>
+
+
+
+            <!-- =============================================
+                 ROUTED PAGE
+            ============================================== -->
+
+            <router-outlet>
+            </router-outlet>
+
+
+        </main>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <app-footer>
+    </app-footer>
+
+
+
+    <!-- =====================================================
+         GLOBAL TOAST
+    ====================================================== -->
+
+    <app-toast>
+    </app-toast>
+
+
 </div>

@@ -10,7 +10,7 @@
 
         subtitle="Manage companies"
 
-        icon="fas fa-list">
+        icon="fas fa-building">
 
         <div pageHeaderCenter>
 
@@ -76,29 +76,6 @@
             [(selectedTab)]="selectedTab">
 
         </app-control-tabs>
-
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
-
-            pageToolbarRight
-
-            placeholder="All Status"
-
-            [items]="statusItems"
-
-            labelField="text"
-
-            valueField="value"
-
-            [(value)]="selectedStatus"
-
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-dropdown>
 
     </app-page-toolbar>
 

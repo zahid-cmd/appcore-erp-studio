@@ -30,6 +30,12 @@ import
 }
 from '@angular/forms';
 
+import
+{
+    environment
+}
+from '../../../../../../environments/environment';
+
 
 //===============================================================
 // Shared Components
@@ -94,6 +100,12 @@ import
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
+
+import
+{
+    ImageHubComponent
+}
+from '../../../../../../shared/components/controls/image-hub/image-hub';
 
 
 //===============================================================
@@ -191,6 +203,8 @@ from '../../../services/user-profile.service';
         TextboxComponent,
 
         DropdownComponent,
+
+        ImageHubComponent,
 
 
         //=======================================================
@@ -384,8 +398,30 @@ implements OnInit
 
         MobileNo:'',
 
+        UserPhotoPath:'',
+
         IsActive:true
     };
+
+
+
+    //===========================================================
+    // User Profile Photo
+    //===========================================================
+
+    selectedUserPhotoFile:
+        File | null =
+        null;
+
+
+    userPhotoPreviewUrl:
+        string =
+        '';
+
+
+    originalUserPhotoPath:
+        string =
+        '';
 
 
 
@@ -552,6 +588,9 @@ implements OnInit
     private initializeEntity():
         void
     {
+        this.revokeUserPhotoPreview();
+
+
         this.entity =
         {
             UserProfileId:0,
@@ -568,8 +607,22 @@ implements OnInit
 
             MobileNo:'',
 
+            UserPhotoPath:'',
+
             IsActive:true
         };
+
+
+        this.selectedUserPhotoFile =
+            null;
+
+
+        this.userPhotoPreviewUrl =
+            '';
+
+
+        this.originalUserPhotoPath =
+            '';
 
 
         this.generateDefaults();
@@ -750,6 +803,15 @@ implements OnInit
                     );
 
 
+                    const userPhotoPath:
+                        string =
+                        response?.UserPhotoPath
+                        ??
+                        response?.userPhotoPath
+                        ??
+                        '';
+
+
                     this.entity =
                     {
                         UserProfileId:
@@ -803,6 +865,9 @@ implements OnInit
                             ??
                             '',
 
+                        UserPhotoPath:
+                            userPhotoPath,
+
                         IsActive:
                             Boolean(
                                 response?.IsActive
@@ -814,10 +879,46 @@ implements OnInit
                     };
 
 
+                    //===================================================
+                    // Reset Selected Photo
+                    //===================================================
+
+                    this.selectedUserPhotoFile =
+                        null;
+
+
+                    //===================================================
+                    // Store Original Photo Path
+                    //===================================================
+
+                    this.originalUserPhotoPath =
+                        userPhotoPath;
+
+
+                    //===================================================
+                    // Build Existing Photo Preview
+                    //===================================================
+
+                    this.revokeUserPhotoPreview();
+
+
+                    this.userPhotoPreviewUrl =
+                        this.buildUserPhotoUrl(
+                            userPhotoPath
+                        );
+
+
                     console.log(
                         'User Profile Form Entity:',
 
                         this.entity
+                    );
+
+
+                    console.log(
+                        'User Profile Photo URL:',
+
+                        this.userPhotoPreviewUrl
                     );
 
 
@@ -863,6 +964,389 @@ implements OnInit
 
 
     //===========================================================
+    // Build User Photo URL
+    //===========================================================
+
+    private buildUserPhotoUrl(
+        photoPath:
+            string
+    ):
+        string
+    {
+        const path =
+            photoPath?.trim()
+            ??
+            '';
+
+
+        if
+        (
+            !path
+        )
+        {
+            return '';
+        }
+
+
+        //=======================================================
+        // Absolute URL
+        //=======================================================
+
+        if
+        (
+            path.startsWith('http://')
+            ||
+            path.startsWith('https://')
+            ||
+            path.startsWith('data:')
+            ||
+            path.startsWith('blob:')
+        )
+        {
+            return path;
+        }
+
+
+        //=======================================================
+        // API Base URL
+        //=======================================================
+
+        const apiBaseUrl =
+            environment.apiUrl
+                .replace(
+                    /\/api\/?$/,
+                    ''
+                );
+
+
+        //=======================================================
+        // Relative Upload Path
+        //=======================================================
+
+        if
+        (
+            path.startsWith('/')
+        )
+        {
+            return `${apiBaseUrl}${path}`;
+        }
+
+
+        return `${apiBaseUrl}/${path}`;
+    }
+
+
+
+    //===========================================================
+    // User Profile Photo Selected
+    //===========================================================
+
+    onUserPhotoChange
+    (
+        file:
+            File | null
+    ):
+        void
+    {
+        //=======================================================
+        // View Mode
+        //=======================================================
+
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Remove Photo
+        //=======================================================
+
+        if
+        (
+            !file
+        )
+        {
+            this.revokeUserPhotoPreview();
+
+
+            this.selectedUserPhotoFile =
+                null;
+
+
+            this.entity.UserPhotoPath =
+                '';
+
+
+            this.userPhotoPreviewUrl =
+                '';
+
+
+            this.checkForChanges();
+
+
+            this.cdr.detectChanges();
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Revoke Previous Preview
+        //=======================================================
+
+        this.revokeUserPhotoPreview();
+
+
+        //=======================================================
+        // Store Selected File
+        //=======================================================
+
+        this.selectedUserPhotoFile =
+            file;
+
+
+        //=======================================================
+        // Existing Path Will Be Replaced
+        //=======================================================
+
+        this.entity.UserPhotoPath =
+            '';
+
+
+        //=======================================================
+        // Create Local Preview
+        //=======================================================
+
+        this.userPhotoPreviewUrl =
+            URL.createObjectURL(
+                file
+            );
+
+
+        //=======================================================
+        // Track Changes
+        //=======================================================
+
+        this.checkForChanges();
+
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Revoke User Photo Preview
+    //===========================================================
+
+    private revokeUserPhotoPreview():
+        void
+    {
+        if
+        (
+            this.userPhotoPreviewUrl
+            &&
+            this.userPhotoPreviewUrl.startsWith('blob:')
+        )
+        {
+            URL.revokeObjectURL(
+                this.userPhotoPreviewUrl
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Upload User Photo
+    //===========================================================
+
+    private uploadUserPhoto():
+        void
+    {
+        if
+        (
+            !this.selectedUserPhotoFile
+            ||
+            this.entity.UserProfileId <= 0
+        )
+        {
+            this.completeSave();
+            return;
+        }
+
+
+        this.userprofileservice
+            .uploadUserPhoto(
+                this.entity.UserProfileId,
+
+                this.selectedUserPhotoFile
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    photoPath:
+                        string
+                ): void =>
+                {
+                    this.entity.UserPhotoPath =
+                        photoPath
+                        ??
+                        '';
+
+
+                    this.originalUserPhotoPath =
+                        this.entity.UserPhotoPath;
+
+
+                    this.completeSave();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Upload User Profile Photo Error',
+
+                        error
+                    );
+
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'User Profile was saved, but the profile photo could not be uploaded.';
+
+
+                    this.toast.error(
+                        'Photo Upload',
+
+                        message
+                    );
+
+
+                    this.completeSave();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Delete User Photo
+    //===========================================================
+
+    private deleteUserPhoto():
+        void
+    {
+        if
+        (
+            this.entity.UserProfileId <= 0
+            ||
+            !this.originalUserPhotoPath
+        )
+        {
+            this.completeSave();
+            return;
+        }
+
+
+        this.userprofileservice
+            .deleteUserPhoto(
+                this.entity.UserProfileId
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.entity.UserPhotoPath =
+                        '';
+
+
+                    this.originalUserPhotoPath =
+                        '';
+
+
+                    this.completeSave();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Delete User Profile Photo Error',
+
+                        error
+                    );
+
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'User Profile was updated, but the profile photo could not be removed.';
+
+
+                    this.toast.error(
+                        'Photo Removal',
+
+                        message
+                    );
+
+
+                    this.completeSave();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Complete Save
+    //===========================================================
+
+    private completeSave():
+        void
+    {
+        this.originalEntity =
+            JSON.stringify(
+                this.entity
+            );
+
+
+        this.hasChanges =
+            false;
+
+
+        this.toast.success(
+            'Success',
+
+            this.mode === 'edit'
+                ? 'User Profile updated successfully.'
+                : 'User Profile created successfully.'
+        );
+
+
+        this.onBackToList();
+    }
+
+
+
+    //===========================================================
     // Track Changes
     //===========================================================
 
@@ -874,7 +1358,9 @@ implements OnInit
                 this.entity
             )
             !==
-            this.originalEntity;
+            this.originalEntity
+            ||
+            this.selectedUserPhotoFile !== null;
     }
 
 
@@ -1062,6 +1548,9 @@ implements OnInit
             MobileNo:
                 this.entity.MobileNo.trim(),
 
+            UserPhotoPath:
+                '',
+
             IsActive:
                 this.entity.IsActive
         };
@@ -1074,26 +1563,33 @@ implements OnInit
             .subscribe
             ({
                 next:
-                (): void =>
+                (
+                    userProfileId:
+                        number
+                ): void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                    this.entity.UserProfileId =
+                        Number(
+                            userProfileId
                         );
 
 
-                    this.hasChanges =
-                        false;
+                    //===================================================
+                    // Upload Photo After Create
+                    //===================================================
+
+                    if
+                    (
+                        this.selectedUserPhotoFile
+                    )
+                    {
+                        this.uploadUserPhoto();
+
+                        return;
+                    }
 
 
-                    this.toast.success(
-                        'Success',
-
-                        'User Profile created successfully.'
-                    );
-
-
-                    this.onBackToList();
+                    this.completeSave();
                 },
 
 
@@ -1158,6 +1654,11 @@ implements OnInit
             MobileNo:
                 this.entity.MobileNo.trim(),
 
+            UserPhotoPath:
+                this.entity.UserPhotoPath
+                ??
+                '',
+
             IsActive:
                 this.entity.IsActive
         };
@@ -1172,24 +1673,39 @@ implements OnInit
                 next:
                 (): void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+                    //===================================================
+                    // New Photo Selected
+                    //===================================================
+
+                    if
+                    (
+                        this.selectedUserPhotoFile
+                    )
+                    {
+                        this.uploadUserPhoto();
+
+                        return;
+                    }
 
 
-                    this.hasChanges =
-                        false;
+                    //===================================================
+                    // Existing Photo Removed
+                    //===================================================
+
+                    if
+                    (
+                        this.originalUserPhotoPath
+                        &&
+                        !this.entity.UserPhotoPath
+                    )
+                    {
+                        this.deleteUserPhoto();
+
+                        return;
+                    }
 
 
-                    this.toast.success(
-                        'Success',
-
-                        'User Profile updated successfully.'
-                    );
-
-
-                    this.onBackToList();
+                    this.completeSave();
                 },
 
 

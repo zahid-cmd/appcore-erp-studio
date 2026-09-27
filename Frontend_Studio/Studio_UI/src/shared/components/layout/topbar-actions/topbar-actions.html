@@ -1,8 +1,12 @@
+<!-- ============================================================
+     Topbar Actions
+============================================================ -->
+
 <div class="topbar-actions">
 
-    <!-- ==========================================
-         LEFT : GLOBAL SEARCH
-    =========================================== -->
+    <!-- ========================================================
+         Actions Left
+    ========================================================= -->
 
     <div class="actions-left">
 
@@ -14,37 +18,183 @@
 
     </div>
 
-    <!-- ==========================================
-         RIGHT : USER MENU
-    =========================================== -->
+
+
+    <!-- ========================================================
+         Actions Right
+    ========================================================= -->
 
     <div class="actions-right">
 
-        <button
-            class="user-menu-button"
-            type="button"
-            (click)="onUserMenuClick()">
+        <!-- ====================================================
+             User Account
+        ==================================================== -->
 
-            <div class="avatar">
+        <div class="user-account">
 
-                <i [class]="avatarIcon"></i>
+            <!-- ==================================================
+                 User Menu Button
+            ================================================== -->
+
+            <button
+                class="user-menu-button"
+                type="button"
+                (click)="onUserMenuClick()">
+
+                <!-- ==============================================
+                     Avatar
+                ============================================== -->
+
+                <div class="avatar">
+
+                    <i
+                        [class]="avatarIcon">
+                    </i>
+
+                </div>
+
+
+
+                <!-- ==============================================
+                     User Name
+                ============================================== -->
+
+                <div class="user-name">
+
+                    {{ userName }}
+
+                </div>
+
+
+
+                <!-- ==============================================
+                     Menu Arrow
+                ============================================== -->
+
+                <div
+                    class="menu-arrow"
+                    [class.open]="isUserMenuOpen">
+
+                    <i
+                        class="fas fa-chevron-down">
+                    </i>
+
+                </div>
+
+            </button>
+
+
+
+            <!-- ==================================================
+                 User Account Dropdown
+            ================================================== -->
+
+            <div
+                class="user-dropdown"
+                *ngIf="isUserMenuOpen">
+
+                <!-- ==============================================
+                     Profile
+                ============================================== -->
+
+                <button
+                    class="user-dropdown-item"
+                    type="button"
+                    (click)="onProfileClick()">
+
+                    <span class="dropdown-icon">
+
+                        <i
+                            class="fas fa-user">
+                        </i>
+
+                    </span>
+
+                    <span class="dropdown-label">
+
+                        Profile
+
+                    </span>
+
+                </button>
+
+
+
+                <!-- ==============================================
+                     Change Password
+                ============================================== -->
+
+                <button
+                    class="user-dropdown-item"
+                    type="button"
+                    (click)="onChangePasswordClick()">
+
+                    <span class="dropdown-icon">
+
+                        <i
+                            class="fas fa-key">
+                        </i>
+
+                    </span>
+
+                    <span class="dropdown-label">
+
+                        Change Password
+
+                    </span>
+
+                </button>
+
+
+
+                <!-- ==============================================
+                     Dropdown Divider
+                ============================================== -->
+
+                <div
+                    class="dropdown-divider">
+                </div>
+
+
+
+                <!-- ==============================================
+                     Logout
+                ============================================== -->
+
+                <button
+                    class="user-dropdown-item logout-item"
+                    type="button"
+                    (click)="onLogout()">
+
+                    <span class="dropdown-icon">
+
+                        <i
+                            class="fas fa-sign-out-alt">
+                        </i>
+
+                    </span>
+
+                    <span class="dropdown-label">
+
+                        Logout
+
+                    </span>
+
+                </button>
 
             </div>
 
-            <div class="user-name">
-
-                {{ userName }}
-
-            </div>
-
-            <div class="menu-arrow">
-
-                <i class="fas fa-chevron-down"></i>
-
-            </div>
-
-        </button>
+        </div>
 
     </div>
 
 </div>
+
+
+
+<!-- ============================================================
+     Confirm Dialog
+============================================================ -->
+
+<app-confirm-dialog>
+</app-confirm-dialog>

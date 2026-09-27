@@ -111,6 +111,9 @@ public class UserProfileRepository : IUserProfileRepository
                         MobileNo =
                             x.MobileNo,
 
+                        UserPhotoPath =
+                            x.UserPhotoPath,
+
 
                         //===================================================
                         // Role Assignment
@@ -247,23 +250,23 @@ public class UserProfileRepository : IUserProfileRepository
     }
 
 
-//===========================================================
-// Get All
-//===========================================================
+    //===========================================================
+    // Get All
+    //===========================================================
 
-public async Task<List<UserProfileDto>>
-    GetAllAsync()
-{
-    return await UserProfileQuery()
+    public async Task<List<UserProfileDto>>
+        GetAllAsync()
+    {
+        return await UserProfileQuery()
 
-        .OrderBy
-        (
-            x =>
-                x.ProfileCode
-        )
+            .OrderBy
+            (
+                x =>
+                    x.ProfileCode
+            )
 
-        .ToListAsync();
-}
+            .ToListAsync();
+    }
 
 
     //===========================================================
@@ -419,6 +422,11 @@ public async Task<List<UserProfileDto>>
                     ??
                     string.Empty,
 
+                UserPhotoPath =
+                    dto.UserPhotoPath?.Trim()
+                    ??
+                    string.Empty,
+
                 IsActive =
                     dto.IsActive,
 
@@ -566,6 +574,12 @@ public async Task<List<UserProfileDto>>
             string.Empty;
 
 
+        entity.UserPhotoPath =
+            dto.UserPhotoPath?.Trim()
+            ??
+            string.Empty;
+
+
         entity.IsActive =
             dto.IsActive;
 
@@ -606,6 +620,208 @@ public async Task<List<UserProfileDto>>
 
                 ActivityDescription =
                     $"User Profile '{entity.DisplayName}' updated.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Update User Profile Photo
+    //===========================================================
+
+    public async Task
+        UpdatePhotoAsync
+        (
+            long userProfileId,
+
+            string photoPath,
+
+            long userId
+        )
+    {
+        UserProfileEntity? entity =
+
+            await _context
+                .Set<UserProfileEntity>()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.UserProfileId ==
+                        userProfileId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            entity ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "User Profile not found."
+            );
+        }
+
+
+        entity.UserPhotoPath =
+            photoPath?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.ModifiedBy =
+            userId;
+
+
+        entity.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
+        _context.ActivityHistories.Add(
+
+            new ActivityHistory
+            {
+                Module =
+                    "Security Permission",
+
+                EntityName =
+                    "User Profile",
+
+                EntityId =
+                    entity.UserProfileId,
+
+                ActivityType =
+                    "Update",
+
+                ActivityTitle =
+                    "User Profile Photo Updated",
+
+                ActivityDescription =
+                    $"User Profile photo for '{entity.DisplayName}' updated.",
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            }
+        );
+
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Clear User Profile Photo
+    //===========================================================
+
+    public async Task
+        ClearPhotoAsync
+        (
+            long userProfileId,
+
+            long userId
+        )
+    {
+        UserProfileEntity? entity =
+
+            await _context
+                .Set<UserProfileEntity>()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.UserProfileId ==
+                        userProfileId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            entity ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "User Profile not found."
+            );
+        }
+
+
+        entity.UserPhotoPath =
+            string.Empty;
+
+
+        entity.ModifiedBy =
+            userId;
+
+
+        entity.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
+        _context.ActivityHistories.Add(
+
+            new ActivityHistory
+            {
+                Module =
+                    "Security Permission",
+
+                EntityName =
+                    "User Profile",
+
+                EntityId =
+                    entity.UserProfileId,
+
+                ActivityType =
+                    "Update",
+
+                ActivityTitle =
+                    "User Profile Photo Removed",
+
+                ActivityDescription =
+                    $"User Profile photo for '{entity.DisplayName}' removed.",
 
                 PerformedBy =
                     userId,

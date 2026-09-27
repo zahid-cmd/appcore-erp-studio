@@ -31,4 +31,18 @@ public class LoginRequestDto
         get;
         set;
     } = string.Empty;
+
+
+    //===========================================================
+    // Remember Me
+    //===========================================================
+    // Controls whether the backend should create a persistent
+    // authentication session/token for the user.
+    //===========================================================
+
+    public bool RememberMe
+    {
+        get;
+        set;
+    }
 }

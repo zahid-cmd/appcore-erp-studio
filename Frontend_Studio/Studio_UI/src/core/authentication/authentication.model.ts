@@ -9,6 +9,9 @@ export interface LoginRequest
 
     password:
         string;
+
+    rememberMe:
+        boolean;
 }
 
 
@@ -35,6 +38,9 @@ export interface LoginResponse
         string;
 
     displayName:
+        string;
+
+    fullName:
         string;
 }
 

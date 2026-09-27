@@ -15,30 +15,6 @@ import
 }
 from '@angular/common';
 
-import
-{
-    Router
-}
-from '@angular/router';
-
-import
-{
-    AuthenticationService
-}
-from '../../../core/authentication/authentication.service';
-
-import
-{
-    AuthenticationStorageService
-}
-from '../../../core/authentication/authentication-storage.service';
-
-import
-{
-    LoginRequest
-}
-from '../../../core/authentication/authentication.model';
-
 
 //===============================================================
 // Login Page 4 Promotional Image Light
@@ -204,33 +180,6 @@ export class LoginPage4
 
 
     //===========================================================
-    // Authentication
-    //===========================================================
-
-    private readonly authenticationService:
-        AuthenticationService;
-
-    private readonly authenticationStorageService:
-        AuthenticationStorageService;
-
-    private readonly router:
-        Router;
-
-
-    //===========================================================
-    // Login State
-    //===========================================================
-
-    isSigningIn:
-        boolean =
-            false;
-
-    loginError:
-        string =
-            '';
-
-
-    //===========================================================
     // Panel State
     // ----------------------------------------------------------
     // false = Login Panel
@@ -264,33 +213,6 @@ export class LoginPage4
 
 
     //===========================================================
-    // Constructor
-    //===========================================================
-
-    constructor
-    (
-        authenticationService:
-            AuthenticationService,
-
-        authenticationStorageService:
-            AuthenticationStorageService,
-
-        router:
-            Router
-    )
-    {
-        this.authenticationService =
-            authenticationService;
-
-        this.authenticationStorageService =
-            authenticationStorageService;
-
-        this.router =
-            router;
-    }
-
-
-    //===========================================================
     // Theme Selector
     //===========================================================
 
@@ -307,111 +229,12 @@ export class LoginPage4
 
 
     //===========================================================
-    // Sign In
-    //===========================================================
-
-    onSignIn
-    (
-        event:
-            {
-                loginId:
-                    string;
-
-                password:
-                    string;
-
-                rememberMe:
-                    boolean;
-            }
-    ):
-        void
-    {
-        this.loginError =
-            '';
-
-        this.isSigningIn =
-            true;
-
-
-        const request:
-            LoginRequest =
-        {
-            userName:
-                event.loginId.trim(),
-
-            password:
-                event.password
-        };
-
-
-        this.authenticationService
-            .login
-            (
-                request
-            )
-            .subscribe
-            ({
-                next:
-                    response =>
-                    {
-                        this.isSigningIn =
-                            false;
-
-
-                        if
-                        (
-                            !response.success
-                        )
-                        {
-                            this.loginError =
-                                response.message;
-
-                            return;
-                        }
-
-
-                        this.authenticationStorageService
-                            .setAuthentication
-                            (
-                                response
-                            );
-
-
-                        this.router.navigate
-                        (
-                            [
-                                '/dashboard'
-                            ]
-                        );
-                    },
-
-
-                error:
-                    error =>
-                    {
-                        this.isSigningIn =
-                            false;
-
-
-                        this.loginError =
-                            error?.error?.message
-                            ||
-                            'Unable to sign in. Please try again.';
-                    }
-            });
-    }
-
-
-    //===========================================================
     // Forgot Password
     //===========================================================
 
     onForgotPassword():
         void
     {
-        this.loginError =
-            '';
-
         this.isRegistrationMode =
             false;
 
@@ -516,9 +339,6 @@ export class LoginPage4
     onRegister():
         void
     {
-        this.loginError =
-            '';
-
         this.isForgetPasswordMode =
             false;
 
@@ -534,9 +354,6 @@ export class LoginPage4
     onBackToLogin():
         void
     {
-        this.loginError =
-            '';
-
         this.isRegistrationMode =
             false;
 

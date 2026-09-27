@@ -1433,30 +1433,9 @@ public class BackendRegistrationEngine
         }
 
 
-        var blockStart =
-            text.IndexOf(
-                beginMarker,
-                regionStart,
-                StringComparison.Ordinal
-            );
-
-
-        if
-        (
-            blockStart >= 0
-            &&
-            blockStart < regionEnd
-        )
-        {
-            return
-            (
-                Success(
-                    $"Repository namespaces already registered: {entityClassName}."
-                ),
-                false
-            );
-        }
-
+        //=======================================================
+        // Build Current Registration
+        //=======================================================
 
         var registration =
             string.Join
@@ -1478,6 +1457,105 @@ public class BackendRegistrationEngine
                 string.Empty
             );
 
+
+        //=======================================================
+        // Locate Existing Registration
+        //=======================================================
+
+        var blockStart =
+            text.IndexOf(
+                beginMarker,
+                regionStart
+                + namespaceBeginRegion.Length,
+                StringComparison.Ordinal
+            );
+
+
+        if
+        (
+            blockStart >= 0
+            &&
+            blockStart < regionEnd
+        )
+        {
+            var blockEndMarker =
+                text.IndexOf(
+                    endMarker,
+                    blockStart
+                    + beginMarker.Length,
+                    StringComparison.Ordinal
+                );
+
+
+            if
+            (
+                blockEndMarker < 0
+                ||
+                blockEndMarker >= regionEnd
+            )
+            {
+                return
+                (
+                    Failure(
+                        $"Repository namespace registration block is incomplete: {entityClassName}."
+                    ),
+                    false
+                );
+            }
+
+
+            //===================================================
+            // Update Existing Registration
+            //===================================================
+
+            var removeStart =
+                FindLineStart(
+                    text,
+                    blockStart
+                );
+
+
+            var removeEnd =
+                FindLineEnd(
+                    text,
+                    blockEndMarker
+                );
+
+
+            text =
+                text.Remove(
+                    removeStart,
+                    removeEnd
+                    - removeStart
+                );
+
+
+            text =
+                text.Insert(
+                    removeStart,
+                    registration
+                );
+
+
+            await File.WriteAllTextAsync(
+                dependencyInjectionFile,
+                text
+            );
+
+
+            return
+            (
+                Success(
+                    $"Repository namespaces updated: {entityClassName}."
+                ),
+                false
+            );
+        }
+
+
+        //=======================================================
+        // Register New Namespace Block
+        //=======================================================
 
         var insertionIndex =
             FindLineEnd(

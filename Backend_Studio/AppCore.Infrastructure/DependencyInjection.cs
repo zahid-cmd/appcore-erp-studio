@@ -149,6 +149,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : Company
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
+
+// AUTO-END : Company
+
 // AUTO-BEGIN : WidgetConfiguration
 
 using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
@@ -217,7 +224,6 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
 
 
 
-
 // AUTO-BEGIN : LoginPages
 
 using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
@@ -260,8 +266,6 @@ using AppCore.Application.SecurityPermission.UserManagement;
 using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
 
 // AUTO-END : UserProfile
-
-
 
 
 
@@ -381,12 +385,6 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 
 
-// AUTO-BEGIN : Company
-
-using AppCore.Application.Settings.GeneralSettings;
-using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
-
-// AUTO-END : Company
 
 
 
@@ -559,6 +557,16 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : Company
+
+        services.AddScoped
+        <
+            ICompanyRepository,
+            CompanyRepository
+        >();
+
+        // AUTO-END : Company
+
         // AUTO-BEGIN : WidgetConfiguration
 
         services.AddScoped
@@ -651,7 +659,6 @@ public static class DependencyInjection
 
 
 
-
         // AUTO-BEGIN : LoginPages
 
         services.AddScoped
@@ -709,8 +716,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : UserProfile
-
-
 
 
 
@@ -864,15 +869,6 @@ public static class DependencyInjection
 
 
 
-        // AUTO-BEGIN : Company
-
-        services.AddScoped
-        <
-            ICompanyRepository,
-            CompanyRepository
-        >();
-
-        // AUTO-END : Company
 
 
 

@@ -19,6 +19,7 @@ import
 }
 from '@angular/common';
 
+
 /* =====================================================
    IMAGE HUB
 ===================================================== */
@@ -50,6 +51,7 @@ export class ImageHubComponent
     fileInput!:
         ElementRef<HTMLInputElement>;
 
+
     /* =====================================================
        IMAGE
     ====================================================== */
@@ -59,7 +61,8 @@ export class ImageHubComponent
 
     @Output()
     imageChange =
-        new EventEmitter<File>();
+        new EventEmitter<File | null>();
+
 
     /* =====================================================
        PLACEHOLDER
@@ -68,6 +71,7 @@ export class ImageHubComponent
     @Input()
     placeholder =
         'No Image Selected';
+
 
     /* =====================================================
        BEHAVIOUR
@@ -78,6 +82,7 @@ export class ImageHubComponent
 
     @Input()
     readonly = false;
+
 
     /* =====================================================
        FILE SELECTED
@@ -97,8 +102,10 @@ export class ImageHubComponent
             return;
         }
 
+
         const input =
             event.target as HTMLInputElement;
+
 
         if
         (
@@ -110,13 +117,17 @@ export class ImageHubComponent
             return;
         }
 
+
         const file =
             input.files[0];
 
+
         this.imageChange.emit(file);
+
 
         input.value = '';
     }
+
 
     /* =====================================================
        REMOVE IMAGE
@@ -134,13 +145,23 @@ export class ImageHubComponent
             return;
         }
 
+
         this.imageUrl = '';
+
 
         if (this.fileInput)
         {
             this.fileInput.nativeElement.value = '';
         }
+
+
+        //===================================================
+        // Notify Parent Component
+        //===================================================
+
+        this.imageChange.emit(null);
     }
+
 
     /* =====================================================
        CLEAR

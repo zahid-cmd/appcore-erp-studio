@@ -2,72 +2,150 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.Company.DTOs;
 
 
 //===============================================================
-// CreateCompanyDto
+// Create Company DTO
 //===============================================================
 
 public class CreateCompanyDto
 {
     //===========================================================
-    // Name
+    // Basic Information
     //===========================================================
 
-    public string Name
+    public string CompanyCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public string CompanyName
     {
         get;
         set;
-    }
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
+    public string CompanyShortName
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Address & Contact Information
+    //===========================================================
+
+    public string AddressLine1
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string AddressLine2
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Phone
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Mobile
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Email
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Website
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Business Information
+    //===========================================================
+
+    public string BINNo
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string OwnershipType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string EconomicActivity
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string TINNo
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string TradeLicenseNo
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    public string CompanyLogoPath
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Status
     //===========================================================
 
-    public bool Status
+    public bool IsActive
     {
         get;
         set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    } = true;
 }

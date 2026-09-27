@@ -4,26 +4,92 @@
 
 export interface Company
 {
-    id:
+    CompanyId:
         number;
 
-    code:
+
+    CompanyCode:
         string;
 
-    name:
+
+    CompanyName:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    CompanyShortName:
         string;
 
-    status:
+
+    //===========================================================
+    // Address & Contact Information
+    //===========================================================
+
+    AddressLine1:
         string;
 
-    remarks:
+
+    AddressLine2:
         string;
+
+
+    Phone:
+        string;
+
+
+    Mobile:
+        string;
+
+
+    Email:
+        string;
+
+
+    Website:
+        string;
+
+
+    //===========================================================
+    // Business Information
+    //===========================================================
+
+    BINNo:
+        string;
+
+
+    OwnershipType:
+        string;
+
+
+    EconomicActivity:
+        string;
+
+
+    TINNo:
+        string;
+
+
+    TradeLicenseNo:
+        string;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    CompanyLogoPath:
+        string;
+
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -34,20 +100,88 @@ export interface Company
 
 export interface CreateCompany
 {
-    name:
+    CompanyCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    CompanyName:
         string;
 
-    status:
+
+    CompanyShortName:
         string;
 
-    remarks:
+
+    //===========================================================
+    // Address & Contact Information
+    //===========================================================
+
+    AddressLine1:
         string;
+
+
+    AddressLine2:
+        string;
+
+
+    Phone:
+        string;
+
+
+    Mobile:
+        string;
+
+
+    Email:
+        string;
+
+
+    Website:
+        string;
+
+
+    //===========================================================
+    // Business Information
+    //===========================================================
+
+    BINNo:
+        string;
+
+
+    OwnershipType:
+        string;
+
+
+    EconomicActivity:
+        string;
+
+
+    TINNo:
+        string;
+
+
+    TradeLicenseNo:
+        string;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    CompanyLogoPath:
+        string;
+
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -58,23 +192,92 @@ export interface CreateCompany
 
 export interface UpdateCompany
 {
-    id:
+    CompanyId:
         number;
 
-    name:
+
+    CompanyCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    CompanyName:
         string;
 
-    status:
+
+    CompanyShortName:
         string;
 
-    remarks:
+
+    //===========================================================
+    // Address & Contact Information
+    //===========================================================
+
+    AddressLine1:
         string;
+
+
+    AddressLine2:
+        string;
+
+
+    Phone:
+        string;
+
+
+    Mobile:
+        string;
+
+
+    Email:
+        string;
+
+
+    Website:
+        string;
+
+
+    //===========================================================
+    // Business Information
+    //===========================================================
+
+    BINNo:
+        string;
+
+
+    OwnershipType:
+        string;
+
+
+    EconomicActivity:
+        string;
+
+
+    TINNo:
+        string;
+
+
+    TradeLicenseNo:
+        string;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    CompanyLogoPath:
+        string;
+
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -85,6 +288,6 @@ export interface UpdateCompany
 
 export interface CompanyDefaults
 {
-    code:
+    Code:
         string;
 }

@@ -185,10 +185,20 @@ public class AuthenticationService : IAuthenticationService
 
         //===========================================================
         // Generate Token
+        // ----------------------------------------------------------
+        // Remember Me is controlled by the backend.
+        //
+        //     Remember Me = false
+        //         Token lifetime = 8 hours
+        //
+        //     Remember Me = true
+        //         Token lifetime = 30 days
         //===========================================================
 
         string token =
-            GenerateToken(userProfile);
+            GenerateToken(
+                userProfile,
+                request.RememberMe);
 
 
         //===========================================================
@@ -198,11 +208,24 @@ public class AuthenticationService : IAuthenticationService
         return new LoginResponseDto
         {
             Success = true,
-            Message = "Login successful.",
-            Token = token,
-            UserProfileId = userProfile.UserProfileId,
-            UserName = userProfile.UserName,
-            DisplayName = userProfile.DisplayName
+
+            Message =
+                "Login successful.",
+
+            Token =
+                token,
+
+            UserProfileId =
+                userProfile.UserProfileId,
+
+            UserName =
+                userProfile.UserName,
+
+            DisplayName =
+                userProfile.DisplayName,
+
+            FullName =
+                userProfile.FullName
         };
     }
 
@@ -292,11 +315,29 @@ public class AuthenticationService : IAuthenticationService
 
         UserProfile userProfile = new UserProfile
         {
-            UserName = userName,
-            DisplayName = request.DisplayName?.Trim() ?? string.Empty,
-            IsActive = false,
-            IsDeleted = false,
-            CreatedDate = DateTime.UtcNow
+            UserName =
+                userName,
+
+            DisplayName =
+                request.DisplayName?.Trim() ?? string.Empty,
+
+            FullName =
+                request.FullName?.Trim() ?? string.Empty,
+
+            Email =
+                request.Email?.Trim() ?? string.Empty,
+
+            MobileNo =
+                request.MobileNo?.Trim() ?? string.Empty,
+
+            IsActive =
+                false,
+
+            IsDeleted =
+                false,
+
+            CreatedDate =
+                DateTime.UtcNow
         };
 
 
@@ -307,7 +348,8 @@ public class AuthenticationService : IAuthenticationService
         UserCredential credential = new UserCredential
         {
             PasswordHash =
-                HashPassword(request.Password),
+                HashPassword(
+                    request.Password),
 
             PasswordChangedDate =
                 DateTime.UtcNow,
@@ -334,13 +376,23 @@ public class AuthenticationService : IAuthenticationService
 
         return new LoginResponseDto
         {
-            Success = true,
+            Success =
+                true,
+
             Message =
                 "User account created successfully. Please wait for administrator activation.",
 
-            UserProfileId = userProfileId,
-            UserName = userProfile.UserName,
-            DisplayName = userProfile.DisplayName
+            UserProfileId =
+                userProfileId,
+
+            UserName =
+                userProfile.UserName,
+
+            DisplayName =
+                userProfile.DisplayName,
+
+            FullName =
+                userProfile.FullName
         };
     }
 
@@ -464,7 +516,8 @@ public class AuthenticationService : IAuthenticationService
                     userProfile.UserProfileId,
 
                 CodeHash =
-                    HashPassword(verificationCode),
+                    HashPassword(
+                        verificationCode),
 
                 ExpiresAt =
                     expiresAt,
@@ -497,7 +550,8 @@ public class AuthenticationService : IAuthenticationService
 
         return new ForgotPasswordCheckResponseDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Verification code generated successfully.",
@@ -824,7 +878,8 @@ public class AuthenticationService : IAuthenticationService
 
         return new LoginResponseDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Password changed successfully.",
@@ -836,7 +891,10 @@ public class AuthenticationService : IAuthenticationService
                 userProfile.UserName,
 
             DisplayName =
-                userProfile.DisplayName
+                userProfile.DisplayName,
+
+            FullName =
+                userProfile.FullName
         };
     }
 
@@ -863,9 +921,14 @@ public class AuthenticationService : IAuthenticationService
     private static string HashPassword(
         string password)
     {
-        const int saltSize = 16;
-        const int keySize = 32;
-        const int iterations = 100000;
+        const int saltSize =
+            16;
+
+        const int keySize =
+            32;
+
+        const int iterations =
+            100000;
 
         byte[] salt =
             RandomNumberGenerator.GetBytes(
@@ -883,8 +946,10 @@ public class AuthenticationService : IAuthenticationService
             '.',
             "PBKDF2",
             iterations.ToString(),
-            Convert.ToBase64String(salt),
-            Convert.ToBase64String(hash));
+            Convert.ToBase64String(
+                salt),
+            Convert.ToBase64String(
+                hash));
     }
 
 
@@ -1022,7 +1087,8 @@ public class AuthenticationService : IAuthenticationService
     //===============================================================
 
     private string GenerateToken(
-        UserProfile userProfile)
+        UserProfile userProfile,
+        bool rememberMe)
     {
         //===========================================================
         // JWT Settings
@@ -1045,12 +1111,33 @@ public class AuthenticationService : IAuthenticationService
 
 
         //===========================================================
+        // Token Lifetime
+        // ----------------------------------------------------------
+        // The backend controls the authentication lifetime.
+        //
+        // Normal Login:
+        //
+        //     8 hours
+        //
+        // Remember Me:
+        //
+        //     30 days
+        //===========================================================
+
+        TimeSpan tokenLifetime =
+            rememberMe
+                ? TimeSpan.FromDays(30)
+                : TimeSpan.FromHours(8);
+
+
+        //===========================================================
         // Security Key
         //===========================================================
 
         SymmetricSecurityKey key =
             new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(secret));
+                Encoding.UTF8.GetBytes(
+                    secret));
 
 
         //===========================================================
@@ -1090,11 +1177,21 @@ public class AuthenticationService : IAuthenticationService
 
         JwtSecurityToken token =
             new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(8),
-                signingCredentials: credentials);
+                issuer:
+                    issuer,
+
+                audience:
+                    audience,
+
+                claims:
+                    claims,
+
+                expires:
+                    DateTime.UtcNow.Add(
+                        tokenLifetime),
+
+                signingCredentials:
+                    credentials);
 
 
         //===========================================================
@@ -1102,7 +1199,8 @@ public class AuthenticationService : IAuthenticationService
         //===========================================================
 
         return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+            .WriteToken(
+                token);
     }
 
 
@@ -1115,8 +1213,11 @@ public class AuthenticationService : IAuthenticationService
     {
         return new LoginResponseDto
         {
-            Success = false,
-            Message = message
+            Success =
+                false,
+
+            Message =
+                message
         };
     }
 
@@ -1131,11 +1232,20 @@ public class AuthenticationService : IAuthenticationService
     {
         return new ForgotPasswordCheckResponseDto
         {
-            Success = false,
-            Message = message,
-            VerificationCode = string.Empty,
-            ExpiresAt = null,
-            UserProfileId = 0
+            Success =
+                false,
+
+            Message =
+                message,
+
+            VerificationCode =
+                string.Empty,
+
+            ExpiresAt =
+                null,
+
+            UserProfileId =
+                0
         };
     }
 }

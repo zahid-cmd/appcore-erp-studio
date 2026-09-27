@@ -17,9 +17,9 @@
 
    RIGHT:
 
-       TOP    = 30px
+       TOP    = 50px
        CENTER = REST
-       BOTTOM = 30px
+       BOTTOM = 50px
 
    IMPORTANT:
 
@@ -54,6 +54,20 @@
            height: 100%;
 
        on the Branding component.
+
+   IMPORTANT AUTHENTICATION RULE:
+
+       Authentication is completely owned by the Central
+       Login Panel.
+
+       Login Page 4 does NOT participate in the authentication
+       request, token storage or navigation process.
+
+       The Login Page only controls:
+
+           - Login / Registration / Forget Password mode
+           - Theme state
+           - Notification Panel
 ============================================================= */
 
 
@@ -457,6 +471,9 @@ app-login-page-powered-by
     padding:
         0;
 
+    box-sizing:
+        border-box;
+
     overflow:
         hidden;
 }
@@ -518,6 +535,9 @@ app-login-page-powered-by
     padding:
         0;
 
+    box-sizing:
+        border-box;
+
     overflow:
         hidden;
 }
@@ -532,9 +552,9 @@ app-login-page-powered-by
 
    ROWS:
 
-       30px
+       50px
        REST
-       30px
+       50px
 
    IMPORTANT:
 
@@ -548,7 +568,7 @@ app-login-page-powered-by
         grid;
 
     grid-template-rows:
-        30px minmax(0, 1fr) 30px;
+        50px minmax(0, 1fr) 50px;
 
     width:
         100%;
@@ -572,7 +592,7 @@ app-login-page-powered-by
    -------------------------------------------------------------
    HEIGHT:
 
-       EXACTLY 30px
+       EXACTLY 50px
 
    RESERVED FOR THE THEME SELECTOR.
 ============================================================= */
@@ -583,7 +603,7 @@ app-login-page-powered-by
         100%;
 
     height:
-        30px;
+        50px;
 
     min-width:
         0;
@@ -608,6 +628,9 @@ app-login-page-powered-by
    HEIGHT:
 
        REMAINING HEIGHT
+
+   The selected Login / Registration / Forget Password panel
+   is centered inside this area.
 ============================================================= */
 
 .login-page-4-right-center
@@ -638,9 +661,16 @@ app-login-page-powered-by
 /* =============================================================
    LOGIN PANEL
    -------------------------------------------------------------
-   The existing Login Panel owns its own internal design.
+   The Login Panel owns:
 
-   This page only controls its position inside the 35% area.
+       - Authentication request
+       - Remember Me
+       - Token storage
+       - Authentication navigation
+       - Login error state
+       - Password visibility
+
+   This page controls only its position inside the 35% area.
 ============================================================= */
 
 .login-page-4-right-center >
@@ -668,6 +698,8 @@ app-login-page-login-panel
    -------------------------------------------------------------
    The Registration Panel uses the same page-level positioning
    area as the Login Panel.
+
+   The page controls only its position.
 ============================================================= */
 
 .login-page-4-right-center >
@@ -695,6 +727,8 @@ app-login-page-registration-panel
    -------------------------------------------------------------
    The Forget Password Panel uses the same page-level
    positioning area as the Login Panel.
+
+   The page controls only its position.
 ============================================================= */
 
 .login-page-4-right-center >
@@ -722,7 +756,7 @@ app-login-page-forget-password-panel
    -------------------------------------------------------------
    HEIGHT:
 
-       EXACTLY 30px
+       EXACTLY 50px
 
    FOOTER AREA
 ============================================================= */
@@ -742,7 +776,7 @@ app-login-page-forget-password-panel
         100%;
 
     height:
-        30px;
+        50px;
 
     min-width:
         0;

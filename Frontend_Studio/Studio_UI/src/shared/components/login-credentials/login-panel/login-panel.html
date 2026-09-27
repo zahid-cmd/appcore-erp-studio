@@ -1,7 +1,7 @@
 <!-- ===========================================================
      LOGIN PAGE LOGIN PANEL
      -----------------------------------------------------------
-     FINAL PREMIUM LOGIN PANEL
+     FINAL FUNCTIONAL LOGIN PANEL
 
      MASTER GEOMETRY:
 
@@ -16,6 +16,9 @@
 
          This panel controls ONLY the login form.
 
+         Authentication is handled directly by the Login Panel
+         component.
+
          No:
          - Language selector
          - Background artwork
@@ -23,6 +26,29 @@
          - Footer
 
          Client branding is displayed INSIDE the login panel.
+
+         Client branding is loaded directly by this Login Panel
+         from Company Setup through CompanyService.
+
+         Client Display Name:
+             Company Short Name
+
+         Client Logo:
+             Company Logo Path
+
+     AUTHENTICATION:
+
+         The Login Panel component handles:
+
+             - Login ID
+             - Password
+             - Remember Me
+             - Authentication request
+             - Authentication error
+             - Authentication storage
+             - Dashboard navigation
+
+         The Login Page does NOT participate in authentication.
 ============================================================ -->
 
 
@@ -107,7 +133,19 @@
                 <!-- ===========================================
                      CLIENT BRANDING
                      -------------------------------------------
-                     Moto Zone
+                     Loaded from Company Setup.
+
+                     Client Display Name:
+
+                         Company Short Name
+
+                     Fallback:
+
+                         Company Name
+
+                     Client Logo:
+
+                         Company Logo Path
                 ============================================ -->
 
                 <div
@@ -121,12 +159,17 @@
 
                     <div
                         class="login-client-logo-area"
+                        *ngIf="clientLogoUrl"
                     >
 
                         <img
                             class="login-client-logo"
-                            src="/assets/client-logo/MotoZone.png"
-                            alt="Moto Zone"
+                            [src]="clientLogoUrl"
+                            [alt]="
+                                clientCompanyName
+                                    ||
+                                'Company Logo'
+                            "
                         >
 
                     </div>
@@ -138,6 +181,7 @@
 
                     <div
                         class="login-client-separator"
+                        *ngIf="clientCompanyName"
                     >
 
                         <span
@@ -159,17 +203,21 @@
 
 
                     <!-- =======================================
-                         CLIENT NAME
+                         CLIENT DISPLAY NAME
+                         ---------------------------------------
+                         Uses Company Short Name from
+                         Company Setup.
                     ======================================== -->
 
                     <div
                         class="login-client-name-area"
+                        *ngIf="clientCompanyName"
                     >
 
                         <div
                             class="login-client-name"
                         >
-                            Moto Zone
+                            {{ clientCompanyName }}
                         </div>
 
 
@@ -219,6 +267,7 @@
                 class="login-form"
                 (ngSubmit)="onSignIn()"
                 autocomplete="on"
+                novalidate
             >
 
 
@@ -265,6 +314,12 @@
                             [value]="loginId"
                             [placeholder]="config.loginIdPlaceholder"
                             autocomplete="username"
+                            [disabled]="isSigningIn"
+                            [attr.aria-invalid]="
+                                loginError
+                                    ? 'true'
+                                    : null
+                            "
                             (input)="
                                 onLoginIdChange(
                                     $any($event.target).value
@@ -324,6 +379,12 @@
                             [value]="password"
                             [placeholder]="config.passwordPlaceholder"
                             autocomplete="current-password"
+                            [disabled]="isSigningIn"
+                            [attr.aria-invalid]="
+                                loginError
+                                    ? 'true'
+                                    : null
+                            "
                             (input)="
                                 onPasswordChange(
                                     $any($event.target).value
@@ -336,6 +397,7 @@
                             type="button"
                             class="password-visibility-button"
                             aria-label="Show or hide password"
+                            [disabled]="isSigningIn"
                             (click)="
                                 togglePasswordVisibility()
                             "
@@ -380,6 +442,7 @@
                             type="checkbox"
                             name="rememberMe"
                             [checked]="rememberMe"
+                            [disabled]="isSigningIn"
                             (change)="
                                 onRememberMeChange(
                                     $any($event.target).checked
@@ -409,6 +472,7 @@
                         type="button"
                         class="forgot-password-button"
                         *ngIf="config.forgotPasswordVisible"
+                        [disabled]="isSigningIn"
                         (click)="onForgotPassword()"
                     >
 
@@ -421,12 +485,41 @@
 
 
                 <!-- ===========================================
+                     LOGIN ERROR
+                     -------------------------------------------
+                     Displayed only when authentication fails
+                     or client-side validation fails.
+                ============================================ -->
+
+                <div
+                    class="login-error"
+                    *ngIf="loginError"
+                    role="alert"
+                    aria-live="assertive"
+                >
+
+                    <i
+                        class="fas fa-circle-exclamation"
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                    <span>
+                        {{ loginError }}
+                    </span>
+
+                </div>
+
+
+                <!-- ===========================================
                      SIGN IN BUTTON
                 ============================================ -->
 
                 <button
                     type="submit"
                     class="sign-in-button"
+                    [disabled]="isSigningIn"
+                    [attr.aria-busy]="isSigningIn"
                 >
 
                     <span
@@ -434,7 +527,16 @@
                     >
 
                         <i
+                            *ngIf="!isSigningIn"
                             [class]="config.signInButtonIcon"
+                            aria-hidden="true"
+                        >
+                        </i>
+
+
+                        <i
+                            *ngIf="isSigningIn"
+                            class="fas fa-spinner fa-spin"
                             aria-hidden="true"
                         >
                         </i>
@@ -445,7 +547,11 @@
                     <span
                         class="sign-in-text"
                     >
-                        {{ config.signInButtonText }}
+                        {{
+                            isSigningIn
+                                ? 'Signing In...'
+                                : config.signInButtonText
+                        }}
                     </span>
 
 
@@ -454,6 +560,7 @@
                     >
 
                         <i
+                            *ngIf="!isSigningIn"
                             [class]="config.signInButtonArrowIcon"
                             aria-hidden="true"
                         >
@@ -554,6 +661,7 @@
                 <button
                     type="button"
                     class="registration-button"
+                    [disabled]="isSigningIn"
                     (click)="onRegister()"
                 >
 

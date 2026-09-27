@@ -252,6 +252,27 @@ public static class CodeGenerator
 
 
     //===============================================================
+    // GENERAL SETTINGS
+    //===============================================================
+
+    //===============================================================
+    // Company Code
+    //===============================================================
+
+    public static string GenerateCompanyCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid company sequence number.");
+        }
+
+        return $"CMP-{sequenceNo:D2}";
+    }
+
+
+    //===============================================================
     // APPLICATION CONFIGURATION
     //===============================================================
 

@@ -56,6 +56,20 @@
            height: 100%;
 
        on the Branding component.
+
+   IMPORTANT AUTHENTICATION RULE:
+
+       Authentication is completely owned by the Central
+       Login Panel.
+
+       Login Page 3 does NOT participate in the authentication
+       request, token storage or navigation process.
+
+       The Login Page only controls:
+
+           - Login / Registration / Forget Password mode
+           - Theme state
+           - Notification Panel
 ============================================================= */
 
 
@@ -275,6 +289,8 @@ app-login-page-promotional-image-deep
        REMAINING HEIGHT
 
    THIS IS THE MAIN LOGIN / REGISTRATION / FORGET PASSWORD AREA.
+
+   Authentication is fully handled by the Login Panel.
 ============================================================= */
 
 .login-page-3-left-center
@@ -304,6 +320,17 @@ app-login-page-promotional-image-deep
 
 /* =============================================================
    LOGIN PANEL
+   -------------------------------------------------------------
+   The Login Panel owns:
+
+       - Authentication request
+       - Remember Me
+       - Token storage
+       - Authentication navigation
+       - Login error state
+       - Password visibility
+
+   This page controls only its position.
 ============================================================= */
 
 .login-page-3-left-center >
@@ -328,7 +355,7 @@ app-login-page-login-panel
 
 /* =============================================================
    REGISTRATION PANEL
-============================================================= */
+   ------------------------------------------------------------- */
 
 .login-page-3-left-center >
 app-login-page-registration-panel
@@ -352,7 +379,7 @@ app-login-page-registration-panel
 
 /* =============================================================
    FORGET PASSWORD PANEL
-============================================================= */
+   ------------------------------------------------------------- */
 
 .login-page-3-left-center >
 app-login-page-forget-password-panel
@@ -578,6 +605,10 @@ app-login-page-forget-password-panel
    The Branding component keeps its own intrinsic dimensions.
 
    The page only controls its position.
+
+   IMPORTANT:
+
+       The page does NOT force width or height to 100%.
 ============================================================= */
 
 .login-page-3-middle-top >

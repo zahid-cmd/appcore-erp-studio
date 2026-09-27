@@ -13,6 +13,12 @@ from '@angular/core';
 
 import
 {
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -71,12 +77,6 @@ import
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
@@ -161,8 +161,6 @@ from '../../../services/company.service';
 
         SearchBoxComponent,
 
-        DropdownComponent,
-
         CommandCenterComponent,
 
         PageCanvasComponent,
@@ -185,7 +183,7 @@ from '../../../services/company.service';
 
 
 //===============================================================
-// Company List Component
+// Company List
 //===============================================================
 
 export class CompanyList
@@ -243,40 +241,7 @@ implements OnInit
 
 
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
     companies:
@@ -394,25 +359,67 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'50px',
 
             align:'center'
         },
 
         {
-            header:'Code',
+            header:'Company Code',
 
-            field:'code',
+            field:'CompanyCode',
 
-            width:'180px',
+            width:'160px',
 
             align:'center'
         },
 
         {
-            header:'Name',
+            header:'Company Name',
 
-            field:'name',
+            field:'CompanyName',
+
+            width:'250px',
+
+            align:'left'
+        },
+
+        {
+            header:'Short Name',
+
+            field:'CompanyShortName',
+
+            width:'160px',
+
+            align:'left'
+        },
+
+        {
+            header:'Phone',
+
+            field:'Phone',
+
+            width:'160px',
+
+            align:'center'
+        },
+
+        {
+            header:'Mobile',
+
+            field:'Mobile',
+
+            width:'160px',
+
+            align:'center'
+        },
+
+        {
+            header:'Email',
+
+            field:'Email',
+
+            width:'250px',
 
             align:'left'
         },
@@ -420,13 +427,13 @@ implements OnInit
         {
             header:'Status',
 
-            field:'status',
-
-            type:'status',
+            field:'IsActive',
 
             width:'120px',
 
-            align:'center'
+            align:'center',
+
+            type:'status'
         },
 
         {
@@ -436,7 +443,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }
@@ -445,7 +452,7 @@ implements OnInit
 
 
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -457,7 +464,186 @@ implements OnInit
 
 
     //===========================================================
-    // Load Companies
+    // Normalize API Response
+    //===========================================================
+
+    private normalizeCompany
+    (
+        item:
+            any
+    ):
+        Company
+    {
+        return {
+            CompanyId:
+                Number
+                (
+                    item?.CompanyId
+                    ??
+                    item?.companyId
+                    ??
+                    0
+                ),
+
+            CompanyCode:
+                item?.CompanyCode
+                ??
+                item?.companyCode
+                ??
+                '',
+
+            CompanyName:
+                item?.CompanyName
+                ??
+                item?.companyName
+                ??
+                '',
+
+            CompanyShortName:
+                item?.CompanyShortName
+                ??
+                item?.companyShortName
+                ??
+                '',
+
+            AddressLine1:
+                item?.AddressLine1
+                ??
+                item?.addressLine1
+                ??
+                '',
+
+            AddressLine2:
+                item?.AddressLine2
+                ??
+                item?.addressLine2
+                ??
+                '',
+
+            Phone:
+                item?.Phone
+                ??
+                item?.phone
+                ??
+                '',
+
+            Mobile:
+                item?.Mobile
+                ??
+                item?.mobile
+                ??
+                '',
+
+            Email:
+                item?.Email
+                ??
+                item?.email
+                ??
+                '',
+
+            Website:
+                item?.Website
+                ??
+                item?.website
+                ??
+                '',
+
+            BINNo:
+                item?.BINNo
+                ??
+                item?.binNo
+                ??
+                '',
+
+            OwnershipType:
+                item?.OwnershipType
+                ??
+                item?.ownershipType
+                ??
+                '',
+
+            EconomicActivity:
+                item?.EconomicActivity
+                ??
+                item?.economicActivity
+                ??
+                '',
+
+            TINNo:
+                item?.TINNo
+                ??
+                item?.tinNo
+                ??
+                '',
+
+            TradeLicenseNo:
+                item?.TradeLicenseNo
+                ??
+                item?.tradeLicenseNo
+                ??
+                '',
+
+            CompanyLogoPath:
+                item?.CompanyLogoPath
+                ??
+                item?.companyLogoPath
+                ??
+                '',
+
+            Remarks:
+                item?.Remarks
+                ??
+                item?.remarks
+                ??
+                '',
+
+            IsActive:
+                Boolean
+                (
+                    item?.IsActive
+                    ??
+                    item?.isActive
+                    ??
+                    true
+                )
+        };
+    }
+
+
+
+    //===========================================================
+    // Normalize API Response List
+    //===========================================================
+
+    private normalizeCompanies
+    (
+        response:
+            any
+    ):
+        Company[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+
+        return response.map
+        (
+            item =>
+                this.normalizeCompany(
+                    item
+                )
+        );
+    }
+
+
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -479,12 +665,27 @@ implements OnInit
                 (
                     response:
                         Company[]
-                ): void =>
+                ):
+                    void =>
                 {
+                    console.log
+                    (
+                        'Company API Response:',
+                        response
+                    );
+
+
                     this.companies =
-                    [
-                        ...response
-                    ];
+                        this.normalizeCompanies(
+                            response
+                        );
+
+
+                    console.log
+                    (
+                        'Normalized Companies:',
+                        this.companies
+                    );
 
 
                     this.applyFilters();
@@ -506,26 +707,26 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load Companies Error',
-
+                        'Load Companies Error:',
                         error
                     );
 
 
                     this.companies =
-                    [];
+                        [];
 
 
                     this.filteredCompanies =
-                    [];
+                        [];
 
 
                     this.pagedCompanies =
-                    [];
+                        [];
 
 
                     this.loading =
@@ -552,26 +753,6 @@ implements OnInit
 
 
     //===========================================================
-    // Status Filter Changed
-    //===========================================================
-
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
-
-    //===========================================================
     // Apply Filters
     //===========================================================
 
@@ -585,47 +766,100 @@ implements OnInit
 
 
         this.filteredCompanies =
-            this.companies
-                .filter
+            this.companies.filter
+            (
                 (
-                    (
-                        x:
-                            Company
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                    item:
+                        Company
+                ):
+                    boolean =>
+                {
+                    const companyCode =
+                        item.CompanyCode
+                        ??
+                        '';
 
 
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
+                    const companyName =
+                        item.CompanyName
+                        ??
+                        '';
 
 
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
+                    const companyShortName =
+                        item.CompanyShortName
+                        ??
+                        '';
+
+
+                    const phone =
+                        item.Phone
+                        ??
+                        '';
+
+
+                    const mobile =
+                        item.Mobile
+                        ??
+                        '';
+
+
+                    const email =
+                        item.Email
+                        ??
+                        '';
+
+
+                    const website =
+                        item.Website
+                        ??
+                        '';
+
+
+                    const status =
+                        item.IsActive
+                            ? 'active'
+                            : 'inactive';
+
+
+                    const searchMatch =
+                        !keyword
+                        ||
+                        companyCode
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        companyName
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        companyShortName
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        phone
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        mobile
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        email
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        website
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        status
+                            .includes(keyword);
+
+
+                    return searchMatch;
+                }
+            );
 
 
         this.currentPage =
@@ -649,7 +883,9 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
+            value
+            ??
+            '';
 
 
         this.applyFilters();
@@ -800,8 +1036,8 @@ implements OnInit
             '';
 
 
-        this.selectedStatus =
-            null;
+        this.currentPage =
+            1;
 
 
         this.loadItems();
@@ -827,13 +1063,12 @@ implements OnInit
 
         this.pagedCompanies =
         [
-            ...this.filteredCompanies
-                .slice
-                (
-                    start,
+            ...this.filteredCompanies.slice
+            (
+                start,
 
-                    start + this.pageSize
-                )
+                start + this.pageSize
+            )
         ];
     }
 
@@ -921,7 +1156,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.CompanyId
             ],
 
             {
@@ -949,7 +1184,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.CompanyId
             ],
 
             {
@@ -976,14 +1211,14 @@ implements OnInit
         (
             'Delete Company',
 
-            `Are you sure you want to delete "${item.name}" ?`,
+            `Are you sure you want to delete "${item.CompanyName}" ?`,
 
             (): void =>
             {
                 this.companyservice
                     .delete
                     (
-                        item.id
+                        item.CompanyId
                     )
                     .subscribe
                     ({
@@ -994,7 +1229,7 @@ implements OnInit
                             (
                                 'Delete Successful',
 
-                                `${item.name} deleted successfully.`
+                                `${item.CompanyName} deleted successfully.`
                             );
 
 
@@ -1006,15 +1241,74 @@ implements OnInit
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Company Error',
-
+                                'Delete Company Error:',
                                 error
                             );
 
+
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'Company cannot be deleted because it is already configured.';
+
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+
+                                    message
+                                );
+
+
+                                return;
+                            }
+
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
                             this.toast.error
                             (
@@ -1088,7 +1382,8 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
@@ -1096,6 +1391,25 @@ implements OnInit
 
                         error
                     );
+
+
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted company record to restore.'
+                        );
+
+
+                        return;
+                    }
 
 
                     this.toast.error
@@ -1125,7 +1439,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,15 +1448,21 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
 
                                 description:
-                                    history.activityDescription,
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
 
                                 user:
                                     history.performedByName
+                                    ??
+                                    history.PerformedByName
                                     ??
                                     'System',
 
@@ -1150,12 +1471,16 @@ implements OnInit
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
 
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
 
@@ -1176,12 +1501,12 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
 

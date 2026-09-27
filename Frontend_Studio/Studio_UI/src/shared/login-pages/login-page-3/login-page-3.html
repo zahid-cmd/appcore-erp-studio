@@ -70,6 +70,24 @@
                  ↓
              Promotional Image Deep
 
+         Authentication:
+
+             Authentication is completely owned by the
+             Central Login Panel.
+
+             Login Page 3 does NOT:
+
+                 - receive signIn
+                 - call AuthenticationService
+                 - create LoginRequest
+                 - store authentication
+                 - navigate after login
+                 - manage login errors
+                 - manage signing-in state
+
+             The Login Panel handles the complete
+             authentication flow internally.
+
          This version is DESKTOP ONLY.
 
          Tablet and mobile layouts will be implemented later.
@@ -325,6 +343,14 @@
                          AND
 
                          isForgetPasswordMode = false
+
+                     IMPORTANT:
+
+                         Authentication is fully handled by
+                         the Login Panel itself.
+
+                         Login Page 3 does NOT receive or
+                         process a signIn event.
                 ============================================ -->
 
                 <app-login-page-login-panel
@@ -337,8 +363,6 @@
                     (register)="onRegister()"
 
                     (forgotPassword)="onForgotPassword()"
-
-                    (signIn)="onSignIn($event)"
                 >
                 </app-login-page-login-panel>
 

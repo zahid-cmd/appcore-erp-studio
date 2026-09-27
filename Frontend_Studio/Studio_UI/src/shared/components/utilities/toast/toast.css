@@ -7,6 +7,7 @@
     position: fixed;
 
     top: 20px;
+
     right: 20px;
 
     display: flex;
@@ -15,8 +16,17 @@
 
     gap: 14px;
 
-    z-index: 4000;
+    /*
+       Keep Toast above all application UI layers,
+       including Topbar, Sidebar, Dropdowns and Dialogs.
+    */
+
+    z-index: 99999;
+
+    pointer-events: none;
 }
+
+
 
 /* =====================================================
    PREVIEW MODE
@@ -27,6 +37,7 @@
     position: relative;
 
     top: auto;
+
     right: auto;
 
     width: 100%;
@@ -42,7 +53,11 @@
     gap: 14px;
 
     z-index: 1;
+
+    pointer-events: auto;
 }
+
+
 
 /* =====================================================
    TOAST
@@ -82,7 +97,16 @@
 
     animation:
         toastSlide .25s ease;
+
+    /*
+       Allow the Toast itself to remain interactive
+       while the container stays pointer-transparent.
+    */
+
+    pointer-events: auto;
 }
+
+
 
 /* =====================================================
    TYPES
@@ -93,20 +117,25 @@
     border-left-color: #16a34a;
 }
 
+
 .toast.error
 {
     border-left-color: #dc2626;
 }
+
 
 .toast.warning
 {
     border-left-color: #d97706;
 }
 
+
 .toast.info
 {
     border-left-color: #2563eb;
 }
+
+
 
 /* =====================================================
    ICON
@@ -129,25 +158,31 @@
     margin-top: 2px;
 }
 
+
 .toast.success .toast-icon
 {
     color: #16a34a;
 }
+
 
 .toast.error .toast-icon
 {
     color: #dc2626;
 }
 
+
 .toast.warning .toast-icon
 {
     color: #d97706;
 }
 
+
 .toast.info .toast-icon
 {
     color: #2563eb;
 }
+
+
 
 /* =====================================================
    CONTENT
@@ -157,6 +192,7 @@
 {
     flex: 1;
 }
+
 
 .toast-title
 {
@@ -169,6 +205,7 @@
     font-weight: 700;
 }
 
+
 .toast-message
 {
     color: #64748b;
@@ -177,6 +214,8 @@
 
     line-height: 1.5;
 }
+
+
 
 /* =====================================================
    CLOSE BUTTON
@@ -210,6 +249,7 @@
         transform .18s ease;
 }
 
+
 .toast-close:hover
 {
     background: #f8fafc;
@@ -218,6 +258,8 @@
 
     transform: scale(1.05);
 }
+
+
 
 /* =====================================================
    ANIMATION

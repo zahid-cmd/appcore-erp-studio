@@ -17,9 +17,9 @@
 
    RIGHT:
 
-       TOP    = 30px
+       TOP    = 50px
        CENTER = REST
-       BOTTOM = 30px
+       BOTTOM = 50px
 
    IMPORTANT:
 
@@ -53,6 +53,20 @@
 
        Its own fixed positioning, button, counter and popover
        are controlled completely by notification-panel.css.
+
+   IMPORTANT AUTHENTICATION RULE:
+
+       Authentication is completely owned by the Central
+       Login Panel.
+
+       Login Page 1 does NOT participate in the authentication
+       request, token storage or navigation process.
+
+       The Login Page only controls:
+
+           - Login / Registration / Forget Password mode
+           - Theme state
+           - Notification Panel
 ============================================================= */
 
 
@@ -526,9 +540,9 @@ app-login-page-powered-by
 
    ROWS:
 
-       30px
+       50px
        REST
-       30px
+       50px
 
    IMPORTANT:
 
@@ -542,7 +556,7 @@ app-login-page-powered-by
         grid;
 
     grid-template-rows:
-        30px minmax(0, 1fr) 30px;
+        50px minmax(0, 1fr) 50px;
 
     width:
         100%;
@@ -566,7 +580,7 @@ app-login-page-powered-by
    -------------------------------------------------------------
    HEIGHT:
 
-       EXACTLY 30px
+       EXACTLY 50px
 
    RESERVED FOR THE THEME SELECTOR.
 ============================================================= */
@@ -577,7 +591,7 @@ app-login-page-powered-by
         100%;
 
     height:
-        30px;
+        50px;
 
     min-width:
         0;
@@ -630,6 +644,8 @@ app-login-page-powered-by
    LOGIN PANEL
    -------------------------------------------------------------
    The existing Login Panel owns its own internal design.
+
+   Authentication is also completely owned by the Login Panel.
 
    This page only controls its position inside the 35% area.
 ============================================================= */
@@ -697,7 +713,7 @@ app-login-page-forget-password-panel
    -------------------------------------------------------------
    HEIGHT:
 
-       EXACTLY 30px
+       EXACTLY 50px
 
    FOOTER AREA
 
@@ -719,7 +735,7 @@ app-login-page-forget-password-panel
         100%;
 
     height:
-        30px;
+        50px;
 
     min-width:
         0;

@@ -16,11 +16,11 @@
      │   │   └── EMPTY
      │   │
      │   └── BOTTOM 15%
-     │       └── POWERED BY
+     │       └── EMPTY
      │
      ├── MIDDLE 20%
      │   ├── TOP 15%
-     │   │   └── CLIENT LOGO
+     │   │   └── POWERED BY
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
@@ -49,13 +49,10 @@
 
          Branding 2 has been completely removed.
 
-         The Client Logo is placed in the
+         Powered By is positioned in the
          MIDDLE TOP area.
 
-         Powered By remains only in the
-         LEFT BOTTOM area.
-
-         Theme Selector is placed in the
+         Theme Selector is positioned in the
          RIGHT TOP area.
 
          Notification Panel:
@@ -73,6 +70,24 @@
          This version is DESKTOP ONLY.
 
          Tablet and mobile layouts will be implemented later.
+
+         AUTHENTICATION:
+
+             Authentication is completely owned by the
+             Central Login Panel.
+
+             Login Page 4 does NOT:
+
+                 - receive signIn
+                 - call AuthenticationService
+                 - create LoginRequest
+                 - store authentication
+                 - navigate after login
+                 - manage login errors
+                 - manage signing-in state
+
+             The Login Panel handles the complete
+             authentication flow internally.
 
          REGISTER NOW EVENT:
 
@@ -318,7 +333,7 @@
 
                  CONTENT:
 
-                     POWERED BY
+                     EMPTY
             ================================================= -->
 
             <section
@@ -359,12 +374,9 @@
 
                  CONTENT:
 
-                     CLIENT LOGO
+                     POWERED BY
 
-                 The Client Logo is positioned independently
-                 from the Branding component.
-
-                 The Client Logo component controls its own
+                 The Powered By component controls its own
                  intrinsic width and height.
             ================================================= -->
 
@@ -502,6 +514,14 @@
                          AND
 
                          isForgetPasswordMode = false
+
+                     IMPORTANT:
+
+                         Authentication is fully handled by
+                         the Login Panel itself.
+
+                         Login Page 4 does NOT receive or
+                         process a signIn event.
                 ============================================ -->
 
                 <app-login-page-login-panel
@@ -514,8 +534,6 @@
                     (register)="onRegister()"
 
                     (forgotPassword)="onForgotPassword()"
-
-                    (signIn)="onSignIn($event)"
                 >
                 </app-login-page-login-panel>
 
@@ -589,8 +607,8 @@
 
                      EMPTY FOOTER AREA
 
-                 Powered By has been completely removed from
-                 this section.
+                 Powered By is positioned in the
+                 MIDDLE TOP area.
             ================================================= -->
 
             <section

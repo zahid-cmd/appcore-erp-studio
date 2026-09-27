@@ -34,14 +34,34 @@
 
                     <div class="avatar-circle">
 
-                        <i class="fas fa-user">
+
+                        <!-- =====================================
+                             USER PROFILE PHOTO
+                        ====================================== -->
+
+                        <img
+                            *ngIf="userPhotoUrl"
+                            [src]="userPhotoUrl"
+                            [alt]="userDisplayName"
+                            class="profile-photo">
+
+
+                        <!-- =====================================
+                             DEFAULT USER ICON
+                        ====================================== -->
+
+                        <i
+                            *ngIf="!userPhotoUrl"
+                            class="fas fa-user">
                         </i>
+
 
                     </div>
 
 
                     <span class="online-indicator">
                     </span>
+
 
                 </div>
 
@@ -78,14 +98,16 @@
                     </div>
 
 
+                    <!-- =========================================
+                         ACTIVE USER DISPLAY NAME
+                    ========================================== -->
+
                     <div class="user-name">
 
                         <span class="user-name-first">
-                            {{ userFirstName }}
-                        </span>
 
-                        <span class="user-name-last">
-                            {{ userLastName }}
+                            {{ userDisplayName }}
+
                         </span>
 
                     </div>

@@ -201,16 +201,6 @@ public class AppDbContext
 
     // AUTO-END : Branch
 
-    // AUTO-BEGIN : Company
-
-    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Company>
-    Companys
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : Company
 
 
 
@@ -524,6 +514,17 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : WidgetConfiguration
+
+    // AUTO-BEGIN : Company
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Company>
+    Companys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Company
 
     // AUTO-END : AUTO REGISTER DBSETS
 

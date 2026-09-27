@@ -42,6 +42,7 @@ import
 from '../models/user-profile.model';
 
 
+
 //===============================================================
 // User Profile Service
 //===============================================================
@@ -122,6 +123,13 @@ export class UserProfileService
                                     ??
                                     '',
 
+                                UserPhotoPath:
+                                    profile.UserPhotoPath
+                                    ??
+                                    profile.userPhotoPath
+                                    ??
+                                    '',
+
                                 IsActive:
                                     Boolean
                                     (
@@ -188,9 +196,91 @@ export class UserProfileService
     ):
         Observable<UserProfile>
     {
-        return this.http.get<UserProfile>(
-            `${this.apiUrl}/${id}`
-        );
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/${id}`
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        ...response,
+
+                        UserProfileId:
+                            Number
+                            (
+                                response.userProfileId
+                                ??
+                                response.UserProfileId
+                                ??
+                                response.id
+                                ??
+                                response.Id
+                                ??
+                                0
+                            ),
+
+                        ProfileCode:
+                            response.profileCode
+                            ??
+                            response.ProfileCode
+                            ??
+                            '',
+
+                        UserName:
+                            response.userName
+                            ??
+                            response.UserName
+                            ??
+                            '',
+
+                        DisplayName:
+                            response.displayName
+                            ??
+                            response.DisplayName
+                            ??
+                            '',
+
+                        FullName:
+                            response.fullName
+                            ??
+                            response.FullName
+                            ??
+                            '',
+
+                        Email:
+                            response.email
+                            ??
+                            response.Email
+                            ??
+                            '',
+
+                        MobileNo:
+                            response.mobileNo
+                            ??
+                            response.MobileNo
+                            ??
+                            '',
+
+                        UserPhotoPath:
+                            response.userPhotoPath
+                            ??
+                            response.UserPhotoPath
+                            ??
+                            '',
+
+                        IsActive:
+                            Boolean
+                            (
+                                response.isActive
+                                ??
+                                response.IsActive
+                                ??
+                                true
+                            )
+                    })
+                )
+            );
     }
 
 
@@ -230,6 +320,63 @@ export class UserProfileService
             this.apiUrl,
 
             model
+        );
+    }
+
+
+
+    //===========================================================
+    // Upload User Profile Photo
+    //===========================================================
+
+    uploadUserPhoto
+    (
+        userProfileId:
+            number,
+
+        file:
+            File
+    ):
+        Observable<string>
+    {
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            'file',
+
+            file
+        );
+
+
+        return this.http.post(
+            `${this.apiUrl}/${userProfileId}/photo`,
+
+            formData,
+
+            {
+                responseType:
+                    'text'
+            }
+        );
+    }
+
+
+
+    //===========================================================
+    // Delete User Profile Photo
+    //===========================================================
+
+    deleteUserPhoto
+    (
+        userProfileId:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.delete<void>(
+            `${this.apiUrl}/${userProfileId}/photo`
         );
     }
 

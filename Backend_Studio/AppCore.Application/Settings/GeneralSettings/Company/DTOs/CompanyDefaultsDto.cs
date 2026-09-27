@@ -2,24 +2,22 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.Company.DTOs;
 
 
 //===============================================================
-// CompanyDefaultsDto
+// Company Defaults DTO
 //===============================================================
 
 public class CompanyDefaultsDto
 {
     //===========================================================
-    // Code
+    // Company Code
     //===========================================================
 
     public string Code
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 }

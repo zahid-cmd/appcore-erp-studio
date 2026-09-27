@@ -159,6 +159,292 @@ public class UserProfileController : ControllerBase
 
 
     //===============================================================
+    // Upload User Profile Photo
+    //===============================================================
+
+    [HttpPost("{id:long}/photo")]
+
+    public async Task<IActionResult> UploadPhoto(
+        long id,
+        IFormFile file)
+    {
+        //===========================================================
+        // Verify User Profile Exists
+        //===========================================================
+
+        if (!await _repository.ExistsAsync(id))
+        {
+            return NotFound(
+                "User Profile not found.");
+        }
+
+
+        //===========================================================
+        // Validate File
+        //===========================================================
+
+        if
+        (
+            file == null
+            ||
+            file.Length == 0
+        )
+        {
+            return BadRequest(
+                "Please select a profile photo.");
+        }
+
+
+        //===========================================================
+        // Validate File Type
+        //===========================================================
+
+        string[] allowedExtensions =
+        {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        };
+
+
+        string extension =
+            Path.GetExtension(
+                file.FileName)
+            .ToLowerInvariant();
+
+
+        if
+        (
+            !allowedExtensions.Contains(
+                extension)
+        )
+        {
+            return BadRequest(
+                "Only JPG, JPEG, PNG and WEBP image files are allowed.");
+        }
+
+
+        //===========================================================
+        // Validate File Size
+        //===========================================================
+
+        const long maximumFileSize =
+            5 * 1024 * 1024;
+
+
+        if
+        (
+            file.Length >
+            maximumFileSize
+        )
+        {
+            return BadRequest(
+                "Profile photo size cannot exceed 5 MB.");
+        }
+
+
+        //===========================================================
+        // Upload Directory
+        //===========================================================
+
+        string webRootPath =
+            Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot");
+
+
+        string uploadDirectory =
+            Path.Combine(
+                webRootPath,
+                "uploads",
+                "user-photos");
+
+
+        Directory.CreateDirectory(
+            uploadDirectory);
+
+
+        //===========================================================
+        // Get Existing User Profile
+        //===========================================================
+
+        UserProfileDto? existingProfile =
+            await _repository.GetByIdAsync(id);
+
+
+        if
+        (
+            existingProfile ==
+            null
+        )
+        {
+            return NotFound(
+                "User Profile not found.");
+        }
+
+
+        //===========================================================
+        // Generate File Name
+        //===========================================================
+
+        string fileName =
+            $"{Guid.NewGuid():N}{extension}";
+
+
+        string physicalFilePath =
+            Path.Combine(
+                uploadDirectory,
+                fileName);
+
+
+        //===========================================================
+        // Save File
+        //===========================================================
+
+        await using
+        (
+            FileStream stream =
+                new FileStream(
+                    physicalFilePath,
+                    FileMode.Create)
+        )
+        {
+            await file.CopyToAsync(
+                stream);
+        }
+
+
+        //===========================================================
+        // Relative Photo Path
+        //===========================================================
+
+        string photoPath =
+            $"/uploads/user-photos/{fileName}";
+
+
+        //===========================================================
+        // Current User
+        //===========================================================
+
+        long userId =
+            1;
+
+
+        //===========================================================
+        // Save Photo Path To Database
+        //===========================================================
+
+        await _repository.UpdatePhotoAsync(
+            id,
+            photoPath,
+            userId);
+
+
+        //===========================================================
+        // Delete Previous Physical Photo
+        //===========================================================
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(
+                existingProfile.UserPhotoPath)
+        )
+        {
+            DeletePhysicalPhoto(
+                existingProfile.UserPhotoPath);
+        }
+
+
+        //===========================================================
+        // Return Photo Path
+        //===========================================================
+
+        return Ok(
+            photoPath);
+    }
+
+
+    //===============================================================
+    // Delete User Profile Photo
+    //===============================================================
+
+    [HttpDelete("{id:long}/photo")]
+
+    public async Task<IActionResult> DeletePhoto(
+        long id)
+    {
+        //===========================================================
+        // Verify User Profile Exists
+        //===========================================================
+
+        if (!await _repository.ExistsAsync(id))
+        {
+            return NotFound(
+                "User Profile not found.");
+        }
+
+
+        //===========================================================
+        // Get Existing User Profile
+        //===========================================================
+
+        UserProfileDto? existingProfile =
+            await _repository.GetByIdAsync(id);
+
+
+        if
+        (
+            existingProfile ==
+            null
+        )
+        {
+            return NotFound(
+                "User Profile not found.");
+        }
+
+
+        //===========================================================
+        // Current User
+        //===========================================================
+
+        long userId =
+            1;
+
+
+        //===========================================================
+        // Clear Photo Path From Database
+        //===========================================================
+
+        await _repository.ClearPhotoAsync(
+            id,
+            userId);
+
+
+        //===========================================================
+        // Delete Physical Photo
+        //===========================================================
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(
+                existingProfile.UserPhotoPath)
+        )
+        {
+            DeletePhysicalPhoto(
+                existingProfile.UserPhotoPath);
+        }
+
+
+        //===========================================================
+        // Delete Successful
+        //===========================================================
+
+        return NoContent();
+    }
+
+
+    //===============================================================
     // Delete
     //===============================================================
 
@@ -181,7 +467,8 @@ public class UserProfileController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+        long userId =
+            1;
 
 
         //===========================================================
@@ -199,7 +486,8 @@ public class UserProfileController : ControllerBase
             InvalidOperationException ex
         )
         {
-            return Conflict(ex.Message);
+            return Conflict(
+                ex.Message);
         }
 
 
@@ -219,17 +507,24 @@ public class UserProfileController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+        long userId =
+            1;
+
 
         bool restored =
             await _repository.RestoreAsync(
                 userId);
 
-        if (!restored)
+
+        if
+        (
+            !restored
+        )
         {
             return NotFound(
                 "There are no deleted user profiles available to restore.");
         }
+
 
         return NoContent();
     }
@@ -247,5 +542,64 @@ public class UserProfileController : ControllerBase
             await _activityHistoryRepository.GetListHistoryAsync(
                 "Security Permission",
                 "User Profile"));
+    }
+
+
+    //===============================================================
+    // Delete Physical Photo
+    //===============================================================
+
+    private void DeletePhysicalPhoto(
+        string photoPath)
+    {
+        try
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    photoPath)
+            )
+            {
+                return;
+            }
+
+
+            string relativePath =
+                photoPath.Trim()
+                    .TrimStart(
+                        '/',
+                        '\\');
+
+
+            string webRootPath =
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot");
+
+
+            string physicalFilePath =
+                Path.Combine(
+                    webRootPath,
+                    relativePath);
+
+
+            if
+            (
+                System.IO.File.Exists(
+                    physicalFilePath)
+            )
+            {
+                System.IO.File.Delete(
+                    physicalFilePath);
+            }
+        }
+        catch
+        {
+            //=======================================================
+            // Physical File Cleanup Failure
+            //=======================================================
+            // Database operation remains successful even if the
+            // physical file cannot be removed.
+        }
     }
 }

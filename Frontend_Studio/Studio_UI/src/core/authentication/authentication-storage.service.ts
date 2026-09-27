@@ -32,6 +32,7 @@ export class AuthenticationStorageService
         string =
             'appcore_authentication_token';
 
+
     private readonly userKey:
         string =
             'appcore_authentication_user';
@@ -49,15 +50,26 @@ export class AuthenticationStorageService
     ):
         void
     {
+        //=======================================================
+        // Store Authentication Token
+        //=======================================================
+
         localStorage.setItem
         (
             this.tokenKey,
+
             response.token
         );
+
+
+        //=======================================================
+        // Store Authenticated User
+        //=======================================================
 
         localStorage.setItem
         (
             this.userKey,
+
             JSON.stringify
             ({
                 userProfileId:
@@ -67,7 +79,10 @@ export class AuthenticationStorageService
                     response.userName,
 
                 displayName:
-                    response.displayName
+                    response.displayName,
+
+                fullName:
+                    response.fullName
             })
         );
     }
@@ -103,6 +118,9 @@ export class AuthenticationStorageService
 
             displayName:
                 string;
+
+            fullName:
+                string;
         }
         | null
     {
@@ -113,6 +131,7 @@ export class AuthenticationStorageService
                     this.userKey
                 );
 
+
         if
         (
             !user
@@ -120,6 +139,7 @@ export class AuthenticationStorageService
         {
             return null;
         }
+
 
         try
         {
@@ -147,6 +167,7 @@ export class AuthenticationStorageService
             string | null =
                 this.getToken();
 
+
         return !!token;
     }
 
@@ -163,6 +184,7 @@ export class AuthenticationStorageService
         (
             this.tokenKey
         );
+
 
         localStorage.removeItem
         (

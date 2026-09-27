@@ -4,98 +4,293 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Application.Settings.GeneralSettings.Company.DTOs;
 
-using AppCore.Domain.Common;
+using CompanyEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.Company;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.GeneralSettings;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+namespace AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 
 
 //===============================================================
-// CompanyRepository
+// Company Repository
 //===============================================================
 
-public class CompanyRepository
-    : ICompanyRepository
+public class CompanyRepository : ICompanyRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public CompanyRepository
-    (
-        AppDbContext context
-    )
+    public CompanyRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // Company Query
+    //===========================================================
+
+    private IQueryable<CompanyDto> CompanyQuery()
+    {
+        return _context
+            .Set<CompanyEntity>()
+
+            .AsNoTracking()
+
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+
+            .Select
+            (
+                x =>
+                    new CompanyDto
+                    {
+                        CompanyId =
+                            x.CompanyId,
+
+                        CompanyCode =
+                            x.CompanyCode,
+
+                        CompanyName =
+                            x.CompanyName,
+
+                        CompanyShortName =
+                            x.CompanyShortName,
+
+
+                        //===================================================
+                        // Address & Contact Information
+                        //===================================================
+
+                        AddressLine1 =
+                            x.AddressLine1,
+
+                        AddressLine2 =
+                            x.AddressLine2,
+
+                        Phone =
+                            x.Phone,
+
+                        Mobile =
+                            x.Mobile,
+
+                        Email =
+                            x.Email,
+
+                        Website =
+                            x.Website,
+
+
+                        //===================================================
+                        // Business Information
+                        //===================================================
+
+                        BINNo =
+                            x.BINNo,
+
+                        OwnershipType =
+                            x.OwnershipType,
+
+                        EconomicActivity =
+                            x.EconomicActivity,
+
+                        TINNo =
+                            x.TINNo,
+
+                        TradeLicenseNo =
+                            x.TradeLicenseNo,
+
+
+                        //===================================================
+                        // Configuration
+                        //===================================================
+
+                        CompanyLogoPath =
+                            x.CompanyLogoPath,
+
+                        Remarks =
+                            x.Remarks,
+
+
+                        //===================================================
+                        // Status
+                        //===================================================
+
+                        IsActive =
+                            x.IsActive,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>>
+    public async Task<List<CompanyDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
-            .AsNoTracking()
-            .Where(
+        return await CompanyQuery()
+
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
+                    x.CompanyCode
             )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
+
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company?>
+    public async Task<CompanyDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await CompanyQuery()
+
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.CompanyId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync()
+    {
+        List<string> existingCodes =
+            await _context
+                .Set<CompanyEntity>()
+
+                .AsNoTracking()
+
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                )
+
+                .Select
+                (
+                    x =>
+                        x.CompanyCode
+                )
+
+                .ToListAsync();
+
+
+        int nextSequenceNo =
+            1;
+
+
+        while
+        (
+            existingCodes.Any
+            (
+                x =>
+                    string.Equals
+                    (
+                        x,
+
+                        CodeGenerator.GenerateCompanyCode(
+                            nextSequenceNo),
+
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            )
+        )
+        {
+            nextSequenceNo++;
+        }
+
+
+        return CodeGenerator.GenerateCompanyCode(
+            nextSequenceNo);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<CompanyDefaultsDto>
+        GetDefaultsAsync()
+    {
+        return new CompanyDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync()
+        };
+    }
 
 
     //===========================================================
@@ -104,41 +299,146 @@ public class CompanyRepository
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.Company entity
-    )
+        (
+            CreateCompanyDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        string companyCode =
+            dto.CompanyCode?.Trim()
+            ??
+            string.Empty;
 
 
-        entity.IsActive =
-            true;
+        if
+        (
+            string.IsNullOrWhiteSpace(companyCode)
+        )
+        {
+            companyCode =
+                await GetNextCodeAsync();
+        }
 
 
-        entity.IsDeleted =
-            false;
+        CompanyEntity entity =
+            new CompanyEntity
+            {
+                CompanyCode =
+                    companyCode,
+
+                CompanyName =
+                    dto.CompanyName?.Trim()
+                    ??
+                    string.Empty,
+
+                CompanyShortName =
+                    dto.CompanyShortName?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.CreatedBy =
-            userId;
+                //=======================================================
+                // Address & Contact Information
+                //=======================================================
+
+                AddressLine1 =
+                    dto.AddressLine1?.Trim()
+                    ??
+                    string.Empty,
+
+                AddressLine2 =
+                    dto.AddressLine2?.Trim()
+                    ??
+                    string.Empty,
+
+                Phone =
+                    dto.Phone?.Trim()
+                    ??
+                    string.Empty,
+
+                Mobile =
+                    dto.Mobile?.Trim()
+                    ??
+                    string.Empty,
+
+                Email =
+                    dto.Email?.Trim()
+                    ??
+                    string.Empty,
+
+                Website =
+                    dto.Website?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.CreatedDate =
-            DateTime.UtcNow;
+                //=======================================================
+                // Business Information
+                //=======================================================
+
+                BINNo =
+                    dto.BINNo?.Trim()
+                    ??
+                    string.Empty,
+
+                OwnershipType =
+                    dto.OwnershipType?.Trim()
+                    ??
+                    string.Empty,
+
+                EconomicActivity =
+                    dto.EconomicActivity?.Trim()
+                    ??
+                    string.Empty,
+
+                TINNo =
+                    dto.TINNo?.Trim()
+                    ??
+                    string.Empty,
+
+                TradeLicenseNo =
+                    dto.TradeLicenseNo?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.ModifiedBy =
-            null;
+                //=======================================================
+                // Configuration
+                //=======================================================
+
+                CompanyLogoPath =
+                    dto.CompanyLogoPath?.Trim()
+                    ??
+                    string.Empty,
+
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.ModifiedDate =
-            null;
+                //=======================================================
+                // Status
+                //=======================================================
+
+                IsActive =
+                    dto.IsActive,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
-            .AddAsync(
+        _context
+            .Set<CompanyEntity>()
+            .Add(
                 entity
             );
 
@@ -146,17 +446,22 @@ public class CompanyRepository
         await _context.SaveChangesAsync();
 
 
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "General Settings",
 
                 EntityName =
                     "Company",
 
                 EntityId =
-                    entity.Id,
+                    entity.CompanyId,
 
                 ActivityType =
                     "Create",
@@ -165,7 +470,7 @@ public class CompanyRepository
                     "Company Created",
 
                 ActivityDescription =
-                    $"Company '{entity.Name}' was created.",
+                    $"Company '{entity.CompanyName}' created.",
 
                 PerformedBy =
                     userId,
@@ -182,9 +487,8 @@ public class CompanyRepository
         await _context.SaveChangesAsync();
 
 
-        return entity.Id;
+        return entity.CompanyId;
     }
-
 
 
     //===========================================================
@@ -193,79 +497,185 @@ public class CompanyRepository
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.Company entity
-    )
+        (
+            UpdateCompanyDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        CompanyEntity? entity =
 
-
-        var existing =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
-                .FirstOrDefaultAsync(
+                .Set<CompanyEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+
+                        x.CompanyId ==
+                        dto.CompanyId
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "Company record was not found."
+            throw new KeyNotFoundException(
+                "Company not found."
             );
         }
 
 
-        existing.Code =
-            entity.Code;
+        entity.CompanyCode =
+            dto.CompanyCode?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Name =
-            entity.Name;
+        entity.CompanyName =
+            dto.CompanyName?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+        entity.CompanyShortName =
+            dto.CompanyShortName?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.SampleField =
-            entity.SampleField;
+        //===========================================================
+        // Address & Contact Information
+        //===========================================================
+
+        entity.AddressLine1 =
+            dto.AddressLine1?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Status =
-            entity.Status;
+        entity.AddressLine2 =
+            dto.AddressLine2?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Remarks =
-            entity.Remarks;
+        entity.Phone =
+            dto.Phone?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.ModifiedBy =
+        entity.Mobile =
+            dto.Mobile?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.Email =
+            dto.Email?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.Website =
+            dto.Website?.Trim()
+            ??
+            string.Empty;
+
+
+        //===========================================================
+        // Business Information
+        //===========================================================
+
+        entity.BINNo =
+            dto.BINNo?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.OwnershipType =
+            dto.OwnershipType?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.EconomicActivity =
+            dto.EconomicActivity?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.TINNo =
+            dto.TINNo?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.TradeLicenseNo =
+            dto.TradeLicenseNo?.Trim()
+            ??
+            string.Empty;
+
+
+        //===========================================================
+        // Configuration
+        //===========================================================
+
+        entity.CompanyLogoPath =
+            dto.CompanyLogoPath?.Trim()
+            ??
+            string.Empty;
+
+
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
+
+
+        //===========================================================
+        // Status
+        //===========================================================
+
+        entity.IsActive =
+            dto.IsActive;
+
+
+        entity.ModifiedBy =
             userId;
 
 
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "General Settings",
 
                 EntityName =
                     "Company",
 
                 EntityId =
-                    existing.Id,
+                    entity.CompanyId,
 
                 ActivityType =
                     "Update",
@@ -274,7 +684,7 @@ public class CompanyRepository
                     "Company Updated",
 
                 ActivityDescription =
-                    $"Company '{existing.Name}' was updated.",
+                    $"Company '{entity.CompanyName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -290,7 +700,6 @@ public class CompanyRepository
 
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
@@ -299,61 +708,81 @@ public class CompanyRepository
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve Company
+        //===========================================================
 
+        CompanyEntity? entity =
 
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
-                .FirstOrDefaultAsync(
+                .Set<CompanyEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+
+                        x.CompanyId ==
+                        id
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "Company not found."
+            );
         }
 
+
+        //===========================================================
+        // Soft Delete Company
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
 
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
 
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "General Settings",
 
                 EntityName =
                     "Company",
 
                 EntityId =
-                    entity.Id,
+                    entity.CompanyId,
 
                 ActivityType =
                     "Delete",
@@ -362,7 +791,7 @@ public class CompanyRepository
                     "Company Deleted",
 
                 ActivityDescription =
-                    $"Company '{entity.Name}' was deleted.",
+                    $"Company '{entity.CompanyName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -380,38 +809,43 @@ public class CompanyRepository
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
+        CompanyEntity? entity =
 
-
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Company>()
-                .FirstOrDefaultAsync(
+                .Set<CompanyEntity>()
+
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
+                )
+
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+
+                .FirstOrDefaultAsync();
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
 
 
@@ -419,8 +853,12 @@ public class CompanyRepository
             false;
 
 
-        entity.IsActive =
-            true;
+        entity.DeletedBy =
+            null;
+
+
+        entity.DeletedDate =
+            null;
 
 
         entity.ModifiedBy =
@@ -431,17 +869,25 @@ public class CompanyRepository
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "General Settings",
 
                 EntityName =
                     "Company",
 
                 EntityId =
-                    entity.Id,
+                    entity.CompanyId,
 
                 ActivityType =
                     "Restore",
@@ -450,7 +896,7 @@ public class CompanyRepository
                     "Company Restored",
 
                 ActivityDescription =
-                    $"Company '{entity.Name}' was restored.",
+                    $"Company '{entity.CompanyName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -465,150 +911,35 @@ public class CompanyRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
+        return await _context
+            .Set<CompanyEntity>()
 
-            .AsNoTracking()
-
-            .Where(
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
 
-                    &&
-
-                    x.EntityName ==
-                    "Company"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "Company"
-
-                    &&
-
-                    x.EntityId ==
+                    x.CompanyId ==
                     id
-            )
 
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
+                    &&
 
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
 }

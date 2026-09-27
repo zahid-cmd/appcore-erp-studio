@@ -5,6 +5,7 @@
 namespace AppCore.Application.Platform.Authentication.DTOs;
 
 
+
 //===============================================================
 // Login Response DTO
 //===============================================================
@@ -22,6 +23,7 @@ public class LoginResponseDto
     }
 
 
+
     //===========================================================
     // Response Message
     //===========================================================
@@ -31,6 +33,7 @@ public class LoginResponseDto
         get;
         set;
     } = string.Empty;
+
 
 
     //===========================================================
@@ -44,6 +47,7 @@ public class LoginResponseDto
     } = string.Empty;
 
 
+
     //===========================================================
     // User Profile ID
     //===========================================================
@@ -53,6 +57,7 @@ public class LoginResponseDto
         get;
         set;
     }
+
 
 
     //===========================================================
@@ -66,11 +71,29 @@ public class LoginResponseDto
     } = string.Empty;
 
 
+
     //===========================================================
     // Display Name
     //===========================================================
 
     public string DisplayName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+
+    //===========================================================
+    // Full Name
+    // ----------------------------------------------------------
+    // Full legal/user name used for authenticated user display.
+    //
+    // This value is used by the application Topbar to display
+    // the currently logged-in user's Full Name.
+    //===========================================================
+
+    public string FullName
     {
         get;
         set;

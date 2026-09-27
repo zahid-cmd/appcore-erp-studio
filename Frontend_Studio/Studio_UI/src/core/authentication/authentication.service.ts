@@ -76,6 +76,7 @@ export class AuthenticationService
         return this.http.post<LoginResponse>
         (
             `${this.apiUrl}/login`,
+
             request
         );
     }
@@ -95,6 +96,7 @@ export class AuthenticationService
         return this.http.post<LoginResponse>
         (
             `${this.apiUrl}/register`,
+
             request
         );
     }
@@ -104,6 +106,7 @@ export class AuthenticationService
        Check Forgot Password
     ========================================================
        Step 1:
+
        Login ID → Account Check → Verification Code
     ======================================================== */
 
@@ -117,6 +120,7 @@ export class AuthenticationService
         return this.http.post<ForgotPasswordCheckResponse>
         (
             `${this.apiUrl}/forgot-password/check`,
+
             request
         );
     }
@@ -126,6 +130,7 @@ export class AuthenticationService
        Confirm Forgot Password
     ========================================================
        Step 2:
+
        Login ID + Verification Code + New Password
     ======================================================== */
 
@@ -139,6 +144,7 @@ export class AuthenticationService
         return this.http.post<LoginResponse>
         (
             `${this.apiUrl}/forgot-password/confirm`,
+
             request
         );
     }
