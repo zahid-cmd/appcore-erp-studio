@@ -36,6 +36,12 @@ from '../../shared/components/utilities/command-center/command-center';
 
 import
 {
+    OrbitLoaderComponent
+}
+from '../../shared/components/utilities/orbit-loader/orbit-loader';
+
+import
+{
     ComponentRenderer
 }
 from '../component-renderer/component-renderer';
@@ -165,6 +171,8 @@ interface DashboardWidget
         PageHeaderComponent,
 
         CommandCenterComponent,
+
+        OrbitLoaderComponent,
 
         ComponentRenderer
     ],
@@ -914,12 +922,9 @@ implements
                         }
 
 
-                        /*
-                         * IMPORTANT:
-                         *
-                         * Layout now comes from the
-                         * WidgetConfigurationDetail.
-                         */
+                        //===================================================
+                        // Layout comes from Widget Configuration Detail
+                        //===================================================
 
                         const columnSpan =
                             this.normalizeColumnSpan(

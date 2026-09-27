@@ -8,11 +8,16 @@
 
     <!-- =======================================================
          DASHBOARD HEADER
+         -------------------------------------------------------
+         FIXED — NEVER SCROLLS
     ======================================================== -->
 
     <app-page-header
+
         title="Dashboard"
+
         subtitle="Welcome back. Here's what's happening across your ERP."
+
         icon="fas fa-gauge-high">
 
 
@@ -23,12 +28,25 @@
         <div pageHeaderRight>
 
             <app-command-center
+
                 command1Text="Customize"
+
                 command1Icon="fas fa-sliders"
+
                 command2Text="Refresh"
+
                 command2Icon="fas fa-rotate-right"
+
                 rightCommandIcon="fas fa-arrow-left"
-                (rightCommandClick)="back()">
+
+                (command2Click)="
+                    refreshDashboard()
+                "
+
+                (rightCommandClick)="
+                    back()
+                ">
+
             </app-command-center>
 
         </div>
@@ -37,110 +55,79 @@
     </app-page-header>
 
 
+
     <!-- =======================================================
-         DASHBOARD CONTENT
+         DASHBOARD SCROLL VIEWPORT
+         -------------------------------------------------------
+         ONLY THIS AREA SCROLLS
     ======================================================== -->
 
     <div
-        class="dashboard-default-content">
+        class="
+            dashboard-default-scroll-wrapper
+            appcore-scrollbar
+        ">
 
 
         <!-- ===================================================
-             DASHBOARD WORKSPACE
+             DASHBOARD CONTENT
         ==================================================== -->
 
         <div
-            class="dashboard-widget-workspace">
+            class="dashboard-default-content">
 
 
-            <!-- =================================================
-                 CONFIGURED DASHBOARD WIDGETS
-            ================================================== -->
+            <!-- ===============================================
+                 ORBIT LOADER
+                 -----------------------------------------------
+                 APPCORE STANDARD LOADER
+            ================================================= -->
 
-            <div
-                class="dashboard-widget"
-                *ngFor="
-                    let widget of dashboardWidgets
-                "
-                [style.grid-column-start]="
-                    getWidgetGridColumnStart(
-                        widget
-                    )
-                "
-                [style.grid-column-end]="
-                    getWidgetGridColumnEnd(
-                        widget
-                    )
-                ">
+            <app-orbit-loader
 
+                *ngIf="loading"
 
-                <!-- =============================================
-                     WIDGET COMPONENT
-                ============================================== -->
+                title="Loading Dashboard"
 
-                <app-component-renderer
-                    [componentKey]="widget.componentPath">
-                </app-component-renderer>
+                message="Preparing your dashboard widgets."
+
+                size="medium"
+
+                [showMessage]="true"
+
+                [overlay]="false">
+
+            </app-orbit-loader>
 
 
-            </div>
 
-
-            <!-- =================================================
-                 EMPTY DASHBOARD STATE
-            ================================================== -->
+            <!-- ===============================================
+                 LOAD FAILURE
+                 -----------------------------------------------
+                 GENUINE CONFIGURATION / SERVER ERROR
+            ================================================= -->
 
             <div
-                class="dashboard-empty-state"
-                *ngIf="
-                    !loading &&
-                    !loadFailed &&
-                    dashboardWidgets.length === 0
-                ">
 
-
-                <i
-                    class="fas fa-table-columns">
-                </i>
-
-
-                <div
-                    class="dashboard-empty-title">
-
-                    No Widgets Configured
-
-                </div>
-
-
-                <div
-                    class="dashboard-empty-message">
-
-                    No active widgets are currently configured
-                    for this dashboard.
-
-                </div>
-
-
-            </div>
-
-
-            <!-- =================================================
-                 DASHBOARD LOAD FAILURE
-            ================================================== -->
-
-            <div
                 class="
                     dashboard-empty-state
                     dashboard-load-failed
                 "
+
                 *ngIf="
+                    !loading &&
                     loadFailed
                 ">
 
 
-                <i
-                    class="fas fa-triangle-exclamation">
-                </i>
+                <div
+                    class="dashboard-empty-icon">
+
+                    <i
+                        class="fas fa-triangle-exclamation">
+                    </i>
+
+                </div>
 
 
                 <div
@@ -159,7 +146,146 @@
                 </div>
 
 
+                <button
+
+                    type="button"
+
+                    class="dashboard-state-button"
+
+                    (click)="
+                        refreshDashboard()
+                    ">
+
+                    <i
+                        class="fas fa-rotate-right">
+                    </i>
+
+                    Retry
+
+                </button>
+
+
             </div>
+
+
+
+            <!-- ===============================================
+                 DASHBOARD CONTENT
+            ================================================= -->
+
+            <ng-container
+
+                *ngIf="
+                    !loading &&
+                    !loadFailed
+                ">
+
+
+                <!-- ===========================================
+                     EMPTY DASHBOARD
+                     -------------------------------------------
+                     SHARED APPCORE EMPTY STATE
+                ============================================ -->
+
+                <app-empty-state
+
+                    *ngIf="
+                        dashboardWidgets.length === 0
+                    "
+
+                    icon="fas fa-table-columns"
+
+                    title="No Widgets Configured"
+
+                    subtitle="
+                        No active widgets are currently configured
+                        for this dashboard.
+                    ">
+
+                </app-empty-state>
+
+
+
+                <!-- ===========================================
+                     WIDGET GRID
+                     -------------------------------------------
+                     SAME 12-COLUMN CONFIGURATION SYSTEM
+                     AS DASHBOARD HOST
+                ============================================ -->
+
+                <div
+
+                    class="dashboard-widget-grid"
+
+                    *ngIf="
+                        dashboardWidgets.length > 0
+                    ">
+
+
+                    <!-- =======================================
+                         CONFIGURED DASHBOARD WIDGETS
+                    ======================================== -->
+
+                    <ng-container
+
+                        *ngFor="
+                            let widget of dashboardWidgets;
+                            trackBy: trackByWidgetId
+                        ">
+
+
+                        <!-- ===================================
+                             DASHBOARD WIDGET
+                             -----------------------------------
+                             ColumnSpan:
+                             Controls widget width.
+
+                             DisplayOrder:
+                             Controls widget position.
+                        ==================================== -->
+
+                        <div
+
+                            class="dashboard-widget"
+
+                            [style.grid-column]="
+                                'span ' +
+                                widget.columnSpan
+                            ">
+
+
+                            <!-- ===============================
+                                 WIDGET CONTENT
+                            ================================ -->
+
+                            <div
+                                class="
+                                    dashboard-widget-content
+                                ">
+
+
+                                <app-component-renderer
+
+                                    [componentKey]="
+                                        widget.componentPath
+                                    ">
+
+                                </app-component-renderer>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    </ng-container>
+
+
+                </div>
+
+
+            </ng-container>
 
 
         </div>

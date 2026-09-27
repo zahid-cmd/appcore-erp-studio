@@ -81,32 +81,26 @@
 
 
             <!-- ===============================================
-                 LOADING STATE
-            ================================================ -->
+                 ORBIT LOADER
+                 -----------------------------------------------
+                 APPCORE STANDARD LOADER
+            ================================================= -->
 
-            <div
-                class="dashboard-state"
-                *ngIf="isLoading">
+            <app-orbit-loader
 
-                <div class="dashboard-state-icon">
+                *ngIf="isLoading"
 
-                    <i class="fas fa-spinner fa-spin"></i>
+                title="Loading Dashboard"
 
-                </div>
+                message="Preparing your dashboard widgets."
 
-                <div class="dashboard-state-title">
+                size="medium"
 
-                    Loading Dashboard
+                [showMessage]="true"
 
-                </div>
+                [overlay]="false">
 
-                <div class="dashboard-state-text">
-
-                    Preparing your dashboard widgets.
-
-                </div>
-
-            </div>
+            </app-orbit-loader>
 
 
 
@@ -115,17 +109,23 @@
             ================================================ -->
 
             <div
+
                 class="dashboard-state dashboard-load-failed"
+
                 *ngIf="
                     !isLoading &&
                     loadFailed
                 ">
 
+
                 <div class="dashboard-state-icon">
 
-                    <i class="fas fa-triangle-exclamation"></i>
+                    <i
+                        class="fas fa-triangle-exclamation">
+                    </i>
 
                 </div>
+
 
                 <div class="dashboard-state-title">
 
@@ -133,22 +133,32 @@
 
                 </div>
 
+
                 <div class="dashboard-state-text">
 
                     The dashboard could not be loaded at this time.
 
                 </div>
 
-                <button
-                    type="button"
-                    class="dashboard-state-button"
-                    (click)="refreshDashboard()">
 
-                    <i class="fas fa-rotate-right"></i>
+                <button
+
+                    type="button"
+
+                    class="dashboard-state-button"
+
+                    (click)="
+                        refreshDashboard()
+                    ">
+
+                    <i
+                        class="fas fa-rotate-right">
+                    </i>
 
                     Retry
 
                 </button>
+
 
             </div>
 
@@ -159,6 +169,7 @@
             ================================================ -->
 
             <ng-container
+
                 *ngIf="
                     !isLoading &&
                     !loadFailed
@@ -170,16 +181,22 @@
                 ============================================ -->
 
                 <div
+
                     class="dashboard-empty"
+
                     *ngIf="
                         visibleWidgets.length === 0
                     ">
 
+
                     <div class="dashboard-empty-icon">
 
-                        <i class="fas fa-gauge-high"></i>
+                        <i
+                            class="fas fa-gauge-high">
+                        </i>
 
                     </div>
+
 
                     <div class="dashboard-empty-title">
 
@@ -187,11 +204,13 @@
 
                     </div>
 
+
                     <div class="dashboard-empty-text">
 
                         No widgets are currently configured for this dashboard.
 
                     </div>
+
 
                 </div>
 
@@ -202,7 +221,9 @@
                 ============================================ -->
 
                 <div
+
                     class="dashboard-widget-grid"
+
                     *ngIf="
                         visibleWidgets.length > 0
                     ">
@@ -213,6 +234,7 @@
                     ======================================== -->
 
                     <ng-container
+
                         *ngFor="
                             let widget of visibleWidgets;
                             trackBy: trackByWidgetId
@@ -250,6 +272,7 @@
                             ============================== -->
 
                             <div
+
                                 class="dashboard-widget-content">
 
 

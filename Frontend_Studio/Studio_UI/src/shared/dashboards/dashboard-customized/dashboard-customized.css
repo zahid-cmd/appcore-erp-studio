@@ -1,58 +1,261 @@
 /* ===========================================================
-   DASHBOARD CUSTOMIZED
+   ANGULAR DASHBOARD CUSTOMIZED COMPONENT HOST
 =========================================================== */
 
-.dashboard-customized
+:host
 {
+    display:block;
+
     width:100%;
+
     height:100%;
+
     min-width:0;
+
     min-height:0;
-    display:flex;
-    flex-direction:column;
+
     box-sizing:border-box;
-    background:#f3f6fa;
+
     overflow:hidden;
 }
 
 
 /* ===========================================================
+   DASHBOARD CUSTOMIZED
+   -----------------------------------------------------------
+   HEADER REMAINS FIXED
+   CONTENT AREA BECOMES THE SCROLL VIEWPORT
+=========================================================== */
+
+.dashboard-customized
+{
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    display:grid;
+
+    grid-template-rows:
+        auto
+        minmax(
+            0,
+            1fr
+        );
+
+    box-sizing:border-box;
+
+    background:#f3f6fa;
+
+    overflow:hidden;
+}
+
+
+/* ===========================================================
+   DASHBOARD PAGE HEADER
+   -----------------------------------------------------------
+   FIXED — NEVER SCROLLS
+=========================================================== */
+
+.dashboard-customized
+app-page-header
+{
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    box-sizing:border-box;
+
+    grid-row:
+        1;
+}
+
+
+/* ===========================================================
+   DASHBOARD SCROLL VIEWPORT
+   -----------------------------------------------------------
+   ONLY WIDGET CONTENT SCROLLS WHEN REQUIRED
+=========================================================== */
+
+.dashboard-customized-scroll-wrapper
+{
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    box-sizing:border-box;
+
+    grid-row:
+        2;
+
+    overflow-x:hidden;
+
+    overflow-y:auto;
+}
+
+
+/* ===========================================================
+   DASHBOARD NON-SCROLLING STATES
+   -----------------------------------------------------------
+   LOADING / EMPTY / ERROR STATES
+   MUST NOT DISPLAY A SCROLLBAR
+=========================================================== */
+
+.dashboard-customized-scroll-wrapper:has(app-orbit-loader),
+.dashboard-customized-scroll-wrapper:has(.dashboard-empty-state),
+.dashboard-customized-scroll-wrapper:has(app-empty-state)
+{
+    overflow-y:hidden;
+}
+
+
+/* ===========================================================
    DASHBOARD CONTENT
+   -----------------------------------------------------------
+   NORMAL WIDGET CONTENT USES THE FULL AVAILABLE WIDTH.
+
+   EMPTY / LOADING / ERROR STATES ARE CENTERED INSIDE
+   THE COMPLETE AVAILABLE DASHBOARD VIEWPORT.
 =========================================================== */
 
 .dashboard-customized-content
 {
-    flex:1 1 auto;
     width:100%;
+
     min-width:0;
+
+    min-height:100%;
+
+    display:flex;
+
+    flex-direction:column;
+
+    box-sizing:border-box;
+
+    padding:
+        16px
+        18px
+        24px;
+
+    overflow:visible;
+}
+
+
+/* ===========================================================
+   DASHBOARD CONTENT — ORBIT LOADER
+   -----------------------------------------------------------
+   FILLS THE AVAILABLE CONTENT AREA
+   AND CENTERS THE LOADER.
+=========================================================== */
+
+.dashboard-customized-content
+app-orbit-loader
+{
+    display:flex;
+
+    width:100%;
+
+    min-width:0;
+
     min-height:0;
-    overflow:auto;
-    padding:18px 20px 24px;
+
+    flex:
+        1 1 auto;
+
+    align-items:center;
+
+    justify-content:center;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+}
+
+
+/* ===========================================================
+   SHARED EMPTY STATE
+   -----------------------------------------------------------
+   APP-EMPTY-STATE IS THE SINGLE SOURCE FOR EMPTY DASHBOARD
+   PRESENTATION.
+
+   The host wrapper gives the shared component the entire
+   remaining dashboard viewport so its content stays centered.
+=========================================================== */
+
+.dashboard-customized-content
+app-empty-state
+{
+    display:flex;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    flex:
+        1 1 auto;
+
+    align-items:center;
+
+    justify-content:center;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+}
+
+
+/* ===========================================================
+   SHARED EMPTY STATE INTERNAL HOST
+   -----------------------------------------------------------
+   ENSURES THE EMPTY STATE DOES NOT SHRINK TO CONTENT HEIGHT.
+=========================================================== */
+
+.dashboard-customized-content
+app-empty-state > *
+{
+    max-width:100%;
+
     box-sizing:border-box;
 }
 
 
 /* ===========================================================
-   DASHBOARD WIDGET WORKSPACE
+   DASHBOARD WIDGET GRID
+   -----------------------------------------------------------
+   12-COLUMN CONFIGURATION GRID
 =========================================================== */
 
-.dashboard-widget-workspace
+.dashboard-widget-grid
 {
     width:100%;
+
     min-width:0;
-    min-height:100%;
 
     display:grid;
 
     grid-template-columns:
         repeat(
             12,
-            minmax(0,1fr)
+            minmax(
+                0,
+                1fr
+            )
         );
 
     grid-auto-rows:
         minmax(
-            120px,
+            0,
             auto
         );
 
@@ -61,56 +264,444 @@
     align-items:stretch;
 
     box-sizing:border-box;
+
+    flex:
+        0 0 auto;
 }
 
 
 /* ===========================================================
-   RESPONSIVE
+   DASHBOARD WIDGET
+   -----------------------------------------------------------
+   WIDTH IS CONTROLLED BY:
+   WidgetConfigurationDetail.ColumnSpan
+=========================================================== */
+
+.dashboard-widget
+{
+    position:relative;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border:
+        1px solid
+        #e2e8f0;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    transition:
+        border-color .20s ease,
+        box-shadow .20s ease;
+}
+
+
+/* ===========================================================
+   DASHBOARD WIDGET HOVER
+=========================================================== */
+
+.dashboard-widget:hover
+{
+    border-color:#d5deea;
+
+    box-shadow:
+        0 5px 18px
+        rgba(
+            15,
+            23,
+            42,
+            .06
+        );
+}
+
+
+/* ===========================================================
+   DASHBOARD WIDGET CONTENT
+=========================================================== */
+
+.dashboard-widget-content
+{
+    flex:
+        1 1 auto;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    display:flex;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+}
+
+
+/* ===========================================================
+   COMPONENT RENDERER
+=========================================================== */
+
+.dashboard-widget-content
+app-component-renderer
+{
+    display:block;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    flex:
+        1 1 auto;
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   COMPONENT RENDERER INTERNAL HOST
+=========================================================== */
+
+.dashboard-widget-content
+app-component-renderer > *
+{
+    display:block;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    max-width:100%;
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   DASHBOARD EMPTY / STATUS STATE
+   -----------------------------------------------------------
+   LEGACY / ERROR STATE SUPPORT
+
+   The shared EmptyStateComponent is used for the normal
+   "No Widgets Configured" state.
+
+   This class remains for the genuine dashboard load-failure
+   block.
+=========================================================== */
+
+.dashboard-empty-state
+{
+    width:100%;
+
+    min-width:0;
+
+    min-height:260px;
+
+    flex:
+        1 1 auto;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    padding:
+        30px
+        24px;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border:
+        1px dashed
+        #cbd5e1;
+
+    border-radius:12px;
+
+    text-align:center;
+}
+
+
+/* ===========================================================
+   DASHBOARD EMPTY ICON
+=========================================================== */
+
+.dashboard-empty-icon
+{
+    width:52px;
+
+    height:52px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin-bottom:4px;
+
+    border-radius:12px;
+
+    background:#eff6ff;
+
+    color:#3b82f6;
+
+    font-size:20px;
+}
+
+
+/* ===========================================================
+   DASHBOARD EMPTY TITLE
+=========================================================== */
+
+.dashboard-empty-title
+{
+    color:#334155;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    line-height:1.3;
+}
+
+
+/* ===========================================================
+   DASHBOARD EMPTY MESSAGE
+=========================================================== */
+
+.dashboard-empty-message
+{
+    max-width:480px;
+
+    color:#94a3b8;
+
+    font-size:12px;
+
+    line-height:1.5;
+}
+
+
+/* ===========================================================
+   LOAD FAILURE
+=========================================================== */
+
+.dashboard-load-failed
+{
+    border-color:#f0d7d7;
+}
+
+
+.dashboard-load-failed
+.dashboard-empty-icon
+{
+    background:#fff1f2;
+
+    color:#dc2626;
+}
+
+
+/* ===========================================================
+   STATE BUTTON
+=========================================================== */
+
+.dashboard-state-button
+{
+    height:34px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:7px;
+
+    margin-top:8px;
+
+    padding:
+        0
+        14px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172554 0%,
+            #2563eb 100%
+        );
+
+    color:#ffffff;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 4px 12px
+        rgba(
+            37,
+            99,
+            235,
+            .16
+        );
+}
+
+
+.dashboard-state-button:hover
+{
+    background:
+        linear-gradient(
+            135deg,
+            #1e3a8a 0%,
+            #1d4ed8 100%
+        );
+}
+
+
+/* ===========================================================
+   REMOVE ARTIFICIAL WIDTH LIMITS
+=========================================================== */
+
+.dashboard-customized,
+.dashboard-customized-scroll-wrapper,
+.dashboard-customized-content,
+.dashboard-widget-grid,
+.dashboard-widget,
+.dashboard-widget-content,
+.dashboard-widget-content
+app-component-renderer
+{
+    max-width:none;
+}
+
+
+/* ===========================================================
+   RESPONSIVE — LARGE DESKTOP
 =========================================================== */
 
 @media (max-width:1200px)
 {
-    .dashboard-widget-workspace
+    .dashboard-widget-grid
     {
         grid-template-columns:
             repeat(
                 6,
-                minmax(0,1fr)
+                minmax(
+                    0,
+                    1fr
+                )
             );
+    }
+
+
+    .dashboard-widget
+    {
+        grid-column:
+            1 /
+            -1 !important;
     }
 }
 
+
+/* ===========================================================
+   RESPONSIVE — TABLET
+=========================================================== */
 
 @media (max-width:800px)
 {
     .dashboard-customized-content
     {
-        padding:14px;
+        padding:
+            14px;
     }
 
 
-    .dashboard-widget-workspace
+    .dashboard-widget-grid
     {
         grid-template-columns:
             repeat(
                 2,
-                minmax(0,1fr)
+                minmax(
+                    0,
+                    1fr
+                )
             );
+
+        gap:14px;
+    }
+
+
+    .dashboard-widget
+    {
+        grid-column:
+            1 /
+            -1 !important;
     }
 }
 
+
+/* ===========================================================
+   RESPONSIVE — MOBILE
+=========================================================== */
 
 @media (max-width:520px)
 {
     .dashboard-customized-content
     {
-        padding:12px;
+        padding:
+            10px;
     }
 
 
-    .dashboard-widget-workspace
+    .dashboard-widget-grid
     {
         grid-template-columns:
-            minmax(0,1fr);
+            minmax(
+                0,
+                1fr
+            );
+
+        gap:10px;
+    }
+
+
+    .dashboard-widget
+    {
+        grid-column:
+            1 /
+            -1 !important;
     }
 }

@@ -47,6 +47,18 @@ import
 }
 from '../../components/utilities/command-center/command-center';
 
+import
+{
+    OrbitLoaderComponent
+}
+from '../../components/utilities/orbit-loader/orbit-loader';
+
+import
+{
+    EmptyStateComponent
+}
+from '../../components/layout/empty-state/empty-state';
+
 
 //===============================================================
 // Models & Services
@@ -122,12 +134,11 @@ interface DashboardWidgetHost
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         CommandCenterComponent,
-
-        ComponentRenderer
+        OrbitLoaderComponent,
+        ComponentRenderer,
+        EmptyStateComponent
     ],
 
     templateUrl:
@@ -267,6 +278,10 @@ implements
             );
 
 
+        //=======================================================
+        // Validate Dashboard ID
+        //=======================================================
+
         if
         (
             !id
@@ -274,12 +289,39 @@ implements
             id <= 0
         )
         {
+            this.dashboardId =
+                0;
+
+            this.widgetConfiguration =
+                null;
+
+            this.widgetConfigurationDetails =
+            [
+            ];
+
+            this.dashboardWidgets =
+            [
+            ];
+
+            this.defaultDashboardComponents =
+            [
+            ];
+
+            this.loading =
+                false;
+
             this.loadFailed =
                 true;
+
+            this.cdr.detectChanges();
 
             return;
         }
 
+
+        //=======================================================
+        // Initialize State
+        //=======================================================
 
         this.dashboardId =
             id;
@@ -291,6 +333,29 @@ implements
         this.loadFailed =
             false;
 
+
+        this.widgetConfiguration =
+            null;
+
+
+        this.widgetConfigurationDetails =
+        [
+        ];
+
+
+        this.dashboardWidgets =
+        [
+        ];
+
+
+        this.defaultDashboardComponents =
+        [
+        ];
+
+
+        //=======================================================
+        // Load Widget Configuration
+        //=======================================================
 
         this.widgetconfigurationservice
             .getByDashboardId(
@@ -310,30 +375,117 @@ implements
 
 
                     this.widgetConfigurationDetails =
-                        configuration.details
+                        configuration?.details
                         ??
                         [
                         ];
 
+
+                    //===================================================
+                    // No Configuration Details
+                    //===================================================
+
+                    if
+                    (
+                        this.widgetConfigurationDetails.length ===
+                        0
+                    )
+                    {
+                        this.dashboardWidgets =
+                        [
+                        ];
+
+                        this.loading =
+                            false;
+
+                        this.loadFailed =
+                            false;
+
+                        this.cdr.detectChanges();
+
+                        return;
+                    }
+
+
+                    //===================================================
+                    // Load Default Dashboard Widget Definitions
+                    //===================================================
 
                     this.loadDefaultDashboardComponents();
                 },
 
 
                 error:
-                    ():
+                    (
+                        error:
+                            unknown
+                    ):
                         void =>
                 {
+                    console.error(
+                        'Load Default Dashboard Configuration Error',
+                        error
+                    );
+
+
                     this.widgetConfiguration =
                         null;
+
 
                     this.widgetConfigurationDetails =
                     [
                     ];
 
+
                     this.dashboardWidgets =
                     [
                     ];
+
+
+                    this.defaultDashboardComponents =
+                    [
+                    ];
+
+
+                    /*
+                       A Dashboard without a Widget Configuration
+                       is a valid empty dashboard state.
+
+                       The backend returns HTTP 404 when no
+                       Widget Configuration exists for this
+                       Dashboard ID.
+
+                       Therefore:
+
+                       404 = No Widgets Configured
+
+                       Other HTTP errors remain genuine
+                       dashboard load failures.
+                    */
+
+                    const status =
+                        this.getHttpStatus(
+                            error
+                        );
+
+
+                    if
+                    (
+                        status ===
+                        404
+                    )
+                    {
+                        this.loading =
+                            false;
+
+                        this.loadFailed =
+                            false;
+
+                        this.cdr.detectChanges();
+
+                        return;
+                    }
+
 
                     this.loading =
                         false;
@@ -345,6 +497,52 @@ implements
                 }
             }
         );
+    }
+
+
+
+    //===========================================================
+    // Get HTTP Status
+    //===========================================================
+
+    private getHttpStatus(
+        error:
+            unknown
+    ):
+        number
+    {
+        if
+        (
+            typeof error ===
+            'object'
+            &&
+            error !== null
+            &&
+            'status' in error
+        )
+        {
+            const status =
+                (
+                    error as
+                    {
+                        status?:
+                            unknown;
+                    }
+                ).status;
+
+
+            if
+            (
+                typeof status ===
+                'number'
+            )
+            {
+                return status;
+            }
+        }
+
+
+        return 0;
     }
 
 
@@ -380,21 +578,35 @@ implements
                     this.loading =
                         false;
 
+                    this.loadFailed =
+                        false;
+
                     this.cdr.detectChanges();
                 },
 
 
                 error:
-                    ():
+                    (
+                        error:
+                            unknown
+                    ):
                         void =>
                 {
+                    console.error(
+                        'Load Default Dashboard Components Error',
+                        error
+                    );
+
+
                     this.defaultDashboardComponents =
                     [
                     ];
 
+
                     this.dashboardWidgets =
                     [
                     ];
+
 
                     this.loading =
                         false;
@@ -417,32 +629,56 @@ implements
     private buildDashboardWidgets():
         void
     {
+        //=======================================================
+        // Get Active Configuration Details
+        //=======================================================
+
         const configuredDetails =
             this.widgetConfigurationDetails
                 .filter(
                     detail =>
+                        detail.isActive !== false
+                        &&
                         Number(
                             detail.widgetId
                         ) > 0
                 );
 
 
+        //=======================================================
+        // Resolve Widgets
+        //=======================================================
+
         this.dashboardWidgets =
             configuredDetails
                 .map(
-                    detail =>
+                    (
+                        detail
+                    ):
+                        DashboardWidgetHost
+                        |
+                        null =>
                     {
+                        //===================================================
+                        // Find Widget Definition
+                        //===================================================
+
                         const widget =
                             this.defaultDashboardComponents.find(
                                 component =>
                                     Number(
                                         component.id
-                                    ) ===
+                                    )
+                                    ===
                                     Number(
                                         detail.widgetId
                                     )
                             );
 
+
+                        //===================================================
+                        // Widget Not Found
+                        //===================================================
 
                         if
                         (
@@ -453,6 +689,10 @@ implements
                         }
 
 
+                        //===================================================
+                        // Widget Inactive
+                        //===================================================
+
                         if
                         (
                             widget.status === false
@@ -462,11 +702,22 @@ implements
                         }
 
 
+                        //===================================================
+                        // Component Path
+                        //===================================================
+
+                        const componentPath =
+                            (
+                                widget.componentPath
+                                ??
+                                ''
+                            )
+                            .trim();
+
+
                         if
                         (
-                            !widget.componentPath
-                            ||
-                            !widget.componentPath.trim()
+                            !componentPath
                         )
                         {
                             return null;
@@ -474,7 +725,7 @@ implements
 
 
                         //===================================================
-                        // Column Span
+                        // Normalize Column Span
                         //===================================================
 
                         const configuredColumnSpan =
@@ -500,7 +751,7 @@ implements
 
 
                         //===================================================
-                        // Display Order
+                        // Normalize Display Order
                         //===================================================
 
                         const configuredDisplayOrder =
@@ -514,8 +765,12 @@ implements
                             ?
                             configuredDisplayOrder
                             :
-                            1;
+                            999999;
 
+
+                        //===================================================
+                        // Create Dashboard Widget
+                        //===================================================
 
                         return (
                             {
@@ -544,7 +799,7 @@ implements
                                     '',
 
                                 componentPath:
-                                    widget.componentPath,
+                                    componentPath,
 
                                 columnSpan:
                                     columnSpan,
@@ -561,110 +816,59 @@ implements
                     ):
                         widget is DashboardWidgetHost =>
                             widget !== null
+                )
+                .sort(
+                    (
+                        first,
+                        second
+                    ) =>
+                        first.displayOrder -
+                        second.displayOrder
                 );
-
-
-        //===========================================================
-        // Sort Widgets
-        //===========================================================
-
-        this.dashboardWidgets =
-            this.dashboardWidgets.sort(
-                (
-                    first,
-                    second
-                ) =>
-                    first.displayOrder -
-                    second.displayOrder
-            );
     }
 
 
 
     //===========================================================
-    // Get Normalized Column Span
+    // Track Dashboard Widget
     //===========================================================
 
-    private getNormalizedColumnSpan(
+    trackByWidgetId(
+        index:
+            number,
+
         widget:
             DashboardWidgetHost
     ):
         number
     {
-        const columnSpan =
-            Number(
-                widget.columnSpan
-            );
-
-
-        if
-        (
-            [
-                3,
-                4,
-                6,
-                8,
-                12
-            ].includes(
-                columnSpan
-            )
-        )
-        {
-            return columnSpan;
-        }
-
-
-        return 12;
-    }
-
-
-
-    //===========================================================
-    // Get Widget Grid Column Start
-    //===========================================================
-
-    getWidgetGridColumnStart(
-        widget:
-            DashboardWidgetHost
-    ):
-        number
-    {
-        return 1;
-    }
-
-
-
-    //===========================================================
-    // Get Widget Grid Column End
-    //===========================================================
-
-    getWidgetGridColumnEnd(
-        widget:
-            DashboardWidgetHost
-    ):
-        number
-    {
-        const columnSpan =
-            this.getNormalizedColumnSpan(
-                widget
-            );
-
-
         return (
-            1 +
-            columnSpan
+            widget.widgetConfigurationDetailId
+            ||
+            widget.widgetId
+            ||
+            index
         );
     }
 
 
 
     //===========================================================
-    // Refresh
+    // Refresh Dashboard
     //===========================================================
 
-    refresh():
+    refreshDashboard():
         void
     {
+        if
+        (
+            this.loading
+        )
+        {
+            return;
+        }
+
+
         this.loadDashboard();
     }
 
