@@ -71,13 +71,18 @@ export class WelcomeWidgetComponent
     userFullName =
         '';
 
-    userDesignation =
-        '';
-
     userFirstName =
         '';
 
     userLastName =
+        '';
+
+
+    //===========================================================
+    // Role Profile
+    //===========================================================
+
+    userRoleProfile =
         '';
 
 
@@ -123,7 +128,7 @@ export class WelcomeWidgetComponent
                 'Tasks',
 
             icon:
-                'fas fa-file-lines',
+                'fas fa-list-check',
 
             progress:
                 72
@@ -251,6 +256,8 @@ export class WelcomeWidgetComponent
         {
             this.clearUserInformation();
 
+            this.changeDetectorRef.detectChanges();
+
             return;
         }
 
@@ -273,22 +280,7 @@ export class WelcomeWidgetComponent
 
 
         //=======================================================
-        // Initial Full Name
-        //=======================================================
-
-        this.userFullName =
-            (
-                user.fullName
-                ??
-                this.userDisplayName
-                ??
-                ''
-            )
-            .trim();
-
-
-        //=======================================================
-        // Split Name
+        // Split Display Name
         //=======================================================
 
         const nameParts =
@@ -338,6 +330,8 @@ export class WelcomeWidgetComponent
                 user.userProfileId
             );
 
+            this.changeDetectorRef.detectChanges();
+
             return;
         }
 
@@ -375,41 +369,47 @@ export class WelcomeWidgetComponent
                         // Full Name
                         //========================================
 
-                        const fullName =
-                            profile.FullName?.trim()
-                            ??
-                            '';
+                        this.userFullName =
+                            (
+                                profile.FullName
+                                ??
+                                ''
+                            )
+                            .trim();
 
+
+                        //========================================
+                        // Fallback Full Name
+                        //========================================
 
                         if
                         (
-                            fullName.length > 0
+                            this.userFullName.length === 0
                         )
                         {
                             this.userFullName =
-                                fullName;
+                                (
+                                    profile.DisplayName
+                                    ??
+                                    this.userDisplayName
+                                    ??
+                                    ''
+                                )
+                                .trim();
                         }
 
 
                         //========================================
-                        // Designation
-                        //========================================
-                        //
-                        // PrimaryRoleName is used as the current
-                        // designation source because the current
-                        // UserProfile DTO does not contain a
-                        // separate Designation property.
-                        //
+                        // Role Profile
                         //========================================
 
-                        const designation =
-                            profile.PrimaryRoleName?.trim()
-                            ??
-                            '';
-
-
-                        this.userDesignation =
-                            designation;
+                        this.userRoleProfile =
+                            (
+                                profile.PrimaryRoleName
+                                ??
+                                ''
+                            )
+                            .trim();
 
 
                         //========================================
@@ -442,13 +442,6 @@ export class WelcomeWidgetComponent
 
 
                         //========================================
-                        // Change Detection
-                        //========================================
-
-                        this.changeDetectorRef.detectChanges();
-
-
-                        //========================================
                         // Debug
                         //========================================
 
@@ -467,8 +460,13 @@ export class WelcomeWidgetComponent
                         );
 
                         console.log(
-                            'WELCOME WIDGET - DESIGNATION:',
-                            this.userDesignation
+                            'WELCOME WIDGET - DISPLAY NAME:',
+                            this.userDisplayName
+                        );
+
+                        console.log(
+                            'WELCOME WIDGET - ROLE PROFILE:',
+                            this.userRoleProfile
                         );
 
                         console.log(
@@ -480,6 +478,13 @@ export class WelcomeWidgetComponent
                             'WELCOME WIDGET - PHOTO DATA LENGTH:',
                             this.userPhotoUrl.length
                         );
+
+
+                        //========================================
+                        // Force UI Update
+                        //========================================
+
+                        this.changeDetectorRef.detectChanges();
                     },
 
                 error:
@@ -491,9 +496,6 @@ export class WelcomeWidgetComponent
                         );
 
                         this.userPhotoUrl =
-                            '';
-
-                        this.userDesignation =
                             '';
 
                         this.changeDetectorRef.detectChanges();
@@ -512,6 +514,11 @@ export class WelcomeWidgetComponent
         console.error(
             'WELCOME WIDGET - PROFILE PHOTO FAILED'
         );
+
+        this.userPhotoUrl =
+            '';
+
+        this.changeDetectorRef.detectChanges();
     }
 
 
@@ -528,13 +535,13 @@ export class WelcomeWidgetComponent
         this.userFullName =
             '';
 
-        this.userDesignation =
-            '';
-
         this.userFirstName =
             '';
 
         this.userLastName =
+            '';
+
+        this.userRoleProfile =
             '';
 
         this.userPhotoUrl =

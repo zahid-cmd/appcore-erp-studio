@@ -5,6 +5,7 @@
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Application;
@@ -15,7 +16,10 @@ using AppCore.Infrastructure;
 // Builder
 //===============================================================
 
-var builder = WebApplication.CreateBuilder(args);
+var builder =
+    WebApplication.CreateBuilder(
+        args
+    );
 
 
 //===============================================================
@@ -46,7 +50,8 @@ builder.Services.AddApplication();
 //===============================================================
 
 builder.Services.AddInfrastructure(
-    builder.Configuration);
+    builder.Configuration
+);
 
 
 //===============================================================
@@ -58,10 +63,12 @@ string jwtKey =
     ??
     string.Empty;
 
+
 string jwtIssuer =
     builder.Configuration["Jwt:Issuer"]
     ??
     string.Empty;
+
 
 string jwtAudience =
     builder.Configuration["Jwt:Audience"]
@@ -69,10 +76,15 @@ string jwtAudience =
     string.Empty;
 
 
+//===============================================================
+// JWT Key Validation
+//===============================================================
+
 if
 (
     string.IsNullOrWhiteSpace(
-        jwtKey)
+        jwtKey
+    )
 )
 {
     throw new InvalidOperationException(
@@ -81,8 +93,13 @@ if
 }
 
 
+//===============================================================
+// Authentication
+//===============================================================
+
 builder.Services.AddAuthentication(
-    JwtBearerDefaults.AuthenticationScheme)
+    JwtBearerDefaults.AuthenticationScheme
+)
 .AddJwtBearer(
     options =>
     {
@@ -101,14 +118,16 @@ builder.Services.AddAuthentication(
 
                 ValidateIssuer =
                     !string.IsNullOrWhiteSpace(
-                        jwtIssuer),
+                        jwtIssuer
+                    ),
 
                 ValidIssuer =
                     jwtIssuer,
 
                 ValidateAudience =
                     !string.IsNullOrWhiteSpace(
-                        jwtAudience),
+                        jwtAudience
+                    ),
 
                 ValidAudience =
                     jwtAudience,
@@ -119,7 +138,8 @@ builder.Services.AddAuthentication(
                 ClockSkew =
                     TimeSpan.Zero
             };
-    });
+    }
+);
 
 
 //===============================================================
@@ -132,32 +152,57 @@ builder.Services.AddAuthorization();
 //===============================================================
 // CORS
 //===============================================================
+//
+// The Angular frontend runs on:
+//
+//     http://localhost:4100
+//
+// The API / uploaded files run on:
+//
+//     http://localhost:5100
+//
+// CORS is therefore required when Angular HttpClient retrieves
+// the user profile photo as a Blob.
+//
+// IMPORTANT:
+//
+// UseCors() will be placed BEFORE UseStaticFiles() below.
+//
+//===============================================================
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(
-        "AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
+builder.Services.AddCors(
+    options =>
+    {
+        options.AddPolicy(
+            "AllowAll",
+            policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            }
+        );
+    }
+);
 
 
 //===============================================================
 // Build Application
 //===============================================================
 
-var app = builder.Build();
+var app =
+    builder.Build();
 
 
 //===============================================================
 // Swagger Middleware
 //===============================================================
 
-if (app.Environment.IsDevelopment())
+if
+(
+    app.Environment.IsDevelopment()
+)
 {
     app.UseSwagger();
 
@@ -173,14 +218,12 @@ app.UseHttpsRedirection();
 
 
 //===============================================================
-// Static Files
-//===============================================================
-
-app.UseStaticFiles();
-
-
-//===============================================================
 // Routing
+//===============================================================
+//
+// Routing is initialized before CORS so that the middleware
+// pipeline is ready to process the incoming request.
+//
 //===============================================================
 
 app.UseRouting();
@@ -189,8 +232,115 @@ app.UseRouting();
 //===============================================================
 // CORS
 //===============================================================
+//
+// IMPORTANT:
+//
+// CORS MUST execute before static files.
+//
+// This is especially important for the upcoming profile-photo
+// Blob retrieval:
+//
+//     Angular
+//        ↓
+//     HttpClient
+//        ↓
+//     localhost:5100/uploads/...
+//        ↓
+//     Blob
+//
+//===============================================================
 
-app.UseCors("AllowAll");
+app.UseCors(
+    "AllowAll"
+);
+
+
+//===============================================================
+// Static Files - wwwroot
+//===============================================================
+//
+// This serves normal public files from:
+//
+//     wwwroot/
+//
+// Example:
+//
+//     wwwroot/assets/logo.png
+//
+// URL:
+//
+//     /assets/logo.png
+//
+//===============================================================
+
+app.UseStaticFiles();
+
+
+//===============================================================
+// Uploaded Files Directory
+//===============================================================
+//
+// User profile photos are expected under:
+//
+//     wwwroot/uploads/
+//
+// Therefore:
+//
+//     wwwroot/uploads/user-photos/photo.png
+//
+// is available through:
+//
+//     /uploads/user-photos/photo.png
+//
+//===============================================================
+
+string uploadsPath =
+    Path.Combine(
+        app.Environment.WebRootPath
+        ??
+        Path.Combine(
+            app.Environment.ContentRootPath,
+            "wwwroot"
+        ),
+        "uploads"
+    );
+
+
+//===============================================================
+// Ensure Upload Directory Exists
+//===============================================================
+
+Directory.CreateDirectory(
+    uploadsPath
+);
+
+
+//===============================================================
+// Static Files - Uploaded Files
+//===============================================================
+//
+// This explicitly exposes the physical uploads directory:
+//
+//     wwwroot/uploads
+//
+// through:
+//
+//     /uploads
+//
+//===============================================================
+
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        FileProvider =
+            new PhysicalFileProvider(
+                uploadsPath
+            ),
+
+        RequestPath =
+            "/uploads"
+    }
+);
 
 
 //===============================================================

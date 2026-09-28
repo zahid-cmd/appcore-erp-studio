@@ -84,6 +84,26 @@ public class UserProfileDto
 
 
     //===========================================================
+    // User Profile Photo Data
+    //
+    // Contains the browser-ready Base64 Data URL.
+    //
+    // Example:
+    //
+    // data:image/png;base64,iVBORw0KGgoAAA...
+    //
+    // This is populated by the application layer/repository.
+    // It is NOT stored in the database.
+    //===========================================================
+
+    public string UserPhotoData
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
     // Role Assignment
     //===========================================================
 

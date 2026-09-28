@@ -114,6 +114,19 @@ public class UserProfileRepository : IUserProfileRepository
                         UserPhotoPath =
                             x.UserPhotoPath,
 
+                        //===================================================
+                        // User Profile Photo Data
+                        //
+                        // This property is intentionally empty here.
+                        //
+                        // The repository only reads database information.
+                        // The Controller will populate the browser-ready
+                        // Base64 photo data later.
+                        //===================================================
+
+                        UserPhotoData =
+                            string.Empty,
+
 
                         //===================================================
                         // Role Assignment

@@ -82,7 +82,34 @@ export class AuthenticationStorageService
                     response.displayName,
 
                 fullName:
-                    response.fullName
+                    response.fullName,
+
+                userPhotoPath:
+                    (
+                        response as
+                        LoginResponse &
+                        {
+                            userPhotoPath?:
+                                string;
+
+                            UserPhotoPath?:
+                                string;
+                        }
+                    ).userPhotoPath
+                    ??
+                    (
+                        response as
+                        LoginResponse &
+                        {
+                            userPhotoPath?:
+                                string;
+
+                            UserPhotoPath?:
+                                string;
+                        }
+                    ).UserPhotoPath
+                    ??
+                    ''
             })
         );
     }
@@ -105,7 +132,7 @@ export class AuthenticationStorageService
 
 
     /* ========================================================
-       Get User
+    Get User
     ======================================================== */
 
     getUser():
@@ -120,6 +147,9 @@ export class AuthenticationStorageService
                 string;
 
             fullName:
+                string;
+
+            userPhotoPath:
                 string;
         }
         | null
@@ -143,10 +173,61 @@ export class AuthenticationStorageService
 
         try
         {
-            return JSON.parse
-            (
-                user
-            );
+            const parsedUser:
+                any =
+                    JSON.parse
+                    (
+                        user
+                    );
+
+
+            //===================================================
+            // Return Normalized Authenticated User
+            //===================================================
+
+            return {
+                userProfileId:
+                    Number
+                    (
+                        parsedUser.userProfileId
+                        ??
+                        parsedUser.UserProfileId
+                        ??
+                        parsedUser.id
+                        ??
+                        parsedUser.Id
+                        ??
+                        0
+                    ),
+
+                userName:
+                    parsedUser.userName
+                    ??
+                    parsedUser.UserName
+                    ??
+                    '',
+
+                displayName:
+                    parsedUser.displayName
+                    ??
+                    parsedUser.DisplayName
+                    ??
+                    '',
+
+                fullName:
+                    parsedUser.fullName
+                    ??
+                    parsedUser.FullName
+                    ??
+                    '',
+
+                userPhotoPath:
+                    parsedUser.userPhotoPath
+                    ??
+                    parsedUser.UserPhotoPath
+                    ??
+                    ''
+            };
         }
         catch
         {

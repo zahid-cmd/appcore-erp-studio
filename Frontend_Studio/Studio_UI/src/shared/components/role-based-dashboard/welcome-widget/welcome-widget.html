@@ -5,7 +5,7 @@
 <div class="welcome-widget">
 
     <!--===========================================================
-        Main Welcome Card
+        Main Glass Card
     ============================================================-->
 
     <div class="welcome-card">
@@ -50,11 +50,13 @@
                     </div>
 
                     <div class="current-time">
+
                         {{ timeValue }}
 
                         <span class="time-period">
                             {{ timePeriod }}
                         </span>
+
                     </div>
 
                 </div>
@@ -141,14 +143,14 @@
 
 
                         <!--========================================
-                            Designation
+                            Role Profile
                         ========================================-->
 
                         <div
-                            class="profile-designation"
-                            *ngIf="userDesignation">
+                            class="profile-role"
+                            *ngIf="userRoleProfile">
 
-                            {{ userDesignation }}
+                            {{ userRoleProfile }}
 
                         </div>
 
@@ -170,24 +172,52 @@
 
                 <div class="profile-details">
 
+                    <!--============================================
+                        Role Profile
+                    ============================================-->
+
                     <div class="profile-detail">
 
-                        <i class="fas fa-user-tie"></i>
+                        <div class="profile-detail-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
 
-                        <span>
-                            Administrator
-                        </span>
+                        <div class="profile-detail-content">
+
+                            <span class="profile-detail-label">
+                                Role Profile
+                            </span>
+
+                            <span class="profile-detail-value">
+                                {{ userRoleProfile || 'Not Assigned' }}
+                            </span>
+
+                        </div>
 
                     </div>
 
 
+                    <!--============================================
+                        Organization
+                    ============================================-->
+
                     <div class="profile-detail">
 
-                        <i class="fas fa-building"></i>
+                        <div class="profile-detail-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
 
-                        <span>
-                            Head Office
-                        </span>
+                        <div class="profile-detail-content">
+
+                            <span class="profile-detail-label">
+                                Organization
+                            </span>
+
+                            <span class="profile-detail-value">
+                                Head Office
+                            </span>
+
+                        </div>
 
                     </div>
 
@@ -233,9 +263,7 @@
                 </div>
 
                 <div class="action-arrow">
-
-                    <i class="fas fa-chevron-right"></i>
-
+                    <i class="fas fa-arrow-right"></i>
                 </div>
 
             </div>
@@ -270,9 +298,7 @@
                 </div>
 
                 <div class="action-arrow">
-
-                    <i class="fas fa-chevron-right"></i>
-
+                    <i class="fas fa-arrow-right"></i>
                 </div>
 
             </div>
@@ -307,9 +333,7 @@
                 </div>
 
                 <div class="action-arrow">
-
-                    <i class="fas fa-chevron-right"></i>
-
+                    <i class="fas fa-arrow-right"></i>
                 </div>
 
             </div>
@@ -343,9 +367,7 @@
                 </div>
 
                 <div class="action-arrow">
-
-                    <i class="fas fa-chevron-right"></i>
-
+                    <i class="fas fa-arrow-right"></i>
                 </div>
 
             </div>

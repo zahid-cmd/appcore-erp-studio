@@ -114,6 +114,10 @@ app-page-header
 
     min-height:100%;
 
+    display:flex;
+
+    flex-direction:column;
+
     box-sizing:border-box;
 
     padding:
@@ -128,8 +132,8 @@ app-page-header
 /* ===========================================================
    DASHBOARD CONTENT — LOADING STATE
    -----------------------------------------------------------
-   When Orbit Loader is displayed, center it vertically
-   and horizontally inside the complete dashboard viewport.
+   Orbit Loader is vertically and horizontally centered
+   inside the available dashboard content viewport.
 =========================================================== */
 
 .dashboard-content
@@ -141,16 +145,67 @@ app-orbit-loader
 
     min-width:0;
 
+    flex:
+        1 1 auto;
+
     min-height:
-        calc(
-            100vh - 220px
-        );
+        0;
 
     align-items:center;
 
     justify-content:center;
 
     box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   DASHBOARD CONTENT — LOAD FAILURE
+   -----------------------------------------------------------
+   Shared Empty State is vertically and horizontally centered
+   inside the complete available dashboard content area.
+=========================================================== */
+
+.dashboard-content
+app-empty-state
+{
+    display:flex;
+
+    width:100%;
+
+    min-width:0;
+
+    flex:
+        1 1 auto;
+
+    min-height:
+        0;
+
+    align-items:center;
+
+    justify-content:center;
+
+    box-sizing:border-box;
+}
+
+
+/* ===========================================================
+   EMPTY STATE HOST
+   -----------------------------------------------------------
+   Keeps the shared Empty State component centered without
+   imposing an artificial width or height limitation.
+=========================================================== */
+
+.dashboard-content
+app-empty-state
+{
+    max-width:none;
+
+    margin:
+        0;
+
+    padding:
+        0;
 }
 
 
@@ -354,187 +409,10 @@ app-component-renderer > *
 
 
 /* ===========================================================
-   DASHBOARD STATE
-   -----------------------------------------------------------
-   Used for error/failure states only.
-=========================================================== */
-
-.dashboard-state
-{
-    width:100%;
-
-    min-height:260px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:8px;
-
-    padding:30px;
-
-    box-sizing:border-box;
-
-    border:
-        1px dashed
-        #cbd5e1;
-
-    border-radius:12px;
-
-    background:#ffffff;
-
-    text-align:center;
-}
-
-
-/* ===========================================================
-   DASHBOARD STATE ICON
-=========================================================== */
-
-.dashboard-state-icon
-{
-    width:52px;
-
-    height:52px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    margin-bottom:4px;
-
-    border-radius:12px;
-
-    background:#eff6ff;
-
-    color:#3b82f6;
-
-    font-size:20px;
-}
-
-
-/* ===========================================================
-   DASHBOARD STATE TITLE
-=========================================================== */
-
-.dashboard-state-title
-{
-    color:#334155;
-
-    font-size:14px;
-
-    font-weight:700;
-
-    line-height:1.3;
-}
-
-
-/* ===========================================================
-   DASHBOARD STATE TEXT
-=========================================================== */
-
-.dashboard-state-text
-{
-    max-width:480px;
-
-    color:#94a3b8;
-
-    font-size:12px;
-
-    line-height:1.5;
-}
-
-
-/* ===========================================================
-   LOAD FAILURE
-=========================================================== */
-
-.dashboard-load-failed
-{
-    border-color:#f0d7d7;
-}
-
-
-.dashboard-load-failed
-.dashboard-state-icon
-{
-    background:#fff1f2;
-
-    color:#dc2626;
-}
-
-
-/* ===========================================================
-   STATE BUTTON
-=========================================================== */
-
-.dashboard-state-button
-{
-    height:34px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:7px;
-
-    margin-top:8px;
-
-    padding:
-        0
-        14px;
-
-    border:none;
-
-    border-radius:8px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #172554 0%,
-            #2563eb 100%
-        );
-
-    color:#ffffff;
-
-    font-size:11px;
-
-    font-weight:600;
-
-    cursor:pointer;
-
-    box-shadow:
-        0 4px 12px
-        rgba(
-            37,
-            99,
-            235,
-            .16
-        );
-}
-
-
-.dashboard-state-button:hover
-{
-    background:
-        linear-gradient(
-            135deg,
-            #1e3a8a 0%,
-            #1d4ed8 100%
-        );
-}
-
-
-/* ===========================================================
    EMPTY DASHBOARD
+   -----------------------------------------------------------
+   Used when the dashboard loads successfully but has no
+   configured widgets.
 =========================================================== */
 
 .dashboard-empty
@@ -638,7 +516,9 @@ app-component-renderer > *
 .dashboard-widget,
 .dashboard-widget-content,
 .dashboard-widget-content
-app-component-renderer
+app-component-renderer,
+.dashboard-content
+app-empty-state
 {
     max-width:none;
 }
@@ -725,9 +605,15 @@ app-component-renderer
     app-orbit-loader
     {
         min-height:
-            calc(
-                100vh - 200px
-            );
+            0;
+    }
+
+
+    .dashboard-content
+    app-empty-state
+    {
+        min-height:
+            0;
     }
 }
 
@@ -788,8 +674,14 @@ app-component-renderer
     app-orbit-loader
     {
         min-height:
-            calc(
-                100vh - 180px
-            );
+            0;
+    }
+
+
+    .dashboard-content
+    app-empty-state
+    {
+        min-height:
+            0;
     }
 }

@@ -1,156 +1,427 @@
 /*===============================================================
-  WELCOME WIDGET
-================================================================*/
+    Welcome Widget
+===============================================================*/
 
 .welcome-widget
 {
-    width:100%;
-    height:100%;
-
-    min-width:0;
-    min-height:0;
-
-    max-width:none;
-
-    display:block;
-
-    box-sizing:border-box;
-
-    background:#ffffff;
-
-    overflow:hidden;
-
-    font-family:
-        "Inter",
-        "Segoe UI",
-        Arial,
-        sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
 }
 
 
 /*===============================================================
-  MAIN CONTENT
-================================================================*/
+    Main Welcome Card
+===============================================================*/
 
-.welcome-widget-main
+.welcome-card
 {
-    width:100%;
-    height:100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 30px 34px 28px;
 
-    min-width:0;
-    min-height:0;
-
-    max-width:none;
-
-    display:grid;
-
-    grid-template-columns:
-        minmax(
-            0,
-            1.35fr
-        )
-        minmax(
-            0,
-            0.65fr
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #ffffff 65%,
+            #f8fbff 100%
         );
 
-    column-gap:42px;
+    border:
+        1px solid #e4ecf8;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 10px 35px rgba(30, 76, 140, 0.08);
+
+    overflow: hidden;
+}
+
+
+/*===============================================================
+    Top Row
+===============================================================*/
+
+.welcome-top-row
+{
+    width: 100%;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 24px;
+
+    box-sizing: border-box;
+}
+
+
+/*===============================================================
+    Welcome Badge
+===============================================================*/
+
+.welcome-badge
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    min-height: 48px;
 
     padding:
-        42px
-        46px
-        38px;
+        7px
+        20px
+        7px
+        10px;
 
-    box-sizing:border-box;
+    box-sizing: border-box;
+
+    border:
+        1px solid #c7ddff;
+
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f5f9ff,
+            #edf5ff
+        );
+
+    color: #0868e8;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    letter-spacing: -0.2px;
 }
 
 
-/*===============================================================
-  WELCOME AREA
-================================================================*/
-
-.welcome-area
+.welcome-badge-icon
 {
-    width:100%;
+    width: 34px;
 
-    min-width:0;
-    min-height:0;
+    height: 34px;
 
-    display:flex;
+    display: flex;
 
-    flex-direction:column;
+    align-items: center;
 
-    justify-content:flex-start;
+    justify-content: center;
 
-    box-sizing:border-box;
+    font-size: 24px;
+
+    line-height: 1;
 }
 
 
 /*===============================================================
-  GREETING HEADER
-================================================================*/
+    Date & Time Panel
+===============================================================*/
 
-.greeting-header
+.date-time-panel
 {
-    width:100%;
+    display: flex;
 
-    min-width:0;
+    align-items: center;
 
-    height:142px;
+    gap: 14px;
 
-    display:flex;
+    padding:
+        9px
+        18px
+        9px
+        12px;
 
-    align-items:center;
+    border:
+        1px solid #dbe7f7;
 
-    box-sizing:border-box;
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8fbff,
+            #eef5ff
+        );
+
+    box-sizing: border-box;
+}
+
+
+.date-time-icon
+{
+    width: 48px;
+
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        #e8f1ff;
+
+    color:
+        #3968bd;
+
+    font-size: 27px;
+}
+
+
+.date-time-content
+{
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 1px;
+}
+
+
+.current-date
+{
+    color:
+        #536b93;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+    white-space: nowrap;
+}
+
+
+.current-time
+{
+    color:
+        #102653;
+
+    font-size: 29px;
+
+    line-height: 1.05;
+
+    font-weight: 800;
+
+    letter-spacing: -1px;
+
+    white-space: nowrap;
+}
+
+
+.time-period
+{
+    margin-left: 4px;
+
+    color:
+        #4674dc;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    letter-spacing: 0;
 }
 
 
 /*===============================================================
-  PROFILE AVATAR
-================================================================*/
+    Main Content
+===============================================================*/
+
+.welcome-main-content
+{
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(470px, 1fr);
+
+    align-items: center;
+
+    gap: 32px;
+
+    margin-top: 28px;
+
+    box-sizing: border-box;
+}
+
+
+/*===============================================================
+    Greeting Section
+===============================================================*/
+
+.greeting-section
+{
+    min-width: 0;
+
+    padding:
+        4px
+        0
+        8px;
+}
+
+
+.greeting-title
+{
+    color:
+        #122653;
+
+    font-size: 34px;
+
+    line-height: 1.1;
+
+    font-weight: 750;
+
+    letter-spacing:
+        -1.2px;
+}
+
+
+.greeting-name
+{
+    margin-top: 2px;
+
+    color:
+        #1269ec;
+
+    font-size: 38px;
+
+    line-height: 1.08;
+
+    font-weight: 800;
+
+    letter-spacing:
+        -1.4px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #0878f5 0%,
+            #4c38e9 100%
+        );
+
+    -webkit-background-clip: text;
+
+    background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+}
+
+
+.greeting-message
+{
+    max-width: 560px;
+
+    margin-top: 20px;
+
+    color:
+        #536b93;
+
+    font-size: 16px;
+
+    line-height: 1.55;
+
+    font-weight: 450;
+}
+
+
+/*===============================================================
+    Profile Panel
+===============================================================*/
+
+.profile-panel
+{
+    min-width: 0;
+
+    min-height: 150px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 24px;
+
+    padding:
+        20px
+        26px;
+
+    box-sizing: border-box;
+
+    border:
+        1px solid #bdd8ff;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f9fcff 0%,
+            #edf5ff 100%
+        );
+}
+
+
+/*===============================================================
+    Profile Identity
+===============================================================*/
+
+.profile-identity
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    min-width: 0;
+}
+
+
+/*===============================================================
+    Profile Avatar
+===============================================================*/
 
 .profile-avatar
 {
-    position:relative;
-
-    width:116px;
-    height:116px;
-
-    min-width:116px;
-
-    flex:0 0 116px;
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    box-sizing:border-box;
+    flex:
+        0 0 auto;
 }
 
 
-/*===============================================================
-  AVATAR CIRCLE
-================================================================*/
-
 .avatar-circle
 {
-    width:94px;
-    height:94px;
+    width: 96px;
 
-    display:flex;
+    height: 96px;
 
-    align-items:center;
-    justify-content:center;
+    display: flex;
 
-    box-sizing:border-box;
+    align-items: center;
 
-    position:relative;
+    justify-content: center;
 
-    overflow:hidden;
+    box-sizing: border-box;
 
-    border-radius:50%;
+    overflow: hidden;
+
+    border-radius: 50%;
 
     background:
         linear-gradient(
@@ -160,1604 +431,552 @@
         );
 
     border:
-        7px solid
-        #ffffff;
+        6px solid #ffffff;
 
     box-shadow:
-        0 0 0 2px #d5e7ff,
-        0 8px 24px
-        rgba(
-            44,
-            111,
-            224,
-            .12
-        );
+        0 0 0 2px #c9defc,
+        0 8px 24px rgba(44, 111, 224, 0.12);
 
-    color:#0f68e8;
+    color:
+        #2367d7;
 
-    font-size:42px;
+    font-size: 40px;
 }
 
-
-/*===============================================================
-  PROFILE PHOTO
-================================================================*/
 
 .profile-photo
 {
-    width:100%;
-    height:100%;
+    width: 100%;
 
-    min-width:0;
-    min-height:0;
+    height: 100%;
 
-    max-width:none;
-    max-height:none;
+    display: block;
 
-    display:block;
+    box-sizing: border-box;
 
-    box-sizing:border-box;
+    object-fit: cover;
 
-    object-fit:cover;
+    object-position: center;
 
-    object-position:center center;
+    border-radius: 50%;
+}
 
-    border-radius:50%;
 
-    margin:0;
+.avatar-circle > i
+{
+    display: flex;
 
-    padding:0;
+    align-items: center;
+
+    justify-content: center;
+
+    width: 100%;
+
+    height: 100%;
+
+    color:
+        #2367d7;
+
+    font-size: 40px;
+
+    line-height: 1;
 }
 
 
 /*===============================================================
-  DEFAULT USER ICON
-================================================================*/
+    Profile Information
+===============================================================*/
 
-.avatar-circle i
+.profile-information
 {
-    line-height:1;
+    min-width: 0;
 
-    flex:none;
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    justify-content: center;
+}
+
+
+.profile-name
+{
+    color:
+        #102653;
+
+    font-size: 21px;
+
+    line-height: 1.2;
+
+    font-weight: 750;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    max-width: 280px;
 }
 
 
 /*===============================================================
-  ONLINE INDICATOR
-================================================================*/
+    Designation
+===============================================================*/
 
-.online-indicator
+.profile-designation
 {
-    position:absolute;
+    margin-top: 7px;
 
-    right:8px;
-    bottom:10px;
+    color:
+        #5b7299;
 
-    width:21px;
-    height:21px;
+    font-size: 15px;
 
-    box-sizing:border-box;
+    line-height: 1.25;
 
-    border-radius:50%;
+    font-weight: 600;
 
-    background:#18d66b;
+    white-space: nowrap;
 
-    border:
-        4px solid
-        #ffffff;
+    overflow: hidden;
 
-    box-shadow:
-        0 2px 8px
-        rgba(
-            24,
-            214,
-            107,
-            .28
-        );
+    text-overflow: ellipsis;
+
+    max-width: 280px;
 }
 
 
 /*===============================================================
-  GREETING DIVIDER
-================================================================*/
+    Profile Divider
+===============================================================*/
 
-.greeting-divider
+.profile-divider
 {
-    width:2px;
-    height:102px;
+    width: 1px;
 
-    min-width:2px;
+    align-self: stretch;
 
-    flex:0 0 2px;
-
-    margin:
-        0
-        30px
-        0
-        8px;
+    min-height: 80px;
 
     background:
-        linear-gradient(
-            to bottom,
-            transparent,
-            #d8e5f5 20%,
-            #d8e5f5 80%,
-            transparent
-        );
+        #d3e1f4;
 }
 
 
 /*===============================================================
-  GREETING CONTENT
-================================================================*/
+    Profile Details
+===============================================================*/
 
-.greeting-content
+.profile-details
 {
-    flex:1 1 auto;
+    min-width: 155px;
 
-    min-width:0;
+    display: flex;
 
-    display:flex;
+    flex-direction: column;
 
-    flex-direction:column;
-
-    justify-content:center;
-
-    overflow:hidden;
+    gap: 20px;
 }
 
 
-.greeting-line
+.profile-detail
 {
-    min-width:0;
+    display: flex;
 
-    display:flex;
+    align-items: center;
 
-    align-items:center;
+    gap: 14px;
 
-    gap:11px;
+    color:
+        #526a96;
 
-    margin-bottom:7px;
+    font-size: 16px;
 
-    color:#5d7293;
+    font-weight: 500;
 
-    font-size:18px;
-
-    font-weight:500;
-
-    line-height:1.2;
-
-    white-space:nowrap;
+    white-space: nowrap;
 }
 
 
-.greeting-icon
+.profile-detail i
 {
-    display:inline-flex;
+    width: 28px;
 
-    align-items:center;
-    justify-content:center;
+    text-align: center;
 
-    flex:none;
+    color:
+        #4771c4;
 
-    color:#f4a500;
-
-    font-size:25px;
-}
-
-
-.greeting-icon i
-{
-    line-height:1;
-}
-
-
-.user-name
-{
-    width:100%;
-
-    min-width:0;
-    max-width:100%;
-
-    display:flex;
-
-    align-items:baseline;
-
-    gap:10px;
-
-    overflow:hidden;
-
-    white-space:nowrap;
-
-    font-size:36px;
-
-    font-weight:600;
-
-    line-height:1;
-
-    letter-spacing:-2px;
-}
-
-
-.user-name-first
-{
-    min-width:0;
-
-    color:#10223e;
-}
-
-
-.user-name-last
-{
-    min-width:0;
-
-    color:#1f59dc;
+    font-size: 25px;
 }
 
 
 /*===============================================================
-  WELCOME MESSAGE
-================================================================*/
+    Action Cards
+===============================================================*/
 
-.welcome-message
+.welcome-actions
 {
-    width:100%;
+    width: 100%;
 
-    min-width:0;
-
-    margin-top:28px;
-
-    color:#5c7193;
-
-    font-size:22px;
-
-    font-weight:500;
-
-    line-height:1.6;
-}
-
-
-.message-line
-{
-    display:block;
-}
-
-
-.message-line span
-{
-    color:#175fe0;
-
-    font-weight:800;
-}
-
-
-/*===============================================================
-  WELCOME ACCENT
-================================================================*/
-
-.welcome-accent
-{
-    width:100%;
-
-    display:flex;
-
-    align-items:center;
-
-    gap:13px;
-
-    margin-top:17px;
-
-    height:12px;
-}
-
-
-.accent-line
-{
-    width:88px;
-    height:7px;
-
-    flex:none;
-
-    border-radius:8px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #2688f4,
-            #66a7ff
-        );
-
-    box-shadow:
-        0 4px 10px
-        rgba(
-            38,
-            136,
-            244,
-            .15
-        );
-}
-
-
-.accent-dot
-{
-    width:11px;
-    height:11px;
-
-    flex:none;
-
-    border-radius:50%;
-
-    background:#a9caff;
-}
-
-
-/*===============================================================
-  STATISTICS GRID
-================================================================*/
-
-.statistics-grid
-{
-    width:100%;
-
-    min-width:0;
-
-    display:grid;
+    display: grid;
 
     grid-template-columns:
-        repeat(
-            4,
-            minmax(
-                0,
-                1fr
-            )
-        );
+        repeat(4, minmax(0, 1fr));
 
-    gap:15px;
+    gap: 20px;
 
-    margin-top:31px;
+    margin-top: 28px;
 
-    box-sizing:border-box;
+    box-sizing: border-box;
 }
 
 
-/*===============================================================
-  STATISTIC CARD
-================================================================*/
-
-.stat-card
+.action-card
 {
-    position:relative;
+    position: relative;
 
-    min-width:0;
+    min-height: 142px;
 
-    height:145px;
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
 
     padding:
-        20px
-        15px
-        18px;
+        20px;
 
-    display:flex;
+    box-sizing: border-box;
 
-    align-items:flex-start;
+    border-radius: 18px;
 
-    box-sizing:border-box;
-
-    border-radius:18px;
+    background:
+        #ffffff;
 
     border:
-        1px solid
-        rgba(
-            119,
-            148,
-            194,
-            .16
-        );
+        1px solid;
 
-    overflow:hidden;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+
+.action-card:hover
+{
+    transform:
+        translateY(-2px);
 
     box-shadow:
-        0 9px 24px
-        rgba(
-            47,
-            84,
-            133,
-            .08
-        );
-}
-
-
-.stat-tasks
-{
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff 0%,
-            #f7f3ff 100%
-        );
-
-    border-color:#e1d7ff;
-}
-
-
-.stat-messages
-{
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff 0%,
-            #effff9 100%
-        );
-
-    border-color:#c9f4e3;
-}
-
-
-.stat-meetings
-{
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff 0%,
-            #fff8ed 100%
-        );
-
-    border-color:#f9dfbd;
-}
-
-
-.stat-notifications
-{
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff 0%,
-            #fff1f6 100%
-        );
-
-    border-color:#f7d0df;
+        0 10px 25px rgba(30, 76, 140, 0.09);
 }
 
 
 /*===============================================================
-  STATISTIC ICON
-================================================================*/
+    Action Card Colors
+===============================================================*/
 
-.stat-icon
+.action-blue
 {
-    width:51px;
-    height:51px;
-
-    min-width:51px;
-
-    flex:0 0 51px;
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    border-radius:17px;
-
-    font-size:22px;
-}
-
-
-.stat-tasks .stat-icon
-{
-    color:#4e2de2;
-
-    background:#eee7ff;
-}
-
-
-.stat-messages .stat-icon
-{
-    color:#04bb76;
-
-    background:#d8faed;
-}
-
-
-.stat-meetings .stat-icon
-{
-    color:#ef8500;
-
-    background:#fff0dc;
-}
-
-
-.stat-notifications .stat-icon
-{
-    color:#ee3563;
-
-    background:#ffe0e9;
-}
-
-
-.stat-icon i
-{
-    line-height:1;
-}
-
-
-/*===============================================================
-  STATISTIC INFORMATION
-================================================================*/
-
-.stat-information
-{
-    min-width:0;
-
-    margin-left:13px;
-
-    padding-top:2px;
-
-    overflow:hidden;
-}
-
-
-.stat-value
-{
-    color:#142644;
-
-    font-size:28px;
-
-    font-weight:600;
-
-    line-height:1.1;
-}
-
-
-.stat-label
-{
-    margin-top:5px;
-
-    color:#637796;
-
-    font-size:14px;
-
-    font-weight:500;
-
-    line-height:1.1;
-
-    white-space:nowrap;
-
-    overflow:hidden;
-
-    text-overflow:ellipsis;
-}
-
-
-/*===============================================================
-  STATISTIC ARROW
-================================================================*/
-
-.stat-arrow
-{
-    position:absolute;
-
-    top:20px;
-    right:13px;
-
-    width:34px;
-    height:34px;
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    box-sizing:border-box;
-
-    border-radius:50%;
-
-    background:#ffffff;
-
-    border:
-        2px solid
-        rgba(
-            255,
-            255,
-            255,
-            .95
-        );
-
-    box-shadow:
-        0 4px 10px
-        rgba(
-            35,
-            67,
-            110,
-            .08
-        );
-
-    font-size:12px;
-}
-
-
-.stat-tasks .stat-arrow
-{
-    color:#5636dc;
-}
-
-
-.stat-messages .stat-arrow
-{
-    color:#08bd7a;
-}
-
-
-.stat-meetings .stat-arrow
-{
-    color:#ef8500;
-}
-
-
-.stat-notifications .stat-arrow
-{
-    color:#ed3463;
-}
-
-
-/*===============================================================
-  STATISTIC PROGRESS
-================================================================*/
-
-.stat-progress
-{
-    position:absolute;
-
-    left:20px;
-    right:20px;
-    bottom:17px;
-
-    height:7px;
-
-    overflow:hidden;
-
-    border-radius:10px;
-
-    background:
-        rgba(
-            108,
-            137,
-            178,
-            .13
-        );
-}
-
-
-.stat-progress span
-{
-    display:block;
-
-    height:100%;
-
-    border-radius:10px;
-}
-
-
-.stat-tasks .stat-progress span
-{
-    background:#5631e8;
-}
-
-
-.stat-messages .stat-progress span
-{
-    background:#04c781;
-}
-
-
-.stat-meetings .stat-progress span
-{
-    background:#f29a3d;
-}
-
-
-.stat-notifications .stat-progress span
-{
-    background:#ed3e70;
-}
-
-
-/*===============================================================
-  RIGHT AREA
-================================================================*/
-
-.right-area
-{
-    width:100%;
-
-    min-width:0;
-    min-height:0;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:stretch;
-
-    box-sizing:border-box;
-}
-
-
-/*===============================================================
-  DATE BADGE
-================================================================*/
-
-.date-badge
-{
-    width:100%;
-
-    min-width:0;
-
-    min-height:58px;
-
-    display:flex;
-
-    align-items:center;
-
-    box-sizing:border-box;
-
-    padding:
-        8px
-        18px;
-
-    border-radius:31px;
-
-    border:
-        1px solid
-        #d5e5ff;
+    border-color:
+        #b9d7ff;
 
     background:
         linear-gradient(
-            90deg,
+            135deg,
             #ffffff,
-            #f4f8ff
+            #f4f9ff
         );
 
-    box-shadow:
-        0 6px 18px
-        rgba(
-            57,
-            108,
-            185,
-            .07
-        );
+    color:
+        #1268e8;
 }
 
 
-.date-icon
+.action-green
 {
-    width:38px;
-    height:38px;
-
-    min-width:38px;
-
-    flex:0 0 38px;
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    border-radius:11px;
-
-    color:#ffffff;
+    border-color:
+        #b5ead7;
 
     background:
         linear-gradient(
-            145deg,
-            #2387ef,
-            #1465df
+            135deg,
+            #ffffff,
+            #f2fcf8
         );
 
-    font-size:17px;
-
-    box-shadow:
-        0 5px 12px
-        rgba(
-            26,
-            110,
-            227,
-            .18
-        );
+    color:
+        #079b67;
 }
 
 
-.date-text
+.action-purple
 {
-    min-width:0;
-
-    margin-left:14px;
-
-    color:#587092;
-
-    font-size:16px;
-
-    font-weight:500;
-
-    white-space:nowrap;
-
-    overflow:hidden;
-
-    text-overflow:ellipsis;
-}
-
-
-/*===============================================================
-  CURRENT TIME
-================================================================*/
-
-.current-time
-{
-    width:100%;
-
-    min-width:0;
-
-    display:flex;
-
-    align-items:baseline;
-
-    justify-content:flex-end;
-
-    margin-top:13px;
-
-    padding-right:7px;
-
-    box-sizing:border-box;
-
-    overflow:hidden;
-}
-
-
-.time-value
-{
-    min-width:0;
-
-    color:#10134e;
-
-    font-size:57px;
-
-    font-weight:600;
-
-    line-height:1;
-
-    letter-spacing:-2px;
-
-    white-space:nowrap;
-}
-
-
-.time-period
-{
-    flex:none;
-
-    margin-left:10px;
-
-    color:#667b9a;
-
-    font-size:26px;
-
-    font-weight:500;
-
-    line-height:1;
-
-    white-space:nowrap;
-}
-
-
-/*===============================================================
-  QUOTE CARD
-================================================================*/
-
-.quote-card
-{
-    position:relative;
-
-    width:100%;
-
-    min-width:0;
-
-    height:292px;
-
-    margin-top:27px;
-
-    padding:
-        27px
-        30px
-        24px;
-
-    box-sizing:border-box;
-
-    overflow:hidden;
-
-    border-radius:20px;
-
-    border:
-        1px solid
-        #d9e5fa;
+    border-color:
+        #d6c3ff;
 
     background:
         linear-gradient(
-            145deg,
-            #ffffff 0%,
-            #f1f6ff 100%
+            135deg,
+            #ffffff,
+            #faf7ff
         );
 
-    box-shadow:
-        0 12px 28px
-        rgba(
-            56,
-            91,
-            139,
-            .09
-        );
+    color:
+        #6831dc;
 }
 
 
-/*===============================================================
-  QUOTE MARK
-================================================================*/
-
-.quote-mark
+.action-orange
 {
-    position:relative;
-
-    z-index:2;
-
-    height:37px;
-
-    color:#2278e7;
-
-    font-size:68px;
-
-    font-family:Georgia,serif;
-
-    font-weight:700;
-
-    line-height:.7;
-}
-
-
-/*===============================================================
-  QUOTE TEXT
-================================================================*/
-
-.quote-text
-{
-    position:relative;
-
-    z-index:2;
-
-    width:100%;
-
-    min-width:0;
-
-    max-width:none;
-
-    margin-top:10px;
-
-    color:#15274a;
-
-    font-size:22px;
-
-    font-style:italic;
-
-    font-weight:500;
-
-    line-height:1.35;
-
-    box-sizing:border-box;
-}
-
-
-.quote-text span
-{
-    color:#1767df;
-
-    font-weight:800;
-}
-
-
-/*===============================================================
-  QUOTE ACCENT
-================================================================*/
-
-.quote-accent
-{
-    position:relative;
-
-    z-index:2;
-
-    width:58px;
-    height:4px;
-
-    margin-top:22px;
-
-    border-radius:8px;
-
-    background:#237ff0;
-}
-
-
-/*===============================================================
-  QUOTE FOOTER
-================================================================*/
-
-.quote-footer
-{
-    position:relative;
-
-    z-index:2;
-
-    margin-top:21px;
-
-    color:#60769a;
-
-    font-size:15px;
-
-    font-weight:500;
-
-    line-height:1.3;
-}
-
-
-/*===============================================================
-  QUOTE DECORATION
-================================================================*/
-
-.quote-decoration
-{
-    position:absolute;
-
-    border-radius:50%;
-
-    pointer-events:none;
-}
-
-
-.quote-decoration-one
-{
-    width:145px;
-    height:145px;
-
-    top:-34px;
-    right:-42px;
+    border-color:
+        #f4d49a;
 
     background:
-        radial-gradient(
-            circle,
-            rgba(
-                185,
-                211,
-                255,
-                .66
-            ),
-            rgba(
-                185,
-                211,
-                255,
-                .18
-            )
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #fffaf0
         );
+
+    color:
+        #e18a00;
 }
 
 
-.quote-decoration-two
+/*===============================================================
+    Action Icon
+===============================================================*/
+
+.action-icon
 {
-    width:118px;
-    height:118px;
+    width: 76px;
 
-    right:-48px;
-    bottom:-51px;
+    height: 76px;
 
+    flex:
+        0 0 76px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 24px;
+
+    font-size: 36px;
+}
+
+
+.action-blue .action-icon
+{
     background:
-        radial-gradient(
-            circle,
-            rgba(
-                190,
-                210,
-                250,
-                .62
-            ),
-            rgba(
-                190,
-                210,
-                250,
-                .16
-            )
-        );
+        #dcecff;
+}
+
+
+.action-green .action-icon
+{
+    background:
+        #d8f6e9;
+}
+
+
+.action-purple .action-icon
+{
+    background:
+        #e9ddff;
+}
+
+
+.action-orange .action-icon
+{
+    background:
+        #ffebc2;
 }
 
 
 /*===============================================================
-  RESPONSIVE — LARGE DESKTOP
-================================================================*/
+    Action Content
+===============================================================*/
 
-@media (max-width:1200px)
+.action-content
 {
-    .welcome-widget-main
-    {
-        grid-template-columns:
-            minmax(
-                0,
-                1.2fr
-            )
-            minmax(
-                0,
-                0.8fr
-            );
+    min-width: 0;
 
-        column-gap:30px;
+    display: flex;
 
-        padding:
-            36px
-            38px
-            34px;
-    }
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    justify-content: center;
+}
 
 
-    .user-name
-    {
-        font-size:50px;
-    }
+.action-title
+{
+    color:
+        #152856;
+
+    font-size: 17px;
+
+    line-height: 1.2;
+
+    font-weight: 650;
+
+    white-space: nowrap;
+}
 
 
-    .welcome-message
-    {
-        font-size:24px;
-    }
+.action-value
+{
+    margin-top: 6px;
+
+    color:
+        #142653;
+
+    font-size: 31px;
+
+    line-height: 1;
+
+    font-weight: 800;
+
+    letter-spacing:
+        -0.8px;
+}
 
 
-    .statistics-grid
-    {
-        gap:11px;
-    }
+.action-subtitle
+{
+    margin-top: 5px;
+
+    color:
+        #61769a;
+
+    font-size: 14px;
+
+    line-height: 1.25;
+
+    font-weight: 450;
+}
 
 
-    .stat-card
-    {
-        padding-left:12px;
-        padding-right:12px;
-    }
-
-
-    .stat-icon
-    {
-        width:45px;
-        height:45px;
-
-        min-width:45px;
-
-        flex-basis:45px;
-    }
-
-
-    .stat-information
-    {
-        margin-left:9px;
-    }
-
-
-    .quote-text
-    {
-        font-size:20px;
-    }
+.quick-access-text
+{
+    max-width: 135px;
 }
 
 
 /*===============================================================
-  RESPONSIVE — MEDIUM
-================================================================*/
+    Action Arrow
+===============================================================*/
 
-@media (max-width:1000px)
+.action-arrow
 {
-    .welcome-widget-main
-    {
-        grid-template-columns:
-            minmax(
-                0,
-                1fr
-            )
-            minmax(
-                0,
-                0.75fr
-            );
+    margin-left: auto;
 
-        column-gap:24px;
+    flex:
+        0 0 auto;
 
-        padding:
-            30px
-            32px
-            30px;
-    }
+    color:
+        #536da5;
 
-
-    .greeting-line
-    {
-        font-size:22px;
-    }
-
-
-    .user-name
-    {
-        font-size:44px;
-
-        letter-spacing:-1.5px;
-    }
-
-
-    .welcome-message
-    {
-        font-size:21px;
-    }
-
-
-    .statistics-grid
-    {
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
-    }
-
-
-    .stat-card
-    {
-        height:130px;
-    }
-
-
-    .quote-card
-    {
-        height:270px;
-    }
+    font-size: 18px;
 }
 
 
 /*===============================================================
-  RESPONSIVE — TABLET
-================================================================*/
+    Responsive
+===============================================================*/
 
-@media (max-width:800px)
+@media
+(
+    max-width:
+        1200px
+)
 {
-    .welcome-widget
-    {
-        width:100%;
-
-        height:auto;
-
-        min-width:0;
-        min-height:100%;
-
-        max-width:none;
-
-        overflow:visible;
-    }
-
-
-    .welcome-widget-main
-    {
-        width:100%;
-
-        height:auto;
-
-        min-width:0;
-        min-height:100%;
-
-        max-width:none;
-
-        display:grid;
-
-        grid-template-columns:
-            minmax(
-                0,
-                1fr
-            );
-
-        row-gap:32px;
-
-        column-gap:0;
-
-        padding:
-            28px;
-    }
-
-
-    .right-area
-    {
-        width:100%;
-
-        min-width:0;
-
-        max-width:none;
-    }
-
-
-    .current-time
-    {
-        justify-content:flex-start;
-
-        padding-right:0;
-    }
-
-
-    .quote-card
-    {
-        height:260px;
-    }
-}
-
-
-/*===============================================================
-  RESPONSIVE — SMALL TABLET
-================================================================*/
-
-@media (max-width:650px)
-{
-    .welcome-widget-main
-    {
-        width:100%;
-
-        padding:
-            24px;
-    }
-
-
-    .greeting-header
-    {
-        height:auto;
-
-        min-height:100px;
-    }
-
-
-    .profile-avatar
-    {
-        width:88px;
-        height:88px;
-
-        min-width:88px;
-
-        flex-basis:88px;
-    }
-
-
-    .avatar-circle
-    {
-        width:72px;
-        height:72px;
-
-        font-size:32px;
-    }
-
-
-    .greeting-divider
-    {
-        height:75px;
-
-        margin:
-            0
-            18px
-            0
-            5px;
-    }
-
-
-    .greeting-line
-    {
-        font-size:19px;
-    }
-
-
-    .user-name
-    {
-        font-size:35px;
-
-        letter-spacing:-1px;
-    }
-
-
-    .welcome-message
-    {
-        font-size:20px;
-    }
-
-
-    .statistics-grid
-    {
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
-
-        gap:12px;
-    }
-
-
-    .stat-card
-    {
-        height:125px;
-    }
-
-
-    .date-text
-    {
-        font-size:14px;
-    }
-
-
-    .time-value
-    {
-        font-size:45px;
-    }
-
-
-    .time-period
-    {
-        font-size:22px;
-    }
-
-
-    .quote-text
-    {
-        font-size:19px;
-    }
-}
-
-
-/*===============================================================
-  RESPONSIVE — MOBILE
-================================================================*/
-
-@media (max-width:430px)
-{
-    .welcome-widget-main
-    {
-        width:100%;
-
-        padding:
-            20px;
-    }
-
-
-    .greeting-header
-    {
-        align-items:flex-start;
-    }
-
-
-    .profile-avatar
-    {
-        width:70px;
-        height:70px;
-
-        min-width:70px;
-
-        flex-basis:70px;
-    }
-
-
-    .avatar-circle
-    {
-        width:58px;
-        height:58px;
-
-        border-width:5px;
-
-        font-size:25px;
-    }
-
-
-    .online-indicator
-    {
-        right:2px;
-        bottom:3px;
-
-        width:15px;
-        height:15px;
-
-        border-width:3px;
-    }
-
-
-    .greeting-divider
-    {
-        height:60px;
-
-        margin-left:8px;
-        margin-right:13px;
-    }
-
-
-    .greeting-line
-    {
-        font-size:16px;
-    }
-
-
-    .user-name
-    {
-        font-size:28px;
-    }
-
-
-    .welcome-message
-    {
-        font-size:18px;
-    }
-
-
-    .statistics-grid
+    .welcome-main-content
     {
         grid-template-columns:
             1fr;
     }
 
-
-    .stat-card
+    .welcome-actions
     {
-        height:125px;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
+}
 
 
-    .date-badge
+@media
+(
+    max-width:
+        768px
+)
+{
+    .welcome-card
     {
-        min-height:52px;
-    }
-
-
-    .date-icon
-    {
-        width:34px;
-        height:34px;
-
-        min-width:34px;
-
-        flex-basis:34px;
-    }
-
-
-    .current-time
-    {
-        margin-top:15px;
-    }
-
-
-    .time-value
-    {
-        font-size:40px;
-    }
-
-
-    .time-period
-    {
-        font-size:21px;
-    }
-
-
-    .quote-card
-    {
-        height:245px;
-
         padding:
-            23px;
+            22px;
     }
 
-
-    .quote-text
+    .welcome-top-row
     {
-        font-size:18px;
+        flex-direction:
+            column;
+    }
+
+    .date-time-panel
+    {
+        align-self:
+            flex-start;
+    }
+
+    .profile-panel
+    {
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+    }
+
+    .profile-divider
+    {
+        width: 100%;
+
+        height: 1px;
+
+        min-height: 1px;
+    }
+
+    .profile-details
+    {
+        width: 100%;
+    }
+
+    .welcome-actions
+    {
+        grid-template-columns:
+            1fr;
+    }
+
+    .greeting-title
+    {
+        font-size:
+            28px;
+    }
+
+    .greeting-name
+    {
+        font-size:
+            32px;
     }
 }

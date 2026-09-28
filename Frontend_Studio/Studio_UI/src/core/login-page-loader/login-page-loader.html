@@ -45,6 +45,36 @@
 
 
     <!--===========================================================
+        Empty State
+        -----------------------------------------------------------
+        Displays when the active Login Page configuration cannot
+        be loaded or is invalid.
+    ============================================================-->
+
+    <app-empty-state
+        *ngIf="
+            !isLoading
+            &&
+            loadError
+        "
+
+        icon="fas fa-exclamation-triangle"
+
+        title="Login Page Could Not Be Loaded"
+
+        [subtitle]="loadError"
+
+        actionText="Retry"
+
+        [showAction]="true"
+
+        (action)="onRetry()"
+    >
+    </app-empty-state>
+
+
+
+    <!--===========================================================
         Login Page 1
     ============================================================-->
 

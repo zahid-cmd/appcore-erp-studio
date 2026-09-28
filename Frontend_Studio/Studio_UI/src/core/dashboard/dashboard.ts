@@ -42,6 +42,12 @@ from '../../shared/components/utilities/orbit-loader/orbit-loader';
 
 import
 {
+    EmptyStateComponent
+}
+from '../../shared/components/layout/empty-state/empty-state';
+
+import
+{
     ComponentRenderer
 }
 from '../component-renderer/component-renderer';
@@ -173,6 +179,8 @@ interface DashboardWidget
         CommandCenterComponent,
 
         OrbitLoaderComponent,
+
+        EmptyStateComponent,
 
         ComponentRenderer
     ],
@@ -1167,6 +1175,26 @@ implements
         ];
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Retry Dashboard
+    //===========================================================
+
+    retryDashboard():
+        void
+    {
+        if
+        (
+            this.isLoading
+        )
+        {
+            return;
+        }
+
+
+        this.loadDashboardHost();
     }
 
 }

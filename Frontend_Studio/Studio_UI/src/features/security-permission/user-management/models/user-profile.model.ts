@@ -40,6 +40,10 @@ export interface UserProfile
         string;
 
 
+    UserPhotoData?:
+        string;
+
+
     //===========================================================
     // Role Assignment
     //===========================================================

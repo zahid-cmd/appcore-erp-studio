@@ -106,61 +106,32 @@
 
             <!-- ===============================================
                  LOAD FAILURE
-            ================================================ -->
+                 -----------------------------------------------
+                 APPCORE SHARED EMPTY STATE
+            ================================================= -->
 
-            <div
-
-                class="dashboard-state dashboard-load-failed"
+            <app-empty-state
 
                 *ngIf="
                     !isLoading &&
                     loadFailed
+                "
+
+                icon="fas fa-triangle-exclamation"
+
+                title="Dashboard Could Not Be Loaded"
+
+                subtitle="The dashboard could not be loaded at this time."
+
+                actionText="Retry"
+
+                [showAction]="true"
+
+                (action)="
+                    retryDashboard()
                 ">
 
-
-                <div class="dashboard-state-icon">
-
-                    <i
-                        class="fas fa-triangle-exclamation">
-                    </i>
-
-                </div>
-
-
-                <div class="dashboard-state-title">
-
-                    Dashboard Could Not Be Loaded
-
-                </div>
-
-
-                <div class="dashboard-state-text">
-
-                    The dashboard could not be loaded at this time.
-
-                </div>
-
-
-                <button
-
-                    type="button"
-
-                    class="dashboard-state-button"
-
-                    (click)="
-                        refreshDashboard()
-                    ">
-
-                    <i
-                        class="fas fa-rotate-right">
-                    </i>
-
-                    Retry
-
-                </button>
-
-
-            </div>
+            </app-empty-state>
 
 
 

@@ -90,6 +90,17 @@ from '../../shared/components/utilities/toast/toast.service';
 
 
 //===============================================================
+// Empty State
+//===============================================================
+
+import
+{
+    EmptyStateComponent
+}
+from '../../shared/components/layout/empty-state/empty-state';
+
+
+//===============================================================
 // Login Page Loader
 //===============================================================
 
@@ -108,6 +119,8 @@ from '../../shared/components/utilities/toast/toast.service';
         OrbitLoaderComponent,
 
         ToastComponent,
+
+        EmptyStateComponent,
 
         LoginPage1,
 
@@ -174,7 +187,8 @@ export class LoginPageLoader
     // Initialization
     //===========================================================
 
-    ngOnInit(): void
+    ngOnInit():
+        void
     {
         this.loadActiveLoginPage();
     }
@@ -185,7 +199,8 @@ export class LoginPageLoader
     // Load Active Login Page
     //===========================================================
 
-    private loadActiveLoginPage(): void
+    private loadActiveLoginPage():
+        void
     {
         this.isLoading =
             true;
@@ -197,11 +212,15 @@ export class LoginPageLoader
             '';
 
 
+        this.changeDetectorRef.detectChanges();
+
+
         this.loginPagesService
             .getActive()
             .pipe
             (
-                finalize(
+                finalize
+                (
                     () =>
                     {
                         this.isLoading =
@@ -307,6 +326,18 @@ export class LoginPageLoader
                         this.changeDetectorRef.detectChanges();
                     }
             });
+    }
+
+
+
+    //===========================================================
+    // Retry
+    //===========================================================
+
+    onRetry():
+        void
+    {
+        this.loadActiveLoginPage();
     }
 
 }
