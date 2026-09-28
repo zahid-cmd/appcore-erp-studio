@@ -303,6 +303,10 @@ implements
                 .getUser();
 
 
+        //=======================================================
+        // No Authenticated User
+        //=======================================================
+
         if
         (
             !user
@@ -370,7 +374,7 @@ implements
 
 
         //=======================================================
-        // Load User Profile Photo
+        // User Profile ID
         //=======================================================
 
         if
@@ -385,6 +389,10 @@ implements
         }
 
 
+        //=======================================================
+        // Load User Profile
+        //=======================================================
+
         this.userProfileService
             .getById(
                 user.userProfileId
@@ -392,18 +400,69 @@ implements
             .subscribe(
                 profile =>
                 {
-                    //================================================
-                    // Build Photo URL
-                    //================================================
+                    console.log(
+                        '========================================'
+                    );
+
+                    console.log(
+                        'USER PROFILE RESPONSE:',
+                        profile
+                    );
+
+                    console.log(
+                        'USER PROFILE ID:',
+                        user.userProfileId
+                    );
+
+
+                    const profileData =
+                        profile as unknown as
+                        {
+                            userPhotoPath?:
+                                string;
+
+                            UserPhotoPath?:
+                                string;
+                        };
+
+
+                    const photoPath =
+                        profileData.userPhotoPath
+                        ??
+                        profileData.UserPhotoPath
+                        ??
+                        '';
+
+
+                    console.log(
+                        'PHOTO PATH:',
+                        photoPath
+                    );
+
 
                     this.userPhotoUrl =
                         this.buildUserPhotoUrl(
-                            profile.UserPhotoPath
+                            photoPath
                         );
+
+
+                    console.log(
+                        'FINAL PHOTO URL:',
+                        this.userPhotoUrl
+                    );
+
+                    console.log(
+                        '========================================'
+                    );
                 },
 
-                () =>
+                error =>
                 {
+                    console.error(
+                        'USER PROFILE API ERROR:',
+                        error
+                    );
+
                     this.userPhotoUrl =
                         '';
                 }
@@ -424,6 +483,10 @@ implements
     ):
         string
     {
+        //=======================================================
+        // Empty Photo Path
+        //=======================================================
+
         if
         (
             !photoPath
@@ -435,8 +498,17 @@ implements
         }
 
 
+        //=======================================================
+        // Normalize Path
+        //=======================================================
+
         const normalizedPath =
-            photoPath.trim();
+            photoPath
+                .trim()
+                .replace(
+                    /\\/g,
+                    '/'
+                );
 
 
         //=======================================================
@@ -471,14 +543,19 @@ implements
         //=======================================================
 
         const apiBaseUrl =
-            environment.apiUrl.replace(
-                /\/api\/?$/,
-                ''
-            );
+            environment.apiUrl
+                .replace(
+                    /\/api\/?$/,
+                    ''
+                )
+                .replace(
+                    /\/$/,
+                    ''
+                );
 
 
         //=======================================================
-        // Relative Upload Path
+        // Root Relative Path
         //=======================================================
 
         if
@@ -489,6 +566,10 @@ implements
             return `${apiBaseUrl}${normalizedPath}`;
         }
 
+
+        //=======================================================
+        // Relative Upload Path
+        //=======================================================
 
         return `${apiBaseUrl}/${normalizedPath}`;
     }

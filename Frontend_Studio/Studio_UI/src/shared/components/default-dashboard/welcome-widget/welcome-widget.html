@@ -43,7 +43,9 @@
                             *ngIf="userPhotoUrl"
                             [src]="userPhotoUrl"
                             [alt]="userDisplayName"
-                            class="profile-photo">
+                            class="profile-photo"
+                            (error)="onUserPhotoError()">
+
 
 
                         <!-- =====================================
@@ -58,6 +60,10 @@
 
                     </div>
 
+
+                    <!-- =========================================
+                         ONLINE INDICATOR
+                    ========================================== -->
 
                     <span class="online-indicator">
                     </span>
@@ -81,7 +87,12 @@
                 <div class="greeting-content">
 
 
+                    <!-- =========================================
+                         GREETING LINE
+                    ========================================== -->
+
                     <div class="greeting-line">
+
 
                         <span class="greeting-icon">
 
@@ -95,6 +106,7 @@
                             {{ greeting }},
                         </span>
 
+
                     </div>
 
 
@@ -104,11 +116,13 @@
 
                     <div class="user-name">
 
+
                         <span class="user-name-first">
 
                             {{ userDisplayName }}
 
                         </span>
+
 
                     </div>
 
@@ -127,7 +141,9 @@
 
 
                 <span class="message-line">
+
                     We're glad to have you here.
+
                 </span>
 
 
@@ -136,7 +152,9 @@
                     Let's make today a
 
                     <span>
+
                         productive day!
+
                     </span>
 
                 </span>
@@ -190,12 +208,16 @@
 
 
                         <div class="stat-value">
+
                             {{ statistics.tasks.value }}
+
                         </div>
 
 
                         <div class="stat-label">
+
                             {{ statistics.tasks.label }}
+
                         </div>
 
 
@@ -212,11 +234,13 @@
 
                     <div class="stat-progress">
 
+
                         <span
                             [style.width.%]="
                                 statistics.tasks.progress
                             ">
                         </span>
+
 
                     </div>
 
@@ -244,12 +268,16 @@
 
 
                         <div class="stat-value">
+
                             {{ statistics.messages.value }}
+
                         </div>
 
 
                         <div class="stat-label">
+
                             {{ statistics.messages.label }}
+
                         </div>
 
 
@@ -266,11 +294,13 @@
 
                     <div class="stat-progress">
 
+
                         <span
                             [style.width.%]="
                                 statistics.messages.progress
                             ">
                         </span>
+
 
                     </div>
 
@@ -298,12 +328,16 @@
 
 
                         <div class="stat-value">
+
                             {{ statistics.meetings.value }}
+
                         </div>
 
 
                         <div class="stat-label">
+
                             {{ statistics.meetings.label }}
+
                         </div>
 
 
@@ -320,11 +354,13 @@
 
                     <div class="stat-progress">
 
+
                         <span
                             [style.width.%]="
                                 statistics.meetings.progress
                             ">
                         </span>
+
 
                     </div>
 
@@ -342,7 +378,9 @@
                     <div class="stat-icon">
 
                         <i
-                            [class]="statistics.notifications.icon">
+                            [class]="
+                                statistics.notifications.icon
+                            ">
                         </i>
 
                     </div>
@@ -352,12 +390,16 @@
 
 
                         <div class="stat-value">
+
                             {{ statistics.notifications.value }}
+
                         </div>
 
 
                         <div class="stat-label">
+
                             {{ statistics.notifications.label }}
+
                         </div>
 
 
@@ -374,11 +416,13 @@
 
                     <div class="stat-progress">
 
+
                         <span
                             [style.width.%]="
                                 statistics.notifications.progress
                             ">
                         </span>
+
 
                     </div>
 
@@ -432,12 +476,16 @@
 
 
                 <span class="time-value">
+
                     {{ timeValue }}
+
                 </span>
 
 
                 <span class="time-period">
+
                     {{ timePeriod }}
+
                 </span>
 
 
@@ -470,7 +518,9 @@
                 ============================================== -->
 
                 <div class="quote-mark">
+
                     “
+
                 </div>
 
 
@@ -480,11 +530,16 @@
 
                 <div class="quote-text">
 
+
                     {{ quoteText }}
 
+
                     <span>
+
                         {{ quoteHighlight }}
+
                     </span>
+
 
                 </div>
 

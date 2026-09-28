@@ -130,6 +130,10 @@
 }
 
 
+/*===============================================================
+  AVATAR CIRCLE
+================================================================*/
+
 .avatar-circle
 {
     width:94px;
@@ -141,6 +145,10 @@
     justify-content:center;
 
     box-sizing:border-box;
+
+    position:relative;
+
+    overflow:hidden;
 
     border-radius:50%;
 
@@ -171,11 +179,52 @@
 }
 
 
+/*===============================================================
+  PROFILE PHOTO
+================================================================*/
+
+.profile-photo
+{
+    width:100%;
+    height:100%;
+
+    min-width:0;
+    min-height:0;
+
+    max-width:none;
+    max-height:none;
+
+    display:block;
+
+    box-sizing:border-box;
+
+    object-fit:cover;
+
+    object-position:center center;
+
+    border-radius:50%;
+
+    margin:0;
+
+    padding:0;
+}
+
+
+/*===============================================================
+  DEFAULT USER ICON
+================================================================*/
+
 .avatar-circle i
 {
     line-height:1;
+
+    flex:none;
 }
 
+
+/*===============================================================
+  ONLINE INDICATOR
+================================================================*/
 
 .online-indicator
 {
