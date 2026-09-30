@@ -107,18 +107,6 @@ import
 from '../../../../../../shared/components/utilities/toast/toast';
 
 
-import
-{
-    EmptyStateComponent
-}
-from '../../../../../../shared/components/layout/empty-state/empty-state';
-
-import
-{
-    OrbitLoaderComponent
-}
-from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
-
 //===============================================================
 // Component Renderer
 //===============================================================
@@ -171,11 +159,7 @@ from '../../../services/core-components.service';
 
         ToastComponent,
 
-        ComponentRenderer,
-
-        EmptyStateComponent,
-
-        OrbitLoaderComponent
+        ComponentRenderer
     ],
 
     templateUrl:
@@ -549,13 +533,13 @@ implements OnInit
 
 
         console.log(
-            'Core Components Component Path:',
+            'Core Component Path:',
             this.selectedComponent?.componentPath
         );
 
 
         console.log(
-            'Core Components Renderer Key:',
+            'Core Component Renderer Key:',
             this.getRendererKey(
                 this.selectedComponent?.componentPath
                 ??
@@ -565,13 +549,13 @@ implements OnInit
 
 
         console.log(
-            'Core Components Component Name:',
+            'Core Component Name:',
             this.selectedComponent?.name
         );
 
 
         console.log(
-            'Core Components Component ID:',
+            'Core Component ID:',
             this.selectedComponent?.id
         );
 
@@ -635,7 +619,8 @@ implements OnInit
         const pathParts =
             normalizedPath
                 .split('/')
-                .filter(
+                .filter
+                (
                     part =>
                         part.trim().length > 0
                 );
@@ -668,13 +653,14 @@ implements OnInit
 
 
         console.log(
-            'Core Components Renderer Key:',
+            'Core Component Renderer Key:',
             componentFolder
         );
 
 
         return componentFolder;
     }
+
 
 
     //===========================================================

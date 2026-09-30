@@ -1,12 +1,14 @@
 <div
     class="confirmation-dialog-overlay"
 >
+
     <div
         class="confirmation-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirmation-dialog-title"
     >
+
 
         <!-- =====================================================
              HEADER
@@ -16,15 +18,27 @@
             class="confirmation-dialog-header"
         >
 
+            <!-- Decorative header waves -->
+
+            <div
+                class="confirmation-dialog-header-art"
+                aria-hidden="true"
+            ></div>
+
+
+            <!-- Success Icon -->
+
             <div
                 class="confirmation-dialog-icon"
             >
                 <i
-                    class="fa-solid fa-circle-check"
+                    class="fa-solid fa-check"
                     aria-hidden="true"
                 ></i>
             </div>
 
+
+            <!-- Heading -->
 
             <div
                 class="confirmation-dialog-heading"
@@ -43,16 +57,20 @@
             </div>
 
 
+            <!-- Close -->
+
             <button
                 type="button"
                 class="confirmation-dialog-close-button"
                 aria-label="Close"
                 (click)="onOkay()"
             >
+
                 <i
                     class="fa-solid fa-xmark"
                     aria-hidden="true"
                 ></i>
+
             </button>
 
         </div>
@@ -66,13 +84,19 @@
             class="confirmation-dialog-content"
         >
 
+
+            <!-- =================================================
+                 ACCOUNT DETAILS
+            ================================================== -->
+
             <div
                 class="confirmation-dialog-details"
             >
 
-                <!-- =================================================
+
+                <!-- =============================================
                      FULL NAME
-                ================================================== -->
+                ============================================== -->
 
                 <div
                     class="confirmation-dialog-detail"
@@ -110,9 +134,9 @@
                 </div>
 
 
-                <!-- =================================================
+                <!-- =============================================
                      DISPLAY NAME
-                ================================================== -->
+                ============================================== -->
 
                 <div
                     class="confirmation-dialog-detail"
@@ -150,12 +174,15 @@
                 </div>
 
 
-                <!-- =================================================
+                <!-- =============================================
                      LOGIN ID
-                ================================================== -->
+                ============================================== -->
 
                 <div
-                    class="confirmation-dialog-detail confirmation-dialog-login-id"
+                    class="
+                        confirmation-dialog-detail
+                        confirmation-dialog-login-id
+                    "
                 >
 
                     <div
@@ -190,9 +217,9 @@
                 </div>
 
 
-                <!-- =================================================
-                     MOBILE NO.
-                ================================================== -->
+                <!-- =============================================
+                     MOBILE NUMBER
+                ============================================== -->
 
                 <div
                     class="confirmation-dialog-detail"
@@ -232,9 +259,9 @@
             </div>
 
 
-            <!-- =====================================================
+            <!-- =================================================
                  ADMINISTRATOR APPROVAL NOTICE
-            ====================================================== -->
+            ================================================== -->
 
             <div
                 class="confirmation-dialog-notice"
@@ -244,7 +271,7 @@
                     class="confirmation-dialog-notice-icon"
                 >
                     <i
-                        class="fa-solid fa-circle-info"
+                        class="fa-solid fa-info"
                         aria-hidden="true"
                     ></i>
                 </div>
@@ -259,8 +286,8 @@
                     </strong>
 
                     <span>
-                        You can login to the workspace after your account
-                        has been approved.
+                        You can login to the workspace after your
+                        account has been approved.
                     </span>
 
                 </div>
@@ -284,10 +311,14 @@
                 (click)="onOkay()"
             >
 
-                <i
-                    class="fa-solid fa-check"
-                    aria-hidden="true"
-                ></i>
+                <span
+                    class="confirmation-dialog-okay-icon"
+                >
+                    <i
+                        class="fa-solid fa-check"
+                        aria-hidden="true"
+                    ></i>
+                </span>
 
                 <span>
                     OKAY
@@ -298,4 +329,5 @@
         </div>
 
     </div>
+
 </div>

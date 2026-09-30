@@ -45,6 +45,7 @@ export class ConfirmationDialogComponent
     loginId: string =
         '';
 
+
     @Output()
     okay:
         EventEmitter<void> =

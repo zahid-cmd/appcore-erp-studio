@@ -118,23 +118,23 @@
         calc(
             100%
             -
-            36px
+            40px
         );
 
     --registration-card-max-height:
         100%;
 
     --registration-card-padding-top:
-        30px;
+        34px;
 
     --registration-card-padding-right:
-        32px;
+        38px;
 
     --registration-card-padding-bottom:
-        10px;
+        28px;
 
     --registration-card-padding-left:
-        32px;
+        38px;
 }
 
 

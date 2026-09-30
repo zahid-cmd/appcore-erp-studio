@@ -1,211 +1,44 @@
-/* =====================================================
-   CORE COMPONENTS LIST
-===================================================== */
+/* ============================================================
+   Core Components List
+============================================================ */
 
-:host
-{
-    display:flex;
-
-    flex-direction:column;
-
-    flex:1 1 auto;
-
-    width:100%;
-
-    height:100%;
-
-    min-width:0;
-
-    min-height:0;
-
-    margin:0;
-
-    padding:0;
-
-    box-sizing:border-box;
-
-    overflow:hidden;
-}
+@import '../../../../../../shared/styles/app-list-page.css';
 
 
-/* =====================================================
-   APP LIST PAGE
-   -----------------------------------------------------
-   Direct page container.
-   No external page canvas is used.
-===================================================== */
-
-.app-list-page
-{
-    position:relative;
-
-    display:flex;
-
-    flex-direction:column;
-
-    flex:1 1 0;
-
-    width:100%;
-
-    height:100%;
-
-    min-width:0;
-
-    min-height:0;
-
-    margin:0;
-
-    padding:0;
-
-    box-sizing:border-box;
-
-    overflow:hidden;
-
-    gap:12px;
-}
-
-
-/* =====================================================
-   PAGE HEADER
-===================================================== */
-
-.app-list-page > app-page-header
-{
-    display:block;
-
-    flex:0 0 auto;
-
-    width:100%;
-
-    min-width:0;
-}
-
-
-/* =====================================================
-   PAGE TOOLBAR
-===================================================== */
-
-.app-list-page > app-page-toolbar
-{
-    display:block;
-
-    flex:0 0 auto;
-
-    width:100%;
-
-    min-width:0;
-}
-
-
-/* =====================================================
-   TOOLBAR AREAS
-===================================================== */
-
-:host ::ng-deep [pageToolbarLeft],
-:host ::ng-deep [pageToolbarCenter],
-:host ::ng-deep [pageToolbarRight]
-{
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-
-    min-width:0;
-}
-
-
-:host ::ng-deep [pageToolbarLeft]
-{
-    justify-content:flex-start;
-}
-
-
-:host ::ng-deep [pageToolbarCenter]
-{
-    justify-content:center;
-}
-
-
-:host ::ng-deep [pageToolbarRight]
-{
-    justify-content:flex-end;
-}
-
-
-/* =====================================================
-   STANDARD TOOLBAR CONTROLS
-===================================================== */
-
-:host ::ng-deep [pageToolbarLeft] > *,
-:host ::ng-deep [pageToolbarCenter] > *,
-:host ::ng-deep [pageToolbarRight] > *
-{
-    flex-shrink:0;
-}
-
-
-/* =====================================================
-   STANDARD SEARCH BOX
-===================================================== */
-
-:host ::ng-deep app-search-box
-{
-    width:300px;
-
-    max-width:100%;
-}
-
-
-/* =====================================================
-   STANDARD COMMAND CENTER
-===================================================== */
-
-:host ::ng-deep app-command-center
-{
-    flex-shrink:0;
-}
-
-
-/* =====================================================
+/* ============================================================
    CORE COMPONENT CANVAS
-   -----------------------------------------------------
-   DIRECT CHILD OF .app-list-page.
-   
-   Consumes all remaining vertical space.
-   
-   The 10px bottom margin creates the exact
-   breathing space above the application footer.
-===================================================== */
+============================================================ */
 
-.app-list-page > .component-canvas
+.component-canvas
 {
     position:relative;
 
-    display:flex;
-
-    flex-direction:column;
-
-    flex:1 1 0;
-
     width:100%;
 
-    height:0;
+    flex:0 0 auto;
 
     min-width:0;
 
     min-height:0;
 
-    margin:0 0 10px 0;
+    height:auto;
 
-    padding:0;
+    display:flex;
 
-    box-sizing:border-box;
+    flex-direction:column;
 
     overflow:hidden;
 
-    border:1px solid
-        rgba(142,164,190,0.24);
+    box-sizing:border-box;
+
+    border:
+        1px solid
+        rgba(
+            142,
+            164,
+            190,
+            0.24
+        );
 
     border-radius:12px;
 
@@ -213,17 +46,32 @@
 
     box-shadow:
 
-        inset 0 1px 0
-            rgba(255,255,255,.95),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        ),
 
-        0 5px 18px
-            rgba(31,41,55,0.045);
+        0
+        5px
+        18px
+        rgba(
+            31,
+            41,
+            55,
+            .045
+        );
 }
 
 
-/* =====================================================
+/* ============================================================
    PREVIEW SECTION HEADER
-===================================================== */
+============================================================ */
 
 .component-section-header
 {
@@ -233,7 +81,8 @@
 
     display:flex;
 
-    flex:0 0 40px;
+    flex:
+        0 0 auto;
 
     width:100%;
 
@@ -249,17 +98,27 @@
 
     gap:10px;
 
-    padding:0 16px;
+    padding:
+        0
+        16px;
 
     box-sizing:border-box;
 
     overflow:hidden;
 
-    border-top:1px solid #ffffff;
+    border-top:
+        1px solid
+        #ffffff;
 
-    border-bottom:1px solid #dde7f3;
+    border-bottom:
+        1px solid
+        #dde7f3;
 
-    border-radius:12px 12px 0 0;
+    border-radius:
+        12px
+        12px
+        0
+        0;
 
     background:
         linear-gradient(
@@ -271,11 +130,27 @@
 
     box-shadow:
 
-        inset 0 1px 0
-            rgba(255,255,255,.95),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        ),
 
-        inset 0 -1px 0
-            rgba(255,255,255,.55);
+        inset
+        0
+        -1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .55
+        );
 
     text-align:left;
 
@@ -283,17 +158,23 @@
 
     transition:
 
-        background-color .18s ease,
+        background-color
+        .18s
+        ease,
 
-        color .18s ease,
+        color
+        .18s
+        ease,
 
-        box-shadow .18s ease;
+        box-shadow
+        .18s
+        ease;
 }
 
 
-/* =====================================================
+/* ============================================================
    PREVIEW SECTION HEADER HOVER
-===================================================== */
+============================================================ */
 
 .component-section-header:hover
 {
@@ -306,9 +187,9 @@
 }
 
 
-/* =====================================================
+/* ============================================================
    PREVIEW SECTION HEADER ICON
-===================================================== */
+============================================================ */
 
 .component-section-icon
 {
@@ -320,7 +201,10 @@
 
     height:30px;
 
-    flex:0 0 30px;
+    flex:
+        0
+        0
+        30px;
 
     display:flex;
 
@@ -337,16 +221,33 @@
             #f7f8ff
         );
 
-    color:var(--primary-color, #4f46e5);
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 
     font-size:13px;
 
-    border:1px solid
-        rgba(79,70,229,0.08);
+    border:
+        1px solid
+        rgba(
+            79,
+            70,
+            229,
+            .08
+        );
 
     box-shadow:
-        0 3px 8px
-            rgba(79,70,229,0.06);
+        0
+        3px
+        8px
+        rgba(
+            79,
+            70,
+            229,
+            .06
+        );
 
     box-sizing:border-box;
 }
@@ -359,14 +260,21 @@
     line-height:1;
 
     text-shadow:
-        0 1px 1px
-            rgba(255,255,255,0.90);
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .90
+        );
 }
 
 
-/* =====================================================
+/* ============================================================
    PREVIEW SECTION HEADER NAME
-===================================================== */
+============================================================ */
 
 .component-section-name
 {
@@ -399,14 +307,21 @@
     letter-spacing:.5px;
 
     text-shadow:
-        0 1px 1px
-            rgba(255,255,255,.82);
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .82
+        );
 }
 
 
-/* =====================================================
+/* ============================================================
    COMPONENT EDIT BUTTON
-===================================================== */
+============================================================ */
 
 .component-edit-button
 {
@@ -420,7 +335,10 @@
 
     min-height:30px;
 
-    flex:0 0 auto;
+    flex:
+        0
+        0
+        auto;
 
     display:flex;
 
@@ -432,18 +350,36 @@
 
     margin-left:auto;
 
-    padding:5px 11px;
+    padding:
+        5px
+        11px;
 
-    border:1px solid
-        rgba(255,255,255,.94);
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .94
+        );
 
     border-radius:9px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,.98),
-            rgba(226,236,246,.84)
+            rgba(
+                255,
+                255,
+                255,
+                .98
+            ),
+            rgba(
+                226,
+                236,
+                246,
+                .84
+            )
         );
 
     color:#315f91;
@@ -456,30 +392,69 @@
 
     box-shadow:
 
-        inset 0 1px 0
-            rgba(255,255,255,1),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            1
+        ),
 
-        inset 0 -1px 0
-            rgba(121,145,170,.08),
+        inset
+        0
+        -1px
+        0
+        rgba(
+            121,
+            145,
+            170,
+            .08
+        ),
 
-        0 3px 9px
-            rgba(55,75,96,.09);
+        0
+        3px
+        9px
+        rgba(
+            55,
+            75,
+            96,
+            .09
+        );
 
-    backdrop-filter:blur(10px);
+    backdrop-filter:
+        blur(
+            10px
+        );
 
-    -webkit-backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:
+        blur(
+            10px
+        );
 
     transition:
 
-        background .18s ease,
+        background
+        .18s
+        ease,
 
-        border-color .18s ease,
+        border-color
+        .18s
+        ease,
 
-        box-shadow .18s ease,
+        box-shadow
+        .18s
+        ease,
 
-        transform .18s ease,
+        transform
+        .18s
+        ease,
 
-        color .18s ease;
+        color
+        .18s
+        ease;
 }
 
 
@@ -488,34 +463,78 @@
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,1),
-            rgba(234,242,249,.94)
+            rgba(
+                255,
+                255,
+                255,
+                1
+            ),
+            rgba(
+                234,
+                242,
+                249,
+                .94
+            )
         );
 
     border-color:
-        rgba(86,125,164,.24);
+        rgba(
+            86,
+            125,
+            164,
+            .24
+        );
 
     color:#294f78;
 
     box-shadow:
 
-        inset 0 1px 0
-            rgba(255,255,255,1),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            1
+        ),
 
-        0 5px 13px
-            rgba(55,75,96,.12);
+        0
+        5px
+        13px
+        rgba(
+            55,
+            75,
+            96,
+            .12
+        );
 
-    transform:translateY(-1px);
+    transform:
+        translateY(
+            -1px
+        );
 }
 
 
 .component-edit-button:active
 {
-    transform:translateY(0);
+    transform:
+        translateY(
+            0
+        );
 
     box-shadow:
-        inset 0 1px 2px
-            rgba(55,75,96,.10);
+        inset
+        0
+        1px
+        2px
+        rgba(
+            55,
+            75,
+            96,
+            .10
+        );
 }
 
 
@@ -525,9 +544,9 @@
 }
 
 
-/* =====================================================
+/* ============================================================
    COMPONENT DELETE BUTTON
-===================================================== */
+============================================================ */
 
 .component-delete-button
 {
@@ -541,7 +560,10 @@
 
     min-height:30px;
 
-    flex:0 0 auto;
+    flex:
+        0
+        0
+        auto;
 
     display:flex;
 
@@ -551,18 +573,36 @@
 
     gap:6px;
 
-    padding:5px 11px;
+    padding:
+        5px
+        11px;
 
-    border:1px solid
-        rgba(255,255,255,.94);
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .94
+        );
 
     border-radius:9px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,.98),
-            rgba(226,236,246,.84)
+            rgba(
+                255,
+                255,
+                255,
+                .98
+            ),
+            rgba(
+                226,
+                236,
+                246,
+                .84
+            )
         );
 
     color:#315f91;
@@ -575,30 +615,69 @@
 
     box-shadow:
 
-        inset 0 1px 0
-            rgba(255,255,255,1),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            1
+        ),
 
-        inset 0 -1px 0
-            rgba(121,145,170,.08),
+        inset
+        0
+        -1px
+        0
+        rgba(
+            121,
+            145,
+            170,
+            .08
+        ),
 
-        0 3px 9px
-            rgba(55,75,96,.09);
+        0
+        3px
+        9px
+        rgba(
+            55,
+            75,
+            96,
+            .09
+        );
 
-    backdrop-filter:blur(10px);
+    backdrop-filter:
+        blur(
+            10px
+        );
 
-    -webkit-backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:
+        blur(
+            10px
+        );
 
     transition:
 
-        background .18s ease,
+        background
+        .18s
+        ease,
 
-        border-color .18s ease,
+        border-color
+        .18s
+        ease,
 
-        box-shadow .18s ease,
+        box-shadow
+        .18s
+        ease,
 
-        transform .18s ease,
+        transform
+        .18s
+        ease,
 
-        color .18s ease;
+        color
+        .18s
+        ease;
 }
 
 
@@ -607,34 +686,78 @@
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,1),
-            rgba(249,235,235,.94)
+            rgba(
+                255,
+                255,
+                255,
+                1
+            ),
+            rgba(
+                249,
+                235,
+                235,
+                .94
+            )
         );
 
     border-color:
-        rgba(180,75,75,.24);
+        rgba(
+            180,
+            75,
+            75,
+            .24
+        );
 
     color:#a33d3d;
 
     box-shadow:
 
-        inset 0 1px 0
-            rgba(255,255,255,1),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            1
+        ),
 
-        0 5px 13px
-            rgba(120,65,65,.12);
+        0
+        5px
+        13px
+        rgba(
+            120,
+            65,
+            65,
+            .12
+        );
 
-    transform:translateY(-1px);
+    transform:
+        translateY(
+            -1px
+        );
 }
 
 
 .component-delete-button:active
 {
-    transform:translateY(0);
+    transform:
+        translateY(
+            0
+        );
 
     box-shadow:
-        inset 0 1px 2px
-            rgba(120,65,96,.10);
+        inset
+        0
+        1px
+        2px
+        rgba(
+            120,
+            65,
+            65,
+            .10
+        );
 }
 
 
@@ -644,14 +767,9 @@
 }
 
 
-/* =====================================================
+/* ============================================================
    PREVIEW HOLDER
-   -----------------------------------------------------
-   This is the remaining canvas area.
-   
-   It has NO blue/grey background.
-   It does NOT create a second visual panel.
-===================================================== */
+============================================================ */
 
 .component-preview-content
 {
@@ -659,19 +777,22 @@
 
     z-index:1;
 
-    display:flex;
-
-    flex:1 1 0;
-
     width:100%;
 
-    height:0;
+    height:456px;
 
     min-width:0;
 
-    min-height:0;
+    min-height:456px;
 
-    max-height:none;
+    max-height:456px;
+
+    flex:
+        0
+        0
+        456px;
+
+    display:flex;
 
     align-items:center;
 
@@ -685,152 +806,200 @@
 
     border:0;
 
-    border-radius:0 0 12px 12px;
+    border-radius:
+        0
+        0
+        12px
+        12px;
 
-    background:transparent;
+    background:#ffffff;
 
     box-shadow:none;
 
-    overflow:hidden;
+    /*
+       IMPORTANT:
+       Do not clip the transformed renderer.
+       The renderer controls its own visual bounds.
+    */
+
+    overflow:visible;
 }
 
 
-/* =====================================================
-   COMPONENT RENDERER HOST
-   -----------------------------------------------------
-   The renderer itself must NOT paint the large
-   light-blue rectangle.
-===================================================== */
+/* ============================================================
+   CORE COMPONENT RENDERER
+   ------------------------------------------------------------
+   IMPORTANT ARCHITECTURE
 
-.component-preview-content
-> app-component-renderer
+   The renderer is the ONLY element responsible
+   for preview scaling.
+
+   Individual components must NOT apply another
+   preview scale to themselves.
+============================================================ */
+
+.core-component-renderer
 {
+    --renderer-scale:
+        1;
+
     position:relative;
 
     display:block;
 
-    flex:0 0 1200px;
+    width:100%;
 
-    width:1200px;
+    height:100%;
 
-    height:675px;
+    min-width:0;
 
-    min-width:1200px;
+    min-height:0;
 
-    min-height:675px;
+    max-width:none;
 
-    max-width:1200px;
-
-    max-height:675px;
+    max-height:none;
 
     margin:0;
 
     padding:0;
 
     box-sizing:border-box;
+
+    flex:
+        0
+        0
+        100%;
 
     align-self:center;
 
-    background:transparent !important;
-
-    border:0 !important;
-
-    box-shadow:none !important;
+    overflow:visible;
 
     transform:
         scale(
-            0.6758333333
+            var(
+                --renderer-scale
+            )
         );
 
-    transform-origin:center center;
+    transform-origin:
+        center center;
+
+    /*
+       Prevent browser containment from
+       creating an unexpected clipping context.
+    */
+
+    contain:layout;
 }
 
 
-/* =====================================================
-   DYNAMIC COMPONENT HOST
-   -----------------------------------------------------
-   Keep the dynamic component at its own
-   1200 × 675 canvas.
-===================================================== */
+/* ============================================================
+   LOGIN PANEL
+============================================================ */
 
-.component-preview-content
-::ng-deep
-app-dashboard-default
+.core-component-renderer.login-panel
 {
-    position:relative;
-
-    display:block;
-
-    width:1200px;
-
-    height:675px;
-
-    min-width:1200px;
-
-    min-height:675px;
-
-    max-width:1200px;
-
-    max-height:675px;
-
-    margin:0;
-
-    padding:0;
-
-    box-sizing:border-box;
-
-    background:transparent !important;
-
-    border:0 !important;
-
-    box-shadow:none !important;
+    --renderer-scale:
+        0.50;
 }
 
 
-/* =====================================================
-   ANY DYNAMIC COMPONENT HOST
-   -----------------------------------------------------
-   Prevent the renderer host from becoming a
-   page-sized background surface.
-===================================================== */
+/* ============================================================
+   REGISTRATION PANEL
+============================================================ */
 
-.component-preview-content
-::ng-deep
-app-component-renderer > *
+.core-component-renderer.registration-panel
 {
-    box-sizing:border-box;
+    --renderer-scale:
+        0.50;
 }
 
 
-/* =====================================================
+/* ============================================================
+   FORGET PASSWORD
+============================================================ */
+
+.core-component-renderer.forget-password
+{
+    --renderer-scale:
+        0.50;
+}
+
+
+/* ============================================================
+   NOTIFICATION PANEL
+============================================================ */
+
+.core-component-renderer.notification-panel
+{
+    --renderer-scale:
+        0.75;
+    padding-bottom: 600px;
+}
+
+
+/* ============================================================
+   CONFIRMATION DIALOG
+   ------------------------------------------------------------
+   Renderer controls the scale.
+   Confirmation component itself should NOT
+   apply another scale.
+============================================================ */
+
+.core-component-renderer.confirmation-dialog
+{
+    --renderer-scale:
+        .5;
+    min-height:190%;
+    min-width: 100%;
+
+}
+
+.core-component-renderer.background
+{
+    --renderer-scale:
+        .5;
+    min-height:200%;
+    min-width: 100%;
+
+}
+
+.core-component-renderer.footer
+{
+    --renderer-scale:
+        .5;
+    min-height:100%;
+    min-width: 1400px;
+
+}
+/* ============================================================
    PREVIEW CLEAN SURFACE
-===================================================== */
+============================================================ */
 
 .component-preview-content::before
 {
     display:none;
-
-    content:none;
 }
 
 
-/* =====================================================
+/* ============================================================
    EMPTY STATE
-===================================================== */
+============================================================ */
 
 .component-empty
 {
     position:relative;
 
-    display:flex;
-
-    flex:1 1 auto;
+    flex:
+        1
+        1
+        auto;
 
     width:100%;
 
-    min-width:0;
-
     min-height:0;
+
+    display:flex;
 
     align-items:center;
 
@@ -842,7 +1011,11 @@ app-component-renderer > *
 
     box-sizing:border-box;
 
-    color:var(--text-secondary, #6b7280);
+    color:
+        var(
+            --text-secondary,
+            #6b7280
+        );
 }
 
 
@@ -850,7 +1023,11 @@ app-component-renderer > *
 {
     font-size:16px;
 
-    color:var(--primary-color, #4f46e5);
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 }
 
 
@@ -860,23 +1037,24 @@ app-component-renderer > *
 }
 
 
-/* =====================================================
+/* ============================================================
    LOADING STATE
-===================================================== */
+============================================================ */
 
 .component-loading
 {
     position:relative;
 
-    display:flex;
-
-    flex:1 1 auto;
+    flex:
+        1
+        1
+        auto;
 
     width:100%;
 
-    min-width:0;
-
     min-height:0;
+
+    display:flex;
 
     align-items:center;
 
@@ -886,7 +1064,11 @@ app-component-renderer > *
 
     text-align:center;
 
-    color:var(--text-secondary, #6b7280);
+    color:
+        var(
+            --text-secondary,
+            #6b7280
+        );
 }
 
 
@@ -894,7 +1076,11 @@ app-component-renderer > *
 {
     font-size:16px;
 
-    color:var(--primary-color, #4f46e5);
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 }
 
 
@@ -904,23 +1090,24 @@ app-component-renderer > *
 }
 
 
-/* =====================================================
+/* ============================================================
    ERROR STATE
-===================================================== */
+============================================================ */
 
 .component-error
 {
     position:relative;
 
-    display:flex;
-
-    flex:1 1 auto;
+    flex:
+        1
+        1
+        auto;
 
     width:100%;
 
-    min-width:0;
-
     min-height:0;
+
+    display:flex;
 
     flex-direction:column;
 
@@ -930,13 +1117,17 @@ app-component-renderer > *
 
     gap:12px;
 
+    text-align:center;
+
     padding:40px;
 
     box-sizing:border-box;
 
-    text-align:center;
-
-    color:var(--text-secondary, #6b7280);
+    color:
+        var(
+            --text-secondary,
+            #6b7280
+        );
 }
 
 
@@ -944,7 +1135,11 @@ app-component-renderer > *
 {
     font-size:28px;
 
-    color:var(--primary-color, #4f46e5);
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 }
 
 
@@ -956,63 +1151,47 @@ app-component-renderer > *
 }
 
 
-/* =====================================================
-   RESPONSIVE TOOLBAR
-===================================================== */
+/* ============================================================
+   RESPONSIVE PREVIEW
+   ------------------------------------------------------------
+   The preview surface becomes 16:9.
 
-@media (max-width:1200px)
-{
-    :host ::ng-deep [pageToolbarLeft],
-    :host ::ng-deep [pageToolbarCenter],
-    :host ::ng-deep [pageToolbarRight]
-    {
-        flex-wrap:wrap;
-    }
+   The renderer remains centered and is still
+   the ONLY element applying scale.
+============================================================ */
 
-
-    :host ::ng-deep app-search-box
-    {
-        width:100%;
-
-        flex:1 1 100%;
-    }
-}
-
-
-/* =====================================================
-   TABLET PREVIEW
-===================================================== */
-
-@media (max-width:1100px)
+@media
+(
+    max-width:1100px
+)
 {
     .component-preview-content
     {
-        position:relative;
-
-        display:flex;
-
-        flex:1 1 0;
-
         width:100%;
 
-        height:0;
+        height:auto;
 
         min-height:0;
 
         max-height:none;
 
+        flex:
+            0
+            0
+            auto;
+
+        aspect-ratio:
+            16 / 9;
+
         align-items:center;
 
         justify-content:center;
 
-        background:transparent;
-
-        overflow:hidden;
+        overflow:visible;
     }
 
 
-    .component-preview-content
-    > app-component-renderer
+    .core-component-renderer
     {
         position:absolute;
 
@@ -1020,23 +1199,27 @@ app-component-renderer > *
 
         left:50%;
 
-        width:1200px;
+        width:100%;
 
-        height:675px;
+        height:100%;
 
-        min-width:1200px;
+        min-width:0;
 
-        min-height:675px;
+        min-height:0;
 
-        max-width:1200px;
+        max-width:none;
 
-        max-height:675px;
+        max-height:none;
 
         margin:0;
 
+        padding:0;
+
         flex:none;
 
-        background:transparent !important;
+        align-self:auto;
+
+        overflow:visible;
 
         transform:
             translate(
@@ -1044,60 +1227,33 @@ app-component-renderer > *
                 -50%
             )
             scale(
-                min(
-                    calc(100% / 1200),
-                    calc(100% / 675)
+                var(
+                    --renderer-scale
                 )
             );
 
-        transform-origin:center center;
-    }
-
-
-    .component-preview-content
-    ::ng-deep
-    app-dashboard-default
-    {
-        width:1200px;
-
-        height:675px;
-
-        min-width:1200px;
-
-        min-height:675px;
-
-        max-width:1200px;
-
-        max-height:675px;
-
-        background:transparent !important;
+        transform-origin:
+            center center;
     }
 }
 
 
-/* =====================================================
+/* ============================================================
    MOBILE
-===================================================== */
+============================================================ */
 
-@media (max-width:768px)
+@media
+(
+    max-width:768px
+)
 {
-    .app-list-page
-    {
-        gap:8px;
-    }
-
-
-    .app-list-page > .component-canvas
+    .component-canvas
     {
         width:100%;
 
-        height:0;
-
-        flex:1 1 0;
+        height:auto;
 
         min-height:0;
-
-        margin-bottom:10px;
 
         border-radius:12px;
     }
@@ -1113,9 +1269,15 @@ app-component-renderer > *
 
         gap:8px;
 
-        padding:0 10px;
+        padding:
+            0
+            10px;
 
-        border-radius:12px 12px 0 0;
+        border-radius:
+            12px
+            12px
+            0
+            0;
     }
 
 
@@ -1152,7 +1314,9 @@ app-component-renderer > *
 
         min-height:30px;
 
-        padding:5px 8px;
+        padding:
+            5px
+            8px;
 
         font-size:10px;
     }
@@ -1160,34 +1324,37 @@ app-component-renderer > *
 
     .component-preview-content
     {
-        position:relative;
-
         width:100%;
 
-        height:0;
+        height:auto;
 
         min-height:0;
 
         max-height:none;
 
-        flex:1 1 0;
+        flex:
+            0
+            0
+            auto;
 
-        aspect-ratio:auto;
+        aspect-ratio:
+            16 / 9;
 
         align-items:center;
 
         justify-content:center;
 
-        background:transparent;
+        overflow:visible;
 
-        border-radius:0 0 12px 12px;
-
-        overflow:hidden;
+        border-radius:
+            0
+            0
+            12px
+            12px;
     }
 
 
-    .component-preview-content
-    > app-component-renderer
+    .core-component-renderer
     {
         position:absolute;
 
@@ -1195,23 +1362,25 @@ app-component-renderer > *
 
         left:50%;
 
-        width:1200px;
+        width:100%;
 
-        height:675px;
+        height:100%;
 
-        min-width:1200px;
+        min-width:0;
 
-        min-height:675px;
+        min-height:0;
 
-        max-width:1200px;
+        max-width:none;
 
-        max-height:675px;
+        max-height:none;
 
         margin:0;
 
+        padding:0;
+
         flex:none;
 
-        background:transparent !important;
+        overflow:visible;
 
         transform:
             translate(
@@ -1219,32 +1388,12 @@ app-component-renderer > *
                 -50%
             )
             scale(
-                min(
-                    calc(100% / 1200),
-                    calc(100% / 675)
+                var(
+                    --renderer-scale
                 )
             );
 
-        transform-origin:center center;
-    }
-
-
-    .component-preview-content
-    ::ng-deep
-    app-dashboard-default
-    {
-        width:1200px;
-
-        height:675px;
-
-        min-width:1200px;
-
-        min-height:675px;
-
-        max-width:1200px;
-
-        max-height:675px;
-
-        background:transparent !important;
+        transform-origin:
+            center center;
     }
 }

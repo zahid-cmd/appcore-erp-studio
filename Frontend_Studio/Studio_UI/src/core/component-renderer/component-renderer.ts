@@ -1,7 +1,5 @@
 //===============================================================
-
 // Imports
-
 //===============================================================
 
 import
@@ -92,21 +90,17 @@ from '../../shared/components/core-components/theme-selector/theme-selector';
 // Default Dashboard Components
 //===============================================================
 
-
 import
 {
     WelcomeWidgetComponent
 }
 from '../../shared/components/default-dashboard/welcome-widget/welcome-widget';
 
-
 import
 {
     QuickAccessWidgetComponent
 }
 from '../../shared/components/default-dashboard/quick-access-widget/quick-access-widget';
-
-
 
 //===============================================================
 // Control Components
@@ -171,7 +165,6 @@ import
     TextboxComponent
 }
 from '../../shared/components/controls/textbox/textbox';
-
 
 //===============================================================
 // Layout Components
@@ -273,7 +266,6 @@ import
 }
 from '../../shared/components/layout/topbar-header/topbar-header';
 
-
 //===============================================================
 // Utility Components
 //===============================================================
@@ -350,7 +342,6 @@ import
 }
 from '../../shared/components/utilities/toast/toast';
 
-
 //===============================================================
 // Component
 //===============================================================
@@ -369,13 +360,10 @@ from '../../shared/components/utilities/toast/toast';
     styleUrl:
         './component-renderer.css'
 })
-
-
 export class ComponentRenderer
 implements
     OnChanges
 {
-
     //===========================================================
     // Component Host
     //===========================================================
@@ -393,7 +381,6 @@ implements
     private componentHost!:
         ViewContainerRef;
 
-
     //===========================================================
     // Component Key
     //===========================================================
@@ -402,7 +389,6 @@ implements
     componentKey:
         string =
         '';
-
 
     //===========================================================
     // Component Reference
@@ -413,7 +399,6 @@ implements
         |
         null =
         null;
-
 
     //===========================================================
     // Dependency Injection
@@ -427,22 +412,17 @@ implements
     {
     }
 
-
     //===========================================================
     // Component Registry
     //===========================================================
 
     private readonly componentRegistry:
-        Record<
-            string,
-            Type<unknown>
-        >
+        Record<string, Type<unknown>>
     =
     {
-
-        //===============================================================
+        //=======================================================
         // Core Components
-        //===============================================================
+        //=======================================================
 
         'background':
             LoginPageBackgroundComponent,
@@ -477,16 +457,15 @@ implements
         'theme-selector':
             LoginPageThemeSelectorComponent,
 
-        //===============================================================
+        //=======================================================
         // Default Dashboard Components
-        //===============================================================
+        //=======================================================
 
         'welcome-widget':
             WelcomeWidgetComponent,
 
         'quick-access-widget':
             QuickAccessWidgetComponent,
-
 
         //=======================================================
         // Control Components
@@ -524,7 +503,6 @@ implements
 
         'textbox':
             TextboxComponent,
-
 
         //=======================================================
         // Layout Components
@@ -578,7 +556,6 @@ implements
         'topbar-header':
             TopbarHeaderComponent,
 
-
         //=======================================================
         // Utility Components
         //=======================================================
@@ -620,7 +597,6 @@ implements
             ToastComponent
     };
 
-
     //===========================================================
     // Changes
     //===========================================================
@@ -641,7 +617,6 @@ implements
         }
     }
 
-
     //===========================================================
     // Render Component
     //===========================================================
@@ -651,12 +626,10 @@ implements
     {
         this.clearComponent();
 
-
         const componentType =
             this.resolveComponent(
                 this.componentKey
             );
-
 
         if
         (
@@ -666,69 +639,15 @@ implements
             return;
         }
 
-
         this.componentRef =
             this.componentHost.createComponent(
                 componentType
             );
 
-
-        this.setComponentHostSize();
-
-
         this.setPreviewMode();
-
 
         this.cdr.detectChanges();
     }
-
-
-    //===========================================================
-    // Set Component Host Size
-    //===========================================================
-
-    private setComponentHostSize():
-        void
-    {
-        if
-        (
-            !this.componentRef
-        )
-        {
-            return;
-        }
-
-
-        const hostElement =
-            this.componentRef
-                .location
-                .nativeElement as HTMLElement;
-
-
-        hostElement.style.display =
-            'block';
-
-
-        hostElement.style.width =
-            '100%';
-
-
-        hostElement.style.height =
-            '100%';
-
-
-        hostElement.style.minWidth =
-            '0';
-
-
-        hostElement.style.minHeight =
-            '0';
-
-
-        hostElement.style.boxSizing =
-            'border-box';
-    }
-
 
     //===========================================================
     // Set Preview Mode
@@ -745,14 +664,12 @@ implements
             return;
         }
 
-
         const instance =
             this.componentRef.instance as
             {
                 previewMode?:
                     boolean;
             };
-
 
         if
         (
@@ -765,7 +682,6 @@ implements
             );
         }
     }
-
 
     //===========================================================
     // Resolve Component
@@ -789,7 +705,6 @@ implements
             .trim()
             .toLowerCase();
 
-
         if
         (
             !normalizedKey
@@ -798,16 +713,10 @@ implements
             return null;
         }
 
-
-        //=======================================================
-        // Direct Registry Match
-        //=======================================================
-
         const directComponent =
             this.componentRegistry[
                 normalizedKey
             ];
-
 
         if
         (
@@ -816,11 +725,6 @@ implements
         {
             return directComponent;
         }
-
-
-        //=======================================================
-        // Normalize Path
-        //=======================================================
 
         const normalizedPath =
             normalizedKey
@@ -837,21 +741,13 @@ implements
                     ''
                 );
 
-
-        //=======================================================
-        // Extract Component Folder
-        //=======================================================
-
         const pathParts =
             normalizedPath
-                .split(
-                    '/'
-                )
+                .split('/')
                 .filter(
                     part =>
                         part.trim() !== ''
                 );
-
 
         if
         (
@@ -861,15 +757,12 @@ implements
             const lastPathPart =
                 pathParts[
                     pathParts.length - 1
-                ]
-                .trim();
-
+                ].trim();
 
             const pathComponent =
                 this.componentRegistry[
                     lastPathPart
                 ];
-
 
             if
             (
@@ -880,24 +773,16 @@ implements
             }
         }
 
-
-        //=======================================================
-        // Normalize Display Name
-        //=======================================================
-
         const displayKey =
             normalizedKey
                 .replace(
                     /\\/g,
                     '/'
                 )
-                .split(
-                    '/'
-                )
+                .split('/')
                 .pop()
                 ??
                 normalizedKey;
-
 
         const componentName =
             displayKey
@@ -916,12 +801,10 @@ implements
                 .trim()
                 .toLowerCase();
 
-
         const displayComponent =
             this.componentRegistry[
                 componentName
             ];
-
 
         if
         (
@@ -930,11 +813,6 @@ implements
         {
             return displayComponent;
         }
-
-
-        //=======================================================
-        // Display Text Match
-        //=======================================================
 
         const displayText =
             displayKey
@@ -948,7 +826,6 @@ implements
                 )
                 .trim()
                 .toLowerCase();
-
 
         for
         (
@@ -971,7 +848,6 @@ implements
                     .trim()
                     .toLowerCase();
 
-
             if
             (
                 registryDisplayText ===
@@ -984,10 +860,8 @@ implements
             }
         }
 
-
         return null;
     }
-
 
     //===========================================================
     // Clear Component
@@ -1003,13 +877,10 @@ implements
         {
             this.componentRef.destroy();
 
-
             this.componentRef =
                 null;
         }
 
-
         this.componentHost.clear();
     }
-
 }

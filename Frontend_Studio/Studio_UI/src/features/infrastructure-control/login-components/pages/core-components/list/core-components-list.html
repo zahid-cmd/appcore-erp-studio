@@ -1,28 +1,46 @@
 <div class="app-list-page">
 
+
     <!-- =====================================================
          PAGE HEADER
     ====================================================== -->
 
+
     <app-page-header
+
         title="Core Components"
+
         subtitle="Manage core components"
+
         icon="fas fa-puzzle-piece">
+
 
         <div pageHeaderRight>
 
             <app-command-center
+
                 command1Text="Add"
+
                 command1Icon="fas fa-plus"
+
                 (command1Click)="add()"
+
                 command2Text="Refresh"
+
                 command2Icon="fas fa-rotate-right"
+
                 (command2Click)="refresh()"
+
                 command3Text="Restore"
+
                 command3Icon="fas fa-trash-arrow-up"
+
                 (command3Click)="restore()"
+
                 rightCommandIcon="fas fa-clock-rotate-left"
+
                 (rightCommandClick)="openHistory()">
+
             </app-command-center>
 
         </div>
@@ -30,58 +48,77 @@
     </app-page-header>
 
 
+
     <!-- =====================================================
          PAGE TOOLBAR
     ====================================================== -->
 
+
     <app-page-toolbar>
 
         <app-control-tabs
+
             pageToolbarLeft
+
             [tabs]="tabs"
+
             [(selectedTab)]="selectedTab"
+
             (selectedTabChange)="onTabChange($event)">
+
         </app-control-tabs>
 
     </app-page-toolbar>
 
 
+
     <!-- =====================================================
          COMPONENT CONTENT
-         -----------------------------------------------------
-         This directly occupies the remaining page area.
-         No app-page-canvas wrapper is used.
     ====================================================== -->
 
+
     <div
+
         class="component-canvas"
+
         *ngIf="selectedComponent && !loading">
+
 
         <!-- =================================================
              COMPONENT SECTION HEADER
         ================================================== -->
 
+
         <div class="component-section-header">
+
 
             <!-- =============================================
                  COMPONENT ICON
             ============================================== -->
 
+
             <div class="component-section-icon">
 
                 <i
+
                     [class]="
+
                         selectedComponent.icon
+
                         || 'fas fa-puzzle-piece'
+
                     ">
+
                 </i>
 
             </div>
 
 
+
             <!-- =============================================
                  COMPONENT NAME
             ============================================== -->
+
 
             <div class="component-section-name">
 
@@ -90,14 +127,20 @@
             </div>
 
 
+
             <!-- =============================================
                  EDIT
             ============================================== -->
 
+
             <button
+
                 type="button"
+
                 class="component-edit-button"
+
                 (click)="edit(selectedComponent)"
+
                 title="Edit Core Component">
 
                 <i class="fas fa-pen"></i>
@@ -107,14 +150,20 @@
             </button>
 
 
+
             <!-- =============================================
                  DELETE
             ============================================== -->
 
+
             <button
+
                 type="button"
+
                 class="component-delete-button"
+
                 (click)="delete(selectedComponent)"
+
                 title="Delete Core Component">
 
                 <i class="fas fa-trash"></i>
@@ -123,92 +172,159 @@
 
             </button>
 
+
         </div>
+
 
 
         <!-- =================================================
              COMPONENT PREVIEW
         ================================================== -->
 
+
         <div class="component-preview-content">
 
+
             <app-component-renderer
-                [componentKey]="
+
+                [class]="
+
+                    'core-component-renderer ' +
+
                     getRendererKey(
+
                         selectedComponent.componentPath
+
                     )
+
+                "
+
+                [componentKey]="
+
+                    getRendererKey(
+
+                        selectedComponent.componentPath
+
+                    )
+
                 ">
+
             </app-component-renderer>
+
 
         </div>
 
+
     </div>
+
 
 
     <!-- =====================================================
          NO COMPONENT SELECTED
     ====================================================== -->
 
-    <app-empty-state
-        *ngIf="
-            !selectedComponent
-            && !loading
-            && !loadFailed
-        "
-        icon="fas fa-puzzle-piece"
-        title="No Core Component Found"
-        subtitle="No core components are available right now.">
-    </app-empty-state>
+
+    <div
+
+        class="component-empty"
+
+        *ngIf="!selectedComponent && !loading">
+
+
+        <i class="fas fa-puzzle-piece"></i>
+
+
+        <span>
+
+            No core component available.
+
+        </span>
+
+
+    </div>
+
 
 
     <!-- =====================================================
          LOADING
     ====================================================== -->
 
-    <app-orbit-loader
-        *ngIf="loading"
-        title="Loading Core Components"
-        message="Please wait while core components are being loaded."
-        size="medium"
-        [showMessage]="true">
-    </app-orbit-loader>
+
+    <div
+
+        class="component-loading"
+
+        *ngIf="loading">
+
+
+        <i class="fas fa-spinner fa-spin"></i>
+
+
+        <span>
+
+            Loading core components...
+
+        </span>
+
+
+    </div>
+
 
 
     <!-- =====================================================
          LOAD ERROR
     ====================================================== -->
 
+
     <div
+
         class="component-error"
+
         *ngIf="loadFailed && !loading">
+
 
         <i class="fas fa-triangle-exclamation"></i>
 
+
         <span>
+
             Unable to load core components.
+
         </span>
 
+
     </div>
+
 
 
     <!-- =====================================================
          HISTORY
     ====================================================== -->
 
+
     <app-history-drawer
+
         [opened]="historyOpened"
+
         [title]="historyTitle"
+
         [items]="historyItems"
+
         (closed)="closeHistory()">
+
     </app-history-drawer>
+
 
 
     <!-- =====================================================
          UTILITIES
     ====================================================== -->
 
+
     <app-toast></app-toast>
 
+
     <app-confirm-dialog></app-confirm-dialog>
+
 
 </div>
