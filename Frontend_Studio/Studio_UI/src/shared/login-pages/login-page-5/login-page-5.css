@@ -1,0 +1,930 @@
+/* =============================================================
+   LOGIN PAGE 5
+   -------------------------------------------------------------
+   FINAL DESKTOP LAYOUT
+
+   FULL VIEWPORT
+
+       LEFT   = 30%
+       MIDDLE = 35%
+       RIGHT  = 35%
+
+   LEFT / MIDDLE:
+
+       TOP    = 15%
+       CENTER = REST
+       BOTTOM = 15%
+
+   RIGHT:
+
+       TOP    = 50px
+       CENTER = REST
+       BOTTOM = 50px
+
+   IMPORTANT:
+
+       DESKTOP ONLY.
+
+       Tablet and mobile layouts are intentionally not included
+       at this stage.
+
+   IMPORTANT NOTIFICATION RULE:
+
+       The Notification Panel is a PAGE-LEVEL floating component.
+
+       It does NOT participate in the 30% / 35% / 35% layout.
+
+       It consumes NO physical layout space.
+
+       Its own fixed positioning, notification button,
+       unread counter and floating popover are controlled
+       completely by notification-panel.css.
+
+   IMPORTANT BRANDING RULE:
+
+       The Login Page controls the POSITION of the Branding
+       component.
+
+       The Branding component itself controls its own
+       intrinsic width and height.
+
+       Therefore the page MUST NOT force:
+
+           width: 100%;
+           height: 100%;
+
+       on the Branding component.
+
+   IMPORTANT AUTHENTICATION RULE:
+
+       Authentication is completely owned by the Central
+       Login Panel.
+
+       Login Page 5 does NOT participate in the authentication
+       request, token storage or navigation process.
+
+       The Login Page only controls:
+
+           - Login / Registration / Forget Password mode
+           - Theme state
+           - Notification Panel
+============================================================= */
+
+
+/* =============================================================
+   ROOT PAGE
+============================================================= */
+
+.login-page-5
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   PROMOTIONAL IMAGE
+   -------------------------------------------------------------
+   FULL VIEWPORT
+
+   This layer remains completely independent from the desktop
+   layout grid.
+============================================================= */
+
+.login-page-5-promotional-area
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden;
+
+    z-index:
+        0;
+}
+
+
+/* =============================================================
+   PROMOTIONAL IMAGE COMPONENTS
+============================================================= */
+
+.login-page-5-promotional-area >
+app-login-page-promotional-image-light,
+
+.login-page-5-promotional-area >
+app-login-page-promotional-image-deep
+{
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   MAIN DESKTOP LAYOUT
+   -------------------------------------------------------------
+   FULL WIDTH:
+
+       30% | 35% | 35%
+
+   FULL HEIGHT:
+
+       100%
+
+   Notification Panel remains completely outside this grid.
+============================================================= */
+
+.login-page-5-layout
+{
+    position:
+        relative;
+
+    z-index:
+        10;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        30% 35% 35%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
+   LEFT AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       30%
+
+   ROWS:
+
+       15%
+       70%
+       15%
+============================================================= */
+
+.login-page-5-left-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        15% 70% 15%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LEFT TOP
+   -------------------------------------------------------------
+   HEIGHT:
+
+       15%
+
+   IMPORTANT:
+
+       This section provides POSITIONING ONLY.
+
+       It does NOT force the Branding component to fill
+       the complete 15% area.
+============================================================= */
+
+.login-page-5-left-top
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* =============================================================
+   LEFT CENTER
+============================================================= */
+
+.login-page-5-left-center
+{
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LEFT BOTTOM
+   -------------------------------------------------------------
+   POWERED BY IS ALIGNED DIRECTLY TO THE LEFT EDGE.
+
+   No horizontal centering is applied to the Powered By
+   component from this page-level container.
+============================================================= */
+
+.login-page-5-left-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   POWERED BY POSITION
+   -------------------------------------------------------------
+   The Powered By component remains controlled by its own
+   internal design.
+
+   The page controls only its position within the
+   30% Left Bottom area.
+============================================================= */
+
+.login-page-5-left-bottom >
+app-login-page-powered-by
+{
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    height:
+        fit-content;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    transform:
+        none;
+
+    flex:
+        0 0 auto;
+}
+
+
+/* =============================================================
+   MIDDLE AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       15%
+       70%
+       15%
+============================================================= */
+
+.login-page-5-middle-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        15% 70% 15%;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE TOP
+============================================================= */
+
+.login-page-5-middle-top
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE CENTER
+============================================================= */
+
+.login-page-5-middle-center
+{
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   MIDDLE BOTTOM
+============================================================= */
+
+.login-page-5-middle-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       50px
+       REST
+       50px
+
+   IMPORTANT:
+
+       The right area is completely independent from the
+       vertical divisions of the left and middle areas.
+============================================================= */
+
+.login-page-5-right-area
+{
+    display:
+        grid;
+
+    grid-template-rows:
+        50px minmax(0, 1fr) 50px;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT TOP
+   -------------------------------------------------------------
+   HEIGHT:
+
+       EXACTLY 50px
+
+   RESERVED FOR THE THEME SELECTOR.
+============================================================= */
+
+.login-page-5-right-top
+{
+    width:
+        100%;
+
+    height:
+        50px;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   RIGHT CENTER
+   -------------------------------------------------------------
+   HEIGHT:
+
+       REMAINING HEIGHT
+
+   The selected Login / Registration / Forget Password panel
+   is centered inside this area.
+============================================================= */
+
+.login-page-5-right-center
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   LOGIN PANEL
+   -------------------------------------------------------------
+   The Login Panel owns:
+
+       - Authentication request
+       - Remember Me
+       - Token storage
+       - Authentication navigation
+       - Login error state
+       - Password visibility
+
+   This page controls only its position inside the 35% area.
+============================================================= */
+
+.login-page-5-right-center >
+app-login-page-login-panel
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+}
+
+
+/* =============================================================
+   REGISTRATION PANEL
+   -------------------------------------------------------------
+   The Registration Panel uses the same page-level positioning
+   area as the Login Panel.
+
+   The page controls only its position.
+============================================================= */
+
+.login-page-5-right-center >
+app-login-page-registration-panel
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+}
+
+
+/* =============================================================
+   FORGET PASSWORD PANEL
+   -------------------------------------------------------------
+   The Forget Password Panel uses the same page-level
+   positioning area as the Login Panel.
+
+   The page controls only its position.
+============================================================= */
+
+.login-page-5-right-center >
+app-login-page-forget-password-panel
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+}
+
+
+/* =============================================================
+   RIGHT BOTTOM
+   -------------------------------------------------------------
+   HEIGHT:
+
+       EXACTLY 50px
+
+   FOOTER AREA
+============================================================= */
+
+.login-page-5-right-bottom
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        50px;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+}
+
+
+/* =============================================================
+   BRANDING
+   -------------------------------------------------------------
+   IMPORTANT:
+
+       The parent Login Page ONLY positions the Branding
+       component.
+
+       The Branding component controls its own:
+
+           width
+           height
+           padding
+           background
+           border
+           radius
+
+       DO NOT use:
+
+           width: 100%;
+           height: 100%;
+
+       here.
+
+       The Branding component is positioned directly against
+       the LEFT edge of the 30% Left Top area.
+
+       No horizontal centering is applied.
+============================================================= */
+
+.login-page-5-left-top >
+app-login-page-branding
+{
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    height:
+        fit-content;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    padding-top:
+        5px;
+
+    padding-left:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    align-self:
+        center;
+
+    flex:
+        0 0 auto;
+}
+
+
+/* =============================================================
+   CLIENT LOGO
+   -------------------------------------------------------------
+   CURRENT PAGE ARCHITECTURE:
+
+       Client Logo is NOT part of the Branding area.
+
+       This rule is retained only for the existing middle-area
+       architecture if the Client Logo component is still present
+       in the page HTML.
+
+   The component remains intrinsically sized.
+============================================================= */
+
+.login-page-5-middle-bottom >
+app-login-page-client-logo
+{
+    display:
+        block;
+
+    width:
+        fit-content;
+
+    height:
+        fit-content;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        none;
+
+    max-height:
+        none;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+
+    flex:
+        0 0 auto;
+}

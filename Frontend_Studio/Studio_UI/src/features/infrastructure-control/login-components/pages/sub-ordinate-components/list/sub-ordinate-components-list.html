@@ -1,28 +1,46 @@
 <div class="app-list-page">
 
+
     <!-- =====================================================
          PAGE HEADER
     ====================================================== -->
 
+
     <app-page-header
+
         title="Sub Ordinate Components"
+
         subtitle="Manage sub ordinate components"
-        icon="fas fa-puzzle-piece">
+
+        icon="fas fa-sitemap">
+
 
         <div pageHeaderRight>
 
             <app-command-center
+
                 command1Text="Add"
+
                 command1Icon="fas fa-plus"
+
                 (command1Click)="add()"
+
                 command2Text="Refresh"
+
                 command2Icon="fas fa-rotate-right"
+
                 (command2Click)="refresh()"
+
                 command3Text="Restore"
+
                 command3Icon="fas fa-trash-arrow-up"
+
                 (command3Click)="restore()"
+
                 rightCommandIcon="fas fa-clock-rotate-left"
+
                 (rightCommandClick)="openHistory()">
+
             </app-command-center>
 
         </div>
@@ -30,55 +48,79 @@
     </app-page-header>
 
 
+
     <!-- =====================================================
          PAGE TOOLBAR
     ====================================================== -->
 
+
     <app-page-toolbar>
 
         <app-control-tabs
+
             pageToolbarLeft
+
             [tabs]="tabs"
+
             [(selectedTab)]="selectedTab"
+
             (selectedTabChange)="onTabChange($event)">
+
         </app-control-tabs>
 
     </app-page-toolbar>
+
 
 
     <!-- =====================================================
          COMPONENT CONTENT
     ====================================================== -->
 
+
     <div
+
         class="component-canvas"
-        *ngIf="selectedComponent && !loading">
+
+        *ngIf="
+            selectedComponent
+            &&
+            !loading
+        ">
+
 
         <!-- =================================================
              COMPONENT SECTION HEADER
         ================================================== -->
 
+
         <div class="component-section-header">
+
 
             <!-- =============================================
                  COMPONENT ICON
             ============================================== -->
 
+
             <div class="component-section-icon">
 
                 <i
+
                     [class]="
                         selectedComponent.icon
-                        || 'fas fa-puzzle-piece'
+                        ||
+                        'fas fa-sitemap'
                     ">
+
                 </i>
 
             </div>
 
 
+
             <!-- =============================================
                  COMPONENT NAME
             ============================================== -->
+
 
             <div class="component-section-name">
 
@@ -87,125 +129,219 @@
             </div>
 
 
+
             <!-- =============================================
                  EDIT
             ============================================== -->
 
+
             <button
+
                 type="button"
+
                 class="component-edit-button"
+
                 (click)="edit(selectedComponent)"
+
                 title="Edit Sub Ordinate Component">
 
                 <i class="fas fa-pen"></i>
 
-                <span>Edit</span>
+                <span>
+                    Edit
+                </span>
 
             </button>
+
 
 
             <!-- =============================================
                  DELETE
             ============================================== -->
 
+
             <button
+
                 type="button"
+
                 class="component-delete-button"
+
                 (click)="delete(selectedComponent)"
+
                 title="Delete Sub Ordinate Component">
 
                 <i class="fas fa-trash"></i>
 
-                <span>Delete</span>
+                <span>
+                    Delete
+                </span>
 
             </button>
 
+
         </div>
+
 
 
         <!-- =================================================
              COMPONENT PREVIEW
         ================================================== -->
 
+
         <div class="component-preview-content">
 
-            <app-component-renderer
-                [componentKey]="
-                    getRendererKey(
-                        selectedComponent.componentPath
-                    )
-                ">
-            </app-component-renderer>
+
+            <!-- =============================================
+                 DIRECT COMPONENT HOST
+                 ---------------------------------------------
+                 The selected subordinate component is
+                 rendered directly here.
+
+                 Image configuration is passed to the
+                 dynamically rendered component through
+                 selectedComponentInputs.
+
+                 No ComponentRenderer is used.
+            ============================================== -->
+
+
+            <div class="component-direct-host">
+
+
+                <ng-container
+
+                    *ngComponentOutlet="
+                        selectedComponentType;
+                        inputs: selectedComponentInputs
+                    ">
+
+                </ng-container>
+
+
+            </div>
+
 
         </div>
 
+
     </div>
+
 
 
     <!-- =====================================================
          NO COMPONENT SELECTED
     ====================================================== -->
 
-    <app-empty-state
+
+    <div
+
+        class="component-empty"
+
         *ngIf="
             !selectedComponent
-            && !loading
-            && !loadFailed
-        "
-        icon="fas fa-puzzle-piece"
-        title="No Sub Ordinate Component Found"
-        subtitle="No sub ordinate components are available right now.">
-    </app-empty-state>
+            &&
+            !loading
+        ">
+
+
+        <i class="fas fa-sitemap"></i>
+
+
+        <span>
+
+            No sub ordinate component available.
+
+        </span>
+
+
+    </div>
+
 
 
     <!-- =====================================================
          LOADING
     ====================================================== -->
 
-    <app-orbit-loader
-        *ngIf="loading"
-        title="Loading Sub Ordinate Components"
-        message="Please wait while sub ordinate components are being loaded."
-        size="medium"
-        [showMessage]="true">
-    </app-orbit-loader>
+
+    <div
+
+        class="component-loading"
+
+        *ngIf="loading">
+
+
+        <i class="fas fa-spinner fa-spin"></i>
+
+
+        <span>
+
+            Loading sub ordinate components...
+
+        </span>
+
+
+    </div>
+
 
 
     <!-- =====================================================
          LOAD ERROR
     ====================================================== -->
 
+
     <div
+
         class="component-error"
-        *ngIf="loadFailed && !loading">
+
+        *ngIf="
+            loadFailed
+            &&
+            !loading
+        ">
+
 
         <i class="fas fa-triangle-exclamation"></i>
 
+
         <span>
+
             Unable to load sub ordinate components.
+
         </span>
 
+
     </div>
+
 
 
     <!-- =====================================================
          HISTORY
     ====================================================== -->
 
+
     <app-history-drawer
+
         [opened]="historyOpened"
+
         [title]="historyTitle"
+
         [items]="historyItems"
+
         (closed)="closeHistory()">
+
     </app-history-drawer>
+
 
 
     <!-- =====================================================
          UTILITIES
     ====================================================== -->
 
+
     <app-toast></app-toast>
 
+
     <app-confirm-dialog></app-confirm-dialog>
+
 
 </div>

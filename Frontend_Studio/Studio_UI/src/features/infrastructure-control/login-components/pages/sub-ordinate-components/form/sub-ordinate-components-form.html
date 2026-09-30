@@ -14,6 +14,7 @@
 
         subtitle="Manage sub ordinate components">
 
+
         <app-command-center
 
             pageHeaderRight
@@ -42,6 +43,7 @@
 
         </app-command-center>
 
+
     </app-page-header>
 
 
@@ -53,6 +55,7 @@
 
     <app-page-toolbar>
 
+
         <app-control-tabs
 
             pageToolbarLeft
@@ -62,6 +65,7 @@
             [(selectedTab)]="selectedTab">
 
         </app-control-tabs>
+
 
     </app-page-toolbar>
 
@@ -74,6 +78,7 @@
 
     <app-page-canvas>
 
+
         <app-form-grid
 
             canvasBody
@@ -81,10 +86,11 @@
             [columns]="4">
 
 
-            <!-- =============================================
+
+            <!-- =================================================
                  SECTION 1
                  GENERAL INFORMATION
-            ============================================== -->
+            ================================================== -->
 
 
             <app-form-section
@@ -94,7 +100,9 @@
                 icon="fas fa-circle-info">
 
 
-                <!-- Code -->
+                <!-- =============================================
+                     CODE
+                ============================================== -->
 
 
                 <app-textbox
@@ -113,7 +121,9 @@
 
 
 
-                <!-- Name -->
+                <!-- =============================================
+                     NAME
+                ============================================== -->
 
 
                 <app-textbox
@@ -134,7 +144,9 @@
 
 
 
-                <!-- Tab Name -->
+                <!-- =============================================
+                     TAB NAME
+                ============================================== -->
 
 
                 <app-textbox
@@ -155,7 +167,9 @@
 
 
 
-                <!-- Icon -->
+                <!-- =============================================
+                     ICON
+                ============================================== -->
 
 
                 <app-textbox
@@ -173,14 +187,37 @@
                 </app-textbox>
 
 
+
+                <!-- =============================================
+                     DISPLAY ORDER
+                ============================================== -->
+
+
+                <app-textbox
+
+                    label="Display Order"
+
+                    placeholder="Enter display order"
+
+                    [(value)]="entity.displayOrder"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
             </app-form-section>
 
 
 
-            <!-- =============================================
+            <!-- =================================================
                  SECTION 2
                  COMPONENT INFORMATION
-            ============================================== -->
+            ================================================== -->
 
 
             <app-form-section
@@ -190,7 +227,9 @@
                 icon="fas fa-puzzle-piece">
 
 
-                <!-- Folder Name -->
+                <!-- =============================================
+                     FOLDER NAME
+                ============================================== -->
 
 
                 <app-textbox
@@ -211,7 +250,9 @@
 
 
 
-                <!-- Feature Folder -->
+                <!-- =============================================
+                     FEATURE FOLDER
+                ============================================== -->
 
 
                 <app-textbox
@@ -230,7 +271,9 @@
 
 
 
-                <!-- Feature Sub Folder -->
+                <!-- =============================================
+                     FEATURE SUB FOLDER
+                ============================================== -->
 
 
                 <app-textbox
@@ -249,7 +292,9 @@
 
 
 
-                <!-- Component Path -->
+                <!-- =============================================
+                     COMPONENT PATH
+                ============================================== -->
 
 
                 <app-textbox
@@ -267,137 +312,10 @@
                 </app-textbox>
 
 
-            </app-form-section>
 
-
-
-            <!-- =============================================
-                 SECTION 3
-                 FILE & REGISTRATION INFORMATION
-            ============================================== -->
-
-
-            <app-form-section
-
-                title="File & Registration Information"
-
-                icon="fas fa-folder-tree">
-
-
-                <!-- Registration File Path -->
-
-
-                <app-textbox
-
-                    label="Registration File Path"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.registrationFilePath"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- HTML File Path -->
-
-
-                <app-textbox
-
-                    label="HTML File Path"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.htmlFilePath"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- TS File Path -->
-
-
-                <app-textbox
-
-                    label="TS File Path"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.tsFilePath"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- CSS File Path -->
-
-
-                <app-textbox
-
-                    label="CSS File Path"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.cssFilePath"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 4
-                 STATUS & ADDITIONAL INFORMATION
-            ============================================== -->
-
-
-            <app-form-section
-
-                title="Status & Additional Information"
-
-                icon="fas fa-clipboard-check">
-
-
-                <!-- Display Order -->
-
-
-                <app-textbox
-
-                    label="Display Order"
-
-                    placeholder="Enter display order"
-
-                    [(value)]="entity.displayOrder"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Status -->
+                <!-- =============================================
+                     STATUS
+                ============================================== -->
 
 
                 <app-dropdown
@@ -421,23 +339,170 @@
                 </app-dropdown>
 
 
+            </app-form-section>
 
-                <!-- Remarks -->
 
 
-                <app-textarea
+            <!-- =================================================
+                 SECTION 3
+                 FILE & REGISTRATION INFORMATION
+            ================================================== -->
 
-                    label="Remarks"
 
-                    placeholder="Enter remarks"
+            <app-form-section
 
-                    [(value)]="entity.remarks"
+                title="File & Registration Information"
 
-                    (valueChange)="onValueChange()"
+                icon="fas fa-folder-tree">
 
-                    [disabled]="isViewMode">
 
-                </app-textarea>
+                <!-- =============================================
+                     REGISTRATION FILE PATH
+                ============================================== -->
+
+
+                <app-textbox
+
+                    label="Registration File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.registrationFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- =============================================
+                     HTML FILE PATH
+                ============================================== -->
+
+
+                <app-textbox
+
+                    label="HTML File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.htmlFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- =============================================
+                     TS FILE PATH
+                ============================================== -->
+
+
+                <app-textbox
+
+                    label="TS File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.tsFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- =============================================
+                     CSS FILE PATH
+                ============================================== -->
+
+
+                <app-textbox
+
+                    label="CSS File Path"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.cssFilePath"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 4
+                 BACKGROUND IMAGE CONFIGURATION
+            ================================================== -->
+
+
+            <app-form-section
+
+                title="Background Image Configuration"
+
+                icon="fas fa-images">
+
+
+                <!-- =============================================
+                     LIGHT THEME IMAGE
+                ============================================== -->
+
+
+                <app-image-hub
+
+                    label="Light theme image"
+
+                    [imageUrl]="lightBackgroundImageUrl"
+
+                    placeholder="No Light Background Image"
+
+                    [disabled]="isViewMode"
+
+                    [readonly]="isViewMode"
+
+                    (imageChange)="
+                        onLightBackgroundImageChange($event)
+                    ">
+
+                </app-image-hub>
+
+
+
+                <!-- =============================================
+                     DEEP THEME IMAGE
+                ============================================== -->
+
+
+                <app-image-hub
+
+                    label="Deep theme image"
+
+                    [imageUrl]="deepBackgroundImageUrl"
+
+                    placeholder="No Deep Background Image"
+
+                    [disabled]="isViewMode"
+
+                    [readonly]="isViewMode"
+
+                    (imageChange)="
+                        onDeepBackgroundImageChange($event)
+                    ">
+
+                </app-image-hub>
 
 
             </app-form-section>
@@ -445,7 +510,9 @@
 
         </app-form-grid>
 
+
     </app-page-canvas>
+
 
 </div>
 

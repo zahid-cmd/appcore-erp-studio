@@ -8,10 +8,41 @@
 
     flex-direction: column;
 
-    gap: 14px;
+    gap: 8px;
 
     width: 100%;
+
+    min-width: 0;
+
+    box-sizing: border-box;
 }
+
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.image-hub-label
+{
+    display: block;
+
+    width: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    color: #475569;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    line-height: 20px;
+
+    box-sizing: border-box;
+}
+
 
 /* =====================================================
    IMAGE PREVIEW
@@ -19,6 +50,8 @@
 
 .image-hub-preview
 {
+    position: relative;
+
     display: flex;
 
     justify-content: center;
@@ -27,13 +60,20 @@
 
     width: 100%;
 
-    height: 165px;
+    height: 160px;
+
+    min-width: 0;
 
     box-sizing: border-box;
 
     overflow: hidden;
 
-    background: #ffffff;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #f8fbff 100%
+        );
 
     border: 1px solid #d9e5f2;
 
@@ -41,11 +81,13 @@
 
     transition:
         border-color .20s ease,
-        box-shadow .20s ease;
+        box-shadow .20s ease,
+        background .20s ease;
 }
 
+
 /* =====================================================
-   HOVER
+   PREVIEW HOVER
 ===================================================== */
 
 .image-hub-preview:hover
@@ -53,8 +95,10 @@
     border-color: #9fc2f7;
 
     box-shadow:
-        0 6px 14px rgba(37,99,235,.08);
+        0 6px 14px
+        rgba(37, 99, 235, .08);
 }
+
 
 /* =====================================================
    FOCUS
@@ -66,9 +110,13 @@
     border-color: #2563eb;
 
     box-shadow:
-        0 0 0 4px rgba(37,99,235,.12),
-        0 10px 22px rgba(37,99,235,.10);
+        0 0 0 4px
+        rgba(37, 99, 235, .10),
+
+        0 10px 22px
+        rgba(37, 99, 235, .08);
 }
+
 
 /* =====================================================
    IMAGE
@@ -83,7 +131,14 @@
     height: 100%;
 
     object-fit: contain;
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
 }
+
 
 /* =====================================================
    PLACEHOLDER
@@ -99,120 +154,200 @@
 
     align-items: center;
 
-    gap: 12px;
+    gap: 10px;
+
+    width: 100%;
+
+    height: 100%;
+
+    padding: 20px;
 
     text-align: center;
 
     color: #94a3b8;
+
+    box-sizing: border-box;
 }
+
 
 .image-hub-placeholder i
 {
-    font-size: 48px;
+    font-size: 42px;
 
     color: #cbd5e1;
 }
 
+
 .image-hub-placeholder span
 {
-    font-size: 13px;
+    font-size: 12px;
 
     font-weight: 500;
+
+    line-height: 18px;
+
+    color: #94a3b8;
 }
 
+
 /* =====================================================
-   ACTIONS
+   FLOATING ACTIONS
 ===================================================== */
 
-.image-hub-actions
+.image-hub-floating-actions
 {
+    position: absolute;
+
+    top: 10px;
+
+    right: 10px;
+
+    z-index: 5;
+
     display: flex;
-
-    justify-content: center;
-
-    gap: 10px;
-}
-
-/* =====================================================
-   BUTTONS
-===================================================== */
-
-.image-hub-actions button
-{
-    display: inline-flex;
 
     align-items: center;
 
+    gap: 6px;
+
+    margin: 0;
+
+    padding: 0;
+}
+
+
+/* =====================================================
+   FLOATING ACTION BUTTON
+===================================================== */
+
+.image-hub-action
+{
+    display: inline-flex;
+
     justify-content: center;
 
-    gap: 8px;
+    align-items: center;
 
-    height: 40px;
+    width: 34px;
 
-    padding: 0 18px;
+    height: 34px;
 
-    border: none;
+    margin: 0;
 
-    border-radius: 10px;
+    padding: 0;
+
+    border: 1px solid rgba(255, 255, 255, .72);
+
+    border-radius: 9px;
 
     cursor: pointer;
 
-    font-size: 13px;
+    color: #ffffff;
 
-    font-weight: 600;
+    font-size: 12px;
+
+    line-height: 1;
+
+    box-shadow:
+        0 5px 14px
+        rgba(15, 23, 42, .16);
+
+    backdrop-filter: blur(8px);
+
+    -webkit-backdrop-filter: blur(8px);
 
     transition:
         background .20s ease,
+        border-color .20s ease,
         box-shadow .20s ease,
-        transform .15s ease;
+        transform .15s ease,
+        opacity .20s ease;
+
+    box-sizing: border-box;
 }
 
+
 /* =====================================================
-   UPLOAD
+   UPLOAD BUTTON
 ===================================================== */
 
 .upload-button
 {
-    background: #2563eb;
-
-    color: #ffffff;
+    background:
+        rgba(37, 99, 235, .92);
 }
+
 
 .upload-button:hover:not(:disabled)
 {
-    background: #1d4ed8;
+    background:
+        rgba(29, 78, 216, .96);
+
+    border-color:
+        rgba(255, 255, 255, .90);
 
     box-shadow:
-        0 6px 14px rgba(37,99,235,.20);
+        0 7px 16px
+        rgba(37, 99, 235, .28);
+
+    transform:
+        translateY(-1px);
 }
 
+
 /* =====================================================
-   REMOVE
+   REMOVE BUTTON
 ===================================================== */
 
 .remove-button
 {
-    background: #ef4444;
-
-    color: #ffffff;
+    background:
+        rgba(239, 68, 68, .92);
 }
+
 
 .remove-button:hover:not(:disabled)
 {
-    background: #dc2626;
+    background:
+        rgba(220, 38, 38, .96);
+
+    border-color:
+        rgba(255, 255, 255, .90);
 
     box-shadow:
-        0 6px 14px rgba(239,68,68,.20);
+        0 7px 16px
+        rgba(239, 68, 68, .28);
+
+    transform:
+        translateY(-1px);
 }
+
 
 /* =====================================================
    BUTTON ACTIVE
 ===================================================== */
 
-.image-hub-actions button:active:not(:disabled)
+.image-hub-action:active:not(:disabled)
 {
-    transform: scale(.98);
+    transform:
+        scale(.96);
 }
+
+
+/* =====================================================
+   BUTTON DISABLED
+===================================================== */
+
+.image-hub-action:disabled
+{
+    cursor: not-allowed;
+
+    opacity: .45;
+
+    box-shadow:
+        none;
+}
+
 
 /* =====================================================
    READONLY
@@ -223,10 +358,19 @@
     cursor: default;
 }
 
+
 .image-hub.readonly .image-hub-preview
 {
-    background: #ffffff;
+    background:
+        #ffffff;
 }
+
+
+.image-hub.readonly .image-hub-floating-actions
+{
+    opacity: .72;
+}
+
 
 /* =====================================================
    DISABLED
@@ -237,44 +381,75 @@
     cursor: not-allowed;
 }
 
+
 .image-hub.disabled .image-hub-preview
 {
-    background: #ffffff;
+    background:
+        #ffffff;
 }
+
 
 .image-hub.disabled .image-hub-placeholder
 {
     color: #94a3b8;
 }
 
+
 .image-hub.disabled .image-hub-placeholder i
 {
     color: #cbd5e1;
 }
 
-.image-hub.disabled button
+
+/* =====================================================
+   DISABLED IMAGE
+===================================================== */
+
+.image-hub.disabled .image-hub-preview img
 {
-    cursor: not-allowed;
+    opacity: .92;
 }
+
 
 /* =====================================================
    RESPONSIVE
 ===================================================== */
 
-@media (max-width:992px)
+@media (max-width: 992px)
 {
     .image-hub-preview
     {
         height: 180px;
     }
+}
 
-    .image-hub-actions
+
+@media (max-width: 576px)
+{
+    .image-hub-preview
     {
-        flex-direction: column;
+        height: 165px;
     }
 
-    .image-hub-actions button
+
+    .image-hub-floating-actions
     {
-        width: 100%;
+        top: 8px;
+
+        right: 8px;
+
+        gap: 5px;
+    }
+
+
+    .image-hub-action
+    {
+        width: 32px;
+
+        height: 32px;
+
+        border-radius: 8px;
+
+        font-size: 11px;
     }
 }

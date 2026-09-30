@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using Microsoft.AspNetCore.Http;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -192,12 +199,53 @@ public class UpdateSubOrdinateComponentsDto
     //===========================================================
     // Remarks
     //===========================================================
+    //
+    // OPTIONAL
+    //
+    // Remarks has been removed from the UI, therefore it must
+    // NOT be treated as a required multipart/form-data field.
+    //
+    //===========================================================
 
-    public string Remarks
+    public string? Remarks
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    //===========================================================
+    // Background Image Configuration
+    //===========================================================
+
+    public IFormFile? LightBackgroundImage
+    {
+        get;
+        set;
+    }
+
+
+    public IFormFile? DeepBackgroundImage
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Image Removal Flags
+    //===========================================================
+
+    public bool RemoveLightBackgroundImage
+    {
+        get;
+        set;
+    }
+
+
+    public bool RemoveDeepBackgroundImage
+    {
+        get;
+        set;
+    }
 }

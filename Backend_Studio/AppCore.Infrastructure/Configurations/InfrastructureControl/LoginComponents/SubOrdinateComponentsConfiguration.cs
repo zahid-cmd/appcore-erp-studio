@@ -270,6 +270,30 @@ public class SubOrdinateComponentsConfiguration
 
 
         //=======================================================
+        // Background Image Configuration
+        //=======================================================
+
+        builder.Property(
+            x => x.LightBackgroundImagePath
+        )
+        .HasColumnName(
+            "lightBackgroundImagePath"
+        )
+        .IsRequired()
+        .HasMaxLength(500);
+
+
+        builder.Property(
+            x => x.DeepBackgroundImagePath
+        )
+        .HasColumnName(
+            "deepBackgroundImagePath"
+        )
+        .IsRequired()
+        .HasMaxLength(500);
+
+
+        //=======================================================
         // Active
         //=======================================================
 

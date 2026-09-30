@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using Microsoft.AspNetCore.Http;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -182,11 +189,32 @@ public class CreateSubOrdinateComponentsDto
     // Remarks
     //===========================================================
 
-    public string Remarks
+    // Optional.
+    //
+    // Remarks is no longer part of the UI and therefore must
+    // not be treated as a required field.
+
+    public string? Remarks
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    //===========================================================
+    // Background Image Configuration
+    //===========================================================
+
+    public IFormFile? LightBackgroundImage
+    {
+        get;
+        set;
+    }
+
+
+    public IFormFile? DeepBackgroundImage
+    {
+        get;
+        set;
+    }
 }

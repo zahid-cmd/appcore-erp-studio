@@ -214,6 +214,28 @@ public class SubOrdinateComponents
 
 
     //===========================================================
+    // Background Image Configuration
+    //===========================================================
+
+    public string LightBackgroundImagePath
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    public string DeepBackgroundImagePath
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    //===========================================================
     // Active
     //===========================================================
 

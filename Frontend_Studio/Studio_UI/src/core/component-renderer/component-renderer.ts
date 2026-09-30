@@ -16,6 +16,7 @@ import
 }
 from '@angular/core';
 
+
 //===============================================================
 // Core Components
 //===============================================================
@@ -86,6 +87,7 @@ import
 }
 from '../../shared/components/core-components/theme-selector/theme-selector';
 
+
 //===============================================================
 // Default Dashboard Components
 //===============================================================
@@ -101,6 +103,7 @@ import
     QuickAccessWidgetComponent
 }
 from '../../shared/components/default-dashboard/quick-access-widget/quick-access-widget';
+
 
 //===============================================================
 // Control Components
@@ -165,6 +168,7 @@ import
     TextboxComponent
 }
 from '../../shared/components/controls/textbox/textbox';
+
 
 //===============================================================
 // Layout Components
@@ -266,6 +270,7 @@ import
 }
 from '../../shared/components/layout/topbar-header/topbar-header';
 
+
 //===============================================================
 // Utility Components
 //===============================================================
@@ -342,6 +347,42 @@ import
 }
 from '../../shared/components/utilities/toast/toast';
 
+
+//===============================================================
+// Sub-ordinate Components
+//===============================================================
+
+import
+{
+    BackgroundImageComponent
+}
+from '../../shared/components/sub-ordinate-components/background-image-1/background-image-1';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent2
+}
+from '../../shared/components/sub-ordinate-components/background-image-2/background-image-2';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent3
+}
+from '../../shared/components/sub-ordinate-components/background-image-3/background-image-3';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent4
+}
+from '../../shared/components/sub-ordinate-components/background-image-4/background-image-4';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent5
+}
+from '../../shared/components/sub-ordinate-components/background-image-5/background-image-5';
+
+
 //===============================================================
 // Component
 //===============================================================
@@ -360,10 +401,13 @@ from '../../shared/components/utilities/toast/toast';
     styleUrl:
         './component-renderer.css'
 })
+
+
 export class ComponentRenderer
 implements
     OnChanges
 {
+
     //===========================================================
     // Component Host
     //===========================================================
@@ -381,6 +425,7 @@ implements
     private componentHost!:
         ViewContainerRef;
 
+
     //===========================================================
     // Component Key
     //===========================================================
@@ -389,6 +434,41 @@ implements
     componentKey:
         string =
         '';
+
+
+    //===========================================================
+    // Light Background Image URL
+    //===========================================================
+    //
+    // Used by Background Image 1.
+    //
+    // The parent component can provide the stored Light
+    // Background Image URL.
+    //
+    //===========================================================
+
+    @Input()
+    lightBackgroundImageUrl:
+        string =
+        '';
+
+
+    //===========================================================
+    // Deep Background Image URL
+    //===========================================================
+    //
+    // Used by Background Image 1.
+    //
+    // The parent component can provide the stored Deep
+    // Background Image URL.
+    //
+    //===========================================================
+
+    @Input()
+    deepBackgroundImageUrl:
+        string =
+        '';
+
 
     //===========================================================
     // Component Reference
@@ -399,6 +479,7 @@ implements
         |
         null =
         null;
+
 
     //===========================================================
     // Dependency Injection
@@ -412,6 +493,7 @@ implements
     {
     }
 
+
     //===========================================================
     // Component Registry
     //===========================================================
@@ -420,6 +502,7 @@ implements
         Record<string, Type<unknown>>
     =
     {
+
         //=======================================================
         // Core Components
         //=======================================================
@@ -457,6 +540,7 @@ implements
         'theme-selector':
             LoginPageThemeSelectorComponent,
 
+
         //=======================================================
         // Default Dashboard Components
         //=======================================================
@@ -466,6 +550,7 @@ implements
 
         'quick-access-widget':
             QuickAccessWidgetComponent,
+
 
         //=======================================================
         // Control Components
@@ -503,6 +588,7 @@ implements
 
         'textbox':
             TextboxComponent,
+
 
         //=======================================================
         // Layout Components
@@ -556,6 +642,7 @@ implements
         'topbar-header':
             TopbarHeaderComponent,
 
+
         //=======================================================
         // Utility Components
         //=======================================================
@@ -594,8 +681,29 @@ implements
             SearchBoxComponent,
 
         'toast':
-            ToastComponent
+            ToastComponent,
+
+
+        //=======================================================
+        // Sub-ordinate Components
+        //=======================================================
+
+        'background-image-1':
+            BackgroundImageComponent,
+
+        'background-image-2':
+            BackgroundImageComponent2,
+
+        'background-image-3':
+            BackgroundImageComponent3,
+
+        'background-image-4':
+            BackgroundImageComponent4,
+
+        'background-image-5':
+            BackgroundImageComponent5
     };
+
 
     //===========================================================
     // Changes
@@ -610,12 +718,15 @@ implements
     {
         if
         (
-            changes['componentKey']
+            changes['componentKey'] ||
+            changes['lightBackgroundImageUrl'] ||
+            changes['deepBackgroundImageUrl']
         )
         {
             this.renderComponent();
         }
     }
+
 
     //===========================================================
     // Render Component
@@ -644,10 +755,154 @@ implements
                 componentType
             );
 
+
+        //=======================================================
+        // Background Image 1 Inputs
+        //=======================================================
+        //
+        // Only Background Image 1 receives these two inputs.
+        //
+        // All other components remain unchanged.
+        //
+        //=======================================================
+
+        if
+        (
+            this.componentKey
+                .trim()
+                .toLowerCase()
+            ===
+            'background-image-1'
+        )
+        {
+            this.componentRef.setInput(
+                'lightBackgroundImageUrl',
+                this.lightBackgroundImageUrl
+            );
+
+            this.componentRef.setInput(
+                'deepBackgroundImageUrl',
+                this.deepBackgroundImageUrl
+            );
+        }
+
+
+        //=======================================================
+        // Explicit Dynamic Host Layout
+        //=======================================================
+
+        this.setComponentHostLayout();
+
+
+        //=======================================================
+        // Preview Mode
+        //=======================================================
+
         this.setPreviewMode();
+
+
+        //=======================================================
+        // Change Detection
+        //=======================================================
 
         this.cdr.detectChanges();
     }
+
+
+    //===========================================================
+    // Set Component Host Layout
+    //===========================================================
+
+    private setComponentHostLayout():
+        void
+    {
+        if
+        (
+            !this.componentRef
+        )
+        {
+            return;
+        }
+
+        const hostElement =
+            this.componentRef
+                .location
+                .nativeElement as
+                HTMLElement;
+
+
+        //=======================================================
+        // Display
+        //=======================================================
+
+        hostElement.style.display =
+            'block';
+
+
+        //=======================================================
+        // Width
+        //=======================================================
+
+        hostElement.style.width =
+            '100%';
+
+        hostElement.style.minWidth =
+            '0';
+
+        hostElement.style.maxWidth =
+            'none';
+
+
+        //=======================================================
+        // Height
+        //=======================================================
+
+        hostElement.style.height =
+            '100%';
+
+        hostElement.style.minHeight =
+            '0';
+
+        hostElement.style.maxHeight =
+            'none';
+
+
+        //=======================================================
+        // Box Model
+        //=======================================================
+
+        hostElement.style.margin =
+            '0';
+
+        hostElement.style.padding =
+            '0';
+
+        hostElement.style.boxSizing =
+            'border-box';
+
+
+        //=======================================================
+        // Position / Overflow
+        //=======================================================
+
+        hostElement.style.position =
+            'relative';
+
+        hostElement.style.overflow =
+            'visible';
+
+
+        //=======================================================
+        // Flex Behavior
+        //=======================================================
+
+        hostElement.style.flex =
+            '0 0 auto';
+
+        hostElement.style.alignSelf =
+            'stretch';
+    }
+
 
     //===========================================================
     // Set Preview Mode
@@ -682,6 +937,7 @@ implements
             );
         }
     }
+
 
     //===========================================================
     // Resolve Component
@@ -863,6 +1119,7 @@ implements
         return null;
     }
 
+
     //===========================================================
     // Clear Component
     //===========================================================
@@ -883,4 +1140,5 @@ implements
 
         this.componentHost.clear();
     }
+
 }

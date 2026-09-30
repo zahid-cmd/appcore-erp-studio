@@ -5,7 +5,6 @@
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Application;
@@ -161,12 +160,8 @@ builder.Services.AddAuthorization();
 //
 //     http://localhost:5100
 //
-// CORS is therefore required when Angular HttpClient retrieves
-// the user profile photo as a Blob.
-//
-// IMPORTANT:
-//
-// UseCors() will be placed BEFORE UseStaticFiles() below.
+// CORS is required when Angular HttpClient retrieves
+// uploaded images as Blob resources.
 //
 //===============================================================
 
@@ -220,34 +215,12 @@ app.UseHttpsRedirection();
 //===============================================================
 // Routing
 //===============================================================
-//
-// Routing is initialized before CORS so that the middleware
-// pipeline is ready to process the incoming request.
-//
-//===============================================================
 
 app.UseRouting();
 
 
 //===============================================================
 // CORS
-//===============================================================
-//
-// IMPORTANT:
-//
-// CORS MUST execute before static files.
-//
-// This is especially important for the upcoming profile-photo
-// Blob retrieval:
-//
-//     Angular
-//        ↓
-//     HttpClient
-//        ↓
-//     localhost:5100/uploads/...
-//        ↓
-//     Blob
-//
 //===============================================================
 
 app.UseCors(
@@ -256,20 +229,24 @@ app.UseCors(
 
 
 //===============================================================
-// Static Files - wwwroot
+// Static Files
 //===============================================================
 //
-// This serves normal public files from:
+// Serves:
 //
 //     wwwroot/
 //
+// Including:
+//
+//     wwwroot/uploads/
+//
 // Example:
 //
-//     wwwroot/assets/logo.png
+//     wwwroot/uploads/sub-ordinate-components/1/light-image.png
 //
-// URL:
+// Browser URL:
 //
-//     /assets/logo.png
+//     /uploads/sub-ordinate-components/1/light-image.png
 //
 //===============================================================
 
@@ -277,20 +254,12 @@ app.UseStaticFiles();
 
 
 //===============================================================
-// Uploaded Files Directory
+// Ensure Upload Directory Exists
 //===============================================================
 //
-// User profile photos are expected under:
+// All uploaded files are stored under:
 //
 //     wwwroot/uploads/
-//
-// Therefore:
-//
-//     wwwroot/uploads/user-photos/photo.png
-//
-// is available through:
-//
-//     /uploads/user-photos/photo.png
 //
 //===============================================================
 
@@ -306,40 +275,8 @@ string uploadsPath =
     );
 
 
-//===============================================================
-// Ensure Upload Directory Exists
-//===============================================================
-
 Directory.CreateDirectory(
     uploadsPath
-);
-
-
-//===============================================================
-// Static Files - Uploaded Files
-//===============================================================
-//
-// This explicitly exposes the physical uploads directory:
-//
-//     wwwroot/uploads
-//
-// through:
-//
-//     /uploads
-//
-//===============================================================
-
-app.UseStaticFiles(
-    new StaticFileOptions
-    {
-        FileProvider =
-            new PhysicalFileProvider(
-                uploadsPath
-            ),
-
-        RequestPath =
-            "/uploads"
-    }
 );
 
 

@@ -30,6 +30,8 @@ import
 }
 from '@angular/forms';
 
+import { environment } 
+from '../../../../../../environments/environment';
 
 //===============================================================
 // Shared Components
@@ -91,15 +93,15 @@ from '../../../../../../shared/components/controls/textbox/textbox';
 
 import
 {
-    TextareaComponent
-}
-from '../../../../../../shared/components/controls/textarea/textarea';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
+
+import
+{
+    ImageHubComponent
+}
+from '../../../../../../shared/components/controls/image-hub/image-hub';
 
 
 //===============================================================
@@ -141,9 +143,7 @@ import
 
     CreateSubOrdinateComponents,
 
-    UpdateSubOrdinateComponents,
-
-    SubOrdinateComponentsDefaults
+    UpdateSubOrdinateComponents
 }
 from '../../../models/sub-ordinate-components.model';
 
@@ -158,67 +158,72 @@ from '../../../services/sub-ordinate-components.service';
 // Component
 //===============================================================
 
-@Component(
-{
-    selector:'sub-ordinate-components-form',
+@Component
+(
+    {
+        selector:
+            'sub-ordinate-components-form',
 
-    standalone:true,
+        standalone:
+            true,
 
-    imports:
-    [
-        CommonModule,
+        imports:
+        [
+            CommonModule,
 
-        FormsModule,
-
-
-        //=======================================================
-        // Layout
-        //=======================================================
-
-        PageHeaderComponent,
-
-        PageToolbarComponent,
-
-        CommandCenterComponent,
-
-        ControlTabsComponent,
-
-        PageCanvasComponent,
-
-        FormGridComponent,
-
-        FormSectionComponent,
+            FormsModule,
 
 
-        //=======================================================
-        // Form Controls
-        //=======================================================
+            //===================================================
+            // Layout
+            //===================================================
 
-        TextboxComponent,
+            PageHeaderComponent,
 
-        TextareaComponent,
+            PageToolbarComponent,
 
-        DropdownComponent,
+            CommandCenterComponent,
 
+            ControlTabsComponent,
 
-        //=======================================================
-        // Utilities
-        //=======================================================
+            PageCanvasComponent,
 
-        ToastComponent,
+            FormGridComponent,
 
-        ConfirmDialogComponent
-    ],
+            FormSectionComponent,
 
 
-    templateUrl:'./sub-ordinate-components-form.html',
+            //===================================================
+            // Form Controls
+            //===================================================
+
+            TextboxComponent,
+
+            DropdownComponent,
+
+            ImageHubComponent,
 
 
-    styleUrls:
-    [
-        './sub-ordinate-components-form.css'
-    ]
-})
+            //===================================================
+            // Utilities
+            //===================================================
+
+            ToastComponent,
+
+            ConfirmDialogComponent
+        ],
+
+
+        templateUrl:
+            './sub-ordinate-components-form.html',
+
+
+        styleUrls:
+        [
+            './sub-ordinate-components-form.css'
+        ]
+    }
+)
 
 
 //===============================================================
@@ -277,6 +282,29 @@ implements OnInit
 
 
     //===========================================================
+    // API Image Base URL
+    //===========================================================
+
+    /*
+       The backend returns a relative image path.
+
+       Example:
+
+       /uploads/sub-ordinate-components/1/light.jpg
+
+       This method converts it into a browser URL.
+    */
+
+    private readonly apiBaseUrl =
+        environment.apiUrl
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+
+
+
+    //===========================================================
     // Mode
     //===========================================================
 
@@ -325,9 +353,11 @@ implements OnInit
     {
         return [
             {
-                id:'general',
+                id:
+                    'general',
 
-                label:this.tabTitle
+                label:
+                    this.tabTitle
             }
         ];
     }
@@ -378,17 +408,76 @@ implements OnInit
     =
         [
             {
-                text:'Active',
+                text:
+                    'Active',
 
-                value:true
+                value:
+                    true
             },
 
             {
-                text:'Inactive',
+                text:
+                    'Inactive',
 
-                value:false
+                value:
+                    false
             }
         ];
+
+
+
+    //===========================================================
+    // Background Image - Light
+    //===========================================================
+
+    lightBackgroundImageUrl:
+        string =
+        '';
+
+
+    lightBackgroundImageFile:
+        File | null =
+        null;
+
+
+    private originalLightBackgroundImagePath:
+        string =
+        '';
+
+
+
+    //===========================================================
+    // Background Image - Deep
+    //===========================================================
+
+    deepBackgroundImageUrl:
+        string =
+        '';
+
+
+    deepBackgroundImageFile:
+        File | null =
+        null;
+
+
+    private originalDeepBackgroundImagePath:
+        string =
+        '';
+
+
+
+    //===========================================================
+    // Image Removal State
+    //===========================================================
+
+    removeLightBackgroundImage:
+        boolean =
+        false;
+
+
+    removeDeepBackgroundImage:
+        boolean =
+        false;
 
 
 
@@ -400,33 +489,48 @@ implements OnInit
         SubOrdinateComponents
     =
     {
-        id:0,
+        id:
+            0,
 
 
         //=======================================================
         // Section 1 - General Information
         //=======================================================
 
-        code:'',
+        code:
+            '',
 
-        name:'',
+        name:
+            '',
 
-        tabName:'',
+        tabName:
+            '',
 
-        icon:'',
+        icon:
+            '',
+
+        displayOrder:
+            0,
 
 
         //=======================================================
         // Section 2 - Component Information
         //=======================================================
 
-        folderName:'',
+        folderName:
+            '',
 
-        featureFolder:'',
+        featureFolder:
+            '',
 
-        featureSubFolder:'',
+        featureSubFolder:
+            '',
 
-        componentPath:'',
+        componentPath:
+            '',
+
+        status:
+            true,
 
 
         //=======================================================
@@ -436,22 +540,28 @@ implements OnInit
         registrationFilePath:
             this.registrationFilePath,
 
-        htmlFilePath:'',
+        htmlFilePath:
+            '',
 
-        tsFilePath:'',
+        tsFilePath:
+            '',
 
-        cssFilePath:'',
+        cssFilePath:
+            '',
+
+        remarks:
+            '',
 
 
         //=======================================================
-        // Section 4 - Status & Additional Information
+        // Section 5 - Background Image Configuration
         //=======================================================
 
-        displayOrder:0,
+        lightBackgroundImagePath:
+            '',
 
-        status:true,
-
-        remarks:''
+        deepBackgroundImagePath:
+            ''
     };
 
 
@@ -492,7 +602,9 @@ implements OnInit
     {
         const id =
             Number(
-                this.route.snapshot.paramMap.get('id')
+                this.route.snapshot.paramMap.get(
+                    'id'
+                )
             );
 
 
@@ -506,7 +618,9 @@ implements OnInit
 
         if
         (
-            url.includes('/view/')
+            url.includes(
+                '/view/'
+            )
         )
         {
             this.mode =
@@ -520,7 +634,9 @@ implements OnInit
 
         else if
         (
-            url.includes('/edit/')
+            url.includes(
+                '/edit/'
+            )
         )
         {
             this.mode =
@@ -551,9 +667,7 @@ implements OnInit
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
@@ -575,212 +689,212 @@ implements OnInit
     private initializeEntity():
         void
     {
+        this.clearBackgroundImageState();
+
+
         this.entity =
         {
-            id:0,
+            id:
+                0,
 
 
             //===================================================
-            // Section 1 - General Information
+            // Section 1
             //===================================================
 
-            code:'',
+            code:
+                '',
 
-            name:'',
+            name:
+                '',
 
-            tabName:'',
+            tabName:
+                '',
 
-            icon:'',
+            icon:
+                '',
 
-
-            //===================================================
-            // Section 2 - Component Information
-            //===================================================
-
-            folderName:'',
-
-            featureFolder:'',
-
-            featureSubFolder:'',
-
-            componentPath:'',
+            displayOrder:
+                0,
 
 
             //===================================================
-            // Section 3 - File & Registration Information
+            // Section 2
+            //===================================================
+
+            folderName:
+                '',
+
+            featureFolder:
+                '',
+
+            featureSubFolder:
+                '',
+
+            componentPath:
+                '',
+
+            status:
+                true,
+
+
+            //===================================================
+            // Section 3
             //===================================================
 
             registrationFilePath:
                 this.registrationFilePath,
 
-            htmlFilePath:'',
+            htmlFilePath:
+                '',
 
-            tsFilePath:'',
+            tsFilePath:
+                '',
 
-            cssFilePath:'',
+            cssFilePath:
+                '',
+
+            remarks:
+                '',
 
 
             //===================================================
-            // Section 4 - Status & Additional Information
+            // Section 5
             //===================================================
 
-            displayOrder:0,
+            lightBackgroundImagePath:
+                '',
 
-            status:true,
-
-            remarks:''
+            deepBackgroundImagePath:
+                ''
         };
 
 
         this.subOrdinateComponentsService
             .getAll()
-            .subscribe(
-            {
-                next:
-                (
-                    entities:
-                        SubOrdinateComponents[]
-                ):
-                    void =>
+            .subscribe
+            (
                 {
-                    //================================================
-                    // Generate Next Code
-                    //================================================
-
-                    this.entity.code =
-                        this.generateNextCode(
-                            entities
-                        );
-
-
-                    //================================================
-                    // Generate Next Display Order
-                    //================================================
-
-                    this.entity.displayOrder =
-                        this.generateNextDisplayOrder(
-                            entities
-                        );
-
-
-                    //================================================
-                    // Load Last Created Folder Information
-                    //================================================
-
-                    const lastCreatedEntity =
-                        this.getLastCreatedEntity(
-                            entities
-                        );
-
-
-                    if
+                    next:
                     (
-                        lastCreatedEntity
-                    )
+                        entities:
+                            SubOrdinateComponents[]
+                    ):
+                        void =>
                     {
-                        this.entity.folderName =
-                            lastCreatedEntity.folderName
-                                ?.trim()
-                                || '';
+                        //========================================
+                        // Generate Next Code
+                        //========================================
+
+                        this.entity.code =
+                            this.generateNextCode(
+                                entities
+                            );
 
 
-                        //================================================
-                        // Generate Feature Folder From Folder Name
-                        //================================================
+                        //========================================
+                        // Generate Next Display Order
+                        //========================================
 
-                        this.generateFeatureFolder();
-
-
-                        //================================================
-                        // Generate Remaining Fields
-                        //================================================
-
-                        this.generateFeatureSubFolder();
+                        this.entity.displayOrder =
+                            this.generateNextDisplayOrder(
+                                entities
+                            );
 
 
-                        this.entity.componentPath =
-                            this.generateComponentPath();
+                        //========================================
+                        // Load Last Created Folder Information
+                        //========================================
+
+                        const lastCreatedEntity =
+                            this.getLastCreatedEntity(
+                                entities
+                            );
 
 
-                        this.entity.htmlFilePath =
-                            this.generateHtmlFilePath();
+                        if
+                        (
+                            lastCreatedEntity
+                        )
+                        {
+                            this.entity.folderName =
+                                lastCreatedEntity.folderName
+                                    ?.trim()
+                                    || '';
 
 
-                        this.entity.tsFilePath =
-                            this.generateTsFilePath();
+                            this.generateFeatureFolder();
 
 
-                        this.entity.cssFilePath =
-                            this.generateCssFilePath();
+                            this.generateFeatureSubFolder();
 
 
-                        this.entity.registrationFilePath =
-                            this.registrationFilePath;
-                    }
+                            this.entity.componentPath =
+                                this.generateComponentPath();
 
 
-                    else
+                            this.entity.htmlFilePath =
+                                this.generateHtmlFilePath();
+
+
+                            this.entity.tsFilePath =
+                                this.generateTsFilePath();
+
+
+                            this.entity.cssFilePath =
+                                this.generateCssFilePath();
+
+
+                            this.entity.registrationFilePath =
+                                this.registrationFilePath;
+                        }
+
+
+                        else
+                        {
+                            this.updateGeneratedFields();
+                        }
+
+
+                        this.storeOriginalState();
+
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                    error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
                     {
-                        //================================================
-                        // No Previous Record
-                        //================================================
+                        console.error(
+                            'Generate Sub Ordinate Components Defaults Error',
+
+                            error
+                        );
+
+
+                        this.entity.code =
+                            'SOC-001';
+
+
+                        this.entity.displayOrder =
+                            1;
+
 
                         this.updateGeneratedFields();
+
+
+                        this.storeOriginalState();
+
+
+                        this.cdr.detectChanges();
                     }
-
-
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Generate Sub Ordinate Components Defaults Error',
-
-                        error
-                    );
-
-
-                    this.entity.code =
-                        'SOC-001';
-
-
-                    this.entity.displayOrder =
-                        1;
-
-
-                    this.updateGeneratedFields();
-
-
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.cdr.detectChanges();
                 }
-            });
+            );
     }
 
 
@@ -975,7 +1089,8 @@ implements OnInit
             )
             .replace(
                 /^-+|-+$/g,
-                '');
+                ''
+            );
     }
 
 
@@ -1178,6 +1293,90 @@ implements OnInit
 
 
     //===========================================================
+    // Build Image URL
+    //===========================================================
+
+    private buildImageUrl
+    (
+        imagePath:
+            string
+    ):
+        string
+    {
+        if
+        (
+            !imagePath
+        )
+        {
+            return '';
+        }
+
+
+        const value =
+            imagePath.trim();
+
+
+        if
+        (
+            !value
+        )
+        {
+            return '';
+        }
+
+
+        //=======================================================
+        // Already Absolute
+        //=======================================================
+
+        if
+        (
+            value.startsWith(
+                'http://'
+            )
+            ||
+            value.startsWith(
+                'https://'
+            )
+            ||
+            value.startsWith(
+                'data:'
+            )
+            ||
+            value.startsWith(
+                'blob:'
+            )
+        )
+        {
+            return value;
+        }
+
+
+        //=======================================================
+        // Absolute Root Relative Path
+        //=======================================================
+
+        if
+        (
+            value.startsWith(
+                '/'
+            )
+        )
+        {
+            return `${this.apiBaseUrl}${value}`;
+        }
+
+
+        //=======================================================
+        // Relative Path
+        //=======================================================
+
+        return `${this.apiBaseUrl}/${value}`;
+    }
+
+
+
+    //===========================================================
     // Load Entity
     //===========================================================
 
@@ -1188,68 +1387,161 @@ implements OnInit
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:
-                (
-                    response:
-                        SubOrdinateComponents
-                ):
-                    void =>
+            .subscribe
+            (
                 {
-                    this.entity =
-                        response;
+                    next:
+                    (
+                        response:
+                            SubOrdinateComponents
+                    ):
+                        void =>
+                    {
+                        this.clearBackgroundImageState();
 
 
-                    //================================================
-                    // Rebuild Generated Fields From User Folder
-                    //================================================
-
-                    this.updateGeneratedFields();
+                        this.entity =
+                            response;
 
 
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                        //========================================
+                        // Rebuild Generated Fields
+                        //========================================
+
+                        this.updateGeneratedFields();
+
+
+                        //========================================
+                        // Existing Light Image
+                        //========================================
+
+                        this.entity.lightBackgroundImagePath =
+                            this.entity.lightBackgroundImagePath
+                            ||
+                            '';
+
+
+                        this.entity.deepBackgroundImagePath =
+                            this.entity.deepBackgroundImagePath
+                            ||
+                            '';
+
+
+                        this.lightBackgroundImageUrl =
+                            this.buildImageUrl(
+                                this.entity.lightBackgroundImagePath
+                            );
+
+
+                        this.deepBackgroundImageUrl =
+                            this.buildImageUrl(
+                                this.entity.deepBackgroundImagePath
+                            );
+
+
+                        //========================================
+                        // Reset New File State
+                        //========================================
+
+                        this.lightBackgroundImageFile =
+                            null;
+
+
+                        this.deepBackgroundImageFile =
+                            null;
+
+
+                        this.removeLightBackgroundImage =
+                            false;
+
+
+                        this.removeDeepBackgroundImage =
+                            false;
+
+
+                        //========================================
+                        // Store Original Image Paths
+                        //========================================
+
+                        this.originalLightBackgroundImagePath =
+                            this.entity.lightBackgroundImagePath;
+
+
+                        this.originalDeepBackgroundImagePath =
+                            this.entity.deepBackgroundImagePath;
+
+
+                        //========================================
+                        // Store Original State
+                        //========================================
+
+                        this.storeOriginalState();
+
+
+                        this.cdr.detectChanges();
+                    },
+
+
+                    error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error(
+                            'Load Sub Ordinate Component Error',
+
+                            error
                         );
 
 
-                    this.hasChanges =
-                        false;
+                        this.toast.error(
+                            'Error',
+
+                            this.getErrorMessage(
+                                error,
+
+                                'Failed to load Sub Ordinate Component.'
+                            )
+                        );
 
 
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Sub Ordinate Component Error',
-
-                        error
-                    );
-
-
-                    this.toast.error(
-                        'Error',
-
-                        this.getErrorMessage(
-                            error,
-
-                            'Failed to load Sub Ordinate Component.'
-                        )
-                    );
-
-
-                    this.onBackToList();
+                        this.onBackToList();
+                    }
                 }
-            });
+            );
+    }
+
+
+
+    //===========================================================
+    // Store Original State
+    //===========================================================
+
+    private storeOriginalState():
+        void
+    {
+        this.originalEntity =
+            JSON.stringify(
+                this.entity
+            );
+
+
+        this.originalLightBackgroundImagePath =
+            this.entity.lightBackgroundImagePath
+            ||
+            '';
+
+
+        this.originalDeepBackgroundImagePath =
+            this.entity.deepBackgroundImagePath
+            ||
+            '';
+
+
+        this.hasChanges =
+            false;
     }
 
 
@@ -1261,12 +1553,32 @@ implements OnInit
     checkForChanges():
         void
     {
-        this.hasChanges =
+        const entityChanged =
             JSON.stringify(
                 this.entity
             )
             !==
             this.originalEntity;
+
+
+        const lightImageChanged =
+            this.lightBackgroundImageFile !== null
+            ||
+            this.removeLightBackgroundImage;
+
+
+        const deepImageChanged =
+            this.deepBackgroundImageFile !== null
+            ||
+            this.removeDeepBackgroundImage;
+
+
+        this.hasChanges =
+            entityChanged
+            ||
+            lightImageChanged
+            ||
+            deepImageChanged;
     }
 
 
@@ -1284,6 +1596,195 @@ implements OnInit
     {
         this.selectedTab =
             tabId;
+    }
+
+
+
+    //===========================================================
+    // Light Background Image Changed
+    //===========================================================
+
+    onLightBackgroundImageChange
+    (
+        file:
+            File | null
+    ):
+        void
+    {
+        this.releaseObjectUrl(
+            this.lightBackgroundImageUrl
+        );
+
+
+        this.lightBackgroundImageFile =
+            file;
+
+
+        if
+        (
+            file
+        )
+        {
+            this.removeLightBackgroundImage =
+                false;
+
+
+            this.lightBackgroundImageUrl =
+                URL.createObjectURL(
+                    file
+                );
+        }
+
+
+        else
+        {
+            this.lightBackgroundImageUrl =
+                '';
+
+
+            this.removeLightBackgroundImage =
+                true;
+        }
+
+
+        this.checkForChanges();
+
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Deep Background Image Changed
+    //===========================================================
+
+    onDeepBackgroundImageChange
+    (
+        file:
+            File | null
+    ):
+        void
+    {
+        this.releaseObjectUrl(
+            this.deepBackgroundImageUrl
+        );
+
+
+        this.deepBackgroundImageFile =
+            file;
+
+
+        if
+        (
+            file
+        )
+        {
+            this.removeDeepBackgroundImage =
+                false;
+
+
+            this.deepBackgroundImageUrl =
+                URL.createObjectURL(
+                    file
+                );
+        }
+
+
+        else
+        {
+            this.deepBackgroundImageUrl =
+                '';
+
+
+            this.removeDeepBackgroundImage =
+                true;
+        }
+
+
+        this.checkForChanges();
+
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Release Object URL
+    //===========================================================
+
+    private releaseObjectUrl
+    (
+        url:
+            string
+    ):
+        void
+    {
+        if
+        (
+            url
+            &&
+            url.startsWith(
+                'blob:'
+            )
+        )
+        {
+            URL.revokeObjectURL(
+                url
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Clear Background Image State
+    //===========================================================
+
+    private clearBackgroundImageState():
+        void
+    {
+        this.releaseObjectUrl(
+            this.lightBackgroundImageUrl
+        );
+
+
+        this.releaseObjectUrl(
+            this.deepBackgroundImageUrl
+        );
+
+
+        this.lightBackgroundImageUrl =
+            '';
+
+
+        this.deepBackgroundImageUrl =
+            '';
+
+
+        this.lightBackgroundImageFile =
+            null;
+
+
+        this.deepBackgroundImageFile =
+            null;
+
+
+        this.removeLightBackgroundImage =
+            false;
+
+
+        this.removeDeepBackgroundImage =
+            false;
+
+
+        this.originalLightBackgroundImagePath =
+            '';
+
+
+        this.originalDeepBackgroundImagePath =
+            '';
     }
 
 
@@ -1409,6 +1910,7 @@ implements OnInit
         }
 
 
+
         //=======================================================
         // Create
         //=======================================================
@@ -1461,7 +1963,18 @@ implements OnInit
                     this.entity.status,
 
                 remarks:
-                    this.entity.remarks
+                    this.entity.remarks,
+
+
+                //==============================================
+                // Background Images
+                //==============================================
+
+                lightBackgroundImage:
+                    this.lightBackgroundImageFile,
+
+                deepBackgroundImage:
+                    this.deepBackgroundImageFile
             };
 
 
@@ -1469,61 +1982,65 @@ implements OnInit
                 .create(
                     model
                 )
-                .subscribe(
-                {
-                    next:
-                    (): void =>
+                .subscribe
+                (
                     {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
+                        next:
+                        (
+                            id:
+                                number
+                        ):
+                            void =>
+                        {
+                            this.entity.id =
+                                id;
+
+
+                            this.storeOriginalState();
+
+
+                            this.toast.success(
+                                'Success',
+
+                                'Sub Ordinate Component created successfully.'
                             );
 
 
-                        this.hasChanges =
-                            false;
+                            this.onBackToList();
+                        },
 
 
-                        this.toast.success(
-                            'Success',
-
-                            'Sub Ordinate Component created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:
-                    (
                         error:
-                            unknown
-                    ):
-                        void =>
-                    {
-                        console.error(
-                            'Create Sub Ordinate Component Error',
+                        (
+                            error:
+                                unknown
+                        ):
+                            void =>
+                        {
+                            console.error(
+                                'Create Sub Ordinate Component Error',
 
-                            error
-                        );
+                                error
+                            );
 
 
-                        this.toast.error(
-                            'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                            this.getErrorMessage(
-                                error,
+                                this.getErrorMessage(
+                                    error,
 
-                                'Failed to create Sub Ordinate Component.'
-                            )
-                        );
+                                    'Failed to create Sub Ordinate Component.'
+                                )
+                            );
+                        }
                     }
-                });
+                );
 
 
             return;
         }
+
 
 
         //=======================================================
@@ -1576,65 +2093,76 @@ implements OnInit
                 this.entity.status,
 
             remarks:
-                this.entity.remarks
-        };
+                this.entity.remarks,
 
+            //=======================================================
+            // Background Image Configuration
+            //=======================================================
+
+            lightBackgroundImage:
+                this.lightBackgroundImageFile,
+
+            deepBackgroundImage:
+                this.deepBackgroundImageFile,
+
+            removeLightBackgroundImage:
+                this.removeLightBackgroundImage,
+
+            removeDeepBackgroundImage:
+                this.removeDeepBackgroundImage
+        };
 
         this.subOrdinateComponentsService
             .update(
                 model
             )
-            .subscribe(
-            {
-                next:
-                (): void =>
+            .subscribe
+            (
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                    next:
+                    ():
+                        void =>
+                    {
+                        this.storeOriginalState();
+
+
+                        this.toast.success(
+                            'Success',
+
+                            'Sub Ordinate Component updated successfully.'
                         );
 
 
-                    this.hasChanges =
-                        false;
+                        this.onBackToList();
+                    },
 
 
-                    this.toast.success(
-                        'Success',
-
-                        'Sub Ordinate Component updated successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Update Sub Ordinate Component Error',
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error(
+                            'Update Sub Ordinate Component Error',
 
-                        error
-                    );
+                            error
+                        );
 
 
-                    this.toast.error(
-                        'Validation',
+                        this.toast.error(
+                            'Validation',
 
-                        this.getErrorMessage(
-                            error,
+                            this.getErrorMessage(
+                                error,
 
-                            'Failed to update Sub Ordinate Component.'
-                        )
-                    );
+                                'Failed to update Sub Ordinate Component.'
+                            )
+                        );
+                    }
                 }
-            });
+            );
     }
 
 
@@ -1719,13 +2247,14 @@ implements OnInit
                 )
                 {
                     messages.push(
-                        ...value.filter(
+                        ...value.filter
+                        (
                             (
                                 message:
                                     unknown
                             ):
                                 message is string =>
-                            typeof message === 'string'
+                                typeof message === 'string'
                         )
                     );
                 }
@@ -1788,16 +2317,17 @@ implements OnInit
         void
     {
         //=======================================================
-        // Edit Mode
+        // Edit / View Mode
         //=======================================================
 
         if
         (
             this.mode === 'edit'
+            ||
+            this.mode === 'view'
         )
         {
             this.loadEntity();
-
 
             return;
         }
@@ -1827,14 +2357,16 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route.parent
-            });
+            void this.router.navigate
+            (
+                [
+                    'list'
+                ],
+                {
+                    relativeTo:
+                        this.route.parent
+                }
+            );
 
 
             return;
@@ -1848,16 +2380,19 @@ implements OnInit
             'Any unsaved changes will be lost. Do you want to leave this page?',
 
 
-            (): void =>
+            ():
+                void =>
             {
-                void this.router.navigate(
-                [
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route.parent
-                });
+                void this.router.navigate
+                (
+                    [
+                        'list'
+                    ],
+                    {
+                        relativeTo:
+                            this.route.parent
+                    }
+                );
             },
 
 
@@ -1997,7 +2532,6 @@ implements OnInit
         {
             this.loadEntity();
 
-
             return;
         }
 
@@ -2092,6 +2626,25 @@ implements OnInit
 
 
         this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.releaseObjectUrl(
+            this.lightBackgroundImageUrl
+        );
+
+
+        this.releaseObjectUrl(
+            this.deepBackgroundImageUrl
+        );
     }
 
 }

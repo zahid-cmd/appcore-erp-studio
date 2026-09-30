@@ -1,0 +1,1532 @@
+/* ============================================================
+   BACKGROUND IMAGE
+============================================================ */
+
+:host
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        auto;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    max-width:
+        100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        visible;
+}
+
+
+/* ============================================================
+   MAIN BACKGROUND IMAGE
+============================================================ */
+
+.background-image
+{
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap:
+        22px;
+
+    width:
+        calc(
+            100% - 40px
+        );
+
+    max-width:
+        1180px;
+
+    min-width:
+        0;
+
+    height:
+        auto;
+
+    margin:
+        0 auto;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    align-self:
+        center;
+}
+
+
+/* ============================================================
+   THEME CONTAINER
+============================================================ */
+
+.background-image-container
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        18px;
+
+    border:
+        1px solid
+        rgba(
+            214,
+            225,
+            242,
+            .90
+        );
+
+    border-radius:
+        16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                255,
+                255,
+                255,
+                .99
+            ) 0%,
+            rgba(
+                247,
+                250,
+                255,
+                .97
+            ) 100%
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(
+            30,
+            64,
+            110,
+            .075
+        ),
+
+        0 2px 7px
+        rgba(
+            30,
+            64,
+            110,
+            .045
+        );
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease,
+        border-color .22s ease;
+}
+
+
+/* ============================================================
+   PREMIUM TOP ACCENT
+============================================================ */
+
+.background-image-container::before
+{
+    content:
+        '';
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    left:
+        18px;
+
+    right:
+        18px;
+
+    height:
+        2px;
+
+    border-radius:
+        0 0 3px 3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                37,
+                99,
+                235,
+                .10
+            ),
+            rgba(
+                37,
+                99,
+                235,
+                .65
+            ),
+            rgba(
+                37,
+                99,
+                235,
+                .10
+            )
+        );
+
+    pointer-events:
+        none;
+}
+
+
+/* ============================================================
+   CARD HOVER
+============================================================ */
+
+.background-image-container:hover
+{
+    transform:
+        translateY(
+            -2px
+        );
+
+    border-color:
+        rgba(
+            173,
+            198,
+            233,
+            .95
+        );
+
+    box-shadow:
+        0 16px 36px
+        rgba(
+            30,
+            64,
+            110,
+            .10
+        ),
+
+        0 4px 10px
+        rgba(
+            30,
+            64,
+            110,
+            .045
+        );
+}
+
+
+/* ============================================================
+   LIGHT THEME CONTAINER
+============================================================ */
+
+.background-image-light
+{
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #f8fbff 58%,
+            #f3f8ff 100%
+        );
+}
+
+
+/* ============================================================
+   LIGHT THEME ACCENT
+============================================================ */
+
+.background-image-light::before
+{
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                37,
+                99,
+                235,
+                .04
+            ),
+            rgba(
+                37,
+                99,
+                235,
+                .60
+            ),
+            rgba(
+                37,
+                99,
+                235,
+                .04
+            )
+        );
+}
+
+
+/* ============================================================
+   DEEP THEME CONTAINER
+============================================================ */
+
+.background-image-deep
+{
+    border-color:
+        rgba(
+            165,
+            187,
+            218,
+            .90
+        );
+
+    background:
+        linear-gradient(
+            145deg,
+            #f1f5fc 0%,
+            #e8eff9 55%,
+            #dfe9f6 100%
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(
+            20,
+            48,
+            89,
+            .11
+        ),
+
+        0 2px 7px
+        rgba(
+            20,
+            48,
+            89,
+            .06
+        );
+}
+
+
+/* ============================================================
+   DEEP THEME ACCENT
+============================================================ */
+
+.background-image-deep::before
+{
+    background:
+        linear-gradient(
+            90deg,
+            rgba(
+                19,
+                49,
+                91,
+                .08
+            ),
+            rgba(
+                19,
+                49,
+                91,
+                .72
+            ),
+            rgba(
+                19,
+                49,
+                91,
+                .08
+            )
+        );
+}
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.background-image-header
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        0 0 15px 0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   HEADING
+============================================================ */
+
+.background-image-heading
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        12px;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   THEME ICON
+============================================================ */
+
+.background-image-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 44px;
+
+    width:
+        44px;
+
+    height:
+        44px;
+
+    border:
+        1px solid
+        rgba(
+            171,
+            201,
+            243,
+            .82
+        );
+
+    border-radius:
+        12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f0f7ff 0%,
+            #dcecff 100%
+        );
+
+    color:
+        #2563eb;
+
+    font-size:
+        17px;
+
+    box-shadow:
+        0 5px 14px
+        rgba(
+            37,
+            99,
+            235,
+            .09
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   DEEP THEME ICON
+============================================================ */
+
+.background-image-deep
+.background-image-icon
+{
+    border-color:
+        rgba(
+            74,
+            106,
+            154,
+            .60
+        );
+
+    background:
+        linear-gradient(
+            145deg,
+            #1d3a67 0%,
+            #102849 100%
+        );
+
+    color:
+        #e1efff;
+
+    box-shadow:
+        0 6px 16px
+        rgba(
+            16,
+            42,
+            77,
+            .18
+        );
+}
+
+
+/* ============================================================
+   HEADING CONTENT
+============================================================ */
+
+.background-image-heading-content
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    flex:
+        1 1 auto;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   SMALL LABEL
+============================================================ */
+
+.background-image-label
+{
+    display:
+        block;
+
+    margin:
+        0 0 2px 0;
+
+    padding:
+        0;
+
+    color:
+        #7b8ba1;
+
+    font-size:
+        10px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.3;
+
+    letter-spacing:
+        .15px;
+
+    text-transform:
+        uppercase;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   TITLE
+============================================================ */
+
+.background-image-title
+{
+    display:
+        block;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #15233b;
+
+    font-size:
+        17px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.25;
+
+    letter-spacing:
+        -.15px;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   DEEP TITLE
+============================================================ */
+
+.background-image-deep
+.background-image-title
+{
+    color:
+        #142746;
+}
+
+
+/* ============================================================
+   DESCRIPTION
+============================================================ */
+
+.background-image-description
+{
+    display:
+        block;
+
+    margin:
+        3px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #718198;
+
+    font-size:
+        10px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.4;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   IMAGE PREVIEW
+============================================================ */
+
+.background-image-preview
+{
+    position:
+        relative;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    aspect-ratio:
+        16 / 9;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(
+            190,
+            205,
+            225,
+            .95
+        );
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #fbfdff 0%,
+            #edf4fc 100%
+        );
+
+    box-shadow:
+        inset
+        0 1px 0
+        rgba(
+            255,
+            255,
+            255,
+            .90
+        ),
+
+        inset
+        0 0 0 1px
+        rgba(
+            255,
+            255,
+            255,
+            .28
+        );
+
+    overflow:
+        hidden;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   LIGHT PREVIEW
+============================================================ */
+
+.background-image-light
+.background-image-preview
+{
+    background:
+        linear-gradient(
+            145deg,
+            #fcfdff 0%,
+            #f0f6ff 100%
+        );
+}
+
+
+/* ============================================================
+   DEEP PREVIEW
+============================================================ */
+
+.background-image-deep
+.background-image-preview
+{
+    border-color:
+        rgba(
+            160,
+            181,
+            211,
+            .95
+        );
+
+    background:
+        linear-gradient(
+            145deg,
+            #dce7f6 0%,
+            #cbd8eb 100%
+        );
+}
+
+
+/* ============================================================
+   PREVIEW IMAGE
+============================================================ */
+
+.background-image-preview-image
+{
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    object-fit:
+        cover;
+
+    object-position:
+        center;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+
+.background-image-empty
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        20px;
+
+    text-align:
+        center;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   EMPTY ICON
+============================================================ */
+
+.background-image-empty-icon
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        46px;
+
+    height:
+        46px;
+
+    margin:
+        0 0 10px 0;
+
+    border:
+        1px solid
+        rgba(
+            156,
+            174,
+            198,
+            .32
+        );
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .78
+        );
+
+    color:
+        #8da0b8;
+
+    font-size:
+        17px;
+
+    box-shadow:
+        0 5px 15px
+        rgba(
+            30,
+            64,
+            110,
+            .06
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   EMPTY TITLE
+============================================================ */
+
+.background-image-empty-title
+{
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #46566d;
+
+    font-size:
+        12px;
+
+    font-weight:
+        650;
+
+    line-height:
+        1.4;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   EMPTY DESCRIPTION
+============================================================ */
+
+.background-image-empty-description
+{
+    max-width:
+        270px;
+
+    margin:
+        5px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #94a3b8;
+
+    font-size:
+        10px;
+
+    font-weight:
+        400;
+
+    line-height:
+        1.5;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   INFORMATION BAR
+============================================================ */
+
+.background-image-information
+{
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(0, 1.25fr)
+        auto
+        minmax(0, .75fr)
+        auto
+        minmax(0, .85fr)
+        auto
+        minmax(0, .85fr);
+
+    align-items:
+        stretch;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        10px 0 0 0;
+
+    padding:
+        8px 9px;
+
+    border:
+        1px solid
+        rgba(
+            207,
+            220,
+            239,
+            .90
+        );
+
+    border-radius:
+        9px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(
+                242,
+                247,
+                255,
+                .98
+            ) 0%,
+            rgba(
+                231,
+                239,
+                250,
+                .94
+            ) 100%
+        );
+
+    box-shadow:
+        inset
+        0 1px 0
+        rgba(
+            255,
+            255,
+            255,
+            .75
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   DEEP INFORMATION BAR
+============================================================ */
+
+.background-image-deep
+.background-image-information
+{
+    border-color:
+        rgba(
+            53,
+            82,
+            123,
+            .55
+        );
+
+    background:
+        linear-gradient(
+            135deg,
+            #19365f 0%,
+            #10284a 100%
+        );
+
+    box-shadow:
+        inset
+        0 1px 0
+        rgba(
+            255,
+            255,
+            255,
+            .07
+        );
+}
+
+
+/* ============================================================
+   INFORMATION ITEM
+============================================================ */
+
+.background-image-information-item
+{
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        7px;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        2px 5px;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   INFORMATION ICON
+============================================================ */
+
+.background-image-information-item > i
+{
+    flex:
+        0 0 auto;
+
+    color:
+        #4d7fe0;
+
+    font-size:
+        10px;
+}
+
+
+/* ============================================================
+   DEEP INFORMATION ICON
+============================================================ */
+
+.background-image-deep
+.background-image-information-item > i
+{
+    color:
+        #8dbcf1;
+}
+
+
+/* ============================================================
+   INFORMATION CONTENT
+============================================================ */
+
+.background-image-information-content
+{
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   INFORMATION LABEL
+============================================================ */
+
+.background-image-information-content span
+{
+    display:
+        block;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    color:
+        #78879c;
+
+    font-size:
+        8px;
+
+    font-weight:
+        500;
+
+    line-height:
+        1.3;
+
+    white-space:
+        nowrap;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   INFORMATION VALUE
+============================================================ */
+
+.background-image-information-content strong
+{
+    display:
+        block;
+
+    margin:
+        2px 0 0 0;
+
+    padding:
+        0;
+
+    color:
+        #294263;
+
+    font-size:
+        9px;
+
+    font-weight:
+        700;
+
+    line-height:
+        1.3;
+
+    white-space:
+        nowrap;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   DEEP INFORMATION TEXT
+============================================================ */
+
+.background-image-deep
+.background-image-information-content span
+{
+    color:
+        #9db4d1;
+}
+
+
+.background-image-deep
+.background-image-information-content strong
+{
+    color:
+        #e0edff;
+}
+
+
+/* ============================================================
+   INFORMATION DIVIDER
+============================================================ */
+
+.background-image-information-divider
+{
+    width:
+        1px;
+
+    height:
+        26px;
+
+    align-self:
+        center;
+
+    margin:
+        0;
+
+    background:
+        rgba(
+            148,
+            163,
+            184,
+            .25
+        );
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ============================================================
+   DEEP INFORMATION DIVIDER
+============================================================ */
+
+.background-image-deep
+.background-image-information-divider
+{
+    background:
+        rgba(
+            157,
+            184,
+            218,
+            .24
+        );
+}
+
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media
+(
+    max-width:
+        1100px
+)
+{
+    .background-image
+    {
+        width:
+            calc(
+                100% - 28px
+            );
+
+        gap:
+            18px;
+    }
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media
+(
+    max-width:
+        850px
+)
+{
+    .background-image
+    {
+        grid-template-columns:
+            1fr;
+
+        width:
+            calc(
+                100% - 24px
+            );
+
+        gap:
+            18px;
+    }
+}
+
+
+/* ============================================================
+   SMALL TABLET
+============================================================ */
+
+@media
+(
+    max-width:
+        650px
+)
+{
+    .background-image
+    {
+        width:
+            calc(
+                100% - 18px
+            );
+    }
+
+
+    .background-image-container
+    {
+        padding:
+            15px;
+    }
+
+
+    .background-image-information
+    {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+        gap:
+            5px;
+    }
+
+
+    .background-image-information-divider
+    {
+        display:
+            none;
+    }
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media
+(
+    max-width:
+        480px
+)
+{
+    .background-image
+    {
+        width:
+            calc(
+                100% - 12px
+            );
+    }
+
+
+    .background-image-container
+    {
+        padding:
+            12px;
+    }
+
+
+    .background-image-icon
+    {
+        flex-basis:
+            40px;
+
+        width:
+            40px;
+
+        height:
+            40px;
+
+        border-radius:
+            10px;
+    }
+
+
+    .background-image-title
+    {
+        font-size:
+            16px;
+    }
+
+
+    .background-image-description
+    {
+        font-size:
+            9px;
+    }
+
+
+    .background-image-information
+    {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .background-image-information-item
+    {
+        justify-content:
+            flex-start;
+    }
+
+
+    .background-image-information-content span,
+    .background-image-information-content strong
+    {
+        white-space:
+            normal;
+    }
+}

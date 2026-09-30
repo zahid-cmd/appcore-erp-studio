@@ -204,7 +204,32 @@ public class SubOrdinateComponentsDto
     // Remarks
     //===========================================================
 
-    public string Remarks
+    // Optional.
+    //
+    // Remarks is no longer part of the UI and therefore must
+    // not be treated as a required field.
+
+    public string? Remarks
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Background Image Configuration
+    //===========================================================
+
+    public string LightBackgroundImagePath
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    public string DeepBackgroundImagePath
     {
         get;
         set;

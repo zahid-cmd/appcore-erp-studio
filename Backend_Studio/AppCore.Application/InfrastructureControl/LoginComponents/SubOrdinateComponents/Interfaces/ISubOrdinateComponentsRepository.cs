@@ -65,6 +65,22 @@ public interface ISubOrdinateComponentsRepository
 
 
     //===========================================================
+    // Update Background Image Paths
+    //===========================================================
+
+    Task
+        UpdateBackgroundImagePathsAsync
+    (
+        long id,
+
+        string lightBackgroundImagePath,
+
+        string deepBackgroundImagePath
+    );
+
+
+
+    //===========================================================
     // Delete
     //===========================================================
 

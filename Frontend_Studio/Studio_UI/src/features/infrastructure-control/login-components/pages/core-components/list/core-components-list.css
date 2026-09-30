@@ -934,7 +934,8 @@
 {
     --renderer-scale:
         0.75;
-    padding-bottom: 600px;
+    padding-bottom: 400px;
+    padding-left: 400px;
 }
 
 
@@ -959,7 +960,7 @@
 {
     --renderer-scale:
         .5;
-    min-height:200%;
+    min-height:50%;
     min-width: 100%;
 
 }

@@ -135,29 +135,57 @@ public class SubOrdinateComponentsRepository
             await GenerateNextCodeAsync();
 
 
+        //=======================================================
+        // Active
+        //=======================================================
+
         entity.IsActive =
             entity.Status;
 
+
+        //=======================================================
+        // Deleted
+        //=======================================================
 
         entity.IsDeleted =
             false;
 
 
+        //=======================================================
+        // Created By
+        //=======================================================
+
         entity.CreatedBy =
             userId;
 
+
+        //=======================================================
+        // Created Date
+        //=======================================================
 
         entity.CreatedDate =
             DateTime.UtcNow;
 
 
+        //=======================================================
+        // Modified By
+        //=======================================================
+
         entity.ModifiedBy =
             null;
 
 
+        //=======================================================
+        // Modified Date
+        //=======================================================
+
         entity.ModifiedDate =
             null;
 
+
+        //=======================================================
+        // Create Entity
+        //=======================================================
 
         await _context
             .Set<SubOrdinateComponents>()
@@ -219,6 +247,51 @@ public class SubOrdinateComponentsRepository
 
 
         return entity.Id;
+    }
+
+
+
+    //===========================================================
+    // Update Background Image Paths Only
+    //===========================================================
+
+    public async Task
+        UpdateBackgroundImagePathsAsync
+    (
+        long id,
+
+        string lightBackgroundImagePath,
+
+        string deepBackgroundImagePath
+    )
+    {
+        var existing =
+            await _context
+                .Set<SubOrdinateComponents>()
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.Id == id
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            existing is null
+        )
+        {
+            throw new InvalidOperationException(
+                "SubOrdinateComponents record was not found."
+            );
+        }
+
+        existing.LightBackgroundImagePath =
+            lightBackgroundImagePath ?? string.Empty;
+
+        existing.DeepBackgroundImagePath =
+            deepBackgroundImagePath ?? string.Empty;
+
+        await _context.SaveChangesAsync();
     }
 
 
@@ -287,6 +360,8 @@ public class SubOrdinateComponentsRepository
                     '\\'
                 );
     }
+
+
 
     //===========================================================
     // Generate Next Code
@@ -1753,6 +1828,22 @@ public class SubOrdinateComponentsRepository
         existing.Remarks =
             entity.Remarks;
 
+
+        //=======================================================
+        // Background Image Paths
+        //=======================================================
+
+        existing.LightBackgroundImagePath =
+            entity.LightBackgroundImagePath;
+
+
+        existing.DeepBackgroundImagePath =
+            entity.DeepBackgroundImagePath;
+
+
+        //=======================================================
+        // Modified Information
+        //=======================================================
 
         existing.ModifiedBy =
             userId;

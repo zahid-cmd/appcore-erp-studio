@@ -7,7 +7,8 @@ import
     Component,
     OnInit,
     inject,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    Type
 }
 from '@angular/core';
 
@@ -29,6 +30,17 @@ import
     Router
 }
 from '@angular/router';
+
+
+//===============================================================
+// Environment
+//===============================================================
+
+import
+{
+    environment
+}
+from '../../../../../../environments/environment';
 
 
 //===============================================================
@@ -106,27 +118,40 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-import
-{
-    EmptyStateComponent
-}
-from '../../../../../../shared/components/layout/empty-state/empty-state';
-
-import
-{
-    OrbitLoaderComponent
-}
-from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
 
 //===============================================================
-// Component Renderer
+// Sub-ordinate Components
 //===============================================================
 
 import
 {
-    ComponentRenderer
+    BackgroundImageComponent
 }
-from '../../../../../../core/component-renderer/component-renderer';
+from '../../../../../../shared/components/sub-ordinate-components/background-image-1/background-image-1';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent2
+}
+from '../../../../../../shared/components/sub-ordinate-components/background-image-2/background-image-2';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent3
+}
+from '../../../../../../shared/components/sub-ordinate-components/background-image-3/background-image-3';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent4
+}
+from '../../../../../../shared/components/sub-ordinate-components/background-image-4/background-image-4';
+
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent5
+}
+from '../../../../../../shared/components/sub-ordinate-components/background-image-5/background-image-5';
 
 
 //===============================================================
@@ -168,13 +193,7 @@ from '../../../services/sub-ordinate-components.service';
 
         ConfirmDialogComponent,
 
-        ToastComponent,
-
-        ComponentRenderer,
-
-        EmptyStateComponent,
-
-        OrbitLoaderComponent
+        ToastComponent
     ],
 
     templateUrl:
@@ -182,9 +201,7 @@ from '../../../services/sub-ordinate-components.service';
 
     styleUrls:
     [
-        './sub-ordinate-components-list.css',
-
-        '../../../../../../shared/styles/component-page.css'
+        './sub-ordinate-components-list.css'
     ]
 })
 
@@ -201,7 +218,7 @@ implements OnInit
     // Dependency Injection
     //===========================================================
 
-    private readonly subOrdinatecomponentsservice =
+    private readonly subordinatecomponentsservice =
         inject(SubOrdinateComponentsService);
 
 
@@ -227,6 +244,29 @@ implements OnInit
 
 
     //===========================================================
+    // API Image Base URL
+    //===========================================================
+
+    /*
+       Backend image paths are stored as relative paths.
+
+       Example:
+
+       /uploads/sub-ordinate-components/1/light-xxxx.jpg
+
+       This base URL converts that path into a browser URL.
+    */
+
+    private readonly apiBaseUrl =
+        environment.apiUrl
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+
+
+
+    //===========================================================
     // Page Tabs
     //===========================================================
 
@@ -245,7 +285,7 @@ implements OnInit
     // Sub Ordinate Components
     //===========================================================
 
-    subOrdinatecomponents:
+    subordinatecomponents:
         SubOrdinateComponents[] =
     [];
 
@@ -253,6 +293,47 @@ implements OnInit
     selectedComponent:
         SubOrdinateComponents | null =
         null;
+
+
+
+    //===========================================================
+    // Selected Component Type
+    //===========================================================
+
+    selectedComponentType:
+        Type<unknown>
+        |
+        null =
+        null;
+
+
+
+    //===========================================================
+    // Selected Component Inputs
+    //===========================================================
+    //
+    // Strongly typed dynamic component inputs.
+    //
+    // These are passed to the selected subordinate component
+    // through Angular's ngComponentOutlet inputs.
+    //
+    //===========================================================
+
+    selectedComponentInputs:
+    {
+        lightBackgroundImageUrl:
+            string;
+
+        deepBackgroundImageUrl:
+            string;
+    } =
+    {
+        lightBackgroundImageUrl:
+            '',
+
+        deepBackgroundImageUrl:
+            ''
+    };
 
 
 
@@ -318,7 +399,7 @@ implements OnInit
             false;
 
 
-        this.subOrdinatecomponentsservice
+        this.subordinatecomponentsservice
             .getAll()
             .subscribe
             ({
@@ -329,7 +410,7 @@ implements OnInit
                 ):
                     void =>
                 {
-                    this.subOrdinatecomponents =
+                    this.subordinatecomponents =
                     [
                         ...response
                     ];
@@ -337,7 +418,7 @@ implements OnInit
 
                     console.log(
                         'Sub Ordinate Components Records:',
-                        this.subOrdinatecomponents
+                        this.subordinatecomponents
                     );
 
 
@@ -374,7 +455,7 @@ implements OnInit
                     );
 
 
-                    this.subOrdinatecomponents =
+                    this.subordinatecomponents =
                     [];
 
 
@@ -388,6 +469,13 @@ implements OnInit
 
                     this.selectedComponent =
                         null;
+
+
+                    this.selectedComponentType =
+                        null;
+
+
+                    this.clearSelectedComponentInputs();
 
 
                     this.loading =
@@ -421,7 +509,7 @@ implements OnInit
         void
     {
         this.tabs =
-            this.subOrdinatecomponents
+            this.subordinatecomponents
                 .map
                 (
                     (
@@ -460,6 +548,11 @@ implements OnInit
 
             this.selectedComponent =
                 null;
+
+            this.selectedComponentType =
+                null;
+
+            this.clearSelectedComponentInputs();
 
             return;
         }
@@ -528,7 +621,7 @@ implements OnInit
 
 
         this.selectedComponent =
-            this.subOrdinatecomponents
+            this.subordinatecomponents
                 .find
                 (
                     component =>
@@ -541,6 +634,47 @@ implements OnInit
                 null;
 
 
+        this.selectedComponentType =
+            this.resolveComponentType(
+                this.selectedComponent
+            );
+
+
+        //=======================================================
+        // Build Dynamic Component Inputs
+        //=======================================================
+
+        if
+        (
+            this.selectedComponent
+        )
+        {
+            this.selectedComponentInputs =
+            {
+                lightBackgroundImageUrl:
+                    this.buildImageUrl(
+                        this.selectedComponent
+                            .lightBackgroundImagePath
+                    ),
+
+                deepBackgroundImageUrl:
+                    this.buildImageUrl(
+                        this.selectedComponent
+                            .deepBackgroundImagePath
+                    )
+            };
+        }
+
+        else
+        {
+            this.clearSelectedComponentInputs();
+        }
+
+
+        //=======================================================
+        // Debug
+        //=======================================================
+
         console.log(
             'Sub Ordinate Components Selected Component:',
             this.selectedComponent
@@ -548,29 +682,39 @@ implements OnInit
 
 
         console.log(
-            'Sub Ordinate Components Component Path:',
-            this.selectedComponent?.componentPath
+            'Sub Ordinate Component Type:',
+            this.selectedComponentType
         );
 
 
         console.log(
-            'Sub Ordinate Components Renderer Key:',
-            this.getRendererKey(
-                this.selectedComponent?.componentPath
-                ??
-                ''
-            )
+            'Sub Ordinate Component Inputs:',
+            this.selectedComponentInputs
         );
 
 
         console.log(
-            'Sub Ordinate Components Component Name:',
+            'Light Background Image URL:',
+            this.selectedComponentInputs
+                .lightBackgroundImageUrl
+        );
+
+
+        console.log(
+            'Deep Background Image URL:',
+            this.selectedComponentInputs
+                .deepBackgroundImageUrl
+        );
+
+
+        console.log(
+            'Sub Ordinate Component Name:',
             this.selectedComponent?.name
         );
 
 
         console.log(
-            'Sub Ordinate Components Component ID:',
+            'Sub Ordinate Component ID:',
             this.selectedComponent?.id
         );
 
@@ -581,99 +725,306 @@ implements OnInit
 
 
     //===========================================================
-    // Get Renderer Key
+    // Build Image URL
+    //===========================================================
     //
-    // Converts the database componentPath into the key used
-    // by the shared ComponentRenderer registry.
+    // Converts the database image path into a browser URL.
     //
     // Example:
     //
-    // Frontend_Studio\Studio_UI\src\shared\components\
-    // sub-ordinate-components\login-panel
+    // /uploads/sub-ordinate-components/1/light-xxxx.jpg
     //
     // becomes:
     //
-    // login-panel
+    // http://localhost:xxxx/uploads/
+    // sub-ordinate-components/1/light-xxxx.jpg
+    //
     //===========================================================
 
-    getRendererKey
+    private buildImageUrl
     (
-        componentPath:
+        imagePath:
             string
+            |
+            null
+            |
+            undefined
     ):
         string
     {
         if
         (
-            !componentPath
-            ||
-            !componentPath.trim()
+            !imagePath
         )
         {
             return '';
         }
 
 
-        const normalizedPath =
-            componentPath
-                .trim()
-                .replace(
-                    /\\/g,
-                    '/'
-                )
-                .replace(
-                    /\/+/g,
-                    '/'
-                )
-                .replace(
-                    /\/$/,
-                    ''
-                );
-
-
-        const pathParts =
-            normalizedPath
-                .split('/')
-                .filter(
-                    part =>
-                        part.trim().length > 0
-                );
+        const value =
+            imagePath.trim();
 
 
         if
         (
-            pathParts.length === 0
+            !value
         )
         {
             return '';
         }
 
 
-        const componentFolder =
-            pathParts[
-                pathParts.length - 1
-            ]
+        //=======================================================
+        // Absolute URL
+        //=======================================================
+
+        if
+        (
+            value.startsWith(
+                'http://'
+            )
+            ||
+            value.startsWith(
+                'https://'
+            )
+            ||
+            value.startsWith(
+                'data:'
+            )
+            ||
+            value.startsWith(
+                'blob:'
+            )
+        )
+        {
+            return value;
+        }
+
+
+        //=======================================================
+        // Root Relative Path
+        //=======================================================
+
+        if
+        (
+            value.startsWith('/')
+        )
+        {
+            return `${this.apiBaseUrl}${value}`;
+        }
+
+
+        //=======================================================
+        // Relative Path
+        //=======================================================
+
+        return `${this.apiBaseUrl}/${value}`;
+    }
+
+
+
+    //===========================================================
+    // Clear Selected Component Inputs
+    //===========================================================
+
+    private clearSelectedComponentInputs():
+        void
+    {
+        this.selectedComponentInputs =
+        {
+            lightBackgroundImageUrl:
+                '',
+
+            deepBackgroundImageUrl:
+                ''
+        };
+    }
+
+
+
+    //===========================================================
+    // Resolve Component Type
+    //===========================================================
+    //
+    // The database record identifies the component through
+    // componentPath / component name.
+    //
+    // The actual Angular component class is selected directly
+    // here.
+    //
+    // ComponentRenderer is intentionally NOT used.
+    //===========================================================
+
+    private resolveComponentType
+    (
+        component:
+            SubOrdinateComponents
+            |
+            null
+    ):
+        Type<unknown>
+        |
+        null
+    {
+        if
+        (
+            !component
+        )
+        {
+            return null;
+        }
+
+
+        const componentPath =
+            (
+                component.componentPath
+                ??
+                ''
+            )
+            .trim()
+            .replace(
+                /\\/g,
+                '/'
+            )
+            .replace(
+                /\/+/g,
+                '/'
+            )
+            .replace(
+                /\/$/,
+                ''
+            )
+            .toLowerCase();
+
+
+        const componentName =
+            (
+                component.name
+                ??
+                ''
+            )
             .trim()
             .toLowerCase();
 
 
+        const tabName =
+            (
+                component.tabName
+                ??
+                ''
+            )
+            .trim()
+            .toLowerCase();
+
+
+        //=======================================================
+        // Background Image 1
+        //=======================================================
+
         if
         (
-            !componentFolder
+            componentPath.includes(
+                'background-image-1'
+            )
+            ||
+            componentName ===
+                'background image 1'
+            ||
+            tabName ===
+                'background image 1'
         )
         {
-            return '';
+            return BackgroundImageComponent;
         }
 
 
-        console.log(
-            'Sub Ordinate Components Renderer Key:',
-            componentFolder
-        );
+        //=======================================================
+        // Background Image 2
+        //=======================================================
+
+        if
+        (
+            componentPath.includes(
+                'background-image-2'
+            )
+            ||
+            componentName ===
+                'background image 2'
+            ||
+            tabName ===
+                'background image 2'
+        )
+        {
+            return BackgroundImageComponent2;
+        }
 
 
-        return componentFolder;
+        //=======================================================
+        // Background Image 3
+        //=======================================================
+
+        if
+        (
+            componentPath.includes(
+                'background-image-3'
+            )
+            ||
+            componentName ===
+                'background image 3'
+            ||
+            tabName ===
+                'background image 3'
+        )
+        {
+            return BackgroundImageComponent3;
+        }
+
+
+        //=======================================================
+        // Background Image 4
+        //=======================================================
+
+        if
+        (
+            componentPath.includes(
+                'background-image-4'
+            )
+            ||
+            componentName ===
+                'background image 4'
+            ||
+            tabName ===
+                'background image 4'
+        )
+        {
+            return BackgroundImageComponent4;
+        }
+
+
+        //=======================================================
+        // Background Image 5
+        //=======================================================
+
+        if
+        (
+            componentPath.includes(
+                'background-image-5'
+            )
+            ||
+            componentName ===
+                'background image 5'
+            ||
+            tabName ===
+                'background image 5'
+        )
+        {
+            return BackgroundImageComponent5;
+        }
+
+
+        return null;
     }
+
 
 
     //===========================================================
@@ -689,6 +1040,13 @@ implements OnInit
 
         this.selectedComponent =
             null;
+
+
+        this.selectedComponentType =
+            null;
+
+
+        this.clearSelectedComponentInputs();
 
 
         this.loadItems();
@@ -766,7 +1124,7 @@ implements OnInit
             ():
                 void =>
             {
-                this.subOrdinatecomponentsservice
+                this.subordinatecomponentsservice
                     .delete
                     (
                         item.id
@@ -854,7 +1212,7 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.subOrdinatecomponentsservice
+        this.subordinatecomponentsservice
             .restore()
             .subscribe
             ({
@@ -926,7 +1284,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.subOrdinatecomponentsservice
+        this.subordinatecomponentsservice
             .getHistory()
             .subscribe
             ({

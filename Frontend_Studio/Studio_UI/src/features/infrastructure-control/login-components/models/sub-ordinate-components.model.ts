@@ -71,6 +71,17 @@ export interface SubOrdinateComponents
 
     remarks:
         string;
+
+
+    //===========================================================
+    // Section 5 - Background Image Configuration
+    //===========================================================
+
+    lightBackgroundImagePath:
+        string;
+
+    deepBackgroundImagePath:
+        string;
 }
 
 
@@ -141,6 +152,17 @@ export interface CreateSubOrdinateComponents
 
     remarks:
         string;
+
+
+    //===========================================================
+    // Section 5 - Background Image Configuration
+    //===========================================================
+
+    lightBackgroundImage:
+        File | null;
+
+    deepBackgroundImage:
+        File | null;
 }
 
 
@@ -215,6 +237,23 @@ export interface UpdateSubOrdinateComponents
 
     remarks:
         string;
+
+
+    //===========================================================
+    // Section 5 - Background Image Configuration
+    //===========================================================
+
+    lightBackgroundImage:
+        File | null;
+
+    deepBackgroundImage:
+        File | null;
+
+    removeLightBackgroundImage:
+        boolean;
+
+    removeDeepBackgroundImage:
+        boolean;
 }
 
 

@@ -5,39 +5,39 @@
 @import '../../../../../../shared/styles/app-list-page.css';
 
 
+
 /* ============================================================
-   SUB ORDINATE COMPONENT CANVAS
-   ------------------------------------------------------------
-   OUTER CANVAS
-   ------------------------------------------------------------
-   The outer canvas remains full available page width.
-   It is NOT resized by the preview.
+   COMPONENT CANVAS
 ============================================================ */
 
 .component-canvas
 {
     position:relative;
 
-    width:100%;
-
-    flex:0 0 auto;
-
-    min-width:0;
-
-    min-height:0;
-
-    height:auto;
-
     display:flex;
 
     flex-direction:column;
 
-    overflow:hidden;
+    width:100%;
+
+    min-width:0;
+
+    margin:0;
+
+    padding:0;
 
     box-sizing:border-box;
 
-    border:1px solid
-        rgba(142,164,190,0.24);
+    overflow:hidden;
+
+    border:
+        1px solid
+        rgba(
+            142,
+            164,
+            190,
+            .24
+        );
 
     border-radius:12px;
 
@@ -45,14 +45,32 @@
 
     box-shadow:
 
-        inset 0 1px 0 rgba(255,255,255,.95),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        ),
 
-        0 5px 18px rgba(31,41,55,0.045);
+        0
+        5px
+        18px
+        rgba(
+            31,
+            41,
+            55,
+            .045
+        );
 }
 
 
+
 /* ============================================================
-   PREVIEW SECTION HEADER
+   COMPONENT SECTION HEADER
 ============================================================ */
 
 .component-section-header
@@ -63,7 +81,9 @@
 
     display:flex;
 
-    flex:0 0 auto;
+    align-items:center;
+
+    justify-content:flex-start;
 
     width:100%;
 
@@ -73,23 +93,36 @@
 
     max-height:40px;
 
-    align-items:center;
-
-    justify-content:flex-start;
+    flex:
+        0
+        0
+        40px;
 
     gap:10px;
 
-    padding:0 16px;
+    margin:0;
+
+    padding:
+        0
+        16px;
 
     box-sizing:border-box;
 
     overflow:hidden;
 
-    border-top:1px solid #ffffff;
+    border-top:
+        1px solid
+        #ffffff;
 
-    border-bottom:1px solid #dde7f3;
+    border-bottom:
+        1px solid
+        #dde7f3;
 
-    border-radius:12px 12px 0 0;
+    border-radius:
+        12px
+        12px
+        0
+        0;
 
     background:
         linear-gradient(
@@ -101,26 +134,35 @@
 
     box-shadow:
 
-        inset 0 1px 0 rgba(255,255,255,.95),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        ),
 
-        inset 0 -1px 0 rgba(255,255,255,.55);
-
-    text-align:left;
+        inset
+        0
+        -1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            .55
+        );
 
     user-select:none;
-
-    transition:
-
-        background-color .18s ease,
-
-        color .18s ease,
-
-        box-shadow .18s ease;
 }
 
 
+
 /* ============================================================
-   PREVIEW SECTION HEADER HOVER
+   COMPONENT SECTION HEADER HOVER
 ============================================================ */
 
 .component-section-header:hover
@@ -134,29 +176,44 @@
 }
 
 
+
 /* ============================================================
-   PREVIEW SECTION HEADER ICON
+   COMPONENT ICON
 ============================================================ */
 
 .component-section-icon
 {
-    position:relative;
-
-    z-index:1;
-
-    width:30px;
-
-    height:30px;
-
-    flex:0 0 30px;
-
     display:flex;
 
     align-items:center;
 
     justify-content:center;
 
+    width:30px;
+
+    height:30px;
+
+    flex:
+        0
+        0
+        30px;
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
     border-radius:8px;
+
+    border:
+        1px solid
+        rgba(
+            79,
+            70,
+            229,
+            .08
+        );
 
     background:
         linear-gradient(
@@ -165,17 +222,24 @@
             #f7f8ff
         );
 
-    color:var(--primary-color, #4f46e5);
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 
     font-size:13px;
 
-    border:1px solid
-        rgba(79,70,229,0.08);
-
     box-shadow:
-        0 3px 8px rgba(79,70,229,0.06);
-
-    box-sizing:border-box;
+        0
+        3px
+        8px
+        rgba(
+            79,
+            70,
+            229,
+            .06
+        );
 }
 
 
@@ -186,23 +250,38 @@
     line-height:1;
 
     text-shadow:
-        0 1px 1px rgba(255,255,255,0.90);
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .90
+        );
 }
 
 
+
 /* ============================================================
-   PREVIEW SECTION HEADER NAME
+   COMPONENT NAME
 ============================================================ */
 
 .component-section-name
 {
-    position:relative;
-
-    z-index:1;
-
     min-width:0;
 
     margin:0;
+
+    padding:0;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    color:#55667d;
 
     font-size:13px;
 
@@ -210,181 +289,93 @@
 
     line-height:1.4;
 
-    color:#55667d;
-
-    text-align:left;
-
-    white-space:nowrap;
-
-    overflow:hidden;
-
-    text-overflow:ellipsis;
+    letter-spacing:.5px;
 
     text-transform:uppercase;
 
-    letter-spacing:.5px;
-
     text-shadow:
-        0 1px 1px rgba(255,255,255,.82);
+        0
+        1px
+        1px
+        rgba(
+            255,
+            255,
+            255,
+            .82
+        );
 }
+
 
 
 /* ============================================================
-   COMPONENT EDIT BUTTON
+   EDIT / DELETE BUTTONS
 ============================================================ */
 
-.component-edit-button
-{
-    position:relative;
-
-    z-index:1;
-
-    width:auto;
-
-    min-width:68px;
-
-    min-height:30px;
-
-    flex:0 0 auto;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:6px;
-
-    margin-left:auto;
-
-    padding:5px 11px;
-
-    border:1px solid
-        rgba(255,255,255,.94);
-
-    border-radius:9px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,.98),
-            rgba(226,236,246,.84)
-        );
-
-    color:#315f91;
-
-    font-size:11px;
-
-    font-weight:600;
-
-    cursor:pointer;
-
-    box-shadow:
-
-        inset 0 1px 0 rgba(255,255,255,1),
-
-        inset 0 -1px 0 rgba(121,145,170,.08),
-
-        0 3px 9px rgba(55,75,96,.09);
-
-    backdrop-filter:blur(10px);
-
-    -webkit-backdrop-filter:blur(10px);
-
-    transition:
-
-        background .18s ease,
-
-        border-color .18s ease,
-
-        box-shadow .18s ease,
-
-        transform .18s ease,
-
-        color .18s ease;
-}
-
-
-.component-edit-button:hover
-{
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,1),
-            rgba(234,242,249,.94)
-        );
-
-    border-color:
-        rgba(86,125,164,.24);
-
-    color:#294f78;
-
-    box-shadow:
-
-        inset 0 1px 0 rgba(255,255,255,1),
-
-        0 5px 13px rgba(55,75,96,.12);
-
-    transform:translateY(-1px);
-}
-
-
-.component-edit-button:active
-{
-    transform:translateY(0);
-
-    box-shadow:
-        inset 0 1px 2px rgba(55,75,96,.10);
-}
-
-
-.component-edit-button i
-{
-    font-size:10px;
-}
-
-
-/* ============================================================
-   COMPONENT DELETE BUTTON
-============================================================ */
-
+.component-edit-button,
 .component-delete-button
 {
     position:relative;
 
     z-index:1;
 
-    width:auto;
-
-    min-width:68px;
-
-    min-height:30px;
-
-    flex:0 0 auto;
-
     display:flex;
 
     align-items:center;
 
     justify-content:center;
 
+    flex:
+        0
+        0
+        auto;
+
     gap:6px;
 
-    padding:5px 11px;
+    width:auto;
 
-    border:1px solid
-        rgba(255,255,255,.94);
+    min-width:68px;
+
+    min-height:30px;
+
+    margin:0;
+
+    padding:
+        5px
+        11px;
+
+    box-sizing:border-box;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .94
+        );
 
     border-radius:9px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,.98),
-            rgba(226,236,246,.84)
+            rgba(
+                255,
+                255,
+                255,
+                .98
+            ),
+            rgba(
+                226,
+                236,
+                246,
+                .84
+            )
         );
 
     color:#315f91;
+
+    font-family:inherit;
 
     font-size:11px;
 
@@ -394,261 +385,282 @@
 
     box-shadow:
 
-        inset 0 1px 0 rgba(255,255,255,1),
+        inset
+        0
+        1px
+        0
+        rgba(
+            255,
+            255,
+            255,
+            1
+        ),
 
-        inset 0 -1px 0 rgba(121,145,170,.08),
+        0
+        3px
+        9px
+        rgba(
+            55,
+            75,
+            96,
+            .09
+        );
 
-        0 3px 9px rgba(55,75,96,.09);
+    backdrop-filter:
+        blur(
+            10px
+        );
 
-    backdrop-filter:blur(10px);
-
-    -webkit-backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:
+        blur(
+            10px
+        );
 
     transition:
+        background
+        .18s
+        ease,
 
-        background .18s ease,
+        border-color
+        .18s
+        ease,
 
-        border-color .18s ease,
+        box-shadow
+        .18s
+        ease,
 
-        box-shadow .18s ease,
+        color
+        .18s
+        ease,
 
-        transform .18s ease,
+        transform
+        .18s
+        ease;
+}
 
-        color .18s ease;
+
+.component-edit-button
+{
+    margin-left:auto;
+}
+
+
+.component-edit-button:hover
+{
+    color:#294f78;
+
+    transform:
+        translateY(
+            -1px
+        );
+
+    border-color:
+        rgba(
+            86,
+            125,
+            164,
+            .24
+        );
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                255,
+                255,
+                255,
+                1
+            ),
+            rgba(
+                234,
+                242,
+                249,
+                .94
+            )
+        );
+
+    box-shadow:
+        0
+        5px
+        13px
+        rgba(
+            55,
+            75,
+            96,
+            .12
+        );
 }
 
 
 .component-delete-button:hover
 {
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,1),
-            rgba(249,235,235,.94)
+    color:#a33d3d;
+
+    transform:
+        translateY(
+            -1px
         );
 
     border-color:
-        rgba(180,75,75,.24);
+        rgba(
+            180,
+            75,
+            75,
+            .24
+        );
 
-    color:#a33d3d;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                255,
+                255,
+                255,
+                1
+            ),
+            rgba(
+                249,
+                235,
+                235,
+                .94
+            )
+        );
 
     box-shadow:
-
-        inset 0 1px 0 rgba(255,255,255,1),
-
-        0 5px 13px rgba(120,65,65,.12);
-
-    transform:translateY(-1px);
+        0
+        5px
+        13px
+        rgba(
+            120,
+            65,
+            65,
+            .12
+        );
 }
 
 
+.component-edit-button:active,
 .component-delete-button:active
 {
-    transform:translateY(0);
-
-    box-shadow:
-        inset 0 1px 2px rgba(120,65,65,.10);
+    transform:
+        translateY(
+            0
+        );
 }
 
 
+.component-edit-button i,
 .component-delete-button i
 {
     font-size:10px;
 }
 
 
+
 /* ============================================================
-   PREVIEW HOLDER
+   PREVIEW CONTENT
    ------------------------------------------------------------
-   OUTER PREVIEW HOLDER
+   Page-level subordinate component preview area.
 
-   Preview:
-       811px × 456px
-       16:9
-
-   The component INSIDE this holder is scaled independently.
+   Reduced from 720px to 520px.
 ============================================================ */
 
 .component-preview-content
 {
     position:relative;
 
-    z-index:1;
+    display:block;
 
     width:100%;
 
-    height:456px;
-
     min-width:0;
 
-    min-height:456px;
+    height:520px;
 
-    max-height:456px;
-
-    flex:0 0 456px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
+    min-height:520px;
 
     margin:0;
 
-    padding:0;
+    padding:20px;
 
     box-sizing:border-box;
 
     border:0;
 
-    border-radius:0 0 12px 12px;
+    border-radius:
+        0
+        0
+        12px
+        12px;
 
-    background:#ffffff;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #f8fbff 100%
+        );
 
-    box-shadow:none;
-
-    overflow:hidden;
+    overflow:auto;
 }
 
 
+
 /* ============================================================
-   ACTUAL SUB ORDINATE COMPONENT PREVIEW
-   ------------------------------------------------------------
-   SOURCE CANVAS:
-
-       1200px × 675px
-
-   PREVIEW CANVAS:
-
-       811px × 456px
-
-   SCALE:
-
-       811 / 1200
-       ≈ 0.6758333333
+   DIRECT COMPONENT HOST
 ============================================================ */
 
-.component-preview-content
-> app-component-renderer
+.component-direct-host
 {
     position:relative;
 
     display:block;
 
-    flex:
-        0 0 1200px;
-
-    width:
-        1200px;
-
-    height:
-        456px;
-
-    min-width:
-        1200px;
-
-    min-height:
-        456px;
-
-    max-width:
-        1200px;
-
-    max-height:
-        456px;
-
-    margin:
-        0 auto;
-
-    padding:
-        0;
-
-    box-sizing:border-box;
-
-    align-self:center;
-
-    transform:
-        scale(
-            0.6758333333
-        );
-
-    transform-origin:
-        center center;
-}
-
-
-/* ============================================================
-   SUB ORDINATE COMPONENT BACKGROUND
-============================================================ */
-
-.component-preview-content
-> app-component-renderer.dashboard-default-background-renderer
-{
-    position:absolute;
-
-    inset:0;
-
-    display:block;
-
     width:100%;
 
-    height:100%;
-
     min-width:0;
-
-    min-height:0;
-
-    max-width:none;
-
-    max-height:none;
-
-    margin:0;
-
-    padding:0;
-
-    flex:0 0 auto;
-
-    transform:none;
-
-    box-sizing:border-box;
-}
-
-
-/* ============================================================
-   FORCE DYNAMIC SUB ORDINATE COMPONENT PREVIEW TO FILL
-============================================================ */
-
-.component-preview-content
-::ng-deep
-app-dashboard-default
-{
-    position:absolute;
-
-    inset:0;
-
-    display:block;
-
-    width:100%;
-
-    height:100%;
-
-    min-width:0;
-
-    min-height:0;
-
-    max-width:none;
-
-    max-height:none;
 
     margin:0;
 
     padding:0;
 
     box-sizing:border-box;
+
+    overflow:visible;
 }
 
 
+
 /* ============================================================
-   PREVIEW CLEAN SURFACE
+   DIRECTLY INSERTED ANGULAR COMPONENT
+============================================================ */
+
+.component-direct-host > *
+{
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+
+    max-width:none;
+
+    height:auto;
+
+    min-height:0;
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    overflow:visible;
+}
+
+
+
+/* ============================================================
+   CLEAN PREVIEW SURFACE
 ============================================================ */
 
 .component-preview-content::before
@@ -657,20 +669,13 @@ app-dashboard-default
 }
 
 
+
 /* ============================================================
    EMPTY STATE
 ============================================================ */
 
 .component-empty
 {
-    position:relative;
-
-    flex:1 1 auto;
-
-    width:100%;
-
-    min-height:0;
-
     display:flex;
 
     align-items:center;
@@ -679,19 +684,35 @@ app-dashboard-default
 
     gap:10px;
 
-    text-align:center;
+    width:100%;
+
+    min-height:160px;
+
+    margin:0;
+
+    padding:40px;
 
     box-sizing:border-box;
 
-    color:var(--text-secondary, #6b7280);
+    color:
+        var(
+            --text-secondary,
+            #6b7280
+        );
+
+    text-align:center;
 }
 
 
 .component-empty i
 {
-    font-size:16px;
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 
-    color:var(--primary-color, #4f46e5);
+    font-size:16px;
 }
 
 
@@ -701,20 +722,13 @@ app-dashboard-default
 }
 
 
+
 /* ============================================================
    LOADING STATE
 ============================================================ */
 
 .component-loading
 {
-    position:relative;
-
-    flex:1 1 auto;
-
-    width:100%;
-
-    min-height:0;
-
     display:flex;
 
     align-items:center;
@@ -723,17 +737,35 @@ app-dashboard-default
 
     gap:10px;
 
-    text-align:center;
+    width:100%;
 
-    color:var(--text-secondary, #6b7280);
+    min-height:160px;
+
+    margin:0;
+
+    padding:40px;
+
+    box-sizing:border-box;
+
+    color:
+        var(
+            --text-secondary,
+            #6b7280
+        );
+
+    text-align:center;
 }
 
 
 .component-loading i
 {
-    font-size:16px;
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 
-    color:var(--primary-color, #4f46e5);
+    font-size:16px;
 }
 
 
@@ -743,20 +775,13 @@ app-dashboard-default
 }
 
 
+
 /* ============================================================
    ERROR STATE
 ============================================================ */
 
 .component-error
 {
-    position:relative;
-
-    flex:1 1 auto;
-
-    width:100%;
-
-    min-height:0;
-
     display:flex;
 
     flex-direction:column;
@@ -767,21 +792,35 @@ app-dashboard-default
 
     gap:12px;
 
-    text-align:center;
+    width:100%;
+
+    min-height:160px;
+
+    margin:0;
 
     padding:40px;
 
     box-sizing:border-box;
 
-    color:var(--text-secondary, #6b7280);
+    color:
+        var(
+            --text-secondary,
+            #6b7280
+        );
+
+    text-align:center;
 }
 
 
 .component-error i
 {
-    font-size:28px;
+    color:
+        var(
+            --primary-color,
+            #4f46e5
+        );
 
-    color:var(--primary-color, #4f46e5);
+    font-size:28px;
 }
 
 
@@ -793,8 +832,9 @@ app-dashboard-default
 }
 
 
+
 /* ============================================================
-   RESPONSIVE
+   TABLET
 ============================================================ */
 
 @media
@@ -804,84 +844,14 @@ app-dashboard-default
 {
     .component-preview-content
     {
-        height:auto;
+        height:500px;
 
-        min-height:0;
+        min-height:500px;
 
-        max-height:none;
-
-        flex:0 0 auto;
-
-        aspect-ratio:16 / 9;
-    }
-
-
-    .component-preview-content
-    > app-component-renderer
-    {
-        position:absolute;
-
-        top:50%;
-
-        left:50%;
-
-        width:1200px;
-
-        height:675px;
-
-        min-width:1200px;
-
-        min-height:675px;
-
-        max-width:1200px;
-
-        max-height:675px;
-
-        margin:0;
-
-        flex:none;
-
-        transform:
-            translate(
-                -50%,
-                -50%
-            )
-            scale(
-                calc(
-                    min(
-                        100% / 1200,
-                        100% / 675
-                    )
-                )
-            );
-
-        transform-origin:
-            center center;
-    }
-
-
-    .component-preview-content
-    > app-component-renderer.dashboard-default-background-renderer
-    {
-        position:absolute;
-
-        inset:0;
-
-        width:100%;
-
-        height:100%;
-
-        min-width:0;
-
-        min-height:0;
-
-        max-width:none;
-
-        max-height:none;
-
-        transform:none;
+        padding:18px;
     }
 }
+
 
 
 /* ============================================================
@@ -893,18 +863,6 @@ app-dashboard-default
     max-width:768px
 )
 {
-    .component-canvas
-    {
-        width:100%;
-
-        height:auto;
-
-        min-height:0;
-
-        border-radius:12px;
-    }
-
-
     .component-section-header
     {
         height:40px;
@@ -913,11 +871,13 @@ app-dashboard-default
 
         max-height:40px;
 
+        flex-basis:40px;
+
         gap:8px;
 
-        padding:0 10px;
-
-        border-radius:12px 12px 0 0;
+        padding:
+            0
+            10px;
     }
 
 
@@ -928,14 +888,6 @@ app-dashboard-default
         height:28px;
 
         flex-basis:28px;
-
-        font-size:12px;
-    }
-
-
-    .component-section-icon i
-    {
-        font-size:12px;
     }
 
 
@@ -954,7 +906,9 @@ app-dashboard-default
 
         min-height:30px;
 
-        padding:5px 8px;
+        padding:
+            5px
+            8px;
 
         font-size:10px;
     }
@@ -962,80 +916,92 @@ app-dashboard-default
 
     .component-preview-content
     {
-        width:100%;
+        height:480px;
 
-        height:auto;
+        min-height:480px;
 
-        min-height:0;
-
-        max-height:none;
-
-        flex:0 0 auto;
-
-        aspect-ratio:16 / 9;
-
-        border-radius:0 0 12px 12px;
+        padding:16px;
     }
 
 
-    .component-preview-content
-    > app-component-renderer
+    .component-direct-host
     {
-        position:absolute;
-
-        top:50%;
-
-        left:50%;
-
-        width:1200px;
-
-        height:675px;
-
-        min-width:1200px;
-
-        min-height:675px;
-
-        max-width:1200px;
-
-        max-height:675px;
-
-        margin:0;
-
-        flex:none;
-
-        transform:
-            translate(
-                -50%,
-                -50%
-            )
-            scale(
-                0.6758333333
-            );
-
-        transform-origin:
-            center center;
-    }
-
-
-    .component-preview-content
-    > app-component-renderer.dashboard-default-background-renderer
-    {
-        position:absolute;
-
-        inset:0;
-
         width:100%;
-
-        height:100%;
 
         min-width:0;
+    }
 
-        min-height:0;
 
-        max-width:none;
+    .component-direct-host > *
+    {
+        width:100%;
 
-        max-height:none;
+        min-width:0;
+    }
+}
 
-        transform:none;
+
+
+/* ============================================================
+   SMALL MOBILE
+============================================================ */
+
+@media
+(
+    max-width:480px
+)
+{
+    .component-section-header
+    {
+        gap:6px;
+
+        padding:
+            0
+            8px;
+    }
+
+
+    .component-section-name
+    {
+        font-size:11px;
+    }
+
+
+    .component-edit-button,
+    .component-delete-button
+    {
+        min-width:58px;
+
+        padding:
+            5px
+            7px;
+
+        font-size:9px;
+    }
+
+
+    .component-preview-content
+    {
+        height:460px;
+
+        min-height:460px;
+
+        padding:12px;
+    }
+
+
+    .component-direct-host
+    {
+        width:100%;
+
+        min-width:0;
+    }
+
+
+    .component-direct-host > *
+    {
+        width:100%;
+
+        min-width:0;
     }
 }

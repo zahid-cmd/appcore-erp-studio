@@ -1,18 +1,31 @@
 <div
-
     class="image-hub"
-
     [class.disabled]="disabled"
-
     [class.readonly]="readonly">
 
+
     <!-- =====================================================
-         IMAGE PREVIEW
+         LABEL
     ====================================================== -->
 
-    <div
+    <div class="image-hub-label">
 
-        class="image-hub-preview">
+        {{ label }}
+
+    </div>
+
+
+
+    <!-- =====================================================
+         IMAGE CONTAINER
+    ====================================================== -->
+
+    <div class="image-hub-preview">
+
+
+        <!-- =================================================
+             IMAGE
+        ================================================== -->
 
         <img
 
@@ -20,11 +33,13 @@
 
             [src]="imageUrl"
 
-            alt="Image Preview" />
+            [alt]="label" />
 
-        <!-- =====================================================
+
+
+        <!-- =================================================
              PLACEHOLDER
-        ====================================================== -->
+        ================================================== -->
 
         <div
 
@@ -32,7 +47,9 @@
 
             class="image-hub-placeholder">
 
+
             <i class="fas fa-image"></i>
+
 
             <span>
 
@@ -40,53 +57,77 @@
 
             </span>
 
+
         </div>
 
+
+
+        <!-- =================================================
+             FLOATING ACTIONS
+        ================================================== -->
+
+        <div class="image-hub-floating-actions">
+
+
+            <!-- =============================================
+                 UPLOAD
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="image-hub-action upload-button"
+
+                title="Upload image"
+
+                aria-label="Upload image"
+
+                [disabled]="disabled || readonly"
+
+                (click)="fileInput.click()">
+
+
+                <i class="fas fa-upload"></i>
+
+
+            </button>
+
+
+
+            <!-- =============================================
+                 REMOVE
+            ============================================== -->
+
+            <button
+
+                *ngIf="imageUrl"
+
+                type="button"
+
+                class="image-hub-action remove-button"
+
+                title="Remove image"
+
+                aria-label="Remove image"
+
+                [disabled]="disabled || readonly"
+
+                (click)="removeImage()">
+
+
+                <i class="fas fa-trash"></i>
+
+
+            </button>
+
+
+        </div>
+
+
     </div>
 
-    <!-- =====================================================
-         ACTIONS
-    ====================================================== -->
 
-    <div
-
-        class="image-hub-actions">
-
-        <button
-
-            type="button"
-
-            class="upload-button"
-
-            [disabled]="disabled || readonly"
-
-            (click)="fileInput.click()">
-
-            <i class="fas fa-upload"></i>
-
-            Upload
-
-        </button>
-
-        <button
-
-            *ngIf="imageUrl"
-
-            type="button"
-
-            class="remove-button"
-
-            [disabled]="disabled || readonly"
-
-            (click)="removeImage()">
-
-            <i class="fas fa-trash"></i>
-
-            Remove
-
-        </button>
-
-    </div>
 
     <!-- =====================================================
          HIDDEN FILE INPUT
@@ -103,5 +144,6 @@
         hidden
 
         (change)="onFileSelected($event)" />
+
 
 </div>

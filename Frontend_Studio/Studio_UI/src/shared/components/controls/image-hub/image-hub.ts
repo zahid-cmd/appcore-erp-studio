@@ -26,9 +26,11 @@ from '@angular/common';
 
 @Component(
 {
-    selector: 'app-image-hub',
+    selector:
+        'app-image-hub',
 
-    standalone: true,
+    standalone:
+        true,
 
     imports:
     [
@@ -41,8 +43,10 @@ from '@angular/common';
     styleUrl:
         './image-hub.css'
 })
+
 export class ImageHubComponent
 {
+
     /* =====================================================
        FILE INPUT
     ====================================================== */
@@ -53,11 +57,21 @@ export class ImageHubComponent
 
 
     /* =====================================================
+       LABEL
+    ====================================================== */
+
+    @Input()
+    label =
+        'Image';
+
+
+    /* =====================================================
        IMAGE
     ====================================================== */
 
     @Input()
-    imageUrl = '';
+    imageUrl =
+        '';
 
     @Output()
     imageChange =
@@ -78,10 +92,12 @@ export class ImageHubComponent
     ====================================================== */
 
     @Input()
-    disabled = false;
+    disabled =
+        false;
 
     @Input()
-    readonly = false;
+    readonly =
+        false;
 
 
     /* =====================================================
@@ -122,10 +138,19 @@ export class ImageHubComponent
             input.files[0];
 
 
-        this.imageChange.emit(file);
+        this.imageChange.emit(
+            file
+        );
 
 
-        input.value = '';
+        /*
+         * Reset the input so that selecting
+         * the same file again still triggers
+         * the change event.
+         */
+
+        input.value =
+            '';
     }
 
 
@@ -146,20 +171,29 @@ export class ImageHubComponent
         }
 
 
-        this.imageUrl = '';
+        this.imageUrl =
+            '';
 
 
-        if (this.fileInput)
+        if
+        (
+            this.fileInput
+        )
         {
-            this.fileInput.nativeElement.value = '';
+            this.fileInput
+                .nativeElement
+                .value =
+                '';
         }
 
 
-        //===================================================
-        // Notify Parent Component
-        //===================================================
+        /* =================================================
+           Notify Parent Component
+        ================================================== */
 
-        this.imageChange.emit(null);
+        this.imageChange.emit(
+            null
+        );
     }
 
 
@@ -171,4 +205,5 @@ export class ImageHubComponent
     {
         this.removeImage();
     }
+
 }
