@@ -20,44 +20,23 @@ from '@angular/common';
 // Login Page 4 Promotional Image Light
 //===============================================================
 
-import
-{
-    LoginPagePromotionalImageLightComponent
-}
-from '../../components/login-page-4/promotional-image-light/promotional-image-light';
 
 
 //===============================================================
 // Login Page 4 Promotional Image Deep
 //===============================================================
 
-import
-{
-    LoginPagePromotionalImageDeepComponent
-}
-from '../../components/login-page-4/promotional-image-deep/promotional-image-deep';
-
 
 //===============================================================
 // Login Page 4 Branding
 //===============================================================
 
-import
-{
-    LoginPageBrandingComponent
-}
-from '../../components/login-page-4/branding/branding';
 
 
 //===============================================================
 // Login Page 4 Powered By
 //===============================================================
 
-import
-{
-    LoginPagePoweredByComponent
-}
-from '../../components/login-page-4/powered-by/powered-by';
 
 
 //===============================================================
@@ -97,12 +76,6 @@ from '../../components/login-credentials/forget-password/forget-password';
 // Login Page 4 Theme Selector
 //===============================================================
 
-import
-{
-    LoginPageThemeSelectorComponent
-}
-from '../../components/login-page-4/theme-selector/theme-selector';
-
 
 //===============================================================
 // Central Notification Panel
@@ -131,21 +104,11 @@ from '../../components/login-credentials/notification-panel/notification-panel';
     [
         CommonModule,
 
-        LoginPagePromotionalImageLightComponent,
-
-        LoginPagePromotionalImageDeepComponent,
-
-        LoginPageBrandingComponent,
-
-        LoginPagePoweredByComponent,
-
         LoginPageLoginPanelComponent,
 
         LoginPageRegistrationPanelComponent,
 
         LoginPageForgetPasswordPanelComponent,
-
-        LoginPageThemeSelectorComponent,
 
         LoginPageNotificationPanelComponent
     ],

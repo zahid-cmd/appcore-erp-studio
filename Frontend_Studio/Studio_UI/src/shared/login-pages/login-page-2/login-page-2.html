@@ -10,17 +10,17 @@
      │
      ├── LEFT 45%
      │   ├── TOP 15%
-     │   │   └── BRANDING 1
+     │   │   └── EMPTY
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
      │   │
      │   └── BOTTOM 15%
-     │       └── POWERED BY
+     │       └── EMPTY
      │
      ├── MIDDLE 20%
      │   ├── TOP 15%
-     │   │   └── CLIENT LOGO AREA
+     │   │   └── EMPTY
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
@@ -30,7 +30,7 @@
      │
      └── RIGHT 35%
          ├── TOP 50px
-         │   └── THEME SELECTOR
+         │   └── EMPTY
          │
          ├── CENTER
          │   ├── LOGIN PANEL
@@ -42,38 +42,17 @@
 
      IMPORTANT:
 
-         The Promotional Image remains completely independent
-         from this layout.
+         Promotional Image, Branding, Powered By and
+         Theme Selector have been transferred to their
+         new locations.
 
-         It occupies the FULL VIEWPORT behind all sections.
+         They are therefore intentionally removed from
+         Login Page 2.
 
-         The Notification Panel is completely independent
-         from the page layout.
+         The Notification Panel remains completely
+         independent from the page layout.
 
          It consumes NO physical layout space.
-
-         Branding 2 has been completely removed.
-
-         The Client Logo area remains in the
-         MIDDLE TOP area.
-
-         Powered By remains only in the
-         LEFT BOTTOM area.
-
-         Theme Selector is placed in the
-         RIGHT TOP area.
-
-         Notification Button is floating at page level.
-
-         Theme Selector controls:
-
-             LIGHT
-                 ↓
-             Promotional Image Light
-
-             DEEP
-                 ↓
-             Promotional Image Deep
 
          Authentication:
 
@@ -159,17 +138,6 @@
              Both panel states become FALSE.
 
              Login Panel is displayed.
-
-         THEME CHANGE EVENT:
-
-             Theme Selector emits themeChange.
-
-             This page receives the event through
-             onThemeChange().
-
-             isLightTheme becomes TRUE or FALSE.
-
-             Promotional Image changes accordingly.
 =========================================================== -->
 
 
@@ -216,54 +184,6 @@
 
 
     <!-- =======================================================
-         FULL VIEWPORT PROMOTIONAL IMAGE
-         -------------------------------------------------------
-         This layer remains completely independent from the
-         45% / 20% / 35% page structure.
-
-         It occupies:
-
-             Width  = 100vw
-             Height = 100vh
-    ======================================================== -->
-
-    <section
-        class="login-page-2-promotional-area"
-    >
-
-
-        <!-- ===================================================
-             LIGHT PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = true
-        ==================================================== -->
-
-        <app-login-page-promotional-image-light
-            *ngIf="isLightTheme"
-        >
-        </app-login-page-promotional-image-light>
-
-
-        <!-- ===================================================
-             DEEP PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = false
-        ==================================================== -->
-
-        <app-login-page-promotional-image-deep
-            *ngIf="!isLightTheme"
-        >
-        </app-login-page-promotional-image-deep>
-
-
-    </section>
-
-
-    <!-- =======================================================
          DESKTOP PAGE LAYOUT
          -------------------------------------------------------
          FULL WIDTH SPLIT:
@@ -272,12 +192,17 @@
              MIDDLE = 20%
              RIGHT  = 35%
 
-         IMPORTANT:
+         The following components have been transferred
+         and are no longer rendered by Login Page 2:
 
-             Notification Panel is NOT inside this layout.
+             Promotional Image Light
+             Promotional Image Deep
+             Branding
+             Powered By
+             Theme Selector
 
-             Therefore it cannot affect the 45% / 20% / 35%
-             dimensions.
+         Notification Panel is intentionally NOT included
+         inside this layout.
     ======================================================== -->
 
     <main
@@ -297,6 +222,10 @@
                  TOP    = 15%
                  CENTER = REST
                  BOTTOM = 15%
+
+             CONTENT:
+
+                 EMPTY
         ==================================================== -->
 
         <section
@@ -313,15 +242,14 @@
 
                  CONTENT:
 
-                     BRANDING 1
+                     EMPTY
+
+                 Branding has been transferred.
             ================================================= -->
 
             <section
                 class="login-page-2-left-top"
             >
-
-                <app-login-page-branding>
-                </app-login-page-branding>
 
             </section>
 
@@ -333,7 +261,9 @@
 
                      REST
 
-                 Promotional image remains visible underneath.
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -352,15 +282,14 @@
 
                  CONTENT:
 
-                     POWERED BY
+                     EMPTY
+
+                 Powered By has been transferred.
             ================================================= -->
 
             <section
                 class="login-page-2-left-bottom"
             >
-
-                <app-login-page-powered-by>
-                </app-login-page-powered-by>
 
             </section>
 
@@ -380,6 +309,10 @@
                  TOP    = 15%
                  CENTER = REST
                  BOTTOM = 15%
+
+             CONTENT:
+
+                 EMPTY
         ==================================================== -->
 
         <section
@@ -396,11 +329,10 @@
 
                  CONTENT:
 
-                     CLIENT LOGO AREA
+                     EMPTY
 
-                 The Client Logo component can be placed here
-                 independently without affecting the rest of
-                 the page composition.
+                 Client Logo area remains structurally empty
+                 until its component is transferred.
             ================================================= -->
 
             <section
@@ -417,7 +349,9 @@
 
                      REST
 
-                 Promotional image remains visible underneath.
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -461,6 +395,8 @@
                  TOP    = 50px
                  CENTER = REST
                  BOTTOM = 50px
+
+             Theme Selector has been transferred.
         ==================================================== -->
 
         <section
@@ -477,31 +413,12 @@
 
                  CONTENT:
 
-                     THEME SELECTOR
-
-                 Theme Selector emits:
-
-                     true
-                         ↓
-                     LIGHT THEME
-
-                     false
-                         ↓
-                     DEEP THEME
-
-                 Page 2 remains the owner of the
-                 isLightTheme state.
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-2-right-top"
             >
-
-                <app-login-page-theme-selector
-                    [isLightTheme]="isLightTheme"
-                    (themeChange)="onThemeChange($event)"
-                >
-                </app-login-page-theme-selector>
 
             </section>
 
@@ -515,7 +432,8 @@
 
                  CONTENT:
 
-                     LOGIN / REGISTRATION /
+                     LOGIN /
+                     REGISTRATION /
                      FORGET PASSWORD PANEL
             ================================================= -->
 
@@ -626,9 +544,6 @@
                  CONTENT:
 
                      EMPTY FOOTER AREA
-
-                 Powered By remains completely removed from
-                 this section.
             ================================================= -->
 
             <section

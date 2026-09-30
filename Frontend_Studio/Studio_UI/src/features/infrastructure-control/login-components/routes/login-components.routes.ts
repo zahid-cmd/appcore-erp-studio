@@ -4,7 +4,6 @@ import
 }
 from '@angular/router';
 
-
 //===========================================================
 // MNU-002-006 Routes
 //===========================================================
@@ -12,7 +11,6 @@ from '@angular/router';
 export const mnu002006Routes:
 Routes =
 [
-
 
     //===========================================================
     // Menu Routes
@@ -23,7 +21,6 @@ Routes =
     //   • Activity routes
     //   • Page routes
     //===========================================================
-
 
     {
         path:'',
@@ -36,24 +33,24 @@ Routes =
             // AUTO-BEGIN : SUB-002-006-001
 
                 //===========================================================
-                // Login Component 1
+                // Core Components
                 //===========================================================
 
                 {
-                    path:'login-component-1',
+                    path:'core-components',
 
                     data:
                     {
-                        breadcrumb:'Login Component 1'
+                        breadcrumb:'Core Components'
                     },
 
                     loadChildren:() =>
                         import(
-                            './login-component-1.routes'
+                            './core-components.routes'
                         )
                         .then(
                             m =>
-                                m.LoginComponent1Routes
+                                m.CoreComponentsRoutes
                         )
                 },
 
@@ -62,80 +59,28 @@ Routes =
             // AUTO-BEGIN : SUB-002-006-002
 
                 //===========================================================
-                // Login Component 2
+                // Sub Ordinate Components
                 //===========================================================
 
                 {
-                    path:'login-component-2',
+                    path:'sub-ordinate-components',
 
                     data:
                     {
-                        breadcrumb:'Login Component 2'
+                        breadcrumb:'Sub Ordinate Components'
                     },
 
                     loadChildren:() =>
                         import(
-                            './login-component-2.routes'
+                            './sub-ordinate-components.routes'
                         )
                         .then(
                             m =>
-                                m.LoginComponent2Routes
+                                m.SubOrdinateComponentsRoutes
                         )
                 },
 
                 // AUTO-END : SUB-002-006-002
-
-            // AUTO-BEGIN : SUB-002-006-003
-
-                //===========================================================
-                // Login Component 3
-                //===========================================================
-
-                {
-                    path:'login-component-3',
-
-                    data:
-                    {
-                        breadcrumb:'Login Component 3'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './login-component-3.routes'
-                        )
-                        .then(
-                            m =>
-                                m.LoginComponent3Routes
-                        )
-                },
-
-                // AUTO-END : SUB-002-006-003
-
-            // AUTO-BEGIN : SUB-002-006-004
-
-                //===========================================================
-                // Login Component 4
-                //===========================================================
-
-                {
-                    path:'login-component-4',
-
-                    data:
-                    {
-                        breadcrumb:'Login Component 4'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './login-component-4.routes'
-                        )
-                        .then(
-                            m =>
-                                m.LoginComponent4Routes
-                        )
-                },
-
-                // AUTO-END : SUB-002-006-004
 
         ]
 

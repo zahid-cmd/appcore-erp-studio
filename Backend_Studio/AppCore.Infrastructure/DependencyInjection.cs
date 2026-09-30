@@ -149,6 +149,22 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : SubOrdinateComponents
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : SubOrdinateComponents
+
+// AUTO-BEGIN : CoreComponents
+
+using AppCore.Application.InfrastructureControl.LoginComponents;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
+
+// AUTO-END : CoreComponents
+
+
+
 // AUTO-BEGIN : Company
 
 using AppCore.Application.Settings.GeneralSettings;
@@ -189,34 +205,10 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfi
 // AUTO-END : Dashboards
 
 
-// AUTO-BEGIN : LoginComponent4
-
-using AppCore.Application.InfrastructureControl.LoginComponents;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
-
-// AUTO-END : LoginComponent4
 
 
-// AUTO-BEGIN : LoginComponent3
 
-using AppCore.Application.InfrastructureControl.LoginComponents;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
 
-// AUTO-END : LoginComponent3
-
-// AUTO-BEGIN : LoginComponent2
-
-using AppCore.Application.InfrastructureControl.LoginComponents;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
-
-// AUTO-END : LoginComponent2
-
-// AUTO-BEGIN : LoginComponent1
-
-using AppCore.Application.InfrastructureControl.LoginComponents;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
-
-// AUTO-END : LoginComponent1
 
 
 
@@ -557,6 +549,28 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : SubOrdinateComponents
+
+        services.AddScoped
+        <
+            ISubOrdinateComponentsRepository,
+            SubOrdinateComponentsRepository
+        >();
+
+        // AUTO-END : SubOrdinateComponents
+
+        // AUTO-BEGIN : CoreComponents
+
+        services.AddScoped
+        <
+            ICoreComponentsRepository,
+            CoreComponentsRepository
+        >();
+
+        // AUTO-END : CoreComponents
+
+
+
         // AUTO-BEGIN : Company
 
         services.AddScoped
@@ -612,46 +626,10 @@ public static class DependencyInjection
         // AUTO-END : Dashboards
 
 
-        // AUTO-BEGIN : LoginComponent4
-
-        services.AddScoped
-        <
-            ILoginComponent4Repository,
-            LoginComponent4Repository
-        >();
-
-        // AUTO-END : LoginComponent4
 
 
-        // AUTO-BEGIN : LoginComponent3
 
-        services.AddScoped
-        <
-            ILoginComponent3Repository,
-            LoginComponent3Repository
-        >();
 
-        // AUTO-END : LoginComponent3
-
-        // AUTO-BEGIN : LoginComponent2
-
-        services.AddScoped
-        <
-            ILoginComponent2Repository,
-            LoginComponent2Repository
-        >();
-
-        // AUTO-END : LoginComponent2
-
-        // AUTO-BEGIN : LoginComponent1
-
-        services.AddScoped
-        <
-            ILoginComponent1Repository,
-            LoginComponent1Repository
-        >();
-
-        // AUTO-END : LoginComponent1
 
 
 

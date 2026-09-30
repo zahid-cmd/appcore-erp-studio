@@ -421,50 +421,10 @@ public class AppDbContext
 
 
 
-    // AUTO-BEGIN : LoginComponent1
-
-    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent1>
-    LoginComponent1s
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : LoginComponent1
-
-    // AUTO-BEGIN : LoginComponent2
-
-    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent2>
-    LoginComponent2s
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : LoginComponent2
-
-    // AUTO-BEGIN : LoginComponent3
-
-    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent3>
-    LoginComponent3s
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : LoginComponent3
 
 
-    // AUTO-BEGIN : LoginComponent4
 
-    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.LoginComponent4>
-    LoginComponent4s
-    {
-    get;
-    set;
-    } = null!;
 
-    // AUTO-END : LoginComponent4
 
 
     // AUTO-BEGIN : Dashboards
@@ -525,6 +485,30 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : Company
+
+
+
+    // AUTO-BEGIN : CoreComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.CoreComponents>
+    CoreComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CoreComponents
+
+    // AUTO-BEGIN : SubOrdinateComponents
+
+    public DbSet<AppCore.Domain.Entities.InfrastructureControl.LoginComponents.SubOrdinateComponents>
+    SubOrdinateComponentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SubOrdinateComponents
 
     // AUTO-END : AUTO REGISTER DBSETS
 

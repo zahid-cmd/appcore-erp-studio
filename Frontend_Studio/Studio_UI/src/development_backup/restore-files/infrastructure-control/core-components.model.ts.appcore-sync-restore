@@ -1,0 +1,90 @@
+/* ============================================================
+   Core Components
+============================================================ */
+
+export interface CoreComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Core Components
+============================================================ */
+
+export interface CreateCoreComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Core Components
+============================================================ */
+
+export interface UpdateCoreComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Core Components Defaults
+============================================================ */
+
+export interface CoreComponentsDefaults
+{
+    code:
+        string;
+}

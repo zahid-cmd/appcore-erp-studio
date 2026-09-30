@@ -20,44 +20,21 @@ from '@angular/common';
 // Login Page 3 Promotional Image Light
 //===============================================================
 
-import
-{
-    LoginPagePromotionalImageLightComponent
-}
-from '../../components/login-page-3/promotional-image-light/promotional-image-light';
 
 
 //===============================================================
 // Login Page 3 Promotional Image Deep
 //===============================================================
 
-import
-{
-    LoginPagePromotionalImageDeepComponent
-}
-from '../../components/login-page-3/promotional-image-deep/promotional-image-deep';
-
 
 //===============================================================
 // Login Page 3 Branding
 //===============================================================
 
-import
-{
-    LoginPageBrandingComponent
-}
-from '../../components/login-page-3/branding/branding';
-
 
 //===============================================================
 // Login Page 3 Powered By
 //===============================================================
-
-import
-{
-    LoginPagePoweredByComponent
-}
-from '../../components/login-page-3/powered-by/powered-by';
 
 
 //===============================================================
@@ -97,11 +74,6 @@ from '../../components/login-credentials/forget-password/forget-password';
 // Login Page 3 Theme Selector
 //===============================================================
 
-import
-{
-    LoginPageThemeSelectorComponent
-}
-from '../../components/login-page-3/theme-selector/theme-selector';
 
 
 //===============================================================
@@ -131,21 +103,11 @@ from '../../components/login-credentials/notification-panel/notification-panel';
     [
         CommonModule,
 
-        LoginPagePromotionalImageLightComponent,
-
-        LoginPagePromotionalImageDeepComponent,
-
-        LoginPageBrandingComponent,
-
-        LoginPagePoweredByComponent,
-
         LoginPageLoginPanelComponent,
 
         LoginPageRegistrationPanelComponent,
 
         LoginPageForgetPasswordPanelComponent,
-
-        LoginPageThemeSelectorComponent,
 
         LoginPageNotificationPanelComponent
     ],

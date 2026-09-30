@@ -1,0 +1,90 @@
+/* ============================================================
+   Sub Ordinate Components
+============================================================ */
+
+export interface SubOrdinateComponents
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Sub Ordinate Components
+============================================================ */
+
+export interface CreateSubOrdinateComponents
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Sub Ordinate Components
+============================================================ */
+
+export interface UpdateSubOrdinateComponents
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Sub Ordinate Components Defaults
+============================================================ */
+
+export interface SubOrdinateComponentsDefaults
+{
+    code:
+        string;
+}

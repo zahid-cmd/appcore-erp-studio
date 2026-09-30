@@ -18,434 +18,75 @@ import
 }
 from '@angular/core';
 
-
 //===============================================================
-// Login Page 1 Components
+// Core Components
 //===============================================================
-
 
 import
 {
     LoginPageBackgroundComponent
 }
-from '../../shared/components/login-page-1/background/background';
-
+from '../../shared/components/core-components/background/background';
 
 import
 {
     LoginPageBrandingComponent
 }
-from '../../shared/components/login-page-1/branding/branding';
-
-
-import
-{
-    LoginPagePromotionalPanelComponent
-}
-from '../../shared/components/login-page-1/promotional-panel/promotional-panel';
-
-
-import
-{
-    LoginPagePromotionalImageLightComponent as
-    LoginPage1PromotionalImageLightComponent
-}
-from '../../shared/components/login-page-1/promotional-image-light/promotional-image-light';
-
-
-import
-{
-    LoginPagePromotionalImageDeepComponent as
-    LoginPage1PromotionalImageDeepComponent
-}
-from '../../shared/components/login-page-1/promotional-image-deep/promotional-image-deep';
-
+from '../../shared/components/core-components/branding/branding';
 
 import
 {
     LoginPageClientLogoComponent
 }
-from '../../shared/components/login-page-1/client-logo/client-logo';
-
-
-import
-{
-    LoginPageLoginPanelComponent
-}
-from '../../shared/components/login-page-1/login-panel/login-panel';
-
+from '../../shared/components/core-components/client-logo/client-logo';
 
 import
 {
-    LoginPageRegistrationPanelComponent as
-    LoginPage1RegistrationPanelComponent
+    ConfirmationDialogComponent
 }
-from '../../shared/components/login-page-1/registration-panel/registration-panel';
-
-
-import
-{
-    LoginPageForgetPasswordPanelComponent as
-    LoginPage1ForgetPasswordPanelComponent
-}
-from '../../shared/components/login-page-1/forget-password/forget-password';
-
-
-import
-{
-    LoginPageNotificationPanelComponent
-}
-from '../../shared/components/login-page-1/notification-panel/notification-panel';
-
-
-import
-{
-    LoginPagePoweredByComponent
-}
-from '../../shared/components/login-page-1/powered-by/powered-by';
-
-
-import
-{
-    LoginPageThemeSelectorComponent as
-    LoginPage1ThemeSelectorComponent
-}
-from '../../shared/components/login-page-1/theme-selector/theme-selector';
-
+from '../../shared/components/core-components/confirmation-dialog/confirmation-dialog';
 
 import
 {
     LoginPageFooterComponent
 }
-from '../../shared/components/login-page-1/footer/footer';
-
-
-//===============================================================
-// Login Page 2 Components
-//===============================================================
-
+from '../../shared/components/core-components/footer/footer';
 
 import
 {
-    LoginPageBackgroundComponent as
-    LoginPage2BackgroundComponent
+    LoginPageForgetPasswordPanelComponent
 }
-from '../../shared/components/login-page-2/background/background';
-
+from '../../shared/components/core-components/forget-password/forget-password';
 
 import
 {
-    LoginPageBrandingComponent as
-    LoginPage2BrandingComponent
+    LoginPageLoginPanelComponent
 }
-from '../../shared/components/login-page-2/branding/branding';
-
+from '../../shared/components/core-components/login-panel/login-panel';
 
 import
 {
-    LoginPagePromotionalPanelComponent as
-    LoginPage2PromotionalPanelComponent
+    LoginPageNotificationPanelComponent
 }
-from '../../shared/components/login-page-2/promotional-panel/promotional-panel';
-
+from '../../shared/components/core-components/notification-panel/notification-panel';
 
 import
 {
-    LoginPagePromotionalImageLightComponent as
-    LoginPage2PromotionalImageLightComponent
+    LoginPagePoweredByComponent
 }
-from '../../shared/components/login-page-2/promotional-image-light/promotional-image-light';
-
+from '../../shared/components/core-components/powered-by/powered-by';
 
 import
 {
-    LoginPagePromotionalImageDeepComponent as
-    LoginPage2PromotionalImageDeepComponent
+    LoginPageRegistrationPanelComponent
 }
-from '../../shared/components/login-page-2/promotional-image-deep/promotional-image-deep';
-
+from '../../shared/components/core-components/registration-panel/registration-panel';
 
 import
 {
-    LoginPageClientLogoComponent as
-    LoginPage2ClientLogoComponent
+    LoginPageThemeSelectorComponent
 }
-from '../../shared/components/login-page-2/client-logo/client-logo';
-
-
-import
-{
-    LoginPageLoginPanelComponent as
-    LoginPage2LoginPanelComponent
-}
-from '../../shared/components/login-page-2/login-panel/login-panel';
-
-
-import
-{
-    LoginPageRegistrationPanelComponent as
-    LoginPage2RegistrationPanelComponent
-}
-from '../../shared/components/login-page-2/registration-panel/registration-panel';
-
-
-import
-{
-    LoginPageForgetPasswordPanelComponent as
-    LoginPage2ForgetPasswordPanelComponent
-}
-from '../../shared/components/login-page-2/forget-password/forget-password';
-
-
-import
-{
-    LoginPageNotificationPanelComponent as
-    LoginPage2NotificationPanelComponent
-}
-from '../../shared/components/login-page-2/notification-panel/notification-panel';
-
-
-import
-{
-    LoginPagePoweredByComponent as
-    LoginPage2PoweredByComponent
-}
-from '../../shared/components/login-page-2/powered-by/powered-by';
-
-
-import
-{
-    LoginPageThemeSelectorComponent as
-    LoginPage2ThemeSelectorComponent
-}
-from '../../shared/components/login-page-2/theme-selector/theme-selector';
-
-
-import
-{
-    LoginPageFooterComponent as
-    LoginPage2FooterComponent
-}
-from '../../shared/components/login-page-2/footer/footer';
-
-
-//===============================================================
-// Login Page 3 Components
-//===============================================================
-
-
-import
-{
-    LoginPageBackgroundComponent as
-    LoginPage3BackgroundComponent
-}
-from '../../shared/components/login-page-3/background/background';
-
-
-import
-{
-    LoginPageBrandingComponent as
-    LoginPage3BrandingComponent
-}
-from '../../shared/components/login-page-3/branding/branding';
-
-
-import
-{
-    LoginPagePromotionalPanelComponent as
-    LoginPage3PromotionalPanelComponent
-}
-from '../../shared/components/login-page-3/promotional-panel/promotional-panel';
-
-
-import
-{
-    LoginPagePromotionalImageLightComponent as
-    LoginPage3PromotionalImageLightComponent
-}
-from '../../shared/components/login-page-3/promotional-image-light/promotional-image-light';
-
-
-import
-{
-    LoginPagePromotionalImageDeepComponent as
-    LoginPage3PromotionalImageDeepComponent
-}
-from '../../shared/components/login-page-3/promotional-image-deep/promotional-image-deep';
-
-
-import
-{
-    LoginPageClientLogoComponent as
-    LoginPage3ClientLogoComponent
-}
-from '../../shared/components/login-page-3/client-logo/client-logo';
-
-
-import
-{
-    LoginPageLoginPanelComponent as
-    LoginPage3LoginPanelComponent
-}
-from '../../shared/components/login-page-3/login-panel/login-panel';
-
-
-import
-{
-    LoginPageRegistrationPanelComponent as
-    LoginPage3RegistrationPanelComponent
-}
-from '../../shared/components/login-page-3/registration-panel/registration-panel';
-
-
-import
-{
-    LoginPageForgetPasswordPanelComponent as
-    LoginPage3ForgetPasswordPanelComponent
-}
-from '../../shared/components/login-page-3/forget-password/forget-password';
-
-
-import
-{
-    LoginPageNotificationPanelComponent as
-    LoginPage3NotificationPanelComponent
-}
-from '../../shared/components/login-page-3/notification-panel/notification-panel';
-
-
-import
-{
-    LoginPagePoweredByComponent as
-    LoginPage3PoweredByComponent
-}
-from '../../shared/components/login-page-3/powered-by/powered-by';
-
-
-import
-{
-    LoginPageThemeSelectorComponent as
-    LoginPage3ThemeSelectorComponent
-}
-from '../../shared/components/login-page-3/theme-selector/theme-selector';
-
-
-import
-{
-    LoginPageFooterComponent as
-    LoginPage3FooterComponent
-}
-from '../../shared/components/login-page-3/footer/footer';
-
-
-//===============================================================
-// Login Page 4 Components
-//===============================================================
-
-
-import
-{
-    LoginPageBackgroundComponent as
-    LoginPage4BackgroundComponent
-}
-from '../../shared/components/login-page-4/background/background';
-
-
-import
-{
-    LoginPageBrandingComponent as
-    LoginPage4BrandingComponent
-}
-from '../../shared/components/login-page-4/branding/branding';
-
-
-import
-{
-    LoginPagePromotionalPanelComponent as
-    LoginPage4PromotionalPanelComponent
-}
-from '../../shared/components/login-page-4/promotional-panel/promotional-panel';
-
-
-import
-{
-    LoginPagePromotionalImageLightComponent as
-    LoginPage4PromotionalImageLightComponent
-}
-from '../../shared/components/login-page-4/promotional-image-light/promotional-image-light';
-
-
-import
-{
-    LoginPagePromotionalImageDeepComponent as
-    LoginPage4PromotionalImageDeepComponent
-}
-from '../../shared/components/login-page-4/promotional-image-deep/promotional-image-deep';
-
-
-import
-{
-    LoginPageClientLogoComponent as
-    LoginPage4ClientLogoComponent
-}
-from '../../shared/components/login-page-4/client-logo/client-logo';
-
-
-import
-{
-    LoginPageLoginPanelComponent as
-    LoginPage4LoginPanelComponent
-}
-from '../../shared/components/login-page-4/login-panel/login-panel';
-
-
-import
-{
-    LoginPageRegistrationPanelComponent as
-    LoginPage4RegistrationPanelComponent
-}
-from '../../shared/components/login-page-4/registration-panel/registration-panel';
-
-
-import
-{
-    LoginPageForgetPasswordPanelComponent as
-    LoginPage4ForgetPasswordPanelComponent
-}
-from '../../shared/components/login-page-4/forget-password/forget-password';
-
-
-import
-{
-    LoginPageNotificationPanelComponent as
-    LoginPage4NotificationPanelComponent
-}
-from '../../shared/components/login-page-4/notification-panel/notification-panel';
-
-
-import
-{
-    LoginPagePoweredByComponent as
-    LoginPage4PoweredByComponent
-}
-from '../../shared/components/login-page-4/powered-by/powered-by';
-
-
-import
-{
-    LoginPageThemeSelectorComponent as
-    LoginPage4ThemeSelectorComponent
-}
-from '../../shared/components/login-page-4/theme-selector/theme-selector';
-
-
-import
-{
-    LoginPageFooterComponent as
-    LoginPage4FooterComponent
-}
-from '../../shared/components/login-page-4/footer/footer';
-
+from '../../shared/components/core-components/theme-selector/theme-selector';
 
 //===============================================================
 // Default Dashboard Components
@@ -465,17 +106,6 @@ import
 }
 from '../../shared/components/default-dashboard/quick-access-widget/quick-access-widget';
 
-
-//===============================================================
-// Shared Login Credential Components
-//===============================================================
-
-
-import
-{
-    ConfirmationDialogComponent
-}
-from '../../shared/components/login-credentials/confirmation-dialog/confirmation-dialog';
 
 
 //===============================================================
@@ -811,192 +441,41 @@ implements
     {
 
         //===============================================================
-        // Login Page 1 Components
+        // Core Components
         //===============================================================
 
-        'login-page-1-background':
+        'background':
             LoginPageBackgroundComponent,
 
-        'login-page-1-branding':
+        'branding':
             LoginPageBrandingComponent,
 
-        'login-page-1-promotional-panel':
-            LoginPagePromotionalPanelComponent,
-
-        'login-page-1-promotional-image-light':
-            LoginPage1PromotionalImageLightComponent,
-
-        'login-page-1-promotional-image-deep':
-            LoginPage1PromotionalImageDeepComponent,
-
-        'login-page-1-login-panel':
-            LoginPageLoginPanelComponent,
-
-        'login-page-1-registration-panel':
-            LoginPage1RegistrationPanelComponent,
-
-        'login-page-1-forget-password':
-            LoginPage1ForgetPasswordPanelComponent,
-
-        'login-page-1-notification-panel':
-            LoginPageNotificationPanelComponent,
-
-        'login-page-1-powered-by':
-            LoginPagePoweredByComponent,
-
-        'login-page-1-theme-selector':
-            LoginPage1ThemeSelectorComponent,
-
-        'login-page-1-footer':
-            LoginPageFooterComponent,
-
-        'login-page-1-client-logo':
+        'client-logo':
             LoginPageClientLogoComponent,
 
-        'login-page-1-confirmation-dialog':
+        'confirmation-dialog':
             ConfirmationDialogComponent,
 
+        'footer':
+            LoginPageFooterComponent,
 
-        //===============================================================
-        // Login Page 2 Components
-        //===============================================================
+        'forget-password':
+            LoginPageForgetPasswordPanelComponent,
 
-        'login-page-2-background':
-            LoginPage2BackgroundComponent,
+        'login-panel':
+            LoginPageLoginPanelComponent,
 
-        'login-page-2-branding':
-            LoginPage2BrandingComponent,
+        'notification-panel':
+            LoginPageNotificationPanelComponent,
 
-        'login-page-2-promotional-panel':
-            LoginPage2PromotionalPanelComponent,
+        'powered-by':
+            LoginPagePoweredByComponent,
 
-        'login-page-2-promotional-image-light':
-            LoginPage2PromotionalImageLightComponent,
+        'registration-panel':
+            LoginPageRegistrationPanelComponent,
 
-        'login-page-2-promotional-image-deep':
-            LoginPage2PromotionalImageDeepComponent,
-
-        'login-page-2-login-panel':
-            LoginPage2LoginPanelComponent,
-
-        'login-page-2-registration-panel':
-            LoginPage2RegistrationPanelComponent,
-
-        'login-page-2-forget-password':
-            LoginPage2ForgetPasswordPanelComponent,
-
-        'login-page-2-notification-panel':
-            LoginPage2NotificationPanelComponent,
-
-        'login-page-2-powered-by':
-            LoginPage2PoweredByComponent,
-
-        'login-page-2-theme-selector':
-            LoginPage2ThemeSelectorComponent,
-
-        'login-page-2-footer':
-            LoginPage2FooterComponent,
-
-        'login-page-2-client-logo':
-            LoginPage2ClientLogoComponent,
-
-        'login-page-2-confirmation-dialog':
-            ConfirmationDialogComponent,
-
-
-        //===============================================================
-        // Login Page 3 Components
-        //===============================================================
-
-        'login-page-3-background':
-            LoginPage3BackgroundComponent,
-
-        'login-page-3-branding':
-            LoginPage3BrandingComponent,
-
-        'login-page-3-promotional-panel':
-            LoginPage3PromotionalPanelComponent,
-
-        'login-page-3-promotional-image-light':
-            LoginPage3PromotionalImageLightComponent,
-
-        'login-page-3-promotional-image-deep':
-            LoginPage3PromotionalImageDeepComponent,
-
-        'login-page-3-login-panel':
-            LoginPage3LoginPanelComponent,
-
-        'login-page-3-registration-panel':
-            LoginPage3RegistrationPanelComponent,
-
-        'login-page-3-forget-password':
-            LoginPage3ForgetPasswordPanelComponent,
-
-        'login-page-3-notification-panel':
-            LoginPage3NotificationPanelComponent,
-
-        'login-page-3-powered-by':
-            LoginPage3PoweredByComponent,
-
-        'login-page-3-theme-selector':
-            LoginPage3ThemeSelectorComponent,
-
-        'login-page-3-footer':
-            LoginPage3FooterComponent,
-
-        'login-page-3-client-logo':
-            LoginPage3ClientLogoComponent,
-
-        'login-page-3-confirmation-dialog':
-            ConfirmationDialogComponent,
-
-
-        //===============================================================
-        // Login Page 4 Components
-        //===============================================================
-
-        'login-page-4-background':
-            LoginPage4BackgroundComponent,
-
-        'login-page-4-branding':
-            LoginPage4BrandingComponent,
-
-        'login-page-4-promotional-panel':
-            LoginPage4PromotionalPanelComponent,
-
-        'login-page-4-promotional-image-light':
-            LoginPage4PromotionalImageLightComponent,
-
-        'login-page-4-promotional-image-deep':
-            LoginPage4PromotionalImageDeepComponent,
-
-        'login-page-4-login-panel':
-            LoginPage4LoginPanelComponent,
-
-        'login-page-4-registration-panel':
-            LoginPage4RegistrationPanelComponent,
-
-        'login-page-4-forget-password':
-            LoginPage4ForgetPasswordPanelComponent,
-
-        'login-page-4-notification-panel':
-            LoginPage4NotificationPanelComponent,
-
-        'login-page-4-powered-by':
-            LoginPage4PoweredByComponent,
-
-        'login-page-4-theme-selector':
-            LoginPage4ThemeSelectorComponent,
-
-        'login-page-4-footer':
-            LoginPage4FooterComponent,
-
-        'login-page-4-client-logo':
-            LoginPage4ClientLogoComponent,
-
-        'login-page-4-confirmation-dialog':
-            ConfirmationDialogComponent,
-
+        'theme-selector':
+            LoginPageThemeSelectorComponent,
 
         //===============================================================
         // Default Dashboard Components

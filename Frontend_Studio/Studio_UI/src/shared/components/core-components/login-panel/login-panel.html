@@ -1,0 +1,719 @@
+<!-- ===========================================================
+     LOGIN PAGE LOGIN PANEL
+     -----------------------------------------------------------
+     FINAL FUNCTIONAL LOGIN PANEL
+
+     MASTER GEOMETRY:
+
+         Width:
+             590px
+
+         Height:
+             Available panel height
+             with 20px top + 20px bottom breathing space.
+
+     IMPORTANT:
+
+         This panel controls ONLY the login form.
+
+         Authentication is handled directly by the Login Panel
+         component.
+
+         No:
+         - Language selector
+         - Background artwork
+         - Powered By
+         - Footer
+
+         Client branding is displayed INSIDE the login panel.
+
+         Client branding is loaded directly by this Login Panel
+         from Company Setup through CompanyService.
+
+         Client Display Name:
+             Company Short Name
+
+         Client Logo:
+             Company Logo Path
+
+     AUTHENTICATION:
+
+         The Login Panel component handles:
+
+             - Login ID
+             - Password
+             - Remember Me
+             - Authentication request
+             - Authentication error
+             - Authentication storage
+             - Dashboard navigation
+
+         The Login Page does NOT participate in authentication.
+============================================================ -->
+
+
+<div
+    class="login-page-login-panel"
+    *ngIf="config.visible"
+>
+
+
+    <!-- =======================================================
+         LOGIN PANEL CONTENT
+    ======================================================== -->
+
+    <div
+        class="login-panel-content"
+    >
+
+
+        <!-- ===================================================
+             LOGIN CARD
+        ==================================================== -->
+
+        <div
+            class="login-card"
+        >
+
+
+            <!-- ===============================================
+                 CARD HEADER
+            ================================================ -->
+
+            <div
+                class="login-card-header"
+            >
+
+
+                <!-- ===========================================
+                     TOP META
+                ============================================ -->
+
+                <div
+                    class="login-card-top-meta"
+                >
+
+                    <span>
+                        SIMPLE
+                    </span>
+
+                    <span
+                        class="topline-separator"
+                    >
+                        |
+                    </span>
+
+                    <span>
+                        SECURE
+                    </span>
+
+                    <span
+                        class="topline-separator"
+                    >
+                        |
+                    </span>
+
+                    <span>
+                        SCALABLE
+                    </span>
+
+                </div>
+
+
+                <!-- ===========================================
+                     BLUE ACCENT
+                ============================================ -->
+
+                <div
+                    class="login-card-accent"
+                >
+                </div>
+
+
+                <!-- ===========================================
+                     CLIENT BRANDING
+                     -------------------------------------------
+                     Loaded from Company Setup.
+
+                     Client Display Name:
+
+                         Company Short Name
+
+                     Fallback:
+
+                         Company Name
+
+                     Client Logo:
+
+                         Company Logo Path
+                ============================================ -->
+
+                <div
+                    class="login-card-client-branding"
+                >
+
+
+                    <!-- =======================================
+                         CLIENT LOGO
+                    ======================================== -->
+
+                    <div
+                        class="login-client-logo-area"
+                        *ngIf="clientLogoUrl"
+                    >
+
+                        <img
+                            class="login-client-logo"
+                            [src]="clientLogoUrl"
+                            [alt]="
+                                clientCompanyName
+                                    ||
+                                'Company Logo'
+                            "
+                        >
+
+                    </div>
+
+
+                    <!-- =======================================
+                         CLIENT BRAND SEPARATOR
+                    ======================================== -->
+
+                    <div
+                        class="login-client-separator"
+                        *ngIf="clientCompanyName"
+                    >
+
+                        <span
+                            class="login-client-separator-dot"
+                        >
+                        </span>
+
+                        <span
+                            class="login-client-separator-line"
+                        >
+                        </span>
+
+                        <span
+                            class="login-client-separator-dot"
+                        >
+                        </span>
+
+                    </div>
+
+
+                    <!-- =======================================
+                         CLIENT DISPLAY NAME
+                         ---------------------------------------
+                         Uses Company Short Name from
+                         Company Setup.
+                    ======================================== -->
+
+                    <div
+                        class="login-client-name-area"
+                        *ngIf="clientCompanyName"
+                    >
+
+                        <div
+                            class="login-client-name"
+                        >
+                            {{ clientCompanyName }}
+                        </div>
+
+
+                        <div
+                            class="login-client-name-accent"
+                        >
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- ===========================================
+                     HEADING AREA
+                ============================================ -->
+
+                <div
+                    class="login-card-heading-area"
+                >
+
+                    <h2
+                        class="login-card-heading"
+                    >
+                        {{ config.heading }}
+                    </h2>
+
+
+                    <p
+                        class="login-card-subtitle"
+                    >
+                        {{ config.subtitle }}
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ===============================================
+                 LOGIN FORM
+            ================================================ -->
+
+            <form
+                class="login-form"
+                (ngSubmit)="onSignIn()"
+                autocomplete="on"
+                novalidate
+            >
+
+
+                <!-- ===========================================
+                     LOGIN ID
+                ============================================ -->
+
+                <div
+                    class="login-form-field"
+                >
+
+                    <label
+                        class="login-form-label"
+                        for="login-page-login-id"
+                    >
+
+                        {{ config.loginIdLabel }}
+
+                    </label>
+
+
+                    <div
+                        class="login-input-wrapper"
+                    >
+
+                        <span
+                            class="login-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-user"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="login-page-login-id"
+                            class="login-form-input"
+                            type="text"
+                            name="loginId"
+                            [value]="loginId"
+                            [placeholder]="config.loginIdPlaceholder"
+                            autocomplete="username"
+                            [disabled]="isSigningIn"
+                            [attr.aria-invalid]="
+                                loginError
+                                    ? 'true'
+                                    : null
+                            "
+                            (input)="
+                                onLoginIdChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     PASSWORD
+                ============================================ -->
+
+                <div
+                    class="login-form-field"
+                >
+
+                    <label
+                        class="login-form-label"
+                        for="login-page-password"
+                    >
+
+                        {{ config.passwordLabel }}
+
+                    </label>
+
+
+                    <div
+                        class="login-input-wrapper"
+                    >
+
+                        <span
+                            class="login-input-icon"
+                        >
+
+                            <i
+                                class="fas fa-lock"
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </span>
+
+
+                        <input
+                            id="login-page-password"
+                            class="login-form-input login-password-input"
+                            [type]="
+                                passwordVisible
+                                    ? 'text'
+                                    : 'password'
+                            "
+                            name="password"
+                            [value]="password"
+                            [placeholder]="config.passwordPlaceholder"
+                            autocomplete="current-password"
+                            [disabled]="isSigningIn"
+                            [attr.aria-invalid]="
+                                loginError
+                                    ? 'true'
+                                    : null
+                            "
+                            (input)="
+                                onPasswordChange(
+                                    $any($event.target).value
+                                )
+                            "
+                        />
+
+
+                        <button
+                            type="button"
+                            class="password-visibility-button"
+                            aria-label="Show or hide password"
+                            [disabled]="isSigningIn"
+                            (click)="
+                                togglePasswordVisibility()
+                            "
+                        >
+
+                            <i
+                                [class]="
+                                    passwordVisible
+                                        ? 'fas fa-eye'
+                                        : 'fas fa-eye-slash'
+                                "
+                                aria-hidden="true"
+                            >
+                            </i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LOGIN OPTIONS
+                ============================================ -->
+
+                <div
+                    class="login-form-options"
+                >
+
+
+                    <!-- =======================================
+                         REMEMBER ME
+                    ======================================== -->
+
+                    <label
+                        class="remember-me"
+                        *ngIf="config.rememberMeVisible"
+                    >
+
+                        <input
+                            type="checkbox"
+                            name="rememberMe"
+                            [checked]="rememberMe"
+                            [disabled]="isSigningIn"
+                            (change)="
+                                onRememberMeChange(
+                                    $any($event.target).checked
+                                )
+                            "
+                        />
+
+                        <span
+                            class="remember-checkbox"
+                        >
+                        </span>
+
+                        <span
+                            class="remember-text"
+                        >
+                            {{ config.rememberMeText }}
+                        </span>
+
+                    </label>
+
+
+                    <!-- =======================================
+                         FORGOT PASSWORD
+                    ======================================== -->
+
+                    <button
+                        type="button"
+                        class="forgot-password-button"
+                        *ngIf="config.forgotPasswordVisible"
+                        [disabled]="isSigningIn"
+                        (click)="onForgotPassword()"
+                    >
+
+                        {{ config.forgotPasswordText }}
+
+                    </button>
+
+
+                </div>
+
+
+                <!-- ===========================================
+                     LOGIN ERROR
+                     -------------------------------------------
+                     Displayed only when authentication fails
+                     or client-side validation fails.
+                ============================================ -->
+
+                <div
+                    class="login-error"
+                    *ngIf="loginError"
+                    role="alert"
+                    aria-live="assertive"
+                >
+
+                    <i
+                        class="fas fa-circle-exclamation"
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                    <span>
+                        {{ loginError }}
+                    </span>
+
+                </div>
+
+
+                <!-- ===========================================
+                     SIGN IN BUTTON
+                ============================================ -->
+
+                <button
+                    type="submit"
+                    class="sign-in-button"
+                    [disabled]="isSigningIn"
+                    [attr.aria-busy]="isSigningIn"
+                >
+
+                    <span
+                        class="sign-in-icon"
+                    >
+
+                        <i
+                            *ngIf="!isSigningIn"
+                            [class]="config.signInButtonIcon"
+                            aria-hidden="true"
+                        >
+                        </i>
+
+
+                        <i
+                            *ngIf="isSigningIn"
+                            class="fas fa-spinner fa-spin"
+                            aria-hidden="true"
+                        >
+                        </i>
+
+                    </span>
+
+
+                    <span
+                        class="sign-in-text"
+                    >
+                        {{
+                            isSigningIn
+                                ? 'Signing In...'
+                                : config.signInButtonText
+                        }}
+                    </span>
+
+
+                    <span
+                        class="sign-in-arrow"
+                    >
+
+                        <i
+                            *ngIf="!isSigningIn"
+                            [class]="config.signInButtonArrowIcon"
+                            aria-hidden="true"
+                        >
+                        </i>
+
+                    </span>
+
+                </button>
+
+
+            </form>
+
+
+            <!-- =================================================
+                 OR SEPARATOR
+            ================================================== -->
+
+            <div
+                class="login-or-separator"
+            >
+
+                <span
+                    class="separator-line"
+                >
+                </span>
+
+
+                <span
+                    class="separator-text"
+                >
+                    {{ config.orText }}
+                </span>
+
+
+                <span
+                    class="separator-line"
+                >
+                </span>
+
+            </div>
+
+
+            <!-- =================================================
+                 REGISTRATION
+            ================================================== -->
+
+            <div
+                class="registration-area"
+                *ngIf="config.registrationVisible"
+            >
+
+
+                <!-- =============================================
+                     REGISTRATION ICON
+                ============================================== -->
+
+                <div
+                    class="registration-icon"
+                >
+
+                    <i
+                        [class]="config.registrationIcon"
+                        aria-hidden="true"
+                    >
+                    </i>
+
+                </div>
+
+
+                <!-- =============================================
+                     REGISTRATION CONTENT
+                ============================================== -->
+
+                <div
+                    class="registration-content"
+                >
+
+                    <div
+                        class="registration-heading"
+                    >
+                        {{ config.registrationHeading }}
+                    </div>
+
+
+                    <div
+                        class="registration-description"
+                    >
+                        {{ config.registrationDescription }}
+                    </div>
+
+                </div>
+
+
+                <!-- =============================================
+                     REGISTRATION BUTTON
+                ============================================== -->
+
+                <button
+                    type="button"
+                    class="registration-button"
+                    [disabled]="isSigningIn"
+                    (click)="onRegister()"
+                >
+
+                    {{ config.registrationButtonText }}
+
+                </button>
+
+
+            </div>
+
+
+            <!-- =================================================
+                 BOTTOM META
+                 -------------------------------------------------
+                 Login panel only
+            ================================================== -->
+
+            <div
+                class="login-card-bottom-meta"
+            >
+
+                <span>
+                    SIMPLE
+                </span>
+
+                <span
+                    class="topline-separator"
+                >
+                    |
+                </span>
+
+                <span>
+                    SECURE
+                </span>
+
+                <span
+                    class="topline-separator"
+                >
+                    |
+                </span>
+
+                <span>
+                    SCALABLE
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

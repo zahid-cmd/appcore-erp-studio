@@ -1,18 +1,85 @@
 /* ============================================================
    COMPONENT RENDERER
+   ------------------------------------------------------------
+   The renderer is only a host/container.
+   
+   It must NOT impose:
+   - width
+   - height
+   - max-width
+   - max-height
+   - scaling
+   - aspect ratio
+   
+   The rendered child controls its own original size.
+============================================================ */
+
+
+/* ============================================================
+   RENDERER HOST
 ============================================================ */
 
 :host
 {
+    display:contents;
+}
+
+
+/* ============================================================
+   COMPONENT RENDERER CONTAINER
+   ------------------------------------------------------------
+   The container follows the natural size of its child.
+============================================================ */
+
+.component-renderer
+{
     display:block;
 
-    width:100%;
-    height:100%;
+    width:max-content;
+
+    height:max-content;
 
     min-width:0;
+
     min-height:0;
 
     max-width:none;
+
+    max-height:none;
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    overflow:visible;
+
+    position:relative;
+}
+
+
+/* ============================================================
+   DIRECT RENDERED CHILD
+   ------------------------------------------------------------
+   Do not resize or constrain the dynamically
+   rendered component.
+============================================================ */
+
+.component-renderer > *
+{
+    display:block;
+
+    width:auto;
+
+    height:auto;
+
+    min-width:0;
+
+    min-height:0;
+
+    max-width:none;
+
     max-height:none;
 
     margin:0;
@@ -25,41 +92,121 @@
 }
 
 
-.component-renderer
-{
-    width:100%;
+/* ============================================================
+   DYNAMIC ANGULAR COMPONENT HOSTS
+   ------------------------------------------------------------
+   Allow the actual component to use its own
+   internal dimensions.
+============================================================ */
 
-    height:100%;
+.component-renderer
+> app-login-page-background,
+.component-renderer
+> app-login-page-branding,
+.component-renderer
+> app-login-page-client-logo,
+.component-renderer
+> app-login-page-powered-by,
+.component-renderer
+> app-login-page-theme-selector
+{
+    width:auto;
+
+    height:auto;
 
     min-width:0;
+
     min-height:0;
 
     max-width:none;
+
     max-height:none;
 
-    display:block;
-
-    margin:0;
-
-    padding:0;
+    overflow:visible;
 
     box-sizing:border-box;
+}
 
+
+/* ============================================================
+   GENERAL DYNAMIC COMPONENT HOST
+   ------------------------------------------------------------
+   Keep this generic so newly registered components
+   automatically follow the same natural-size behavior.
+============================================================ */
+
+.component-renderer
+> *
+{
+    width:auto;
+
+    height:auto;
+
+    min-width:0;
+
+    min-height:0;
+
+    max-width:none;
+
+    max-height:none;
+
+    overflow:visible;
+
+    box-sizing:border-box;
+}
+
+
+/* ============================================================
+   RENDERER CONTENT
+   ------------------------------------------------------------
+   Angular-generated content must remain unrestricted.
+============================================================ */
+
+.component-renderer
+{
     overflow:visible;
 }
 
 
-.component-renderer
-ng-container
+/* ============================================================
+   MOBILE
+   ------------------------------------------------------------
+   Do NOT introduce a forced responsive size here.
+   The parent preview area decides whether clipping,
+   scrolling, or another presentation mode is required.
+============================================================ */
+
+@media (max-width:768px)
 {
-    width:100%;
+    .component-renderer
+    {
+        width:max-content;
 
-    height:100%;
+        height:max-content;
 
-    min-width:0;
-    min-height:0;
+        max-width:none;
 
-    max-width:none;
+        max-height:none;
 
-    box-sizing:border-box;
+        overflow:visible;
+    }
+
+
+    .component-renderer
+    > *
+    {
+        width:auto;
+
+        height:auto;
+
+        min-width:0;
+
+        min-height:0;
+
+        max-width:none;
+
+        max-height:none;
+
+        overflow:visible;
+    }
 }

@@ -10,7 +10,7 @@
      │
      ├── LEFT 45%
      │   ├── TOP 15%
-     │   │   └── BRANDING 1
+     │   │   └── EMPTY
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
@@ -20,7 +20,7 @@
      │
      ├── MIDDLE 20%
      │   ├── TOP 15%
-     │   │   └── POWERED BY
+     │   │   └── EMPTY
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
@@ -30,7 +30,7 @@
      │
      └── RIGHT 35%
          ├── TOP 50px
-         │   └── THEME SELECTOR
+         │   └── EMPTY
          │
          ├── CENTER
          │   ├── LOGIN PANEL
@@ -42,18 +42,21 @@
 
      IMPORTANT:
 
+         The Promotional Image, Branding, Powered By and
+         Theme Selector components have been transferred
+         to their new locations.
+
+         They are therefore intentionally removed from
+         Login Page 4.
+
          The Promotional Image remains completely independent
          from this layout.
 
-         It occupies the FULL VIEWPORT behind all sections.
+         Branding has been removed.
 
-         Branding 2 has been completely removed.
+         Powered By has been removed.
 
-         Powered By is positioned in the
-         MIDDLE TOP area.
-
-         Theme Selector is positioned in the
-         RIGHT TOP area.
+         Theme Selector has been removed.
 
          Notification Panel:
 
@@ -151,17 +154,6 @@
              Both panel states become FALSE.
 
              Login Panel is displayed.
-
-         THEME CHANGE EVENT:
-
-             Theme Selector emits themeChange.
-
-             This page receives the event through
-             onThemeChange().
-
-             isLightTheme becomes TRUE or FALSE.
-
-             Promotional Image changes accordingly.
 =========================================================== -->
 
 
@@ -201,54 +193,6 @@
 
 
     <!-- =======================================================
-         FULL VIEWPORT PROMOTIONAL IMAGE
-         -------------------------------------------------------
-         This layer remains completely independent from the
-         45% / 20% / 35% page structure.
-
-         It occupies:
-
-             Width  = 100vw
-             Height = 100vh
-    ======================================================== -->
-
-    <section
-        class="login-page-4-promotional-area"
-    >
-
-
-        <!-- ===================================================
-             LIGHT PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = true
-        ==================================================== -->
-
-        <app-login-page-promotional-image-light
-            *ngIf="isLightTheme"
-        >
-        </app-login-page-promotional-image-light>
-
-
-        <!-- ===================================================
-             DEEP PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = false
-        ==================================================== -->
-
-        <app-login-page-promotional-image-deep
-            *ngIf="!isLightTheme"
-        >
-        </app-login-page-promotional-image-deep>
-
-
-    </section>
-
-
-    <!-- =======================================================
          DESKTOP PAGE LAYOUT
          -------------------------------------------------------
          FULL WIDTH SPLIT:
@@ -256,6 +200,15 @@
              LEFT   = 45%
              MIDDLE = 20%
              RIGHT  = 35%
+
+         The following components have been transferred
+         and are no longer rendered by Login Page 4:
+
+             Promotional Image Light
+             Promotional Image Deep
+             Branding
+             Powered By
+             Theme Selector
 
          Notification Panel is intentionally NOT included
          inside this layout.
@@ -278,6 +231,12 @@
                  TOP    = 15%
                  CENTER = 70%
                  BOTTOM = 15%
+
+             CONTENT:
+
+                 EMPTY
+
+             The Branding component has been transferred.
         ==================================================== -->
 
         <section
@@ -294,15 +253,12 @@
 
                  CONTENT:
 
-                     BRANDING 1
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-4-left-top"
             >
-
-                <app-login-page-branding>
-                </app-login-page-branding>
 
             </section>
 
@@ -314,7 +270,9 @@
 
                      70%
 
-                 Promotional image remains visible underneath.
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -358,6 +316,12 @@
                  TOP    = 15%
                  CENTER = 70%
                  BOTTOM = 15%
+
+             CONTENT:
+
+                 EMPTY
+
+             The Powered By component has been transferred.
         ==================================================== -->
 
         <section
@@ -374,18 +338,12 @@
 
                  CONTENT:
 
-                     POWERED BY
-
-                 The Powered By component controls its own
-                 intrinsic width and height.
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-4-middle-top"
             >
-
-                <app-login-page-powered-by>
-                </app-login-page-powered-by>
 
             </section>
 
@@ -397,7 +355,9 @@
 
                      70%
 
-                 Promotional image remains visible underneath.
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -441,6 +401,8 @@
                  TOP    = 50px
                  CENTER = REST
                  BOTTOM = 50px
+
+             Theme Selector has been transferred.
         ==================================================== -->
 
         <section
@@ -457,31 +419,12 @@
 
                  CONTENT:
 
-                     THEME SELECTOR
-
-                 Theme Selector emits:
-
-                     true
-                         ↓
-                     LIGHT THEME
-
-                     false
-                         ↓
-                     DEEP THEME
-
-                 Page 4 remains the owner of the
-                 isLightTheme state.
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-4-right-top"
             >
-
-                <app-login-page-theme-selector
-                    [isLightTheme]="isLightTheme"
-                    (themeChange)="onThemeChange($event)"
-                >
-                </app-login-page-theme-selector>
 
             </section>
 
@@ -495,7 +438,8 @@
 
                  CONTENT:
 
-                     LOGIN / REGISTRATION /
+                     LOGIN /
+                     REGISTRATION /
                      FORGET PASSWORD PANEL
             ================================================= -->
 
@@ -606,9 +550,6 @@
                  CONTENT:
 
                      EMPTY FOOTER AREA
-
-                 Powered By is positioned in the
-                 MIDDLE TOP area.
             ================================================= -->
 
             <section

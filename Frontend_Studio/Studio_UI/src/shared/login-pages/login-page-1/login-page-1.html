@@ -8,77 +8,51 @@
      ├── FLOATING NOTIFICATION CONTROL
      │   └── Notification Button + Counter + Popover
      │
-     ├── FULL VIEWPORT PROMOTIONAL IMAGE
+     ├── LEFT 30%
+     │   ├── TOP 15%
+     │   │   └── EMPTY
+     │   │
+     │   ├── CENTER
+     │   │   └── EMPTY
+     │   │
+     │   └── BOTTOM 15%
+     │       └── EMPTY
      │
-     └── DESKTOP PAGE LAYOUT
+     ├── MIDDLE 35%
+     │   ├── TOP 15%
+     │   │   └── EMPTY
+     │   │
+     │   ├── CENTER
+     │   │   └── EMPTY
+     │   │
+     │   └── BOTTOM 15%
+     │       └── EMPTY
+     │
+     └── RIGHT 35%
+         ├── TOP 50px
+         │   └── EMPTY
          │
-         ├── LEFT 30%
-         │   ├── TOP 15%
-         │   │   └── BRANDING 1
-         │   │
-         │   ├── CENTER
-         │   │   └── EMPTY
-         │   │
-         │   └── BOTTOM 15%
-         │       └── EMPTY
+         ├── CENTER
+         │   ├── LOGIN PANEL
+         │   ├── REGISTRATION PANEL
+         │   └── FORGET PASSWORD PANEL
          │
-         ├── MIDDLE 35%
-         │   ├── TOP 15%
-         │   │   └── CLIENT LOGO
-         │   │
-         │   ├── CENTER
-         │   │   └── EMPTY
-         │   │
-         │   └── BOTTOM 15%
-         │       └── POWERED BY
-         │
-         └── RIGHT 35%
-             ├── TOP 50px
-             │   └── THEME SELECTOR
-             │
-             ├── CENTER
-             │   ├── LOGIN PANEL
-             │   ├── REGISTRATION PANEL
-             │   └── FORGET PASSWORD PANEL
-             │
-             └── BOTTOM 50px
-                 └── EMPTY FOOTER AREA
+         └── BOTTOM 50px
+             └── EMPTY FOOTER AREA
 
      IMPORTANT:
 
-         The Promotional Image remains completely independent
-         from this layout.
+         Promotional Image, Branding, Powered By and
+         Theme Selector have been transferred to their
+         new locations.
 
-         It occupies the FULL VIEWPORT behind all sections.
+         They are therefore intentionally removed from
+         Login Page 1.
 
-         The Notification Panel is also independent from the
-         page layout and therefore consumes NO physical layout
-         space.
+         The Notification Panel remains completely
+         independent from the page layout.
 
-         The Notification Panel is a floating page-level control.
-
-         Branding 2 has been completely removed.
-
-         The Client Logo is placed in the
-         MIDDLE TOP area.
-
-         Powered By remains only in the
-         MIDDLE BOTTOM area.
-
-         Theme Selector is placed in the
-         RIGHT TOP area.
-
-         Notification Button is floating at the page level.
-
-         Theme Selector controls:
-
-             LIGHT
-                 ↓
-             Promotional Image Light
-
-             DEEP
-                 ↓
-             Promotional Image Deep
+         It consumes NO physical layout space.
 
          Authentication:
 
@@ -141,7 +115,7 @@
              The notification remains unread.
 
              The Notification Panel automatically opens
-             for 3 seconds.
+             for 5 seconds.
 
              The Notification Panel then closes automatically.
 
@@ -164,18 +138,7 @@
              Both panel states become FALSE.
 
              Login Panel is displayed.
-
-         THEME CHANGE EVENT:
-
-             Theme Selector emits themeChange.
-
-             This page receives the event through
-             onThemeChange().
-
-             isLightTheme becomes TRUE or FALSE.
-
-             Promotional Image changes accordingly.
-=========================================================== -->
+============================================================ -->
 
 
 <!-- ===========================================================
@@ -190,20 +153,25 @@
     <!-- =======================================================
          FLOATING NOTIFICATION PANEL
          -------------------------------------------------------
+         PAGE-LEVEL COMPONENT
+
          IMPORTANT:
 
-             This is a PAGE-LEVEL component.
+             This component is intentionally placed OUTSIDE
+             the desktop layout.
 
              It does NOT belong to:
 
                  - Login Panel
                  - Registration Panel
                  - Forget Password Panel
+                 - Left Area
+                 - Middle Area
+                 - Right Area
 
-             It also does NOT occupy any physical space in the
-             30% / 35% / 35% layout.
+             It consumes NO physical layout space.
 
-             The component itself uses fixed positioning.
+             Its own CSS controls its fixed position.
 
              #notificationPanel provides an explicit template
              reference for the Login Page 1 @ViewChild.
@@ -216,54 +184,6 @@
 
 
     <!-- =======================================================
-         FULL VIEWPORT PROMOTIONAL IMAGE
-         -------------------------------------------------------
-         This layer remains completely independent from the
-         30% / 35% / 35% page structure.
-
-         It occupies:
-
-             Width  = 100vw
-             Height = 100vh
-    ======================================================== -->
-
-    <section
-        class="login-page-1-promotional-area"
-    >
-
-
-        <!-- ===================================================
-             LIGHT PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = true
-        ==================================================== -->
-
-        <app-login-page-promotional-image-light
-            *ngIf="isLightTheme"
-        >
-        </app-login-page-promotional-image-light>
-
-
-        <!-- ===================================================
-             DEEP PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = false
-        ==================================================== -->
-
-        <app-login-page-promotional-image-deep
-            *ngIf="!isLightTheme"
-        >
-        </app-login-page-promotional-image-deep>
-
-
-    </section>
-
-
-    <!-- =======================================================
          DESKTOP PAGE LAYOUT
          -------------------------------------------------------
          FULL WIDTH SPLIT:
@@ -272,10 +192,17 @@
              MIDDLE = 35%
              RIGHT  = 35%
 
-         IMPORTANT:
+         The following components have been transferred
+         and are no longer rendered by Login Page 1:
 
-             Notification Panel is NOT inside this layout.
-             Therefore it cannot affect these dimensions.
+             Promotional Image Light
+             Promotional Image Deep
+             Branding
+             Powered By
+             Theme Selector
+
+         Notification Panel is intentionally NOT included
+         inside this layout.
     ======================================================== -->
 
     <main
@@ -295,6 +222,10 @@
                  TOP    = 15%
                  CENTER = 70%
                  BOTTOM = 15%
+
+             CONTENT:
+
+                 EMPTY
         ==================================================== -->
 
         <section
@@ -311,15 +242,14 @@
 
                  CONTENT:
 
-                     BRANDING 1
+                     EMPTY
+
+                 Branding has been transferred.
             ================================================= -->
 
             <section
                 class="login-page-1-left-top"
             >
-
-                <app-login-page-branding>
-                </app-login-page-branding>
 
             </section>
 
@@ -331,7 +261,9 @@
 
                      70%
 
-                 Promotional image remains visible underneath.
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -375,6 +307,10 @@
                  TOP    = 15%
                  CENTER = 70%
                  BOTTOM = 15%
+
+             CONTENT:
+
+                 EMPTY
         ==================================================== -->
 
         <section
@@ -391,10 +327,10 @@
 
                  CONTENT:
 
-                     CLIENT LOGO
+                     EMPTY
 
-                 The Client Logo component can be placed here
-                 independently when required.
+                 Client Logo area remains structurally empty
+                 until its component is transferred.
             ================================================= -->
 
             <section
@@ -411,7 +347,9 @@
 
                      70%
 
-                 Promotional image remains visible underneath.
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -430,15 +368,14 @@
 
                  CONTENT:
 
-                     POWERED BY
+                     EMPTY
+
+                 Powered By has been transferred.
             ================================================= -->
 
             <section
                 class="login-page-1-middle-bottom"
             >
-
-                <app-login-page-powered-by>
-                </app-login-page-powered-by>
 
             </section>
 
@@ -458,6 +395,8 @@
                  TOP    = 50px
                  CENTER = REST
                  BOTTOM = 50px
+
+             Theme Selector has been transferred.
         ==================================================== -->
 
         <section
@@ -474,18 +413,12 @@
 
                  CONTENT:
 
-                     THEME SELECTOR
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-1-right-top"
             >
-
-                <app-login-page-theme-selector
-                    [isLightTheme]="isLightTheme"
-                    (themeChange)="onThemeChange($event)"
-                >
-                </app-login-page-theme-selector>
 
             </section>
 
@@ -499,7 +432,8 @@
 
                  CONTENT:
 
-                     LOGIN / REGISTRATION /
+                     LOGIN /
+                     REGISTRATION /
                      FORGET PASSWORD PANEL
             ================================================= -->
 
@@ -578,7 +512,7 @@
                              3. Keeps notification unread.
                              4. Opens Notification Panel
                                 automatically.
-                             5. Keeps it open for 3 seconds.
+                             5. Keeps it open for 5 seconds.
                              6. Closes automatically.
                              7. Leaves unread counter visible.
                 ============================================ -->
@@ -611,8 +545,7 @@
 
                      EMPTY FOOTER AREA
 
-                 Powered By has been completely removed from
-                 this section.
+                 Powered By has been transferred.
             ================================================= -->
 
             <section

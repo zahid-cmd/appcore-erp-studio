@@ -11,7 +11,7 @@
      │
      ├── LEFT 35%
      │   ├── TOP 30px
-     │   │   └── THEME SELECTOR
+     │   │   └── EMPTY
      │   │
      │   ├── CENTER
      │   │   ├── LOGIN PANEL
@@ -23,13 +23,13 @@
      │
      ├── MIDDLE 20%
      │   ├── TOP
-     │   │   └── BRANDING
+     │   │   └── EMPTY
      │   │
      │   ├── CENTER
      │   │   └── EMPTY
      │   │
      │   └── BOTTOM
-     │       └── POWERED BY
+     │       └── EMPTY
      │
      └── RIGHT 45%
          ├── TOP 15%
@@ -43,32 +43,19 @@
 
      IMPORTANT:
 
-         This page is intentionally mirrored horizontally
-         compared with Login Page 2.
+         Promotional Image, Branding, Powered By and
+         Theme Selector have been transferred to their
+         new locations.
 
-         LEFT  ↔  RIGHT
+         They are therefore intentionally removed from
+         Login Page 3.
 
-         The Notification Panel is completely independent
-         from the desktop layout.
+         The Notification Panel remains PAGE-LEVEL.
 
-         It consumes NO physical layout space.
+         It does NOT participate in the
+         35% / 20% / 45% layout.
 
-         The promotional image remains completely independent
-         from the desktop layout.
-
-         BRANDING IS IN THE MIDDLE 20% AREA.
-
-         POWERED BY IS CURRENTLY IN THE MIDDLE BOTTOM AREA.
-
-         Theme Selector controls:
-
-             LIGHT
-                 ↓
-             Promotional Image Light
-
-             DEEP
-                 ↓
-             Promotional Image Deep
+         It occupies NO physical layout space.
 
          Authentication:
 
@@ -154,22 +141,11 @@
              Both panel states become FALSE.
 
              Login Panel is displayed.
-
-         THEME CHANGE EVENT:
-
-             Theme Selector emits themeChange.
-
-             This page receives the event through
-             onThemeChange().
-
-             isLightTheme becomes TRUE or FALSE.
-
-             Promotional Image changes accordingly.
 ============================================================ -->
 
 
 <!-- ===========================================================
-     LOGIN PAGE 3
+     LOGIN PAGE 3 ROOT
 ============================================================ -->
 
 <div
@@ -178,30 +154,23 @@
 
 
     <!-- =======================================================
-         FLOATING NOTIFICATION PANEL
+         PAGE-LEVEL NOTIFICATION PANEL
          -------------------------------------------------------
-         PAGE-LEVEL COMPONENT
+         This component is intentionally outside the main
+         desktop layout.
 
-         IMPORTANT:
+         It does NOT consume any layout space.
 
-             This component is intentionally outside the
-             35% / 20% / 45% desktop layout.
+         Its own CSS controls:
 
-             It does NOT belong to:
+             Bell Button
+             Unread Counter
+             Floating Popover
+             Outside Click
+             Notification Position
 
-                 - Login Panel
-                 - Registration Panel
-                 - Forget Password Panel
-                 - Left Area
-                 - Middle Area
-                 - Right Area
-
-             It consumes NO physical layout space.
-
-             Its own CSS controls its fixed position.
-
-             #notificationPanel provides an explicit template
-             reference for the Login Page 3 @ViewChild.
+         #notificationPanel provides an explicit template
+         reference for the Login Page 3 @ViewChild.
     ======================================================== -->
 
     <app-login-page-notification-panel
@@ -211,63 +180,25 @@
 
 
     <!-- =======================================================
-         PROMOTIONAL IMAGE AREA
-         -------------------------------------------------------
-         FULL VIEWPORT BACKGROUND
-
-         This layer remains completely independent from the
-         35% / 20% / 45% desktop layout.
-    ======================================================== -->
-
-    <section
-        class="login-page-3-promotional-area"
-    >
-
-        <!-- ===================================================
-             LIGHT PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = true
-        ==================================================== -->
-
-        <app-login-page-promotional-image-light
-            *ngIf="isLightTheme"
-        >
-        </app-login-page-promotional-image-light>
-
-
-        <!-- ===================================================
-             DEEP PROMOTIONAL IMAGE
-             ---------------------------------------------------
-             DISPLAYED WHEN:
-
-                 isLightTheme = false
-        ==================================================== -->
-
-        <app-login-page-promotional-image-deep
-            *ngIf="!isLightTheme"
-        >
-        </app-login-page-promotional-image-deep>
-
-    </section>
-
-
-    <!-- =======================================================
          MAIN DESKTOP LAYOUT
          -------------------------------------------------------
-         MIRRORED STRUCTURE
+         FULL WIDTH SPLIT:
 
              LEFT   = 35%
              MIDDLE = 20%
              RIGHT  = 45%
 
-         IMPORTANT:
+         The following components have been transferred
+         and are no longer rendered by Login Page 3:
 
-             Notification Panel is NOT inside this layout.
+             Promotional Image Light
+             Promotional Image Deep
+             Branding
+             Powered By
+             Theme Selector
 
-             Therefore it cannot affect the
-             35% / 20% / 45% dimensions.
+         Notification Panel is intentionally NOT included
+         inside this layout.
     ======================================================== -->
 
     <main
@@ -282,10 +213,17 @@
 
                  35%
 
+             VERTICAL STRUCTURE:
+
+                 TOP    = 30px
+                 CENTER = REST
+                 BOTTOM = 30px
+
              CONTENT:
 
-                 Theme Selector
-                 Login / Registration / Forget Password
+                 LOGIN /
+                 REGISTRATION /
+                 FORGET PASSWORD
         ==================================================== -->
 
         <section
@@ -302,18 +240,14 @@
 
                  CONTENT:
 
-                     THEME SELECTOR
+                     EMPTY
+
+                 Theme Selector has been transferred.
             ================================================= -->
 
             <section
                 class="login-page-3-left-top"
             >
-
-                <app-login-page-theme-selector
-                    [isLightTheme]="isLightTheme"
-                    (themeChange)="onThemeChange($event)"
-                >
-                </app-login-page-theme-selector>
 
             </section>
 
@@ -428,7 +362,13 @@
             <!-- ===============================================
                  LEFT BOTTOM
                  -----------------------------------------------
-                 EMPTY
+                 HEIGHT:
+
+                     30px
+
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -450,10 +390,9 @@
 
              CONTENT:
 
-                 BRANDING
-                 POWERED BY
+                 EMPTY
 
-             Current component placement is preserved.
+             Branding and Powered By have been transferred.
         ==================================================== -->
 
         <section
@@ -466,15 +405,12 @@
                  -----------------------------------------------
                  CONTENT:
 
-                     BRANDING
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-3-middle-top"
             >
-
-                <app-login-page-branding>
-                </app-login-page-branding>
 
             </section>
 
@@ -482,7 +418,9 @@
             <!-- ===============================================
                  MIDDLE CENTER
                  -----------------------------------------------
-                 EMPTY
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -497,15 +435,12 @@
                  -----------------------------------------------
                  CONTENT:
 
-                     POWERED BY
+                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-3-middle-bottom"
             >
-
-                <app-login-page-powered-by>
-                </app-login-page-powered-by>
 
             </section>
 
@@ -533,7 +468,9 @@
             <!-- ===============================================
                  RIGHT TOP
                  -----------------------------------------------
-                 EMPTY
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -546,7 +483,9 @@
             <!-- ===============================================
                  RIGHT CENTER
                  -----------------------------------------------
-                 EMPTY
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
@@ -559,7 +498,9 @@
             <!-- ===============================================
                  RIGHT BOTTOM
                  -----------------------------------------------
-                 EMPTY
+                 CONTENT:
+
+                     EMPTY
             ================================================= -->
 
             <section
