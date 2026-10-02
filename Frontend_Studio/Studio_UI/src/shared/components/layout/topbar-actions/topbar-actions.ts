@@ -45,6 +45,12 @@ from '../../utilities/confirm-dialog/confirm-dialog.service';
 
 import
 {
+    AuthenticationService
+}
+from '../../../../core/authentication/authentication.service';
+
+import
+{
     AuthenticationStorageService
 }
 from '../../../../core/authentication/authentication-storage.service';
@@ -76,9 +82,9 @@ from '../../../../core/authentication/authentication-storage.service';
         './topbar-actions.html',
 
     styleUrls:
-        [
-            './topbar-actions.css'
-        ]
+    [
+        './topbar-actions.css'
+    ]
 })
 
 
@@ -97,6 +103,9 @@ export class TopbarActionsComponent
 
     constructor
     (
+        private readonly authenticationService:
+            AuthenticationService,
+
         private readonly authenticationStorageService:
             AuthenticationStorageService,
 
@@ -115,7 +124,7 @@ export class TopbarActionsComponent
     // User Name
     // ----------------------------------------------------------
     // The displayed user name is populated from the currently
-    // authenticated user stored by the Login Panel.
+    // authenticated user stored during successful login.
     //
     // Priority:
     //
@@ -167,9 +176,6 @@ export class TopbarActionsComponent
     //===========================================================
     // User Menu State
     // ----------------------------------------------------------
-    // Controls the visibility of the authenticated user's
-    // account dropdown menu.
-    //
     // false = dropdown closed
     // true  = dropdown open
     //===========================================================
@@ -288,19 +294,6 @@ export class TopbarActionsComponent
 
     //===========================================================
     // Load Authenticated User
-    // ----------------------------------------------------------
-    // Reads the user information saved during successful login.
-    //
-    // AuthenticationStorageService stores:
-    //
-    //     userProfileId
-    //     userName
-    //     displayName
-    //     fullName
-    //
-    // The Topbar uses Full Name as the primary displayed value.
-    // If Full Name is unavailable, Display Name is used.
-    // If Display Name is also unavailable, User Name is used.
     //===========================================================
 
     private loadAuthenticatedUser():
@@ -366,9 +359,6 @@ export class TopbarActionsComponent
 
     //===========================================================
     // User Menu Click
-    // ----------------------------------------------------------
-    // Opens or closes the authenticated user's account
-    // dropdown menu.
     //===========================================================
 
     onUserMenuClick():
@@ -384,9 +374,6 @@ export class TopbarActionsComponent
 
     //===========================================================
     // Profile
-    // ----------------------------------------------------------
-    // Closes the account dropdown and raises the Profile event
-    // for the parent component.
     //===========================================================
 
     onProfileClick():
@@ -402,9 +389,6 @@ export class TopbarActionsComponent
 
     //===========================================================
     // Change Password
-    // ----------------------------------------------------------
-    // Closes the account dropdown and raises the Change Password
-    // event for the parent component.
     //===========================================================
 
     onChangePasswordClick():
@@ -431,6 +415,10 @@ export class TopbarActionsComponent
     onLogout():
         void
     {
+        //=======================================================
+        // Close User Menu
+        //=======================================================
+
         this.isUserMenuOpen =
             false;
 
@@ -464,26 +452,53 @@ export class TopbarActionsComponent
     //===========================================================
     // Execute Logout
     // ----------------------------------------------------------
-    // Clears the authenticated session and returns the user
-    // to the Login Page.
+    // Centralized authentication logout:
     //
-    // AuthenticationStorageService removes:
+    //     Topbar Actions
+    //          ↓
+    //     AuthenticationService.logout()
+    //          ↓
+    //     AuthenticationStorageService.logout()
+    //          ↓
+    //     clearAuthentication()
+    //          ↓
+    //     localStorage cleared
+    //     sessionStorage cleared
+    //          ↓
+    //     /login
     //
-    //     Authentication Token
-    //     Authenticated User Information
+    // replaceUrl prevents the authenticated dashboard from
+    // remaining as the previous browser history entry.
     //===========================================================
 
     private executeLogout():
         void
     {
-        this.authenticationStorageService
-            .clearAuthentication();
+        //=======================================================
+        // Clear Authentication
+        //=======================================================
 
-        this.router.navigate
+        this.authenticationService
+            .logout();
+
+
+
+        //=======================================================
+        // Navigate To Login
+        // ------------------------------------------------------
+        // replaceUrl prevents returning to the authenticated
+        // dashboard through the browser Back button.
+        //=======================================================
+
+        void this.router.navigate
         (
             [
                 '/login'
-            ]
+            ],
+            {
+                replaceUrl:
+                    true
+            }
         );
     }
 

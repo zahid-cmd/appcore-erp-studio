@@ -1,60 +1,14 @@
 <!-- ===========================================================
-     LOGIN PAGE 1
-     -----------------------------------------------------------
-     FINAL DESKTOP PAGE COMPOSITION
-
-     FULL VIEWPORT
-     │
-     ├── BACKGROUND IMAGE 1
-     │
-     ├── FLOATING NOTIFICATION PANEL
-     │
-     └── DESKTOP LAYOUT
-         │
-         ├── LEFT 30%
-         │
-         ├── MIDDLE 35%
-         │
-         └── RIGHT 35%
-             │
-             ├── THEME SELECTOR
-             │   └── ABSOLUTE / OVERLAY
-             │
-             ├── LOGIN / REGISTRATION /
-             │   FORGET PASSWORD
-             │
-             └── EMPTY BOTTOM AREA
-
-     IMPORTANT:
-
-         The Background Image management component is NOT
-         rendered here.
-
-         Login Page 1 directly displays the image URL loaded
-         from Sub Ordinate Component ID 1.
-
-         Theme Selector controls the Login Page theme.
-
-         Authentication remains completely owned by the
-         Central Login Panel.
-
-         DESKTOP ONLY.
-=========================================================== -->
-
-
-<!-- =========================================================
      LOGIN PAGE 1 ROOT
-========================================================= -->
+============================================================ -->
 
 <div
     class="login-page-1"
 >
 
 
-    <!-- =====================================================
+    <!-- =======================================================
          ACTUAL BACKGROUND IMAGE 1
-
-         This is the real Login Page background.
 
          Light:
 
@@ -67,7 +21,7 @@
          Current:
 
              currentBackgroundImageUrl
-    ====================================================== -->
+    ======================================================== -->
 
     <div
         class="login-page-1-background"
@@ -81,13 +35,9 @@
     </div>
 
 
-    <!-- =====================================================
-         PAGE-LEVEL NOTIFICATION PANEL
-
-         This component is outside the main layout.
-
-         It consumes NO layout space.
-    ====================================================== -->
+    <!-- =======================================================
+         NOTIFICATION
+    ======================================================== -->
 
     <app-login-page-notification-panel
         #notificationPanel
@@ -95,36 +45,23 @@
     </app-login-page-notification-panel>
 
 
-    <!-- =====================================================
-         MAIN DESKTOP LAYOUT
-
-         30% | 35% | 35%
-    ====================================================== -->
+    <!-- =======================================================
+         MAIN LAYOUT
+    ======================================================== -->
 
     <main
         class="login-page-1-layout"
     >
 
 
-        <!-- =================================================
-             LEFT AREA
-             -------------------------------------------------
-             WIDTH:
-
-                 30%
-
-             ROWS:
-
-                 15%
-                 70%
-                 15%
-
-             CURRENTLY EMPTY.
-        ================================================== -->
+        <!-- ===================================================
+             LEFT
+        ==================================================== -->
 
         <section
             class="login-page-1-left-area"
         >
+
 
             <section
                 class="login-page-1-left-top"
@@ -135,136 +72,93 @@
 
             </section>
 
+
             <section
                 class="login-page-1-left-center"
             >
             </section>
+
 
             <section
                 class="login-page-1-left-bottom"
             >
             </section>
 
+
         </section>
 
 
-        <!-- =================================================
-             MIDDLE AREA
-             -------------------------------------------------
-             WIDTH:
-
-                 35%
-
-             ROWS:
-
-                 15%
-                 70%
-                 15%
-
-             CURRENTLY EMPTY.
-        ================================================== -->
+        <!-- ===================================================
+             MIDDLE
+        ==================================================== -->
 
         <section
             class="login-page-1-middle-area"
         >
 
+
             <section
                 class="login-page-1-middle-top"
             >
-
             </section>
+
 
             <section
                 class="login-page-1-middle-center"
             >
             </section>
 
+
             <section
                 class="login-page-1-middle-bottom"
             >
+
                 <app-login-page-powered-by>
                 </app-login-page-powered-by>
+
             </section>
+
 
         </section>
 
 
-        <!-- =================================================
-             RIGHT AREA
-             -------------------------------------------------
-             WIDTH:
-
-                 35%
-
-             IMPORTANT:
-
-                 The Theme Selector is NOT a grid row.
-
-                 It is an overlay controlled by CSS.
-
-                 Therefore it will NOT create blank space
-                 above the Login Panel.
-        ================================================== -->
+        <!-- ===================================================
+             RIGHT
+        ==================================================== -->
 
         <section
             class="login-page-1-right-area"
         >
 
 
-            <!-- =============================================
+            <!-- ===============================================
                  THEME SELECTOR
+            ================================================ -->
 
-                 Login Page owns:
-
-                     isLightTheme
-
-                 Theme Selector emits:
-
-                     true
-                         =
-                     Light
-
-                     false
-                         =
-                     Deep
-
-                 CSS will position this component at the
-                 absolute top of the Right 35% area.
-
-                 It therefore consumes ZERO layout height.
-            ============================================== -->
-
-            <app-login-page-theme-selector
-                [isLightTheme]="isLightTheme"
-
-                (themeChange)="
-                    onThemeChange($event)
-                "
+            <section
+                class="login-page-1-right-top"
             >
-            </app-login-page-theme-selector>
+
+                <app-login-page-theme-selector
+                    [isLightTheme]="isLightTheme"
+
+                    (themeChange)="
+                        onThemeChange($event)
+                    "
+                >
+                </app-login-page-theme-selector>
+
+            </section>
 
 
-            <!-- =============================================
-                 RIGHT CENTER
-
-                 The Login / Registration / Forget Password
-                 panel occupies the available right-area
-                 content space.
-            ============================================== -->
+            <!-- ===============================================
+                 AUTHENTICATION
+            ================================================ -->
 
             <section
                 class="login-page-1-right-center"
             >
 
-
-                <!-- =========================================
-                     LOGIN PANEL
-
-                     Shown when:
-
-                         Registration = false
-                         Forget Password = false
-                ========================================== -->
 
                 <app-login-page-login-panel
                     *ngIf="
@@ -284,14 +178,6 @@
                 </app-login-page-login-panel>
 
 
-                <!-- =========================================
-                     REGISTRATION PANEL
-
-                     Shown when:
-
-                         Registration = true
-                ========================================== -->
-
                 <app-login-page-registration-panel
                     *ngIf="
                         isRegistrationMode
@@ -303,14 +189,6 @@
                 >
                 </app-login-page-registration-panel>
 
-
-                <!-- =========================================
-                     FORGET PASSWORD PANEL
-
-                     Shown when:
-
-                         Forget Password = true
-                ========================================== -->
 
                 <app-login-page-forget-password-panel
                     *ngIf="
@@ -331,11 +209,9 @@
             </section>
 
 
-            <!-- =============================================
-                 RIGHT BOTTOM
-
-                 Empty 50px footer area.
-            ============================================== -->
+            <!-- ===============================================
+                 BOTTOM
+            ================================================ -->
 
             <section
                 class="login-page-1-right-bottom"

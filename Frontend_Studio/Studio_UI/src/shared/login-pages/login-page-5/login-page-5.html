@@ -1,162 +1,4 @@
 <!-- ===========================================================
-     LOGIN PAGE 5
-     -----------------------------------------------------------
-     FINAL DESKTOP PAGE COMPOSITION
-
-     FULL VIEWPORT
-     │
-     ├── FLOATING NOTIFICATION CONTROL
-     │   └── Notification Button + Counter + Popover
-     │
-     ├── LEFT 45%
-     │   ├── TOP 15%
-     │   │   └── EMPTY
-     │   │
-     │   ├── CENTER
-     │   │   └── EMPTY
-     │   │
-     │   └── BOTTOM 15%
-     │       └── EMPTY
-     │
-     ├── MIDDLE 20%
-     │   ├── TOP 15%
-     │   │   └── EMPTY
-     │   │
-     │   ├── CENTER
-     │   │   └── EMPTY
-     │   │
-     │   └── BOTTOM 15%
-     │       └── EMPTY
-     │
-     └── RIGHT 35%
-         ├── TOP 50px
-         │   └── EMPTY
-         │
-         ├── CENTER
-         │   ├── LOGIN PANEL
-         │   ├── REGISTRATION PANEL
-         │   └── FORGET PASSWORD PANEL
-         │
-         └── BOTTOM 50px
-             └── EMPTY FOOTER AREA
-
-     IMPORTANT:
-
-         Login Page 5 is a direct clone of Login Page 4.
-
-         The Promotional Image, Branding, Powered By and
-         Theme Selector components remain intentionally
-         removed from this page.
-
-         The Promotional Image remains completely independent
-         from this layout.
-
-         Branding has been removed.
-
-         Powered By has been removed.
-
-         Theme Selector has been removed.
-
-         Notification Panel:
-
-             The Notification Panel is PAGE-LEVEL.
-
-             It does NOT participate in the
-             45% / 20% / 35% layout.
-
-             It occupies NO physical layout space.
-
-             It floats above the page through its own
-             notification-panel.css.
-
-         This version is DESKTOP ONLY.
-
-         Tablet and mobile layouts will be implemented later.
-
-         AUTHENTICATION:
-
-             Authentication is completely owned by the
-             Central Login Panel.
-
-             Login Page 5 does NOT:
-
-                 - receive signIn
-                 - call AuthenticationService
-                 - create LoginRequest
-                 - store authentication
-                 - navigate after login
-                 - manage login errors
-                 - manage signing-in state
-
-             The Login Panel handles the complete
-             authentication flow internally.
-
-         REGISTER NOW EVENT:
-
-             Login Panel emits the register event.
-
-             This page receives the event through onRegister().
-
-             isRegistrationMode becomes TRUE.
-
-             Login Panel is hidden.
-
-             Registration Panel is displayed.
-
-         FORGOT PASSWORD EVENT:
-
-             Login Panel emits the forgotPassword event.
-
-             This page receives the event through onForgotPassword().
-
-             isForgetPasswordMode becomes TRUE.
-
-             Login Panel is hidden.
-
-             Forget Password Panel is displayed.
-
-         PASSWORD RESET SUCCESS EVENT:
-
-             Forget Password Panel emits the
-             passwordResetSuccess event.
-
-             This page receives the event through
-             onPasswordResetSuccess().
-
-             The Notification Panel receives:
-
-                 Password Changed
-
-             The notification remains unread.
-
-             The Notification Panel automatically opens
-             for 5 seconds.
-
-             The Notification Panel then closes automatically.
-
-             The unread counter remains visible.
-
-             The Forget Password Panel is immediately replaced
-             by the Login Panel.
-
-             The notification becomes read only when the user
-             manually opens/interacts with the Notification Panel.
-
-         BACK TO LOGIN EVENT:
-
-             Registration Panel or Forget Password Panel emits
-             the backToLogin event.
-
-             This page receives the event through
-             onBackToLogin().
-
-             Both panel states become FALSE.
-
-             Login Panel is displayed.
-=========================================================== -->
-
-
-<!-- ===========================================================
      LOGIN PAGE 5 ROOT
 ============================================================ -->
 
@@ -166,23 +8,41 @@
 
 
     <!-- =======================================================
-         PAGE-LEVEL NOTIFICATION PANEL
+         ACTUAL BACKGROUND IMAGE 5
+
+         Light:
+
+             lightBackgroundImageUrl
+
+         Deep:
+
+             deepBackgroundImageUrl
+
+         Current:
+
+             currentBackgroundImageUrl
+
+         SOURCE:
+
+             Sub Ordinate Component ID = 5
+    ======================================================== -->
+
+    <div
+        class="login-page-5-background"
+
+        [style.background-image]="
+            currentBackgroundImageUrl
+                ? 'url(' + currentBackgroundImageUrl + ')'
+                : ''
+        "
+    >
+    </div>
+
+
+    <!-- =======================================================
+         NOTIFICATION
          -------------------------------------------------------
-         This component is intentionally outside the main
-         desktop layout.
-
-         It does NOT consume any layout space.
-
-         Its own component CSS controls:
-
-             Bell Button
-             Unread Counter
-             Floating Popover
-             Outside Click
-             Notification Position
-
-         #notificationPanel provides an explicit template
-         reference for the Login Page 5 @ViewChild.
+         Page-level floating notification component.
     ======================================================== -->
 
     <app-login-page-notification-panel
@@ -192,25 +52,9 @@
 
 
     <!-- =======================================================
-         DESKTOP PAGE LAYOUT
+         MAIN LAYOUT
          -------------------------------------------------------
-         FULL WIDTH SPLIT:
-
-             LEFT   = 45%
-             MIDDLE = 20%
-             RIGHT  = 35%
-
-         The following components have been transferred
-         and are no longer rendered by Login Page 5:
-
-             Promotional Image Light
-             Promotional Image Deep
-             Branding
-             Powered By
-             Theme Selector
-
-         Notification Panel is intentionally NOT included
-         inside this layout.
+         PIXEL-BY-PIXEL CLONE OF LOGIN PAGE 4
     ======================================================== -->
 
     <main
@@ -219,23 +63,9 @@
 
 
         <!-- ===================================================
-             LEFT AREA
+             LEFT
              ---------------------------------------------------
-             WIDTH:
-
-                 45%
-
-             VERTICAL STRUCTURE:
-
-                 TOP    = 15%
-                 CENTER = 70%
-                 BOTTOM = 15%
-
-             CONTENT:
-
-                 EMPTY
-
-             The Branding component has been transferred.
+             Same structure as Login Page 4.
         ==================================================== -->
 
         <section
@@ -246,13 +76,7 @@
             <!-- ===============================================
                  LEFT TOP
                  -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     EMPTY
+                 BRANDING
             ================================================= -->
 
             <section
@@ -265,37 +89,27 @@
             <!-- ===============================================
                  LEFT CENTER
                  -----------------------------------------------
-                 HEIGHT:
-
-                     70%
-
-                 CONTENT:
-
-                     EMPTY
+                 EMPTY
             ================================================= -->
 
             <section
                 class="login-page-5-left-center"
             >
-
             </section>
 
 
             <!-- ===============================================
                  LEFT BOTTOM
                  -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     EMPTY
+                 POWERED BY
             ================================================= -->
 
             <section
                 class="login-page-5-left-bottom"
             >
+
+                <app-login-page-powered-by>
+                </app-login-page-powered-by>
 
             </section>
 
@@ -304,23 +118,10 @@
 
 
         <!-- ===================================================
-             MIDDLE AREA
+             MIDDLE
              ---------------------------------------------------
-             WIDTH:
-
-                 20%
-
-             VERTICAL STRUCTURE:
-
-                 TOP    = 15%
-                 CENTER = 70%
-                 BOTTOM = 15%
-
-             CONTENT:
-
-                 EMPTY
-
-             The Powered By component has been transferred.
+             EMPTY
+             Same structure as Login Page 4.
         ==================================================== -->
 
         <section
@@ -330,58 +131,31 @@
 
             <!-- ===============================================
                  MIDDLE TOP
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-5-middle-top"
             >
-
             </section>
 
 
             <!-- ===============================================
                  MIDDLE CENTER
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     70%
-
-                 CONTENT:
-
-                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-5-middle-center"
             >
-
             </section>
 
 
             <!-- ===============================================
                  MIDDLE BOTTOM
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     15%
-
-                 CONTENT:
-
-                     EMPTY
             ================================================= -->
 
             <section
                 class="login-page-5-middle-bottom"
             >
-
             </section>
 
 
@@ -389,19 +163,9 @@
 
 
         <!-- ===================================================
-             RIGHT AREA
+             RIGHT
              ---------------------------------------------------
-             WIDTH:
-
-                 35%
-
-             VERTICAL STRUCTURE:
-
-                 TOP    = 50px
-                 CENTER = REST
-                 BOTTOM = 50px
-
-             Theme Selector has been transferred.
+             Same structure as Login Page 4.
         ==================================================== -->
 
         <section
@@ -410,36 +174,29 @@
 
 
             <!-- ===============================================
-                 RIGHT TOP
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     50px
-
-                 CONTENT:
-
-                     EMPTY
+                 THEME SELECTOR
             ================================================= -->
 
             <section
                 class="login-page-5-right-top"
             >
 
+                <app-login-page-theme-selector
+                    [isLightTheme]="isLightTheme"
+
+                    (themeChange)="
+                        onThemeChange($event)
+                    "
+                >
+                </app-login-page-theme-selector>
+
             </section>
 
 
             <!-- ===============================================
-                 RIGHT CENTER
-                 -----------------------------------------------
-                 HEIGHT:
-
-                     REST
-
-                 CONTENT:
-
-                     LOGIN /
-                     REGISTRATION /
-                     FORGET PASSWORD PANEL
+                 AUTHENTICATION
+                 ------------------------------------------------
+                 LOGIN / REGISTRATION / FORGET PASSWORD
             ================================================= -->
 
             <section
@@ -449,22 +206,6 @@
 
                 <!-- ===========================================
                      LOGIN PANEL
-                     -------------------------------------------
-                     DISPLAYED WHEN:
-
-                         isRegistrationMode = false
-
-                         AND
-
-                         isForgetPasswordMode = false
-
-                     IMPORTANT:
-
-                         Authentication is fully handled by
-                         the Login Panel itself.
-
-                         Login Page 5 does NOT receive or
-                         process a signIn event.
                 ============================================ -->
 
                 <app-login-page-login-panel
@@ -474,56 +215,41 @@
                         !isForgetPasswordMode
                     "
 
-                    (register)="onRegister()"
+                    (register)="
+                        onRegister()
+                    "
 
-                    (forgotPassword)="onForgotPassword()"
+                    (forgotPassword)="
+                        onForgotPassword()
+                    "
                 >
                 </app-login-page-login-panel>
 
 
                 <!-- ===========================================
                      REGISTRATION PANEL
-                     -------------------------------------------
-                     DISPLAYED WHEN:
-
-                         isRegistrationMode = true
                 ============================================ -->
 
                 <app-login-page-registration-panel
-                    *ngIf="isRegistrationMode"
+                    *ngIf="
+                        isRegistrationMode
+                    "
 
-                    (backToLogin)="onBackToLogin()"
+                    (backToLogin)="
+                        onBackToLogin()
+                    "
                 >
                 </app-login-page-registration-panel>
 
 
                 <!-- ===========================================
                      FORGET PASSWORD PANEL
-                     -------------------------------------------
-                     DISPLAYED WHEN:
-
-                         isForgetPasswordMode = true
-
-                     SUCCESS:
-
-                         passwordResetSuccess is emitted by
-                         the Forget Password Panel.
-
-                         onPasswordResetSuccess() then:
-
-                             1. Returns to Login Panel.
-                             2. Creates Password Changed
-                                notification.
-                             3. Keeps notification unread.
-                             4. Opens Notification Panel
-                                automatically.
-                             5. Keeps it open for 5 seconds.
-                             6. Closes automatically.
-                             7. Leaves unread counter visible.
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
-                    *ngIf="isForgetPasswordMode"
+                    *ngIf="
+                        isForgetPasswordMode
+                    "
 
                     (passwordResetSuccess)="
                         onPasswordResetSuccess()
@@ -542,19 +268,12 @@
             <!-- ===============================================
                  RIGHT BOTTOM
                  -----------------------------------------------
-                 HEIGHT:
-
-                     50px
-
-                 CONTENT:
-
-                     EMPTY FOOTER AREA
+                 EMPTY
             ================================================= -->
 
             <section
                 class="login-page-5-right-bottom"
             >
-
             </section>
 
 

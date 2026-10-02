@@ -1,32 +1,54 @@
 /* =====================================================
    FOOTER BRAND
+   -----------------------------------------------------
+   Application footer brand area.
+
+   IMPORTANT:
+
+       The Footer remains part of the normal application
+       shell.
+
+       Toasts must remain above the Footer.
+
+       When Login Page Preview is active, the Footer Brand
+       is hidden so the Login Page can occupy the viewport.
 ===================================================== */
 
 .footer-brand
 {
-    position:relative;
+    position:
+        relative;
 
-    width:280px;
+    width:
+        280px;
 
-    min-width:280px;
+    min-width:
+        280px;
 
-    max-width:280px;
+    max-width:
+        280px;
 
-    height:100%;
+    height:
+        100%;
 
-    display:flex;
+    display:
+        flex;
 
-    align-items:center;
+    align-items:
+        center;
 
-    justify-content:space-between;
+    justify-content:
+        space-between;
 
-    gap:12px;
+    gap:
+        12px;
 
     padding:
         0
         10px;
 
-    box-sizing:border-box;
+    box-sizing:
+        border-box;
 
     background:
         linear-gradient(
@@ -36,7 +58,16 @@
             #d9dfe7 100%
         );
 
-    overflow:hidden;
+    overflow:
+        hidden;
+
+    /*
+        Footer application layer.
+
+        Keep this below Topbar and Toast.
+    */
+    z-index:
+        800;
 }
 
 
@@ -47,17 +78,23 @@
 
 .footer-brand::before
 {
-    content:'';
+    content:
+        '';
 
-    position:absolute;
+    position:
+        absolute;
 
-    top:0;
+    top:
+        0;
 
-    left:0;
+    left:
+        0;
 
-    width:100%;
+    width:
+        100%;
 
-    height:1px;
+    height:
+        1px;
 
     background:
         linear-gradient(
@@ -67,9 +104,11 @@
             rgba(255,255,255,.70) 100%
         );
 
-    pointer-events:none;
+    pointer-events:
+        none;
 
-    z-index:1;
+    z-index:
+        1;
 }
 
 
@@ -80,23 +119,32 @@
 
 .about-button
 {
-    position:relative;
+    position:
+        relative;
 
-    z-index:2;
+    z-index:
+        2;
 
-    flex-shrink:0;
+    flex-shrink:
+        0;
 
-    display:inline-flex;
+    display:
+        inline-flex;
 
-    align-items:center;
+    align-items:
+        center;
 
-    justify-content:center;
+    justify-content:
+        center;
 
-    gap:6px;
+    gap:
+        6px;
 
-    height:26px;
+    height:
+        26px;
 
-    min-width:84px;
+    min-width:
+        84px;
 
     padding:
         0
@@ -111,7 +159,8 @@
             .22
         );
 
-    border-radius:4px;
+    border-radius:
+        4px;
 
     background:
         rgba(
@@ -121,17 +170,23 @@
             .68
         );
 
-    color:#334155;
+    color:
+        #334155;
 
-    font-size:12px;
+    font-size:
+        12px;
 
-    font-weight:600;
+    font-weight:
+        600;
 
-    cursor:pointer;
+    cursor:
+        pointer;
 
-    white-space:nowrap;
+    white-space:
+        nowrap;
 
-    box-sizing:border-box;
+    box-sizing:
+        border-box;
 
     transition:
         background-color .20s ease,
@@ -149,7 +204,8 @@
 
 .about-button:hover
 {
-    background:#ffffff;
+    background:
+        #ffffff;
 
     border-color:
         rgba(
@@ -159,7 +215,8 @@
             .35
         );
 
-    color:#2563eb;
+    color:
+        #2563eb;
 
     box-shadow:
         0
@@ -194,7 +251,8 @@
 
 .about-button:focus-visible
 {
-    outline:none;
+    outline:
+        none;
 
     border-color:
         rgba(
@@ -225,9 +283,11 @@
 
 .about-button i
 {
-    font-size:13px;
+    font-size:
+        13px;
 
-    line-height:1;
+    line-height:
+        1;
 }
 
 
@@ -238,23 +298,32 @@
 
 .footer-brand-content
 {
-    position:relative;
+    position:
+        relative;
 
-    z-index:2;
+    z-index:
+        2;
 
-    flex:1;
+    flex:
+        1;
 
-    min-width:0;
+    min-width:
+        0;
 
-    height:100%;
+    height:
+        100%;
 
-    display:flex;
+    display:
+        flex;
 
-    align-items:center;
+    align-items:
+        center;
 
-    justify-content:flex-end;
+    justify-content:
+        flex-end;
 
-    overflow:hidden;
+    overflow:
+        hidden;
 }
 
 
@@ -265,23 +334,32 @@
 
 .footer-brand-content img
 {
-    display:block;
+    display:
+        block;
 
-    max-height:50px;
+    max-height:
+        50px;
 
-    max-width:170px;
+    max-width:
+        170px;
 
-    width:auto;
+    width:
+        auto;
 
-    height:auto;
+    height:
+        auto;
 
-    object-fit:contain;
+    object-fit:
+        contain;
 
-    user-select:none;
+    user-select:
+        none;
 
-    -webkit-user-select:none;
+    -webkit-user-select:
+        none;
 
-    pointer-events:none;
+    pointer-events:
+        none;
 }
 
 
@@ -294,41 +372,48 @@
 {
     .footer-brand
     {
-        width:300px;
+        width:
+            300px;
 
-        min-width:300px;
+        min-width:
+            300px;
 
-        max-width:300px;
+        max-width:
+            300px;
 
         padding:
             0
             8px;
 
-        gap:10px;
+        gap:
+            10px;
     }
-
 
 
     .about-button
     {
-        height:25px;
+        height:
+            25px;
 
-        min-width:78px;
+        min-width:
+            78px;
 
         padding:
             0
             10px;
 
-        font-size:11px;
+        font-size:
+            11px;
     }
-
 
 
     .footer-brand-content img
     {
-        max-width:150px;
+        max-width:
+            150px;
 
-        max-height:46px;
+        max-height:
+            46px;
     }
 }
 
@@ -342,47 +427,78 @@
 {
     .footer-brand
     {
-        width:300px;
+        width:
+            300px;
 
-        min-width:300px;
+        min-width:
+            300px;
 
-        max-width:300px;
+        max-width:
+            300px;
 
         padding:
             0
             6px;
 
-        gap:8px;
+        gap:
+            8px;
     }
-
 
 
     .about-button
     {
-        height:24px;
+        height:
+            24px;
 
-        min-width:70px;
+        min-width:
+            70px;
 
         padding:
             0
             8px;
 
-        font-size:10px;
+        font-size:
+            10px;
     }
-
 
 
     .about-button i
     {
-        font-size:11px;
+        font-size:
+            11px;
     }
-
 
 
     .footer-brand-content img
     {
-        max-width:130px;
+        max-width:
+            130px;
 
-        max-height:42px;
+        max-height:
+            42px;
     }
+}
+
+
+
+/* =====================================================
+   LOGIN PAGE PREVIEW MODE
+   -----------------------------------------------------
+   STEP 2 ONLY
+
+   When LoginPageLoader activates:
+
+       body.login-page-preview-active
+
+   the Footer Brand is hidden.
+
+   This is intentionally limited to the Footer Brand.
+   We are NOT changing Toast, Loader or global layout yet.
+===================================================== */
+
+:host-context(body.login-page-preview-active)
+.footer-brand
+{
+    display:
+        none !important;
 }

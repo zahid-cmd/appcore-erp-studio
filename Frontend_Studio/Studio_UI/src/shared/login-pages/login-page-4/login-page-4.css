@@ -95,6 +95,84 @@
 
 
 /* =============================================================
+   ACTUAL BACKGROUND IMAGE 4
+   -------------------------------------------------------------
+   FULL VIEWPORT
+
+   Login Page 4 loads its background through:
+
+       Sub Ordinate Component ID = 3
+
+   The TypeScript provides:
+
+       lightBackgroundImageUrl
+       deepBackgroundImageUrl
+       currentBackgroundImageUrl
+
+   Theme:
+
+       Light Theme
+           → lightBackgroundImageUrl
+
+       Deep Theme
+           → deepBackgroundImageUrl
+
+   This layer is completely independent from the
+   30% / 35% / 35% desktop layout.
+
+   IMPORTANT:
+
+       The background consumes NO physical layout space.
+
+       It remains behind the entire Login Page 4 layout.
+
+       The main layout remains at z-index: 10.
+============================================================= */
+
+.login-page-4-background
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    background-position:
+        center center;
+
+    background-repeat:
+        no-repeat;
+
+    background-size:
+        cover;
+
+    background-color:
+        transparent;
+
+    z-index:
+        0;
+
+    pointer-events:
+        none;
+}
+
+
+/* =============================================================
    PROMOTIONAL IMAGE
    -------------------------------------------------------------
    FULL VIEWPORT
@@ -178,7 +256,7 @@ app-login-page-promotional-image-deep
         grid;
 
     grid-template-columns:
-        30% 35% 35%;
+        35% 30% 35%;
 
     width:
         100%;
@@ -208,7 +286,7 @@ app-login-page-promotional-image-deep
         grid;
 
     grid-template-rows:
-        15% 70% 15%;
+        20% 65% 15%;
 
     width:
         100%;

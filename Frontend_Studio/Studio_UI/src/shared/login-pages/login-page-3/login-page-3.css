@@ -97,6 +97,72 @@
 
 
 /* =============================================================
+   BACKGROUND IMAGE 3
+   -------------------------------------------------------------
+   FULL VIEWPORT
+
+   Background Image 3 is loaded by LoginPage3.ts from:
+
+       Sub Ordinate Component ID = 3
+
+   The HTML supplies:
+
+       currentBackgroundImageUrl
+
+   The background layer remains completely independent from
+   the 35% / 45% / 20% desktop layout.
+
+   IMPORTANT:
+
+       This layer must remain behind the main layout.
+
+       It consumes NO physical layout space.
+============================================================= */
+
+.login-page-3-background
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    background-position:
+        center center;
+
+    background-repeat:
+        no-repeat;
+
+    background-size:
+        cover;
+
+    background-color:
+        transparent;
+
+    z-index:
+        0;
+
+    pointer-events:
+        none;
+}
+
+
+/* =============================================================
    PROMOTIONAL IMAGE
    -------------------------------------------------------------
    FULL VIEWPORT
@@ -196,7 +262,7 @@ app-login-page-promotional-image-deep
         grid;
 
     grid-template-columns:
-        35% 45% 20%;
+        35% 35% 30%;
 
     width:
         100%;
@@ -469,7 +535,7 @@ app-login-page-forget-password-panel
         grid;
 
     grid-template-rows:
-        15% 70% 15%;
+        15% 65% 20%;
 
     width:
         100%;

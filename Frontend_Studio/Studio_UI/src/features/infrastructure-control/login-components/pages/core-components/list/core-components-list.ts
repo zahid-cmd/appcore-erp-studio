@@ -320,12 +320,6 @@ implements OnInit
                     ];
 
 
-                    console.log(
-                        'Core Components Records:',
-                        this.corecomponents
-                    );
-
-
                     this.buildTabs();
 
 
@@ -526,40 +520,6 @@ implements OnInit
                 null;
 
 
-        console.log(
-            'Core Components Selected Component:',
-            this.selectedComponent
-        );
-
-
-        console.log(
-            'Core Component Path:',
-            this.selectedComponent?.componentPath
-        );
-
-
-        console.log(
-            'Core Component Renderer Key:',
-            this.getRendererKey(
-                this.selectedComponent?.componentPath
-                ??
-                ''
-            )
-        );
-
-
-        console.log(
-            'Core Component Name:',
-            this.selectedComponent?.name
-        );
-
-
-        console.log(
-            'Core Component ID:',
-            this.selectedComponent?.id
-        );
-
-
         this.cdr.detectChanges();
     }
 
@@ -650,12 +610,6 @@ implements OnInit
         {
             return '';
         }
-
-
-        console.log(
-            'Core Component Renderer Key:',
-            componentFolder
-        );
 
 
         return componentFolder;

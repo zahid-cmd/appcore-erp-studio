@@ -276,6 +276,36 @@ implements OnInit
 
 
     //===========================================================
+    // Profile Navigation Context
+    //===========================================================
+    //
+    // true:
+    //
+    //     Profile was opened from the logged-in user's
+    //     Topbar Profile menu.
+    //
+    // false:
+    //
+    //     Profile was opened through normal User Management.
+    //
+    // This allows the same UserProfileForm to support both:
+    //
+    //     User Management → User Profile
+    //
+    // and
+    //
+    //     Topbar → Profile
+    //
+    // without creating a separate My Profile component.
+    //===========================================================
+
+    private openedFromProfileMenu:
+        boolean =
+        false;
+
+
+
+    //===========================================================
     // Page Header
     //===========================================================
 
@@ -461,6 +491,28 @@ implements OnInit
     {
         const url =
             this.router.url.toLowerCase();
+
+
+        //=======================================================
+        // Detect Profile Menu Navigation
+        //=======================================================
+        //
+        // The Topbar opens the same User Profile form with:
+        //
+        //     ?source=profile
+        //
+        // This flag controls only the Back destination.
+        //=======================================================
+
+        const source =
+            this.route.snapshot.queryParamMap
+                .get('source');
+
+
+        this.openedFromProfileMenu =
+            source?.toLowerCase()
+            ===
+            'profile';
 
 
         //=======================================================
@@ -1177,6 +1229,7 @@ implements OnInit
         )
         {
             this.completeSave();
+
             return;
         }
 
@@ -1257,6 +1310,7 @@ implements OnInit
         )
         {
             this.completeSave();
+
             return;
         }
 
@@ -1757,7 +1811,6 @@ implements OnInit
         {
             this.loadEntity();
 
-
             return;
         }
 
@@ -1775,12 +1828,44 @@ implements OnInit
 
 
     //===========================================================
-    // Back To List
+    // Back To List / Profile
     //===========================================================
 
     onBackToList():
         void
     {
+        //=======================================================
+        // Profile Menu
+        //=======================================================
+        //
+        // When the form is opened from the Topbar Profile menu,
+        // the correct application Dashboard route is:
+        //
+        //     /dashboard
+        //
+        // This returns the logged-in user directly to Dashboard.
+        //=======================================================
+
+        if
+        (
+            this.openedFromProfileMenu
+        )
+        {
+            void this.router.navigate
+            (
+                [
+                    '/dashboard'
+                ]
+            );
+
+            return;
+        }
+
+
+        //=======================================================
+        // Normal User Management
+        //=======================================================
+
         if
         (
             !this.hasChanges

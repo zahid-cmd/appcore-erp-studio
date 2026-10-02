@@ -47,6 +47,12 @@ from '../../shared/components/core-components/confirmation-dialog/confirmation-d
 
 import
 {
+    ChangePasswordComponent
+}
+from '../../shared/components/core-components/change-password/change-password';
+
+import
+{
     LoginPageFooterComponent
 }
 from '../../shared/components/core-components/footer/footer';
@@ -387,8 +393,8 @@ from '../../shared/components/sub-ordinate-components/background-image-5/backgro
 // Component
 //===============================================================
 
-@Component(
-{
+@Component
+({
     selector:
         'app-component-renderer',
 
@@ -412,7 +418,8 @@ implements
     // Component Host
     //===========================================================
 
-    @ViewChild(
+    @ViewChild
+    (
         'componentHost',
         {
             read:
@@ -439,13 +446,6 @@ implements
     //===========================================================
     // Light Background Image URL
     //===========================================================
-    //
-    // Used by Background Image 1.
-    //
-    // The parent component can provide the stored Light
-    // Background Image URL.
-    //
-    //===========================================================
 
     @Input()
     lightBackgroundImageUrl:
@@ -455,13 +455,6 @@ implements
 
     //===========================================================
     // Deep Background Image URL
-    //===========================================================
-    //
-    // Used by Background Image 1.
-    //
-    // The parent component can provide the stored Deep
-    // Background Image URL.
-    //
     //===========================================================
 
     @Input()
@@ -518,6 +511,9 @@ implements
 
         'confirmation-dialog':
             ConfirmationDialogComponent,
+
+        'change-password':
+            ChangePasswordComponent,
 
         'footer':
             LoginPageFooterComponent,
@@ -718,8 +714,10 @@ implements
     {
         if
         (
-            changes['componentKey'] ||
-            changes['lightBackgroundImageUrl'] ||
+            changes['componentKey']
+            ||
+            changes['lightBackgroundImageUrl']
+            ||
             changes['deepBackgroundImageUrl']
         )
         {
@@ -758,12 +756,6 @@ implements
 
         //=======================================================
         // Background Image 1 Inputs
-        //=======================================================
-        //
-        // Only Background Image 1 receives these two inputs.
-        //
-        // All other components remain unchanged.
-        //
         //=======================================================
 
         if
@@ -812,6 +804,23 @@ implements
     //===========================================================
     // Set Component Host Layout
     //===========================================================
+    //
+    // Most dynamic components use the complete preview surface.
+    //
+    // Change Password is different:
+    //
+    // Its native modal is intentionally designed at
+    // 1190px × 690px.
+    //
+    // Therefore its host must preserve those native dimensions.
+    //
+    // The parent renderer remains responsible for applying the
+    // preview scale.
+    //
+    // This prevents the Change Password modal from being forced
+    // into the 16:9 preview container before scaling occurs.
+    //
+    //===========================================================
 
     private setComponentHostLayout():
         void
@@ -831,45 +840,28 @@ implements
                 HTMLElement;
 
 
+        const normalizedKey =
+            (
+                this.componentKey
+                ??
+                ''
+            )
+            .trim()
+            .toLowerCase();
+
+
+        const isChangePassword =
+            normalizedKey
+                ===
+                'change-password';
+
+
         //=======================================================
-        // Display
+        // Common Host Styles
         //=======================================================
 
         hostElement.style.display =
             'block';
-
-
-        //=======================================================
-        // Width
-        //=======================================================
-
-        hostElement.style.width =
-            '100%';
-
-        hostElement.style.minWidth =
-            '0';
-
-        hostElement.style.maxWidth =
-            'none';
-
-
-        //=======================================================
-        // Height
-        //=======================================================
-
-        hostElement.style.height =
-            '100%';
-
-        hostElement.style.minHeight =
-            '0';
-
-        hostElement.style.maxHeight =
-            'none';
-
-
-        //=======================================================
-        // Box Model
-        //=======================================================
 
         hostElement.style.margin =
             '0';
@@ -880,21 +872,111 @@ implements
         hostElement.style.boxSizing =
             'border-box';
 
-
-        //=======================================================
-        // Position / Overflow
-        //=======================================================
-
-        hostElement.style.position =
-            'relative';
-
         hostElement.style.overflow =
             'visible';
 
 
         //=======================================================
-        // Flex Behavior
+        // Change Password Host
         //=======================================================
+        //
+        // Preserve the component's native modal dimensions.
+        //
+        // The renderer's CSS scale is applied to this complete
+        // native-size component.
+        //
+        //=======================================================
+
+        if
+        (
+            isChangePassword
+        )
+        {
+            hostElement.style.position =
+                'absolute';
+
+            hostElement.style.width =
+                '1190px';
+
+            hostElement.style.minWidth =
+                '1190px';
+
+            hostElement.style.maxWidth =
+                '1190px';
+
+            hostElement.style.height =
+                '690px';
+
+            hostElement.style.minHeight =
+                '690px';
+
+            hostElement.style.maxHeight =
+                '690px';
+
+            hostElement.style.top =
+                '50%';
+
+            hostElement.style.left =
+                '50%';
+
+            hostElement.style.right =
+                'auto';
+
+            hostElement.style.bottom =
+                'auto';
+
+            hostElement.style.transform =
+                'translate(-50%, -50%)';
+
+            hostElement.style.flex =
+                '0 0 1190px';
+
+            hostElement.style.alignSelf =
+                'auto';
+
+            return;
+        }
+
+
+        //=======================================================
+        // Standard Component Host Layout
+        //=======================================================
+
+        hostElement.style.position =
+            'relative';
+
+        hostElement.style.width =
+            '100%';
+
+        hostElement.style.minWidth =
+            '0';
+
+        hostElement.style.maxWidth =
+            'none';
+
+        hostElement.style.height =
+            '100%';
+
+        hostElement.style.minHeight =
+            '0';
+
+        hostElement.style.maxHeight =
+            'none';
+
+        hostElement.style.top =
+            'auto';
+
+        hostElement.style.left =
+            'auto';
+
+        hostElement.style.right =
+            'auto';
+
+        hostElement.style.bottom =
+            'auto';
+
+        hostElement.style.transform =
+            'none';
 
         hostElement.style.flex =
             '0 0 auto';

@@ -1,6 +1,55 @@
 <!--===========================================================
     Login Page Loader
+    -----------------------------------------------------------
+    RESPONSIBILITIES:
+
+        - Normal Active Login Page loading
+        - Selected Login Page Preview loading
+        - Login Page 1
+        - Login Page 2
+        - Login Page 3
+        - Login Page 4
+        - Login Page 5
+
+    MODES:
+
+        NORMAL MODE:
+
+            Loads the currently active Login Page.
+
+        PREVIEW MODE:
+
+            Loads the Login Page selected by the route:
+
+                /preview/1
+                /preview/2
+                /preview/3
+                /preview/4
+                /preview/5
+
+            The TypeScript component determines the
+            activePageKey.
+
+    IMPORTANT:
+
+        The Login Page Loader does NOT contain:
+
+            - Application Topbar
+            - Application Sidebar
+            - Application Footer
+            - Login Page Previewer
+
+        The selected Login Page is rendered directly by
+        this Loader.
+
+    IMPORTANT:
+
+        Only ONE Login Page is rendered at a time.
+
+        The activePageKey determines which Login Page
+        component is displayed.
 ============================================================-->
+
 
 <div
     class="login-page-loader"
@@ -10,8 +59,13 @@
     <!--===========================================================
         Orbit Loader
         -----------------------------------------------------------
-        Displays while the active Login Page configuration is
-        being loaded.
+        Displays while the Login Page configuration is being
+        resolved.
+
+        This works for both:
+
+            - Normal Active Login Page mode
+            - Preview mode
     ============================================================-->
 
     <app-orbit-loader
@@ -47,8 +101,11 @@
     <!--===========================================================
         Empty State
         -----------------------------------------------------------
-        Displays when the active Login Page configuration cannot
-        be loaded or is invalid.
+        Displays when:
+
+            - Active Login Page cannot be loaded
+            - Requested Preview Login Page is invalid
+            - Login Page configuration cannot be resolved
     ============================================================-->
 
     <app-empty-state
@@ -76,6 +133,14 @@
 
     <!--===========================================================
         Login Page 1
+        -----------------------------------------------------------
+        Rendered when:
+
+            activePageKey === 'login-page-1'
+
+        Preview:
+
+            /preview/1
     ============================================================-->
 
     <app-login-page-1
@@ -93,6 +158,14 @@
 
     <!--===========================================================
         Login Page 2
+        -----------------------------------------------------------
+        Rendered when:
+
+            activePageKey === 'login-page-2'
+
+        Preview:
+
+            /preview/2
     ============================================================-->
 
     <app-login-page-2
@@ -110,6 +183,14 @@
 
     <!--===========================================================
         Login Page 3
+        -----------------------------------------------------------
+        Rendered when:
+
+            activePageKey === 'login-page-3'
+
+        Preview:
+
+            /preview/3
     ============================================================-->
 
     <app-login-page-3
@@ -127,6 +208,14 @@
 
     <!--===========================================================
         Login Page 4
+        -----------------------------------------------------------
+        Rendered when:
+
+            activePageKey === 'login-page-4'
+
+        Preview:
+
+            /preview/4
     ============================================================-->
 
     <app-login-page-4
@@ -139,6 +228,31 @@
         "
     >
     </app-login-page-4>
+
+
+
+    <!--===========================================================
+        Login Page 5
+        -----------------------------------------------------------
+        Rendered when:
+
+            activePageKey === 'login-page-5'
+
+        Preview:
+
+            /preview/5
+    ============================================================-->
+
+    <app-login-page-5
+        *ngIf="
+            !isLoading
+            &&
+            !loadError
+            &&
+            activePageKey === 'login-page-5'
+        "
+    >
+    </app-login-page-5>
 
 
 </div>

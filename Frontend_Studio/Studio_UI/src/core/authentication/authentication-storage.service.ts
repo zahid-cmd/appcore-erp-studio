@@ -38,23 +38,97 @@ export class AuthenticationStorageService
             'appcore_authentication_user';
 
 
+    private readonly rememberedLoginIdKey:
+        string =
+            'appcore_remembered_login_id';
+
+
 
     /* ========================================================
        Set Authentication
+       --------------------------------------------------------
+       Remember Me behavior:
+
+       rememberMe = true
+           -> localStorage
+
+       rememberMe = false
+           -> sessionStorage
+
+       The Login ID is remembered only when Remember Me
+       is enabled.
+
+       Password is NEVER stored.
     ======================================================== */
 
     setAuthentication
     (
         response:
-            LoginResponse
+            LoginResponse,
+
+        rememberMe:
+            boolean =
+                false,
+
+        loginId:
+            string =
+                ''
     ):
         void
     {
         //=======================================================
+        // Clear Previous Authentication
+        //=======================================================
+
+        this.clearAuthentication();
+
+
+
+        //=======================================================
+        // Remember Login ID
+        //=======================================================
+
+        if
+        (
+            rememberMe
+            &&
+            loginId.trim()
+        )
+        {
+            localStorage.setItem
+            (
+                this.rememberedLoginIdKey,
+
+                loginId.trim()
+            );
+        }
+        else
+        {
+            localStorage.removeItem
+            (
+                this.rememberedLoginIdKey
+            );
+        }
+
+
+
+        //=======================================================
+        // Select Authentication Storage
+        //=======================================================
+
+        const storage:
+            Storage =
+                rememberMe
+                    ? localStorage
+                    : sessionStorage;
+
+
+
+        //=======================================================
         // Store Authentication Token
         //=======================================================
 
-        localStorage.setItem
+        storage.setItem
         (
             this.tokenKey,
 
@@ -62,11 +136,12 @@ export class AuthenticationStorageService
         );
 
 
+
         //=======================================================
         // Store Authenticated User
         //=======================================================
 
-        localStorage.setItem
+        storage.setItem
         (
             this.userKey,
 
@@ -118,11 +193,31 @@ export class AuthenticationStorageService
 
     /* ========================================================
        Get Token
+       --------------------------------------------------------
+       Checks sessionStorage first and then localStorage.
     ======================================================== */
 
     getToken():
         string | null
     {
+        const sessionToken:
+            string | null =
+                sessionStorage.getItem
+                (
+                    this.tokenKey
+                );
+
+
+        if
+        (
+            sessionToken
+        )
+        {
+            return sessionToken;
+        }
+
+
+
         return localStorage.getItem
         (
             this.tokenKey
@@ -132,7 +227,9 @@ export class AuthenticationStorageService
 
 
     /* ========================================================
-    Get User
+       Get User
+       --------------------------------------------------------
+       Checks sessionStorage first and then localStorage.
     ======================================================== */
 
     getUser():
@@ -154,12 +251,27 @@ export class AuthenticationStorageService
         }
         | null
     {
-        const user:
+        const sessionUser:
+            string | null =
+                sessionStorage.getItem
+                (
+                    this.userKey
+                );
+
+
+        const localUser:
             string | null =
                 localStorage.getItem
                 (
                     this.userKey
                 );
+
+
+        const user:
+            string | null =
+                sessionUser
+                ??
+                localUser;
 
 
         if
@@ -181,11 +293,8 @@ export class AuthenticationStorageService
                     );
 
 
-            //===================================================
-            // Return Normalized Authenticated User
-            //===================================================
-
-            return {
+            const normalizedUser =
+            {
                 userProfileId:
                     Number
                     (
@@ -228,11 +337,61 @@ export class AuthenticationStorageService
                     ??
                     ''
             };
+
+
+            return normalizedUser;
         }
         catch
         {
             return null;
         }
+    }
+
+
+
+    /* ========================================================
+       Get Remembered Login ID
+    ======================================================== */
+
+    getRememberedLoginId():
+        string
+        | null
+    {
+        return localStorage.getItem
+        (
+            this.rememberedLoginIdKey
+        );
+    }
+
+
+
+    /* ========================================================
+       Has Remembered Login
+    ======================================================== */
+
+    hasRememberedLogin():
+        boolean
+    {
+        return !!this.getRememberedLoginId();
+    }
+
+
+
+    /* ========================================================
+       Clear Remembered Login
+       --------------------------------------------------------
+       Removes only the remembered Login ID.
+
+       This is separate from Logout.
+    ======================================================== */
+
+    clearRememberedLogin():
+        void
+    {
+        localStorage.removeItem
+        (
+            this.rememberedLoginIdKey
+        );
     }
 
 
@@ -244,30 +403,92 @@ export class AuthenticationStorageService
     isAuthenticated():
         boolean
     {
-        const token:
-            string | null =
-                this.getToken();
+        return !!this.getToken();
+    }
 
 
-        return !!token;
+
+    /* ========================================================
+       Logout
+       --------------------------------------------------------
+       Clears authentication from BOTH localStorage and
+       sessionStorage.
+
+       The remembered Login ID is intentionally preserved.
+
+       Therefore:
+
+           Remember Me checked
+               -> Login ID remains after logout.
+
+           Remember Me unchecked
+               -> no remembered Login ID exists.
+
+       IMPORTANT:
+
+           This method does NOT navigate.
+
+           Routing/navigation belongs to the component or
+           AuthenticationService.
+    ======================================================== */
+
+    logout():
+        void
+    {
+        this.clearAuthentication();
     }
 
 
 
     /* ========================================================
        Clear Authentication
+       --------------------------------------------------------
+       Removes ONLY authentication information.
+
+       Removes:
+
+           - Authentication token
+           - Authenticated user
+
+       From:
+
+           - localStorage
+           - sessionStorage
+
+       Does NOT remove:
+
+           - Remembered Login ID
     ======================================================== */
 
     clearAuthentication():
         void
     {
+        //=======================================================
+        // Clear Local Authentication
+        //=======================================================
+
         localStorage.removeItem
         (
             this.tokenKey
         );
 
-
         localStorage.removeItem
+        (
+            this.userKey
+        );
+
+
+
+        //=======================================================
+        // Clear Session Authentication
+        //=======================================================
+
+        sessionStorage.removeItem
+        (
+            this.tokenKey
+        );
+
+        sessionStorage.removeItem
         (
             this.userKey
         );

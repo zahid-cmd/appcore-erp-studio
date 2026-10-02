@@ -124,3 +124,77 @@ export interface ForgotPasswordConfirmRequest
     newPassword:
         string;
 }
+
+
+
+/* ============================================================
+   Validate Current Password Request
+   ------------------------------------------------------------
+   Used for live validation when the user leaves the
+   Current Password field.
+============================================================ */
+
+export interface ValidateCurrentPasswordRequest
+{
+    userName:
+        string;
+
+    currentPassword:
+        string;
+}
+
+
+
+/* ============================================================
+   Validate Current Password Response
+   ------------------------------------------------------------
+   Returns whether the entered Current Password is valid.
+============================================================ */
+
+export interface ValidateCurrentPasswordResponse
+{
+    success:
+        boolean;
+
+    message:
+        string;
+}
+
+
+
+/* ============================================================
+   Change Password Request
+   ------------------------------------------------------------
+   Sent to the authenticated password-change API.
+
+   NOTE:
+   confirmPassword is intentionally NOT included here.
+   It is only used by the frontend for validation.
+============================================================ */
+
+export interface ChangePasswordRequest
+{
+    userName:
+        string;
+
+    currentPassword:
+        string;
+
+    newPassword:
+        string;
+}
+
+
+
+/* ============================================================
+   Change Password Response
+============================================================ */
+
+export interface ChangePasswordResponse
+{
+    success:
+        boolean;
+
+    message:
+        string;
+}

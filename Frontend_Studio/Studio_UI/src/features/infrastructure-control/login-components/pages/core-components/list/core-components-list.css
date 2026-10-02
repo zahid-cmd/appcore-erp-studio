@@ -816,26 +816,12 @@
 
     box-shadow:none;
 
-    /*
-       IMPORTANT:
-       Do not clip the transformed renderer.
-       The renderer controls its own visual bounds.
-    */
-
     overflow:visible;
 }
 
 
 /* ============================================================
    CORE COMPONENT RENDERER
-   ------------------------------------------------------------
-   IMPORTANT ARCHITECTURE
-
-   The renderer is the ONLY element responsible
-   for preview scaling.
-
-   Individual components must NOT apply another
-   preview scale to themselves.
 ============================================================ */
 
 .core-component-renderer
@@ -884,11 +870,6 @@
     transform-origin:
         center center;
 
-    /*
-       Prevent browser containment from
-       creating an unexpected clipping context.
-    */
-
     contain:layout;
 }
 
@@ -934,45 +915,77 @@
 {
     --renderer-scale:
         0.75;
-    padding-bottom: 400px;
-    padding-left: 400px;
+
+    padding-bottom:
+        400px;
+
+    padding-left:
+        400px;
 }
 
 
 /* ============================================================
    CONFIRMATION DIALOG
-   ------------------------------------------------------------
-   Renderer controls the scale.
-   Confirmation component itself should NOT
-   apply another scale.
 ============================================================ */
 
 .core-component-renderer.confirmation-dialog
 {
     --renderer-scale:
-        .5;
-    min-height:190%;
-    min-width: 100%;
+        0.50;
 
+    min-height:
+        190%;
+
+    min-width:
+        100%;
 }
+
+
+/* ============================================================
+   BACKGROUND
+============================================================ */
 
 .core-component-renderer.background
 {
     --renderer-scale:
-        .5;
-    min-height:50%;
-    min-width: 100%;
+        0.50;
 
+    min-height:
+        50%;
+
+    min-width:
+        100%;
 }
+
+
+/* ============================================================
+   FOOTER
+============================================================ */
 
 .core-component-renderer.footer
 {
     --renderer-scale:
-        .5;
-    min-height:100%;
-    min-width: 1400px;
+        0.50;
+
+    min-height:
+        100%;
+
+    min-width:
+        1400px;
+}
+
+/* ============================================================
+   FOOTER
+============================================================ */
+
+.core-component-renderer.change-password
+{
+    --renderer-scale:
+        0.80;
 
 }
+
+
 /* ============================================================
    PREVIEW CLEAN SURFACE
 ============================================================ */
@@ -1154,11 +1167,6 @@
 
 /* ============================================================
    RESPONSIVE PREVIEW
-   ------------------------------------------------------------
-   The preview surface becomes 16:9.
-
-   The renderer remains centered and is still
-   the ONLY element applying scale.
 ============================================================ */
 
 @media

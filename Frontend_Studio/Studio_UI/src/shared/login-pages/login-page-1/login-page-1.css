@@ -17,7 +17,7 @@
 
    RIGHT:
 
-       TOP    = AUTO
+       TOP    = 50px
        CENTER = REST
        BOTTOM = 50px
 
@@ -28,27 +28,20 @@
        Tablet and mobile layouts are intentionally not included
        at this stage.
 
-   IMPORTANT BACKGROUND RULE:
+   IMPORTANT BRANDING RULE:
 
-       Background Image 1 is loaded from:
+       The Login Page controls the POSITION of the Branding
+       component.
 
-           Sub Ordinate Component ID = 1
+       The Branding component itself controls its own
+       intrinsic width and height.
 
-       Light Theme:
+       Therefore the page MUST NOT force:
 
-           lightBackgroundImageUrl
+           width: 100%;
+           height: 100%;
 
-       Deep Theme:
-
-           deepBackgroundImageUrl
-
-       Login Page 1 displays the currently selected image
-       through:
-
-           currentBackgroundImageUrl
-
-       The Background Image management component itself is
-       NOT rendered on this page.
+       on the Branding component.
 
    IMPORTANT NOTIFICATION RULE:
 
@@ -73,8 +66,31 @@
 
            - Login / Registration / Forget Password mode
            - Theme state
-           - Background Image 1
            - Notification Panel
+
+   IMPORTANT BACKGROUND RULE:
+
+       Login Page 1 uses:
+
+           Sub Ordinate Component ID = 1
+
+       Light Theme:
+
+           lightBackgroundImageUrl
+
+       Deep Theme:
+
+           deepBackgroundImageUrl
+
+       Current:
+
+           currentBackgroundImageUrl
+
+       The actual Login Page background is rendered directly
+       by Login Page 1.
+
+       The Background Image 1 management component is NOT
+       rendered here.
 ============================================================= */
 
 
@@ -98,20 +114,46 @@
 
     overflow:
         hidden;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
 }
 
 
 /* =============================================================
    BACKGROUND IMAGE 1
+   -------------------------------------------------------------
+   ACTUAL LOGIN PAGE BACKGROUND
+
+   SOURCE:
+
+       Sub Ordinate Component ID = 1
+
+   LIGHT:
+
+       lightBackgroundImageUrl
+
+   DEEP:
+
+       deepBackgroundImageUrl
+
+   CURRENT:
+
+       currentBackgroundImageUrl
+
+   IMPORTANT:
+
+       This is the actual background layer for Login Page 1.
+
+       It is completely independent from the 30% / 35% / 35%
+       desktop layout.
+
+       It consumes NO layout space.
+
+       The Login Page HTML binds:
+
+           [style.background-image]
+
+       to:
+
+           currentBackgroundImageUrl
 ============================================================= */
 
 .login-page-1-background
@@ -158,18 +200,87 @@
 
 
 /* =============================================================
+   PROMOTIONAL IMAGE
+   -------------------------------------------------------------
+   IMPORTANT:
+
+       This old promotional-image layer is intentionally NOT
+       used as the Login Page 1 background.
+
+       Background Image 1 above is now the actual page
+       background.
+
+       These rules are retained to keep the stylesheet
+       structurally identical to Login Page 2.
+============================================================= */
+
+.login-page-1-promotional-area
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden;
+
+    z-index:
+        0;
+}
+
+
+/* =============================================================
+   PROMOTIONAL IMAGE COMPONENTS
+============================================================= */
+
+.login-page-1-promotional-area >
+app-login-page-promotional-image-light,
+
+.login-page-1-promotional-area >
+app-login-page-promotional-image-deep
+{
+    position:
+        absolute;
+
+    inset:
+        0;
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    height:
+        100%;
+}
+
+
+/* =============================================================
    MAIN DESKTOP LAYOUT
    -------------------------------------------------------------
    FULL WIDTH:
 
        30% | 35% | 35%
 
+   FULL HEIGHT:
+
+       100%
+
    IMPORTANT:
 
-       The right area itself is NOT moved.
+       Notification Panel is NOT part of this grid.
 
-       Only the visible contents inside the right area
-       are shifted horizontally.
+       It is a floating page-level component.
+
+       The layout remains above Background Image 1.
 ============================================================= */
 
 .login-page-1-layout
@@ -191,20 +302,21 @@
 
     height:
         100%;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
 }
 
 
 /* =============================================================
    LEFT AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       30%
+
+   ROWS:
+
+       15%
+       70%
+       15%
 ============================================================= */
 
 .login-page-1-left-area
@@ -213,24 +325,31 @@
         grid;
 
     grid-template-rows:
-        5% 80% 15%;
+        15% 65% 20%;
 
     width:
         100%;
 
     height:
         100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
 }
 
 
 /* =============================================================
    LEFT TOP
+   -------------------------------------------------------------
+   HEIGHT:
+
+       15%
+
+   CONTENT:
+
+       BRANDING
+
+   This section provides POSITIONING ONLY.
+
+   It does NOT force the Branding component to fill the
+   complete 15% area.
 ============================================================= */
 
 .login-page-1-left-top
@@ -299,6 +418,15 @@
 
 .login-page-1-left-bottom
 {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-start;
+
     width:
         100%;
 
@@ -317,6 +445,9 @@
     padding:
         0;
 
+    box-sizing:
+        border-box;
+
     overflow:
         hidden;
 }
@@ -324,6 +455,16 @@
 
 /* =============================================================
    MIDDLE AREA
+   -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       15%
+       70%
+       15%
 ============================================================= */
 
 .login-page-1-middle-area
@@ -332,24 +473,22 @@
         grid;
 
     grid-template-rows:
-        15% 60% 25%;
+        15% 65% 20%;
 
     width:
         100%;
 
     height:
         100%;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
 }
 
 
 /* =============================================================
    MIDDLE TOP
+   -------------------------------------------------------------
+   CONTENT:
+
+       EMPTY
 ============================================================= */
 
 .login-page-1-middle-top
@@ -414,6 +553,11 @@
 
 /* =============================================================
    MIDDLE BOTTOM
+   -------------------------------------------------------------
+   POWERED BY
+
+   Powered By is positioned directly from the LEFT edge of
+   the 35% Middle Bottom area.
 ============================================================= */
 
 .login-page-1-middle-bottom
@@ -455,6 +599,11 @@
 
 /* =============================================================
    POWERED BY POSITION
+   -------------------------------------------------------------
+   The Powered By component remains intrinsically sized.
+
+   The page only controls its position from the LEFT edge of
+   the 35% Middle Bottom area.
 ============================================================= */
 
 .login-page-1-middle-bottom >
@@ -493,6 +642,9 @@ app-login-page-powered-by
     overflow:
         visible;
 
+    transform:
+        none;
+
     flex:
         0 0 auto;
 }
@@ -501,17 +653,20 @@ app-login-page-powered-by
 /* =============================================================
    RIGHT AREA
    -------------------------------------------------------------
+   WIDTH:
+
+       35%
+
+   ROWS:
+
+       50px
+       REST
+       50px
+
    IMPORTANT:
 
-       DO NOT MOVE THIS AREA.
-
-       It remains inside the original 35% grid column.
-
-       NO transform.
-       NO left.
-       NO translateX.
-
-       Only the child components below are moved.
+       The right area is completely independent from the
+       vertical divisions of the left and middle areas.
 ============================================================= */
 
 .login-page-1-right-area
@@ -520,7 +675,7 @@ app-login-page-powered-by
         grid;
 
     grid-template-rows:
-        auto minmax(0, 1fr) 50px;
+        50px minmax(0, 1fr) 50px;
 
     width:
         100%;
@@ -534,128 +689,49 @@ app-login-page-powered-by
     min-height:
         0;
 
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
     overflow:
         hidden;
-
-    background:
-        transparent;
 }
 
 
 /* =============================================================
    RIGHT TOP
    -------------------------------------------------------------
-   THEME SELECTOR CONTAINER
+   HEIGHT:
 
-   The container itself remains unchanged.
+       EXACTLY 50px
 
-   No vertical padding.
-   No vertical margin.
+   RESERVED FOR THE THEME SELECTOR.
 ============================================================= */
 
 .login-page-1-right-top
 {
-    display:
-        flex;
-
-    align-items:
-        flex-start;
-
-    justify-content:
-        center;
-
     width:
         100%;
 
     height:
-        auto;
+        50px;
 
     min-width:
         0;
 
     min-height:
         0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
 
     overflow:
-        visible;
-
-    background:
-        transparent;
-}
-
-
-/* =============================================================
-   THEME SELECTOR
-   -------------------------------------------------------------
-   HORIZONTAL POSITION ONLY
-
-       30px → RIGHT
-
-   VERTICAL POSITION:
-
-       UNCHANGED
-============================================================= */
-
-.login-page-1-right-top >
-app-login-page-theme-selector
-{
-    display:
-        block;
-
-    width:
-        fit-content;
-
-    height:
-        fit-content;
-
-    min-width:
-        0;
-
-    min-height:
-        0;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
-    position:
-        relative;
-
-    left:
-        30px;
+        hidden;
 }
 
 
 /* =============================================================
    RIGHT CENTER
    -------------------------------------------------------------
-   CENTER AREA ITSELF IS NOT MOVED.
+   HEIGHT:
 
-   The selected credential panel is centered normally,
-   then shifted 30px to the right.
+       REMAINING HEIGHT
+
+   The selected Login / Registration / Forget Password panel
+   is centered inside this area.
 ============================================================= */
 
 .login-page-1-right-center
@@ -678,30 +754,19 @@ app-login-page-theme-selector
     min-height:
         0;
 
-    margin:
-        0;
-
-    padding:
-        0;
-
-    box-sizing:
-        border-box;
-
     overflow:
-        visible;
+        hidden;
 }
 
 
 /* =============================================================
    LOGIN PANEL
    -------------------------------------------------------------
-   HORIZONTAL POSITION ONLY
+   The existing Login Panel owns its own internal design.
 
-       30px → RIGHT
+   Authentication is also completely owned by the Login Panel.
 
-   VERTICAL POSITION:
-
-       UNCHANGED
+   This page only controls its position inside the 35% area.
 ============================================================= */
 
 .login-page-1-right-center >
@@ -721,19 +786,15 @@ app-login-page-login-panel
 
     min-height:
         0;
-
-    position:
-        relative;
-
-    left:
-        30px;
 }
 
 
 /* =============================================================
    REGISTRATION PANEL
    -------------------------------------------------------------
-   SAME POSITION AS LOGIN PANEL
+   The existing Registration Panel owns its own internal design.
+
+   The page controls only its position inside the 35% area.
 ============================================================= */
 
 .login-page-1-right-center >
@@ -753,19 +814,16 @@ app-login-page-registration-panel
 
     min-height:
         0;
-
-    position:
-        relative;
-
-    left:
-        30px;
 }
 
 
 /* =============================================================
    FORGET PASSWORD PANEL
    -------------------------------------------------------------
-   SAME POSITION AS LOGIN PANEL
+   The existing Forget Password Panel owns its own internal
+   design.
+
+   The page controls only its position inside the 35% area.
 ============================================================= */
 
 .login-page-1-right-center >
@@ -785,17 +843,17 @@ app-login-page-forget-password-panel
 
     min-height:
         0;
-
-    position:
-        relative;
-
-    left:
-        30px;
 }
 
 
 /* =============================================================
    RIGHT BOTTOM
+   -------------------------------------------------------------
+   HEIGHT:
+
+       EXACTLY 50px
+
+   FOOTER AREA
 ============================================================= */
 
 .login-page-1-right-bottom
@@ -827,9 +885,6 @@ app-login-page-forget-password-panel
     padding:
         0;
 
-    box-sizing:
-        border-box;
-
     overflow:
         hidden;
 }
@@ -837,6 +892,32 @@ app-login-page-forget-password-panel
 
 /* =============================================================
    BRANDING
+   -------------------------------------------------------------
+   IMPORTANT:
+
+       The parent Login Page ONLY positions the Branding
+       component.
+
+       The Branding component controls its own:
+
+           width
+           height
+           padding
+           background
+           border
+           radius
+
+       DO NOT use:
+
+           width: 100%;
+           height: 100%;
+
+       here.
+
+       The Branding component is positioned directly from the
+       LEFT edge of the 30% Left Top area.
+
+       The existing 20px left offset is preserved.
 ============================================================= */
 
 .login-page-1-left-top >
@@ -870,10 +951,10 @@ app-login-page-branding
         0;
 
     padding-top:
-        0px;
+        5px;
 
     padding-left:
-        0px;
+        20px;
 
     box-sizing:
         border-box;
@@ -891,6 +972,20 @@ app-login-page-branding
 
 /* =============================================================
    CLIENT LOGO
+   -------------------------------------------------------------
+   CURRENT PAGE ARCHITECTURE:
+
+       Client Logo is placed in the MIDDLE TOP area.
+
+       The component remains intrinsically sized.
+
+       The page only controls its position.
+
+       IMPORTANT:
+
+           The selector belongs to MIDDLE TOP.
+
+           It must NOT target MIDDLE BOTTOM.
 ============================================================= */
 
 .login-page-1-middle-top >
@@ -931,33 +1026,4 @@ app-login-page-client-logo
 
     flex:
         0 0 auto;
-}
-
-
-/* =============================================================
-   NOTIFICATION PANEL
-   -------------------------------------------------------------
-   PAGE-LEVEL FLOATING COMPONENT
-
-   IMPORTANT:
-
-       No padding.
-       No horizontal movement.
-       No participation in layout.
-============================================================= */
-
-.login-page-1 >
-app-login-page-notification-panel
-{
-    position:
-        relative;
-
-    margin:
-        0;
-
-    padding:
-        0;
-
-    z-index:
-        100;
 }

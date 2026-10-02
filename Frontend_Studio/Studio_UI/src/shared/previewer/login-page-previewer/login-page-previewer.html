@@ -1,18 +1,47 @@
 <!-- ===========================================================
      LOGIN PAGE PREVIEWER
+     -----------------------------------------------------------
+     FULL-SCREEN LOGIN PAGE PREVIEW
+
+     IMPORTANT:
+
+         This Previewer contains ONLY the selected Login Page.
+
+         The normal application shell is hidden while this
+         Previewer is active.
+
+         NOT DISPLAYED DURING PREVIEW:
+
+             - Application Topbar
+             - Application Sidebar
+             - Application Footer
+             - Orbit Loader
+             - Toast
+             - Empty State
+
+         ESCAPE KEY:
+
+             Press ESC to close the Previewer and return to
+             the Login Pages list.
 ============================================================ -->
+
 
 <div
     class="login-page-previewer"
-    [class.preview-closed]="!isOpen">
+    [class.preview-closed]="!isOpen"
+>
 
 
     <!-- =======================================================
          LOGIN PAGE HOST
+         -------------------------------------------------------
+         The selected Login Page occupies the complete
+         viewport.
     ======================================================== -->
 
     <div
-        class="login-page-previewer-host">
+        class="login-page-previewer-host"
+    >
 
 
         <!-- ===================================================
@@ -20,8 +49,8 @@
         ==================================================== -->
 
         <app-login-page-1
-            *ngIf="isLoginPage1">
-
+            *ngIf="isLoginPage1"
+        >
         </app-login-page-1>
 
 
@@ -31,8 +60,8 @@
         ==================================================== -->
 
         <app-login-page-2
-            *ngIf="isLoginPage2">
-
+            *ngIf="isLoginPage2"
+        >
         </app-login-page-2>
 
 
@@ -42,8 +71,8 @@
         ==================================================== -->
 
         <app-login-page-3
-            *ngIf="isLoginPage3">
-
+            *ngIf="isLoginPage3"
+        >
         </app-login-page-3>
 
 
@@ -53,31 +82,20 @@
         ==================================================== -->
 
         <app-login-page-4
-            *ngIf="isLoginPage4">
-
+            *ngIf="isLoginPage4"
+        >
         </app-login-page-4>
 
 
 
         <!-- ===================================================
-             PAGE NOT AVAILABLE
+             LOGIN PAGE 5
         ==================================================== -->
 
-        <div
-            *ngIf="
-                !isLoginPage1
-                &&
-                !isLoginPage2
-                &&
-                !isLoginPage3
-                &&
-                !isLoginPage4
-            "
-            class="login-page-previewer-message">
-
-            Login Page Preview is not available.
-
-        </div>
+        <app-login-page-5
+            *ngIf="isLoginPage5"
+        >
+        </app-login-page-5>
 
 
     </div>

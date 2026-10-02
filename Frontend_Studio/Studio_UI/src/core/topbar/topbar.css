@@ -1,35 +1,66 @@
 /* =====================================================
    TOPBAR
+   -----------------------------------------------------
+   Application navigation layer.
+
+   IMPORTANT:
+
+       Toasts must always appear above the Topbar.
+
+       Therefore the Topbar remains a stacking context,
+       but its z-index is deliberately kept below the
+       global Toast layer.
+
+       When Login Page Preview is active, the Topbar is
+       completely hidden so that the Login Page Loader
+       can occupy the viewport.
 ===================================================== */
 
 .topbar
 {
-    position: relative;
+    position:
+        relative;
 
-    height: 70px;
+    height:
+        70px;
 
-    display: flex;
-    align-items: center;
+    display:
+        flex;
 
-    background: linear-gradient(
-        90deg,
-        #08122f 0%,
-        #0c1b45 35%,
-        #13285f 70%,
-        #1a3778 100%
-    );
+    align-items:
+        center;
 
-    box-sizing: border-box;
+    background:
+        linear-gradient(
+            90deg,
+            #08122f 0%,
+            #0c1b45 35%,
+            #13285f 70%,
+            #1a3778 100%
+        );
 
-    overflow: visible;
+    box-sizing:
+        border-box;
 
-    z-index: 1000;
+    overflow:
+        visible;
 
-    user-select: none;
+    /*
+        Topbar application layer.
 
-    border: none;
+        Keep this below Toast.
+    */
+    z-index:
+        1000;
 
-    box-shadow: none;
+    user-select:
+        none;
+
+    border:
+        none;
+
+    box-shadow:
+        none;
 }
 
 
@@ -40,28 +71,39 @@
 
 .topbar::after
 {
-    content: "";
+    content:
+        "";
 
-    position: absolute;
+    position:
+        absolute;
 
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left:
+        0;
 
-    height: 2px;
+    right:
+        0;
 
-    background: linear-gradient(
-        90deg,
-        #2f80ed 0%,
-        #3fa9f5 20%,
-        #63c5ff 50%,
-        #3fa9f5 80%,
-        #2f80ed 100%
-    );
+    bottom:
+        0;
 
-    opacity: .95;
+    height:
+        2px;
 
-    pointer-events: none;
+    background:
+        linear-gradient(
+            90deg,
+            #2f80ed 0%,
+            #3fa9f5 20%,
+            #63c5ff 50%,
+            #3fa9f5 80%,
+            #2f80ed 100%
+        );
+
+    opacity:
+        .95;
+
+    pointer-events:
+        none;
 }
 
 
@@ -72,17 +114,26 @@
 
 .topbar-left
 {
-    flex: 0 0 320px;
+    flex:
+        0 0 320px;
 
-    height: 100%;
+    height:
+        100%;
 
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    display:
+        flex;
 
-    padding: 0 24px;
+    align-items:
+        center;
 
-    overflow: hidden;
+    justify-content:
+        flex-start;
+
+    padding:
+        0 24px;
+
+    overflow:
+        hidden;
 }
 
 
@@ -93,19 +144,29 @@
 
 .topbar-center
 {
-    flex: 1;
+    flex:
+        1;
 
-    min-width: 0;
+    min-width:
+        0;
 
-    height: 100%;
+    height:
+        100%;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display:
+        flex;
 
-    padding: 0 24px;
+    align-items:
+        center;
 
-    overflow: hidden;
+    justify-content:
+        center;
+
+    padding:
+        0 24px;
+
+    overflow:
+        hidden;
 }
 
 
@@ -116,19 +177,61 @@
 
 .topbar-right
 {
-    flex: 0 0 560px;
+    flex:
+        0 0 560px;
 
-    height: 100%;
+    height:
+        100%;
 
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+    display:
+        flex;
 
-    padding: 0 24px;
+    align-items:
+        center;
 
-    overflow: visible;
+    justify-content:
+        flex-end;
 
-    position: relative;
+    padding:
+        0 24px;
 
-    z-index: 1001;
+    overflow:
+        visible;
+
+    position:
+        relative;
+
+    /*
+        Keep Topbar controls inside the Topbar layer.
+
+        Still below global Toast.
+    */
+    z-index:
+        1001;
+}
+
+
+
+/* =====================================================
+   LOGIN PAGE PREVIEW MODE
+   -----------------------------------------------------
+   STEP 1 ONLY
+
+   When LoginPageLoader activates:
+
+       body.login-page-preview-active
+
+   the application Topbar is completely hidden.
+
+   This allows us to test the Preview viewport behavior
+   one layer at a time.
+
+   Do NOT change Footer, Toast, Loader or global CSS yet.
+===================================================== */
+
+:host-context(body.login-page-preview-active)
+.topbar
+{
+    display:
+        none !important;
 }

@@ -95,6 +95,84 @@
 
 
 /* =============================================================
+   ACTUAL BACKGROUND IMAGE 5
+   -------------------------------------------------------------
+   FULL VIEWPORT
+
+   Login Page 5 loads its background through:
+
+       Sub Ordinate Component ID = 5
+
+   The TypeScript provides:
+
+       lightBackgroundImageUrl
+       deepBackgroundImageUrl
+       currentBackgroundImageUrl
+
+   Theme:
+
+       Light Theme
+           → lightBackgroundImageUrl
+
+       Deep Theme
+           → deepBackgroundImageUrl
+
+   This layer is completely independent from the
+   30% / 35% / 35% desktop layout.
+
+   IMPORTANT:
+
+       The background consumes NO physical layout space.
+
+       It remains behind the entire Login Page 5 layout.
+
+       The main layout remains at z-index: 10.
+============================================================= */
+
+.login-page-5-background
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    background-position:
+        center center;
+
+    background-repeat:
+        no-repeat;
+
+    background-size:
+        cover;
+
+    background-color:
+        transparent;
+
+    z-index:
+        0;
+
+    pointer-events:
+        none;
+}
+
+
+/* =============================================================
    PROMOTIONAL IMAGE
    -------------------------------------------------------------
    FULL VIEWPORT
@@ -157,7 +235,7 @@ app-login-page-promotional-image-deep
    -------------------------------------------------------------
    FULL WIDTH:
 
-       30% | 35% | 35%
+       40% | 25% | 35%
 
    FULL HEIGHT:
 
@@ -178,7 +256,7 @@ app-login-page-promotional-image-deep
         grid;
 
     grid-template-columns:
-        30% 35% 35%;
+        40% 25% 35%;
 
     width:
         100%;
@@ -208,7 +286,7 @@ app-login-page-promotional-image-deep
         grid;
 
     grid-template-rows:
-        15% 70% 15%;
+        15% 65% 20%;
 
     width:
         100%;
@@ -384,6 +462,10 @@ app-login-page-powered-by
 
     padding:
         0;
+
+    padding-left: 30px;
+
+    padding-bottom: 0px;
 
     box-sizing:
         border-box;
@@ -859,7 +941,9 @@ app-login-page-branding
         5px;
 
     padding-left:
-        0;
+        0px;
+
+    padding-top: 0px;
 
     box-sizing:
         border-box;

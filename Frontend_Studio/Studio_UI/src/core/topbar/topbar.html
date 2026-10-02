@@ -35,8 +35,85 @@
 
     <div class="topbar-right">
 
-        <app-topbar-actions></app-topbar-actions>
+        <app-topbar-actions
+            (profileClick)="onProfileClick()"
+            (changePasswordClick)="onChangePasswordClick()">
+        </app-topbar-actions>
 
     </div>
 
 </div>
+
+
+
+<!-- =====================================================
+     CONFIRMATION DIALOG
+     -----------------------------------------------------
+     IMPORTANT:
+
+     This is outside the Topbar flex container so the
+     dialog cannot affect the position of the Topbar
+     actions.
+===================================================== -->
+
+<app-confirm-dialog></app-confirm-dialog>
+
+
+
+<!-- =====================================================
+     CHANGE PASSWORD
+     -----------------------------------------------------
+     IMPORTANT:
+
+     The component remains mounted while the confirmation
+     dialog is displayed.
+
+     changePasswordMounted:
+
+         Controls component lifetime.
+
+     changePasswordOpened:
+
+         Controls Change Password shell visibility.
+
+     The ChangePasswordComponent itself remains mounted
+     so its Progress Dialog can remain independently
+     visible during password update.
+
+     Therefore:
+
+         Change Password
+              ↓
+         Update Password
+              ↓
+         Change Password shell hidden
+              ↓
+         Confirm Dialog
+              ↓
+         Cancel
+              ↓
+         Change Password shell visible again
+
+     The same ChangePasswordComponent instance is retained,
+     so entered form values are preserved.
+===================================================== -->
+
+<app-change-password
+    *ngIf="changePasswordMounted"
+
+    [visible]="
+        changePasswordOpened
+    "
+
+    (close)="
+        onChangePasswordClose()
+    "
+
+    (reopen)="
+        onChangePasswordReopen()
+    "
+
+    (update)="
+        onChangePasswordUpdate()
+    ">
+</app-change-password>

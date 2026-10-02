@@ -158,9 +158,9 @@
 
 .date-time-icon
 {
-    width: 48px;
+    width: 60px;
 
-    height: 48px;
+    height: 70px;
 
     display: flex;
 
@@ -197,9 +197,9 @@
     color:
         #536b93;
 
-    font-size: 13px;
+    font-size: 15px;
 
-    font-weight: 500;
+    font-weight: 600;
 
     white-space: nowrap;
 }
@@ -210,13 +210,13 @@
     color:
         #102653;
 
-    font-size: 29px;
+    font-size: 40px;
 
     line-height: 1.05;
 
-    font-weight: 800;
+    font-weight: 600;
 
-    letter-spacing: -1px;
+    letter-spacing: -.5px;
 
     white-space: nowrap;
 }
@@ -285,7 +285,7 @@
 
     line-height: 1.1;
 
-    font-weight: 750;
+    font-weight: 600;
 
     letter-spacing:
         -1.2px;
@@ -296,17 +296,19 @@
 {
     margin-top: 2px;
 
+    margin-bottom: 5px;
+
     color:
         #1269ec;
 
-    font-size: 38px;
+    font-size: 30px;
 
     line-height: 1.08;
 
-    font-weight: 800;
+    font-weight: 500;
 
     letter-spacing:
-        -1.4px;
+        1.4px;
 
     background:
         linear-gradient(
@@ -506,11 +508,11 @@
     color:
         #102653;
 
-    font-size: 21px;
+    font-size: 20px;
 
     line-height: 1.2;
 
-    font-weight: 750;
+    font-weight: 650;
 
     white-space: nowrap;
 
@@ -518,7 +520,7 @@
 
     text-overflow: ellipsis;
 
-    max-width: 280px;
+    max-width: 320px;
 }
 
 
@@ -841,11 +843,11 @@
     color:
         #142653;
 
-    font-size: 31px;
+    font-size: 28px;
 
     line-height: 1;
 
-    font-weight: 800;
+    font-weight: 700;
 
     letter-spacing:
         -0.8px;

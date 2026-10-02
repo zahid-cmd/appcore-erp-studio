@@ -1,11 +1,62 @@
-//===============================================================
-// Login Page 2
-//===============================================================
+/* =============================================================
+   LOGIN PAGE 2
+   -------------------------------------------------------------
+   PAGE RESPONSIBILITIES:
+
+       - Login / Registration / Forget Password mode
+       - Theme state
+       - Background Image 2
+       - Branding
+       - Powered By
+       - Notification Panel
+
+   AUTHENTICATION:
+
+       Completely owned by the Central Login Panel.
+
+   BACKGROUND:
+
+       Loaded from:
+
+           Sub Ordinate Component ID = 2
+
+       Light:
+
+           lightBackgroundImageUrl
+
+       Deep:
+
+           deepBackgroundImageUrl
+
+       Current:
+
+           currentBackgroundImageUrl
+
+   CHANGE DETECTION:
+
+       Login Page 2 uses Angular's Default change-detection
+       strategy.
+
+       Background images are loaded asynchronously.
+
+       ChangeDetectorRef.detectChanges() is explicitly called
+       after the image URLs are assigned so the background
+       renders reliably after browser refresh and theme changes.
+============================================================= */
+
+
+/* =============================================================
+   Angular
+============================================================= */
 
 import
 {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
-    ViewChild
+    OnInit,
+    ViewChild,
+    inject
 }
 from '@angular/core';
 
@@ -16,81 +67,102 @@ import
 from '@angular/common';
 
 
-//===============================================================
-// Login Page 2 Promotional Image Light
-//===============================================================
+/* =============================================================
+   Environment
+============================================================= */
+
+import
+{
+    environment
+}
+from '../../../environments/environment';
 
 
+/* =============================================================
+   Sub Ordinate Components Service
+============================================================= */
 
-//===============================================================
-// Login Page 2 Promotional Image Deep
-//===============================================================
-
-
-
-//===============================================================
-// Login Page 2 Branding
-//===============================================================
-
-
-//===============================================================
-// Login Page 2 Powered By
-//===============================================================
+import
+{
+    SubOrdinateComponentsService
+}
+from '../../../features/infrastructure-control/login-components/services/sub-ordinate-components.service';
 
 
+/* =============================================================
+   CORE COMPONENTS
+============================================================= */
 
-//===============================================================
-// Central Login Panel
-//===============================================================
+import
+{
+    LoginPageBrandingComponent
+}
+from '../../components/core-components/branding/branding';
+
+import
+{
+    LoginPagePoweredByComponent
+}
+from '../../components/core-components/powered-by/powered-by';
+
+import
+{
+    LoginPageThemeSelectorComponent
+}
+from '../../components/core-components/theme-selector/theme-selector';
+
+
+/* =============================================================
+   LOGIN PANEL
+   -------------------------------------------------------------
+   Login Panel is located under:
+
+       components/core-components/login-panel
+============================================================= */
 
 import
 {
     LoginPageLoginPanelComponent
 }
-from '../../components/login-credentials/login-panel/login-panel';
+from '../../components/core-components/login-panel/login-panel';
 
 
-//===============================================================
-// Central Registration Panel
-//===============================================================
+/* =============================================================
+   REGISTRATION PANEL
+============================================================= */
 
 import
 {
     LoginPageRegistrationPanelComponent
 }
-from '../../components/login-credentials/registration-panel/registration-panel';
+from '../../components/core-components/registration-panel/registration-panel';
 
 
-//===============================================================
-// Central Forget Password Panel
-//===============================================================
+/* =============================================================
+   FORGET PASSWORD
+============================================================= */
 
 import
 {
     LoginPageForgetPasswordPanelComponent
 }
-from '../../components/login-credentials/forget-password/forget-password';
+from '../../components/core-components/forget-password/forget-password';
 
 
-//===============================================================
-// Login Page 2 Theme Selector
-//===============================================================
-
-
-//===============================================================
-// Central Notification Panel
-//===============================================================
+/* =============================================================
+   NOTIFICATION PANEL
+============================================================= */
 
 import
 {
     LoginPageNotificationPanelComponent
 }
-from '../../components/login-credentials/notification-panel/notification-panel';
+from '../../components/core-components/notification-panel/notification-panel';
 
 
-//===============================================================
-// Login Page 2 Component
-//===============================================================
+/* =============================================================
+   COMPONENT
+============================================================= */
 
 @Component
 ({
@@ -103,6 +175,21 @@ from '../../components/login-credentials/notification-panel/notification-panel';
     imports:
     [
         CommonModule,
+
+        //=======================================================
+        // CORE COMPONENTS
+        //=======================================================
+
+        LoginPageBrandingComponent,
+
+        LoginPagePoweredByComponent,
+
+        LoginPageThemeSelectorComponent,
+
+
+        //=======================================================
+        // LOGIN COMPONENTS
+        //=======================================================
 
         LoginPageLoginPanelComponent,
 
@@ -119,27 +206,67 @@ from '../../components/login-credentials/notification-panel/notification-panel';
     styleUrls:
     [
         './login-page-2.css'
-    ]
+    ],
+
+    changeDetection:
+        ChangeDetectionStrategy.Default
 })
-
-
-//===============================================================
-// Login Page 2
-//===============================================================
-
 export class LoginPage2
+    implements OnInit
 {
-    //===========================================================
-    // Notification Panel Reference
-    // ----------------------------------------------------------
-    // Used by Login Page 2 to create real application
-    // notifications.
-    //
-    // IMPORTANT:
-    //
-    // The Notification Panel remains completely independent
-    // from the Login / Registration / Forget Password panels.
-    //===========================================================
+
+
+    /* =========================================================
+       SERVICES
+    ========================================================= */
+
+    private readonly subOrdinateComponentsService =
+        inject(
+            SubOrdinateComponentsService
+        );
+
+    private readonly changeDetectorRef =
+        inject(
+            ChangeDetectorRef
+        );
+
+
+    /* =========================================================
+       BACKGROUND IMAGE 2
+       ---------------------------------------------------------
+       IMPORTANT:
+
+       Background Image 2 = Sub Ordinate Component ID 2
+    ========================================================= */
+
+    lightBackgroundImageUrl:
+        string =
+        '';
+
+    deepBackgroundImageUrl:
+        string =
+        '';
+
+    private readonly backgroundImageComponentId:
+        number =
+        2;
+
+
+    /* =========================================================
+       API BASE URL
+    ========================================================= */
+
+    private readonly apiBaseUrl =
+        environment.apiUrl
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+
+
+    /* =========================================================
+       NOTIFICATION PANEL
+    ========================================================= */
 
     @ViewChild(
         LoginPageNotificationPanelComponent
@@ -150,45 +277,204 @@ export class LoginPage2
         undefined;
 
 
-    //===========================================================
-    // Panel State
-    // ----------------------------------------------------------
-    // false = Login Panel
-    // true  = Registration Panel
-    //===========================================================
+    /* =========================================================
+       PAGE STATE
+    ========================================================= */
 
     isRegistrationMode:
         boolean =
-            false;
-
-
-    //===========================================================
-    // Forget Password State
-    // ----------------------------------------------------------
-    // false = Normal Login / Registration State
-    // true  = Forget Password Panel
-    //===========================================================
+        false;
 
     isForgetPasswordMode:
         boolean =
-            false;
-
-
-    //===========================================================
-    // Theme State
-    //===========================================================
+        false;
 
     isLightTheme:
         boolean =
-            true;
+        true;
 
 
-    //===========================================================
-    // Theme Selector
-    //===========================================================
+    /* =========================================================
+       CURRENT BACKGROUND IMAGE
+    ========================================================= */
 
-    onThemeChange
-    (
+    get currentBackgroundImageUrl():
+        string
+    {
+        return this.isLightTheme
+            ? this.lightBackgroundImageUrl
+            : this.deepBackgroundImageUrl;
+    }
+
+
+    /* =========================================================
+       INITIALIZATION
+    ========================================================= */
+
+    ngOnInit():
+        void
+    {
+        this.loadBackgroundImages();
+    }
+
+
+    /* =========================================================
+       LOAD BACKGROUND IMAGES
+       ---------------------------------------------------------
+       Source:
+
+           Sub Ordinate Component ID = 2
+    ========================================================= */
+
+    private loadBackgroundImages():
+        void
+    {
+        this.subOrdinateComponentsService
+            .getById(
+                this.backgroundImageComponentId
+            )
+            .subscribe(
+            {
+                next:
+                    response =>
+                    {
+                        //=======================================
+                        // LIGHT
+                        //=======================================
+
+                        this.lightBackgroundImageUrl =
+                            this.buildImageUrl(
+                                response.lightBackgroundImagePath
+                            );
+
+
+                        //=======================================
+                        // DEEP
+                        //=======================================
+
+                        this.deepBackgroundImageUrl =
+                            this.buildImageUrl(
+                                response.deepBackgroundImagePath
+                            );
+
+
+                        //=======================================
+                        // FORCE VIEW UPDATE
+                        //=======================================
+
+                        this.changeDetectorRef.detectChanges();
+                    },
+
+                error:
+                    error =>
+                    {
+                        console.error(
+                            'Failed to load Login Page 2 background images.',
+                            error
+                        );
+
+
+                        this.lightBackgroundImageUrl =
+                            '';
+
+                        this.deepBackgroundImageUrl =
+                            '';
+
+
+                        this.changeDetectorRef.detectChanges();
+                    }
+            });
+    }
+
+
+    /* =========================================================
+       BUILD IMAGE URL
+       ---------------------------------------------------------
+       SUPPORTED:
+
+           http://
+           https://
+           data:
+           blob:
+           /uploads/...
+           uploads/...
+    ========================================================= */
+
+    private buildImageUrl(
+        imagePath:
+            string
+    ):
+        string
+    {
+        if (!imagePath)
+        {
+            return '';
+        }
+
+
+        const value =
+            imagePath.trim();
+
+
+        if (!value)
+        {
+            return '';
+        }
+
+
+        /* -----------------------------------------------------
+           ABSOLUTE URL
+        ----------------------------------------------------- */
+
+        if
+        (
+            value.startsWith('http://')
+            ||
+            value.startsWith('https://')
+            ||
+            value.startsWith('data:')
+            ||
+            value.startsWith('blob:')
+        )
+        {
+            return value;
+        }
+
+
+        /* -----------------------------------------------------
+           ROOT RELATIVE
+        ----------------------------------------------------- */
+
+        if
+        (
+            value.startsWith('/')
+        )
+        {
+            return `${this.apiBaseUrl}${value}`;
+        }
+
+
+        /* -----------------------------------------------------
+           RELATIVE
+        ----------------------------------------------------- */
+
+        return `${this.apiBaseUrl}/${value}`;
+    }
+
+
+    /* =========================================================
+       THEME CHANGE
+       ---------------------------------------------------------
+       true:
+
+           LIGHT
+
+       false:
+
+           DEEP
+    ========================================================= */
+
+    onThemeChange(
         isLightTheme:
             boolean
     ):
@@ -196,12 +482,15 @@ export class LoginPage2
     {
         this.isLightTheme =
             isLightTheme;
+
+
+        this.changeDetectorRef.detectChanges();
     }
 
 
-    //===========================================================
-    // Forgot Password
-    //===========================================================
+    /* =========================================================
+       FORGOT PASSWORD
+    ========================================================= */
 
     onForgotPassword():
         void
@@ -211,114 +500,65 @@ export class LoginPage2
 
         this.isForgetPasswordMode =
             true;
+
+
+        this.changeDetectorRef.detectChanges();
     }
 
 
-    //===========================================================
-    // Password Reset Success
-    // ----------------------------------------------------------
-    // The Forget Password Panel does NOT display the successful
-    // password-reset message.
-    //
-    // Instead Login Page 2:
-    //
-    //     1. Returns immediately to Login Panel.
-    //     2. Creates a real notification.
-    //     3. Notification starts UNREAD.
-    //     4. Unread counter becomes visible.
-    //     5. Notification Panel automatically opens.
-    //     6. Panel remains open for 5 seconds.
-    //     7. Panel automatically closes.
-    //     8. Unread counter REMAINS visible.
-    //
-    // The notification becomes READ only when the user manually
-    // opens/interacts with the Notification Panel.
-    //===========================================================
+    /* =========================================================
+       PASSWORD RESET SUCCESS
+    ========================================================= */
 
     onPasswordResetSuccess():
         void
     {
-        //=======================================================
-        // Return To Login Panel
-        // -------------------------------------------------------
-        // Return immediately to the normal Sign In screen after
-        // the password reset has been completed successfully.
-        //=======================================================
-
         this.onBackToLogin();
 
 
-        //=======================================================
-        // Notification Panel Reference Check
-        //=======================================================
-
-        if(
-            !this.notificationPanel
-        )
+        if (!this.notificationPanel)
         {
             return;
         }
 
 
-        //=======================================================
-        // Add Password Changed Notification
-        // -------------------------------------------------------
-        // IMPORTANT:
-        //
-        // The second argument is 5000 milliseconds.
-        //
-        // Therefore the Notification Panel will:
-        //
-        //     OPEN IMMEDIATELY
-        //
-        //     remain OPEN for:
-        //
-        //         5000 ms = 5 seconds
-        //
-        //     then CLOSE automatically.
-        //
-        // The notification remains UNREAD.
-        //=======================================================
+        this.notificationPanel.addNotification(
+        {
+            visible:
+                true,
 
-        this.notificationPanel.addNotification
-        (
-            {
-                visible:
-                    true,
+            isRead:
+                false,
 
-                isRead:
-                    false,
+            heading:
+                'Password Changed',
 
-                heading:
-                    'Password Changed',
+            message:
+                'Your password was changed successfully. You can now sign in using your new password.',
 
-                message:
-                    'Your password was changed successfully. You can now sign in using your new password.',
+            icon:
+                'fas fa-key',
 
-                icon:
-                    'fas fa-key',
+            type:
+                'success',
 
-                type:
-                    'success',
+            dismissible:
+                true,
 
-                dismissible:
-                    true,
+            autoHide:
+                false,
 
-                autoHide:
-                    false,
-
-                displayDuration:
-                    5000
-            },
-
-            5000
+            displayDuration:
+                5000
+        },
+        5000
         );
     }
 
 
-    //===========================================================
-    // Registration
-    //===========================================================
+    /* =========================================================
+       REGISTRATION
+    ========================================================= */
 
     onRegister():
         void
@@ -328,12 +568,15 @@ export class LoginPage2
 
         this.isRegistrationMode =
             true;
+
+
+        this.changeDetectorRef.detectChanges();
     }
 
 
-    //===========================================================
-    // Back To Login
-    //===========================================================
+    /* =========================================================
+       BACK TO LOGIN
+    ========================================================= */
 
     onBackToLogin():
         void
@@ -343,5 +586,9 @@ export class LoginPage2
 
         this.isForgetPasswordMode =
             false;
+
+
+        this.changeDetectorRef.detectChanges();
     }
+
 }

@@ -76,13 +76,10 @@ public class AuthenticationRepository
 
         return await _context
             .Set<UserProfile>()
-
             .AsNoTracking()
-
             .FirstOrDefaultAsync
             (
                 x =>
-
                     x.UserName ==
                     normalizedUserName
 
@@ -101,15 +98,22 @@ public class AuthenticationRepository
         GetUserCredentialByUserProfileIdAsync(
             long userProfileId)
     {
+        if
+        (
+            userProfileId <=
+            0
+        )
+        {
+            return null;
+        }
+
+
         return await _context
             .Set<UserCredential>()
-
             .AsNoTracking()
-
             .FirstOrDefaultAsync
             (
                 x =>
-
                     x.UserProfileId ==
                     userProfileId
             );
@@ -288,6 +292,22 @@ public class AuthenticationRepository
 
 
         //=======================================================
+        // Validate Credential ID
+        //=======================================================
+
+        if
+        (
+            userCredential.UserCredentialId <=
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                "A valid user credential ID is required."
+            );
+        }
+
+
+        //=======================================================
         // Get Existing Credential
         //=======================================================
 
@@ -298,7 +318,6 @@ public class AuthenticationRepository
                 .FirstOrDefaultAsync
                 (
                     x =>
-
                         x.UserCredentialId ==
                         userCredential.UserCredentialId
                 );
@@ -356,11 +375,9 @@ public class AuthenticationRepository
 
             await _context
                 .Set<UserCredential>()
-
                 .FirstOrDefaultAsync
                 (
                     x =>
-
                         x.UserProfileId ==
                         userProfileId
                 );
@@ -426,7 +443,6 @@ public class AuthenticationRepository
                     .Where
                     (
                         x =>
-
                             x.UserProfileId ==
                             userProfileId
 
@@ -532,7 +548,6 @@ public class AuthenticationRepository
             .FirstOrDefaultAsync
             (
                 x =>
-
                     x.UserProfileId ==
                     userProfileId
 
@@ -619,21 +634,17 @@ public class AuthenticationRepository
 
             await _context
                 .Set<UserProfile>()
-
                 .AsNoTracking()
-
                 .Where
                 (
                     x =>
                         !x.IsDeleted
                 )
-
                 .Select
                 (
                     x =>
                         x.ProfileCode
                 )
-
                 .ToListAsync();
 
 

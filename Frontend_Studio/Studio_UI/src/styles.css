@@ -10,23 +10,30 @@
 html,
 body
 {
-    width:100%;
+    width:
+        100%;
 
-    height:100%;
+    height:
+        100%;
 
-    margin:0;
+    margin:
+        0;
 
-    padding:0;
+    padding:
+        0;
 
-    overflow:hidden;
+    overflow:
+        hidden;
 
     font-family:
         "Segoe UI",
         Arial,
         sans-serif;
 
-    background:#f8fafc;
+    background:
+        #f8fafc;
 }
+
 
 
 /* =====================================================
@@ -37,8 +44,10 @@ body
 *::before,
 *::after
 {
-    box-sizing:border-box;
+    box-sizing:
+        border-box;
 }
+
 
 
 /* =====================================================
@@ -47,7 +56,8 @@ body
 
 .appcore-scrollbar
 {
-    scrollbar-width:thin;
+    scrollbar-width:
+        thin;
 
     scrollbar-color:
         #2563eb
@@ -57,31 +67,40 @@ body
 
 .appcore-scrollbar::-webkit-scrollbar
 {
-    width:6px;
+    width:
+        6px;
 
-    height:6px;
+    height:
+        6px;
 }
 
 
 .appcore-scrollbar::-webkit-scrollbar-track
 {
-    background:transparent;
+    background:
+        transparent;
 
-    margin-top:4px;
+    margin-top:
+        4px;
 
-    margin-bottom:4px;
+    margin-bottom:
+        4px;
 }
 
 
 .appcore-scrollbar::-webkit-scrollbar-thumb
 {
-    background:#2563eb;
+    background:
+        #2563eb;
 
-    border-radius:999px;
+    border-radius:
+        999px;
 
-    border:1px solid transparent;
+    border:
+        1px solid transparent;
 
-    background-clip:padding-box;
+    background-clip:
+        padding-box;
 
     transition:
         background .20s ease;
@@ -90,5 +109,285 @@ body
 
 .appcore-scrollbar::-webkit-scrollbar-thumb:hover
 {
-    background:#1d4ed8;
+    background:
+        #1d4ed8;
+}
+
+
+
+/* =====================================================
+   LOGIN PAGE PREVIEW
+   -----------------------------------------------------
+   GLOBAL PREVIEW STATE
+
+   LoginPageLoader adds this class to <body> when the
+   application enters Login Page Preview mode:
+
+       login-page-preview-active
+
+   Preview is intentionally treated as a global
+   application state rather than as a normal page
+   inside the application content area.
+===================================================== */
+
+
+/* =====================================================
+   PREVIEW — DOCUMENT
+===================================================== */
+
+html:has(
+    body.login-page-preview-active
+),
+body.login-page-preview-active
+{
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden !important;
+}
+
+
+
+/* =====================================================
+   PREVIEW — LOGIN PAGE LOADER
+   -----------------------------------------------------
+   The Loader becomes a viewport-level surface.
+
+   This is intentionally defined globally rather than
+   relying only on the Angular component stylesheet.
+===================================================== */
+
+body.login-page-preview-active
+app-login-page-loader
+{
+    position:
+        fixed !important;
+
+    inset:
+        0 !important;
+
+    display:
+        block !important;
+
+    width:
+        100vw !important;
+
+    height:
+        100vh !important;
+
+    min-width:
+        100vw !important;
+
+    min-height:
+        100vh !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    box-sizing:
+        border-box !important;
+
+    overflow:
+        hidden !important;
+
+    z-index:
+        2147483647 !important;
+}
+
+
+
+/* =====================================================
+   PREVIEW — LOADER CHILD
+===================================================== */
+
+body.login-page-preview-active
+app-login-page-loader
+.login-page-loader
+{
+    position:
+        fixed !important;
+
+    inset:
+        0 !important;
+
+    display:
+        block !important;
+
+    width:
+        100vw !important;
+
+    height:
+        100vh !important;
+
+    min-width:
+        100vw !important;
+
+    min-height:
+        100vh !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    box-sizing:
+        border-box !important;
+
+    overflow:
+        hidden !important;
+
+    z-index:
+        2147483647 !important;
+}
+
+
+
+/* =====================================================
+   PREVIEW — LOGIN PAGE HOSTS
+===================================================== */
+
+body.login-page-preview-active
+app-login-page-loader
+> app-login-page-1,
+
+body.login-page-preview-active
+app-login-page-loader
+> app-login-page-2,
+
+body.login-page-preview-active
+app-login-page-loader
+> app-login-page-3,
+
+body.login-page-preview-active
+app-login-page-loader
+> app-login-page-4,
+
+body.login-page-preview-active
+app-login-page-loader
+> app-login-page-5
+{
+    position:
+        absolute !important;
+
+    inset:
+        0 !important;
+
+    display:
+        block !important;
+
+    width:
+        100vw !important;
+
+    height:
+        100vh !important;
+
+    min-width:
+        100vw !important;
+
+    min-height:
+        100vh !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    box-sizing:
+        border-box !important;
+
+    overflow:
+        hidden !important;
+
+    z-index:
+        2147483647 !important;
+}
+
+
+
+/* =====================================================
+   PREVIEW — BODY INTERACTION
+   -----------------------------------------------------
+   Prevents the underlying application from scrolling
+   or receiving normal page-level interaction while
+   Preview is active.
+===================================================== */
+
+body.login-page-preview-active
+{
+    overscroll-behavior:
+        none;
+
+    touch-action:
+        none;
+}
+
+
+
+/* =====================================================
+   PREVIEW — APPLICATION CONTENT
+   -----------------------------------------------------
+   The normal application content must not create an
+   additional scroll surface while Preview is active.
+===================================================== */
+
+body.login-page-preview-active
+app-root
+{
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    overflow:
+        hidden !important;
+}
+
+
+
+/* =====================================================
+   PREVIEW — LOADER PRIORITY
+   -----------------------------------------------------
+   Keep the Login Page Loader above normal application
+   surfaces.
+===================================================== */
+
+body.login-page-preview-active
+app-login-page-loader
+{
+    isolation:
+        isolate;
+
+    contain:
+        layout;
+}
+
+
+
+/* =====================================================
+   NORMAL DOCUMENT STATE
+   -----------------------------------------------------
+   These values remain unchanged when Preview mode is
+   not active.
+===================================================== */
+
+body:not(.login-page-preview-active)
+{
+    overflow:
+        hidden;
 }

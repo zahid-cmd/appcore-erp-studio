@@ -125,24 +125,53 @@ Routes =
 
     //===========================================================
     // Preview
+    // ----------------------------------------------------------
+    // IMPORTANT:
+    //
+    // Preview is now handled directly by LoginPageLoader.
+    //
+    // Loader location:
+    //
+    //     src/core/login-page-loader/login-page-loader.ts
+    //
+    // Route:
+    //
+    //     /preview/1
+    //     /preview/2
+    //     /preview/3
+    //     /preview/4
+    //     /preview/5
+    //
+    // The LoginPageLoader reads :id and renders:
+    //
+    //     1 → Login Page 1
+    //     2 → Login Page 2
+    //     3 → Login Page 3
+    //     4 → Login Page 4
+    //     5 → Login Page 5
+    //
+    // The old LoginPagePreviewer is no longer used.
     //===========================================================
 
     {
-        path:'preview/:id',
+        path:
+            'preview/:id',
 
         data:
         {
-            breadcrumb:'Preview Login Pages'
+            breadcrumb:
+                'Preview Login Pages'
         },
 
-        loadComponent:() =>
-            import(
-                '../../../../shared/previewer/login-page-previewer/login-page-previewer'
-            )
-            .then(
-                m =>
-                    m.LoginPagePreviewer
-            )
+        loadComponent:
+            () =>
+                import(
+                    '../../../../core/login-page-loader/login-page-loader'
+                )
+                .then(
+                    m =>
+                        m.LoginPageLoader
+                )
     }
 
 ];

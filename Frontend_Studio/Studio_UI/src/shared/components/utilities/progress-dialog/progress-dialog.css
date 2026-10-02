@@ -29,31 +29,31 @@
 
 .progress-overlay
 {
-    position:fixed;
+    position: fixed;
 
-    inset:0;
+    inset: 0;
 
-    display:flex;
+    display: flex;
 
-    align-items:center;
+    align-items: center;
 
-    justify-content:center;
+    justify-content: center;
 
-    width:100%;
+    width: 100%;
 
-    height:100%;
+    height: 100%;
 
-    background:transparent;
+    background: transparent;
 
-    backdrop-filter:none;
+    backdrop-filter: none;
 
-    -webkit-backdrop-filter:none;
+    -webkit-backdrop-filter: none;
 
-    filter:none;
+    filter: none;
 
-    -webkit-filter:none;
+    -webkit-filter: none;
 
-    z-index:3000;
+    z-index: 30000;
 }
 
 

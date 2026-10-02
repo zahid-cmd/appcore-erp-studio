@@ -4,15 +4,15 @@
 
 .dialog-overlay
 {
-    position:fixed;
+    position: fixed;
 
-    inset:0;
+    inset: 0;
 
-    display:flex;
+    display: flex;
 
-    align-items:center;
+    align-items: center;
 
-    justify-content:center;
+    justify-content: center;
 
     background:
         rgba(
@@ -28,7 +28,7 @@
     -webkit-backdrop-filter:
         blur(1px);
 
-    z-index:2000;
+    z-index: 20000;
 }
 
 

@@ -33,8 +33,11 @@ public class AuthenticationService : IAuthenticationService
     // Fields
     //===========================================================
 
-    private readonly IAuthenticationRepository _authenticationRepository;
-    private readonly IConfiguration _configuration;
+    private readonly IAuthenticationRepository
+        _authenticationRepository;
+
+    private readonly IConfiguration
+        _configuration;
 
 
     //===========================================================
@@ -45,8 +48,11 @@ public class AuthenticationService : IAuthenticationService
         IAuthenticationRepository authenticationRepository,
         IConfiguration configuration)
     {
-        _authenticationRepository = authenticationRepository;
-        _configuration = configuration;
+        _authenticationRepository =
+            authenticationRepository;
+
+        _configuration =
+            configuration;
     }
 
 
@@ -185,14 +191,6 @@ public class AuthenticationService : IAuthenticationService
 
         //===========================================================
         // Generate Token
-        // ----------------------------------------------------------
-        // Remember Me is controlled by the backend.
-        //
-        //     Remember Me = false
-        //         Token lifetime = 8 hours
-        //
-        //     Remember Me = true
-        //         Token lifetime = 30 days
         //===========================================================
 
         string token =
@@ -207,7 +205,8 @@ public class AuthenticationService : IAuthenticationService
 
         return new LoginResponseDto
         {
-            Success = true,
+            Success =
+                true,
 
             Message =
                 "Login successful.",
@@ -313,50 +312,52 @@ public class AuthenticationService : IAuthenticationService
         // Create User Profile
         //===========================================================
 
-        UserProfile userProfile = new UserProfile
-        {
-            UserName =
-                userName,
+        UserProfile userProfile =
+            new UserProfile
+            {
+                UserName =
+                    userName,
 
-            DisplayName =
-                request.DisplayName?.Trim() ?? string.Empty,
+                DisplayName =
+                    request.DisplayName?.Trim() ?? string.Empty,
 
-            FullName =
-                request.FullName?.Trim() ?? string.Empty,
+                FullName =
+                    request.FullName?.Trim() ?? string.Empty,
 
-            Email =
-                request.Email?.Trim() ?? string.Empty,
+                Email =
+                    request.Email?.Trim() ?? string.Empty,
 
-            MobileNo =
-                request.MobileNo?.Trim() ?? string.Empty,
+                MobileNo =
+                    request.MobileNo?.Trim() ?? string.Empty,
 
-            IsActive =
-                false,
+                IsActive =
+                    false,
 
-            IsDeleted =
-                false,
+                IsDeleted =
+                    false,
 
-            CreatedDate =
-                DateTime.UtcNow
-        };
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
         //===========================================================
         // Create User Credential
         //===========================================================
 
-        UserCredential credential = new UserCredential
-        {
-            PasswordHash =
-                HashPassword(
-                    request.Password),
+        UserCredential credential =
+            new UserCredential
+            {
+                PasswordHash =
+                    HashPassword(
+                        request.Password),
 
-            PasswordChangedDate =
-                DateTime.UtcNow,
+                PasswordChangedDate =
+                    DateTime.UtcNow,
 
-            CreatedDate =
-                DateTime.UtcNow
-        };
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
         //===========================================================
@@ -545,8 +546,6 @@ public class AuthenticationService : IAuthenticationService
         //===========================================================
         // Return Verification Code
         //===========================================================
-        // The code is intentionally returned to the Forget Password
-        // panel according to the current internal ERP design.
 
         return new ForgotPasswordCheckResponseDto
         {
@@ -900,6 +899,419 @@ public class AuthenticationService : IAuthenticationService
 
 
     //===============================================================
+    // Validate Current Password
+    //===============================================================
+    //
+    // Authenticated ERP user only.
+    //
+    // This method verifies the supplied current password but does
+    // NOT modify the user's credential.
+    //
+    //===============================================================
+
+    public async Task<ValidateCurrentPasswordResponseDto>
+        ValidateCurrentPasswordAsync(
+            ValidateCurrentPasswordRequestDto request)
+    {
+        //===========================================================
+        // Validate Request
+        //===========================================================
+
+        if (request == null)
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Invalid password validation request.");
+        }
+
+
+        //===========================================================
+        // Normalize User Name
+        //===========================================================
+
+        string userName =
+            request.UserName?.Trim() ?? string.Empty;
+
+
+        //===========================================================
+        // Validate Login ID
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Login ID is required.");
+        }
+
+
+        //===========================================================
+        // Validate Current Password
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(
+            request.CurrentPassword))
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Current password is required.");
+        }
+
+
+        //===========================================================
+        // Get User Profile
+        //===========================================================
+
+        UserProfile? userProfile =
+            await _authenticationRepository
+                .GetUserProfileByUserNameAsync(
+                    userName);
+
+
+        //===========================================================
+        // User Not Found
+        //===========================================================
+
+        if (userProfile == null)
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Login ID was not found.");
+        }
+
+
+        //===========================================================
+        // Deleted User
+        //===========================================================
+
+        if (userProfile.IsDeleted)
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "This Login ID is not available.");
+        }
+
+
+        //===========================================================
+        // Inactive User
+        //===========================================================
+
+        if (!userProfile.IsActive)
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Your Login ID is inactive. Please contact the administrator for activation.");
+        }
+
+
+        //===========================================================
+        // Get User Credential
+        //===========================================================
+
+        UserCredential? credential =
+            await _authenticationRepository
+                .GetUserCredentialByUserProfileIdAsync(
+                    userProfile.UserProfileId);
+
+
+        //===========================================================
+        // Credential Not Found
+        //===========================================================
+
+        if
+        (
+            credential == null ||
+            string.IsNullOrWhiteSpace(
+                credential.PasswordHash)
+        )
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Login credentials are not configured.");
+        }
+
+
+        //===========================================================
+        // Verify Current Password
+        //===========================================================
+
+        bool passwordValid =
+            VerifyPassword(
+                request.CurrentPassword,
+                credential.PasswordHash);
+
+
+        //===========================================================
+        // Invalid Current Password
+        //===========================================================
+
+        if (!passwordValid)
+        {
+            return CreateValidateCurrentPasswordFailureResponse(
+                "Current password is incorrect.");
+        }
+
+
+        //===========================================================
+        // Current Password Valid
+        //===========================================================
+
+        return new ValidateCurrentPasswordResponseDto
+        {
+            Success =
+                true,
+
+            Message =
+                "Current password verified successfully."
+        };
+    }
+
+
+    //===============================================================
+    // Change Password
+    //===============================================================
+    //
+    // Authenticated ERP user changes their own password.
+    //
+    // Flow:
+    //
+    //     Login ID
+    //         ↓
+    //     User Profile
+    //         ↓
+    //     Active / Deleted Check
+    //         ↓
+    //     User Credential
+    //         ↓
+    //     Current Password Verification
+    //         ↓
+    //     New Password Validation
+    //         ↓
+    //     Hash New Password
+    //         ↓
+    //     Save Credential
+    //
+    //===============================================================
+
+    public async Task<ChangePasswordResponseDto>
+        ChangePasswordAsync(
+            ChangePasswordRequestDto request)
+    {
+        //===========================================================
+        // Validate Request
+        //===========================================================
+
+        if (request == null)
+        {
+            return CreateChangePasswordFailureResponse(
+                "Invalid change password request.");
+        }
+
+
+        //===========================================================
+        // Normalize User Name
+        //===========================================================
+
+        string userName =
+            request.UserName?.Trim() ?? string.Empty;
+
+
+        //===========================================================
+        // Validate Login ID
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return CreateChangePasswordFailureResponse(
+                "Login ID is required.");
+        }
+
+
+        //===========================================================
+        // Validate Current Password
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(
+            request.CurrentPassword))
+        {
+            return CreateChangePasswordFailureResponse(
+                "Current password is required.");
+        }
+
+
+        //===========================================================
+        // Validate New Password
+        //===========================================================
+
+        if (string.IsNullOrWhiteSpace(
+            request.NewPassword))
+        {
+            return CreateChangePasswordFailureResponse(
+                "New password is required.");
+        }
+
+
+        //===========================================================
+        // Validate New Password Length
+        //===========================================================
+
+        if (request.NewPassword.Length < 8)
+        {
+            return CreateChangePasswordFailureResponse(
+                "Password must be at least 8 characters long.");
+        }
+
+
+        //===========================================================
+        // Prevent Same Password
+        //===========================================================
+
+        if
+        (
+            string.Equals(
+                request.CurrentPassword,
+                request.NewPassword,
+                StringComparison.Ordinal)
+        )
+        {
+            return CreateChangePasswordFailureResponse(
+                "New password must be different from the current password.");
+        }
+
+
+        //===========================================================
+        // Get User Profile
+        //===========================================================
+
+        UserProfile? userProfile =
+            await _authenticationRepository
+                .GetUserProfileByUserNameAsync(
+                    userName);
+
+
+        //===========================================================
+        // User Not Found
+        //===========================================================
+
+        if (userProfile == null)
+        {
+            return CreateChangePasswordFailureResponse(
+                "Login ID was not found.");
+        }
+
+
+        //===========================================================
+        // Deleted User
+        //===========================================================
+
+        if (userProfile.IsDeleted)
+        {
+            return CreateChangePasswordFailureResponse(
+                "This Login ID is not available.");
+        }
+
+
+        //===========================================================
+        // Inactive User
+        //===========================================================
+
+        if (!userProfile.IsActive)
+        {
+            return CreateChangePasswordFailureResponse(
+                "Your Login ID is inactive. Please contact the administrator for activation.");
+        }
+
+
+        //===========================================================
+        // Get User Credential
+        //===========================================================
+
+        UserCredential? credential =
+            await _authenticationRepository
+                .GetUserCredentialByUserProfileIdAsync(
+                    userProfile.UserProfileId);
+
+
+        //===========================================================
+        // Credential Not Found
+        //===========================================================
+
+        if
+        (
+            credential == null ||
+            string.IsNullOrWhiteSpace(
+                credential.PasswordHash)
+        )
+        {
+            return CreateChangePasswordFailureResponse(
+                "Login credentials are not configured.");
+        }
+
+
+        //===========================================================
+        // Verify Current Password
+        //===========================================================
+
+        bool currentPasswordValid =
+            VerifyPassword(
+                request.CurrentPassword,
+                credential.PasswordHash);
+
+
+        //===========================================================
+        // Invalid Current Password
+        //===========================================================
+
+        if (!currentPasswordValid)
+        {
+            return CreateChangePasswordFailureResponse(
+                "Current password is incorrect.");
+        }
+
+
+        //===========================================================
+        // Hash New Password
+        //===========================================================
+
+        credential.PasswordHash =
+            HashPassword(
+                request.NewPassword);
+
+
+        //===========================================================
+        // Update Password Changed Date
+        //===========================================================
+
+        credential.PasswordChangedDate =
+            DateTime.UtcNow;
+
+
+        //===========================================================
+        // Update Modified Date
+        //===========================================================
+
+        credential.ModifiedDate =
+            DateTime.UtcNow;
+
+
+        //===========================================================
+        // Save New Password
+        //===========================================================
+
+        await _authenticationRepository
+            .UpdateCredentialAsync(
+                credential);
+
+
+        //===========================================================
+        // Success
+        //===========================================================
+
+        return new ChangePasswordResponseDto
+        {
+            Success =
+                true,
+
+            Message =
+                "Password changed successfully."
+        };
+    }
+
+
+    //===============================================================
     // Generate Verification Code
     //===============================================================
 
@@ -1112,16 +1524,6 @@ public class AuthenticationService : IAuthenticationService
 
         //===========================================================
         // Token Lifetime
-        // ----------------------------------------------------------
-        // The backend controls the authentication lifetime.
-        //
-        // Normal Login:
-        //
-        //     8 hours
-        //
-        // Remember Me:
-        //
-        //     30 days
         //===========================================================
 
         TimeSpan tokenLifetime =
@@ -1212,6 +1614,44 @@ public class AuthenticationService : IAuthenticationService
         string message)
     {
         return new LoginResponseDto
+        {
+            Success =
+                false,
+
+            Message =
+                message
+        };
+    }
+
+
+    //===============================================================
+    // Create Change Password Failure Response
+    //===============================================================
+
+    private static ChangePasswordResponseDto
+        CreateChangePasswordFailureResponse(
+            string message)
+    {
+        return new ChangePasswordResponseDto
+        {
+            Success =
+                false,
+
+            Message =
+                message
+        };
+    }
+
+
+    //===============================================================
+    // Create Validate Current Password Failure Response
+    //===============================================================
+
+    private static ValidateCurrentPasswordResponseDto
+        CreateValidateCurrentPasswordFailureResponse(
+            string message)
+    {
+        return new ValidateCurrentPasswordResponseDto
         {
             Success =
                 false,

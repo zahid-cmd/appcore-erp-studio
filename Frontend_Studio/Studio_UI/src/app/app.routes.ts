@@ -22,6 +22,12 @@ import
 }
 from '../core/login-page-loader/login-page-loader';
 
+import
+{
+    authenticationGuard
+}
+from '../core/authentication/authentication.guard';
+
 
 
 export const routes:
@@ -32,72 +38,92 @@ export const routes:
     //===========================================================
 
     {
-        path:'login',
+        path:
+            'login',
 
         component:
             LoginPageLoader
     },
 
 
+    //===========================================================
+    // Authenticated Application
+    //===========================================================
+
     {
-        path:'',
+        path:
+            '',
 
         component:
             LayoutComponent,
 
+        canActivate:
+        [
+            authenticationGuard
+        ],
+
         children:
         [
+            //=======================================================
             // Fall Back
+            //=======================================================
 
             {
-                path:'',
+                path:
+                    '',
 
                 redirectTo:
                     'dashboard',
 
-                pathMatch:'full'
+                pathMatch:
+                    'full'
             },
 
 
-            //===========================================================
+            //=======================================================
             // Dashboard
-            //===========================================================
+            //=======================================================
 
             {
-                path:'dashboard',
+                path:
+                    'dashboard',
 
                 component:
                     DashboardComponent,
 
                 data:
                 {
-                    breadcrumb:'Dashboard'
+                    breadcrumb:
+                        'Dashboard'
                 }
             },
 
 
             // AUTO-BEGIN : MOD-004
 
-            //===========================================================
+            //=======================================================
             // Accounts & Finance
-            //===========================================================
+            //=======================================================
 
             {
-                path:'accounts-finance',
+                path:
+                    'accounts-finance',
 
                 data:
                 {
-                    breadcrumb:'Accounts & Finance'
+                    breadcrumb:
+                        'Accounts & Finance'
                 },
 
-                loadChildren:() =>
-                    import(
-                        '../features/accounts-finance/routes/accounts-finance.routes'
-                    )
-                    .then(
-                        m =>
-                            m.accountsFinanceRoutes
-                    )
+                loadChildren:
+                    () =>
+                        import(
+                            '../features/accounts-finance/routes/accounts-finance.routes'
+                        )
+                        .then(
+                            m =>
+                                m.accountsFinanceRoutes
+                        )
             },
 
             // AUTO-END : MOD-004
@@ -105,26 +131,29 @@ export const routes:
 
             // AUTO-BEGIN : MOD-003
 
-            //===========================================================
+            //=======================================================
             // Settings
-            //===========================================================
+            //=======================================================
 
             {
-                path:'settings',
+                path:
+                    'settings',
 
                 data:
                 {
-                    breadcrumb:'Settings'
+                    breadcrumb:
+                        'Settings'
                 },
 
-                loadChildren:() =>
-                    import(
-                        '../features/settings/routes/settings.routes'
-                    )
-                    .then(
-                        m =>
-                            m.settingsRoutes
-                    )
+                loadChildren:
+                    () =>
+                        import(
+                            '../features/settings/routes/settings.routes'
+                        )
+                        .then(
+                            m =>
+                                m.settingsRoutes
+                        )
             },
 
             // AUTO-END : MOD-003
@@ -132,26 +161,29 @@ export const routes:
 
             // AUTO-BEGIN : MOD-002
 
-            //===========================================================
+            //=======================================================
             // Infrastructure Control
-            //===========================================================
+            //=======================================================
 
             {
-                path:'infrastructure-control',
+                path:
+                    'infrastructure-control',
 
                 data:
                 {
-                    breadcrumb:'Infrastructure Control'
+                    breadcrumb:
+                        'Infrastructure Control'
                 },
 
-                loadChildren:() =>
-                    import(
-                        '../features/infrastructure-control/routes/infrastructure-control.routes'
-                    )
-                    .then(
-                        m =>
-                            m.infrastructureControlRoutes
-                    )
+                loadChildren:
+                    () =>
+                        import(
+                            '../features/infrastructure-control/routes/infrastructure-control.routes'
+                        )
+                        .then(
+                            m =>
+                                m.infrastructureControlRoutes
+                        )
             },
 
             // AUTO-END : MOD-002
@@ -159,26 +191,29 @@ export const routes:
 
             // AUTO-BEGIN : MOD-005
 
-            //===========================================================
-            // Human Resource Manangement
-            //===========================================================
+            //=======================================================
+            // Human Resource Management
+            //=======================================================
 
             {
-                path:'human-resource-manangement',
+                path:
+                    'human-resource-manangement',
 
                 data:
                 {
-                    breadcrumb:'Human Resource Manangement'
+                    breadcrumb:
+                        'Human Resource Manangement'
                 },
 
-                loadChildren:() =>
-                    import(
-                        '../features/human-resource-manangement/routes/human-resource-manangement.routes'
-                    )
-                    .then(
-                        m =>
-                            m.humanResourceManangementRoutes
-                    )
+                loadChildren:
+                    () =>
+                        import(
+                            '../features/human-resource-manangement/routes/human-resource-manangement.routes'
+                        )
+                        .then(
+                            m =>
+                                m.humanResourceManangementRoutes
+                        )
             },
 
             // AUTO-END : MOD-005
@@ -186,26 +221,29 @@ export const routes:
 
             // AUTO-BEGIN : MOD-006
 
-            //===========================================================
+            //=======================================================
             // Security & Permission
-            //===========================================================
+            //=======================================================
 
             {
-                path:'security-permission',
+                path:
+                    'security-permission',
 
                 data:
                 {
-                    breadcrumb:'Security & Permission'
+                    breadcrumb:
+                        'Security & Permission'
                 },
 
-                loadChildren:() =>
-                    import(
-                        '../features/security-permission/routes/security-permission.routes'
-                    )
-                    .then(
-                        m =>
-                            m.securityPermissionRoutes
-                    )
+                loadChildren:
+                    () =>
+                        import(
+                            '../features/security-permission/routes/security-permission.routes'
+                        )
+                        .then(
+                            m =>
+                                m.securityPermissionRoutes
+                        )
             },
 
             // AUTO-END : MOD-006
@@ -213,9 +251,15 @@ export const routes:
     },
 
 
-    {
-        path:'**',
+    //===========================================================
+    // Unknown Route
+    //===========================================================
 
-        redirectTo:''
+    {
+        path:
+            '**',
+
+        redirectTo:
+            ''
     }
 ];

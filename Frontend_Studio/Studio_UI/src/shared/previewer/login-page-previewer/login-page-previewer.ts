@@ -5,9 +5,15 @@
 import
 {
     Component,
+
     HostListener,
+
     Input,
+
+    OnDestroy,
+
     OnInit,
+
     inject
 }
 from '@angular/core';
@@ -21,6 +27,7 @@ from '@angular/common';
 import
 {
     ActivatedRoute,
+
     Router
 }
 from '@angular/router';
@@ -49,13 +56,19 @@ import
 }
 from '../../login-pages/login-page-4/login-page-4';
 
+import
+{
+    LoginPage5
+}
+from '../../login-pages/login-page-5/login-page-5';
 
 
 //===============================================================
 // Login Page Previewer
 //===============================================================
 
-@Component(
+@Component
+(
 {
     selector:
         'app-login-page-previewer',
@@ -73,7 +86,9 @@ from '../../login-pages/login-page-4/login-page-4';
 
         LoginPage3,
 
-        LoginPage4
+        LoginPage4,
+
+        LoginPage5
     ],
 
     templateUrl:
@@ -91,19 +106,24 @@ from '../../login-pages/login-page-4/login-page-4';
 //===============================================================
 
 export class LoginPagePreviewer
-implements OnInit
+    implements OnInit, OnDestroy
 {
+
 
     //===========================================================
     // Dependency Injection
     //===========================================================
 
     private readonly route =
-        inject(ActivatedRoute);
+        inject(
+            ActivatedRoute
+        );
 
 
     private readonly router =
-        inject(Router);
+        inject(
+            Router
+        );
 
 
 
@@ -139,6 +159,15 @@ implements OnInit
     {
         this.isOpen =
             true;
+
+
+        //=======================================================
+        // ENABLE FULL-SCREEN PREVIEW MODE
+        //=======================================================
+
+        document.body.classList.add(
+            'login-page-preview-active'
+        );
 
 
         //=======================================================
@@ -179,6 +208,25 @@ implements OnInit
 
         this.loginPageId =
             null;
+    }
+
+
+
+    //===========================================================
+    // Destroy
+    // ----------------------------------------------------------
+    // IMPORTANT:
+    //
+    // Always remove the global Previewer state when this
+    // component is destroyed.
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        document.body.classList.remove(
+            'login-page-preview-active'
+        );
     }
 
 
@@ -236,6 +284,19 @@ implements OnInit
 
 
     //===========================================================
+    // Login Page 5
+    //===========================================================
+
+    get isLoginPage5():
+        boolean
+    {
+        return this.loginPageId ===
+            5;
+    }
+
+
+
+    //===========================================================
     // Login Page Available
     //===========================================================
 
@@ -248,13 +309,17 @@ implements OnInit
             ||
             this.isLoginPage3
             ||
-            this.isLoginPage4;
+            this.isLoginPage4
+            ||
+            this.isLoginPage5;
     }
 
 
 
     //===========================================================
-    // Escape Key
+    // ESCAPE KEY
+    // ----------------------------------------------------------
+    // Pressing ESC closes the Previewer.
     //===========================================================
 
     @HostListener(
@@ -275,12 +340,25 @@ implements OnInit
     private closePreview():
         void
     {
+        //=======================================================
+        // CLOSE PREVIEW STATE
+        //=======================================================
+
         this.isOpen =
             false;
 
 
         //=======================================================
-        // Return To Login Pages List
+        // REMOVE GLOBAL PREVIEW MODE
+        //=======================================================
+
+        document.body.classList.remove(
+            'login-page-preview-active'
+        );
+
+
+        //=======================================================
+        // RETURN TO LOGIN PAGES LIST
         //=======================================================
 
         void this.router.navigate(

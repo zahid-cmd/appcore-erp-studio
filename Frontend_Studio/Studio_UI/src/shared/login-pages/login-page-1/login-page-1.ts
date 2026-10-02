@@ -44,6 +44,11 @@
        renders reliably after browser refresh and theme changes.
 ============================================================= */
 
+
+/* =============================================================
+   Angular
+============================================================= */
+
 import
 {
     ChangeDetectionStrategy,
@@ -61,11 +66,21 @@ import
 }
 from '@angular/common';
 
+
+/* =============================================================
+   Environment
+============================================================= */
+
 import
 {
     environment
 }
 from '../../../environments/environment';
+
+
+/* =============================================================
+   Sub Ordinate Components Service
+============================================================= */
 
 import
 {
@@ -98,32 +113,53 @@ from '../../components/core-components/theme-selector/theme-selector';
 
 
 /* =============================================================
-   LOGIN CREDENTIAL COMPONENTS
+   LOGIN PANEL
+   -------------------------------------------------------------
+   IMPORTANT:
+
+       Login Panel is now located under:
+
+       components/core-components/login-panel
 ============================================================= */
 
 import
 {
     LoginPageLoginPanelComponent
 }
-from '../../components/login-credentials/login-panel/login-panel';
+from '../../components/core-components/login-panel/login-panel';
+
+
+/* =============================================================
+   REGISTRATION PANEL
+============================================================= */
 
 import
 {
     LoginPageRegistrationPanelComponent
 }
-from '../../components/login-credentials/registration-panel/registration-panel';
+from '../../components/core-components/registration-panel/registration-panel';
+
+
+/* =============================================================
+   FORGET PASSWORD
+============================================================= */
 
 import
 {
     LoginPageForgetPasswordPanelComponent
 }
-from '../../components/login-credentials/forget-password/forget-password';
+from '../../components/core-components/forget-password/forget-password';
+
+
+/* =============================================================
+   NOTIFICATION PANEL
+============================================================= */
 
 import
 {
     LoginPageNotificationPanelComponent
 }
-from '../../components/login-credentials/notification-panel/notification-panel';
+from '../../components/core-components/notification-panel/notification-panel';
 
 
 /* =============================================================
@@ -142,9 +178,9 @@ from '../../components/login-credentials/notification-panel/notification-panel';
     [
         CommonModule,
 
-        /* -----------------------------------------------------
-           CORE COMPONENTS
-        ----------------------------------------------------- */
+        //=======================================================
+        // CORE COMPONENTS
+        //=======================================================
 
         LoginPageBrandingComponent,
 
@@ -153,9 +189,9 @@ from '../../components/login-credentials/notification-panel/notification-panel';
         LoginPageThemeSelectorComponent,
 
 
-        /* -----------------------------------------------------
-           LOGIN CREDENTIAL COMPONENTS
-        ----------------------------------------------------- */
+        //=======================================================
+        // LOGIN COMPONENTS
+        //=======================================================
 
         LoginPageLoginPanelComponent,
 
@@ -174,20 +210,20 @@ from '../../components/login-credentials/notification-panel/notification-panel';
         './login-page-1.css'
     ],
 
-    /*
-     * IMPORTANT:
-     *
-     * Login Page 1 intentionally uses Angular's Default
-     * change-detection strategy.
-     *
-     * Do NOT change this to OnPush.
-     */
     changeDetection:
         ChangeDetectionStrategy.Default
 })
+
+
+/* =============================================================
+   LOGIN PAGE 1
+============================================================= */
+
 export class LoginPage1
     implements OnInit
 {
+
+
     /* =========================================================
        SERVICES
     ========================================================= */
@@ -206,9 +242,9 @@ export class LoginPage1
     /* =========================================================
        BACKGROUND IMAGE 1
        ---------------------------------------------------------
-       Sub Ordinate Component ID:
+       IMPORTANT:
 
-           1
+       Background Image 1 = Sub Ordinate Component ID 1
     ========================================================= */
 
     lightBackgroundImageUrl:
@@ -318,9 +354,9 @@ export class LoginPage1
                 next:
                     response =>
                     {
-                        /* -------------------------------------
-                           LIGHT BACKGROUND
-                        ------------------------------------- */
+                        //=======================================
+                        // LIGHT
+                        //=======================================
 
                         this.lightBackgroundImageUrl =
                             this.buildImageUrl(
@@ -328,9 +364,9 @@ export class LoginPage1
                             );
 
 
-                        /* -------------------------------------
-                           DEEP BACKGROUND
-                        ------------------------------------- */
+                        //=======================================
+                        // DEEP
+                        //=======================================
 
                         this.deepBackgroundImageUrl =
                             this.buildImageUrl(
@@ -338,9 +374,9 @@ export class LoginPage1
                             );
 
 
-                        /* -------------------------------------
-                           FORCE VIEW UPDATE
-                        ------------------------------------- */
+                        //=======================================
+                        // FORCE VIEW UPDATE
+                        //=======================================
 
                         this.changeDetectorRef.detectChanges();
                     },
@@ -422,10 +458,11 @@ export class LoginPage1
 
 
         /* -----------------------------------------------------
-           ROOT-RELATIVE PATH
+           ROOT RELATIVE
         ----------------------------------------------------- */
 
-        if (
+        if
+        (
             value.startsWith('/')
         )
         {
@@ -434,7 +471,7 @@ export class LoginPage1
 
 
         /* -----------------------------------------------------
-           RELATIVE PATH
+           RELATIVE
         ----------------------------------------------------- */
 
         return `${this.apiBaseUrl}/${value}`;
@@ -463,9 +500,6 @@ export class LoginPage1
             isLightTheme;
 
 
-        /*
-         * Immediately refresh the background binding.
-         */
         this.changeDetectorRef.detectChanges();
     }
 
@@ -572,4 +606,5 @@ export class LoginPage1
 
         this.changeDetectorRef.detectChanges();
     }
+
 }

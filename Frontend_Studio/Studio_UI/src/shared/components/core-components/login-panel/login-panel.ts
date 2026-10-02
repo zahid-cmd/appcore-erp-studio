@@ -4,6 +4,7 @@
 
 import
 {
+    AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
@@ -67,6 +68,8 @@ import
     environment
 }
 from '../../../../environments/environment';
+
+
 
 
 
@@ -144,7 +147,6 @@ export interface LoginPageLoginPanelConfig
 }
 
 
-
 //===============================================================
 // Login Page 1 Login Panel Component
 //===============================================================
@@ -160,6 +162,7 @@ export interface LoginPageLoginPanelConfig
     imports:
     [
         CommonModule,
+
         FormsModule
     ],
 
@@ -175,12 +178,16 @@ export interface LoginPageLoginPanelConfig
 
 
 
+
+
 //===============================================================
 // Login Page 1 Login Panel
 //===============================================================
 
 export class LoginPageLoginPanelComponent
-    implements OnInit
+    implements
+        OnInit,
+        AfterViewInit
 {
 
     //===========================================================
@@ -206,6 +213,8 @@ export class LoginPageLoginPanelComponent
     )
     {
     }
+
+
 
 
 
@@ -286,6 +295,8 @@ export class LoginPageLoginPanelComponent
 
 
 
+
+
     //===========================================================
     // Configuration Change
     //===========================================================
@@ -297,15 +308,10 @@ export class LoginPageLoginPanelComponent
 
 
 
+
+
     //===========================================================
     // Client Branding
-    // ----------------------------------------------------------
-    // The Login Panel is the single source of client branding
-    // for all Login Pages.
-    //
-    // Company Short Name is used as the Login Page Display Name.
-    // Company Name remains available in Company Setup as the
-    // legal/full company name.
     //===========================================================
 
     clientCompanyName:
@@ -315,6 +321,8 @@ export class LoginPageLoginPanelComponent
     clientLogoUrl:
         string =
             '';
+
+
 
 
 
@@ -340,6 +348,8 @@ export class LoginPageLoginPanelComponent
 
 
 
+
+
     //===========================================================
     // Authentication State
     //===========================================================
@@ -354,6 +364,8 @@ export class LoginPageLoginPanelComponent
 
 
 
+
+
     //===========================================================
     // Initialization
     //===========================================================
@@ -361,26 +373,162 @@ export class LoginPageLoginPanelComponent
     ngOnInit():
         void
     {
+        console.log(
+            'LOGIN PANEL - ngOnInit'
+        );
+
+
+        //=======================================================
+        // Restore Remember Me
+        //=======================================================
+
+        this.loadRememberedLogin();
+
+
+        console.log(
+            'LOGIN PANEL - state after loadRememberedLogin:',
+            {
+                loginId:
+                    this.loginId,
+
+                rememberMe:
+                    this.rememberMe
+            }
+        );
+
+
+        //=======================================================
+        // Load Client Branding
+        //=======================================================
+
         this.loadClientBranding();
     }
 
 
 
+
+
+    //===========================================================
+    // After View Initialization
+    //===========================================================
+
+    ngAfterViewInit():
+        void
+    {
+        console.log(
+            'LOGIN PANEL - ngAfterViewInit'
+        );
+
+
+        console.log(
+            'LOGIN PANEL - FINAL VIEW STATE:',
+            {
+                loginId:
+                    this.loginId,
+
+                rememberMe:
+                    this.rememberMe
+            }
+        );
+
+
+        //=======================================================
+        // Ensure OnPush Component Checks Its View
+        //=======================================================
+
+        this.changeDetectorRef.markForCheck();
+
+        this.changeDetectorRef.detectChanges();
+    }
+
+
+
+
+
+    //===========================================================
+    // Load Remembered Login
+    //===========================================================
+
+    private loadRememberedLogin():
+        void
+    {
+        const rememberedLoginId:
+            string | null =
+                this.authenticationStorageService
+                    .getRememberedLoginId();
+
+
+        console.log(
+            'LOGIN PANEL - rememberedLoginId read:',
+            rememberedLoginId
+        );
+
+
+        //=======================================================
+        // No Remembered Login ID
+        //=======================================================
+
+        if
+        (
+            !rememberedLoginId
+            ||
+            !rememberedLoginId.trim()
+        )
+        {
+            this.loginId =
+                '';
+
+            this.rememberMe =
+                false;
+
+
+            this.changeDetectorRef.markForCheck();
+
+            this.changeDetectorRef.detectChanges();
+
+            return;
+        }
+
+
+        //=======================================================
+        // Restore Login ID
+        //=======================================================
+
+        this.loginId =
+            rememberedLoginId.trim();
+
+
+        //=======================================================
+        // Restore Remember Me
+        //=======================================================
+
+        this.rememberMe =
+            true;
+
+
+        console.log(
+            'LOGIN PANEL - REMEMBERED LOGIN RESTORED:',
+            {
+                loginId:
+                    this.loginId,
+
+                rememberMe:
+                    this.rememberMe
+            }
+        );
+
+
+        this.changeDetectorRef.markForCheck();
+
+        this.changeDetectorRef.detectChanges();
+    }
+
+
+
+
+
     //===========================================================
     // Load Client Branding
-    // ----------------------------------------------------------
-    // Loads the active company from Company Setup.
-    //
-    // The same Login Panel is reused by:
-    //
-    //     Login Page 1
-    //     Login Page 2
-    //     Login Page 3
-    //     Login Page 4
-    //
-    // Therefore company branding is intentionally handled
-    // here instead of inside individual Login Pages or
-    // Login Page Loader.
     //===========================================================
 
     private loadClientBranding():
@@ -407,7 +555,6 @@ export class LoginPageLoginPanelComponent
                             );
 
 
-
                         //===================================================
                         // No Active Company
                         //===================================================
@@ -423,20 +570,16 @@ export class LoginPageLoginPanelComponent
                             this.clientLogoUrl =
                                 '';
 
+                            this.changeDetectorRef.markForCheck();
+
                             this.changeDetectorRef.detectChanges();
 
                             return;
                         }
 
 
-
                         //===================================================
                         // Login Display Name
-                        //
-                        // Priority:
-                        //
-                        //     1. Company Short Name
-                        //     2. Company Name
                         //===================================================
 
                         this.clientCompanyName =
@@ -445,7 +588,6 @@ export class LoginPageLoginPanelComponent
                             activeCompany.CompanyName?.trim()
                             ||
                             '';
-
 
 
                         //===================================================
@@ -459,6 +601,7 @@ export class LoginPageLoginPanelComponent
                             );
 
 
+                        this.changeDetectorRef.markForCheck();
 
                         this.changeDetectorRef.detectChanges();
                     },
@@ -477,17 +620,21 @@ export class LoginPageLoginPanelComponent
                         );
 
 
-
                         this.clientCompanyName =
                             '';
 
                         this.clientLogoUrl =
                             '';
 
+
+                        this.changeDetectorRef.markForCheck();
+
                         this.changeDetectorRef.detectChanges();
                     }
             });
     }
+
+
 
 
 
@@ -513,11 +660,9 @@ export class LoginPageLoginPanelComponent
         }
 
 
-
         const normalizedPath:
             string =
                 logoPath.trim();
-
 
 
         //=======================================================
@@ -539,17 +684,8 @@ export class LoginPageLoginPanelComponent
         }
 
 
-
         //=======================================================
         // API Root
-        //
-        // environment.apiUrl:
-        //
-        //     http://localhost:5100/api
-        //
-        // Static files:
-        //
-        //     http://localhost:5100/uploads/...
         //=======================================================
 
         const apiUrl:
@@ -560,7 +696,6 @@ export class LoginPageLoginPanelComponent
                         /\/+$/,
                         ''
                     );
-
 
 
         const serverUrl:
@@ -574,7 +709,6 @@ export class LoginPageLoginPanelComponent
                     : apiUrl;
 
 
-
         const cleanPath:
             string =
                 normalizedPath.startsWith('/')
@@ -582,9 +716,10 @@ export class LoginPageLoginPanelComponent
                     : `/${normalizedPath}`;
 
 
-
         return `${serverUrl}${cleanPath}`;
     }
+
+
 
 
 
@@ -607,12 +742,13 @@ export class LoginPageLoginPanelComponent
         };
 
 
-
         this.configChange.emit
         (
             this.config
         );
     }
+
+
 
 
 
@@ -626,6 +762,8 @@ export class LoginPageLoginPanelComponent
         this.passwordVisible =
             !this.passwordVisible;
     }
+
+
 
 
 
@@ -649,6 +787,8 @@ export class LoginPageLoginPanelComponent
 
 
 
+
+
     //===========================================================
     // Password Change
     //===========================================================
@@ -669,6 +809,8 @@ export class LoginPageLoginPanelComponent
 
 
 
+
+
     //===========================================================
     // Remember Me Change
     //===========================================================
@@ -682,25 +824,33 @@ export class LoginPageLoginPanelComponent
     {
         this.rememberMe =
             value;
+
+
+        //=======================================================
+        // When Remember Me Is Manually Unchecked
+        //=======================================================
+
+        if
+        (
+            !value
+        )
+        {
+            this.authenticationStorageService
+                .clearRememberedLogin();
+
+
+            console.log(
+                'LOGIN PANEL - Remembered Login ID removed.'
+            );
+        }
     }
+
+
 
 
 
     //===========================================================
     // Sign In
-    // ----------------------------------------------------------
-    // The Login Panel is the authentication owner.
-    //
-    // Login Page 1, 2, 3 and 4 do not authenticate the user.
-    //
-    // The Login Panel:
-    //
-    //     1. Validates the Login ID.
-    //     2. Validates the Password.
-    //     3. Sends Remember Me to the backend.
-    //     4. Receives the authentication response.
-    //     5. Stores the authentication.
-    //     6. Navigates to the Dashboard.
     //===========================================================
 
     onSignIn():
@@ -719,14 +869,12 @@ export class LoginPageLoginPanelComponent
         }
 
 
-
         //=======================================================
         // Clear Previous Error
         //=======================================================
 
         this.loginError =
             '';
-
 
 
         //=======================================================
@@ -736,7 +884,6 @@ export class LoginPageLoginPanelComponent
         const normalizedLoginId:
             string =
                 this.loginId.trim();
-
 
 
         //=======================================================
@@ -751,11 +898,12 @@ export class LoginPageLoginPanelComponent
             this.loginError =
                 'Login ID is required.';
 
+            this.changeDetectorRef.markForCheck();
+
             this.changeDetectorRef.detectChanges();
 
             return;
         }
-
 
 
         //=======================================================
@@ -770,11 +918,25 @@ export class LoginPageLoginPanelComponent
             this.loginError =
                 'Password is required.';
 
+            this.changeDetectorRef.markForCheck();
+
             this.changeDetectorRef.detectChanges();
 
             return;
         }
 
+
+        //=======================================================
+        // CAPTURE REMEMBER ME STATE
+        //
+        // The HTTP request is asynchronous.
+        // Capture the checkbox state now so the authentication
+        // response cannot change the value used for persistence.
+        //=======================================================
+
+        const rememberMe:
+            boolean =
+                this.rememberMe;
 
 
         //=======================================================
@@ -784,16 +946,13 @@ export class LoginPageLoginPanelComponent
         this.isSigningIn =
             true;
 
-        this.changeDetectorRef.detectChanges();
+        this.changeDetectorRef.markForCheck();
 
+        this.changeDetectorRef.detectChanges();
 
 
         //=======================================================
         // Login Request
-        // ------------------------------------------------------
-        // Remember Me is sent directly to the backend.
-        //
-        // The backend controls the authentication lifetime.
         //=======================================================
 
         const request:
@@ -806,9 +965,8 @@ export class LoginPageLoginPanelComponent
                 this.password,
 
             rememberMe:
-                this.rememberMe
+                rememberMe
         };
-
 
 
         //=======================================================
@@ -833,7 +991,6 @@ export class LoginPageLoginPanelComponent
                             false;
 
 
-
                         //===================================================
                         // Authentication Failure
                         //===================================================
@@ -848,36 +1005,62 @@ export class LoginPageLoginPanelComponent
                                 ||
                                 'Unable to sign in. Please try again.';
 
+
+                            this.changeDetectorRef.markForCheck();
+
                             this.changeDetectorRef.detectChanges();
 
                             return;
                         }
 
 
-
                         //===================================================
                         // Store Authentication
-                        //===================================================
-                        // The storage service stores the authentication
-                        // returned by the backend.
                         //
-                        // Remember Me itself is already handled by the
-                        // backend through the JWT lifetime.
+                        // AuthenticationStorageService is now the SINGLE
+                        // owner of Remember Me persistence.
+                        //
+                        // If rememberMe = true:
+                        //     Login ID -> localStorage
+                        //
+                        // If rememberMe = false:
+                        //     Remembered Login ID is removed
+                        //     Authentication -> sessionStorage
                         //===================================================
 
                         this.authenticationStorageService
                             .setAuthentication
                             (
-                                response
+                                response,
+
+                                rememberMe,
+
+                                normalizedLoginId
                             );
 
+
+                        //===================================================
+                        // Verify Remember Me State After Storage
+                        //===================================================
+
+                        console.log(
+                            'LOGIN PANEL - Authentication stored:',
+                            {
+                                rememberMe:
+                                    rememberMe,
+
+                                rememberedLoginId:
+                                    this.authenticationStorageService
+                                        .getRememberedLoginId()
+                            }
+                        );
 
 
                         //===================================================
                         // Navigate To Dashboard
                         //===================================================
 
-                        this.router
+                        void this.router
                             .navigate
                             (
                                 [
@@ -897,7 +1080,6 @@ export class LoginPageLoginPanelComponent
                             false;
 
 
-
                         //===================================================
                         // Extract Backend Error Message
                         //===================================================
@@ -910,11 +1092,14 @@ export class LoginPageLoginPanelComponent
                             'Unable to sign in. Please try again.';
 
 
+                        this.changeDetectorRef.markForCheck();
 
                         this.changeDetectorRef.detectChanges();
                     }
             });
     }
+
+
 
 
 
@@ -926,7 +1111,6 @@ export class LoginPageLoginPanelComponent
     forgotPassword:
         EventEmitter<void> =
             new EventEmitter<void>();
-
 
 
     onForgotPassword():
@@ -941,14 +1125,14 @@ export class LoginPageLoginPanelComponent
         }
 
 
-
         this.loginError =
             '';
 
 
-
         this.forgotPassword.emit();
     }
+
+
 
 
 
@@ -960,7 +1144,6 @@ export class LoginPageLoginPanelComponent
     register:
         EventEmitter<void> =
             new EventEmitter<void>();
-
 
 
     onRegister():
@@ -975,10 +1158,8 @@ export class LoginPageLoginPanelComponent
         }
 
 
-
         this.loginError =
             '';
-
 
 
         this.register.emit();

@@ -67,6 +67,30 @@
            - Login / Registration / Forget Password mode
            - Theme state
            - Notification Panel
+
+   IMPORTANT BACKGROUND RULE:
+
+       Login Page 2 uses:
+
+           Sub Ordinate Component ID = 2
+
+       Light Theme:
+
+           lightBackgroundImageUrl
+
+       Deep Theme:
+
+           deepBackgroundImageUrl
+
+       Current:
+
+           currentBackgroundImageUrl
+
+       The actual Login Page background is rendered directly
+       by Login Page 2.
+
+       The Background Image 2 management component is NOT
+       rendered here.
 ============================================================= */
 
 
@@ -94,12 +118,100 @@
 
 
 /* =============================================================
+   BACKGROUND IMAGE 2
+   -------------------------------------------------------------
+   ACTUAL LOGIN PAGE BACKGROUND
+
+   SOURCE:
+
+       Sub Ordinate Component ID = 2
+
+   LIGHT:
+
+       lightBackgroundImageUrl
+
+   DEEP:
+
+       deepBackgroundImageUrl
+
+   CURRENT:
+
+       currentBackgroundImageUrl
+
+   IMPORTANT:
+
+       This is the actual background layer for Login Page 2.
+
+       It is completely independent from the 45% / 20% / 35%
+       desktop layout.
+
+       It consumes NO layout space.
+
+       The Login Page HTML binds:
+
+           [style.background-image]
+
+       to:
+
+           currentBackgroundImageUrl
+============================================================= */
+
+.login-page-2-background
+{
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    width:
+        100vw;
+
+    height:
+        100vh;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    box-sizing:
+        border-box;
+
+    background-position:
+        center center;
+
+    background-repeat:
+        no-repeat;
+
+    background-size:
+        cover;
+
+    background-color:
+        transparent;
+
+    z-index:
+        0;
+
+    pointer-events:
+        none;
+}
+
+
+/* =============================================================
    PROMOTIONAL IMAGE
    -------------------------------------------------------------
-   FULL VIEWPORT
+   IMPORTANT:
 
-   This layer remains completely independent from the desktop
-   layout grid.
+       This old promotional-image layer is intentionally NOT
+       used as the Login Page 2 background.
+
+       Background Image 2 above is now the actual page
+       background.
+
+       These rules are retained so the rest of the existing
+       stylesheet remains unchanged.
 ============================================================= */
 
 .login-page-2-promotional-area
@@ -167,6 +279,8 @@ app-login-page-promotional-image-deep
        Notification Panel is NOT part of this grid.
 
        It is a floating page-level component.
+
+       The layout remains above Background Image 2.
 ============================================================= */
 
 .login-page-2-layout
@@ -211,7 +325,7 @@ app-login-page-promotional-image-deep
         grid;
 
     grid-template-rows:
-        15% 70% 15%;
+        15% 65% 20%;
 
     width:
         100%;
@@ -380,6 +494,8 @@ app-login-page-powered-by
 
     padding:
         0;
+
+    padding-left: 40px;
 
     box-sizing:
         border-box;

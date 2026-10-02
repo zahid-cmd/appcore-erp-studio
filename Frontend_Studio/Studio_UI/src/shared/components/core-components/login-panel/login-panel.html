@@ -49,6 +49,13 @@
              - Dashboard navigation
 
          The Login Page does NOT participate in authentication.
+
+     REMEMBER ME:
+
+         Login ID and Remember Me state are restored by the
+         Login Panel component when the page initializes.
+
+         Password is NEVER restored.
 ============================================================ -->
 
 
@@ -132,20 +139,6 @@
 
                 <!-- ===========================================
                      CLIENT BRANDING
-                     -------------------------------------------
-                     Loaded from Company Setup.
-
-                     Client Display Name:
-
-                         Company Short Name
-
-                     Fallback:
-
-                         Company Name
-
-                     Client Logo:
-
-                         Company Logo Path
                 ============================================ -->
 
                 <div
@@ -204,9 +197,6 @@
 
                     <!-- =======================================
                          CLIENT DISPLAY NAME
-                         ---------------------------------------
-                         Uses Company Short Name from
-                         Company Setup.
                     ======================================== -->
 
                     <div
@@ -273,6 +263,15 @@
 
                 <!-- ===========================================
                      LOGIN ID
+                     -------------------------------------------
+                     IMPORTANT:
+
+                     Direct [value] binding is intentionally
+                     used instead of [(ngModel)].
+
+                     This guarantees that the value restored
+                     from localStorage is reflected directly
+                     in the input element.
                 ============================================ -->
 
                 <div
@@ -311,15 +310,21 @@
                             class="login-form-input"
                             type="text"
                             name="loginId"
+
                             [value]="loginId"
+
                             [placeholder]="config.loginIdPlaceholder"
+
                             autocomplete="username"
+
                             [disabled]="isSigningIn"
+
                             [attr.aria-invalid]="
                                 loginError
                                     ? 'true'
                                     : null
                             "
+
                             (input)="
                                 onLoginIdChange(
                                     $any($event.target).value
@@ -376,19 +381,23 @@
                                     : 'password'
                             "
                             name="password"
-                            [value]="password"
+
+                            [(ngModel)]="password"
+
                             [placeholder]="config.passwordPlaceholder"
+
                             autocomplete="current-password"
+
                             [disabled]="isSigningIn"
+
                             [attr.aria-invalid]="
                                 loginError
                                     ? 'true'
                                     : null
                             "
-                            (input)="
-                                onPasswordChange(
-                                    $any($event.target).value
-                                )
+
+                            (ngModelChange)="
+                                onPasswordChange($event)
                             "
                         />
 
@@ -398,6 +407,7 @@
                             class="password-visibility-button"
                             aria-label="Show or hide password"
                             [disabled]="isSigningIn"
+
                             (click)="
                                 togglePasswordVisibility()
                             "
@@ -431,6 +441,10 @@
 
                     <!-- =======================================
                          REMEMBER ME
+                         ---------------------------------------
+                         Direct checked binding is intentionally
+                         used so the restored component state
+                         controls the checkbox directly.
                     ======================================== -->
 
                     <label
@@ -441,8 +455,11 @@
                         <input
                             type="checkbox"
                             name="rememberMe"
+
                             [checked]="rememberMe"
+
                             [disabled]="isSigningIn"
+
                             (change)="
                                 onRememberMeChange(
                                     $any($event.target).checked
@@ -450,10 +467,12 @@
                             "
                         />
 
+
                         <span
                             class="remember-checkbox"
                         >
                         </span>
+
 
                         <span
                             class="remember-text"
@@ -473,6 +492,7 @@
                         class="forgot-password-button"
                         *ngIf="config.forgotPasswordVisible"
                         [disabled]="isSigningIn"
+
                         (click)="onForgotPassword()"
                     >
 
@@ -486,9 +506,6 @@
 
                 <!-- ===========================================
                      LOGIN ERROR
-                     -------------------------------------------
-                     Displayed only when authentication fails
-                     or client-side validation fails.
                 ============================================ -->
 
                 <div
@@ -662,6 +679,7 @@
                     type="button"
                     class="registration-button"
                     [disabled]="isSigningIn"
+
                     (click)="onRegister()"
                 >
 
@@ -675,8 +693,6 @@
 
             <!-- =================================================
                  BOTTOM META
-                 -------------------------------------------------
-                 Login panel only
             ================================================== -->
 
             <div

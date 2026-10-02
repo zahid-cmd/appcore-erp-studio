@@ -1,150 +1,4 @@
 <!-- ===========================================================
-     LOGIN PAGE 3
-     -----------------------------------------------------------
-     FINAL DESKTOP PAGE COMPOSITION
-
-     FULL VIEWPORT
-
-     │
-     ├── FLOATING NOTIFICATION CONTROL
-     │   └── Notification Button + Counter + Popover
-     │
-     ├── LEFT 35%
-     │   ├── TOP 30px
-     │   │   └── EMPTY
-     │   │
-     │   ├── CENTER
-     │   │   ├── LOGIN PANEL
-     │   │   ├── REGISTRATION PANEL
-     │   │   └── FORGET PASSWORD PANEL
-     │   │
-     │   └── BOTTOM 30px
-     │       └── EMPTY
-     │
-     ├── MIDDLE 20%
-     │   ├── TOP
-     │   │   └── EMPTY
-     │   │
-     │   ├── CENTER
-     │   │   └── EMPTY
-     │   │
-     │   └── BOTTOM
-     │       └── EMPTY
-     │
-     └── RIGHT 45%
-         ├── TOP 15%
-         │   └── EMPTY
-         │
-         ├── CENTER
-         │   └── EMPTY
-         │
-         └── BOTTOM 15%
-             └── EMPTY
-
-     IMPORTANT:
-
-         Promotional Image, Branding, Powered By and
-         Theme Selector have been transferred to their
-         new locations.
-
-         They are therefore intentionally removed from
-         Login Page 3.
-
-         The Notification Panel remains PAGE-LEVEL.
-
-         It does NOT participate in the
-         35% / 20% / 45% layout.
-
-         It occupies NO physical layout space.
-
-         Authentication:
-
-             Authentication is completely owned by the
-             Central Login Panel.
-
-             Login Page 3 does NOT:
-
-                 - receive signIn
-                 - call AuthenticationService
-                 - create LoginRequest
-                 - store authentication
-                 - navigate after login
-                 - manage login errors
-                 - manage signing-in state
-
-             The Login Panel handles the complete
-             authentication flow internally.
-
-         This version is DESKTOP ONLY.
-
-         Tablet and mobile layouts will be implemented later.
-
-         REGISTER NOW EVENT:
-
-             Login Panel emits the register event.
-
-             This page receives the event through onRegister().
-
-             isRegistrationMode becomes TRUE.
-
-             Login Panel is hidden.
-
-             Registration Panel is displayed.
-
-         FORGOT PASSWORD EVENT:
-
-             Login Panel emits the forgotPassword event.
-
-             This page receives the event through onForgotPassword().
-
-             isForgetPasswordMode becomes TRUE.
-
-             Login Panel is hidden.
-
-             Forget Password Panel is displayed.
-
-         PASSWORD RESET SUCCESS EVENT:
-
-             Forget Password Panel emits the
-             passwordResetSuccess event.
-
-             This page receives the event through
-             onPasswordResetSuccess().
-
-             The Notification Panel receives:
-
-                 Password Changed
-
-             The notification remains unread.
-
-             The Notification Panel automatically opens
-             for 5 seconds.
-
-             The Notification Panel then closes automatically.
-
-             The unread counter remains visible.
-
-             The Forget Password Panel is immediately replaced
-             by the Login Panel.
-
-             The notification becomes read only when the user
-             manually opens/interacts with the Notification Panel.
-
-         BACK TO LOGIN EVENT:
-
-             Registration Panel or Forget Password Panel emits
-             the backToLogin event.
-
-             This page receives the event through
-             onBackToLogin().
-
-             Both panel states become FALSE.
-
-             Login Panel is displayed.
-============================================================ -->
-
-
-<!-- ===========================================================
      LOGIN PAGE 3 ROOT
 ============================================================ -->
 
@@ -154,23 +8,52 @@
 
 
     <!-- =======================================================
+         PAGE-LEVEL BACKGROUND IMAGE
+         -------------------------------------------------------
+         Background Image 3 is loaded by LoginPage3.ts from:
+
+             Sub Ordinate Component ID = 3
+
+         The current image is selected according to:
+
+             isLightTheme = true
+                 → Light Background Image 3
+
+             isLightTheme = false
+                 → Deep Background Image 3
+
+         The background consumes NO layout-grid space.
+    ======================================================== -->
+
+    <div
+        class="login-page-3-background"
+
+        [style.background-image]="
+            currentBackgroundImageUrl
+                ? 'url(' + currentBackgroundImageUrl + ')'
+                : ''
+        "
+    >
+    </div>
+
+
+    <!-- =======================================================
          PAGE-LEVEL NOTIFICATION PANEL
          -------------------------------------------------------
-         This component is intentionally outside the main
-         desktop layout.
+         This component remains completely independent from
+         the Login Page 3 desktop layout.
 
-         It does NOT consume any layout space.
+         It consumes NO physical layout space.
 
          Its own CSS controls:
 
-             Bell Button
-             Unread Counter
-             Floating Popover
-             Outside Click
-             Notification Position
+             - Notification Button
+             - Unread Counter
+             - Notification Popover
+             - Floating Position
 
-         #notificationPanel provides an explicit template
-         reference for the Login Page 3 @ViewChild.
+         #notificationPanel provides the explicit template
+         reference used by LoginPage3 @ViewChild.
     ======================================================== -->
 
     <app-login-page-notification-panel
@@ -182,23 +65,33 @@
     <!-- =======================================================
          MAIN DESKTOP LAYOUT
          -------------------------------------------------------
-         FULL WIDTH SPLIT:
+         FULL WIDTH:
 
              LEFT   = 35%
-             MIDDLE = 20%
-             RIGHT  = 45%
+             CENTER = 45%
+             RIGHT  = 20%
 
-         The following components have been transferred
-         and are no longer rendered by Login Page 3:
+         COMPONENT LOCATIONS:
 
-             Promotional Image Light
-             Promotional Image Deep
-             Branding
-             Powered By
-             Theme Selector
+             LEFT:
 
-         Notification Panel is intentionally NOT included
-         inside this layout.
+                 Theme Selector
+                 Login / Registration / Forget Password
+
+             CENTER:
+
+                 Branding
+
+             RIGHT:
+
+                 Powered By
+
+         Notification Panel remains PAGE LEVEL / FLOATING.
+
+         Login Page 3 does NOT render:
+
+             - Promotional Image
+             - Client Logo
     ======================================================== -->
 
     <main
@@ -221,9 +114,11 @@
 
              CONTENT:
 
-                 LOGIN /
-                 REGISTRATION /
-                 FORGET PASSWORD
+                 Theme Selector
+
+                 Login /
+                 Registration /
+                 Forget Password
         ==================================================== -->
 
         <section
@@ -240,14 +135,43 @@
 
                  CONTENT:
 
-                     EMPTY
+                     THEME SELECTOR
 
-                 Theme Selector has been transferred.
+                 Theme state is owned by Login Page 3.
+
+                 true:
+
+                     Light Theme
+
+                 false:
+
+                     Deep Theme
             ================================================= -->
 
             <section
                 class="login-page-3-left-top"
             >
+
+                <!-- ===========================================
+                     LOGIN PAGE 3 THEME SELECTOR
+                     -------------------------------------------
+                     Login Page 3 owns:
+
+                         isLightTheme
+
+                     Theme Selector emits:
+
+                         themeChange
+                ============================================ -->
+
+                <app-login-page-theme-selector
+                    [isLightTheme]="isLightTheme"
+
+                    (themeChange)="
+                        onThemeChange($event)
+                    "
+                >
+                </app-login-page-theme-selector>
 
             </section>
 
@@ -255,6 +179,10 @@
             <!-- ===============================================
                  LEFT CENTER
                  -----------------------------------------------
+                 HEIGHT:
+
+                     REMAINING HEIGHT
+
                  CONTENT:
 
                      LOGIN /
@@ -278,13 +206,8 @@
 
                          isForgetPasswordMode = false
 
-                     IMPORTANT:
-
-                         Authentication is fully handled by
-                         the Login Panel itself.
-
-                         Login Page 3 does NOT receive or
-                         process a signIn event.
+                     Authentication is completely handled
+                     internally by the Login Panel.
                 ============================================ -->
 
                 <app-login-page-login-panel
@@ -294,9 +217,13 @@
                         !isForgetPasswordMode
                     "
 
-                    (register)="onRegister()"
+                    (register)="
+                        onRegister()
+                    "
 
-                    (forgotPassword)="onForgotPassword()"
+                    (forgotPassword)="
+                        onForgotPassword()
+                    "
                 >
                 </app-login-page-login-panel>
 
@@ -310,9 +237,13 @@
                 ============================================ -->
 
                 <app-login-page-registration-panel
-                    *ngIf="isRegistrationMode"
+                    *ngIf="
+                        isRegistrationMode
+                    "
 
-                    (backToLogin)="onBackToLogin()"
+                    (backToLogin)="
+                        onBackToLogin()
+                    "
                 >
                 </app-login-page-registration-panel>
 
@@ -326,24 +257,24 @@
 
                      SUCCESS:
 
-                         passwordResetSuccess is emitted by
-                         the Forget Password Panel.
+                         passwordResetSuccess is emitted.
 
-                         onPasswordResetSuccess() then:
+                         Login Page 3 then:
 
                              1. Returns to Login Panel.
                              2. Creates Password Changed
                                 notification.
-                             3. Keeps notification unread.
-                             4. Opens Notification Panel
-                                automatically.
+                             3. Leaves notification unread.
+                             4. Opens Notification Panel.
                              5. Keeps it open for 5 seconds.
                              6. Closes automatically.
                              7. Leaves unread counter visible.
                 ============================================ -->
 
                 <app-login-page-forget-password-panel
-                    *ngIf="isForgetPasswordMode"
+                    *ngIf="
+                        isForgetPasswordMode
+                    "
 
                     (passwordResetSuccess)="
                         onPasswordResetSuccess()
@@ -374,7 +305,6 @@
             <section
                 class="login-page-3-left-bottom"
             >
-
             </section>
 
 
@@ -382,17 +312,23 @@
 
 
         <!-- ===================================================
-             MIDDLE AREA
+             CENTER AREA
              ---------------------------------------------------
              WIDTH:
 
-                 20%
+                 45%
+
+             VERTICAL STRUCTURE:
+
+                 TOP    = 15%
+                 CENTER = 70%
+                 BOTTOM = 15%
 
              CONTENT:
 
-                 EMPTY
+                 BRANDING
 
-             Branding and Powered By have been transferred.
+             Branding remains intrinsically sized.
         ==================================================== -->
 
         <section
@@ -403,14 +339,25 @@
             <!-- ===============================================
                  MIDDLE TOP
                  -----------------------------------------------
-                 CONTENT:
-
-                     EMPTY
+                 BRANDING AREA
             ================================================= -->
 
             <section
                 class="login-page-3-middle-top"
             >
+
+                <!-- ===========================================
+                     BRANDING
+                     -------------------------------------------
+                     Branding controls its own intrinsic:
+
+                         width
+                         height
+                         opacity
+                         object-fit
+
+                     Login Page 3 controls only its position.
+                ============================================ -->
 
             </section>
 
@@ -418,30 +365,26 @@
             <!-- ===============================================
                  MIDDLE CENTER
                  -----------------------------------------------
-                 CONTENT:
-
-                     EMPTY
+                 EMPTY
             ================================================= -->
 
             <section
                 class="login-page-3-middle-center"
             >
-
             </section>
 
 
             <!-- ===============================================
                  MIDDLE BOTTOM
                  -----------------------------------------------
-                 CONTENT:
-
-                     EMPTY
+                 EMPTY
             ================================================= -->
 
             <section
                 class="login-page-3-middle-bottom"
             >
-
+                <app-login-page-powered-by>
+                </app-login-page-powered-by>
             </section>
 
 
@@ -453,11 +396,17 @@
              ---------------------------------------------------
              WIDTH:
 
-                 45%
+                 20%
+
+             VERTICAL STRUCTURE:
+
+                 TOP    = 15%
+                 CENTER = 70%
+                 BOTTOM = 15%
 
              CONTENT:
 
-                 EMPTY
+                 POWERED BY
         ==================================================== -->
 
         <section
@@ -468,44 +417,51 @@
             <!-- ===============================================
                  RIGHT TOP
                  -----------------------------------------------
-                 CONTENT:
-
-                     EMPTY
+                 EMPTY
             ================================================= -->
 
             <section
                 class="login-page-3-right-top"
             >
-
+                <app-login-page-branding>
+                </app-login-page-branding>
             </section>
 
 
             <!-- ===============================================
                  RIGHT CENTER
                  -----------------------------------------------
-                 CONTENT:
-
-                     EMPTY
+                 EMPTY
             ================================================= -->
 
             <section
                 class="login-page-3-right-center"
             >
-
             </section>
 
 
             <!-- ===============================================
                  RIGHT BOTTOM
                  -----------------------------------------------
-                 CONTENT:
+                 POWERED BY
 
-                     EMPTY
+                 Positioned from the LEFT edge of the
+                 20% Right Bottom area.
             ================================================= -->
 
             <section
                 class="login-page-3-right-bottom"
             >
+
+                <!-- ===========================================
+                     POWERED BY
+                     -------------------------------------------
+                     Powered By controls its own intrinsic
+                     dimensions.
+
+                     Login Page 3 controls only its position.
+                ============================================ -->
+
 
             </section>
 

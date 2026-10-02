@@ -1212,6 +1212,35 @@ implements
 
     //===========================================================
     // Preview
+    // ----------------------------------------------------------
+    // IMPORTANT:
+    //
+    // The Preview operation does NOT load the Login Page here.
+    //
+    // It only navigates to:
+    //
+    //     preview/:id
+    //
+    // The LoginPageLoader receives the ID from the route and
+    // renders the corresponding Login Page.
+    //
+    // Examples:
+    //
+    //     item.id = 1
+    //         ↓
+    //     preview/1
+    //         ↓
+    //     LoginPageLoader
+    //         ↓
+    //     Login Page 1
+    //
+    //     item.id = 5
+    //         ↓
+    //     preview/5
+    //         ↓
+    //     LoginPageLoader
+    //         ↓
+    //     Login Page 5
     //===========================================================
 
     preview
