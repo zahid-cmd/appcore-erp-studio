@@ -6,7 +6,10 @@ import
 {
     Component,
     inject,
-    Input
+    Input,
+    ElementRef,
+    ViewChild,
+    effect
 }
 from '@angular/core';
 
@@ -71,6 +74,17 @@ export class GitMessageModalComponent
 
 
     //===========================================================
+    // Message Input
+    //===========================================================
+
+    @ViewChild(
+        'messageInput'
+    )
+    messageInput?:
+        ElementRef<HTMLTextAreaElement>;
+
+
+    //===========================================================
     // Injection
     //===========================================================
 
@@ -86,6 +100,50 @@ export class GitMessageModalComponent
 
     state =
         this.modal.state;
+
+
+    //===========================================================
+    // Constructor
+    //===========================================================
+
+    constructor()
+    {
+        effect(
+            () =>
+            {
+                const visible =
+                    this.state().visible;
+
+                if
+                (
+                    visible
+                )
+                {
+                    setTimeout(
+                        () =>
+                        {
+                            this.focusMessageInput();
+                        },
+
+                        0
+                    );
+                }
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Focus Message Input
+    //===========================================================
+
+    private focusMessageInput():
+        void
+    {
+        this.messageInput
+            ?.nativeElement
+            .focus();
+    }
 
 
     //===========================================================
