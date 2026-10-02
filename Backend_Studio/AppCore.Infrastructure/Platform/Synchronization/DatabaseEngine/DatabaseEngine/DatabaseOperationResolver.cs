@@ -998,24 +998,49 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
+        // Resolve Configuration Dependencies
+        //
+        // IMPORTANT:
+        //
+        // A target entity may depend on another entity through a
+        // foreign key relationship.
+        //
+        // Example:
+        //
+        // Wings
+        //     └── Company
+        //
+        // The target database operation must still apply the
+        // CompanyConfiguration so that the principal table name
+        // and column metadata are resolved correctly.
+        //
+        // The dependent entity is NOT added to entityClrTypes.
+        // Therefore its table is NOT created or removed by this
+        // synchronization operation.
+        //
+        // Its configuration is applied only so that EF can build
+        // the correct relationship metadata.
+        //=======================================================
+
+        var configurationEntityTypes =
+            ResolveConfigurationDependencyTypes(
+                entityClrTypes
+            );
+
+
+        //=======================================================
         // Apply Only Matching Configuration Classes
         //
         // IMPORTANT:
         //
         // A configuration class is selected when ANY of its
         // IEntityTypeConfiguration<T> interfaces belongs to the
-        // resolved entity group.
+        // resolved entity group or one of its foreign-key
+        // dependencies.
         //
-        // This is what allows:
-        //
-        // ActivityAssignmentConfiguration
-        //     ├── ActivityAssignment
-        //     ├── ActivityAssignmentDetail
-        //     └── ActivityAssignmentPermission
-        //
-        // to be applied as one complete configuration group.
-        //
-        // The same mechanism applies to Special Assignment.
+        // This preserves the existing grouped configuration
+        // behavior while also allowing dependent entities such
+        // as Company to contribute their table mapping.
         //
         // Unrelated configuration classes are NOT applied.
         //=======================================================
@@ -1027,7 +1052,7 @@ public class DatabaseOperationResolver
 
                 configurationType =>
                 {
-                    var configurationEntityTypes =
+                    var configurationTypes =
                         configurationType
                             .GetInterfaces()
                             .Where
@@ -1049,7 +1074,7 @@ public class DatabaseOperationResolver
 
                     if
                     (
-                        !configurationEntityTypes.Any()
+                        !configurationTypes.Any()
                     )
                     {
                         return false;
@@ -1057,10 +1082,10 @@ public class DatabaseOperationResolver
 
 
                     return
-                        configurationEntityTypes
+                        configurationTypes
                             .Any
                             (
-                                entityTypeSet.Contains
+                                configurationEntityTypes.Contains
                             );
                 }
             );
@@ -1073,6 +1098,70 @@ public class DatabaseOperationResolver
         return
             modelBuilder
                 .Model;
+    }
+
+
+
+    //===========================================================
+    // Resolve Configuration Dependency Types
+    //===========================================================
+
+    private HashSet<Type>
+        ResolveConfigurationDependencyTypes
+    (
+        List<Type> entityClrTypes
+    )
+    {
+        var configurationEntityTypes =
+            entityClrTypes
+                .ToHashSet();
+
+
+        //=======================================================
+        // Resolve Foreign-Key Dependencies
+        //=======================================================
+
+        foreach
+        (
+            var entityClrType
+            in entityClrTypes
+        )
+        {
+            var entityType =
+                _context.Model.FindEntityType(
+                    entityClrType
+                );
+
+
+            if
+            (
+                entityType == null
+            )
+            {
+                continue;
+            }
+
+
+            foreach
+            (
+                var foreignKey
+                in entityType.GetForeignKeys()
+            )
+            {
+                var principalClrType =
+                    foreignKey
+                        .PrincipalEntityType
+                        .ClrType;
+
+
+                configurationEntityTypes.Add(
+                    principalClrType
+                );
+            }
+        }
+
+
+        return configurationEntityTypes;
     }
 
 

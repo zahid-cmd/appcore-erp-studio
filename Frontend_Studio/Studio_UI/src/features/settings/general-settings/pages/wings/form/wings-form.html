@@ -1,0 +1,258 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-layer-group"
+
+        [title]="pageTitle"
+
+        subtitle="Manage wings">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 COMPANY
+            ============================================== -->
+
+            <app-form-section
+
+                title="Company"
+
+                icon="fas fa-building">
+
+
+
+                <!-- Company -->
+
+                <app-dropdown
+
+                    label="Company"
+
+                    [items]="companyItems"
+
+                    [(value)]="entity.CompanyId"
+
+                    (valueChange)="onCompanyChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 WING INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Wing Information"
+
+                icon="fas fa-layer-group">
+
+
+
+                <!-- Wing Code -->
+
+                <app-textbox
+
+                    label="Wing Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.WingCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Wing Name -->
+
+                <app-textbox
+
+                    label="Wing Name"
+
+                    placeholder="Enter wing name"
+
+                    [(value)]="entity.WingName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status"
+
+                icon="fas fa-toggle-on">
+
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 CONFIGURATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Configuration"
+
+                icon="fas fa-sliders">
+
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

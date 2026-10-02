@@ -28,32 +28,6 @@ Routes =
         children:
         [
 
-            // AUTO-BEGIN : SUB-003-001-002
-
-                //===========================================================
-                // Branch
-                //===========================================================
-
-                {
-                    path:'branch',
-
-                    data:
-                    {
-                        breadcrumb:'Branch'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './branch.routes'
-                        )
-                        .then(
-                            m =>
-                                m.BranchRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-001-002
-
             // AUTO-BEGIN : SUB-003-001-001
 
                 //===========================================================
@@ -79,6 +53,84 @@ Routes =
                 },
 
                 // AUTO-END : SUB-003-001-001
+
+            // AUTO-BEGIN : SUB-003-001-002
+
+                //===========================================================
+                // Wings
+                //===========================================================
+
+                {
+                    path:'wings',
+
+                    data:
+                    {
+                        breadcrumb:'Wings'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './wings.routes'
+                        )
+                        .then(
+                            m =>
+                                m.WingsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-002
+
+            // AUTO-BEGIN : SUB-003-001-003
+
+                //===========================================================
+                // Branches
+                //===========================================================
+
+                {
+                    path:'branches',
+
+                    data:
+                    {
+                        breadcrumb:'Branches'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './branches.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BranchesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-003
+
+            // AUTO-BEGIN : SUB-003-001-004
+
+                //===========================================================
+                // Warehouses
+                //===========================================================
+
+                {
+                    path:'warehouses',
+
+                    data:
+                    {
+                        breadcrumb:'Warehouses'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './warehouses.routes'
+                        )
+                        .then(
+                            m =>
+                                m.WarehousesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-004
 
         ]
 

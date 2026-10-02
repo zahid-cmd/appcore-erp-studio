@@ -149,6 +149,34 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : Warehouses
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
+
+// AUTO-END : Warehouses
+
+// AUTO-BEGIN : Branches
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
+
+// AUTO-END : Branches
+
+
+
+
+// AUTO-BEGIN : Wings
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
+
+// AUTO-END : Wings
+
+
+
+
+
 // AUTO-BEGIN : SubOrdinateComponents
 
 using AppCore.Application.InfrastructureControl.LoginComponents;
@@ -380,12 +408,6 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 
 
-// AUTO-BEGIN : Branch
-
-using AppCore.Application.Settings.GeneralSettings;
-using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
-
-// AUTO-END : Branch
 
 
 
@@ -548,6 +570,43 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : Warehouses
+
+        services.AddScoped
+        <
+            IWarehousesRepository,
+            WarehousesRepository
+        >();
+
+        // AUTO-END : Warehouses
+
+        // AUTO-BEGIN : Branches
+
+        services.AddScoped
+        <
+            IBranchesRepository,
+            BranchesRepository
+        >();
+
+        // AUTO-END : Branches
+
+
+
+
+        // AUTO-BEGIN : Wings
+
+        services.AddScoped
+        <
+            IWingsRepository,
+            WingsRepository
+        >();
+
+        // AUTO-END : Wings
+
+
+
+
 
         // AUTO-BEGIN : SubOrdinateComponents
 
@@ -850,15 +909,6 @@ public static class DependencyInjection
 
 
 
-        // AUTO-BEGIN : Branch
-
-        services.AddScoped
-        <
-            IBranchRepository,
-            BranchRepository
-        >();
-
-        // AUTO-END : Branch
 
 
 

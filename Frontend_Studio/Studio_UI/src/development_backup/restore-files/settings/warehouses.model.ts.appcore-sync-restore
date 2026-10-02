@@ -1,0 +1,90 @@
+/* ============================================================
+   Warehouses
+============================================================ */
+
+export interface Warehouses
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Warehouses
+============================================================ */
+
+export interface CreateWarehouses
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Warehouses
+============================================================ */
+
+export interface UpdateWarehouses
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Warehouses Defaults
+============================================================ */
+
+export interface WarehousesDefaults
+{
+    code:
+        string;
+}

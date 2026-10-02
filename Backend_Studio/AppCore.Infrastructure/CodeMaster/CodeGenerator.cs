@@ -272,6 +272,103 @@ public static class CodeGenerator
     }
 
 
+
+    //===============================================================
+    // Wing Code
+    //===============================================================
+
+    public static string GenerateWingCode(
+        int companySequenceNo,
+        int wingSequenceNo)
+    {
+        if (companySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid company sequence number.");
+        }
+
+        if (wingSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid wing sequence number.");
+        }
+
+        return $"WNG-{companySequenceNo:D2}-{wingSequenceNo:D2}";
+    }
+
+
+
+    //===============================================================
+    // Branch Code
+    //===============================================================
+
+    public static string GenerateBranchCode(
+        int companySequenceNo,
+        int wingSequenceNo,
+        int branchSequenceNo)
+    {
+        if (companySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid company sequence number.");
+        }
+
+        if (wingSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid wing sequence number.");
+        }
+
+        if (branchSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid branch sequence number.");
+        }
+
+        return $"BRN-{companySequenceNo:D2}-{wingSequenceNo:D2}-{branchSequenceNo:D2}";
+    }
+
+
+
+    //===============================================================
+    // Warehouse Code
+    //===============================================================
+
+    public static string GenerateWarehouseCode(
+        int companySequenceNo,
+        int wingSequenceNo,
+        int branchSequenceNo,
+        int warehouseSequenceNo)
+    {
+        if (companySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid company sequence number.");
+        }
+
+        if (wingSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid wing sequence number.");
+        }
+
+        if (branchSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid branch sequence number.");
+        }
+
+        if (warehouseSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid warehouse sequence number.");
+        }
+
+        return $"WH-{companySequenceNo:D2}-{wingSequenceNo:D2}-{branchSequenceNo:D2}-{warehouseSequenceNo:D2}";
+    }
+
+
+
     //===============================================================
     // APPLICATION CONFIGURATION
     //===============================================================

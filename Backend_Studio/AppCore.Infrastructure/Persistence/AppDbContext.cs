@@ -190,16 +190,6 @@ public class AppDbContext
 
     // AUTO-END : AccountGroup
 
-    // AUTO-BEGIN : Branch
-
-    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Branch>
-    Branchs
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : Branch
 
 
 
@@ -509,6 +499,46 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : SubOrdinateComponents
+
+
+
+
+
+    // AUTO-BEGIN : Wings
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Wings>
+    Wingss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Wings
+
+
+
+
+    // AUTO-BEGIN : Branches
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Branches>
+    Branchess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Branches
+
+    // AUTO-BEGIN : Warehouses
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Warehouses>
+    Warehousess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Warehouses
 
     // AUTO-END : AUTO REGISTER DBSETS
 

@@ -256,7 +256,10 @@ export class WelcomeWidgetComponent
 
 
         //=======================================================
-        // Display Name
+        // Initial Display Name
+        // ------------------------------------------------------
+        // This is used immediately while the latest User Profile
+        // is being loaded from the server.
         //=======================================================
 
         this.userDisplayName =
@@ -288,30 +291,10 @@ export class WelcomeWidgetComponent
 
 
         //=======================================================
-        // Split Name
+        // Initial Name Split
         //=======================================================
 
-        const nameParts =
-            this.userDisplayName
-                .split(/\s+/)
-                .filter(
-                    part =>
-                        part.length > 0
-                );
-
-
-        this.userFirstName =
-            nameParts.length > 0
-                ? nameParts[0]
-                : '';
-
-
-        this.userLastName =
-            nameParts.length > 1
-                ? nameParts
-                    .slice(1)
-                    .join(' ')
-                : '';
+        this.updateNameParts();
 
 
         //=======================================================
@@ -343,7 +326,7 @@ export class WelcomeWidgetComponent
 
 
         //=======================================================
-        // Load User Profile
+        // Load Latest User Profile
         //=======================================================
 
         this.loadUserProfile(
@@ -371,6 +354,39 @@ export class WelcomeWidgetComponent
                 next:
                     profile =>
                     {
+                        //========================================
+                        // Display Name
+                        //========================================
+                        //
+                        // IMPORTANT:
+                        //
+                        // The authenticated user object can contain
+                        // an older Display Name because it was loaded
+                        // when the user logged in.
+                        //
+                        // The User Profile API contains the latest
+                        // Display Name, so use it here.
+                        //
+                        //========================================
+
+                        const displayName =
+                            profile.DisplayName?.trim()
+                            ??
+                            '';
+
+
+                        if
+                        (
+                            displayName.length > 0
+                        )
+                        {
+                            this.userDisplayName =
+                                displayName;
+
+                            this.updateNameParts();
+                        }
+
+
                         //========================================
                         // Full Name
                         //========================================
@@ -462,6 +478,11 @@ export class WelcomeWidgetComponent
                         );
 
                         console.log(
+                            'WELCOME WIDGET - DISPLAY NAME:',
+                            this.userDisplayName
+                        );
+
+                        console.log(
                             'WELCOME WIDGET - FULL NAME:',
                             this.userFullName
                         );
@@ -499,6 +520,37 @@ export class WelcomeWidgetComponent
                         this.changeDetectorRef.detectChanges();
                     }
             });
+    }
+
+
+    //===========================================================
+    // Update Name Parts
+    //===========================================================
+
+    private updateNameParts():
+        void
+    {
+        const nameParts =
+            this.userDisplayName
+                .split(/\s+/)
+                .filter(
+                    part =>
+                        part.length > 0
+                );
+
+
+        this.userFirstName =
+            nameParts.length > 0
+                ? nameParts[0]
+                : '';
+
+
+        this.userLastName =
+            nameParts.length > 1
+                ? nameParts
+                    .slice(1)
+                    .join(' ')
+                : '';
     }
 
 

@@ -194,6 +194,10 @@ app-form-section app-textarea
 
     width:100%;
 
+    min-width:0;
+
+    max-width:100%;
+
     height:auto;
 
     min-height:0;
@@ -223,7 +227,13 @@ app-form-section app-textarea
 .app-form-page ::ng-deep
 app-form-section app-dropdown .dropdown-container
 {
+    display:block;
+
     width:100%;
+
+    min-width:0;
+
+    max-width:100%;
 
     height:auto;
 
@@ -248,7 +258,13 @@ app-form-section app-dropdown .dropdown-container
 .app-form-page ::ng-deep
 app-form-section app-dropdown .dropdown
 {
+    display:block;
+
     width:100%;
+
+    min-width:0;
+
+    max-width:100%;
 
     height:auto;
 
@@ -262,7 +278,13 @@ app-form-section app-dropdown .dropdown
 .app-form-page ::ng-deep
 app-form-section app-dropdown .dropdown-selector
 {
+    display:flex;
+
     width:100%;
+
+    min-width:0;
+
+    max-width:100%;
 
     height:36px;
 
@@ -283,9 +305,13 @@ app-form-section app-dropdown .dropdown-selector
 .app-form-page ::ng-deep
 app-form-section app-search-dropdown
 {
-    display:block;
+    display:block !important;
 
-    width:100%;
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
 
     height:auto;
 
@@ -316,7 +342,13 @@ app-form-section app-search-dropdown
 .app-form-page ::ng-deep
 app-form-section app-search-dropdown .dropdown-container
 {
-    width:100%;
+    display:block !important;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
 
     height:auto;
 
@@ -341,13 +373,21 @@ app-form-section app-search-dropdown .dropdown-container
 .app-form-page ::ng-deep
 app-form-section app-search-dropdown .dropdown
 {
-    width:100%;
+    display:block !important;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
 
     height:auto;
 
     min-height:0;
 
     max-height:none;
+
+    box-sizing:border-box;
 }
 
 
@@ -355,13 +395,38 @@ app-form-section app-search-dropdown .dropdown
 .app-form-page ::ng-deep
 app-form-section app-search-dropdown .dropdown-selector
 {
-    width:100%;
+    display:flex;
+
+    width:100% !important;
+
+    min-width:0 !important;
+
+    max-width:100% !important;
 
     height:36px;
 
     min-height:36px;
 
     max-height:36px;
+
+    box-sizing:border-box;
+}
+
+
+
+/* =====================================================
+   SEARCH DROPDOWN
+   LABEL / FIELD WRAPPER
+===================================================== */
+
+.app-form-page ::ng-deep
+app-form-section app-search-dropdown > *
+{
+    width:100%;
+
+    min-width:0;
+
+    max-width:100%;
 
     box-sizing:border-box;
 }
@@ -379,6 +444,10 @@ app-form-section app-textarea
     display:block;
 
     width:100%;
+
+    min-width:0;
+
+    max-width:100%;
 
     height:auto;
 
@@ -411,6 +480,10 @@ app-form-section app-textarea .textarea-container
 {
     width:100%;
 
+    min-width:0;
+
+    max-width:100%;
+
     height:auto;
 
     min-height:0;
@@ -436,6 +509,10 @@ app-form-section app-textarea .textarea
 {
     width:100%;
 
+    min-width:0;
+
+    max-width:100%;
+
     height:115px;
 
     min-height:115px;
@@ -451,6 +528,10 @@ app-form-section app-textarea .textarea
 app-form-section app-textarea textarea
 {
     width:100%;
+
+    min-width:0;
+
+    max-width:100%;
 
     height:115px;
 
@@ -857,7 +938,11 @@ select:disabled
     .app-form-page ::ng-deep
     app-form-section app-search-dropdown .dropdown-selector
     {
-        width:100%;
+        width:100% !important;
+
+        min-width:0;
+
+        max-width:100%;
     }
 
 
