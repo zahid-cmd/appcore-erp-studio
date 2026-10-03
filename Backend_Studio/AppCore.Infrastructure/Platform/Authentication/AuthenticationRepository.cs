@@ -4,11 +4,15 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Platform.Authentication.DTOs;
+
 using AppCore.Application.Platform.Authentication.Interfaces;
 
 using AppCore.Domain.Common;
 
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
+
+using AppCore.Domain.Entities.Settings.GeneralSettings;
 
 using AppCore.Domain.Platform.Authentication;
 
@@ -117,6 +121,94 @@ public class AuthenticationRepository
                     x.UserProfileId ==
                     userProfileId
             );
+    }
+
+
+    //===========================================================
+    // Get Active Branch Assignments By User Profile ID
+    //===========================================================
+
+    public async Task<List<LoginBranchDto>>
+        GetActiveBranchAssignmentsByUserProfileIdAsync(
+            long userProfileId)
+    {
+        if
+        (
+            userProfileId <=
+            0
+        )
+        {
+            return new List<LoginBranchDto>();
+        }
+
+
+        return await
+            (
+                from assignment
+                    in _context
+                        .Set<BranchAssignment>()
+
+                join detail
+                    in _context
+                        .Set<BranchAssignmentDetail>()
+                    on assignment.BranchAssignmentId
+                    equals detail.BranchAssignmentId
+
+                join branch
+                    in _context
+                        .Set<Branches>()
+                    on detail.BranchId
+                    equals branch.BranchId
+
+                where
+                    assignment.UserProfileId ==
+                    userProfileId
+
+                    &&
+
+                    assignment.IsActive
+
+                    &&
+
+                    !assignment.IsDeleted
+
+                    &&
+
+                    detail.IsActive
+
+                    &&
+
+                    !detail.IsDeleted
+
+                    &&
+
+                    branch.IsActive
+
+                    &&
+
+                    !branch.IsDeleted
+
+                orderby
+                    branch.BranchName
+
+                select new LoginBranchDto
+                {
+                    BranchId =
+                        branch.BranchId,
+
+                    BranchCode =
+                        branch.BranchCode
+                        ??
+                        string.Empty,
+
+                    BranchName =
+                        branch.BranchName
+                        ??
+                        string.Empty
+                }
+            )
+            .AsNoTracking()
+            .ToListAsync();
     }
 
 

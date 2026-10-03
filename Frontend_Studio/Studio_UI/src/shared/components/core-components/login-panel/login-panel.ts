@@ -47,6 +47,7 @@ from '../../../../core/authentication/authentication-storage.service';
 
 import
 {
+    LoginBranch,
     LoginRequest
 }
 from '../../../../core/authentication/authentication.model';
@@ -62,6 +63,12 @@ import
     Company
 }
 from '../../../../features/settings/general-settings/models/company.model';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../controls/search-dropdown/search-dropdown';
 
 import
 {
@@ -163,7 +170,9 @@ export interface LoginPageLoginPanelConfig
     [
         CommonModule,
 
-        FormsModule
+        FormsModule,
+
+        SearchDropdownComponent
     ],
 
     templateUrl:
@@ -351,6 +360,27 @@ export class LoginPageLoginPanelComponent
 
 
     //===========================================================
+    // Branch Selection State
+    //===========================================================
+
+    requiresBranchSelection:
+        boolean =
+            false;
+
+    assignedBranches:
+        LoginBranch[] =
+            [];
+
+    selectedBranchId:
+        number
+        | null =
+            null;
+
+
+
+
+
+    //===========================================================
     // Authentication State
     //===========================================================
 
@@ -427,7 +457,13 @@ export class LoginPageLoginPanelComponent
                     this.loginId,
 
                 rememberMe:
-                    this.rememberMe
+                    this.rememberMe,
+
+                requiresBranchSelection:
+                    this.requiresBranchSelection,
+
+                selectedBranchId:
+                    this.selectedBranchId
             }
         );
 
@@ -783,6 +819,8 @@ export class LoginPageLoginPanelComponent
 
         this.loginError =
             '';
+
+        this.resetBranchSelection();
     }
 
 
@@ -805,6 +843,8 @@ export class LoginPageLoginPanelComponent
 
         this.loginError =
             '';
+
+        this.resetBranchSelection();
     }
 
 
@@ -842,6 +882,102 @@ export class LoginPageLoginPanelComponent
             console.log(
                 'LOGIN PANEL - Remembered Login ID removed.'
             );
+        }
+    }
+
+
+
+
+
+    //===========================================================
+    // Branch Change
+    //===========================================================
+
+    onBranchChange
+    (
+        value:
+            number
+            | string
+            | null
+    ):
+        void
+    {
+        if
+        (
+            value ===
+            null
+            ||
+            value ===
+            ''
+            ||
+            value ===
+            undefined
+        )
+        {
+            this.selectedBranchId =
+                null;
+        }
+        else
+        {
+            const branchId:
+                number =
+                    Number(
+                        value
+                    );
+
+
+            this.selectedBranchId =
+                Number.isFinite(branchId)
+                    ? branchId
+                    : null;
+        }
+
+
+        this.loginError =
+            '';
+
+
+        this.changeDetectorRef.markForCheck();
+    }
+
+
+
+
+
+    //===========================================================
+    // Reset Branch Selection
+    //===========================================================
+
+    private resetBranchSelection():
+        void
+    {
+        this.requiresBranchSelection =
+            false;
+
+        this.assignedBranches =
+            [];
+
+        this.selectedBranchId =
+            null;
+
+
+        //=======================================================
+        // Restore Sign In Button
+        //=======================================================
+
+        if
+        (
+            this.config.signInButtonText !==
+            'Sign In'
+        )
+        {
+            this.config =
+            {
+                ...this.config,
+
+                signInButtonText:
+                    'Sign In'
+            };
         }
     }
 
@@ -927,6 +1063,34 @@ export class LoginPageLoginPanelComponent
 
 
         //=======================================================
+        // Validate Branch Selection
+        //=======================================================
+
+        if
+        (
+            this.requiresBranchSelection
+            &&
+            (
+                this.selectedBranchId ===
+                null
+                ||
+                this.selectedBranchId <=
+                0
+            )
+        )
+        {
+            this.loginError =
+                'Please select a branch to continue.';
+
+            this.changeDetectorRef.markForCheck();
+
+            this.changeDetectorRef.detectChanges();
+
+            return;
+        }
+
+
+        //=======================================================
         // CAPTURE REMEMBER ME STATE
         //
         // The HTTP request is asynchronous.
@@ -965,8 +1129,28 @@ export class LoginPageLoginPanelComponent
                 this.password,
 
             rememberMe:
-                rememberMe
+                rememberMe,
+
+            branchId:
+                this.requiresBranchSelection
+                    ? this.selectedBranchId
+                    : null
         };
+
+
+        console.log(
+            'LOGIN PANEL - Login request:',
+            {
+                userName:
+                    request.userName,
+
+                rememberMe:
+                    request.rememberMe,
+
+                branchId:
+                    request.branchId
+            }
+        );
 
 
         //=======================================================
@@ -1015,17 +1199,99 @@ export class LoginPageLoginPanelComponent
 
 
                         //===================================================
+                        // Branch Selection Required
+                        //===================================================
+                        //
+                        // The backend has validated the credentials but
+                        // has not finalized authentication because the
+                        // user has multiple active assigned branches.
+                        //
+                        // IMPORTANT:
+                        //
+                        // No token is stored at this stage.
+                        //
+                        // The user must now select a branch and explicitly
+                        // click Continue to complete authentication.
+                        //===================================================
+
+                        if
+                        (
+                            response.requiresBranchSelection
+                        )
+                        {
+                            this.requiresBranchSelection =
+                                true;
+
+                            this.assignedBranches =
+                                response.branches
+                                ??
+                                [];
+
+                            this.selectedBranchId =
+                                null;
+
+                            this.loginError =
+                                '';
+
+
+                            //===================================================
+                            // Change Button To Continue
+                            //===================================================
+
+                            this.config =
+                            {
+                                ...this.config,
+
+                                signInButtonText:
+                                    'Continue'
+                            };
+
+
+                            console.log(
+                                'LOGIN PANEL - Branch selection required:',
+                                this.assignedBranches
+                            );
+
+
+                            this.changeDetectorRef.markForCheck();
+
+                            this.changeDetectorRef.detectChanges();
+
+                            return;
+                        }
+
+
+                        //===================================================
+                        // Final Authentication
+                        //===================================================
+                        //
+                        // At this point the backend has already selected
+                        // the single branch automatically OR validated
+                        // the branch selected by the user.
+                        //
+                        // The JWT therefore contains the final branch
+                        // operational context.
+                        //===================================================
+
+                        if
+                        (
+                            !response.token
+                        )
+                        {
+                            this.loginError =
+                                'Authentication token was not returned. Please try again.';
+
+
+                            this.changeDetectorRef.markForCheck();
+
+                            this.changeDetectorRef.detectChanges();
+
+                            return;
+                        }
+
+
+                        //===================================================
                         // Store Authentication
-                        //
-                        // AuthenticationStorageService is now the SINGLE
-                        // owner of Remember Me persistence.
-                        //
-                        // If rememberMe = true:
-                        //     Login ID -> localStorage
-                        //
-                        // If rememberMe = false:
-                        //     Remembered Login ID is removed
-                        //     Authentication -> sessionStorage
                         //===================================================
 
                         this.authenticationStorageService
@@ -1054,6 +1320,33 @@ export class LoginPageLoginPanelComponent
                                         .getRememberedLoginId()
                             }
                         );
+
+
+                        //===================================================
+                        // Clear Branch Selection State
+                        //===================================================
+
+                        this.requiresBranchSelection =
+                            false;
+
+                        this.assignedBranches =
+                            [];
+
+                        this.selectedBranchId =
+                            null;
+
+
+                        //===================================================
+                        // Restore Sign In Button
+                        //===================================================
+
+                        this.config =
+                        {
+                            ...this.config,
+
+                            signInButtonText:
+                                'Sign In'
+                        };
 
 
                         //===================================================

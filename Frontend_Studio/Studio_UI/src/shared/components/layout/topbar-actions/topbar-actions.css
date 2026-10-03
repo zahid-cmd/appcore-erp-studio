@@ -19,6 +19,10 @@
     max-height:64px;
 
     box-sizing:border-box;
+
+    position:relative;
+
+    z-index:301;
 }
 
 
@@ -31,7 +35,7 @@
 {
     position:relative;
 
-    z-index:101;
+    z-index:301;
 
     width:100%;
 
@@ -142,6 +146,10 @@
     flex:0 0 auto;
 
     min-width:0;
+
+    position:relative;
+
+    z-index:302;
 }
 
 
@@ -163,6 +171,8 @@
     height:64px;
 
     flex:0 0 auto;
+
+    z-index:303;
 }
 
 
@@ -219,6 +229,10 @@
         transform .20s ease;
 
     box-sizing:border-box;
+
+    position:relative;
+
+    z-index:304;
 }
 
 
@@ -540,7 +554,7 @@
             .18
         );
 
-    z-index:102;
+    z-index:305;
 
     animation:
         userDropdownOpen

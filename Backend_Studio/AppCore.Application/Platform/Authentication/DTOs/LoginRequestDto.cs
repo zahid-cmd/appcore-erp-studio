@@ -45,4 +45,24 @@ public class LoginRequestDto
         get;
         set;
     }
+
+
+    //===========================================================
+    // Branch ID
+    //===========================================================
+    // Optional during the first login request.
+    //
+    // If the user has only one active assigned branch, the
+    // backend automatically selects that branch.
+    //
+    // If the user has multiple active assigned branches, the
+    // frontend sends the selected Branch ID in the next login
+    // request.
+    //===========================================================
+
+    public long? BranchId
+    {
+        get;
+        set;
+    }
 }

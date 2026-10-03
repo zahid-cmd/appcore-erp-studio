@@ -1,4 +1,22 @@
 /* ============================================================
+   Login Branch
+============================================================ */
+
+export interface LoginBranch
+{
+    branchId:
+        number;
+
+    branchCode:
+        string;
+
+    branchName:
+        string;
+}
+
+
+
+/* ============================================================
    Login Request
 ============================================================ */
 
@@ -12,6 +30,9 @@ export interface LoginRequest
 
     rememberMe:
         boolean;
+
+    branchId:
+        number | null;
 }
 
 
@@ -42,6 +63,12 @@ export interface LoginResponse
 
     fullName:
         string;
+
+    requiresBranchSelection:
+        boolean;
+
+    branches:
+        LoginBranch[];
 }
 
 

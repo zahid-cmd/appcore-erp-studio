@@ -69,7 +69,15 @@ app-topbar
 
     position:relative;
 
-    z-index:100;
+    /*
+        Topbar must remain above the Layout Body
+        so dropdown menus can paint outside the
+        Topbar area.
+
+        Internal Topbar layers remain below
+        global Toast and History Drawer layers.
+    */
+    z-index:300;
 }
 
 

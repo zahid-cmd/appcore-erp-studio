@@ -2,7 +2,10 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Platform.Authentication.DTOs;
+
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
+
 using AppCore.Domain.Platform.Authentication;
 
 
@@ -33,6 +36,18 @@ public interface IAuthenticationRepository
 
     Task<UserCredential?> GetUserCredentialByUserProfileIdAsync(
         long userProfileId);
+
+
+    //===========================================================
+    // Get Active Branch Assignments By User Profile ID
+    //===========================================================
+    // Returns the active branches assigned to the specified
+    // user profile for login branch selection.
+    //===========================================================
+
+    Task<List<LoginBranchDto>>
+        GetActiveBranchAssignmentsByUserProfileIdAsync(
+            long userProfileId);
 
 
     //===========================================================

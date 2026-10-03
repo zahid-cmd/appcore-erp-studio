@@ -43,6 +43,7 @@
              - Login ID
              - Password
              - Remember Me
+             - Branch Selection
              - Authentication request
              - Authentication error
              - Authentication storage
@@ -56,6 +57,21 @@
          Login Panel component when the page initializes.
 
          Password is NEVER restored.
+
+     BRANCH SELECTION:
+
+         Branch selection is displayed only when the backend
+         reports that multiple active branches are assigned
+         to the authenticated Login ID.
+
+         One active branch:
+             Backend selects automatically.
+
+         Multiple active branches:
+             User must select a branch before login completes.
+
+         Zero active branches:
+             Backend blocks authentication and returns an error.
 ============================================================ -->
 
 
@@ -263,15 +279,6 @@
 
                 <!-- ===========================================
                      LOGIN ID
-                     -------------------------------------------
-                     IMPORTANT:
-
-                     Direct [value] binding is intentionally
-                     used instead of [(ngModel)].
-
-                     This guarantees that the value restored
-                     from localStorage is reflected directly
-                     in the input element.
                 ============================================ -->
 
                 <div
@@ -431,6 +438,57 @@
 
 
                 <!-- ===========================================
+                     BRANCH SELECTION
+                     -------------------------------------------
+                     The SearchDropdown is now the complete
+                     field. No nested login-input-wrapper is
+                     used here.
+
+                     This prevents the double-border / double-
+                     layer appearance.
+                ============================================ -->
+
+                <div
+                    class="login-form-field login-branch-field"
+                    *ngIf="requiresBranchSelection"
+                >
+
+                    <label
+                        class="login-form-label"
+                        for="login-page-branch"
+                    >
+
+                        Branch
+
+                    </label>
+
+
+                    <app-search-dropdown
+                        id="login-page-branch"
+                        class="login-branch-dropdown"
+
+                        [items]="assignedBranches"
+
+                        labelField="branchName"
+
+                        valueField="branchId"
+
+                        [value]="selectedBranchId"
+
+                        [disabled]="isSigningIn"
+
+                        [value]="selectedBranchId"
+
+                        (valueChange)="
+                            onBranchChange($event)
+                        "
+                    >
+                    </app-search-dropdown>
+
+                </div>
+
+
+                <!-- ===========================================
                      LOGIN OPTIONS
                 ============================================ -->
 
@@ -441,10 +499,6 @@
 
                     <!-- =======================================
                          REMEMBER ME
-                         ---------------------------------------
-                         Direct checked binding is intentionally
-                         used so the restored component state
-                         controls the checkbox directly.
                     ======================================== -->
 
                     <label
@@ -629,11 +683,6 @@
                 *ngIf="config.registrationVisible"
             >
 
-
-                <!-- =============================================
-                     REGISTRATION ICON
-                ============================================== -->
-
                 <div
                     class="registration-icon"
                 >
@@ -646,10 +695,6 @@
 
                 </div>
 
-
-                <!-- =============================================
-                     REGISTRATION CONTENT
-                ============================================== -->
 
                 <div
                     class="registration-content"
@@ -670,10 +715,6 @@
 
                 </div>
 
-
-                <!-- =============================================
-                     REGISTRATION BUTTON
-                ============================================== -->
 
                 <button
                     type="button"

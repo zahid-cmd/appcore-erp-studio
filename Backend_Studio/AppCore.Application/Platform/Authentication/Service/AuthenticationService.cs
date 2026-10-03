@@ -190,12 +190,156 @@ public class AuthenticationService : IAuthenticationService
 
 
         //===========================================================
+        // Get Active Branch Assignments
+        //===========================================================
+
+        List<LoginBranchDto> branches =
+            await _authenticationRepository
+                .GetActiveBranchAssignmentsByUserProfileIdAsync(
+                    userProfile.UserProfileId);
+
+
+        //===========================================================
+        // No Active Branch Assignment
+        //===========================================================
+
+        if (branches.Count ==
+            0)
+        {
+            return CreateFailureResponse(
+                "No active branch is assigned to your Login ID. Please contact the administrator.");
+        }
+
+
+        //===========================================================
+        // Resolve Branch Context
+        //===========================================================
+
+        long? selectedBranchId =
+            request.BranchId;
+
+
+        //===========================================================
+        // Single Active Branch
+        //===========================================================
+        // When exactly one active branch is assigned, the system
+        // automatically selects that branch.
+        //===========================================================
+
+        if
+        (
+            branches.Count ==
+            1
+        )
+        {
+            selectedBranchId =
+                branches[0].BranchId;
+        }
+
+
+        //===========================================================
+        // Multiple Active Branches
+        //===========================================================
+
+        if
+        (
+            branches.Count >
+            1
+        )
+        {
+            //=======================================================
+            // Branch Not Yet Selected
+            //=======================================================
+
+            if
+            (
+                !selectedBranchId.HasValue
+                ||
+                selectedBranchId.Value <=
+                0
+            )
+            {
+                return new LoginResponseDto
+                {
+                    Success =
+                        true,
+
+                    Message =
+                        "Please select a branch to continue.",
+
+                    Token =
+                        string.Empty,
+
+                    UserProfileId =
+                        userProfile.UserProfileId,
+
+                    UserName =
+                        userProfile.UserName,
+
+                    DisplayName =
+                        userProfile.DisplayName,
+
+                    FullName =
+                        userProfile.FullName,
+
+                    RequiresBranchSelection =
+                        true,
+
+                    Branches =
+                        branches
+                };
+            }
+
+
+            //=======================================================
+            // Validate Selected Branch
+            //=======================================================
+
+            bool selectedBranchAssigned =
+                branches.Any
+                (
+                    x =>
+                        x.BranchId ==
+                        selectedBranchId.Value
+                );
+
+
+            if
+            (
+                !selectedBranchAssigned
+            )
+            {
+                return CreateFailureResponse(
+                    "The selected branch is not assigned to your Login ID.");
+            }
+        }
+
+
+        //===========================================================
+        // Validate Resolved Branch
+        //===========================================================
+
+        if
+        (
+            !selectedBranchId.HasValue
+            ||
+            selectedBranchId.Value <=
+            0
+        )
+        {
+            return CreateFailureResponse(
+                "Unable to determine the active branch context.");
+        }
+
+
+        //===========================================================
         // Generate Token
         //===========================================================
 
         string token =
             GenerateToken(
                 userProfile,
+                selectedBranchId.Value,
                 request.RememberMe);
 
 
@@ -224,7 +368,13 @@ public class AuthenticationService : IAuthenticationService
                 userProfile.DisplayName,
 
             FullName =
-                userProfile.FullName
+                userProfile.FullName,
+
+            RequiresBranchSelection =
+                false,
+
+            Branches =
+                branches
         };
     }
 
@@ -1500,6 +1650,7 @@ public class AuthenticationService : IAuthenticationService
 
     private string GenerateToken(
         UserProfile userProfile,
+        long branchId,
         bool rememberMe)
     {
         //===========================================================
@@ -1569,7 +1720,11 @@ public class AuthenticationService : IAuthenticationService
 
                 new Claim(
                     "displayName",
-                    userProfile.DisplayName ?? string.Empty)
+                    userProfile.DisplayName ?? string.Empty),
+
+                new Claim(
+                    "branchId",
+                    branchId.ToString())
             };
 
 

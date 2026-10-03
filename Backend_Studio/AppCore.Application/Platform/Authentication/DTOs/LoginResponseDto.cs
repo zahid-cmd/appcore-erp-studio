@@ -98,4 +98,35 @@ public class LoginResponseDto
         get;
         set;
     } = string.Empty;
+
+
+
+    //===========================================================
+    // Branch Selection Required
+    //===========================================================
+    // Indicates whether the authenticated user has multiple
+    // active assigned branches and must select one before the
+    // authentication token can be finalized.
+    //===========================================================
+
+    public bool RequiresBranchSelection
+    {
+        get;
+        set;
+    }
+
+
+
+    //===========================================================
+    // Assigned Branches
+    //===========================================================
+    // Contains the active branches available to the user when
+    // branch selection is required.
+    //===========================================================
+
+    public List<LoginBranchDto> Branches
+    {
+        get;
+        set;
+    } = new();
 }

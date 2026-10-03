@@ -48,11 +48,12 @@
     /*
         Topbar application layer.
 
-        Keep this below History Drawer
-        and below global Toast.
+        Above Layout Body
+        Below History Drawer
+        Below global Toast.
     */
     z-index:
-        100;
+        300;
 
     user-select:
         none;
@@ -203,13 +204,14 @@
         relative;
 
     /*
-        Keep Topbar controls inside the Topbar layer.
+        Topbar controls remain above the
+        application body.
 
         Still below History Drawer
-        and below global Toast.
+        and global Toast.
     */
     z-index:
-        101;
+        301;
 }
 
 

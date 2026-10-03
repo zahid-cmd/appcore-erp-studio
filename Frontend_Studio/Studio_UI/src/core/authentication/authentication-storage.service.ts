@@ -159,6 +159,93 @@ export class AuthenticationStorageService
                 fullName:
                     response.fullName,
 
+                branchId:
+                    response.branches
+                        ?.find
+                        (
+                            branch =>
+                                branch.branchId
+                                ===
+                                Number
+                                (
+                                    response.token
+                                        ?
+                                        (
+                                            JSON.parse
+                                            (
+                                                atob
+                                                (
+                                                    response.token
+                                                        .split('.')[1]
+                                                )
+                                            )
+                                        ).branchId
+                                        :
+                                        0
+                                )
+                        )
+                        ?.branchId
+                        ??
+                        null,
+
+                branchCode:
+                    response.branches
+                        ?.find
+                        (
+                            branch =>
+                                branch.branchId
+                                ===
+                                Number
+                                (
+                                    response.token
+                                        ?
+                                        (
+                                            JSON.parse
+                                            (
+                                                atob
+                                                (
+                                                    response.token
+                                                        .split('.')[1]
+                                                )
+                                            )
+                                        ).branchId
+                                        :
+                                        0
+                                )
+                        )
+                        ?.branchCode
+                        ??
+                        '',
+
+                branchName:
+                    response.branches
+                        ?.find
+                        (
+                            branch =>
+                                branch.branchId
+                                ===
+                                Number
+                                (
+                                    response.token
+                                        ?
+                                        (
+                                            JSON.parse
+                                            (
+                                                atob
+                                                (
+                                                    response.token
+                                                        .split('.')[1]
+                                                )
+                                            )
+                                        ).branchId
+                                        :
+                                        0
+                                )
+                        )
+                        ?.branchName
+                        ??
+                        '',
+
                 userPhotoPath:
                     (
                         response as
@@ -246,6 +333,15 @@ export class AuthenticationStorageService
             fullName:
                 string;
 
+            branchId:
+                number | null;
+
+            branchCode:
+                string;
+
+            branchName:
+                string;
+
             userPhotoPath:
                 string;
         }
@@ -327,6 +423,27 @@ export class AuthenticationStorageService
                     parsedUser.fullName
                     ??
                     parsedUser.FullName
+                    ??
+                    '',
+
+                branchId:
+                    parsedUser.branchId
+                    ??
+                    parsedUser.BranchId
+                    ??
+                    null,
+
+                branchCode:
+                    parsedUser.branchCode
+                    ??
+                    parsedUser.BranchCode
+                    ??
+                    '',
+
+                branchName:
+                    parsedUser.branchName
+                    ??
+                    parsedUser.BranchName
                     ??
                     '',
 
