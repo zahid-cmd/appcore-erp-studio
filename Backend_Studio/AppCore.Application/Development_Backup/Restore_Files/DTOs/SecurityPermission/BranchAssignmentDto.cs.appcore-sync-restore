@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.SecurityPermission.UserManagement.BranchAssignment.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,89 +6,92 @@ namespace AppCore.Application.SecurityPermission.UserManagement;
 
 
 //===============================================================
-// IBranchAssignmentRepository
+// BranchAssignmentDto
 //===============================================================
 
-public interface IBranchAssignmentRepository
+public class BranchAssignmentDto
 {
     //===========================================================
-    // Defaults
+    // Primary Key
     //===========================================================
 
-    Task<BranchAssignmentDefaultsDto>
-        GetDefaultsAsync();
-
-
-    //===========================================================
-    // Branch Assignment
-    //===========================================================
-
-    Task<List<BranchAssignmentDto>>
-        GetAllAsync();
-
-
-    Task<BranchAssignmentDto?>
-        GetByIdAsync
-        (
-            long branchAssignmentId
-        );
-
-
-    Task<BranchAssignmentDto?>
-        GetByUserProfileIdAsync
-        (
-            long userProfileId
-        );
+    public long Id
+    {
+        get;
+        set;
+    }
 
 
     //===========================================================
-    // Check User Profile Assignment
+    // Code
     //===========================================================
 
-    Task<bool>
-        ExistsByUserProfileIdAsync
-        (
-            long userProfileId
-        );
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    Task<long>
-        CreateAsync
-        (
-            CreateBranchAssignmentDto dto
-        );
+    public string Code
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
 
 
     //===========================================================
-    // Update
+    // Name
     //===========================================================
 
-    Task<bool>
-        UpdateAsync
-        (
-            UpdateBranchAssignmentDto dto
-        );
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    Task<bool>
-        DeleteAsync
-        (
-            long branchAssignmentId
-        );
+    public string Name
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
 
 
     //===========================================================
-    // Restore
+    // Sample Search Dropdown
     //===========================================================
 
-    Task<bool>
-        RestoreLastDeletedAsync();
+    public long? SampleSearchDropdownId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Sample Field
+    //===========================================================
+
+    public string SampleField
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool Status
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Remarks
+    //===========================================================
+
+    public string Remarks
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
 }

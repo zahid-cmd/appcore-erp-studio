@@ -37,6 +37,13 @@ from '@angular/forms';
 
 import
 {
+    PageCanvasComponent,
+    PageCanvasConfig
+}
+from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
     PageHeaderComponent
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
@@ -62,55 +69,15 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
-}
-from '../../../../../../shared/components/layout/page-canvas/page-canvas';
-
-import
-{
-    FormGridComponent
-}
-from '../../../../../../shared/components/layout/form-grid/form-grid';
-
-import
-{
-    FormSectionComponent
-}
-from '../../../../../../shared/components/layout/form-section/form-section';
-
-
-//===============================================================
-// Form Controls
-//===============================================================
-
-import
-{
-    TextboxComponent
-}
-from '../../../../../../shared/components/controls/textbox/textbox';
-
-import
-{
-    TextareaComponent
-}
-from '../../../../../../shared/components/controls/textarea/textarea';
-
-import
-{
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
-    DropdownComponent
+    ListTableColumn
 }
-from '../../../../../../shared/components/controls/dropdown/dropdown';
-
-
-//===============================================================
-// Utilities
-//===============================================================
+from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
@@ -126,15 +93,39 @@ from '../../../../../../shared/components/utilities/toast/toast.service';
 
 import
 {
+    ConfirmDialogComponent
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 
 import
 {
-    ConfirmDialogComponent
+    PaginationComponent
 }
-from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+from '../../../../../../shared/components/controls/pagination/pagination';
+
+import
+{
+    RecordCounterComponent
+}
+from '../../../../../../shared/components/utilities/record-counter/record-counter';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
 
 //===============================================================
@@ -143,17 +134,46 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
-    BranchAssignment,
-    CreateBranchAssignment,
-    UpdateBranchAssignment
+    BranchAssignment
 }
 from '../../../models/branch-assignment.model';
+
+import
+{
+    UserProfileService
+}
+from '../../../services/user-profile.service';
 
 import
 {
     BranchAssignmentService
 }
 from '../../../services/branch-assignment.service';
+
+import
+{
+
+    Branches
+
+}
+
+from '../../../../../settings/general-settings/models/branches.model';
+
+
+import
+{
+
+    BranchesService
+
+}
+
+from '../../../../../settings/general-settings/services/branches.service';
+
+import
+{
+    RecordCounterSection
+}
+from '../../../../../../shared/components/utilities/record-counter/record-counter.model';
 
 
 //===============================================================
@@ -162,7 +182,7 @@ from '../../../services/branch-assignment.service';
 
 @Component(
 {
-    selector:'branchAssignment-form',
+    selector:'app-branch-assignment-form',
 
     standalone:true,
 
@@ -172,12 +192,11 @@ from '../../../services/branch-assignment.service';
 
         FormsModule,
 
-
-        //=======================================================
-        // Layout
-        //=======================================================
+        PageCanvasComponent,
 
         PageHeaderComponent,
+
+        RecordCounterComponent,
 
         PageToolbarComponent,
 
@@ -185,38 +204,18 @@ from '../../../services/branch-assignment.service';
 
         ControlTabsComponent,
 
-        PageCanvasComponent,
-
-        FormGridComponent,
-
-        FormSectionComponent,
-
-
-        //=======================================================
-        // Form Controls
-        //=======================================================
-
-        TextboxComponent,
-
-        TextareaComponent,
-
         SearchDropdownComponent,
-
-        DropdownComponent,
-
-
-        //=======================================================
-        // Utilities
-        //=======================================================
 
         ToastComponent,
 
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+
+        PaginationComponent,
+
+        ProgressDialogComponent
     ],
 
-
     templateUrl:'./branch-assignment-form.html',
-
 
     styleUrls:
     [
@@ -230,7 +229,7 @@ implements OnInit
 {
 
     //===========================================================
-    // Dependency Injection
+    // Injection
     //===========================================================
 
     private readonly route =
@@ -241,7 +240,15 @@ implements OnInit
         inject(Router);
 
 
-    private readonly branchassignmentservice =
+    private readonly userProfileService =
+        inject(UserProfileService);
+
+
+    private readonly branchesService =
+        inject(BranchesService);
+
+
+    private readonly branchAssignmentService =
         inject(BranchAssignmentService);
 
 
@@ -257,61 +264,73 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
+
 
     //===========================================================
     // Mode
     //===========================================================
 
     mode:
-        'add' | 'edit' | 'view' =
+        'add' | 'edit' | 'view'
+        =
         'add';
 
 
-    entityId:
+    branchAssignmentId:
         number =
         0;
 
 
 
     //===========================================================
-    // Page Header
+    // Save Button Text
     //===========================================================
 
-    pageTitle:
-        string =
+    get saveButtonText():
+        string
+    {
+        return this.mode === 'edit'
+            ?
+            'Update'
+            :
+            'Save';
+    }
+
+
+
+    //===========================================================
+    // Header
+    //===========================================================
+
+    pageTitle =
         'Branch Assignment';
 
 
-    entityName:
-        string =
+    entityName =
         'Branch Assignment';
 
 
-
-    //===========================================================
-    // Selected Tab
-    //===========================================================
-
-    selectedTab:
-        string =
+    selectedTab =
         'general';
 
 
 
     //===========================================================
-    // Tabs
+    // Tab Change
     //===========================================================
 
-    get tabs():
-        ControlTab[]
+    onTabChange
+    (
+        tab:
+            string
+    ):
+        void
     {
-        return [
-            {
-                id:'general',
-
-                label:this.tabTitle
-            }
-        ];
+        this.selectedTab =
+            tab;
     }
 
 
@@ -323,10 +342,7 @@ implements OnInit
     get tabTitle():
         string
     {
-        switch
-        (
-            this.mode
-        )
+        switch(this.mode)
         {
             case 'add':
 
@@ -352,70 +368,322 @@ implements OnInit
 
 
     //===========================================================
-    // Sample Search Dropdown Items
+    // Tabs
     //===========================================================
 
-    items:
-        any[]
-    =
-        [];
-
-
-
-    //===========================================================
-    // Status Items
-    //===========================================================
-
-    statusItems:
-        any[]
-    =
-        [
-            {
-                text:'Active',
-
-                value:'Active'
-            },
-
-            {
-                text:'Inactive',
-
-                value:'Inactive'
-            }
-        ];
-
-
-
-    //===========================================================
-    // Entity
-    //===========================================================
-
-    entity:
-        BranchAssignment
-    =
+    get tabs():
+        ControlTab[]
     {
-        id:0,
+        return [
 
-        code:'',
+            {
+                id:'general',
 
-        name:'',
+                label:this.tabTitle
+            }
 
-        sampleSearchDropdownId:0,
+        ];
+    }
 
-        sampleField:'',
 
-        status:'Active',
 
-        remarks:''
+    //===========================================================
+    // Pagination
+    //===========================================================
+
+    currentPage:
+        number =
+        1;
+
+
+    pageSize:
+        number =
+        10;
+
+
+
+    //===========================================================
+    // Loading State
+    //===========================================================
+
+    loading:
+        boolean =
+        false;
+
+
+    orbitLoading:
+        boolean =
+        false;
+
+
+    loadFailed:
+        boolean =
+        false;
+
+
+
+    //===========================================================
+    // Page Canvas Configuration
+    //===========================================================
+
+    readonly canvasConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+
+        showHeader:false,
+
+        showFooter:true,
+
+        reserveFooterSpace:true,
+
+        bodyScrollable:true,
+
+        fixedHeight:true,
+
+        visibleRows:10,
+
+        rowHeight:32,
+
+        headerHeight:36,
+
+        footerHeight:56
+    };
+
+
+    //===========================================================
+    // Table Columns
+    //===========================================================
+
+    readonly columns:
+        ListTableColumn[] =
+    [
+        {
+            header:'#',
+
+            field:'serial',
+
+            type:'serial',
+
+            width:'60px',
+
+            align:'center'
+        },
+
+        {
+            header:'Branch Code',
+
+            field:'branchCode',
+
+            width:'180px',
+
+            align:'left'
+        },
+
+        {
+            header:'Branch',
+
+            field:'branchName',
+
+            align:'left'
+        },
+
+        {
+            header:'Actions',
+
+            field:'actions',
+
+            type:'actions',
+
+            width:'120px',
+
+            align:'center'
+        }
+    ];
+
+
+    //===========================================================
+    // Table Column Width
+    //===========================================================
+    // Compatibility helper for the current HTML.
+    // This will be removed when the HTML is changed to consume
+    // the ListTableColumn configuration directly.
+    //===========================================================
+
+    getColumnWidth
+    (
+        column:
+            'serial'
+            |
+            'code'
+            |
+            'name'
+            |
+            'status'
+            |
+            'action'
+    ):
+        number | null
+    {
+        const fieldMap:
+        {
+            serial:
+                string;
+
+            code:
+                string;
+
+            name:
+                string;
+
+            status:
+                string;
+
+            action:
+                string;
+        } =
+        {
+            serial:'serial',
+
+            code:'branchCode',
+
+            name:'branchName',
+
+            status:'isActive',
+
+            action:'actions'
+        };
+
+
+        const selectedField =
+            fieldMap[column];
+
+
+        const selectedColumn =
+            this.columns.find(
+                item =>
+                    item.field ===
+                    selectedField
+            );
+
+
+        if
+        (
+            !selectedColumn
+            ||
+            !selectedColumn.width
+        )
+        {
+            return null;
+        }
+
+
+        return Number(
+            String(
+                selectedColumn.width
+            ).replace(
+                'px',
+
+                ''
+            )
+        );
+    }
+
+
+
+    //===========================================================
+    // User Profile Collection
+    //===========================================================
+
+    userProfiles:
+        any[] =
+    [
+    ];
+
+
+
+    //===========================================================
+    // Branch Collection
+    //===========================================================
+
+    branches:
+        Branches[] =
+    [
+    ];
+
+
+
+    //===========================================================
+    // Selected Values
+    //===========================================================
+
+    selectedUserProfileId:
+        number | null =
+        null;
+
+
+    selectedBranchId:
+        number | null =
+        null;
+
+
+
+    //===========================================================
+    // Assignment Rows
+    //===========================================================
+
+    branchAssignmentRows:
+        any[] =
+    [
+    ];
+
+
+    pagedBranchAssignmentRows:
+        any[] =
+    [
+    ];
+
+
+
+    //===========================================================
+    // Assignment Entity
+    //===========================================================
+
+    branchAssignment:
+        BranchAssignment =
+    {
+        branchAssignmentId:0,
+
+        userProfileId:0,
+
+        userProfileCode:'',
+
+        userProfileName:'',
+
+        branchCount:0,
+
+        isActive:true,
+
+        details:[]
     };
 
 
 
     //===========================================================
-    // Form State
+    // Selection State
     //===========================================================
 
-    private originalEntity:
-        string =
+    isAddDisabled:
+        boolean =
+        true;
+
+
+
+    //===========================================================
+    // State
+    //===========================================================
+
+    private originalBranchAssignment =
         '';
 
 
@@ -426,15 +694,388 @@ implements OnInit
 
 
     //===========================================================
-    // Initialize
+    // User Profile Lock
+    //===========================================================
+
+    isUserProfileLocked:
+        boolean =
+        false;
+
+
+
+    //===========================================================
+    // Init
     //===========================================================
 
     ngOnInit():
         void
     {
         this.initializeMode();
+
+        this.loadUserProfiles();
+
+        this.loadBranches();
+
+        this.updatePagination();
+
+        this.updateUserProfileLock();
     }
 
+
+    //===========================================================
+    // Load User Profiles
+    //===========================================================
+
+    private loadUserProfiles():
+        void
+    {
+        //===========================================================
+        // Clear Collection First
+        //===========================================================
+
+        this.userProfiles =
+        [
+        ];
+
+
+        //===========================================================
+        // Add Mode
+        //===========================================================
+
+        if
+        (
+            this.mode === 'add'
+        )
+        {
+            this.branchAssignmentService
+                .getAll()
+                .subscribe(
+                {
+                    next:
+                        (
+                            assignments:
+                                BranchAssignment[]
+                        ):
+                            void =>
+                    {
+                        //=======================================================
+                        // Existing User Profile Ids
+                        //=======================================================
+
+                        const configuredUserProfileIds =
+                            new Set<number>();
+
+
+                        assignments.forEach(
+                            (
+                                assignment:
+                                    BranchAssignment
+                            ):
+                                void =>
+                            {
+                                const userProfileId =
+                                    Number(
+                                        assignment.userProfileId
+                                    );
+
+
+                                if
+                                (
+                                    userProfileId > 0
+                                )
+                                {
+                                    configuredUserProfileIds.add(
+                                        userProfileId
+                                    );
+                                }
+                            }
+                        );
+
+
+                        //=======================================================
+                        // Load User Profiles
+                        //=======================================================
+
+                        this.userProfileService
+                            .getAll()
+                            .subscribe(
+                            {
+                                next:
+                                    (
+                                        response:
+                                            any[]
+                                    ):
+                                        void =>
+                                {
+                                    this.userProfiles =
+                                        response
+                                            .filter(
+                                                (
+                                                    user:
+                                                        any
+                                                ):
+                                                    boolean =>
+                                                {
+                                                    const userProfileId =
+                                                        Number(
+                                                            user?.userProfileId
+                                                            ??
+                                                            user?.UserProfileId
+                                                            ??
+                                                            user?.id
+                                                            ??
+                                                            user?.Id
+                                                            ??
+                                                            0
+                                                        );
+
+
+                                                    return (
+                                                        userProfileId > 0
+                                                        &&
+                                                        !configuredUserProfileIds.has(
+                                                            userProfileId
+                                                        )
+                                                    );
+                                                }
+                                            )
+                                            .map(
+                                                (
+                                                    user:
+                                                        any
+                                                ):
+                                                    any =>
+                                                ({
+                                                    ...user,
+
+                                                    userProfileId:
+                                                        Number(
+                                                            user?.userProfileId
+                                                            ??
+                                                            user?.UserProfileId
+                                                            ??
+                                                            user?.id
+                                                            ??
+                                                            user?.Id
+                                                            ??
+                                                            0
+                                                        ),
+
+                                                    fullName:
+                                                        user?.FullName
+                                                        ??
+                                                        user?.fullName
+                                                        ??
+                                                        ''
+                                                })
+                                            );
+
+
+                                    this.cdr.detectChanges();
+                                },
+
+
+                                error:
+                                    (
+                                        error:
+                                            unknown
+                                    ):
+                                        void =>
+                                {
+                                    console.error(
+                                        'Load User Profiles Error',
+
+                                        error
+                                    );
+
+
+                                    this.userProfiles =
+                                    [
+                                    ];
+
+
+                                    this.toast.error(
+                                        'Load Failed',
+
+                                        'Unable to load user profiles.'
+                                    );
+
+
+                                    this.cdr.detectChanges();
+                                }
+                            }
+                        );
+                    },
+
+
+                    error:
+                        (
+                            error:
+                                unknown
+                        ):
+                            void =>
+                    {
+                        console.error(
+                            'Load Branch Assignments Error',
+
+                            error
+                        );
+
+
+                        this.userProfiles =
+                        [
+                        ];
+
+
+                        this.toast.error(
+                            'Load Failed',
+
+                            'Unable to determine available user profiles.'
+                        );
+
+
+                        this.cdr.detectChanges();
+                    }
+                }
+            );
+
+
+            return;
+        }
+
+
+        //===========================================================
+        // Edit / View Mode
+        //===========================================================
+
+        this.userProfileService
+            .getAll()
+            .subscribe(
+            {
+                next:
+                    (
+                        response:
+                            any[]
+                    ):
+                        void =>
+                {
+                    this.userProfiles =
+                        response.map(
+                            (
+                                user:
+                                    any
+                            ):
+                                any =>
+                            ({
+                                ...user,
+
+                                userProfileId:
+                                    Number(
+                                        user?.userProfileId
+                                        ??
+                                        user?.UserProfileId
+                                        ??
+                                        user?.id
+                                        ??
+                                        user?.Id
+                                        ??
+                                        0
+                                    ),
+
+                                fullName:
+                                    user?.FullName
+                                    ??
+                                    user?.fullName
+                                    ??
+                                    ''
+                            })
+                        );
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                {
+                    console.error(
+                        'Load User Profiles Error',
+
+                        error
+                    );
+
+
+                    this.userProfiles =
+                    [
+                    ];
+
+
+                    this.toast.error(
+                        'Load Failed',
+
+                        'Unable to load user profiles.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Load Branches
+    //===========================================================
+
+    private loadBranches(): void
+    {
+        this.branchesService
+            .getAll()
+            .subscribe({
+                next:
+                    (
+                        response:
+                            Branches[]
+                    ):
+                        void =>
+                {
+                    this.branches =
+                        [
+                            ...response
+                        ];
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                {
+                    console.error(
+                        'Load Branches Error',
+                        error
+                    );
+
+                    this.branches = [];
+
+                    this.toast.error(
+                        'Load Failed',
+                        'Unable to load branches.'
+                    );
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
 
 
     //===========================================================
@@ -444,35 +1085,11 @@ implements OnInit
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
-            this.router.url.toLowerCase();
+            this.router.url;
 
-
-        //=======================================================
-        // View Mode
-        //=======================================================
 
         if
-        (
-            url.includes('/view/')
-        )
-        {
-            this.mode =
-                'view';
-        }
-
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
-        else if
         (
             url.includes('/edit/')
         )
@@ -480,12 +1097,14 @@ implements OnInit
             this.mode =
                 'edit';
         }
-
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
+        else if
+        (
+            url.includes('/view/')
+        )
+        {
+            this.mode =
+                'view';
+        }
         else
         {
             this.mode =
@@ -493,98 +1112,172 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Existing Entity
-        //=======================================================
+        const id =
+            this.resolveEntityId();
+
 
         if
         (
             id > 0
         )
         {
-            this.entityId =
+            this.branchAssignmentId =
                 id;
 
 
-            this.loadEntity();
+            this.loadBranchAssignment();
+        }
+        else
+        {
+            this.loadDefaults();
+        }
+    }
 
 
-            return;
+
+    //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+            this.route;
+
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get(
+                        'id'
+                    )
+                );
+
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+
+            currentRoute =
+                currentRoute.parent;
         }
 
 
-        //=======================================================
-        // New Entity
-        //=======================================================
-
-        this.initializeEntity();
+        return 0;
     }
 
 
 
     //===========================================================
-    // Initialize Entity
+    // Load Defaults
     //===========================================================
 
-    private initializeEntity():
+    private loadDefaults():
         void
     {
-        this.entity =
+        this.branchAssignment =
         {
-            id:0,
+            branchAssignmentId:0,
 
-            code:'',
+            userProfileId:0,
 
-            name:'',
+            userProfileCode:'',
 
-            sampleSearchDropdownId:0,
+            userProfileName:'',
 
-            sampleField:'',
+            branchCount:0,
 
-            status:'Active',
+            isActive:true,
 
-            remarks:''
+            details:[]
         };
 
 
-        this.originalEntity =
+        this.branchAssignmentRows =
+        [
+        ];
+
+
+        this.selectedUserProfileId =
+            null;
+
+
+        this.selectedBranchId =
+            null;
+
+
+        this.originalBranchAssignment =
             JSON.stringify(
-                this.entity
+                this.buildBranchAssignment()
             );
 
 
-        this.hasChanges =
-            false;
+        this.updatePagination();
+
+        this.updateUserProfileLock();
+
+        this.cdr.detectChanges();
     }
 
 
 
     //===========================================================
-    // Load Entity
+    // Load Branch Assignment
     //===========================================================
 
-    private loadEntity():
+    private loadBranchAssignment():
         void
     {
-        this.branchassignmentservice
+        this.loading =
+            false;
+
+
+        this.orbitLoading =
+            true;
+
+
+        this.loadFailed =
+            false;
+
+
+        this.branchAssignmentService
             .getById(
-                this.entityId
+                this.branchAssignmentId
             )
             .subscribe(
             {
-                next:(response) =>
+                next:
+                    (
+                        response:
+                            BranchAssignment
+                    ):
+                        void =>
                 {
-                    this.entity =
-                        response;
+                    this.bindBranchAssignment(
+                        response
+                    );
 
 
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+                    this.orbitLoading =
+                        false;
 
 
-                    this.hasChanges =
+                    this.loading =
+                        false;
+
+
+                    this.loadFailed =
                         false;
 
 
@@ -592,22 +1285,40 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
                 {
                     console.error(
                         'Load Branch Assignment Error',
+
                         error
                     );
 
 
-                    this.toast.error(
-                        'Error',
+                    this.orbitLoading =
+                        false;
 
-                        'Failed to load Branch Assignment.'
+
+                    this.loading =
+                        false;
+
+
+                    this.loadFailed =
+                        true;
+
+
+                    this.toast.error(
+                        'Load Failed',
+
+                        'Unable to load branch assignment.'
                     );
 
 
-                    this.onBackToList();
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -615,62 +1326,406 @@ implements OnInit
 
 
     //===========================================================
-    // Sample Search Dropdown Changed
+    // Bind Branch Assignment
     //===========================================================
 
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
-
-
-    //===========================================================
-    // Track Changes
-    //===========================================================
-
-    checkForChanges():
-        void
-    {
-        this.hasChanges =
-            JSON.stringify(
-                this.entity
-            )
-            !==
-            this.originalEntity;
-    }
-
-
-
-    //===========================================================
-    // Tab Change
-    //===========================================================
-
-    onTabChange
+    private bindBranchAssignment
     (
-        tabId:
-            string
+        data:
+            BranchAssignment
     ):
         void
     {
-        this.selectedTab =
-            tabId;
+        this.branchAssignment =
+        {
+            ...data
+        };
+
+
+        this.selectedUserProfileId =
+            data.userProfileId
+            ??
+            null;
+
+
+        this.branchAssignmentRows =
+            (
+                data.details
+                ??
+                []
+            )
+            .map(
+                (
+                    detail:
+                        any
+                ) =>
+                ({
+                    branchAssignmentDetailId:
+                        detail.branchAssignmentDetailId
+                        ??
+                        0,
+
+                    branchAssignmentId:
+                        detail.branchAssignmentId
+                        ??
+                        this.branchAssignmentId,
+
+                    branchId:
+                        detail.branchId
+                        ??
+                        0,
+
+                    branchCode:
+                        detail.branchCode
+                        ??
+                        '',
+
+                    branchName:
+                        detail.branchName
+                        ??
+                        '',
+
+                    isActive:
+                        detail.isActive
+                        ??
+                        true
+                })
+            );
+
+
+        this.selectedBranchId =
+            null;
+
+
+        this.originalBranchAssignment =
+            JSON.stringify(
+                this.buildBranchAssignment()
+            );
+
+
+        this.updatePagination();
+
+        this.updateUserProfileLock();
+
+        this.detectChanges();
+
+        this.cdr.detectChanges();
     }
 
 
 
     //===========================================================
-    // Save
+    // Detect Changes
     //===========================================================
 
-    onSave():
+    private detectChanges():
         void
     {
+        const current =
+            this.buildBranchAssignment();
+
+
+        this.hasChanges =
+
+            JSON.stringify(
+                current
+            )
+            !==
+            this.originalBranchAssignment;
+    }
+
+
+
+    //===========================================================
+    // User Profile Changed
+    //===========================================================
+
+    onUserProfileChanged
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedUserProfileId =
+            value;
+
+
+        if
+        (
+            this.selectedUserProfileId
+            ==
+            null
+        )
+        {
+            this.branchAssignment.userProfileId =
+                0;
+
+
+            this.branchAssignment.userProfileName =
+                '';
+
+
+            this.branchAssignment.userProfileCode =
+                '';
+
+
+            this.isUserProfileLocked =
+                false;
+
+
+            this.isAddDisabled =
+                true;
+
+
+            this.detectChanges();
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+
+        this.branchAssignment.userProfileId =
+            this.selectedUserProfileId;
+
+
+        const selectedUser =
+            this.userProfiles.find(
+                user =>
+                    Number(
+                        user.userProfileId
+                        ??
+                        user.UserProfileId
+                        ??
+                        user.id
+                        ??
+                        user.Id
+                    )
+                    ===
+                    Number(
+                        this.selectedUserProfileId
+                    )
+            );
+
+
+        if
+        (
+            selectedUser
+        )
+        {
+            this.branchAssignment.userProfileName =
+                selectedUser.displayName
+                ??
+                selectedUser.DisplayName
+                ??
+                selectedUser.fullName
+                ??
+                selectedUser.FullName
+                ??
+                selectedUser.userName
+                ??
+                selectedUser.UserName
+                ??
+                '';
+
+
+            this.branchAssignment.userProfileCode =
+                selectedUser.userProfileCode
+                ??
+                selectedUser.UserProfileCode
+                ??
+                selectedUser.code
+                ??
+                selectedUser.Code
+                ??
+                '';
+        }
+
+
+        this.isAddDisabled =
+            this.selectedBranchId == null;
+
+
+        this.updateUserProfileLock();
+
+        this.detectChanges();
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Branch Changed
+    //===========================================================
+
+    onBranchChanged
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedBranchId =
+            value;
+
+
+        this.isAddDisabled =
+            this.selectedUserProfileId == null
+            ||
+            this.selectedBranchId == null;
+
+
+        this.detectChanges();
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Add Selection
+    //===========================================================
+
+    onAddSelection():
+        void
+    {
+        if
+        (
+            this.selectedUserProfileId == null
+            ||
+            this.selectedBranchId == null
+        )
+        {
+            return;
+        }
+
+
         //=======================================================
-        // View Mode
+        // Duplicate Validation
         //=======================================================
 
+        const duplicate =
+            this.branchAssignmentRows.some(
+                row =>
+                    Number(
+                        row.branchId
+                    )
+                    ===
+                    Number(
+                        this.selectedBranchId
+                    )
+            );
+
+
+        if
+        (
+            duplicate
+        )
+        {
+            this.toast.warning(
+                'Already Added',
+
+                'This branch is already assigned to the selected user.'
+            );
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Find Branch
+        //=======================================================
+
+        const selectedBranch =
+            this.branches.find(
+                branch =>
+                    Number(
+                        branch.BranchId
+                    )
+                    ===
+                    Number(
+                        this.selectedBranchId
+                    )
+            );
+
+
+        if
+        (
+            !selectedBranch
+        )
+        {
+            this.toast.error(
+                'Error',
+
+                'Unable to find the selected branch.'
+            );
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Add Assignment Row
+        //=======================================================
+
+        this.branchAssignmentRows.push(
+        {
+            branchAssignmentDetailId:0,
+
+            branchAssignmentId:
+                this.branchAssignmentId,
+
+            branchId:
+                this.selectedBranchId,
+
+            branchCode:
+                selectedBranch.BranchCode ?? '',
+
+            branchName:
+                selectedBranch.BranchName ?? '',
+
+            isActive:true
+        });
+
+
+        this.branchAssignment.branchCount =
+            this.branchAssignmentRows.length;
+
+
+        this.selectedBranchId =
+            null;
+
+
+        this.isAddDisabled =
+            true;
+
+
+        this.updatePagination();
+
+        this.updateUserProfileLock();
+
+        this.detectChanges();
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Remove Assignment
+    //===========================================================
+
+    onRemoveAssignment
+    (
+        row:
+            any
+    ):
+        void
+    {
         if
         (
             this.isViewMode
@@ -680,187 +1735,159 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Validation
-        //=======================================================
-
-        if
-        (
-            !this.entity.name?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-
-                'Name is required.'
+        this.branchAssignmentRows =
+            this.branchAssignmentRows.filter(
+                item =>
+                    Number(
+                        item.branchId
+                    )
+                    !==
+                    Number(
+                        row.branchId
+                    )
             );
 
-            return;
-        }
+
+        this.branchAssignment.branchCount =
+            this.branchAssignmentRows.length;
 
 
-        //=======================================================
-        // Create
-        //=======================================================
+        this.updatePagination();
+
+        this.updateUserProfileLock();
+
+        this.detectChanges();
+
+        this.cdr.detectChanges();
+    }
+
+
+
+    //===========================================================
+    // Update Pagination
+    //===========================================================
+
+    updatePagination():
+        void
+    {
+        const totalPages =
+
+            Math.max(
+
+                1,
+
+                Math.ceil(
+
+                    this.branchAssignmentRows.length
+                    /
+                    this.pageSize
+
+                )
+            );
+
 
         if
         (
-            this.mode === 'add'
+            this.currentPage > totalPages
         )
         {
-            const model:
-                CreateBranchAssignment =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
+            this.currentPage =
+                totalPages;
+        }
 
 
-            this.branchassignmentservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
+        const start =
+
+            (
+                this.currentPage - 1
+            )
+            *
+            this.pageSize;
 
 
-                        this.hasChanges =
-                            false;
+        this.pagedBranchAssignmentRows =
+
+            this.branchAssignmentRows.slice(
+
+                start,
+
+                start + this.pageSize
+            );
+    }
 
 
-                        this.toast.success(
-                            'Success',
 
-                            'Branch Assignment created successfully.'
-                        );
+    //===========================================================
+    // Page Change
+    //===========================================================
 
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Branch Assignment Error',
-                            error
-                        );
+    onPageChange
+    (
+        page:
+            number
+    ):
+        void
+    {
+        this.currentPage =
+            page;
 
 
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
+        this.updatePagination();
+    }
 
 
-                        this.toast.error(
-                            'Validation',
 
-                            message
-                        );
-                    }
-                });
+    //===========================================================
+    // Page Size Change
+    //===========================================================
+
+    onPageSizeChange
+    (
+        pageSize:
+            number
+    ):
+        void
+    {
+        this.pageSize =
+            pageSize;
 
 
+        this.currentPage =
+            1;
+
+
+        this.updatePagination();
+    }
+
+
+
+    //===========================================================
+    // Reset Selection
+    //===========================================================
+
+    onResetSelection():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
             return;
         }
 
 
-        //=======================================================
-        // Update
-        //=======================================================
-
-        const model:
-            UpdateBranchAssignment =
-        {
-            id:
-                this.entity.id,
-
-            name:
-                this.entity.name,
-
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
-
-            sampleField:
-                this.entity.sampleField,
-
-            status:
-                this.entity.status,
-
-            remarks:
-                this.entity.remarks
-        };
+        this.selectedBranchId =
+            null;
 
 
-        this.branchassignmentservice
-            .update(
-                model
-            )
-            .subscribe(
-            {
-                next:() =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+        this.isAddDisabled =
+            this.selectedUserProfileId == null;
 
 
-                    this.hasChanges =
-                        false;
+        this.detectChanges();
 
-
-                    this.toast.success(
-                        'Success',
-
-                        'Branch Assignment updated successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Update Branch Assignment Error',
-                        error
-                    );
-
-
-                    const message =
-                        error?.error
-                        ??
-                        'Failed to update {{ENTITY_NAME}.';
-
-
-                    this.toast.error(
-                        'Validation',
-
-                        message
-                    );
-                }
-            });
+        this.cdr.detectChanges();
     }
 
 
@@ -869,34 +1896,62 @@ implements OnInit
     // Clear
     //===========================================================
 
-    onClear():
+    clear():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
         if
         (
-            this.mode === 'edit'
+            this.isViewMode
         )
         {
-            this.loadEntity();
-
-
-            this.checkForChanges();
-
-
             return;
         }
 
 
-        //=======================================================
-        // Add Mode
-        //=======================================================
+        this.selectedUserProfileId =
+            null;
 
-        this.initializeEntity();
 
+        this.selectedBranchId =
+            null;
+
+
+        this.branchAssignmentRows =
+        [
+        ];
+
+
+        this.branchAssignment =
+        {
+            branchAssignmentId:0,
+
+            userProfileId:0,
+
+            userProfileCode:'',
+
+            userProfileName:'',
+
+            branchCount:0,
+
+            isActive:true,
+
+            details:[]
+        };
+
+
+        this.currentPage =
+            1;
+
+
+        this.isAddDisabled =
+            true;
+
+
+        this.updateUserProfileLock();
+
+        this.updatePagination();
+
+        this.detectChanges();
 
         this.cdr.detectChanges();
     }
@@ -904,75 +1959,16 @@ implements OnInit
 
 
     //===========================================================
-    // Back To List
+    // Update User Profile Lock
     //===========================================================
 
-    onBackToList():
+    private updateUserProfileLock():
         void
     {
-        if
-        (
-            !this.hasChanges
-        )
-        {
-            void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
-
-            return;
-        }
-
-
-        this.confirmDialog.open(
-
-            'Cancel Changes',
-
-            'Any unsaved changes will be lost. Do you want to leave this page?',
-
-
-            () =>
-            {
-                void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
-            },
-
-
-            'Leave',
-
-            'Stay',
-
-            'primary'
-        );
-    }
-
-
-
-    //===========================================================
-    // Save Button Text
-    //===========================================================
-
-    get saveButtonText():
-        string
-    {
-        return this.mode === 'edit'
-            ? 'Update'
-            : 'Save';
+        this.isUserProfileLocked =
+            this.mode !== 'add'
+            ||
+            this.branchAssignmentRows.length > 0;
     }
 
 
@@ -990,80 +1986,686 @@ implements OnInit
 
 
     //===========================================================
-    // Edit Mode
+    // Build Branch Assignment Payload
     //===========================================================
 
-    get isEditMode():
-        boolean
+    private buildBranchAssignment():
+        BranchAssignment
     {
-        return this.mode === 'edit';
+        return {
+
+            branchAssignmentId:
+                this.branchAssignment.branchAssignmentId
+                ??
+                this.branchAssignmentId,
+
+            userProfileId:
+                this.selectedUserProfileId
+                ??
+                0,
+
+            userProfileCode:
+                this.branchAssignment.userProfileCode
+                ??
+                '',
+
+            userProfileName:
+                this.branchAssignment.userProfileName
+                ??
+                '',
+
+            branchCount:
+                this.branchAssignmentRows.length,
+
+            isActive:
+                this.branchAssignment.isActive
+                ??
+                true,
+
+            details:
+                this.branchAssignmentRows.map(
+                    row =>
+                    ({
+                        branchAssignmentDetailId:
+                            row.branchAssignmentDetailId
+                            ??
+                            0,
+
+                        branchAssignmentId:
+                            row.branchAssignmentId
+                            ??
+                            this.branchAssignmentId,
+
+                        branchId:
+                            row.branchId,
+
+                        branchCode:
+                            row.branchCode
+                            ??
+                            '',
+
+                        branchName:
+                            row.branchName
+                            ??
+                            '',
+
+                        isActive:
+                            row.isActive
+                            ??
+                            true
+                    })
+                )
+        };
     }
 
 
 
     //===========================================================
-    // Add Mode
+    // Save
     //===========================================================
 
-    get isAddMode():
-        boolean
-    {
-        return this.mode === 'add';
-    }
-
-
-
-    //===========================================================
-    // Close
-    //===========================================================
-
-    close():
+    save():
         void
     {
-        this.onBackToList();
+        const payload =
+            this.buildBranchAssignment();
+
+
+        if
+        (
+            this.mode === 'add'
+        )
+        {
+            this.create(
+                payload
+            );
+        }
+        else
+        {
+            this.update(
+                payload
+            );
+        }
     }
 
 
 
     //===========================================================
-    // Refresh
+    // Create
     //===========================================================
 
-    refresh():
+    private create
+    (
+        payload:
+            BranchAssignment
+    ):
+        void
+    {
+        this.progressDialog.show(
+            'Saving Branch Assignment',
+
+            'Preparing data...',
+
+            false
+        );
+
+
+        this.progressDialog.update(
+            20,
+
+            'Preparing data...'
+        );
+
+
+        this.branchAssignmentService
+            .create(
+                payload
+            )
+            .subscribe(
+            {
+                next:
+                    (
+                        id:
+                            number
+                    ):
+                        void =>
+                {
+                    this.progressDialog.update(
+                        80,
+
+                        'Branch assignment saved successfully...'
+                    );
+
+
+                    this.progressDialog.update(
+                        100,
+
+                        'Finalizing...'
+                    );
+
+
+                    setTimeout(
+                        () =>
+                        {
+                            this.progressDialog.close();
+
+
+                            this.toast.success(
+                                'Success',
+
+                                'Branch Assignment created successfully.'
+                            );
+
+
+                            this.hasChanges =
+                                false;
+
+
+                            void this.router.navigate(
+                            [
+                                '/security-permission/user-management/branch-assignment/list'
+                            ]);
+                        },
+
+                        300
+                    );
+                },
+
+
+                error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                {
+                    console.error(
+                        'Create Branch Assignment Error',
+
+                        error
+                    );
+
+
+                    this.progressDialog.close();
+
+
+                    this.toast.error(
+                        'Save Failed',
+
+                        'Failed to create branch assignment.'
+                    );
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    private update
+    (
+        payload:
+            BranchAssignment
+    ):
+        void
+    {
+        this.progressDialog.show(
+            'Updating Branch Assignment',
+
+            'Preparing data...',
+
+            false
+        );
+
+
+        this.progressDialog.update(
+            20,
+
+            'Preparing data...'
+        );
+
+
+        this.branchAssignmentService
+            .update(
+                payload
+            )
+            .subscribe(
+            {
+                next:
+                    ():
+                        void =>
+                {
+                    this.progressDialog.update(
+                        80,
+
+                        'Branch assignment updated successfully...'
+                    );
+
+
+                    this.progressDialog.update(
+                        100,
+
+                        'Finalizing...'
+                    );
+
+
+                    setTimeout(
+                        () =>
+                        {
+                            this.progressDialog.close();
+
+
+                            this.toast.success(
+                                'Success',
+
+                                'Branch Assignment updated successfully.'
+                            );
+
+
+                            this.hasChanges =
+                                false;
+
+
+                            void this.router.navigate(
+                            [
+                                '/security-permission/user-management/branch-assignment/list'
+                            ]);
+                        },
+
+                        300
+                    );
+                },
+
+
+                error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                {
+                    console.error(
+                        'Update Branch Assignment Error',
+
+                        error
+                    );
+
+
+                    this.progressDialog.close();
+
+
+                    this.toast.error(
+                        'Update Failed',
+
+                        'Failed to update branch assignment.'
+                    );
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Delete
+    //===========================================================
+
+    delete():
         void
     {
         if
         (
-            this.mode === 'edit'
-            ||
-            this.mode === 'view'
+            this.branchAssignmentId <= 0
         )
         {
-            this.loadEntity();
+            return;
+        }
+
+
+        this.confirmDialog.open(
+
+            'Delete Branch Assignment',
+
+            'Are you sure you want to delete this branch assignment?',
+
+
+            () =>
+            {
+                this.branchAssignmentService
+                    .delete(
+                        this.branchAssignmentId
+                    )
+                    .subscribe(
+                    {
+                        next:
+                            ():
+                                void =>
+                        {
+                            this.toast.success(
+                                'Deleted',
+
+                                'Branch Assignment deleted successfully.'
+                            );
+
+
+                            void this.router.navigate(
+                            [
+                                '/security-permission/user-management/branch-assignment/list'
+                            ]);
+                        },
+
+
+                        error:
+                            (
+                                error:
+                                    unknown
+                            ):
+                                void =>
+                        {
+                            console.error(
+                                'Delete Branch Assignment Error',
+
+                                error
+                            );
+
+
+                            this.toast.error(
+                                'Delete Failed',
+
+                                'Failed to delete branch assignment.'
+                            );
+                        }
+                    });
+            }
+        );
+    }
+
+
+
+    //===========================================================
+    // Restore
+    //===========================================================
+
+    restore():
+        void
+    {
+        this.confirmDialog.open(
+
+            'Restore Branch Assignment',
+
+            'Are you sure you want to restore this branch assignment?',
+
+
+            () =>
+            {
+                this.branchAssignmentService
+                    .restore()
+                    .subscribe(
+                    {
+                        next:
+                            ():
+                                void =>
+                        {
+                            this.toast.success(
+                                'Restored',
+
+                                'Branch Assignment restored successfully.'
+                            );
+
+
+                            this.loadBranchAssignment();
+                        },
+
+
+                        error:
+                            (
+                                error:
+                                    unknown
+                            ):
+                                void =>
+                        {
+                            console.error(
+                                'Restore Branch Assignment Error',
+
+                                error
+                            );
+
+
+                            this.toast.error(
+                                'Restore Failed',
+
+                                'Failed to restore branch assignment.'
+                            );
+                        }
+                    });
+            }
+        );
+    }
+
+
+
+    //===========================================================
+    // Cancel
+    //===========================================================
+
+    cancel():
+        void
+    {
+        void this.router.navigate(
+        [
+            '/security-permission/user-management/branch-assignment/list'
+        ]);
+    }
+
+
+
+    //===========================================================
+    // Save Command
+    //===========================================================
+
+    onSave():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            this.selectedUserProfileId == null
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'User Profile is required.'
+            );
+
 
             return;
         }
 
 
-        this.initializeEntity();
+        if
+        (
+            this.branchAssignmentRows.length === 0
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'At least one branch assignment is required.'
+            );
 
 
-        this.cdr.detectChanges();
+            return;
+        }
+
+
+        this.save();
     }
 
 
 
     //===========================================================
-    // Value Changed
+    // Clear Command
     //===========================================================
 
-    onValueChange():
+    onClear():
         void
     {
-        this.checkForChanges();
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
 
 
-        this.cdr.detectChanges();
+        this.clear();
+    }
+
+
+
+    //===========================================================
+    // Back To List
+    //===========================================================
+
+    onBackToList():
+        void
+    {
+        void this.router.navigate(
+        [
+            '/security-permission/user-management/branch-assignment/list'
+        ]);
+    }
+
+
+
+    //===========================================================
+    // Back
+    //===========================================================
+
+    back():
+        void
+    {
+        void this.router.navigate(
+        [
+            '/security-permission/user-management/branch-assignment/list'
+        ]);
+    }
+
+
+
+    //===========================================================
+    // Save Disabled
+    //===========================================================
+
+    get saveDisabled():
+        boolean
+    {
+        return (
+
+            this.isViewMode
+
+            ||
+
+            this.selectedUserProfileId == null
+
+            ||
+
+            this.branchAssignmentRows.length === 0
+
+        );
+    }
+
+
+
+    //===========================================================
+    // Add Disabled
+    //===========================================================
+
+    get addDisabled():
+        boolean
+    {
+        return (
+
+            this.isViewMode
+
+            ||
+
+            this.selectedUserProfileId == null
+
+            ||
+
+            this.selectedBranchId == null
+
+        );
+    }
+
+
+
+    //===========================================================
+    // Total Branches
+    //===========================================================
+
+    get totalBranchCount():
+        number
+    {
+        return this.branchAssignmentRows.length;
+    }
+
+
+
+    //===========================================================
+    // Record Counter
+    //===========================================================
+
+    get recordCounterSections():
+        RecordCounterSection[]
+    {
+        return [
+
+            {
+                label:'Branches',
+
+                value:this.branchAssignmentRows.length
+            },
+
+            {
+                label:'Active',
+
+                value:
+                    this.branchAssignmentRows.filter(
+                        row =>
+                            row.isActive !== false
+                    ).length
+            },
+
+            {
+                label:'Inactive',
+
+                value:
+                    this.branchAssignmentRows.filter(
+                        row =>
+                            row.isActive === false
+                    ).length
+            },
+
+            {
+                label:'Total',
+
+                value:this.branchAssignmentRows.length
+            }
+
+        ];
     }
 
 }

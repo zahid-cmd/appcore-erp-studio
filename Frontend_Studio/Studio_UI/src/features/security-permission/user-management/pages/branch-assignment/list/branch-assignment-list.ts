@@ -24,6 +24,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
 
 //===============================================================
 // Models
@@ -129,7 +135,7 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -137,6 +143,12 @@ import
     BranchAssignmentService
 }
 from '../../../services/branch-assignment.service';
+
+import
+{
+    UserProfileService
+}
+from '../../../services/user-profile.service';
 
 
 //===============================================================
@@ -200,6 +212,10 @@ implements OnInit
         inject(BranchAssignmentService);
 
 
+    private readonly userprofileservice =
+        inject(UserProfileService);
+
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -231,7 +247,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All BranchAssignments'
+            label:'All Branch Assignments'
         }
     ];
 
@@ -256,13 +272,13 @@ implements OnInit
         },
 
         {
-            value:'Active',
+            value:true,
 
             text:'Active'
         },
 
         {
-            value:'Inactive',
+            value:false,
 
             text:'Inactive'
         }
@@ -270,7 +286,7 @@ implements OnInit
 
 
     selectedStatus:
-        string | null =
+        boolean | null =
         null;
 
 
@@ -291,6 +307,16 @@ implements OnInit
 
     pagedBranchAssignments:
         BranchAssignment[] =
+    [];
+
+
+
+    //===========================================================
+    // User Profiles
+    //===========================================================
+
+    private userProfiles:
+        any[] =
     [];
 
 
@@ -400,31 +426,63 @@ implements OnInit
         },
 
         {
-            header:'Code',
+            header:'User Profile Code',
 
-            field:'code',
+            field:'userProfileCode',
 
             width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
 
             align:'left'
         },
 
         {
+            header:'Display Name',
+
+            field:'displayName',
+
+            width:'200px',
+
+            align:'left'
+        },
+
+        {
+            header:'Full Name',
+
+            field:'fullName',
+
+            width:'240px',
+
+            align:'left'
+        },
+
+        {
+            header:'Default Branch',
+
+            field:'defaultBranchName',
+
+            width:'220px',
+
+            align:'left'
+        },
+
+        {
+            header:'Branches',
+
+            field:'branchCount',
+
+            width:'150px',
+
+            align:'center'
+        },
+
+        {
             header:'Status',
 
-            field:'status',
+            field:'isActive',
 
             type:'status',
 
-            width:'120px',
+            width:'150px',
 
             align:'center'
         },
@@ -436,7 +494,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }
@@ -457,7 +515,7 @@ implements OnInit
 
 
     //===========================================================
-    // Load BranchAssignments
+    // Load Branch Assignments
     //===========================================================
 
     loadItems():
@@ -481,24 +539,9 @@ implements OnInit
                         BranchAssignment[]
                 ): void =>
                 {
-                    this.branchassignments =
-                    [
-                        ...response
-                    ];
-
-
-                    this.applyFilters();
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
+                    this.loadUserProfiles(
+                        response
+                    );
                 },
 
 
@@ -510,7 +553,7 @@ implements OnInit
                 {
                     console.error
                     (
-                        'Load BranchAssignments Error',
+                        'Load Branch Assignments Error',
 
                         error
                     );
@@ -540,7 +583,7 @@ implements OnInit
                     (
                         'Load Failed',
 
-                        'Unable to load branchassignments.'
+                        'Unable to load branch assignments.'
                     );
 
 
@@ -552,13 +595,290 @@ implements OnInit
 
 
     //===========================================================
+    // Load User Profiles
+    //===========================================================
+
+    private loadUserProfiles
+    (
+        response:
+            BranchAssignment[]
+    ):
+        void
+    {
+        this.userprofileservice
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    userProfiles:
+                        any[]
+                ): void =>
+                {
+                    this.userProfiles =
+                    [
+                        ...userProfiles
+                    ];
+
+
+                    this.branchassignments =
+                        response.map
+                        (
+                            assignment =>
+                                this.normalizeBranchAssignment(
+                                    assignment
+                                )
+                        );
+
+
+                    this.applyFilters();
+
+
+                    this.loading =
+                        false;
+
+
+                    this.loadFailed =
+                        false;
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error
+                    (
+                        'Load User Profiles For Branch Assignments Error',
+
+                        error
+                    );
+
+
+                    this.userProfiles =
+                    [];
+
+
+                    this.branchassignments =
+                        response.map
+                        (
+                            assignment =>
+                                this.normalizeBranchAssignment(
+                                    assignment
+                                )
+                        );
+
+
+                    this.applyFilters();
+
+
+                    this.loading =
+                        false;
+
+
+                    this.loadFailed =
+                        false;
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Normalize Branch Assignment
+    //===========================================================
+
+    private normalizeBranchAssignment
+    (
+        assignment:
+            BranchAssignment
+    ):
+        BranchAssignment
+    {
+        //=======================================================
+        // User Profile
+        //=======================================================
+
+        const userProfile =
+            this.getUserProfile(
+                assignment.userProfileId
+            );
+
+
+        //=======================================================
+        // Display Name
+        //=======================================================
+
+        const displayName =
+            userProfile?.displayName
+            ??
+            userProfile?.DisplayName
+            ??
+            assignment.displayName
+            ??
+            'Not Assigned';
+
+
+        //=======================================================
+        // Full Name
+        //=======================================================
+
+        const fullName =
+            userProfile?.fullName
+            ??
+            userProfile?.FullName
+            ??
+            assignment.fullName
+            ??
+            'Not Assigned';
+
+
+        //=======================================================
+        // User Profile Code
+        //=======================================================
+
+        const userProfileCode =
+            assignment.userProfileCode
+            ??
+            userProfile?.profileCode
+            ??
+            userProfile?.ProfileCode
+            ??
+            userProfile?.code
+            ??
+            userProfile?.Code
+            ??
+            '';
+
+
+        //=======================================================
+        // User Profile Name
+        //=======================================================
+
+        const userProfileName =
+            assignment.userProfileName
+            ??
+            displayName
+            ??
+            '';
+
+
+        //=======================================================
+        // Default Branch
+        //=======================================================
+
+        const defaultBranchName =
+            assignment.defaultBranchName
+            ??
+            'Not Assigned';
+
+
+        //=======================================================
+        // Branch Count
+        //=======================================================
+
+        const branchCount =
+            Number(
+                assignment.branchCount
+                ??
+                0
+            );
+
+
+        //=======================================================
+        // Return Normalized Record
+        //=======================================================
+
+        return {
+
+            ...assignment,
+
+            userProfileCode,
+
+            displayName,
+
+            fullName,
+
+            userProfileName,
+
+            defaultBranchName,
+
+            branchCount,
+
+            isActive:
+                assignment.isActive !== false
+        };
+    }
+
+
+
+    //===========================================================
+    // Get User Profile
+    //===========================================================
+
+    private getUserProfile
+    (
+        userProfileId:
+            number
+    ):
+        any
+    {
+        const id =
+            Number(
+                userProfileId
+            );
+
+
+        if
+        (
+            id <= 0
+        )
+        {
+            return null;
+        }
+
+
+        const userProfile =
+            this.userProfiles.find
+            (
+                item =>
+                    Number(
+                        item?.userProfileId
+                        ??
+                        item?.UserProfileId
+                        ??
+                        item?.id
+                        ??
+                        item?.Id
+                    )
+                    ===
+                    id
+            );
+
+
+        return userProfile
+            ??
+            null;
+    }
+
+
+
+    //===========================================================
     // Status Filter Changed
     //===========================================================
 
     onStatusFilterChange
     (
         value:
-            string | null
+            boolean | null
     ):
         void
     {
@@ -594,30 +914,102 @@ implements OnInit
                     ):
                         boolean =>
                     {
+                        //===================================================
+                        // Status
+                        //===================================================
+
                         const statusMatch =
                             this.selectedStatus === null
                             ||
-                            x.status ===
+                            x.isActive ===
                             this.selectedStatus;
 
+
+                        //===================================================
+                        // Display Name
+                        //===================================================
+
+                        const displayName =
+                            (
+                                x.displayName
+                                ??
+                                ''
+                            )
+                            .toLowerCase();
+
+
+                        //===================================================
+                        // Full Name
+                        //===================================================
+
+                        const fullName =
+                            (
+                                x.fullName
+                                ??
+                                ''
+                            )
+                            .toLowerCase();
+
+
+                        //===================================================
+                        // Default Branch
+                        //===================================================
+
+                        const defaultBranchName =
+                            (
+                                x.defaultBranchName
+                                ??
+                                'Not Assigned'
+                            )
+                            .toLowerCase();
+
+
+                        //===================================================
+                        // User Profile Name
+                        //===================================================
+
+                        const userProfileName =
+                            (
+                                x.userProfileName
+                                ??
+                                ''
+                            )
+                            .toLowerCase();
+
+
+                        //===================================================
+                        // User Profile Code
+                        //===================================================
+
+                        const userProfileCode =
+                            (
+                                x.userProfileCode
+                                ??
+                                ''
+                            )
+                            .toLowerCase();
+
+
+                        //===================================================
+                        // Search
+                        //===================================================
 
                         const searchMatch =
                             !keyword
                             ||
-                            x.code
-                                ?.toLowerCase()
+                            displayName
                                 .includes(keyword)
                             ||
-                            x.name
-                                ?.toLowerCase()
+                            fullName
                                 .includes(keyword)
                             ||
-                            x.sampleField
-                                ?.toLowerCase()
+                            defaultBranchName
                                 .includes(keyword)
                             ||
-                            x.remarks
-                                ?.toLowerCase()
+                            userProfileName
+                                .includes(keyword)
+                            ||
+                            userProfileCode
                                 .includes(keyword);
 
 
@@ -921,7 +1313,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.branchAssignmentId
             ],
 
             {
@@ -949,7 +1341,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.branchAssignmentId
             ],
 
             {
@@ -976,14 +1368,14 @@ implements OnInit
         (
             'Delete Branch Assignment',
 
-            `Are you sure you want to delete "${item.name}" ?`,
+            `Are you sure you want to delete "${item.userProfileName}" ?`,
 
             (): void =>
             {
                 this.branchassignmentservice
                     .delete
                     (
-                        item.id
+                        item.branchAssignmentId
                     )
                     .subscribe
                     ({
@@ -994,7 +1386,7 @@ implements OnInit
                             (
                                 'Delete Successful',
 
-                                `${item.name} deleted successfully.`
+                                `${item.userProfileName} deleted successfully.`
                             );
 
 
@@ -1020,7 +1412,7 @@ implements OnInit
                             (
                                 'Delete Failed',
 
-                                'Failed to delete branchAssignment.'
+                                'Failed to delete branch assignment.'
                             );
                         }
                     });
@@ -1041,7 +1433,7 @@ implements OnInit
         (
             'Restore Branch Assignment',
 
-            'Are you sure you want to restore the most recently deleted branchAssignment?',
+            'Are you sure you want to restore the most recently deleted branch assignment?',
 
             (): void =>
             {
@@ -1076,7 +1468,7 @@ implements OnInit
                     (
                         'Restore Successful',
 
-                        'The most recently deleted branchAssignment has been restored.'
+                        'The most recently deleted branch assignment has been restored.'
                     );
 
 
@@ -1098,11 +1490,30 @@ implements OnInit
                     );
 
 
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted branch assignment record to restore.'
+                        );
+
+
+                        return;
+                    }
+
+
                     this.toast.error
                     (
                         'Restore Failed',
 
-                        'Failed to restore branchAssignment.'
+                        'Failed to restore branch assignment.'
                     );
                 }
             });
@@ -1190,7 +1601,7 @@ implements OnInit
                     (
                         'History',
 
-                        'Failed to load branchAssignment history.'
+                        'Failed to load branch assignment history.'
                     );
                 }
             });

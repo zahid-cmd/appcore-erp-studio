@@ -1,90 +1,106 @@
-/* ============================================================
-   Branch Assignment
-============================================================ */
+//===============================================================
+// Branch Assignment Model
+//===============================================================
 
 export interface BranchAssignment
 {
-    id:
+    //===========================================================
+    // Primary Key
+    //===========================================================
+
+    branchAssignmentId:
         number;
 
-    code:
-        string;
 
-    name:
-        string;
+    //===========================================================
+    // User Profile
+    //===========================================================
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   Create Branch Assignment
-============================================================ */
-
-export interface CreateBranchAssignment
-{
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   Update Branch Assignment
-============================================================ */
-
-export interface UpdateBranchAssignment
-{
-    id:
+    userProfileId:
         number;
 
-    name:
+    userProfileCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    userProfileName:
         string;
 
-    status:
+    displayName?:
         string;
 
-    remarks:
+    fullName?:
         string;
+
+
+    //===========================================================
+    // Branch Assignment Summary
+    //===========================================================
+
+    branchCount:
+        number;
+
+
+    //===========================================================
+    // Default Branch
+    //===========================================================
+
+    defaultBranchName?:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    isActive:
+        boolean;
+
+
+    //===========================================================
+    // Details
+    //===========================================================
+
+    details:
+        BranchAssignmentDetail[];
 }
 
 
 
-/* ============================================================
-   Branch Assignment Defaults
-============================================================ */
+//===============================================================
+// Branch Assignment Detail
+//===============================================================
 
-export interface BranchAssignmentDefaults
+export interface BranchAssignmentDetail
 {
-    code:
+    //===========================================================
+    // Primary Key
+    //===========================================================
+
+    branchAssignmentDetailId:
+        number;
+
+    branchAssignmentId:
+        number;
+
+
+    //===========================================================
+    // Branch
+    //===========================================================
+
+    branchId:
+        number;
+
+    branchCode:
         string;
+
+    branchName:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    isActive:
+        boolean;
 }

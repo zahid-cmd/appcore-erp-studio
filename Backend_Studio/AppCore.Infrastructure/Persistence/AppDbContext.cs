@@ -540,6 +540,17 @@ public class AppDbContext
 
     // AUTO-END : Warehouses
 
+    // AUTO-BEGIN : BranchAssignment
+
+    public DbSet<AppCore.Domain.Entities.SecurityPermission.UserManagement.BranchAssignment>
+    BranchAssignments
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BranchAssignment
+
     // AUTO-END : AUTO REGISTER DBSETS
 
     //===========================================================

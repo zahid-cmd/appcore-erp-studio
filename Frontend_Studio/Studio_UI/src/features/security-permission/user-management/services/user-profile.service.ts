@@ -9,11 +9,13 @@ import
 }
 from '@angular/core';
 
+
 import
 {
     HttpClient
 }
 from '@angular/common/http';
+
 
 import
 {
@@ -25,11 +27,13 @@ import
 }
 from 'rxjs';
 
+
 import
 {
     environment
 }
 from '../../../../environments/environment';
+
 
 import
 {
@@ -146,6 +150,11 @@ export class UserProfileService
                                         0
                                     ),
 
+
+                                //================================
+                                // Display Name
+                                //================================
+
                                 displayName:
                                     this.getFirstNonEmptyValue
                                     (
@@ -161,6 +170,20 @@ export class UserProfileService
 
                                         profile.UserName
                                     ),
+
+
+                                //================================
+                                // Full Name
+                                //================================
+
+                                fullName:
+                                    this.getFirstNonEmptyValue
+                                    (
+                                        profile.fullName,
+
+                                        profile.FullName
+                                    ),
+
 
                                 //================================
                                 // Primary Role / Designation
@@ -182,6 +205,7 @@ export class UserProfileService
                                         profile.roleName
                                     ),
 
+
                                 UserPhotoPath:
                                     this.getFirstNonEmptyValue
                                     (
@@ -190,6 +214,7 @@ export class UserProfileService
                                         profile.userPhotoPath
                                     ),
 
+
                                 UserPhotoData:
                                     this.getFirstNonEmptyValue
                                     (
@@ -197,6 +222,7 @@ export class UserProfileService
 
                                         profile.userPhotoData
                                     ),
+
 
                                 IsActive:
                                     Boolean

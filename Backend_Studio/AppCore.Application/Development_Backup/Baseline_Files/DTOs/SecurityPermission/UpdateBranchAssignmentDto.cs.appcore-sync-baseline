@@ -2,34 +2,20 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.SecurityPermission.UserManagement.BranchAssignment.DTOs;
+namespace AppCore.Application.SecurityPermission.UserManagement;
 
 
 //===============================================================
-// Update Branch Assignment DTO
+// UpdateBranchAssignmentDto
 //===============================================================
 
 public class UpdateBranchAssignmentDto
 {
     //===========================================================
-    // Branch Assignment
+    // Primary Key
     //===========================================================
 
-    public long BranchAssignmentId
-    {
-        get;
-        set;
-    }
-
-
-    public long UserProfileId
-    {
-        get;
-        set;
-    }
-
-
-    public bool IsActive
+    public long Id
     {
         get;
         set;
@@ -37,46 +23,62 @@ public class UpdateBranchAssignmentDto
 
 
     //===========================================================
-    // Details
+    // Name
     //===========================================================
 
-    public List<UpdateBranchAssignmentDetailDto> Details
+    public string Name
     {
         get;
         set;
     }
     =
-        new();
-}
+        string.Empty;
 
 
-//===============================================================
-// Update Branch Assignment Detail DTO
-//===============================================================
-
-public class UpdateBranchAssignmentDetailDto
-{
     //===========================================================
-    // Branch Assignment Detail
+    // Sample Search Dropdown
     //===========================================================
 
-    public long BranchAssignmentDetailId
+    public long? SampleSearchDropdownId
     {
         get;
         set;
     }
 
 
-    public long BranchId
+    //===========================================================
+    // Sample Field
+    //===========================================================
+
+    public string SampleField
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool Status
     {
         get;
         set;
     }
 
 
-    public bool IsActive
+    //===========================================================
+    // Remarks
+    //===========================================================
+
+    public string Remarks
     {
         get;
         set;
     }
+    =
+        string.Empty;
 }

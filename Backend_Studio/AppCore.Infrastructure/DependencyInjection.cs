@@ -149,6 +149,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : BranchAssignment
+
+using AppCore.Application.SecurityPermission.UserManagement;
+using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
+
+// AUTO-END : BranchAssignment
+
 // AUTO-BEGIN : Warehouses
 
 using AppCore.Application.Settings.GeneralSettings;
@@ -570,6 +577,16 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : BranchAssignment
+
+        services.AddScoped
+        <
+            IBranchAssignmentRepository,
+            BranchAssignmentRepository
+        >();
+
+        // AUTO-END : BranchAssignment
 
         // AUTO-BEGIN : Warehouses
 

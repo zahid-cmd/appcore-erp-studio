@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.SecurityPermission.UserManagement.BranchAssignment.DTOs;
+using AppCore.Application.Common.ActivityHistory.DTOs;
 
 
 //===============================================================
@@ -18,45 +18,26 @@ namespace AppCore.Application.SecurityPermission.UserManagement;
 
 public interface IBranchAssignmentRepository
 {
-    //===========================================================
-    // Defaults
-    //===========================================================
-
-    Task<BranchAssignmentDefaultsDto>
-        GetDefaultsAsync();
-
 
     //===========================================================
-    // Branch Assignment
+    // Get All
     //===========================================================
 
-    Task<List<BranchAssignmentDto>>
+    Task<IReadOnlyList<global::AppCore.Domain.Entities.SecurityPermission.UserManagement.BranchAssignment>>
         GetAllAsync();
 
 
-    Task<BranchAssignmentDto?>
+
+    //===========================================================
+    // Get By Id
+    //===========================================================
+
+    Task<global::AppCore.Domain.Entities.SecurityPermission.UserManagement.BranchAssignment?>
         GetByIdAsync
-        (
-            long branchAssignmentId
-        );
+    (
+        long id
+    );
 
-
-    Task<BranchAssignmentDto?>
-        GetByUserProfileIdAsync
-        (
-            long userProfileId
-        );
-
-
-    //===========================================================
-    // Check User Profile Assignment
-    //===========================================================
-
-    Task<bool>
-        ExistsByUserProfileIdAsync
-        (
-            long userProfileId
-        );
 
 
     //===========================================================
@@ -65,37 +46,65 @@ public interface IBranchAssignmentRepository
 
     Task<long>
         CreateAsync
-        (
-            CreateBranchAssignmentDto dto
-        );
+    (
+        global::AppCore.Domain.Entities.SecurityPermission.UserManagement.BranchAssignment entity
+    );
+
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task<bool>
+    Task
         UpdateAsync
-        (
-            UpdateBranchAssignmentDto dto
-        );
+    (
+        global::AppCore.Domain.Entities.SecurityPermission.UserManagement.BranchAssignment entity
+    );
+
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task<bool>
+    Task
         DeleteAsync
-        (
-            long branchAssignmentId
-        );
+    (
+        long id
+    );
+
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task<bool>
-        RestoreLastDeletedAsync();
+    Task
+        RestoreAsync
+    (
+        long id
+    );
+
+
+
+    //===========================================================
+    // Get History
+    //===========================================================
+
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetHistoryAsync();
+
+
+
+    //===========================================================
+    // Get Entity History
+    //===========================================================
+
+    Task<IReadOnlyList<ActivityHistoryDto>>
+        GetEntityHistoryAsync
+    (
+        long id
+    );
+
 }

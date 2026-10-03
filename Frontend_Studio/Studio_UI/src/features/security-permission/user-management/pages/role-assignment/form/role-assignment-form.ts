@@ -1456,13 +1456,13 @@ implements OnInit
         )
         {
             this.roleAssignment.userProfileName =
-                selectedUser.displayName
-                ??
-                selectedUser.DisplayName
-                ??
                 selectedUser.fullName
                 ??
                 selectedUser.FullName
+                ??
+                selectedUser.displayName
+                ??
+                selectedUser.DisplayName
                 ??
                 selectedUser.userName
                 ??

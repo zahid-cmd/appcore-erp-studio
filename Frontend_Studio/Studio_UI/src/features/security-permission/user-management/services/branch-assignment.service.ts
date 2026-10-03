@@ -9,17 +9,23 @@ import
 }
 from '@angular/core';
 
-import
-{
-    HttpClient
-}
-from '@angular/common/http';
 
 import
 {
-    Observable
+    HttpClient,
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+
+import
+{
+    Observable,
+    catchError,
+    throwError
 }
 from 'rxjs';
+
 
 import
 {
@@ -27,24 +33,22 @@ import
 }
 from '../../../../environments/environment';
 
+
 import
 {
-    BranchAssignment,
-
-    CreateBranchAssignment,
-
-    UpdateBranchAssignment
+    BranchAssignment
 }
 from '../models/branch-assignment.model';
 
 
 //===============================================================
-// Branch Assignment Service
+// Service
 //===============================================================
 
 @Injectable(
 {
-    providedIn:'root'
+    providedIn:
+        'root'
 })
 
 
@@ -52,21 +56,28 @@ export class BranchAssignmentService
 {
 
     //===========================================================
-    // Injection
+    // Fields
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
 
 
-
-    //===========================================================
-    // API
-    //===========================================================
-
     private readonly apiUrl =
         `${environment.apiUrl}/security-permission/user-management/branch-assignment`;
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<BranchAssignment>
+    {
+        return this.http.get<BranchAssignment>(
+            `${this.apiUrl}/defaults`
+        );
+    }
 
 
     //===========================================================
@@ -81,6 +92,18 @@ export class BranchAssignmentService
         );
     }
 
+
+    //===========================================================
+    // Get List History
+    //===========================================================
+
+    getHistory():
+        Observable<any[]>
+    {
+        return this.http.get<any[]>(
+            `${this.apiUrl}/history`
+        );
+    }
 
 
     //===========================================================
@@ -100,93 +123,21 @@ export class BranchAssignmentService
     }
 
 
-
     //===========================================================
-    // Create
+    // Get By User Profile Id
     //===========================================================
 
-    create
+    getByUserProfileId
     (
-        model:
-            CreateBranchAssignment
-    ):
-        Observable<number>
-    {
-        return this.http.post<number>(
-            this.apiUrl,
-
-            model
-        );
-    }
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    update
-    (
-        model:
-            UpdateBranchAssignment
-    ):
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
-            model
-        );
-    }
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    delete
-    (
-        id:
+        userProfileId:
             number
     ):
-        Observable<void>
+        Observable<BranchAssignment>
     {
-        return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
+        return this.http.get<BranchAssignment>(
+            `${this.apiUrl}/user-profile/${userProfileId}`
         );
     }
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    restore():
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/restore`,
-
-            {}
-        );
-    }
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    getHistory():
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/history`
-        );
-    }
-
 
 
     //===========================================================
@@ -202,6 +153,200 @@ export class BranchAssignmentService
     {
         return this.http.get<any[]>(
             `${this.apiUrl}/${id}/history`
+        );
+    }
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    create
+    (
+        branchAssignment:
+            BranchAssignment
+    ):
+        Observable<number>
+    {
+        return this.http.post<number>(
+            this.apiUrl,
+
+            branchAssignment
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    //===========================================
+                    // Log complete API error
+                    //===========================================
+
+                    console.error(
+                        'Branch Assignment Create API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Branch Assignment Create API Error Body:',
+                        error.error
+                    );
+
+
+                    //===========================================
+                    // Preserve original HttpErrorResponse
+                    //===========================================
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
+        );
+    }
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    update
+    (
+        branchAssignment:
+            BranchAssignment
+    ):
+        Observable<void>
+    {
+        return this.http.put<void>(
+            this.apiUrl,
+
+            branchAssignment
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    //===========================================
+                    // Log complete API error
+                    //===========================================
+
+                    console.error(
+                        'Branch Assignment Update API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Branch Assignment Update API Error Body:',
+                        error.error
+                    );
+
+
+                    //===========================================
+                    // Preserve original HttpErrorResponse
+                    //===========================================
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
+        );
+    }
+
+
+    //===========================================================
+    // Delete
+    //===========================================================
+
+    delete
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.delete<void>(
+            `${this.apiUrl}/${id}`
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    console.error(
+                        'Branch Assignment Delete API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Branch Assignment Delete API Error Body:',
+                        error.error
+                    );
+
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
+        );
+    }
+
+
+    //===========================================================
+    // Restore
+    //===========================================================
+
+    restore():
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.apiUrl}/restore`,
+
+            {}
+        )
+        .pipe(
+
+            catchError(
+                (
+                    error:
+                        HttpErrorResponse
+                ) =>
+                {
+                    console.error(
+                        'Branch Assignment Restore API Error:',
+                        error
+                    );
+
+
+                    console.error(
+                        'Branch Assignment Restore API Error Body:',
+                        error.error
+                    );
+
+
+                    return throwError(
+                        () =>
+                            error
+                    );
+                }
+            )
         );
     }
 

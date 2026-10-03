@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Domain.Common;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,7 +6,7 @@ namespace AppCore.Domain.Entities.SecurityPermission.UserManagement;
 
 
 //===============================================================
-// Branch Assignment
+// BranchAssignment
 //===============================================================
 
 public class BranchAssignment
@@ -22,7 +15,7 @@ public class BranchAssignment
     // Primary Key
     //===========================================================
 
-    public long BranchAssignmentId
+    public long Id
     {
         get;
         set;
@@ -30,18 +23,81 @@ public class BranchAssignment
 
 
     //===========================================================
-    // User Profile
+    // Code
     //===========================================================
 
-    public long UserProfileId
+    public string Code
     {
         get;
         set;
     }
+    =
+        string.Empty;
+
+
+    //===========================================================
+    // Name
+    //===========================================================
+
+    public string Name
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    //===========================================================
+    // Sample Search Dropdown
+    //===========================================================
+
+    public long? SampleSearchDropdownId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Sample Field
+    //===========================================================
+
+    public string SampleField
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
 
 
     //===========================================================
     // Status
+    //===========================================================
+
+    public bool Status
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Remarks
+    //===========================================================
+
+    public string Remarks
+    {
+        get;
+        set;
+    }
+    =
+        string.Empty;
+
+
+    //===========================================================
+    // Active
     //===========================================================
 
     public bool IsActive
@@ -49,31 +105,24 @@ public class BranchAssignment
         get;
         set;
     }
-    =
-        true;
 
+
+    //===========================================================
+    // Deleted
+    //===========================================================
 
     public bool IsDeleted
     {
         get;
         set;
     }
-    =
-        false;
 
 
     //===========================================================
-    // Delete Audit
+    // Created By
     //===========================================================
 
-    public long? DeletedBy
-    {
-        get;
-        set;
-    }
-
-
-    public DateTime? DeletedDate
+    public long CreatedBy
     {
         get;
         set;
@@ -81,27 +130,18 @@ public class BranchAssignment
 
 
     //===========================================================
-    // Create Audit
+    // Created Date
     //===========================================================
-
-    public long? CreatedBy
-    {
-        get;
-        set;
-    }
-
 
     public DateTime CreatedDate
     {
         get;
         set;
     }
-    =
-        DateTime.UtcNow;
 
 
     //===========================================================
-    // Modify Audit
+    // Modified By
     //===========================================================
 
     public long? ModifiedBy
@@ -111,155 +151,13 @@ public class BranchAssignment
     }
 
 
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
-
-
     //===========================================================
-    // Details
+    // Modified Date
     //===========================================================
-
-    public virtual ICollection<BranchAssignmentDetail>
-        Details
-    {
-        get;
-        set;
-    }
-    =
-        new List<BranchAssignmentDetail>();
-}
-
-
-//===============================================================
-// Branch Assignment Detail
-//===============================================================
-
-public class BranchAssignmentDetail
-{
-    //===========================================================
-    // Primary Key
-    //===========================================================
-
-    public long BranchAssignmentDetailId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Branch Assignment
-    //===========================================================
-
-    public long BranchAssignmentId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Branch
-    //===========================================================
-
-    public long BranchId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool IsActive
-    {
-        get;
-        set;
-    }
-    =
-        true;
-
-
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
-    =
-        false;
-
-
-    //===========================================================
-    // Delete Audit
-    //===========================================================
-
-    public long? DeletedBy
-    {
-        get;
-        set;
-    }
-
-
-    public DateTime? DeletedDate
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Create Audit
-    //===========================================================
-
-    public long? CreatedBy
-    {
-        get;
-        set;
-    }
-
-
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
-    =
-        DateTime.UtcNow;
-
-
-    //===========================================================
-    // Modify Audit
-    //===========================================================
-
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
 
     public DateTime? ModifiedDate
     {
         get;
         set;
     }
-
-
-    //===========================================================
-    // Branch Assignment
-    //===========================================================
-
-    public virtual BranchAssignment
-        BranchAssignment
-    {
-        get;
-        set;
-    }
-    =
-        null!;
 }

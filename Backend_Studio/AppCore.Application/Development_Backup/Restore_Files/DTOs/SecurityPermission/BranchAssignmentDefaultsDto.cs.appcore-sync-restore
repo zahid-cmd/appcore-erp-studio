@@ -2,22 +2,24 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.SecurityPermission.UserManagement.BranchAssignment.DTOs;
+namespace AppCore.Application.SecurityPermission.UserManagement;
 
 
 //===============================================================
-// Branch Assignment Defaults DTO
+// BranchAssignmentDefaultsDto
 //===============================================================
 
 public class BranchAssignmentDefaultsDto
 {
     //===========================================================
-    // User Profile
+    // Code
     //===========================================================
 
-    public long UserProfileId
+    public string Code
     {
         get;
         set;
     }
+    =
+        string.Empty;
 }

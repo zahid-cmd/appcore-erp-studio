@@ -6,11 +6,30 @@
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-code-branch"
 
         [title]="pageTitle"
 
-        subtitle="Manage branchassignments">
+        subtitle="Manage branch assignments.">
+
+        <!-- =================================================
+             CENTER
+        ================================================== -->
+
+        <app-record-counter
+
+            pageHeaderCenter
+
+            [sections]="recordCounterSections"
+
+            [compact]="true">
+
+        </app-record-counter>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
 
         <app-command-center
 
@@ -48,17 +67,149 @@
          PAGE TOOLBAR
     ====================================================== -->
 
-    <app-page-toolbar>
+    <app-page-toolbar
 
-        <app-control-tabs
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div
 
             pageToolbarLeft
 
-            [tabs]="tabs"
+            class="branch-toolbar-left">
 
-            [(selectedTab)]="selectedTab">
+            <app-control-tabs
 
-        </app-control-tabs>
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab"
+
+                (selectedTabChange)="onTabChange($event)">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            class="branch-toolbar-right">
+
+
+            <!-- =============================================
+                 USER PROFILE
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select User Profile"
+
+                [items]="userProfiles"
+
+                labelField="fullName"
+
+                valueField="userProfileId"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    isUserProfileLocked
+                "
+
+                [(value)]="selectedUserProfileId"
+
+                (valueChange)="onUserProfileChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 BRANCH
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Branch"
+
+                [items]="branches"
+
+                labelField="BranchName"
+
+                valueField="BranchId"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedBranchId"
+
+                (valueChange)="onBranchChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 ADD BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="branch-add-button"
+
+                [disabled]="addDisabled"
+
+                (click)="onAddSelection()">
+
+                <i class="fas fa-plus"></i>
+
+                <span>
+                    Add
+                </span>
+
+            </button>
+
+
+
+            <!-- =============================================
+                 RESET BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="branch-reset-button"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    selectedBranchId == null
+                "
+
+                (click)="onResetSelection()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>
+                    Reset
+                </span>
+
+            </button>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -68,195 +219,316 @@
          PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
 
-        <app-form-grid
+        [config]="canvasConfig">
 
-            canvasBody
+        <!-- =================================================
+             BODY
+        ================================================== -->
 
-            [columns]="4">
+        <ng-container canvasBody>
 
+            <!-- =================================================
+                 BRANCH ASSIGNMENT TABLE CONTAINER
+            ================================================== -->
 
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
+            <div class="branch-assignment-table-container">
 
-            <app-form-section
+                <!-- =============================================
+                     TABLE
+                ============================================== -->
 
-                title="General Information"
+                <table class="branch-assignment-table">
 
-                icon="fas fa-circle-info">
+                    <!-- =========================================
+                         TABLE HEADER
+                    ========================================== -->
 
+                    <thead>
 
-                <!-- Code -->
+                        <tr>
 
-                <app-textbox
+                            <!-- =================================
+                                 SERIAL
+                            ================================== -->
 
-                    label="Code"
+                            <th
 
-                    placeholder="Auto generated"
+                                class="col-serial"
 
-                    [(value)]="entity.code"
+                                [style.width]="
+                                    columns[0].width
+                                ">
 
-                    [readonly]="true"
+                                #
 
-                    [required]="true">
+                            </th>
 
-                </app-textbox>
 
 
+                            <!-- =================================
+                                 BRANCH CODE
+                            ================================== -->
 
-                <!-- Name -->
+                            <th
 
-                <app-textbox
+                                class="col-code"
 
-                    label="Name"
+                                [style.width]="
+                                    columns[1].width
+                                ">
 
-                    placeholder="Enter name"
+                                Branch Code
 
-                    [(value)]="entity.name"
+                            </th>
 
-                    (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
 
-                    [required]="true">
+                            <!-- =================================
+                                 BRANCH
+                            ================================== -->
 
-                </app-textbox>
+                            <th
 
+                                class="col-name">
 
-            </app-form-section>
+                                Branch
 
+                            </th>
 
 
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
 
-            <app-form-section
+                            <!-- =================================
+                                 ACTION
+                            ================================== -->
 
-                title="Sample Information"
+                            <th
 
-                icon="fas fa-layer-group">
+                                class="col-action"
 
+                                [style.width]="
+                                    columns[3].width
+                                ">
 
-                <!-- Sample Search Dropdown -->
+                                Actions
 
-                <app-search-dropdown
+                            </th>
 
-                    label="Sample Search Dropdown"
+                        </tr>
 
-                    [items]="items"
+                    </thead>
 
-                    labelField="text"
 
-                    valueField="value"
 
-                    [(value)]="entity.sampleSearchDropdownId"
+                    <!-- =========================================
+                         TABLE BODY
+                    ========================================== -->
 
-                    (valueChange)="onValueChange()"
+                    <tbody>
 
-                    [disabled]="isViewMode">
 
-                </app-search-dropdown>
+                        <!-- =====================================
+                             DATA ROWS
+                        ====================================== -->
 
+                        <tr
 
+                            *ngFor="
+                                let row of pagedBranchAssignmentRows;
+                                let i = index
+                            "
 
-                <!-- Sample Field -->
+                            class="branch-data-row">
 
-                <app-textbox
 
-                    label="Sample Field"
+                            <!-- =================================
+                                 SERIAL
+                            ================================== -->
 
-                    placeholder="Enter sample value"
+                            <td
 
-                    [(value)]="entity.sampleField"
+                                class="col-serial"
 
-                    (valueChange)="onValueChange()"
+                                [style.width]="
+                                    columns[0].width
+                                ">
 
-                    [disabled]="isViewMode">
+                                {{
+                                    (
+                                        (
+                                            currentPage - 1
+                                        )
+                                        *
+                                        pageSize
+                                    )
+                                    +
+                                    i
+                                    +
+                                    1
+                                }}
 
-                </app-textbox>
+                            </td>
 
 
-            </app-form-section>
 
+                            <!-- =================================
+                                 BRANCH CODE
+                            ================================== -->
 
+                            <td
 
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
+                                class="col-code"
 
-            <app-form-section
+                                [style.width]="
+                                    columns[1].width
+                                "
 
-                title="Status Information"
+                                [title]="
+                                    row.branchCode
+                                ">
 
-                icon="fas fa-toggle-on">
+                                {{
+                                    row.branchCode
+                                    ||
+                                    '-'
+                                }}
 
+                            </td>
 
-                <!-- Status -->
 
-                <app-dropdown
 
-                    label="Status"
+                            <!-- =================================
+                                 BRANCH
+                            ================================== -->
 
-                    [items]="statusItems"
+                            <td
 
-                    labelField="text"
+                                class="col-name"
 
-                    valueField="value"
+                                [title]="
+                                    row.branchName
+                                ">
 
-                    [(value)]="entity.status"
+                                {{
+                                    row.branchName
+                                    ||
+                                    '-'
+                                }}
 
-                    (valueChange)="onValueChange()"
+                            </td>
 
-                    [disabled]="isViewMode"
 
-                    [required]="true">
 
-                </app-dropdown>
+                            <!-- =================================
+                                 ACTION
+                            ================================== -->
 
+                            <td
 
-            </app-form-section>
+                                class="col-action"
 
+                                [style.width]="
+                                    columns[3].width
+                                ">
 
 
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
+                                <button
 
-            <app-form-section
+                                    type="button"
 
-                title="Additional Information"
+                                    class="branch-remove-button"
 
-                icon="fas fa-clipboard">
+                                    [disabled]="isViewMode"
 
+                                    title="Remove Branch"
 
-                <!-- Remarks -->
+                                    (click)="
+                                        onRemoveAssignment(row)
+                                    ">
 
-                <app-textarea
+                                    <i class="fas fa-trash"></i>
 
-                    label="Remarks"
+                                </button>
 
-                    placeholder="Enter remarks"
+                            </td>
 
-                    [(value)]="entity.remarks"
+                        </tr>
 
-                    (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
 
-                </app-textarea>
+                        <!-- =====================================
+                             EMPTY STATE
+                        ====================================== -->
 
+                        <tr
 
-            </app-form-section>
+                            *ngIf="
+                                branchAssignmentRows.length === 0
+                            "
 
+                            class="empty-row">
 
-        </app-form-grid>
+                            <td
+
+                                colspan="4"
+
+                                class="empty-cell">
+
+                                <div class="branch-empty-state">
+
+                                    <i class="fas fa-code-branch"></i>
+
+                                    <div>
+
+                                        <strong>
+                                            No Branches Assigned
+                                        </strong>
+
+                                        <span>
+                                            Select a User Profile and Branch, then click Add.
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </ng-container>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <ng-container canvasFooter>
+
+            <app-pagination
+
+                [totalRecords]="branchAssignmentRows.length"
+
+                [currentPage]="currentPage"
+
+                [pageSize]="pageSize"
+
+                (pageChange)="onPageChange($event)"
+
+                (pageSizeChange)="onPageSizeChange($event)">
+
+            </app-pagination>
+
+        </ng-container>
 
     </app-page-canvas>
 
@@ -264,10 +536,12 @@
 
 
 
-<!-- =====================================================
+<!-- =========================================================
      UTILITIES
-====================================================== -->
+========================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>
