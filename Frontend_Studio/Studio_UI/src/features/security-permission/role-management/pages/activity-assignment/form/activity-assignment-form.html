@@ -41,7 +41,11 @@
 
             (command1Click)="onSave()"
 
-            [command1Visible]="!isViewMode"
+            [command1Visible]="
+                mode === 'add'
+                    ? canAdd
+                    : canUpdate
+            "
 
             command2Text="Clear"
 
@@ -235,6 +239,8 @@
             ============================================== -->
 
             <button
+
+                *ngIf="canAdd"
 
                 type="button"
 

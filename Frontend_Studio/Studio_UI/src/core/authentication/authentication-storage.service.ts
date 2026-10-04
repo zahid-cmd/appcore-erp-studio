@@ -59,6 +59,14 @@ export class AuthenticationStorageService
        is enabled.
 
        Password is NEVER stored.
+
+       Branch context:
+
+           The final Branch ID is stored from the JWT
+           branchId claim.
+
+           The matching Branch Code and Branch Name are
+           resolved from the Login Response branch list.
     ======================================================== */
 
     setAuthentication
@@ -138,6 +146,35 @@ export class AuthenticationStorageService
 
 
         //=======================================================
+        // Read Branch ID From JWT
+        //=======================================================
+
+        const branchId:
+            number
+            | null =
+                this.getBranchIdFromToken(
+                    response.token
+                );
+
+
+
+        //=======================================================
+        // Resolve Branch Information
+        //=======================================================
+
+        const selectedBranch =
+            response.branches?.find
+            (
+                branch =>
+                    branch.branchId ===
+                    branchId
+            )
+            ??
+            null;
+
+
+
+        //=======================================================
         // Store Authenticated User
         //=======================================================
 
@@ -160,91 +197,17 @@ export class AuthenticationStorageService
                     response.fullName,
 
                 branchId:
-                    response.branches
-                        ?.find
-                        (
-                            branch =>
-                                branch.branchId
-                                ===
-                                Number
-                                (
-                                    response.token
-                                        ?
-                                        (
-                                            JSON.parse
-                                            (
-                                                atob
-                                                (
-                                                    response.token
-                                                        .split('.')[1]
-                                                )
-                                            )
-                                        ).branchId
-                                        :
-                                        0
-                                )
-                        )
-                        ?.branchId
-                        ??
-                        null,
+                    branchId,
 
                 branchCode:
-                    response.branches
-                        ?.find
-                        (
-                            branch =>
-                                branch.branchId
-                                ===
-                                Number
-                                (
-                                    response.token
-                                        ?
-                                        (
-                                            JSON.parse
-                                            (
-                                                atob
-                                                (
-                                                    response.token
-                                                        .split('.')[1]
-                                                )
-                                            )
-                                        ).branchId
-                                        :
-                                        0
-                                )
-                        )
-                        ?.branchCode
-                        ??
-                        '',
+                    selectedBranch?.branchCode
+                    ??
+                    '',
 
                 branchName:
-                    response.branches
-                        ?.find
-                        (
-                            branch =>
-                                branch.branchId
-                                ===
-                                Number
-                                (
-                                    response.token
-                                        ?
-                                        (
-                                            JSON.parse
-                                            (
-                                                atob
-                                                (
-                                                    response.token
-                                                        .split('.')[1]
-                                                )
-                                            )
-                                        ).branchId
-                                        :
-                                        0
-                                )
-                        )
-                        ?.branchName
-                        ??
-                        '',
+                    selectedBranch?.branchName
+                    ??
+                    '',
 
                 userPhotoPath:
                     (
@@ -274,6 +237,127 @@ export class AuthenticationStorageService
                     ''
             })
         );
+    }
+
+
+
+    /* ========================================================
+       Get Branch ID From Token
+       --------------------------------------------------------
+       The JWT branchId claim is the authoritative operational
+       branch context for the authenticated session.
+
+       This method only reads the token payload.
+
+       It does NOT validate the token.
+       Token validation remains the responsibility of the
+       authentication/backend security layer.
+    ======================================================== */
+
+    private getBranchIdFromToken
+    (
+        token:
+            string
+    ):
+        number
+        | null
+    {
+        if
+        (
+            !token
+            ||
+            !token.trim()
+        )
+        {
+            return null;
+        }
+
+
+        try
+        {
+            const tokenParts:
+                string[] =
+                    token.split('.');
+
+
+            if
+            (
+                tokenParts.length <
+                2
+            )
+            {
+                return null;
+            }
+
+
+            const encodedPayload:
+                string =
+                    tokenParts[1];
+
+
+            const normalizedPayload:
+                string =
+                    encodedPayload
+                        .replace(/-/g, '+')
+                        .replace(/_/g, '/');
+
+
+            const paddedPayload:
+                string =
+                    normalizedPayload.padEnd
+                    (
+                        normalizedPayload.length
+                        +
+                        (
+                            4
+                            -
+                            normalizedPayload.length % 4
+                        ) % 4,
+                        '='
+                    );
+
+
+            const payload:
+                {
+                    branchId?:
+                        number
+                        | string;
+                } =
+                    JSON.parse
+                    (
+                        atob(
+                            paddedPayload
+                        )
+                    );
+
+
+            const branchId:
+                number =
+                    Number(
+                        payload.branchId
+                    );
+
+
+            if
+            (
+                !Number.isFinite(
+                    branchId
+                )
+                ||
+                branchId <=
+                0
+            )
+            {
+                return null;
+            }
+
+
+            return branchId;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
 

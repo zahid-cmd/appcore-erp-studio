@@ -5,7 +5,8 @@ import
   Input,
   Output,
   OnChanges,
-  SimpleChanges
+  SimpleChanges,
+  inject
 }
 from '@angular/core';
 
@@ -14,6 +15,18 @@ import
   CommonModule
 }
 from '@angular/common';
+
+import
+{
+  SidebarService
+}
+from '../../../../core/sidebar/sidebar.service';
+
+import
+{
+  EffectiveAccessService
+}
+from '../../../../core/effective-access/effective-access.service';
 
 @Component(
 {
@@ -37,6 +50,17 @@ export class CommandCenterComponent
 implements OnChanges
 {
   /* =====================================================
+     DEPENDENCIES
+  ====================================================== */
+
+  private readonly sidebarService =
+    inject(SidebarService);
+
+  private readonly effectiveAccessService =
+    inject(EffectiveAccessService);
+
+
+  /* =====================================================
      PREVIEW MODE
   ====================================================== */
 
@@ -55,6 +79,17 @@ implements OnChanges
 
   @Input() command1Visible = true;
 
+  @Input()
+  command1Permission:
+    'add'
+    |
+    'update'
+    |
+    'restore'
+    |
+    '' =
+    '';
+
   @Output() command1Click =
     new EventEmitter<void>();
 
@@ -69,6 +104,17 @@ implements OnChanges
 
   @Input() command2Visible = true;
 
+  @Input()
+  command2Permission:
+    'add'
+    |
+    'update'
+    |
+    'restore'
+    |
+    '' =
+    '';
+
   @Output() command2Click =
     new EventEmitter<void>();
 
@@ -82,6 +128,17 @@ implements OnChanges
   @Input() command3Icon = '';
 
   @Input() command3Visible = true;
+
+  @Input()
+  command3Permission:
+    'add'
+    |
+    'update'
+    |
+    'restore'
+    |
+    '' =
+    '';
 
   @Output() command3Click =
     new EventEmitter<void>();
@@ -168,12 +225,341 @@ implements OnChanges
 
 
   /* =====================================================
+     CURRENT SUBMENU ID
+  ====================================================== */
+
+  private getCurrentSubMenuId():
+    number | null
+  {
+    return this.sidebarService
+      .getCurrentNavigationContext()
+      .subMenuId;
+  }
+
+
+  /* =====================================================
+     RESOLVE COMMAND PERMISSION
+  ====================================================== */
+
+  private resolveCommandPermission
+  (
+    text: string,
+
+    explicitPermission:
+      'add'
+      |
+      'update'
+      |
+      'restore'
+      |
+      ''
+  ):
+    'add'
+    |
+    'update'
+    |
+    'restore'
+    |
+    ''
+  {
+    if
+    (
+      explicitPermission
+    )
+    {
+      return explicitPermission;
+    }
+
+
+    const normalizedText =
+      text
+        .trim()
+        .toLowerCase();
+
+
+    if
+    (
+      normalizedText
+      ===
+      'add'
+    )
+    {
+      return 'add';
+    }
+
+
+    if
+    (
+      normalizedText
+      ===
+      'save'
+    )
+    {
+      return 'add';
+    }
+
+
+    if
+    (
+      normalizedText
+      ===
+      'update'
+    )
+    {
+      return 'update';
+    }
+
+
+    if
+    (
+      normalizedText
+      ===
+      'restore'
+    )
+    {
+      return 'restore';
+    }
+
+
+    return '';
+  }
+
+
+  /* =====================================================
+     CHECK COMMAND PERMISSION
+  ====================================================== */
+
+  private hasCommandPermission
+  (
+    text: string,
+
+    explicitPermission:
+      'add'
+      |
+      'update'
+      |
+      'restore'
+      |
+      ''
+  ):
+    boolean
+  {
+    const permission =
+      this.resolveCommandPermission(
+        text,
+
+        explicitPermission
+      );
+
+
+    if
+    (
+      !permission
+    )
+    {
+      return true;
+    }
+
+
+    const subMenuId =
+      this.getCurrentSubMenuId();
+
+
+    if
+    (
+      subMenuId === null
+    )
+    {
+      return false;
+    }
+
+
+    if
+    (
+      permission
+      ===
+      'add'
+    )
+    {
+      return this.effectiveAccessService
+        .canAdd(
+          subMenuId
+        );
+    }
+
+
+    if
+    (
+      permission
+      ===
+      'update'
+    )
+    {
+      return this.effectiveAccessService
+        .canUpdate(
+          subMenuId
+        );
+    }
+
+
+    if
+    (
+      permission
+      ===
+      'restore'
+    )
+    {
+      return this.effectiveAccessService
+        .canRestore(
+          subMenuId
+        );
+    }
+
+
+    return true;
+  }
+
+
+  /* =====================================================
+     COMMAND 1 VISIBILITY
+  ====================================================== */
+
+  isCommand1Visible():
+    boolean
+  {
+    return (
+      this.command1Visible
+
+      &&
+
+      !!(
+        this.command1Text
+        ||
+        this.command1Icon
+      )
+
+      &&
+
+      this.hasCommandPermission(
+        this.command1Text,
+
+        this.command1Permission
+      )
+    );
+  }
+
+
+  /* =====================================================
+     COMMAND 2 VISIBILITY
+  ====================================================== */
+
+  isCommand2Visible():
+    boolean
+  {
+    return (
+      this.command2Visible
+
+      &&
+
+      !!(
+        this.command2Text
+        ||
+        this.command2Icon
+      )
+
+      &&
+
+      this.hasCommandPermission(
+        this.command2Text,
+
+        this.command2Permission
+      )
+    );
+  }
+
+
+  /* =====================================================
+     COMMAND 3 VISIBILITY
+  ====================================================== */
+
+  isCommand3Visible():
+    boolean
+  {
+    return (
+      this.command3Visible
+
+      &&
+
+      !!(
+        this.command3Text
+        ||
+        this.command3Icon
+      )
+
+      &&
+
+      this.hasCommandPermission(
+        this.command3Text,
+
+        this.command3Permission
+      )
+    );
+  }
+
+
+  /* =====================================================
+     RIGHT COMMAND VISIBILITY
+  ====================================================== */
+
+  isRightCommandVisible():
+    boolean
+  {
+    return (
+      this.rightCommandVisible
+
+      &&
+
+      !!this.rightCommandIcon
+    );
+  }
+
+
+  /* =====================================================
+     LEFT COMMAND VISIBILITY
+  ====================================================== */
+
+  hasVisibleLeftCommands():
+    boolean
+  {
+    return (
+      this.isCommand1Visible()
+
+      ||
+
+      this.isCommand2Visible()
+
+      ||
+
+      this.isCommand3Visible()
+    );
+  }
+
+
+  /* =====================================================
      LEFT COMMAND 1 CLICK
   ====================================================== */
 
   onCommand1Click():
     void
   {
+    if
+    (
+      !this.isCommand1Visible()
+    )
+    {
+      return;
+    }
+
     this.command1Click.emit();
   }
 
@@ -185,6 +571,14 @@ implements OnChanges
   onCommand2Click():
     void
   {
+    if
+    (
+      !this.isCommand2Visible()
+    )
+    {
+      return;
+    }
+
     this.command2Click.emit();
   }
 
@@ -196,6 +590,14 @@ implements OnChanges
   onCommand3Click():
     void
   {
+    if
+    (
+      !this.isCommand3Visible()
+    )
+    {
+      return;
+    }
+
     this.command3Click.emit();
   }
 
@@ -207,6 +609,14 @@ implements OnChanges
   onRightCommandClick():
     void
   {
+    if
+    (
+      !this.isRightCommandVisible()
+    )
+    {
+      return;
+    }
+
     this.rightCommandClick.emit();
   }
 }

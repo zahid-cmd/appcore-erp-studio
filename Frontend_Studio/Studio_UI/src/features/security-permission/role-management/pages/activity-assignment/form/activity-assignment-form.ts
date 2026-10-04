@@ -194,6 +194,24 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
+import
+{
+    EffectiveAccessService
+}
+from '../../../../../../core/effective-access/effective-access.service';
+
+import
+{
+    EffectiveAccess
+}
+from '../../../../../../core/effective-access/effective-access.model';
+
+import
+{
+    AuthenticationStorageService
+}
+from '../../../../../../core/authentication/authentication-storage.service';
+
 //===============================================================
 // Component
 //===============================================================
@@ -292,6 +310,14 @@ implements OnInit
 
     private readonly progressDialog =
         inject(ProgressDialogService);
+
+
+    private readonly effectiveAccessService =
+        inject(EffectiveAccessService);
+
+
+    private readonly authenticationStorageService =
+        inject(AuthenticationStorageService);
 
     //===========================================================
     // Mode
@@ -540,6 +566,53 @@ implements OnInit
 
     isAddDisabled =
         true;
+
+    //===========================================================
+    // Effective Access
+    //===========================================================
+
+    private effectiveAccess:
+        EffectiveAccess[] =
+        [
+        ];
+
+
+    private masterActivityPermissionIds:
+        {
+            add:number | null;
+            view:number | null;
+            update:number | null;
+            delete:number | null;
+            restore:number | null;
+        } =
+        {
+            add:null,
+            view:null,
+            update:null,
+            delete:null,
+            restore:null
+        };
+
+
+    canAdd =
+        false;
+
+
+    canView =
+        false;
+
+
+    canUpdate =
+        false;
+
+
+    canDelete =
+        false;
+
+
+    canRestore =
+        false;
+
 
     //==========================================================
     // Selected Values
@@ -1071,6 +1144,8 @@ implements OnInit
     {
         this.initializeMode();
 
+        this.loadEffectiveAccess();
+
         this.loadRoleProfiles();
 
         this.loadModules();
@@ -1398,6 +1473,10 @@ implements OnInit
                             })
                         );
 
+                    this.resolveMasterActivityPermissionIds(
+                        response
+                    );
+
                     this.cdr.detectChanges();
                 },
 
@@ -1412,6 +1491,252 @@ implements OnInit
                 }
             });
     }
+
+    //===========================================================
+    // Load Effective Access
+    //===========================================================
+
+    private loadEffectiveAccess():
+        void
+    {
+        const authenticatedUser =
+            this.authenticationStorageService
+                .getUser();
+
+
+        const userProfileId =
+            Number(
+                authenticatedUser?.userProfileId
+                ??
+                0
+            );
+
+
+        if
+        (
+            userProfileId <= 0
+        )
+        {
+            this.effectiveAccess =
+            [
+            ];
+
+            this.updateActionPermissions();
+
+            return;
+        }
+
+
+        this.effectiveAccessService
+            .getEffectiveAccess(
+                userProfileId
+            )
+            .subscribe
+            ({
+                next:(response) =>
+                {
+                    this.effectiveAccess =
+                        response ??
+                        [
+                        ];
+
+                    this.updateActionPermissions();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:(error) =>
+                {
+                    console.error(
+                        'Load Effective Access Error',
+                        error
+                    );
+
+                    this.effectiveAccess =
+                    [
+                    ];
+
+                    this.updateActionPermissions();
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Resolve Master Activity Permission Ids
+    //===========================================================
+
+    private resolveMasterActivityPermissionIds
+    (
+        activities:any[]
+    ):
+        void
+    {
+        this.masterActivityPermissionIds =
+        {
+            add:null,
+            view:null,
+            update:null,
+            delete:null,
+            restore:null
+        };
+
+
+        activities.forEach(
+            activity =>
+            {
+                const activityName =
+                    String(
+                        activity?.name
+                        ??
+                        ''
+                    )
+                    .trim()
+                    .toLowerCase();
+
+                const activityId =
+                    Number(
+                        activity?.id
+                    );
+
+
+                if
+                (
+                    activityId <= 0
+                )
+                {
+                    return;
+                }
+
+
+                if
+                (
+                    activityName === 'add'
+                    ||
+                    activityName === 'create'
+                )
+                {
+                    this.masterActivityPermissionIds.add =
+                        activityId;
+                }
+
+
+                if
+                (
+                    activityName === 'view'
+                )
+                {
+                    this.masterActivityPermissionIds.view =
+                        activityId;
+                }
+
+
+                if
+                (
+                    activityName === 'update'
+                    ||
+                    activityName === 'edit'
+                )
+                {
+                    this.masterActivityPermissionIds.update =
+                        activityId;
+                }
+
+
+                if
+                (
+                    activityName === 'delete'
+                )
+                {
+                    this.masterActivityPermissionIds.delete =
+                        activityId;
+                }
+
+
+                if
+                (
+                    activityName === 'restore'
+                )
+                {
+                    this.masterActivityPermissionIds.restore =
+                        activityId;
+                }
+            }
+        );
+
+
+        this.updateActionPermissions();
+    }
+
+
+    //===========================================================
+    // Update Action Permissions
+    //===========================================================
+
+    private updateActionPermissions():
+        void
+    {
+        this.canAdd =
+            this.hasMasterActivityPermission(
+                this.masterActivityPermissionIds.add
+            );
+
+
+        this.canView =
+            this.hasMasterActivityPermission(
+                this.masterActivityPermissionIds.view
+            );
+
+
+        this.canUpdate =
+            this.hasMasterActivityPermission(
+                this.masterActivityPermissionIds.update
+            );
+
+
+        this.canDelete =
+            this.hasMasterActivityPermission(
+                this.masterActivityPermissionIds.delete
+            );
+
+
+        this.canRestore =
+            this.hasMasterActivityPermission(
+                this.masterActivityPermissionIds.restore
+            );
+    }
+
+
+    //===========================================================
+    // Check Master Activity Permission
+    //===========================================================
+
+    private hasMasterActivityPermission
+    (
+        activityId:number | null
+    ):
+        boolean
+    {
+        if
+        (
+            activityId == null
+            ||
+            activityId <= 0
+        )
+        {
+            return false;
+        }
+
+
+        return this.effectiveAccess.some(
+            access =>
+                access.masterActivityId ===
+                activityId
+        );
+    }
+
 
     //===========================================================
     // Load Special Activities
@@ -2010,18 +2335,25 @@ implements OnInit
 
         //=======================================================
         // Default Hierarchy
+        //
+        // Edit / View mode starts from the complete hierarchy.
+        // Zero represents the explicit "All" selection.
         //=======================================================
 
         this.selectedModuleId =
-            null;
+            0;
 
         this.selectedMenuId =
-            null;
+            0;
 
         this.selectedSubMenuId =
-            null;
+            0;
 
         this.loadMenus(
+            0
+        );
+
+        this.loadSubMenus(
             0
         );
 
@@ -2267,27 +2599,12 @@ implements OnInit
 
 
                 //===================================================
-                // Default Menu Selection During Edit/View
+                // Preserve Current Selection
+                //
+                // Do NOT reset Menu/Sub Menu here.
+                // Module changes in Edit/View mode must keep the
+                // explicit All / specific selection made by the user.
                 //===================================================
-
-                if
-                (
-                    this.mode !== 'add'
-                )
-                {
-                    this.selectedMenuId =
-                        null;
-
-                    this.selectedSubMenuId =
-                        null;
-
-                    this.loadSubMenus(
-                        0
-                    );
-
-                    return;
-                }
-
 
                 if
                 (
@@ -3082,6 +3399,28 @@ implements OnInit
     save():
         void
     {
+        if
+        (
+            this.mode === 'add'
+            &&
+            !this.canAdd
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            this.mode === 'edit'
+            &&
+            !this.canUpdate
+        )
+        {
+            return;
+        }
+
+
         const payload =
 
             this.buildActivityAssignment();
@@ -3281,6 +3620,15 @@ implements OnInit
     delete():
         void
     {
+        if
+        (
+            !this.canDelete
+        )
+        {
+            return;
+        }
+
+
         this.confirmDialog.open(
 
             'Delete Activity Assignment',
@@ -3337,6 +3685,15 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            !this.canRestore
+        )
+        {
+            return;
+        }
+
+
         this.confirmDialog.open(
 
             'Restore Activity Assignment',
@@ -3766,6 +4123,28 @@ implements OnInit
 
         if
         (
+            this.mode === 'add'
+            &&
+            !this.canAdd
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            this.mode === 'edit'
+            &&
+            !this.canUpdate
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
             this.selectedRoleProfileId == null
         )
         {
@@ -3858,6 +4237,22 @@ implements OnInit
         return (
 
             this.isViewMode
+
+            ||
+
+            (
+                this.mode === 'add'
+                &&
+                !this.canAdd
+            )
+
+            ||
+
+            (
+                this.mode === 'edit'
+                &&
+                !this.canUpdate
+            )
 
             ||
 

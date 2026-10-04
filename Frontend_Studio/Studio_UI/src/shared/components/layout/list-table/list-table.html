@@ -1,7 +1,7 @@
 <div class="list-table">
 
     <!-- =========================================================
-        HEADER
+         HEADER
     ========================================================= -->
 
     <div class="list-table-header">
@@ -14,21 +14,15 @@
 
                     <th
                         *ngFor="let column of columns"
-
                         [style.width]="column.width"
-
                         [class.left]="column.align==='left'"
-
                         [class.center]="column.align==='center'"
-
                         [class.right]="column.align==='right'"
-
                         [class.sortable]="
                             column.type!=='serial' &&
                             column.type!=='actions' &&
                             column.type!=='operation'
                         "
-
                         (click)="sort(column)"
                     >
 
@@ -46,14 +40,13 @@
 
 
     <!-- =========================================================
-        BODY
-    ====================================================== -->
+         BODY
+    ========================================================= -->
 
     <div class="list-table-body">
 
-
         <!-- =====================================================
-            LOADING
+             LOADING
         ===================================================== -->
 
         <div
@@ -68,7 +61,7 @@
 
 
         <!-- =====================================================
-            EMPTY
+             EMPTY
         ===================================================== -->
 
         <div
@@ -86,7 +79,7 @@
 
 
         <!-- =====================================================
-            ERROR
+             ERROR
         ===================================================== -->
 
         <div
@@ -104,7 +97,7 @@
 
 
         <!-- =====================================================
-            TABLE
+             TABLE
         ===================================================== -->
 
         <table
@@ -119,24 +112,19 @@
                         let i=index;
                         trackBy:trackRow
                     "
-
                     class="list-table-row">
 
 
                     <td
                         *ngFor="let column of columns"
-
                         [style.width]="column.width"
-
                         [class.left]="column.align==='left'"
-
                         [class.center]="column.align==='center'"
-
                         [class.right]="column.align==='right'">
 
 
                         <!-- =================================================
-                            SERIAL
+                             SERIAL
                         ================================================== -->
 
                         <ng-container
@@ -148,7 +136,7 @@
 
 
                         <!-- =================================================
-                            STATUS
+                             STATUS
                         ================================================== -->
 
                         <ng-container
@@ -156,7 +144,6 @@
 
                             <span
                                 class="status"
-
                                 [ngClass]="
                                     getStatusClass(
                                         row,
@@ -177,7 +164,7 @@
 
 
                         <!-- =================================================
-                            BOOLEAN
+                             BOOLEAN
                         ================================================== -->
 
                         <ng-container
@@ -185,14 +172,12 @@
 
                             <span
                                 class="status"
-
                                 [class.active]="
                                     getBooleanValue(
                                         row,
                                         column
                                     )
                                 "
-
                                 [class.inactive]="
                                     !getBooleanValue(
                                         row,
@@ -215,7 +200,7 @@
 
 
                         <!-- =================================================
-                            OPERATION
+                             OPERATION
                         ================================================== -->
 
                         <ng-container
@@ -223,7 +208,7 @@
 
 
                             <!-- =============================================
-                                CODE SYNCHRONIZATION
+                                 CODE SYNCHRONIZATION
                             ============================================== -->
 
                             <ng-container
@@ -236,26 +221,22 @@
 
 
                                     <!-- =====================================
-                                        SYNCHRONIZE / ROLLBACK
+                                         SYNCHRONIZE / ROLLBACK
                                     ====================================== -->
 
                                     <button
                                         type="button"
-
                                         class="action-btn"
-
                                         [class.sync]="
                                             row.status?.toLowerCase()
                                             !==
                                             'synchronized'
                                         "
-
                                         [class.rollback]="
                                             row.status?.toLowerCase()
                                             ===
                                             'synchronized'
                                         "
-
                                         [disabled]="
                                             row.status?.toLowerCase()
                                             ===
@@ -265,7 +246,6 @@
                                             ===
                                             'registered'
                                         "
-
                                         [title]="
                                             row.status?.toLowerCase()
                                             ===
@@ -283,7 +263,6 @@
                                                 :
                                                 'Synchronize'
                                         "
-
                                         (click)="
                                             onOperationClick(
                                                 row,
@@ -293,7 +272,7 @@
 
 
                                         <!-- =================================
-                                            ROLLBACK
+                                             ROLLBACK
                                         ================================== -->
 
                                         <i
@@ -302,14 +281,13 @@
                                                 ===
                                                 'synchronized'
                                             "
-
                                             class="fas fa-rotate-left">
 
                                         </i>
 
 
                                         <!-- =================================
-                                            SYNCHRONIZE
+                                             SYNCHRONIZE
                                         ================================== -->
 
                                         <i
@@ -318,7 +296,6 @@
                                                 !==
                                                 'synchronized'
                                             "
-
                                             class="fas fa-arrows-rotate">
 
                                         </i>
@@ -327,22 +304,18 @@
 
 
                                     <!-- =====================================
-                                        REGISTER / DEREGISTER
+                                         REGISTER / DEREGISTER
                                     ====================================== -->
 
                                     <button
                                         *ngIf="showRegistration"
-
                                         type="button"
-
                                         class="action-btn registration"
-
                                         [class.unregister]="
                                             row.dbStatus?.toLowerCase()
                                             ===
                                             'registered'
                                         "
-
                                         [disabled]="
                                             row.status?.toLowerCase()
                                             !==
@@ -366,7 +339,6 @@
                                                     )
                                             )
                                         "
-
                                         [title]="
                                             row.status?.toLowerCase()
                                             !==
@@ -410,7 +382,6 @@
                                                         )
                                                 )
                                         "
-
                                         (click)="
                                             onRegistrationClick(
                                                 row,
@@ -418,13 +389,13 @@
                                             )
                                         ">
 
+
                                         <i
                                             *ngIf="
                                                 row.dbStatus?.toLowerCase()
                                                 ===
                                                 'registered'
                                             "
-
                                             class="fas fa-clipboard">
 
                                         </i>
@@ -436,7 +407,6 @@
                                                 !==
                                                 'registered'
                                             "
-
                                             class="fas fa-clipboard-check">
 
                                         </i>
@@ -445,27 +415,23 @@
 
 
                                     <!-- =====================================
-                                        DATABASE CREATE / REMOVE
+                                         DATABASE CREATE / REMOVE
 
-                                        Database creation will be handled
-                                        directly by the Database Engine.
+                                         Database creation will be handled
+                                         directly by the Database Engine.
 
-                                        Once the database table exists,
-                                        the same button becomes the
-                                        Remove Database operation.
+                                         Once the database table exists,
+                                         the same button becomes the
+                                         Remove Database operation.
                                     ====================================== -->
 
                                     <button
                                         *ngIf="showRegistration"
-
                                         type="button"
-
                                         class="action-btn database"
-
                                         [class.remove-database]="
                                             row.databaseCreated === true
                                         "
-
                                         [disabled]="
                                             row.status?.toLowerCase()
                                             !==
@@ -475,7 +441,6 @@
                                             !==
                                             'registered'
                                         "
-
                                         [title]="
                                             row.status?.toLowerCase()
                                             !==
@@ -499,14 +464,12 @@
                                                         )
                                                 )
                                         "
-
                                         (click)="
                                             onDatabaseClick(
                                                 row,
                                                 $event
                                             )
                                         ">
-
 
                                         <i
                                             class="fas fa-database">
@@ -517,32 +480,28 @@
 
 
                                     <!-- =====================================
-                                        INITIALIZE DB
+                                         INITIALIZE DB
 
-                                        Initialize DB is available only
-                                        after the physical database table
-                                        has been created.
+                                         Initialize DB is available only
+                                         after the physical database table
+                                         has been created.
 
-                                        Initial state:
+                                         Initial state:
 
-                                            Disabled
+                                             Disabled
 
-                                        Database created:
+                                         Database created:
 
-                                            Enabled
+                                             Enabled
                                     ====================================== -->
 
                                     <button
                                         *ngIf="showRegistration"
-
                                         type="button"
-
                                         class="action-btn initialize-database"
-
                                         [disabled]="
                                             row.databaseCreated !== true
                                         "
-
                                         [title]="
                                             row.databaseCreated === true
                                                 ?
@@ -550,7 +509,6 @@
                                                 :
                                                 'Initialize DB disabled until database is created'
                                         "
-
                                         (click)="
                                             onInitializeDatabaseClick(
                                                 row,
@@ -565,14 +523,13 @@
 
                                     </button>
 
-
                                 </div>
 
                             </ng-container>
 
 
                             <!-- =============================================
-                                STANDARD OPERATION
+                                 STANDARD OPERATION
                             ============================================== -->
 
                             <ng-template
@@ -580,11 +537,8 @@
 
                                 <button
                                     type="button"
-
                                     class="action-btn sync"
-
                                     title="Synchronize"
-
                                     (click)="
                                         onOperationClick(
                                             row,
@@ -604,7 +558,7 @@
 
 
                         <!-- =================================================
-                            ACTIONS
+                             ACTIONS
                         ================================================== -->
 
                         <ng-container
@@ -614,18 +568,14 @@
 
 
                                 <!-- =========================================
-                                    VIEW
+                                     VIEW
                                 ========================================== -->
 
                                 <button
-                                    *ngIf="actions.view"
-
+                                    *ngIf="canViewRow()"
                                     type="button"
-
                                     class="action-btn view"
-
                                     title="View"
-
                                     (click)="
                                         onViewClick(
                                             row,
@@ -642,21 +592,17 @@
 
 
                                 <!-- =========================================
-                                    SAVE RESTORE POINT
+                                     SAVE RESTORE POINT
 
-                                    Visible ONLY when the parent page
-                                    explicitly enables Restore Point.
+                                     Visible ONLY when the parent page
+                                     explicitly enables Restore Point.
                                 ========================================== -->
 
                                 <button
                                     *ngIf="showRestorePoint"
-
                                     type="button"
-
                                     class="action-btn restore-point"
-
                                     title="Save Restore Point"
-
                                     (click)="
                                         onSaveRestorePointClick(
                                             row,
@@ -673,18 +619,14 @@
 
 
                                 <!-- =========================================
-                                    EDIT
+                                     EDIT
                                 ========================================== -->
 
                                 <button
-                                    *ngIf="actions.edit"
-
+                                    *ngIf="canEditRow()"
                                     type="button"
-
                                     class="action-btn edit"
-
                                     title="Edit"
-
                                     (click)="
                                         onEditClick(
                                             row,
@@ -701,18 +643,14 @@
 
 
                                 <!-- =========================================
-                                    DELETE
+                                     DELETE
                                 ========================================== -->
 
                                 <button
-                                    *ngIf="actions.delete"
-
+                                    *ngIf="canDeleteRow()"
                                     type="button"
-
                                     class="action-btn delete"
-
                                     title="Delete"
-
                                     (click)="
                                         onDeleteClick(
                                             row,
@@ -733,7 +671,7 @@
 
 
                         <!-- =================================================
-                            TEXT
+                             TEXT
                         ================================================== -->
 
                         <ng-container

@@ -1,1123 +1,2058 @@
 /* =====================================================
+
    IMPORTS
+
 ===================================================== */
 
+
 import
+
 {
+
   ChangeDetectionStrategy,
+
   Component,
+
+  inject,
+
   EventEmitter,
+
   Input,
+
   Output,
+
   OnChanges,
+
   SimpleChanges
+
 }
+
 from '@angular/core';
 
+
 import
+
 {
+
   CommonModule
+
 }
+
 from '@angular/common';
 
-import
-{
-    OrbitLoaderComponent
-}
-from '../../utilities/orbit-loader/orbit-loader';
 
 import
+
 {
-  EmptyStateComponent
+
+    OrbitLoaderComponent
+
 }
+
+from '../../utilities/orbit-loader/orbit-loader';
+
+
+import
+
+{
+
+  EmptyStateComponent
+
+}
+
 from '../empty-state/empty-state';
 
 
+import
+
+{
+
+  SidebarService
+
+}
+
+from '../../../../core/sidebar/sidebar.service';
+
+
+import
+
+{
+
+  EffectiveAccessService
+
+}
+
+from '../../../../core/effective-access/effective-access.service';
+
+
 /* =====================================================
+
    COLUMN TYPES
+
 ===================================================== */
 
+
 export type ListTableColumnType =
+
   | 'text'
+
   | 'serial'
+
   | 'status'
+
   | 'boolean'
+
   | 'operation'
+
   | 'actions';
 
 
 /* =====================================================
+
    COLUMN ALIGNMENT
+
 ===================================================== */
 
+
 export type ListTableAlign =
+
   | 'left'
+
   | 'center'
+
   | 'right';
 
 
 /* =====================================================
+
    COLUMN
+
 ===================================================== */
 
+
 export interface ListTableColumn
+
 {
+
   header: string;
+
 
   field: string;
 
+
   width?: string;
+
 
   align?: ListTableAlign;
 
+
   type?: ListTableColumnType;
 
+
   sortable?: boolean;
+
 }
 
 
 /* =====================================================
+
    ACTIONS
+
 ===================================================== */
 
+
 export interface ListTableActions
+
 {
+
   view?: boolean;
+
 
   edit?: boolean;
 
+
   delete?: boolean;
+
 }
 
 
 /* =====================================================
+
    COMPONENT
+
 ===================================================== */
 
+
 @Component(
+
 {
+
   selector: 'app-list-table',
+
 
   standalone: true,
 
+
   imports:
+
   [
+
     CommonModule,
+
     EmptyStateComponent,
+
     OrbitLoaderComponent
+
   ],
+
 
   templateUrl: './list-table.html',
 
+
   styleUrl: './list-table.css',
 
+
   host:
+
   {
+
     class: 'list-table-host'
+
   },
 
+
   changeDetection:
+
     ChangeDetectionStrategy.OnPush
+
 })
+
 export class ListTableComponent
+
 implements OnChanges
+
 {
 
+
   /* =====================================================
+     DEPENDENCIES
+  ====================================================== */
+
+  private readonly sidebarService =
+    inject(SidebarService);
+
+  private readonly effectiveAccessService =
+    inject(EffectiveAccessService);
+
+
+  /* =====================================================
+
      INPUTS
+
   ===================================================== */
 
+
   @Input()
+
   columns: ListTableColumn[] = [];
 
 
   @Input()
+
   rows: any[] = [];
 
 
   @Input()
+
   serialOffset = 0;
 
 
   @Input()
+
   loading = false;
 
 
   @Input()
+
   error = false;
 
 
   @Input()
+
   actions: ListTableActions =
+
   {
+
       view: true,
+
 
       edit: true,
 
+
       delete: true
+
   };
 
 
   /* =====================================================
+
      REGISTRATION VISIBILITY
 
+
      Default:
+
      Registration is hidden.
 
+
      Controls only the Register / Deregister button.
+
   ===================================================== */
 
+
   @Input()
+
   showRegistration = false;
 
 
   /* =====================================================
+
      RESTORE POINT VISIBILITY
 
+
      Default:
+
      Restore Point is hidden.
 
+
      The Save Restore Point button is displayed only by
+
      pages that explicitly enable it.
+
 
      Code Synchronization page:
 
+
          showRestorePoint = true
+
 
      All other list pages:
 
+
          showRestorePoint = false
+
   ===================================================== */
 
+
   @Input()
+
   showRestorePoint = false;
 
 
   /* =====================================================
+
      REGISTRATION STATE
 
+
      Registration availability is determined only from
+
      the actual synchronization workflow state.
+
 
      A registration lock exists when another row is:
 
+
          1. Synchronized
+
          2. Registered
+
          3. Database table not yet created
 
+
      While that pending registration exists, all OTHER
+
      unregistered registration controls are disabled.
 
+
      IMPORTANT:
+
 
          Migration state is completely independent.
 
+
      Creating or removing a migration must not enable,
+
      disable, register, deregister, or otherwise modify
+
      registration controls.
 
+
      IMPORTANT:
+
 
          A currently registered row is NEVER blocked by
+
          the global registration lock.
+
 
      IMPORTANT:
 
+
          A registered row must always be allowed to emit
+
          the registration event so the parent can perform
+
          DEREGISTRATION.
 
+
      Database state does not block the registration /
+
      deregistration button here.
+
   ===================================================== */
 
+
   isRegistrationDisabled
+
   (
+
       row: any
+
   ):
+
       boolean
+
   {
+
       //=====================================================
+
       // A registered row is performing DEREGISTRATION.
+
       //
+
       // It must ALWAYS remain clickable.
+
       //
+
       // The database state must not disable the
+
       // registration / deregistration button.
+
       //
+
       // The parent component decides whether the event
+
       // performs registration or deregistration.
+
       //=====================================================
 
+
       if
+
       (
+
           row?.dbStatus
+
               ?.toLowerCase()
+
           ===
+
           'registered'
+
       )
+
       {
+
           return false;
+
       }
 
 
       //=====================================================
+
       // An unregistered row with an existing database table
+
       // cannot be registered.
+
       //=====================================================
+
 
       if
+
       (
+
           row?.databaseCreated === true
+
       )
+
       {
+
           return true;
+
       }
 
 
       //=====================================================
+
       // GLOBAL REGISTRATION LOCK
+
       //
+
       // Only an UNREGISTERED row is subject to this lock.
+
       //
+
       // If another backend submenu is currently:
+
       //
+
       //     Synchronized
+
       //     +
+
       //     Registered
+
       //     +
+
       //     Database NOT Created
+
       //
+
       // registration of this unregistered row is blocked.
+
       //
+
       // Once that database is successfully created,
+
       // databaseCreated becomes true and the lock is
+
       // released for the other rows.
+
       //=====================================================
+
 
       return this.rows.some(
+
           currentRow =>
+
           {
+
               if
+
               (
+
                   this.isSameRow(
+
                       currentRow,
+
                       row
+
                   )
+
               )
+
               {
+
                   return false;
+
               }
 
 
               return this.isPendingRegistration(
+
                   currentRow
+
               );
+
           }
+
       );
+
   }
 
 
   /* =====================================================
+
      PENDING REGISTRATION
+
 
      A pending registration exists when a row is:
 
+
          1. Synchronized
+
          2. Registered
+
          3. Database table not yet created
+
 
      Migration state is intentionally not checked here.
 
+
      Migration state and Database state are completely
+
      independent.
+
   ===================================================== */
 
+
   private isPendingRegistration
+
   (
+
       row: any
+
   ):
+
       boolean
+
   {
+
       return (
+
           row?.status
+
               ?.toLowerCase()
+
           ===
+
           'synchronized'
 
+
           &&
+
 
           row?.dbStatus
+
               ?.toLowerCase()
+
           ===
+
           'registered'
+
 
           &&
 
+
           row?.databaseCreated
+
           !==
+
           true
+
       );
+
   }
 
 
   /* =====================================================
+
      SAME ROW
+
 
      Uses object reference first.
 
+
      If an ID is available, it is also used so the
+
      registration lock remains correct when row objects
+
      are refreshed or replaced.
+
   ===================================================== */
 
+
   private isSameRow
+
   (
+
       firstRow: any,
 
+
       secondRow: any
+
   ):
+
       boolean
+
   {
+
       if
+
       (
+
           firstRow === secondRow
+
       )
+
       {
+
           return true;
+
       }
 
 
       if
+
       (
+
           firstRow?.id !== undefined
+
           &&
+
           firstRow?.id !== null
+
           &&
+
           secondRow?.id !== undefined
+
           &&
+
           secondRow?.id !== null
+
       )
+
       {
+
           return (
+
               firstRow.id
+
               ===
+
               secondRow.id
+
           );
+
       }
 
 
       return false;
+
   }
 
 
   /* =====================================================
+
      OUTPUTS
+
   ===================================================== */
 
+
   @Output()
+
   view =
+
       new EventEmitter<any>();
 
 
   @Output()
+
   edit =
+
       new EventEmitter<any>();
 
 
   @Output()
+
   delete =
+
       new EventEmitter<any>();
 
 
   @Output()
+
   sortChange =
+
       new EventEmitter<
+
       {
+
           field: string;
 
+
           direction:
+
               'asc'
+
               |
+
               'desc';
+
       }>();
 
 
   @Output()
+
   operation =
+
       new EventEmitter<any>();
 
 
   @Output()
+
   registration =
+
       new EventEmitter<any>();
 
 
   /* =====================================================
+
      DATABASE
 
+
      Database execution is handled by the parent
+
      Code Synchronization component.
 
+
      This component only emits the selected row.
+
 
      Flow:
 
+
          Database Button
+
               ↓
+
          onDatabaseClick()
+
               ↓
+
          database.emit(row)
+
               ↓
+
          Parent database(row)
+
               ↓
+
          Confirm Dialog
+
               ↓
+
          Backend Database Creation / Removal
+
   ===================================================== */
 
+
   @Output()
+
   database =
+
       new EventEmitter<any>();
 
 
   /* =====================================================
+
      INITIALIZE DATABASE
 
+
      Initialize Database is handled by the parent
+
      Code Synchronization component.
+
 
      This component only emits the selected row.
 
+
      Initialize DB is available ONLY when the physical
+
      database table has already been created.
+
 
      Therefore:
 
+
          databaseCreated === false
+
                  ↓
+
               DISABLED
 
+
          databaseCreated === true
+
                  ↓
+
               ENABLED
+
 
      This is intentionally independent from:
 
+
          migrationCreated
+
          dbStatus
+
          registration state
+
          restore point state
 
+
      The physical database state is the only condition
+
      required to enable Initialize DB.
+
   ===================================================== */
 
+
   @Output()
+
   initializeDatabase =
+
       new EventEmitter<any>();
 
 
   /* =====================================================
+
      INITIALIZE DATABASE ENABLED
 
+
      The Initialize DB button is enabled only after the
+
      physical database table has been created.
+
 
      IMPORTANT:
 
+
          Do not use dbStatus here.
+
 
          dbStatus means backend registration.
 
+
          databaseCreated means the physical database
+
          table exists.
 
+
      Therefore databaseCreated is authoritative.
+
   ===================================================== */
 
+
   canInitializeDatabase
+
   (
+
       row: any
+
   ):
+
       boolean
+
   {
+
       return (
+
           row?.databaseCreated === true
+
       );
+
   }
 
 
   /* =====================================================
+
      RESTORE POINT
 
+
      Save Restore Point is handled by the parent
+
      Code Synchronization component.
+
 
      This component only emits the selected row.
 
+
      The restore point operation belongs to the
+
      individual record / submenu.
+
 
      Visibility is controlled separately through:
 
+
          showRestorePoint
 
+
      This keeps the generic List Table reusable without
+
      displaying the Code Synchronization-specific action
+
      on every list page.
+
   ===================================================== */
 
+
   @Output()
+
   saveRestorePoint =
+
       new EventEmitter<any>();
 
 
   @Output()
+
   commandCenter =
+
       new EventEmitter<any>();
 
 
   @Output()
+
   commandServer =
+
       new EventEmitter<any>();
 
 
   /* =====================================================
+
      CHANGES
+
   ===================================================== */
 
+
   ngOnChanges(
+
       changes: SimpleChanges
+
   ):
+
       void
+
   {
+
       if
+
       (
+
           changes['loading']
+
       )
+
       {
-          console.log(
-              '=============================='
-          );
 
           console.log(
+
+              '=============================='
+
+          );
+
+
+          console.log(
+
               'LIST TABLE LOADING'
+
           );
 
+
           console.log(
+
               this.loading
+
           );
 
+
           console.log(
+
               '=============================='
+
           );
+
       }
 
 
       if
+
       (
+
           changes['error']
+
       )
+
       {
-          console.log(
-              '=============================='
-          );
 
           console.log(
+
+              '=============================='
+
+          );
+
+
+          console.log(
+
               'LIST TABLE ERROR'
+
           );
 
+
           console.log(
+
               this.error
+
           );
 
+
           console.log(
+
               '=============================='
+
           );
+
       }
 
 
       if
+
       (
+
           changes['rows']
+
       )
+
       {
-          console.log(
-              '=============================='
-          );
 
           console.log(
+
+              '=============================='
+
+          );
+
+
+          console.log(
+
               'LIST TABLE RECEIVED ROWS'
+
           );
 
+
           console.log(
+
               this.rows
+
           );
 
+
           console.log(
+
               'Rows Length:',
+
               this.rows.length
+
           );
 
+
           console.log(
+
               '=============================='
+
           );
+
       }
+
   }
 
 
   /* =====================================================
+
      SORT STATE
+
   ===================================================== */
+
 
   sortField = '';
 
 
   sortDirection:
+
       'asc'
+
       |
+
       'desc'
+
       =
+
       'asc';
 
 
   /* =====================================================
+
      SORT
+
   ===================================================== */
 
+
   sort
+
   (
+
       column: ListTableColumn
+
   ):
+
       void
+
   {
+
       if
+
       (
+
           column.type === 'serial'
+
           ||
+
           column.type === 'actions'
+
           ||
+
           column.type === 'operation'
+
       )
+
       {
+
           return;
+
       }
 
 
       if
+
       (
+
           this.sortField ===
+
           column.field
+
       )
+
       {
+
           this.sortDirection =
+
               this.sortDirection === 'asc'
+
                   ? 'desc'
+
                   : 'asc';
+
       }
+
       else
+
       {
+
           this.sortField =
+
               column.field;
 
+
           this.sortDirection =
+
               'asc';
+
       }
 
 
       this.sortChange.emit(
+
       {
+
           field:
+
               this.sortField,
 
+
           direction:
+
               this.sortDirection
+
       });
+
   }
 
 
   /* =====================================================
+
      SERIAL
+
   ===================================================== */
+
 
   getSerial
+
   (
+
       index: number
+
   ):
+
       number
+
   {
+
       return this.serialOffset + index + 1;
+
   }
 
 
   /* =====================================================
+
      CELL VALUE
+
   ===================================================== */
+
 
   getCellValue
+
   (
+
       row: any,
 
+
       column: ListTableColumn
+
   ):
+
       any
+
   {
+
       return row[column.field];
+
   }
 
 
   /* =====================================================
+
      STATUS VALUE
+
   ===================================================== */
 
+
   getStatusValue
+
   (
+
       row: any,
 
+
       column: ListTableColumn
+
   ):
+
       string
+
   {
+
       const value =
+
           row[column.field];
 
 
       if
+
       (
+
           typeof value === 'boolean'
+
       )
+
       {
+
           return value
+
               ? 'Active'
+
               : 'Inactive';
+
       }
 
 
       return value ?? '';
+
   }
 
 
   /* =====================================================
+
      STATUS CLASS
+
   ===================================================== */
 
+
   getStatusClass
+
   (
+
       row: any,
 
+
       column: ListTableColumn
+
   ):
+
       string
+
   {
+
       const value =
+
           this.getStatusValue(
+
               row,
+
               column
+
           )
+
           .toLowerCase();
 
 
       switch
+
       (
+
           value
+
       )
+
       {
+
           case 'active':
+
 
           case 'completed':
 
+
           case 'success':
+
 
               return 'active';
 
 
           case 'pending':
 
+
           case 'running':
 
+
           case 'processing':
+
 
               return 'pending';
 
 
           case 'inactive':
 
+
           case 'failed':
 
+
           case 'error':
+
 
               return 'inactive';
 
 
           case 'not applicable':
 
+
               return 'neutral';
 
 
           default:
 
+
               return 'neutral';
+
       }
+
   }
 
 
   /* =====================================================
+
      BOOLEAN VALUE
+
   ===================================================== */
+
 
   getBooleanValue
+
   (
+
       row: any,
+
 
       column: ListTableColumn
+
   ):
+
       boolean
+
   {
+
       return !!row[column.field];
+
   }
 
 
   /* =====================================================
+
      BOOLEAN LABEL
+
   ===================================================== */
+
 
   getBooleanLabel
+
   (
+
       value: boolean
+
   ):
+
       string
+
   {
+
       return value
+
           ? 'Yes'
+
           : 'No';
+
   }
 
 
   /* =====================================================
-     ACTION EVENTS
+     CURRENT SUBMENU ID
   ===================================================== */
 
+  private getCurrentSubMenuId():
+    number | null
+  {
+    return this.sidebarService
+      .getCurrentNavigationContext()
+      .subMenuId;
+  }
+
+
+  /* =====================================================
+     VIEW PERMISSION
+  ===================================================== */
+
+  canViewRow():
+    boolean
+  {
+    const subMenuId =
+      this.getCurrentSubMenuId();
+
+    if
+    (
+      subMenuId === null
+    )
+    {
+      return false;
+    }
+
+    return this.effectiveAccessService
+      .canView(
+        subMenuId
+      );
+  }
+
+
+  /* =====================================================
+     UPDATE PERMISSION
+  ===================================================== */
+
+  canEditRow():
+    boolean
+  {
+    const subMenuId =
+      this.getCurrentSubMenuId();
+
+    if
+    (
+      subMenuId === null
+    )
+    {
+      return false;
+    }
+
+    return this.effectiveAccessService
+      .canUpdate(
+        subMenuId
+      );
+  }
+
+
+  /* =====================================================
+     DELETE PERMISSION
+  ===================================================== */
+
+  canDeleteRow():
+    boolean
+  {
+    const subMenuId =
+      this.getCurrentSubMenuId();
+
+    if
+    (
+      subMenuId === null
+    )
+    {
+      return false;
+    }
+
+    return this.effectiveAccessService
+      .canDelete(
+        subMenuId
+      );
+  }
+
+
+  /* =====================================================
+
+     ACTION EVENTS
+
+  ===================================================== */
+
+
   onViewClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
+
+      if
+      (
+          !this.canViewRow()
+      )
+      {
+          return;
+      }
 
 
       console.log(
+
           'VIEW CLICK',
+
           row
+
       );
 
 
       this.view.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      SAVE RESTORE POINT CLICK
+
   ===================================================== */
 
+
   onSaveRestorePointClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
 
 
       console.log(
+
           'SAVE RESTORE POINT CLICK',
+
           row
+
       );
 
 
       this.saveRestorePoint.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      OPERATION CLICK
+
   ===================================================== */
 
+
   onOperationClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
 
 
       console.log(
+
           'OPERATION CLICK',
+
           row
+
       );
 
 
       this.operation.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      REGISTRATION CLICK
+
   ===================================================== */
 
+
   onRegistrationClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
 
 
       //=====================================================
+
       // A registered row must always be allowed to emit
+
       // the registration event.
+
       //
+
       // The parent component decides whether this event
+
       // means Register or Deregister.
+
       //
+
       // The registration lock applies only to an
+
       // unregistered row attempting registration.
+
       //
+
       // Database state does not block deregistration.
+
       //=====================================================
 
+
       if
+
       (
+
           row?.dbStatus
+
               ?.toLowerCase()
+
           !==
+
           'registered'
+
           &&
+
           this.isRegistrationDisabled(
+
               row
+
           )
+
       )
+
       {
+
           return;
+
       }
 
 
       console.log(
+
           'REGISTRATION CLICK',
+
           row
+
       );
 
 
       this.registration.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      DATABASE CLICK
+
 
      Database state is controlled by the parent.
 
+
      This method only emits the selected row.
 
+
      The parent Code Synchronization component decides
+
      whether the operation is:
 
+
          Create Database
+
          or
+
          Remove Database
 
+
      and opens the Confirm Dialog before execution.
+
   ===================================================== */
 
+
   onDatabaseClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
 
 
       console.log(
+
           'DATABASE CLICK',
+
           row
+
       );
 
 
       this.database.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      INITIALIZE DATABASE CLICK
+
 
      Initialization is controlled by the parent.
 
+
      The Initialize DB operation MUST NOT emit while the
+
      physical database table does not exist.
 
+
      This guard is intentionally duplicated here even
+
      though the HTML button is disabled.
+
 
      Therefore:
 
+
          databaseCreated !== true
+
                  ↓
+
               RETURN
 
+
          databaseCreated === true
+
                  ↓
+
               EMIT
+
   ===================================================== */
 
+
   onInitializeDatabaseClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
 
 
       //=====================================================
+
       // INITIALIZE DATABASE GUARD
+
       //
+
       // The database must already exist before Initialize DB
+
       // can be executed.
+
       //
+
       // This prevents the parent Initialize DB workflow from
+
       // being triggered while the database is still in its
+
       // initial / virgin state.
+
       //=====================================================
+
+
+      if
+
+      (
+
+          row?.databaseCreated !== true
+
+      )
+
+      {
+
+          return;
+
+      }
+
+
+      console.log(
+
+          'INITIALIZE DATABASE CLICK',
+
+          row
+
+      );
+
+
+      this.initializeDatabase.emit(
+
+          row
+
+      );
+
+  }
+
+
+  /* =====================================================
+
+     EDIT CLICK
+
+  ===================================================== */
+
+
+  onEditClick
+
+  (
+
+      row: any,
+
+
+      event: MouseEvent
+
+  ):
+
+      void
+
+  {
+
+      event.stopPropagation();
 
       if
       (
-          row?.databaseCreated !== true
+          !this.canEditRow()
       )
       {
           return;
@@ -1125,89 +2060,109 @@ implements OnChanges
 
 
       console.log(
-          'INITIALIZE DATABASE CLICK',
-          row
-      );
 
-
-      this.initializeDatabase.emit(
-          row
-      );
-  }
-
-
-  /* =====================================================
-     EDIT CLICK
-  ===================================================== */
-
-  onEditClick
-  (
-      row: any,
-
-      event: MouseEvent
-  ):
-      void
-  {
-      event.stopPropagation();
-
-
-      console.log(
           'EDIT CLICK',
+
           row
+
       );
 
 
       this.edit.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      DELETE CLICK
+
   ===================================================== */
 
+
   onDeleteClick
+
   (
+
       row: any,
 
+
       event: MouseEvent
+
   ):
+
       void
+
   {
+
       event.stopPropagation();
+
+      if
+      (
+          !this.canDeleteRow()
+      )
+      {
+          return;
+      }
 
 
       console.log(
+
           'DELETE CLICK',
+
           row
+
       );
 
 
       this.delete.emit(
+
           row
+
       );
+
   }
 
 
   /* =====================================================
+
      TRACK ROW
+
   ===================================================== */
 
+
   trackRow
+
   (
+
       index:
+
           number,
 
+
       row:
+
           any
+
   ):
+
       any
+
   {
+
       return
+
           row?.id
+
           ??
+
           index;
+
   }
+
 
 }

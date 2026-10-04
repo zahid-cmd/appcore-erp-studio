@@ -352,6 +352,31 @@ app-search-dropdown:nth-child(4)
 
 
 /* =====================================================
+   TOOLBAR ACTION AREA
+   Add + Reset remain fixed at the right side.
+===================================================== */
+
+.activity-add-button,
+.activity-reset-button
+{
+    flex-shrink:0;
+
+    flex-grow:0;
+
+    position:relative;
+
+    z-index:20;
+}
+
+
+.activity-add-button
+{
+    margin-left:auto;
+}
+
+
+
+/* =====================================================
    ACTIVITY ADD BUTTON
 ===================================================== */
 
@@ -377,7 +402,11 @@ app-search-dropdown:nth-child(4)
 
     padding:0 8px;
 
-    margin:0;
+    margin-top:0;
+
+    margin-right:0;
+
+    margin-bottom:0;
 
     border:none;
 
@@ -1107,6 +1136,14 @@ span
         min-width:90px;
 
         max-width:none;
+
+        margin-left:0;
+    }
+
+
+    .activity-add-button
+    {
+        margin-left:0;
     }
 
 
@@ -1212,6 +1249,8 @@ span
         min-width:100%;
 
         max-width:100%;
+
+        margin-left:0;
     }
 
 

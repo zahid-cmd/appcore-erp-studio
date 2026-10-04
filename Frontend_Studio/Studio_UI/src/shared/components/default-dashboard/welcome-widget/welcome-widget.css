@@ -248,12 +248,12 @@
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr)
-        minmax(470px, 1fr);
+        35%
+        calc(65% - 24px);
 
     align-items: center;
 
-    gap: 32px;
+    gap: 24px;
 
     margin-top: 28px;
 
@@ -358,11 +358,11 @@
 
     justify-content: space-between;
 
-    gap: 24px;
+    gap: 20px;
 
     padding:
         20px
-        26px;
+        24px;
 
     box-sizing: border-box;
 
@@ -386,13 +386,16 @@
 
 .profile-identity
 {
+    flex:
+        1 1 auto;
+
+    min-width: 0;
+
     display: flex;
 
     align-items: center;
 
     gap: 18px;
-
-    min-width: 0;
 }
 
 
@@ -491,6 +494,9 @@
 
 .profile-information
 {
+    flex:
+        1 1 auto;
+
     min-width: 0;
 
     display: flex;
@@ -505,6 +511,8 @@
 
 .profile-name
 {
+    width: 100%;
+
     color:
         #102653;
 
@@ -520,7 +528,7 @@
 
     text-overflow: ellipsis;
 
-    max-width: 320px;
+    max-width: none;
 }
 
 
@@ -530,6 +538,8 @@
 
 .profile-designation
 {
+    width: 100%;
+
     margin-top: 7px;
 
     color:
@@ -547,7 +557,7 @@
 
     text-overflow: ellipsis;
 
-    max-width: 280px;
+    max-width: none;
 }
 
 
@@ -558,6 +568,9 @@
 .profile-divider
 {
     width: 1px;
+
+    flex:
+        0 0 1px;
 
     align-self: stretch;
 
@@ -574,28 +587,37 @@
 
 .profile-details
 {
-    min-width: 155px;
+    flex:
+        0 0 175px;
+
+    min-width: 200px;
+
+    max-width: 360px;
 
     display: flex;
 
     flex-direction: column;
 
     gap: 20px;
+
+    box-sizing: border-box;
 }
 
 
 .profile-detail
 {
+    min-width: 0;
+
     display: flex;
 
     align-items: center;
 
-    gap: 14px;
+    gap: 10px;
 
     color:
         #526a96;
 
-    font-size: 16px;
+    font-size: 15px;
 
     font-weight: 500;
 
@@ -607,12 +629,27 @@
 {
     width: 28px;
 
+    flex:
+        0 0 28px;
+
     text-align: center;
 
     color:
         #4771c4;
 
-    font-size: 25px;
+    font-size: 24px;
+}
+
+
+.profile-detail span
+{
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
 }
 
 
@@ -914,6 +951,16 @@
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
+
+    .profile-details
+    {
+        flex:
+            0 0 190px;
+
+        min-width: 190px;
+
+        max-width: 210px;
+    }
 }
 
 
@@ -950,6 +997,11 @@
             flex-start;
     }
 
+    .profile-identity
+    {
+        width: 100%;
+    }
+
     .profile-divider
     {
         width: 100%;
@@ -962,6 +1014,13 @@
     .profile-details
     {
         width: 100%;
+
+        max-width: none;
+
+        min-width: 0;
+
+        flex:
+            0 0 auto;
     }
 
     .welcome-actions

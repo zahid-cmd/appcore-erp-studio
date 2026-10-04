@@ -82,6 +82,14 @@ export class WelcomeWidgetComponent
 
 
     //===========================================================
+    // Logged In Branch
+    //===========================================================
+
+    userBranchName =
+        '';
+
+
+    //===========================================================
     // User Profile Photo
     //===========================================================
 
@@ -291,6 +299,22 @@ export class WelcomeWidgetComponent
 
 
         //=======================================================
+        // Initial Logged In Branch
+        // ------------------------------------------------------
+        // The branch name is stored during authentication from
+        // the selected branch contained in the login response.
+        //=======================================================
+
+        this.userBranchName =
+            (
+                user.branchName
+                ??
+                ''
+            )
+            .trim();
+
+
+        //=======================================================
         // Initial Name Split
         //=======================================================
 
@@ -493,6 +517,11 @@ export class WelcomeWidgetComponent
                         );
 
                         console.log(
+                            'WELCOME WIDGET - BRANCH NAME:',
+                            this.userBranchName
+                        );
+
+                        console.log(
                             'WELCOME WIDGET - PHOTO DATA AVAILABLE:',
                             this.userPhotoUrl.length > 0
                         );
@@ -587,6 +616,9 @@ export class WelcomeWidgetComponent
             '';
 
         this.userLastName =
+            '';
+
+        this.userBranchName =
             '';
 
         this.userPhotoUrl =

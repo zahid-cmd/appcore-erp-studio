@@ -76,6 +76,15 @@ using AppCore.Infrastructure.Platform.Authentication;
 
 
 //===============================================================
+// Platform Effective Access
+//===============================================================
+
+using AppCore.Application.Platform.EffectiveAccess.Interfaces;
+
+using AppCore.Infrastructure.Platform.EffectiveAccess;
+
+
+//===============================================================
 // Module Synchronization Engines
 //===============================================================
 
@@ -493,6 +502,17 @@ public static class DependencyInjection
         <
             IAuthenticationRepository,
             AuthenticationRepository
+        >();
+
+
+        //=======================================================
+        // Effective Access Repository
+        //=======================================================
+
+        services.AddScoped
+        <
+            IEffectiveAccessRepository,
+            EffectiveAccessRepository
         >();
 
 
