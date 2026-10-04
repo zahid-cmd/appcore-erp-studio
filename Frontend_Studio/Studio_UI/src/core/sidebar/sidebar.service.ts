@@ -297,23 +297,6 @@ export class SidebarService
             const module of sidebar
         )
         {
-            const moduleAccess =
-                effectiveAccess.some
-                (
-                    access =>
-                        access.moduleId
-                        ===
-                        module.id
-                );
-
-            if
-            (
-                !moduleAccess
-            )
-            {
-                continue;
-            }
-
             const filteredMenus:
                 SidebarMenuDto[] = [];
 
@@ -322,29 +305,6 @@ export class SidebarService
                 const menu of module.menus
             )
             {
-                const menuAccess =
-                    effectiveAccess.some
-                    (
-                        access =>
-                            access.moduleId
-                            ===
-                            module.id
-
-                            &&
-
-                            access.menuId
-                            ===
-                            menu.id
-                    );
-
-                if
-                (
-                    !menuAccess
-                )
-                {
-                    continue;
-                }
-
                 const filteredSubmenus:
                     SidebarSubmenuDto[] =
                     menu.submenus.filter
@@ -397,6 +357,23 @@ export class SidebarService
                 filteredMenus.length
                 ===
                 0
+            )
+            {
+                continue;
+            }
+
+            const moduleAccess =
+                effectiveAccess.some
+                (
+                    access =>
+                        access.moduleId
+                        ===
+                        module.id
+                );
+
+            if
+            (
+                !moduleAccess
             )
             {
                 continue;

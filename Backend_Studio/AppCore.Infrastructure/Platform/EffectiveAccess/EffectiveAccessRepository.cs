@@ -96,18 +96,15 @@ public class EffectiveAccessRepository
         // Role Based Effective Access
         //=======================================================
         //
-        // Master Activities:
-        //   Module + Menu + Submenu scope
+        // Role Assignment provides the user's normal ERP access.
         //
-        // Navigation Activities:
-        //   Module scope
+        // The complete hierarchy is retained:
         //
-        // The original hierarchy is retained here because
-        // Activity Assignment stores the activities against
-        // an Activity Assignment Detail.
-        //
-        // The central permission service will interpret the
-        // NavigationActivityId as module-level permission.
+        //   Module
+        //      Menu
+        //          Submenu
+        //              Master Activity
+        //              Navigation Activity
         //=======================================================
 
         var
@@ -214,22 +211,29 @@ public class EffectiveAccessRepository
         // Special Assignment Effective Access
         //=======================================================
         //
-        // Special / Navigation Activities are MODULE LEVEL.
+        // Special Assignment adds additional ERP access to the
+        // user's existing Role Assignment.
         //
-        // They are not restricted to a particular Menu or
-        // Submenu. Therefore MenuId and SubMenuId are normalized
-        // to zero.
+        // Therefore the complete hierarchy must be retained:
+        //
+        //   Module
+        //      Menu
+        //          Submenu
+        //              Master Activity
+        //              Navigation Activity
         //
         // Example:
         //
-        //   Infrastructure Control
-        //       Pull
-        //       Commit
-        //       Push
-        //       Refresh
-        //       Sync
+        //   Role Assignment
+        //       Code Management
+        //           Repository Management
         //
-        // applies to all menus and submenus under that module.
+        //   Special Assignment
+        //       Code Management
+        //           Source Control
+        //
+        // The Special Assignment submenu is therefore an
+        // additional effective submenu for the user.
         //=======================================================
 
         var
@@ -282,13 +286,13 @@ public class EffectiveAccessRepository
                         specialAssignmentDetail.ModuleId,
 
                     MenuId =
-                        0,
+                        specialAssignmentDetail.MenuId,
 
                     SubMenuId =
-                        0,
+                        specialAssignmentDetail.SubMenuId,
 
                     MasterActivityId =
-                        null,
+                        specialAssignmentPermission.MasterActivityId,
 
                     NavigationActivityId =
                         specialAssignmentPermission.NavigationActivityId
@@ -297,6 +301,15 @@ public class EffectiveAccessRepository
 
         //=======================================================
         // Combine Effective Access
+        //=======================================================
+        //
+        // Effective access is the additive union of:
+        //
+        //   Role Assignment
+        //   +
+        //   Special Assignment
+        //
+        // Special Assignment never replaces the Role Assignment.
         //=======================================================
 
         return await
