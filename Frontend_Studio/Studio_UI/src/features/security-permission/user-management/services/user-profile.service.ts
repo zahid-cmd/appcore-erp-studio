@@ -154,17 +154,20 @@ export class UserProfileService
                                 //================================
                                 // Display Name
                                 //================================
+                                // Use Full Name first so the UI
+                                // displays the complete user name.
+                                //================================
 
                                 displayName:
                                     this.getFirstNonEmptyValue
                                     (
-                                        profile.displayName,
-
-                                        profile.DisplayName,
-
                                         profile.fullName,
 
                                         profile.FullName,
+
+                                        profile.displayName,
+
+                                        profile.DisplayName,
 
                                         profile.userName,
 
@@ -206,6 +209,10 @@ export class UserProfileService
                                     ),
 
 
+                                //================================
+                                // User Photo Path
+                                //================================
+
                                 UserPhotoPath:
                                     this.getFirstNonEmptyValue
                                     (
@@ -215,6 +222,10 @@ export class UserProfileService
                                     ),
 
 
+                                //================================
+                                // User Photo Data
+                                //================================
+
                                 UserPhotoData:
                                     this.getFirstNonEmptyValue
                                     (
@@ -223,6 +234,10 @@ export class UserProfileService
                                         profile.userPhotoData
                                     ),
 
+
+                                //================================
+                                // Active Status
+                                //================================
 
                                 IsActive:
                                     Boolean

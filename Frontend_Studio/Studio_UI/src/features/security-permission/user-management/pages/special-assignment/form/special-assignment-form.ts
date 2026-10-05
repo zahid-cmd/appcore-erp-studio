@@ -129,6 +129,12 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
 
+import
+{
+    SearchBoxComponent
+}
+from '../../../../../../shared/components/utilities/search-box/search-box';
+
 
 //===============================================================
 // Models & Services
@@ -177,11 +183,6 @@ import
 }
 from '../../../../../infrastructure-control/navigation-management/services/master-activity.service';
 
-import
-{
-    NavigationActivityService
-}
-from '../../../../../infrastructure-control/navigation-management/services/activity.service';
 
 import
 {
@@ -263,6 +264,7 @@ interface SpecialAssignmentSavePermission
         PageCanvasComponent,
         PageHeaderComponent,
         RecordCounterComponent,
+        SearchBoxComponent,
         PageToolbarComponent,
 
         ItemCart,
@@ -338,8 +340,6 @@ implements OnInit
         inject(MasterActivityService);
 
 
-    private readonly navigationActivityService =
-        inject(NavigationActivityService);
 
 
     private readonly progressDialog =
@@ -465,6 +465,14 @@ implements OnInit
 
 
     //===========================================================
+    // Activity Search
+    //===========================================================
+
+    activitySearchText =
+        '';
+
+
+    //===========================================================
     // Loading State
     //===========================================================
 
@@ -490,8 +498,6 @@ implements OnInit
     } =
     {
         masterActivities:false,
-
-        specialActivities:false
     };
 
 
@@ -573,11 +579,6 @@ implements OnInit
     [
     ];
 
-
-    specialActivities:
-        ActivityItem[] =
-    [
-    ];
 
 
     //===========================================================
@@ -785,27 +786,13 @@ implements OnInit
         },
 
         {
-            header:'Special Activities',
-
-            field:'specialActivities',
-
-            type:'specialActivities',
-
-            width:'500px',
-
-            align:'center',
-
-            headerCheckbox:true
-        },
-
-        {
             header:'Action',
 
             field:'action',
 
             type:'action',
 
-            width:'150px',
+            width:'50px',
 
             align:'center'
         }
@@ -843,14 +830,6 @@ implements OnInit
 
                 break;
 
-
-            case 'specialActivities':
-
-                this.toggleSpecialActivities(
-                    event.checked
-                );
-
-                break;
         }
 
 
@@ -881,37 +860,6 @@ implements OnInit
 
                 masterActivities:
                     row.masterActivities.map(activity =>
-                    ({
-                        ...activity,
-
-                        checked
-                    }))
-            }));
-
-
-        this.updatePagination();
-
-        this.updateHeaderCheckboxStates();
-    }
-
-
-    //===========================================================
-    // Toggle Special Activities
-    //===========================================================
-
-    toggleSpecialActivities
-    (
-        checked:boolean
-    ):
-        void
-    {
-        this.itemCartRows =
-            this.itemCartRows.map(row =>
-            ({
-                ...row,
-
-                specialActivities:
-                    row.specialActivities.map(activity =>
                     ({
                         ...activity,
 
@@ -984,12 +932,6 @@ implements OnInit
             );
 
 
-        const hasSpecialActivities =
-            this.itemCartRows.some(
-                row => row.specialActivities.length > 0
-            );
-
-
         this.headerCheckboxStates =
         {
             masterActivities:
@@ -1002,22 +944,77 @@ implements OnInit
                         row.masterActivities.every(
                             activity => activity.checked
                         )
-                ),
-
-
-            specialActivities:
-                hasSpecialActivities
-                &&
-                this.itemCartRows.every(
-                    row =>
-                        row.specialActivities.length === 0
-                        ||
-                        row.specialActivities.every(
-                            activity => activity.checked
-                        )
                 )
         };
 
+
+        this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Filtered Item Cart Rows
+    //===========================================================
+
+    getFilteredItemCartRows():
+        ItemCartRow[]
+    {
+        const search =
+            this.activitySearchText
+                .trim()
+                .toLowerCase();
+
+
+        if
+        (
+            !search
+        )
+        {
+            return this.itemCartRows;
+        }
+
+
+        return this.itemCartRows.filter(
+            row =>
+                String(
+                    row.menu
+                    ??
+                    ''
+                )
+                .toLowerCase()
+                .includes(search)
+                ||
+                String(
+                    row.subMenu
+                    ??
+                    ''
+                )
+                .toLowerCase()
+                .includes(search)
+        );
+    }
+
+
+    //===========================================================
+    // Activity Search
+    //===========================================================
+
+    onActivitySearch(
+        value:string
+    ):
+        void
+    {
+        this.activitySearchText =
+            value
+            ??
+            '';
+
+
+        this.currentPage =
+            1;
+
+
+        this.updatePagination();
 
         this.cdr.detectChanges();
     }
@@ -1030,6 +1027,10 @@ implements OnInit
     updatePagination():
         void
     {
+        const filteredRows =
+            this.getFilteredItemCartRows();
+
+
         const totalPages =
 
             Math.max(
@@ -1038,7 +1039,7 @@ implements OnInit
 
                 Math.ceil(
 
-                    this.itemCartRows.length
+                    filteredRows.length
                     /
                     this.pageSize
 
@@ -1067,7 +1068,7 @@ implements OnInit
 
         this.pagedItemCartRows =
 
-            this.itemCartRows.slice(
+            filteredRows.slice(
 
                 start,
 
@@ -1455,7 +1456,6 @@ implements OnInit
                             })
                         );
 
-
                     //===================================================
                     // Edit / View Synchronization
                     //
@@ -1467,19 +1467,15 @@ implements OnInit
                     if
                     (
                         this.mode !== 'add'
-                        &&
-                        this.specialAssignment.details.length > 0
                     )
                     {
                         this.editCartInitialized =
                             false;
 
-
                         this.loadMenus(
                             0
                         );
                     }
-
 
                     this.cdr.detectChanges();
                 },
@@ -1493,338 +1489,6 @@ implements OnInit
                         'Failed to load master activities.'
                     );
                 }
-            });
-    }
-
-
-    //===========================================================
-    // Load Special Activities
-    //===========================================================
-
-    private loadSpecialActivities
-    (
-        row:ItemCartRow,
-        moduleId:number
-    ):
-        void
-    {
-        //=======================================================
-        // Invalid Module
-        //=======================================================
-
-        if
-        (
-            !moduleId
-            ||
-            moduleId <= 0
-        )
-        {
-            const updatedRow:ItemCartRow =
-            {
-                ...row,
-
-                specialActivities:
-                [
-                ]
-            };
-
-
-            const rowIndex =
-                this.itemCartRows.findIndex
-                (
-                    item =>
-                        item.subMenuId ===
-                        row.subMenuId
-                );
-
-
-            if
-            (
-                rowIndex >= 0
-            )
-            {
-                this.itemCartRows =
-                    this.itemCartRows.map
-                    (
-                        (item,index) =>
-                            index === rowIndex
-                            ?
-                            updatedRow
-                            :
-                            item
-                    );
-            }
-
-
-            this.completedActivityLoads++;
-
-
-            if
-            (
-                this.completedActivityLoads >=
-                this.pendingActivityLoads
-            )
-            {
-                this.orbitLoading =
-                    false;
-            }
-
-
-            this.updatePagination();
-
-            this.updateHeaderCheckboxStates();
-
-            this.cdr.detectChanges();
-
-            return;
-        }
-
-
-        //=======================================================
-        // Load Activities
-        //=======================================================
-
-        this.navigationActivityService
-
-            .getAll
-            (
-                moduleId
-            )
-
-            .subscribe
-            ({
-                next:
-                    (
-                        activities
-                    ) =>
-                    {
-                        //===================================================
-                        // Existing Permissions
-                        //===================================================
-
-                        const existingPermissions =
-
-                            this.getExistingPermissions
-                            (
-                                row.subMenuId
-                            );
-
-
-                        //===================================================
-                        // Build Special Activities
-                        //===================================================
-
-                        const specialActivities:ActivityItem[] =
-
-                            activities.map
-                            (
-                                activity =>
-                                ({
-                                    id:
-                                        activity.id,
-
-                                    text:
-                                        activity.name,
-
-                                    checked:
-
-                                        existingPermissions.some
-                                        (
-                                            permission =>
-
-                                                permission.navigationActivityId ===
-                                                activity.id
-                                        )
-                                })
-                            );
-
-
-                        //===================================================
-                        // Create Updated Row
-                        //===================================================
-
-                        const updatedRow:ItemCartRow =
-                        {
-                            ...row,
-
-                            specialActivities:
-                                specialActivities
-                        };
-
-
-                        //===================================================
-                        // Find Current Row
-                        //===================================================
-
-                        const rowIndex =
-
-                            this.itemCartRows.findIndex
-                            (
-                                item =>
-
-                                    item.subMenuId ===
-                                    row.subMenuId
-                            );
-
-
-                        //===================================================
-                        // Replace Current Row
-                        //===================================================
-
-                        if
-                        (
-                            rowIndex >= 0
-                        )
-                        {
-                            this.itemCartRows =
-
-                                this.itemCartRows.map
-                                (
-                                    (item,index) =>
-
-                                        index === rowIndex
-                                        ?
-                                        updatedRow
-                                        :
-                                        item
-                                );
-                        }
-
-
-                        //===================================================
-                        // Activity Loading Counter
-                        //===================================================
-
-                        this.completedActivityLoads++;
-
-
-                        if
-                        (
-                            this.completedActivityLoads >=
-                            this.pendingActivityLoads
-                        )
-                        {
-                            this.orbitLoading =
-                                false;
-                        }
-
-
-                        //===================================================
-                        // Rebuild Paged Rows
-                        //===================================================
-
-                        this.updatePagination();
-
-
-                        //===================================================
-                        // Update Header Checkbox
-                        //===================================================
-
-                        this.updateHeaderCheckboxStates();
-
-
-                        //===================================================
-                        // Angular Refresh
-                        //===================================================
-
-                        this.cdr.detectChanges();
-                    },
-
-
-                error:
-                    (
-                        error
-                    ) =>
-                    {
-                        console.error
-                        (
-                            'Load Special Activities Error',
-                            error
-                        );
-
-
-                        //===================================================
-                        // Replace Row With Empty Special Activities
-                        //===================================================
-
-                        const updatedRow:ItemCartRow =
-                        {
-                            ...row,
-
-                            specialActivities:
-                            [
-                            ]
-                        };
-
-
-                        const rowIndex =
-
-                            this.itemCartRows.findIndex
-                            (
-                                item =>
-
-                                    item.subMenuId ===
-                                    row.subMenuId
-                            );
-
-
-                        if
-                        (
-                            rowIndex >= 0
-                        )
-                        {
-                            this.itemCartRows =
-
-                                this.itemCartRows.map
-                                (
-                                    (item,index) =>
-
-                                        index === rowIndex
-                                        ?
-                                        updatedRow
-                                        :
-                                        item
-                                );
-                        }
-
-
-                        //===================================================
-                        // Activity Loading Counter
-                        //===================================================
-
-                        this.completedActivityLoads++;
-
-
-                        if
-                        (
-                            this.completedActivityLoads >=
-                            this.pendingActivityLoads
-                        )
-                        {
-                            this.orbitLoading =
-                                false;
-                        }
-
-
-                        //===================================================
-                        // Refresh
-                        //===================================================
-
-                        this.updatePagination();
-
-                        this.updateHeaderCheckboxStates();
-
-
-                        this.toast.error
-                        (
-                            'Error',
-
-                            'Failed to load special activities.'
-                        );
-
-
-                        this.cdr.detectChanges();
-                    }
             });
     }
 
@@ -2013,7 +1677,7 @@ implements OnInit
         void
     {
         this.loading =
-            false;
+            true;
 
         this.orbitLoading =
             true;
@@ -2035,16 +1699,26 @@ implements OnInit
                         response
                     );
 
+                    this.loading =
+                        false;
+
                     //===================================================
-                    // Do NOT stop the Orbit Loader here.
-                    // It will be stopped after menus, sub menus,
-                    // item cart and special activities are fully loaded.
+                    // Orbit Loader
+                    //
+                    // The final loading state is controlled by
+                    // refreshItemCartRows() after the navigation
+                    // and cart data have been restored.
                     //===================================================
+
+                    this.cdr.detectChanges();
                 },
 
                 error:(error) =>
                 {
                     console.error(error);
+
+                    this.loading =
+                        false;
 
                     this.orbitLoading =
                         false;
@@ -2205,23 +1879,6 @@ implements OnInit
                             );
                     });
 
-
-                row.specialActivities.forEach(
-                    activity =>
-                    {
-                        activity.checked =
-
-                            existingPermissions.some(
-                                permission =>
-                                    Number(
-                                        permission.navigationActivityId
-                                    )
-                                    ===
-                                    Number(
-                                        activity.id
-                                    )
-                            );
-                    });
             });
 
 
@@ -2808,7 +2465,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Refresh Item Cart Rows
     //===========================================================
@@ -2818,24 +2474,22 @@ implements OnInit
     {
         //=======================================================
         // Edit / View Mode
+        //
+        // Edit / View must ALWAYS use the saved assignment
+        // details as the source of truth, including when the
+        // assignment contains zero rows.
         //=======================================================
 
         if
         (
             this.mode !== 'add'
-            &&
-            this.specialAssignment.details.length > 0
         )
         {
             this.pendingActivityLoads =
                 this.specialAssignment.details.length;
 
             this.completedActivityLoads =
-                0;
-
-            this.orbitLoading =
-                true;
-
+                this.specialAssignment.details.length;
 
             this.itemCartRows =
 
@@ -2847,7 +2501,6 @@ implements OnInit
                             this.getExistingPermissions(
                                 detail.subMenuId
                             );
-
 
                         const row:ItemCartRow =
                         {
@@ -2910,34 +2563,26 @@ implements OnInit
                                             )
                                     })
                                 ),
-
-                            specialActivities:
-                            [
-                            ]
                         };
-
-
-                        this.loadSpecialActivities(
-                            row,
-
-                            detail.moduleId
-                        );
-
 
                         return row;
                     }
                 );
 
-
             this.updatePagination();
 
             this.updateHeaderCheckboxStates();
+
+            this.orbitLoading =
+                false;
+
+            this.loading =
+                false;
 
             this.cdr.detectChanges();
 
             return;
         }
-
 
         //=======================================================
         // Add Mode
@@ -2954,9 +2599,16 @@ implements OnInit
 
             this.updatePagination();
 
+            this.orbitLoading =
+                false;
+
+            this.loading =
+                false;
+
+            this.cdr.detectChanges();
+
             return;
         }
-
 
         this.itemCartRows =
 
@@ -2980,7 +2632,6 @@ implements OnInit
                             this.getExistingPermissions(
                                 subMenu.id
                             );
-
 
                         const row:ItemCartRow =
                         {
@@ -3033,32 +2684,24 @@ implements OnInit
                                             )
                                     })
                                 ),
-
-                            specialActivities:
-                            [
-                            ]
                         };
-
-
-                        this.loadSpecialActivities(
-                            row,
-
-                            row.moduleId
-                        );
-
 
                         return row;
                     }
                 );
 
-
         this.updatePagination();
 
         this.updateHeaderCheckboxStates();
 
+        this.orbitLoading =
+            false;
+
+        this.loading =
+            false;
+
         this.cdr.detectChanges();
     }
-
 
     //===========================================================
     // Get Existing Permissions
@@ -3114,70 +2757,26 @@ implements OnInit
     ):
         any[]
     {
-        return [
+        return this.masterActivities.map(
+            activity =>
+            ({
+                specialAssignmentPermissionId:
+                    0,
 
-            ...this.masterActivities.map(
-                activity =>
-                ({
-                    specialAssignmentPermissionId:
-                        0,
+                masterActivityId:
+                    activity.id,
 
+                activityName:
+                    activity.text,
 
-                    masterActivityId:
-                        activity.id,
-
-
-                    navigationActivityId:
-                        null,
-
-
-                    activityName:
-                        activity.text,
-
-
-                    checked:
-
-                        existingPermissions.some(
-                            permission =>
-
-                                permission.masterActivityId ===
-                                activity.id
-                        )
-                })
-            ),
-
-
-            ...this.specialActivities.map(
-                activity =>
-                ({
-                    specialAssignmentPermissionId:
-                        0,
-
-
-                    masterActivityId:
-                        null,
-
-
-                    navigationActivityId:
-                        activity.id,
-
-
-                    activityName:
-                        activity.text,
-
-
-                    checked:
-
-                        existingPermissions.some(
-                            permission =>
-
-                                permission.navigationActivityId ===
-                                activity.id
-                        )
-                })
-            )
-
-        ];
+                checked:
+                    existingPermissions.some(
+                        permission =>
+                            permission.masterActivityId ===
+                            activity.id
+                    )
+            })
+        );
     }
 
 
@@ -3199,8 +2798,9 @@ implements OnInit
                 const permissions:
                     SpecialAssignmentSavePermission[] =
 
-                    [
-                        ...row.masterActivities.map(
+                    row.masterActivities
+
+                        .map(
                             permission =>
                             ({
                                 masterActivityId:
@@ -3211,36 +2811,16 @@ implements OnInit
                                     null,
 
                                 navigationActivityId:
-                                    null,
-
-                                isActive:true
-                            })
-                        ),
-
-                        ...row.specialActivities.map(
-                            permission =>
-                            ({
-                                masterActivityId:
-                                    null,
-
-                                navigationActivityId:
-                                    permission.checked
-                                    ?
-                                    permission.id
-                                    :
                                     null,
 
                                 isActive:true
                             })
                         )
-                    ]
 
-                    .filter(
-                        permission =>
-                            permission.masterActivityId !== null
-                            ||
-                            permission.navigationActivityId !== null
-                    );
+                        .filter(
+                            permission =>
+                                permission.masterActivityId !== null
+                        );
 
 
                 if
@@ -3346,49 +2926,6 @@ implements OnInit
             )
 
             .length;
-    }
-
-
-    //===========================================================
-    // Special Activity Count
-    //===========================================================
-
-    private getSpecialActivityCount():
-        number
-    {
-        return this.itemCartRows
-
-            .flatMap(
-                row =>
-                    row.specialActivities
-            )
-
-            .filter(
-                activity =>
-
-                    activity.checked
-            )
-
-            .length;
-    }
-
-
-    //===========================================================
-    // Total Activity Count
-    //===========================================================
-
-    private getTotalActivityCount():
-        number
-    {
-        return (
-
-            this.getMasterActivityCount()
-
-            +
-
-            this.getSpecialActivityCount()
-
-        );
     }
 
 
@@ -3741,6 +3278,14 @@ implements OnInit
     clear():
         void
     {
+        this.activitySearchText =
+            '';
+
+
+        this.currentPage =
+            1;
+
+
         this.selectedModuleId =
             null;
 
@@ -3940,11 +3485,6 @@ implements OnInit
                                     false
                             })
                         ),
-
-
-                    specialActivities:
-                    [
-                    ]
                 })
             );
 
@@ -4011,13 +3551,6 @@ implements OnInit
 
 
                 addedCount++;
-
-
-                this.loadSpecialActivities(
-                    row,
-
-                    row.moduleId
-                );
             }
         );
 
@@ -4075,25 +3608,13 @@ implements OnInit
                                 checked:false
                             })
                         ),
-
-                    specialActivities:
-                        row.specialActivities.map(
-                            activity =>
-                            ({
-                                ...activity,
-
-                                checked:false
-                            })
-                        )
                 })
             );
 
 
         this.headerCheckboxStates =
         {
-            masterActivities:false,
-
-            specialActivities:false
+            masterActivities:false
         };
 
 
@@ -4110,7 +3631,6 @@ implements OnInit
     //===========================================================
     // Save Command
     //===========================================================
-
     onSave():
         void
     {
@@ -4121,8 +3641,6 @@ implements OnInit
         {
             return;
         }
-
-
         if
         (
             this.selectedUserProfileId == null
@@ -4130,34 +3648,25 @@ implements OnInit
         {
             this.toast.error(
                 'Validation',
-
                 'User Profile is required.'
             );
-
-
             return;
         }
-
-
         if
         (
+            this.mode === 'add'
+            &&
             this.itemCartRows.length === 0
         )
         {
             this.toast.error(
                 'Validation',
-
                 'At least one submenu assignment is required.'
             );
-
-
             return;
         }
-
-
         this.save();
     }
-
 
     //===========================================================
     // Clear Command
@@ -4215,17 +3724,15 @@ implements OnInit
         boolean
     {
         return (
-
             this.isViewMode
-
             ||
-
             this.selectedUserProfileId == null
-
             ||
-
-            this.itemCartRows.length === 0
-
+            (
+                this.mode === 'add'
+                &&
+                this.itemCartRows.length === 0
+            )
         );
     }
 
@@ -4272,11 +3779,7 @@ implements OnInit
 
             .flatMap(
                 row =>
-                [
-                    ...row.masterActivities,
-
-                    ...row.specialActivities
-                ]
+                row.masterActivities
             )
 
             .filter(
@@ -4300,25 +3803,13 @@ implements OnInit
             {
                 label:'Submenus',
 
-                value:this.itemCartRows.length
+                value:this.getFilteredItemCartRows().length
             },
 
             {
-                label:'Master',
+                label:'Activity',
 
                 value:this.getMasterActivityCount()
-            },
-
-            {
-                label:'Special',
-
-                value:this.getSpecialActivityCount()
-            },
-
-            {
-                label:'Total',
-
-                value:this.getTotalActivityCount()
             }
         ];
     }

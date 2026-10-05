@@ -17,6 +17,12 @@ from '@angular/common/http';
 
 import
 {
+    Router
+}
+from '@angular/router';
+
+import
+{
     Observable,
     BehaviorSubject,
     switchMap,
@@ -121,11 +127,14 @@ export interface CurrentNavigationContext
 export class SidebarService
 {
     //===========================================================
-    // Fields
+    // Dependencies
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
+
+    private readonly router =
+        inject(Router);
 
     private readonly authenticationStorageService =
         inject(AuthenticationStorageService);
@@ -133,8 +142,18 @@ export class SidebarService
     private readonly effectiveAccessService =
         inject(EffectiveAccessService);
 
+
+    //===========================================================
+    // API URL
+    //===========================================================
+
     private readonly apiUrl =
         `${environment.apiUrl}/infrastructure-control/navigation-management/sidebar`;
+
+
+    //===========================================================
+    // Subjects
+    //===========================================================
 
     private readonly sidebarCollapsedSubject =
         new BehaviorSubject<boolean>(false);
@@ -148,6 +167,15 @@ export class SidebarService
 
             subMenuId: null
         });
+
+
+    //===========================================================
+    // Constructor
+    //===========================================================
+
+    constructor()
+    {
+    }
 
 
     //===========================================================
@@ -267,11 +295,87 @@ export class SidebarService
                 ),
                 map(
                     sidebar =>
-                        this.filterSidebarByAccess(
-                            sidebar
-                        )
+                    {
+                        const filteredSidebar =
+                            this.filterSidebarByAccess(
+                                sidebar
+                            );
+
+                        this.restoreNavigationContext(
+                            filteredSidebar
+                        );
+
+                        return filteredSidebar;
+                    }
                 )
             );
+    }
+
+
+    //===========================================================
+    // Restore Navigation Context
+    //===========================================================
+
+    private restoreNavigationContext
+    (
+        sidebar: SidebarModuleDto[]
+    ):
+        void
+    {
+        const currentUrl =
+            this.router.url
+                .split('?')[0]
+                .split('#')[0];
+
+        for
+        (
+            const module of sidebar
+        )
+        {
+            for
+            (
+                const menu of module.menus
+            )
+            {
+                for
+                (
+                    const submenu of menu.submenus
+                )
+                {
+                    const submenuRoute =
+                        submenu.route
+                            ?.split('?')[0]
+                            .split('#')[0];
+
+                    if
+                    (
+                        !submenuRoute
+                    )
+                    {
+                        continue;
+                    }
+
+                    if
+                    (
+                        currentUrl ===
+                        submenuRoute
+                    )
+                    {
+                        this.setCurrentNavigationContext(
+                            module.id,
+
+                            menu.id,
+
+                            submenu.id
+                        );
+
+                        return;
+                    }
+                }
+            }
+        }
+
+        this.clearCurrentNavigationContext();
     }
 
 
@@ -307,11 +411,9 @@ export class SidebarService
             {
                 const filteredSubmenus:
                     SidebarSubmenuDto[] =
-                    menu.submenus.filter
-                    (
+                    menu.submenus.filter(
                         submenu =>
-                            effectiveAccess.some
-                            (
+                            effectiveAccess.some(
                                 access =>
                                     access.moduleId
                                     ===
@@ -341,15 +443,13 @@ export class SidebarService
                     continue;
                 }
 
-                filteredMenus.push
-                (
-                    {
-                        ...menu,
+                filteredMenus.push(
+                {
+                    ...menu,
 
-                        submenus:
-                            filteredSubmenus
-                    }
-                );
+                    submenus:
+                        filteredSubmenus
+                });
             }
 
             if
@@ -363,8 +463,7 @@ export class SidebarService
             }
 
             const moduleAccess =
-                effectiveAccess.some
-                (
+                effectiveAccess.some(
                     access =>
                         access.moduleId
                         ===
@@ -379,15 +478,13 @@ export class SidebarService
                 continue;
             }
 
-            filteredModules.push
-            (
-                {
-                    ...module,
+            filteredModules.push(
+            {
+                ...module,
 
-                    menus:
-                        filteredMenus
-                }
-            );
+                menus:
+                    filteredMenus
+            });
         }
 
         return filteredModules;

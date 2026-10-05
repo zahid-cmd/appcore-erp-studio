@@ -70,14 +70,6 @@ public class AppDbContext
         } = null!;
 
 
-    public DbSet<NavigationActivity>
-        NavigationActivities
-        {
-            get;
-            set;
-        } = null!;
-
-
     public DbSet<MasterActivity>
         MasterActivities
         {
@@ -189,10 +181,6 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : AccountGroup
-
-
-
-
 
 
     // AUTO-BEGIN : ControlComponents

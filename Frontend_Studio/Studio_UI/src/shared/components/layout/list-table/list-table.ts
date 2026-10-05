@@ -1,54 +1,46 @@
-/* =====================================================
-   IMPORTS
-===================================================== */
+//===============================================================
+// Imports
+//===============================================================
 
-import
-{
+import {
   ChangeDetectionStrategy,
   Component,
+  ChangeDetectorRef,
+  DestroyRef,
   inject,
   EventEmitter,
   Input,
   Output,
   OnChanges,
   SimpleChanges
-}
-from '@angular/core';
+} from '@angular/core';
 
-import
-{
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import {
   CommonModule
-}
-from '@angular/common';
+} from '@angular/common';
 
-import
-{
+import {
   OrbitLoaderComponent
-}
-from '../../utilities/orbit-loader/orbit-loader';
+} from '../../utilities/orbit-loader/orbit-loader';
 
-import
-{
+import {
   EmptyStateComponent
-}
-from '../empty-state/empty-state';
+} from '../empty-state/empty-state';
 
-import
-{
+import {
   SidebarService
-}
-from '../../../../core/sidebar/sidebar.service';
+} from '../../../../core/sidebar/sidebar.service';
 
-import
-{
+import {
   EffectiveAccessService
-}
-from '../../../../core/effective-access/effective-access.service';
+} from '../../../../core/effective-access/effective-access.service';
 
 
-/* =====================================================
-   COLUMN TYPES
-===================================================== */
+//===============================================================
+// COLUMN TYPES
+//===============================================================
 
 export type ListTableColumnType =
   | 'text'
@@ -59,9 +51,9 @@ export type ListTableColumnType =
   | 'actions';
 
 
-/* =====================================================
-   COLUMN ALIGNMENT
-===================================================== */
+//===============================================================
+// COLUMN ALIGNMENT
+//===============================================================
 
 export type ListTableAlign =
   | 'left'
@@ -69,68 +61,50 @@ export type ListTableAlign =
   | 'right';
 
 
-/* =====================================================
-   COLUMN
-===================================================== */
+//===============================================================
+// COLUMN
+//===============================================================
 
 export interface ListTableColumn
 {
   header: string;
-
   field: string;
-
   width?: string;
-
   align?: ListTableAlign;
-
   type?: ListTableColumnType;
-
   sortable?: boolean;
 }
 
 
-/* =====================================================
-   ACTIONS
-===================================================== */
+//===============================================================
+// ACTIONS
+//===============================================================
 
 export interface ListTableActions
 {
   view?: boolean;
-
   edit?: boolean;
-
   delete?: boolean;
 }
 
 
-/* =====================================================
-   COMPONENT
-===================================================== */
+//===============================================================
+// COMPONENT
+//===============================================================
 
-@Component(
-{
+@Component({
   selector: 'app-list-table',
-
   standalone: true,
-
-  imports:
-  [
+  imports: [
     CommonModule,
-
     EmptyStateComponent,
-
     OrbitLoaderComponent
   ],
-
   templateUrl: './list-table.html',
-
   styleUrl: './list-table.css',
-
-  host:
-  {
+  host: {
     class: 'list-table-host'
   },
-
   changeDetection:
     ChangeDetectionStrategy.OnPush
 })
@@ -148,6 +122,40 @@ implements OnChanges
   private readonly effectiveAccessService =
     inject(EffectiveAccessService);
 
+  private readonly cdr =
+    inject(ChangeDetectorRef);
+
+  private readonly destroyRef =
+    inject(DestroyRef);
+
+//===============================================================
+// Permission / Navigation Refresh
+//===============================================================
+
+private readonly permissionsSubscription =
+    this.effectiveAccessService.permissionsLoaded$
+        .pipe(
+            takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(
+            () =>
+            {
+                this.cdr.markForCheck();
+            }
+        );
+
+
+private readonly navigationContextSubscription =
+    this.sidebarService.currentNavigationContext$
+        .pipe(
+            takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(
+            () =>
+            {
+                this.cdr.markForCheck();
+            }
+        );
 
   /* =====================================================
      INPUTS
@@ -169,12 +177,9 @@ implements OnChanges
   error = false;
 
   @Input()
-  actions: ListTableActions =
-  {
+  actions: ListTableActions = {
     view: true,
-
     edit: true,
-
     delete: true
   };
 
@@ -225,9 +230,7 @@ implements OnChanges
      A registration lock exists when another row is:
 
          1. Synchronized
-
          2. Registered
-
          3. Database table not yet created
 
      While that pending registration exists, all OTHER
@@ -237,9 +240,9 @@ implements OnChanges
 
          Migration state is completely independent.
 
-         Creating or removing a migration must not enable,
-         disable, register, deregister, or otherwise modify
-         registration controls.
+     Creating or removing a migration must not enable,
+     disable, register, deregister, or otherwise modify
+     registration controls.
 
      IMPORTANT:
 
@@ -256,8 +259,7 @@ implements OnChanges
      deregistration button here.
   ====================================================== */
 
-  isRegistrationDisabled
-  (
+  isRegistrationDisabled(
     row: any
   ):
     boolean
@@ -274,8 +276,7 @@ implements OnChanges
     // performs registration or deregistration.
     //=====================================================
 
-    if
-    (
+    if (
       row?.dbStatus
         ?.toLowerCase()
       ===
@@ -291,8 +292,7 @@ implements OnChanges
     // cannot be registered.
     //=====================================================
 
-    if
-    (
+    if (
       row?.databaseCreated === true
     )
     {
@@ -323,8 +323,7 @@ implements OnChanges
     return this.rows.some(
       currentRow =>
       {
-        if
-        (
+        if (
           this.isSameRow(
             currentRow,
             row
@@ -348,9 +347,7 @@ implements OnChanges
      A pending registration exists when a row is:
 
          1. Synchronized
-
          2. Registered
-
          3. Database table not yet created
 
      Migration state is intentionally not checked here.
@@ -359,8 +356,7 @@ implements OnChanges
      independent.
   ====================================================== */
 
-  private isPendingRegistration
-  (
+  private isPendingRegistration(
     row: any
   ):
     boolean
@@ -397,37 +393,26 @@ implements OnChanges
      are refreshed or replaced.
   ====================================================== */
 
-  private isSameRow
-  (
+  private isSameRow(
     firstRow: any,
-
     secondRow: any
   ):
     boolean
   {
-    if
-    (
+    if (
       firstRow === secondRow
     )
     {
       return true;
     }
 
-
-    if
-    (
+    if (
       firstRow?.id !== undefined
-
       &&
-
       firstRow?.id !== null
-
       &&
-
       secondRow?.id !== undefined
-
       &&
-
       secondRow?.id !== null
     )
     {
@@ -437,7 +422,6 @@ implements OnChanges
         secondRow.id
       );
     }
-
 
     return false;
   }
@@ -461,10 +445,8 @@ implements OnChanges
 
   @Output()
   sortChange =
-    new EventEmitter<
-    {
+    new EventEmitter<{
       field: string;
-
       direction:
         'asc'
         |
@@ -522,12 +504,12 @@ implements OnChanges
      Therefore:
 
          databaseCreated === false
-                 ↓
-              DISABLED
+                  ↓
+               DISABLED
 
          databaseCreated === true
-                 ↓
-              ENABLED
+                  ↓
+               ENABLED
 
      This is intentionally independent from:
 
@@ -563,8 +545,7 @@ implements OnChanges
      Therefore databaseCreated is authoritative.
   ====================================================== */
 
-  canInitializeDatabase
-  (
+  canInitializeDatabase(
     row: any
   ):
     boolean
@@ -599,11 +580,9 @@ implements OnChanges
   saveRestorePoint =
     new EventEmitter<any>();
 
-
   @Output()
   commandCenter =
     new EventEmitter<any>();
-
 
   @Output()
   commandServer =
@@ -619,8 +598,7 @@ implements OnChanges
   ):
     void
   {
-    if
-    (
+    if (
       changes['loading']
     )
     {
@@ -641,9 +619,7 @@ implements OnChanges
       );
     }
 
-
-    if
-    (
+    if (
       changes['error']
     )
     {
@@ -664,9 +640,7 @@ implements OnChanges
       );
     }
 
-
-    if
-    (
+    if (
       changes['rows']
     )
     {
@@ -712,31 +686,23 @@ implements OnChanges
      SORT
   ====================================================== */
 
-  sort
-  (
+  sort(
     column: ListTableColumn
   ):
     void
   {
-    if
-    (
+    if (
       column.type === 'serial'
-
       ||
-
       column.type === 'actions'
-
       ||
-
       column.type === 'operation'
     )
     {
       return;
     }
 
-
-    if
-    (
+    if (
       this.sortField
       ===
       column.field
@@ -756,12 +722,9 @@ implements OnChanges
         'asc';
     }
 
-
-    this.sortChange.emit(
-    {
+    this.sortChange.emit({
       field:
         this.sortField,
-
       direction:
         this.sortDirection
     });
@@ -772,8 +735,7 @@ implements OnChanges
      SERIAL
   ====================================================== */
 
-  getSerial
-  (
+  getSerial(
     index: number
   ):
     number
@@ -786,10 +748,8 @@ implements OnChanges
      CELL VALUE
   ====================================================== */
 
-  getCellValue
-  (
+  getCellValue(
     row: any,
-
     column: ListTableColumn
   ):
     any
@@ -802,10 +762,8 @@ implements OnChanges
      STATUS VALUE
   ====================================================== */
 
-  getStatusValue
-  (
+  getStatusValue(
     row: any,
-
     column: ListTableColumn
   ):
     string
@@ -813,8 +771,7 @@ implements OnChanges
     const value =
       row[column.field];
 
-    if
-    (
+    if (
       typeof value === 'boolean'
     )
     {
@@ -831,10 +788,8 @@ implements OnChanges
      STATUS CLASS
   ====================================================== */
 
-  getStatusClass
-  (
+  getStatusClass(
     row: any,
-
     column: ListTableColumn
   ):
     string
@@ -846,46 +801,29 @@ implements OnChanges
       )
       .toLowerCase();
 
-
-    switch
-    (
+    switch (
       value
     )
     {
       case 'active':
-
       case 'completed':
-
       case 'success':
-
         return 'active';
 
-
       case 'pending':
-
       case 'running':
-
       case 'processing':
-
         return 'pending';
 
-
       case 'inactive':
-
       case 'failed':
-
       case 'error':
-
         return 'inactive';
 
-
       case 'not applicable':
-
         return 'neutral';
 
-
       default:
-
         return 'neutral';
     }
   }
@@ -895,10 +833,8 @@ implements OnChanges
      BOOLEAN VALUE
   ====================================================== */
 
-  getBooleanValue
-  (
+  getBooleanValue(
     row: any,
-
     column: ListTableColumn
   ):
     boolean
@@ -911,8 +847,7 @@ implements OnChanges
      BOOLEAN LABEL
   ====================================================== */
 
-  getBooleanLabel
-  (
+  getBooleanLabel(
     value: boolean
   ):
     string
@@ -943,27 +878,22 @@ implements OnChanges
   canViewRow():
     boolean
   {
-    if
-    (
+    if (
       this.actions.view === false
     )
     {
       return false;
     }
 
-
     const subMenuId =
       this.getCurrentSubMenuId();
 
-
-    if
-    (
+    if (
       subMenuId === null
     )
     {
       return false;
     }
-
 
     return this.effectiveAccessService
       .canView(
@@ -979,27 +909,22 @@ implements OnChanges
   canEditRow():
     boolean
   {
-    if
-    (
+    if (
       this.actions.edit === false
     )
     {
       return false;
     }
 
-
     const subMenuId =
       this.getCurrentSubMenuId();
 
-
-    if
-    (
+    if (
       subMenuId === null
     )
     {
       return false;
     }
-
 
     return this.effectiveAccessService
       .canUpdate(
@@ -1015,27 +940,22 @@ implements OnChanges
   canDeleteRow():
     boolean
   {
-    if
-    (
+    if (
       this.actions.delete === false
     )
     {
       return false;
     }
 
-
     const subMenuId =
       this.getCurrentSubMenuId();
 
-
-    if
-    (
+    if (
       subMenuId === null
     )
     {
       return false;
     }
-
 
     return this.effectiveAccessService
       .canDelete(
@@ -1048,31 +968,25 @@ implements OnChanges
      ACTION EVENTS
   ====================================================== */
 
-  onViewClick
-  (
+  onViewClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
 
-
-    if
-    (
+    if (
       !this.canViewRow()
     )
     {
       return;
     }
 
-
     console.log(
       'VIEW CLICK',
       row
     );
-
 
     this.view.emit(
       row
@@ -1084,22 +998,18 @@ implements OnChanges
      SAVE RESTORE POINT CLICK
   ====================================================== */
 
-  onSaveRestorePointClick
-  (
+  onSaveRestorePointClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
 
-
     console.log(
       'SAVE RESTORE POINT CLICK',
       row
     );
-
 
     this.saveRestorePoint.emit(
       row
@@ -1111,22 +1021,18 @@ implements OnChanges
      OPERATION CLICK
   ====================================================== */
 
-  onOperationClick
-  (
+  onOperationClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
 
-
     console.log(
       'OPERATION CLICK',
       row
     );
-
 
     this.operation.emit(
       row
@@ -1138,16 +1044,13 @@ implements OnChanges
      REGISTRATION CLICK
   ====================================================== */
 
-  onRegistrationClick
-  (
+  onRegistrationClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
-
 
     //=====================================================
     // A registered row must always be allowed to emit
@@ -1162,15 +1065,12 @@ implements OnChanges
     // Database state does not block deregistration.
     //=====================================================
 
-    if
-    (
+    if (
       row?.dbStatus
         ?.toLowerCase()
       !==
       'registered'
-
       &&
-
       this.isRegistrationDisabled(
         row
       )
@@ -1179,12 +1079,10 @@ implements OnChanges
       return;
     }
 
-
     console.log(
       'REGISTRATION CLICK',
       row
     );
-
 
     this.registration.emit(
       row
@@ -1211,22 +1109,18 @@ implements OnChanges
      and opens the Confirm Dialog before execution.
   ====================================================== */
 
-  onDatabaseClick
-  (
+  onDatabaseClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
 
-
     console.log(
       'DATABASE CLICK',
       row
     );
-
 
     this.database.emit(
       row
@@ -1248,24 +1142,21 @@ implements OnChanges
      Therefore:
 
          databaseCreated !== true
-                 ↓
-              RETURN
+                  ↓
+               RETURN
 
          databaseCreated === true
-                 ↓
-              EMIT
+                  ↓
+                EMIT
   ====================================================== */
 
-  onInitializeDatabaseClick
-  (
+  onInitializeDatabaseClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
-
 
     //=====================================================
     // INITIALIZE DATABASE GUARD
@@ -1278,20 +1169,17 @@ implements OnChanges
     // initial / virgin state.
     //=====================================================
 
-    if
-    (
+    if (
       row?.databaseCreated !== true
     )
     {
       return;
     }
 
-
     console.log(
       'INITIALIZE DATABASE CLICK',
       row
     );
-
 
     this.initializeDatabase.emit(
       row
@@ -1303,31 +1191,25 @@ implements OnChanges
      EDIT CLICK
   ====================================================== */
 
-  onEditClick
-  (
+  onEditClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
 
-
-    if
-    (
+    if (
       !this.canEditRow()
     )
     {
       return;
     }
 
-
     console.log(
       'EDIT CLICK',
       row
     );
-
 
     this.edit.emit(
       row
@@ -1339,31 +1221,25 @@ implements OnChanges
      DELETE CLICK
   ====================================================== */
 
-  onDeleteClick
-  (
+  onDeleteClick(
     row: any,
-
     event: MouseEvent
   ):
     void
   {
     event.stopPropagation();
 
-
-    if
-    (
+    if (
       !this.canDeleteRow()
     )
     {
       return;
     }
 
-
     console.log(
       'DELETE CLICK',
       row
     );
-
 
     this.delete.emit(
       row
@@ -1375,13 +1251,9 @@ implements OnChanges
      TRACK ROW
   ====================================================== */
 
-  trackRow
-  (
-    index:
-      number,
-
-    row:
-      any
+  trackRow(
+    index: number,
+    row: any
   ):
     any
   {

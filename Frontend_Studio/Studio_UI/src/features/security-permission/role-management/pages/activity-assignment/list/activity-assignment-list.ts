@@ -424,29 +424,9 @@ implements OnInit
         },
 
         {
-            header:'Master Activities',
+            header:'Activities',
 
             field:'masterActivityCount',
-
-            width:'220px',
-
-            align:'center'
-        },
-
-        {
-            header:'Special Activities',
-
-            field:'specialActivityCount',
-
-            width:'220px',
-
-            align:'center'
-        },
-
-        {
-            header:'Total Activities',
-
-            field:'totalActivityCount',
 
             width:'220px',
 

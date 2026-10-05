@@ -1,11 +1,13 @@
 //===============================================================
 // Namespaces
 //===============================================================
-using AppCore.Domain.Common;
-using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.InfrastructureControl.NavigationManagement.MasterActivity.DTOs;
 using AppCore.Application.InfrastructureControl.NavigationManagement.MasterActivity.Interfaces;
+
+using AppCore.Domain.Common;
+
+using Microsoft.EntityFrameworkCore;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
@@ -27,8 +29,7 @@ namespace AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationMa
 // Master Activity Repository
 //===============================================================
 
-public class MasterActivityRepository
-    : IMasterActivityRepository
+public class MasterActivityRepository : IMasterActivityRepository
 {
     //===============================================================
     // Private Fields
@@ -53,30 +54,22 @@ public class MasterActivityRepository
     public async Task<List<MasterActivityDto>> GetAllAsync()
     {
         return await _context.MasterActivities
-
             .AsNoTracking()
-
-            .Where(x => !x.IsDeleted)
-
-            .OrderBy(x => x.DisplayOrder)
-
-            .ThenBy(x => x.Name)
-
+            .Where(x =>
+                !x.IsDeleted)
+            .OrderBy(x =>
+                x.DisplayOrder)
+            .ThenBy(x =>
+                x.Name)
             .Select(x => new MasterActivityDto
             {
                 Id = x.Id,
-
                 Code = x.Code,
-
                 Name = x.Name,
-
                 DisplayOrder = x.DisplayOrder,
-
                 Remarks = x.Remarks,
-
                 IsActive = x.IsActive
             })
-
             .ToListAsync();
     }
 
@@ -88,28 +81,19 @@ public class MasterActivityRepository
         long id)
     {
         return await _context.MasterActivities
-
             .AsNoTracking()
-
             .Where(x =>
                 x.Id == id &&
                 !x.IsDeleted)
-
             .Select(x => new MasterActivityDto
             {
                 Id = x.Id,
-
                 Code = x.Code,
-
                 Name = x.Name,
-
                 DisplayOrder = x.DisplayOrder,
-
                 Remarks = x.Remarks,
-
                 IsActive = x.IsActive
             })
-
             .FirstOrDefaultAsync();
     }
 
@@ -131,8 +115,7 @@ public class MasterActivityRepository
                     nextSequenceNo,
 
                 Code =
-                    GetNextCode(
-                        nextSequenceNo),
+                    GetNextCode(nextSequenceNo),
 
                 Name =
                     dto.Name,
@@ -159,7 +142,6 @@ public class MasterActivityRepository
         _context.MasterActivities.Add(entity);
 
         await _context.SaveChangesAsync();
-
 
         _context.ActivityHistories.Add(
             new ActivityHistory
@@ -207,7 +189,6 @@ public class MasterActivityRepository
     {
         MasterActivityEntity? entity =
             await _context.MasterActivities
-
                 .FirstOrDefaultAsync(x =>
                     x.Id == dto.Id &&
                     !x.IsDeleted);
@@ -237,7 +218,6 @@ public class MasterActivityRepository
             DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
 
         _context.ActivityHistories.Add(
             new ActivityHistory
@@ -283,7 +263,6 @@ public class MasterActivityRepository
     {
         MasterActivityEntity? entity =
             await _context.MasterActivities
-
                 .FirstOrDefaultAsync(x =>
                     x.Id == id &&
                     !x.IsDeleted);
@@ -304,7 +283,6 @@ public class MasterActivityRepository
             DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
 
         _context.ActivityHistories.Add(
             new ActivityHistory
@@ -339,7 +317,7 @@ public class MasterActivityRepository
 
         await _context.SaveChangesAsync();
     }
-    
+
     //===============================================================
     // Restore
     //===============================================================
@@ -349,13 +327,10 @@ public class MasterActivityRepository
     {
         MasterActivityEntity? entity =
             await _context.MasterActivities
-
                 .Where(x =>
                     x.IsDeleted)
-
                 .OrderByDescending(x =>
                     x.DeletedDate)
-
                 .FirstOrDefaultAsync();
 
         if (entity == null)
@@ -433,8 +408,7 @@ public class MasterActivityRepository
             new()
             {
                 Code =
-                    GetNextCode(
-                        nextSequenceNo),
+                    GetNextCode(nextSequenceNo),
 
                 DisplayOrder =
                     await GetNextDisplayOrderAsync(),
@@ -454,7 +428,6 @@ public class MasterActivityRepository
         long id)
     {
         return await _context.MasterActivities
-
             .AnyAsync(x =>
                 x.Id == id &&
                 !x.IsDeleted);
@@ -479,23 +452,16 @@ public class MasterActivityRepository
     {
         List<int> usedDisplayOrders =
             await _context.MasterActivities
-
                 .AsNoTracking()
-
                 .Where(x =>
                     !x.IsDeleted)
-
                 .Select(x =>
                     x.DisplayOrder)
-
                 .OrderBy(x =>
                     x)
-
                 .ToListAsync();
 
-
         int suggestedDisplayOrder = 1;
-
 
         foreach (int displayOrder in usedDisplayOrders)
         {
@@ -523,9 +489,8 @@ public class MasterActivityRepository
     {
         int? lastSequenceNo =
             await _context.MasterActivities
-
-                .Where(x => !x.IsDeleted)
-
+                .Where(x =>
+                    !x.IsDeleted)
                 .MaxAsync(x =>
                     (int?)x.SequenceNo);
 

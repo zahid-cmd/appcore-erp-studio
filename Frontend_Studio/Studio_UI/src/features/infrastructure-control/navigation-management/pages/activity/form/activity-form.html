@@ -7,11 +7,7 @@
     <app-page-header
         icon="fas fa-list"
         [title]="pageTitle"
-        [subtitle]="
-            isMasterMode
-                ? 'Manage ERP master activities.'
-                : 'Manage ERP navigation activities.'
-        ">
+        subtitle="Manage ERP master activities.">
 
         <app-command-center
             pageHeaderRight
@@ -41,15 +37,6 @@
     ====================================================== -->
 
     <app-page-toolbar>
-
-        <app-control-tabs
-            pageToolbarLeft
-            [tabs]="tabs"
-            [(selectedTab)]="selectedTab"
-            (selectedTabChange)="onTabChange($event)">
-
-        </app-control-tabs>
-
     </app-page-toolbar>
 
 
@@ -71,26 +58,6 @@
                 title="Activity Information"
                 icon="fas fa-list">
 
-                @if (isNavigationMode)
-                {
-                <app-search-dropdown
-
-                    label="Module"
-
-                    [required]="true"
-
-                    [items]="modules"
-
-                    labelField="name"
-
-                    valueField="id"
-
-                    [(value)]="activity.navigationModuleId"
-
-                    (valueChange)="onModuleChange($event)">
-                </app-search-dropdown>
-                }
-
                 <app-textbox
                     label="Activity Code"
                     [(value)]="activity.code"
@@ -109,7 +76,7 @@
             <app-form-section
                 title="Display Settings"
                 icon="fas fa-sort-numeric-down">
-                
+
                 <app-textbox
                     label="Activity Name"
                     [(value)]="activity.name"
@@ -172,7 +139,6 @@
                 </app-textarea>
 
             </app-form-section>
-
 
         </app-form-grid>
 

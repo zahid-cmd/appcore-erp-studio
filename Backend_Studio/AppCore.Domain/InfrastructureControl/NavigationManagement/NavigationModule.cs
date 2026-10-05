@@ -60,11 +60,4 @@ public class NavigationModule : CodeMasterEntity
         get;
         set;
     } = new List<NavigationMenu>();
-
-    public ICollection<NavigationActivity> Activities
-    {
-        get;
-        set;
-    } = new List<NavigationActivity>();
-    
 }

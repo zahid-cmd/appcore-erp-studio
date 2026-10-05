@@ -16,15 +16,34 @@
              CENTER
         ================================================== -->
 
-        <app-record-counter
-
+        <div
             pageHeaderCenter
+            class="activity-header-center">
 
-            [sections]="recordCounterSections"
+            <app-record-counter
 
-            [compact]="true">
+                [sections]="recordCounterSections"
 
-        </app-record-counter>
+                [compact]="true">
+
+            </app-record-counter>
+
+
+            <app-search-box
+
+                class="activity-header-search"
+
+                placeholder="Search menu or sub menu..."
+
+                [value]="activitySearchText"
+
+                [disabled]="loading"
+
+                (search)="onActivitySearch($event)">
+
+            </app-search-box>
+
+        </div>
 
 
         <!-- =================================================
@@ -73,7 +92,7 @@
 
     <app-page-toolbar
 
-        leftFlex="0 0 auto"
+        leftFlex="0 0 420px"
 
         rightFlex="1 1 auto">
 
@@ -165,10 +184,6 @@
 
             <!-- =============================================
                  MENU
-                 Locked when:
-                 1. View Mode
-                 2. No Module selected
-                 3. All Modules selected
             ============================================== -->
 
             <app-search-dropdown
@@ -199,11 +214,6 @@
 
             <!-- =============================================
                  SUB MENU
-                 Locked when:
-                 1. View Mode
-                 2. No Menu selected
-                 3. All Modules selected
-                 4. All Menus selected
             ============================================== -->
 
             <app-search-dropdown

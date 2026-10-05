@@ -54,13 +54,6 @@ from '../../../../../../shared/components/utilities/command-center/command-cente
 
 import
 {
-    ControlTabsComponent,
-    ControlTab
-}
-from '../../../../../../shared/components/controls/control-tabs/control-tabs';
-
-import
-{
     PageCanvasComponent
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
@@ -97,12 +90,6 @@ from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
@@ -125,34 +112,9 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
-
-//===============================================================
-// Parent Module Service
-//===============================================================
-
-import
-{
-    ModuleService
-}
-from '../../../services/module.service';
-
-import
-{
-    NavigationModule
-}
-from '../../../models/navigation-module.model';
-
 //===============================================================
 // Models & Services
 //===============================================================
-import
-{
-    NavigationActivity,
-    NavigationActivityDefaults,
-    CreateNavigationActivity,
-    UpdateNavigationActivity
-}
-from '../../../models/navigation-activity.model';
 
 import
 {
@@ -162,12 +124,6 @@ import
     UpdateMasterActivity
 }
 from '../../../models/master-activity.model';
-
-import
-{
-    NavigationActivityService
-}
-from '../../../services/activity.service';
 
 import
 {
@@ -182,44 +138,24 @@ from '../../../services/master-activity.service';
 @Component(
 {
     selector:'app-navigation-activity-form',
-
     standalone:true,
-
     imports:
     [
         CommonModule,
-
         FormsModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         CommandCenterComponent,
-
-        ControlTabsComponent,
-
         PageCanvasComponent,
-
         FormGridComponent,
-
         FormSectionComponent,
-
         TextboxComponent,
-
         TextareaComponent,
-
         DropdownComponent,
-
-        SearchDropdownComponent,
-        
         ToastComponent,
-
         ConfirmDialogComponent
     ],
-
     templateUrl:'./activity-form.html',
-
     styleUrls:
     [
         './activity-form.css'
@@ -227,7 +163,7 @@ from '../../../services/master-activity.service';
 })
 
 //===============================================================
-// Navigation Activity Form Component
+// Master Activity Form Component
 //===============================================================
 
 export class NavigationActivityFormComponent
@@ -243,14 +179,8 @@ implements OnInit
     private readonly router =
         inject(Router);
 
-    private readonly navigationActivityService =
-        inject(NavigationActivityService);
-
     private readonly masterActivityService =
         inject(MasterActivityService);
-
-    private readonly moduleService =
-        inject(ModuleService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
@@ -276,14 +206,14 @@ implements OnInit
     //===========================================================
 
     pageTitle =
-        'Navigation Activity';
+        'Master Activity';
 
     //===========================================================
     // Entity
     //===========================================================
 
     entityName =
-        'Activity';
+        'Master Activity';
 
     //===========================================================
     // Tab Title
@@ -308,38 +238,6 @@ implements OnInit
     }
 
     //===========================================================
-    // Tabs
-    //===========================================================
-
-    tabs: ControlTab[] =
-    [
-        {
-            id:'master',
-
-            label:'Master Activities'
-        },
-
-        {
-            id:'navigation',
-
-            label:'Navigation Activities'
-        }
-    ];
-
-    selectedTab =
-        'master';
-
-    get isMasterMode(): boolean
-    {
-        return this.selectedTab === 'master';
-    }
-
-    get isNavigationMode(): boolean
-    {
-        return this.selectedTab === 'navigation';
-    }
-
-    //===========================================================
     // Status Dropdown
     //===========================================================
 
@@ -347,46 +245,25 @@ implements OnInit
     [
         {
             value:true,
-
             text:'Active'
         },
-
         {
             value:false,
-
             text:'Inactive'
         }
     ];
 
     //===========================================================
-    // Modules Dropdown
+    // Activity Model
     //===========================================================
 
-    modules:
-        NavigationModule[] =
-    [
-    ];
-
-    //===========================================================
-    // Activity Model (Shared Form Model)
-    //===========================================================
-
-    activity: NavigationActivity =
+    activity: MasterActivity =
     {
         id:0,
-
-        navigationModuleId:0,
-
-        navigationModuleName:'',
-
         code:'',
-
         name:'',
-
         displayOrder:1,
-
         remarks:'',
-
         isActive:true
     };
 
@@ -420,29 +297,8 @@ implements OnInit
     ngOnInit():
         void
     {
-        const tab =
-            this.route.snapshot.queryParamMap.get('tab');
-
-        if
-        (
-            tab === 'master'
-            ||
-            tab === 'navigation'
-        )
-        {
-            this.selectedTab =
-                tab;
-        }
-
-        this.loadModules();
-
         this.initializeMode();
-
-        this.onTabChange(
-            this.selectedTab
-        );
     }
-
 
     //===========================================================
     // Initialize Mode
@@ -510,19 +366,10 @@ implements OnInit
         this.activity =
         {
             id:0,
-
-            navigationModuleId:0,
-
-            navigationModuleName:'',
-
             code:'',
-
             name:'',
-
             displayOrder:1,
-
             remarks:'',
-
             isActive:true
         };
 
@@ -536,124 +383,27 @@ implements OnInit
     }
 
     //===========================================================
-    // Load Modules
-    //===========================================================
-
-    private loadModules():
-        void
-    {
-        this.moduleService
-
-            .getAll()
-
-            .subscribe(
-            {
-                next:(response) =>
-                {
-                    this.modules =
-                    [
-                        ...response
-                    ];
-
-                    this.cdr.detectChanges();
-                },
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Failed to load modules.',
-                        error
-                    );
-
-                    this.toast.error(
-                        'Error',
-                        'Unable to load modules.'
-                    );
-                }
-            });
-    }
-
-
-    //===========================================================
     // Load Activity
     //===========================================================
 
     private loadActivity():
         void
     {
-        //=======================================================
-        // Master Activity
-        //=======================================================
-
-        if (this.isMasterMode)
-        {
-            this.masterActivityService
-                .getById(this.activityId)
-                .subscribe(
-                {
-                    next:(response) =>
-                    {
-                        this.activity.id =
-                            response.id;
-
-                        this.activity.navigationModuleId =
-                            0;
-
-                        this.activity.navigationModuleName =
-                            '';
-
-                        this.activity.code =
-                            response.code;
-
-                        this.activity.name =
-                            response.name;
-
-                        this.activity.displayOrder =
-                            response.displayOrder;
-
-                        this.activity.remarks =
-                            response.remarks;
-
-                        this.activity.isActive =
-                            response.isActive;
-
-                        this.originalActivity =
-                            JSON.stringify(this.activity);
-
-                        this.hasChanges =
-                            false;
-
-                        this.cdr.detectChanges();
-                    },
-
-                    error:(error) =>
-                    {
-                        console.error(error);
-
-                        this.toast.error(
-                            'Error',
-                            'Failed to load master activity.'
-                        );
-
-                        this.onBackToList();
-                    }
-                });
-
-            return;
-        }
-
-        //=======================================================
-        // Navigation Activity
-        //=======================================================
-
-        this.navigationActivityService
+        this.masterActivityService
             .getById(this.activityId)
             .subscribe(
             {
                 next:(response) =>
                 {
                     this.activity =
-                        response;
+                    {
+                        id:response.id,
+                        code:response.code,
+                        name:response.name,
+                        displayOrder:response.displayOrder,
+                        remarks:response.remarks,
+                        isActive:response.isActive
+                    };
 
                     this.originalActivity =
                         JSON.stringify(this.activity);
@@ -670,7 +420,7 @@ implements OnInit
 
                     this.toast.error(
                         'Error',
-                        'Failed to load navigation activity.'
+                        'Failed to load master activity.'
                     );
 
                     this.onBackToList();
@@ -685,83 +435,14 @@ implements OnInit
     private loadDefaults():
         void
     {
-        //=======================================================
-        // Master Activity
-        //=======================================================
-
-        if (this.isMasterMode)
-        {
-            this.masterActivityService
-                .getDefaults()
-                .subscribe(
-                {
-                    next:(defaults:MasterActivityDefaults) =>
-                    {
-                        console.log(
-                            'Master Activity Defaults:',
-                            defaults
-                        );
-
-                        this.activity.code =
-                            defaults.code;
-
-                        this.activity.displayOrder =
-                            defaults.displayOrder;
-
-                        this.activity.isActive =
-                            defaults.isActive;
-
-                        this.activity.navigationModuleId =
-                            0;
-
-                        this.activity.navigationModuleName =
-                            '';
-
-                        this.originalActivity =
-                            JSON.stringify(this.activity);
-
-                        this.hasChanges =
-                            false;
-
-                        this.cdr.detectChanges();
-                    },
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Failed to load master activity defaults.',
-                            error
-                        );
-
-                        this.toast.error(
-                            'Error',
-                            'Unable to load default values.'
-                        );
-                    }
-                });
-
-            return;
-        }
-
-        //=======================================================
-        // Navigation Activity
-        //=======================================================
-
-        if (this.activity.navigationModuleId <= 0)
-        {
-            return;
-        }
-
-        this.navigationActivityService
-            .getDefaults(
-                this.activity.navigationModuleId
-            )
+        this.masterActivityService
+            .getDefaults()
             .subscribe(
             {
-                next:(defaults:NavigationActivityDefaults) =>
+                next:(defaults:MasterActivityDefaults) =>
                 {
                     console.log(
-                        'Navigation Activity Defaults:',
+                        'Master Activity Defaults:',
                         defaults
                     );
 
@@ -773,12 +454,6 @@ implements OnInit
 
                     this.activity.isActive =
                         defaults.isActive;
-
-                    this.activity.navigationModuleId =
-                        defaults.navigationModuleId;
-
-                    this.activity.navigationModuleName =
-                        defaults.navigationModuleName;
 
                     this.originalActivity =
                         JSON.stringify(this.activity);
@@ -792,7 +467,7 @@ implements OnInit
                 error:(error) =>
                 {
                     console.error(
-                        'Failed to load navigation activity defaults.',
+                        'Failed to load master activity defaults.',
                         error
                     );
 
@@ -804,115 +479,21 @@ implements OnInit
             });
     }
 
-        //===========================================================
-        // Status Changed
-        //===========================================================
-
-        onStatusChange(
-            value:boolean
-        ):
-            void
-        {
-            this.activity.isActive =
-                value;
-
-            this.checkForChanges();
-        }
-
     //===========================================================
-    // Active Tab Changed
+    // Status Changed
     //===========================================================
 
-    onTabChange(
-        tabId:string
+    onStatusChange(
+        value:boolean
     ):
         void
     {
-        this.selectedTab =
-            tabId;
-
-        this.entityName =
-            this.isMasterMode
-                ? 'Master Activity'
-                : 'Navigation Activity';
-
-        this.pageTitle =
-            this.entityName;
-
-        //=======================================================
-        // Add Mode Only
-        //=======================================================
-
-        if (this.mode === 'add')
-        {
-            this.activity =
-            {
-                id:0,
-
-                navigationModuleId:0,
-
-                navigationModuleName:'',
-
-                code:'',
-
-                name:'',
-
-                displayOrder:1,
-
-                remarks:'',
-
-                isActive:true
-            };
-
-            this.originalActivity =
-                JSON.stringify(this.activity);
-
-            this.hasChanges =
-                false;
-
-            this.loadDefaults();
-        }
-
-        this.cdr.detectChanges();
-    }
-
-    //===========================================================
-    // Module Changed
-    //===========================================================
-
-    onModuleChange(
-        moduleId:number
-    ):
-        void
-    {
-        this.activity.navigationModuleId =
-            moduleId;
-
-        const selected =
-            this.modules.find(
-                x =>
-                    x.id === moduleId
-            );
-
-        if (selected)
-        {
-            this.activity.navigationModuleName =
-                selected.name;
-        }
+        this.activity.isActive =
+            value;
 
         this.checkForChanges();
-
-        if
-        (
-            this.mode === 'add'
-            &&
-            moduleId > 0
-        )
-        {
-            this.loadDefaults();
-        }
     }
-    
+
     //===========================================================
     // Save
     //===========================================================
@@ -930,88 +511,14 @@ implements OnInit
             return;
         }
 
-        if
-        (
-            this.isNavigationMode
-            &&
-            !this.activity.navigationModuleId
-        )
-        {
-            this.toast.warning(
-                'Validation',
-                'Navigation module is required.'
-            );
-
-            return;
-        }
-
         //=======================================================
-        // Master Activity
+        // Create
         //=======================================================
 
-        if (this.isMasterMode)
+        if (this.mode === 'add')
         {
-            if (this.mode === 'add')
+            const model:CreateMasterActivity =
             {
-                const model:CreateMasterActivity =
-                {
-                    name:
-                        this.activity.name,
-
-                    displayOrder:
-                        this.activity.displayOrder,
-
-                    remarks:
-                        this.activity.remarks,
-
-                    isActive:
-                        this.activity.isActive
-                };
-
-                this.masterActivityService
-                    .create(model)
-                    .subscribe(
-                    {
-                        next:() =>
-                        {
-                            this.originalActivity =
-                                JSON.stringify(this.activity);
-
-                            this.hasChanges =
-                                false;
-
-                            this.toast.success(
-                                'Success',
-                                'Master activity created successfully.'
-                            );
-
-                            this.onBackToList();
-                        },
-
-                        error:(error) =>
-                        {
-                            console.error(error);
-
-                            const message =
-                                error?.error
-                                ??
-                                'Failed to create master activity.';
-
-                            this.toast.error(
-                                'Validation',
-                                message
-                            );
-                        }
-                    });
-
-                return;
-            }
-
-            const model:UpdateMasterActivity =
-            {
-                id:
-                    this.activity.id,
-
                 name:
                     this.activity.name,
 
@@ -1026,69 +533,6 @@ implements OnInit
             };
 
             this.masterActivityService
-                .update(model)
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalActivity =
-                            JSON.stringify(this.activity);
-
-                        this.hasChanges =
-                            false;
-
-                        this.toast.success(
-                            'Success',
-                            'Master activity updated successfully.'
-                        );
-
-                        this.onBackToList();
-                    },
-
-                    error:(error) =>
-                    {
-                        console.error(error);
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to update master activity.';
-
-                        this.toast.error(
-                            'Validation',
-                            message
-                        );
-                    }
-                });
-
-            return;
-        }
-
-        //=======================================================
-        // Navigation Activity
-        //=======================================================
-
-        if (this.mode === 'add')
-        {
-            const model:CreateNavigationActivity =
-            {
-                navigationModuleId:
-                    this.activity.navigationModuleId,
-
-                name:
-                    this.activity.name,
-
-                displayOrder:
-                    this.activity.displayOrder,
-
-                remarks:
-                    this.activity.remarks,
-
-                isActive:
-                    this.activity.isActive
-            };
-
-            this.navigationActivityService
                 .create(model)
                 .subscribe(
                 {
@@ -1102,7 +546,7 @@ implements OnInit
 
                         this.toast.success(
                             'Success',
-                            'Navigation activity created successfully.'
+                            'Master activity created successfully.'
                         );
 
                         this.onBackToList();
@@ -1115,7 +559,7 @@ implements OnInit
                         const message =
                             error?.error
                             ??
-                            'Failed to create navigation activity.';
+                            'Failed to create master activity.';
 
                         this.toast.error(
                             'Validation',
@@ -1127,13 +571,14 @@ implements OnInit
             return;
         }
 
-        const model:UpdateNavigationActivity =
+        //=======================================================
+        // Update
+        //=======================================================
+
+        const model:UpdateMasterActivity =
         {
             id:
                 this.activity.id,
-
-            navigationModuleId:
-                this.activity.navigationModuleId,
 
             name:
                 this.activity.name,
@@ -1148,7 +593,7 @@ implements OnInit
                 this.activity.isActive
         };
 
-        this.navigationActivityService
+        this.masterActivityService
             .update(model)
             .subscribe(
             {
@@ -1162,7 +607,7 @@ implements OnInit
 
                     this.toast.success(
                         'Success',
-                        'Navigation activity updated successfully.'
+                        'Master activity updated successfully.'
                     );
 
                     this.onBackToList();
@@ -1175,7 +620,7 @@ implements OnInit
                     const message =
                         error?.error
                         ??
-                        'Failed to update navigation activity.';
+                        'Failed to update master activity.';
 
                     this.toast.error(
                         'Validation',
@@ -1198,11 +643,6 @@ implements OnInit
 
         if (this.mode === 'edit')
         {
-            // Keep:
-            // - Code
-            // - Display Order
-            // - Navigation Module (Navigation Mode only)
-
             this.activity.name =
                 '';
 
@@ -1221,27 +661,19 @@ implements OnInit
         // Add Mode
         //=======================================================
 
+        const currentCode =
+            this.activity.code;
+
+        const currentDisplayOrder =
+            this.activity.displayOrder;
+
         this.activity =
         {
             id:0,
-
-            navigationModuleId:
-                this.isNavigationMode
-                    ? 0
-                    : 0,
-
-            navigationModuleName:'',
-
-            code:
-                this.activity.code,
-
+            code:currentCode,
             name:'',
-
-            displayOrder:
-                this.activity.displayOrder,
-
+            displayOrder:currentDisplayOrder,
             remarks:'',
-
             isActive:true
         };
 
@@ -1251,10 +683,7 @@ implements OnInit
         this.hasChanges =
             false;
 
-        if (this.isMasterMode)
-        {
-            this.loadDefaults();
-        }
+        this.loadDefaults();
 
         this.cdr.detectChanges();
     }
@@ -1266,52 +695,33 @@ implements OnInit
     onBackToList():
         void
     {
-        const tab =
-            this.selectedTab;
-
         const route =
             '/infrastructure-control/navigation-management/navigation-activities';
-
-        const navigation =
-        {
-            queryParams:
-            {
-                tab:tab
-            }
-        };
 
         if (!this.hasChanges)
         {
             this.router.navigate(
-                [route],
-                navigation
+                [route]
             );
 
             return;
         }
 
         this.confirmDialog.open(
-
             'Cancel Changes',
-
             'Any unsaved changes will be lost. Do you want to leave this page?',
-
             () =>
             {
                 this.router.navigate(
-                    [route],
-                    navigation
+                    [route]
                 );
             },
-
             'Leave',
-
             'Stay',
-
             'primary'
         );
     }
-    
+
     //===========================================================
     // Save Button Text
     //===========================================================
@@ -1324,7 +734,6 @@ implements OnInit
             : 'Save';
     }
 
-
     //===========================================================
     // View Mode
     //===========================================================
@@ -1334,7 +743,6 @@ implements OnInit
     {
         return this.mode === 'view';
     }
-
 
     //===========================================================
     // Edit Mode
@@ -1346,7 +754,6 @@ implements OnInit
         return this.mode === 'edit';
     }
 
-
     //===========================================================
     // Add Mode
     //===========================================================
@@ -1357,7 +764,6 @@ implements OnInit
         return this.mode === 'add';
     }
 
-
     //===========================================================
     // Close Form
     //===========================================================
@@ -1367,7 +773,6 @@ implements OnInit
     {
         this.onBackToList();
     }
-
 
     //===========================================================
     // Refresh Form
@@ -1400,7 +805,6 @@ implements OnInit
 
         this.cdr.detectChanges();
     }
-
 
     //===========================================================
     // Value Changed

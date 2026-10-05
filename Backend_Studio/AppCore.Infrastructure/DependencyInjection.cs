@@ -25,14 +25,12 @@ using AppCore.Infrastructure.Repositories.Common;
 using AppCore.Application.InfrastructureControl.NavigationManagement.Module.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.Menu.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.Submenu.Interfaces;
-using AppCore.Application.InfrastructureControl.NavigationManagement.Activity.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.MasterActivity.Interfaces;
 using AppCore.Application.InfrastructureControl.NavigationManagement.Sidebar.Interfaces;
 
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Module;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Menu;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Submenu;
-using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.Activity;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement.MasterActivity;
 
 using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
@@ -536,12 +534,6 @@ public static class DependencyInjection
         <
             INavigationSubmenuRepository,
             NavigationSubmenuRepository
-        >();
-
-        services.AddScoped
-        <
-            INavigationActivityRepository,
-            NavigationActivityRepository
         >();
 
         services.AddScoped

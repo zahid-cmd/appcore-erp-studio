@@ -346,8 +346,6 @@ public class SpecialAssignmentRepository
             );
     }
 
-
-
     //===========================================================
     // Create
     //===========================================================
@@ -361,6 +359,31 @@ public class SpecialAssignmentRepository
         const long userId =
             1;
 
+        //=======================================================
+        // Check Existing Active Assignment
+        //=======================================================
+
+        var existing =
+            await _context
+                .Set<SpecialAssignment>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.UserProfileId ==
+                        entity.UserProfileId
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            existing is not null
+        )
+        {
+            throw new InvalidOperationException(
+                $"An active Special Assignment already exists for User Profile '{entity.UserProfileId}'."
+            );
+        }
 
         //=======================================================
         // Master Audit
@@ -369,34 +392,26 @@ public class SpecialAssignmentRepository
         entity.IsActive =
             true;
 
-
         entity.IsDeleted =
             false;
-
 
         entity.DeletedBy =
             null;
 
-
         entity.DeletedDate =
             null;
-
 
         entity.CreatedBy =
             userId;
 
-
         entity.CreatedDate =
             DateTime.UtcNow;
-
 
         entity.ModifiedBy =
             null;
 
-
         entity.ModifiedDate =
             null;
-
 
         //=======================================================
         // Detail Audit
@@ -412,34 +427,26 @@ public class SpecialAssignmentRepository
             detail.IsActive =
                 true;
 
-
             detail.IsDeleted =
                 false;
-
 
             detail.DeletedBy =
                 null;
 
-
             detail.DeletedDate =
                 null;
-
 
             detail.CreatedBy =
                 userId;
 
-
             detail.CreatedDate =
                 DateTime.UtcNow;
-
 
             detail.ModifiedBy =
                 null;
 
-
             detail.ModifiedDate =
                 null;
-
 
             //===================================================
             // Permission Audit
@@ -455,36 +462,28 @@ public class SpecialAssignmentRepository
                 permission.IsActive =
                     true;
 
-
                 permission.IsDeleted =
                     false;
-
 
                 permission.DeletedBy =
                     null;
 
-
                 permission.DeletedDate =
                     null;
-
 
                 permission.CreatedBy =
                     userId;
 
-
                 permission.CreatedDate =
                     DateTime.UtcNow;
 
-
                 permission.ModifiedBy =
                     null;
-
 
                 permission.ModifiedDate =
                     null;
             }
         }
-
 
         //=======================================================
         // Add Graph
@@ -496,9 +495,7 @@ public class SpecialAssignmentRepository
                 entity
             );
 
-
         await _context.SaveChangesAsync();
-
 
         //=======================================================
         // Activity History
@@ -536,14 +533,10 @@ public class SpecialAssignmentRepository
             }
         );
 
-
         await _context.SaveChangesAsync();
-
 
         return entity.SpecialAssignmentId;
     }
-
-
 
     //===========================================================
     // Update
@@ -558,7 +551,6 @@ public class SpecialAssignmentRepository
         const long userId =
             1;
 
-
         //=======================================================
         // Load Existing Graph
         //=======================================================
@@ -566,27 +558,21 @@ public class SpecialAssignmentRepository
         var existing =
             await _context
                 .Set<SpecialAssignment>()
-
                 .Include(
                     x =>
                         x.Details
                 )
-
                 .ThenInclude(
                     x =>
                         x.SpecialAssignmentPermissions
                 )
-
                 .FirstOrDefaultAsync(
                     x =>
                         x.SpecialAssignmentId ==
                         entity.SpecialAssignmentId
-
                         &&
-
                         !x.IsDeleted
                 );
-
 
         if
         (
@@ -598,6 +584,142 @@ public class SpecialAssignmentRepository
             );
         }
 
+        //=======================================================
+        // Empty Details = Delete Entire Assignment
+        //=======================================================
+
+        if
+        (
+            entity.Details == null
+            ||
+            entity.Details.Count == 0
+        )
+        {
+            var now =
+                DateTime.UtcNow;
+
+            //===================================================
+            // Soft Delete Existing Permissions
+            //===================================================
+
+            foreach
+            (
+                var detail
+                in
+                existing.Details
+            )
+            {
+                foreach
+                (
+                    var permission
+                    in
+                    detail.SpecialAssignmentPermissions
+                )
+                {
+                    permission.IsActive =
+                        false;
+
+                    permission.IsDeleted =
+                        true;
+
+                    permission.ModifiedBy =
+                        userId;
+
+                    permission.ModifiedDate =
+                        now;
+
+                    permission.DeletedBy =
+                        userId;
+
+                    permission.DeletedDate =
+                        now;
+                }
+
+                //================================================
+                // Soft Delete Existing Detail
+                //================================================
+
+                detail.IsActive =
+                    false;
+
+                detail.IsDeleted =
+                    true;
+
+                detail.ModifiedBy =
+                    userId;
+
+                detail.ModifiedDate =
+                    now;
+
+                detail.DeletedBy =
+                    userId;
+
+                detail.DeletedDate =
+                    now;
+            }
+
+            //===================================================
+            // Soft Delete Master
+            //===================================================
+
+            existing.IsActive =
+                false;
+
+            existing.IsDeleted =
+                true;
+
+            existing.ModifiedBy =
+                userId;
+
+            existing.ModifiedDate =
+                now;
+
+            existing.DeletedBy =
+                userId;
+
+            existing.DeletedDate =
+                now;
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "SecurityPermission",
+
+                    EntityName =
+                        "SpecialAssignment",
+
+                    EntityId =
+                        existing.SpecialAssignmentId,
+
+                    ActivityType =
+                        "Delete",
+
+                    ActivityTitle =
+                        "SpecialAssignment Deleted",
+
+                    ActivityDescription =
+                        $"SpecialAssignment for UserProfile '{existing.UserProfileId}' was deleted.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        now
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            return;
+        }
 
         //=======================================================
         // Master
@@ -606,18 +728,14 @@ public class SpecialAssignmentRepository
         existing.UserProfileId =
             entity.UserProfileId;
 
-
         existing.IsActive =
             entity.IsActive;
-
 
         existing.ModifiedBy =
             userId;
 
-
         existing.ModifiedDate =
             DateTime.UtcNow;
-
 
         //=======================================================
         // Remove Existing Permissions
@@ -637,7 +755,6 @@ public class SpecialAssignmentRepository
                 );
         }
 
-
         //=======================================================
         // Remove Existing Details
         //=======================================================
@@ -648,14 +765,12 @@ public class SpecialAssignmentRepository
                 existing.Details
             );
 
-
         //=======================================================
         // Add New Details
         //=======================================================
 
         existing.Details =
             new List<SpecialAssignmentDetail>();
-
 
         foreach
         (
@@ -707,7 +822,6 @@ public class SpecialAssignmentRepository
                         new List<SpecialAssignmentPermission>()
                 };
 
-
             //===================================================
             // Add Permissions
             //===================================================
@@ -753,7 +867,6 @@ public class SpecialAssignmentRepository
                             null
                     };
 
-
                 detail
                     .SpecialAssignmentPermissions
                     .Add(
@@ -761,14 +874,12 @@ public class SpecialAssignmentRepository
                     );
             }
 
-
             existing
                 .Details
                 .Add(
                     detail
                 );
         }
-
 
         //=======================================================
         // Activity History
@@ -806,10 +917,8 @@ public class SpecialAssignmentRepository
             }
         );
 
-
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================

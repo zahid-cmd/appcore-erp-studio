@@ -17,6 +17,7 @@
     overflow: hidden;
 }
 
+
 /* =====================================================
    PROJECTED CONTENT
 ===================================================== */
@@ -37,6 +38,7 @@
 
     overflow: hidden;
 }
+
 
 /* =====================================================
    ROOT
@@ -60,6 +62,7 @@
 
     background: #ffffff;
 }
+
 
 /* =====================================================
    TABLE HEADER CONTAINER
@@ -94,6 +97,7 @@
         inset 0 -1px 0 rgba(255,255,255,.55);
 }
 
+
 /* =====================================================
    TABLE BODY CONTAINER
 ===================================================== */
@@ -117,6 +121,7 @@
     background: #ffffff;
 }
 
+
 /* =====================================================
    TABLE
 ===================================================== */
@@ -134,6 +139,7 @@
     background: #ffffff;
 }
 
+
 /* =====================================================
    DATA TABLE
 ===================================================== */
@@ -146,6 +152,7 @@
 
     align-self: flex-start;
 }
+
 
 /* =====================================================
    HEADER CELL
@@ -203,6 +210,7 @@
         box-shadow .18s ease;
 }
 
+
 /* =====================================================
    HEADER ALIGNMENT
 ===================================================== */
@@ -212,15 +220,18 @@
     text-align: left;
 }
 
+
 .list-table-grid thead th.center
 {
     text-align: center;
 }
 
+
 .list-table-grid thead th.right
 {
     text-align: right;
 }
+
 
 /* =====================================================
    PERMISSION HEADER COLUMN
@@ -231,7 +242,180 @@
     padding: 0;
 
     text-align: center;
+
+    vertical-align: middle;
 }
+
+
+/* =====================================================
+   PERMISSION HEADER
+===================================================== */
+
+.permission-header
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 100%;
+
+    height: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   PERMISSION HEADER CONTENT
+===================================================== */
+
+.permission-header-content
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    width: auto;
+
+    height: 100%;
+
+    margin: 0 auto;
+
+    padding: 0;
+
+    white-space: nowrap;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   PERMISSION HEADER TITLE
+===================================================== */
+
+.permission-header-title
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    height: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: .4px;
+
+    color: #55667d;
+
+    line-height: 1;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   PERMISSION HEADER DIVIDER
+===================================================== */
+
+.permission-header-divider
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    height: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
+
+    font-weight: 400;
+
+    line-height: 1;
+
+    user-select: none;
+}
+
+
+/* =====================================================
+   PERMISSION HEADER ACTION
+===================================================== */
+
+.permission-header-action
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    height: 100%;
+
+    margin: 0;
+
+    padding: 0;
+
+    white-space: nowrap;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   PERMISSION HEADER LABEL
+===================================================== */
+
+.permission-header-label
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin: 0;
+
+    padding: 0;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    color: #64748b;
+
+    line-height: 1;
+
+    text-align: center;
+}
+
 
 /* =====================================================
    TABLE STATES
@@ -259,6 +443,7 @@
         );
 }
 
+
 .table-state app-empty-state
 {
     display: flex;
@@ -273,6 +458,7 @@
 
     justify-content: center;
 }
+
 
 /* =====================================================
    BODY ROW
@@ -290,15 +476,18 @@
         background-color .18s ease;
 }
 
+
 .list-table-row:nth-child(even)
 {
     background: #fbfcfe;
 }
 
+
 .list-table-row:hover
 {
     background: #eef5ff;
 }
+
 
 /* =====================================================
    BODY CELL
@@ -335,37 +524,318 @@
     box-sizing: border-box;
 }
 
+
+/* =====================================================
+   BODY CELL ALIGNMENT
+===================================================== */
+
 .list-table-grid tbody td.left
 {
     text-align: left;
 }
+
 
 .list-table-grid tbody td.center
 {
     text-align: center;
 }
 
+
 .list-table-grid tbody td.right
 {
     text-align: right;
 }
 
+
 /* =====================================================
-   ACTIVITY SELECTOR
+   MASTER ACTIVITY CELL
 ===================================================== */
 
 .list-table-grid tbody td app-activity-selector
 {
-    display: flex;
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    width: 100% !important;
+
+    height: 40px !important;
+
+    min-height: 40px !important;
+
+    max-height: 40px !important;
+
+    margin: 0 auto !important;
+
+    padding: 0 !important;
+
+    line-height: normal !important;
+
+    text-align: center !important;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY SELECTOR ROOT
+===================================================== */
+
+::ng-deep app-activity-selector
+{
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    text-align: center !important;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY SELECTOR DIRECT CONTAINER
+===================================================== */
+
+::ng-deep app-activity-selector > div
+{
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    margin: 0 auto !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   COMMON ACTIVITY SELECTOR CONTAINERS
+===================================================== */
+
+::ng-deep app-activity-selector .activity-selector,
+
+::ng-deep app-activity-selector .activity-selector-content,
+
+::ng-deep app-activity-selector .activity-list,
+
+::ng-deep app-activity-selector .activities,
+
+::ng-deep app-activity-selector .selector-content
+{
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    margin: 0 auto !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY ITEMS
+===================================================== */
+
+/*
+   EVERY ACTIVITY GETS EXACTLY 100px.
+
+   All
+   View
+   Add
+   Edit / Update
+   Delete
+   Restore
+
+   are therefore visually aligned.
+*/
+
+::ng-deep app-activity-selector .activity-item
+{
+    display: inline-flex !important;
+
+    flex: 0 0 100px !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    width: 100px !important;
+
+    min-width: 100px !important;
+
+    max-width: 100px !important;
+
+    height: 32px !important;
+
+    min-height: 32px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box;
+
+    text-align: center !important;
+}
+
+
+/* =====================================================
+   ACTIVITY LABEL
+===================================================== */
+
+/*
+   The label receives the same fixed width
+   as the activity item.
+*/
+
+::ng-deep app-activity-selector .activity-item label,
+
+::ng-deep app-activity-selector label
+{
+    display: inline-flex !important;
+
+    flex: 0 0 100px !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    width: 100px !important;
+
+    min-width: 100px !important;
+
+    max-width: 100px !important;
+
+    height: 32px !important;
+
+    min-height: 32px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    line-height: 1 !important;
+
+    white-space: nowrap;
+
+    text-align: center !important;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY CHECKBOX + TEXT
+===================================================== */
+
+::ng-deep app-activity-selector .activity-item input[type="checkbox"],
+
+::ng-deep app-activity-selector input[type="checkbox"]
+{
+    flex: 0 0 auto;
+
+    width: 15px;
+
+    height: 15px;
+
+    margin: 0 5px 0 0 !important;
+
+    padding: 0;
+
+    vertical-align: middle;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY TEXT
+===================================================== */
+
+::ng-deep app-activity-selector .activity-item span,
+
+::ng-deep app-activity-selector label span
+{
+    display: inline-flex;
 
     align-items: center;
 
     justify-content: center;
 
-    width: 100%;
+    margin: 0;
 
-    min-height: 40px;
+    padding: 0;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    text-align: center;
 }
+
+
+/* =====================================================
+   ACTIVITY ITEM HOVER
+===================================================== */
+
+::ng-deep app-activity-selector .activity-item:hover
+{
+    background: transparent;
+}
+
+
+/* =====================================================
+   SELECT ALL HEADER CHECKBOX
+===================================================== */
+
+.permission-header-action input[type="checkbox"]
+{
+    width: 15px;
+
+    height: 15px;
+
+    margin: 0;
+
+    padding: 0;
+
+    vertical-align: middle;
+
+    box-sizing: border-box;
+}
+
 
 /* =====================================================
    REMOVE BUTTON
@@ -409,6 +879,7 @@
     transition: all .18s ease;
 }
 
+
 .remove-button:hover
 {
     background:
@@ -429,6 +900,7 @@
         inset 0 1px 0 rgba(255,255,255,.9);
 }
 
+
 .remove-button:active
 {
     transform: translateY(0);
@@ -437,12 +909,14 @@
         inset 0 2px 4px rgba(0,0,0,.12);
 }
 
+
 .remove-button i
 {
     font-size: 15px;
 
     line-height: 1;
 }
+
 
 .remove-button:focus
 {
@@ -451,6 +925,7 @@
     box-shadow:
         0 0 0 3px rgba(220,38,38,.18);
 }
+
 
 .remove-button:disabled
 {
@@ -463,6 +938,7 @@
     box-shadow: none;
 }
 
+
 /* =====================================================
    SCROLLBAR
 ===================================================== */
@@ -474,6 +950,7 @@
     height: 10px;
 }
 
+
 .list-table-body::-webkit-scrollbar-thumb
 {
     background: #cfd8e3;
@@ -481,15 +958,18 @@
     border-radius: 999px;
 }
 
+
 .list-table-body::-webkit-scrollbar-thumb:hover
 {
     background: #b7c3d4;
 }
 
+
 .list-table-body::-webkit-scrollbar-track
 {
     background: #f7f9fc;
 }
+
 
 /* =====================================================
    UTILITIES
@@ -500,109 +980,20 @@
     white-space: nowrap;
 }
 
+
 .text-left
 {
     text-align: left;
 }
+
 
 .text-center
 {
     text-align: center;
 }
 
+
 .text-right
 {
     text-align: right;
-}
-
-/* =====================================================
-   PERMISSION HEADER
-===================================================== */
-
-.permission-header
-{
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    width: 100%;
-
-    height: 100%;
-}
-
-.permission-header-content
-{
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 14px;
-
-    padding: 0 12px;
-
-    white-space: nowrap;
-}
-
-.permission-header-title
-{
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-size: 13px;
-
-    font-weight: 700;
-
-    text-transform: uppercase;
-
-    letter-spacing: .4px;
-
-    color: #55667d;
-}
-
-.permission-header-divider
-{
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    color: #cbd5e1;
-
-    font-size: 14px;
-
-    font-weight: 400;
-
-    user-select: none;
-}
-
-.permission-header-action
-{
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 6px;
-
-    white-space: nowrap;
-}
-
-.permission-header-label
-{
-    font-size: 11px;
-
-    font-weight: 600;
-
-    color: #64748b;
-
-    line-height: 1;
 }

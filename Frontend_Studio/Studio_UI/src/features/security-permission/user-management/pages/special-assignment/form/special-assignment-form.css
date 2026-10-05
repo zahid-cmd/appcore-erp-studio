@@ -5,14 +5,55 @@
 @import '../../../../../../shared/styles/app-form-page.css';
 
 
-
 /* =====================================================
-   SPECIAL TOOLBAR — MASTER CONTROL
+   ACTIVITY HEADER CENTER
 ===================================================== */
 
-.special-toolbar-right
+.activity-header-center
 {
-    --special-dropdown-width:260px;
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    width:auto;
+
+    height:100%;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY HEADER SEARCH
+===================================================== */
+
+.activity-header-search
+{
+    display:block;
+
+    width:260px;
+
+    flex:0 0 260px;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
+   ACTIVITY TOOLBAR — MASTER CONTROL
+===================================================== */
+
+.activity-toolbar-right
+{
+    --activity-dropdown-width:260px;
 
     display:flex;
 
@@ -40,12 +81,11 @@
 }
 
 
-
 /* =====================================================
    PAGE TOOLBAR — LEFT
 ===================================================== */
 
-.special-toolbar-left
+.activity-toolbar-left
 {
     display:flex;
 
@@ -63,28 +103,27 @@
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — MASTER WIDTH
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 {
-    --dropdown-width:var(--special-dropdown-width) !important;
+    --dropdown-width:var(--activity-dropdown-width) !important;
 
     --dropdown-height:36px !important;
 
     display:block !important;
 
-    flex:0 0 var(--special-dropdown-width) !important;
+    flex:0 0 var(--activity-dropdown-width) !important;
 
-    width:var(--special-dropdown-width) !important;
+    width:var(--activity-dropdown-width) !important;
 
-    min-width:var(--special-dropdown-width) !important;
+    min-width:var(--activity-dropdown-width) !important;
 
-    max-width:var(--special-dropdown-width) !important;
+    max-width:var(--activity-dropdown-width) !important;
 
     height:36px !important;
 
@@ -100,13 +139,12 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — CONTAINER
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-container
 {
@@ -114,11 +152,11 @@ app-search-dropdown
 
     flex-direction:column !important;
 
-    width:var(--special-dropdown-width) !important;
+    width:var(--activity-dropdown-width) !important;
 
-    min-width:var(--special-dropdown-width) !important;
+    min-width:var(--activity-dropdown-width) !important;
 
-    max-width:var(--special-dropdown-width) !important;
+    max-width:var(--activity-dropdown-width) !important;
 
     margin:0 !important;
 
@@ -128,27 +166,25 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — ROOT
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown
 {
     position:relative !important;
 
-    width:var(--special-dropdown-width) !important;
+    width:var(--activity-dropdown-width) !important;
 
-    min-width:var(--special-dropdown-width) !important;
+    min-width:var(--activity-dropdown-width) !important;
 
-    max-width:var(--special-dropdown-width) !important;
+    max-width:var(--activity-dropdown-width) !important;
 
     box-sizing:border-box !important;
 }
-
 
 
 /* =====================================================
@@ -156,7 +192,7 @@ app-search-dropdown
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-selector
 {
@@ -166,11 +202,11 @@ app-search-dropdown
 
     justify-content:space-between !important;
 
-    width:var(--special-dropdown-width) !important;
+    width:var(--activity-dropdown-width) !important;
 
-    min-width:var(--special-dropdown-width) !important;
+    min-width:var(--activity-dropdown-width) !important;
 
-    max-width:var(--special-dropdown-width) !important;
+    max-width:var(--activity-dropdown-width) !important;
 
     height:36px !important;
 
@@ -180,18 +216,17 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — SELECTED TEXT
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-selected-text,
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-placeholder
 {
@@ -207,13 +242,12 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — PANEL
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-panel
 {
@@ -221,11 +255,11 @@ app-search-dropdown
 
     left:0 !important;
 
-    width:var(--special-dropdown-width) !important;
+    width:var(--activity-dropdown-width) !important;
 
-    min-width:var(--special-dropdown-width) !important;
+    min-width:var(--activity-dropdown-width) !important;
 
-    max-width:var(--special-dropdown-width) !important;
+    max-width:var(--activity-dropdown-width) !important;
 
     box-sizing:border-box !important;
 
@@ -233,13 +267,12 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — SEARCH
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-search
 {
@@ -255,13 +288,12 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — SEARCH INPUT
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-search input
 {
@@ -275,13 +307,12 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — OPTIONS
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-options
 {
@@ -295,13 +326,12 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    SEARCH DROPDOWN — OPTION LABEL
 ===================================================== */
 
 :host ::ng-deep
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown
 .dropdown-option-label
 {
@@ -317,45 +347,43 @@ app-search-dropdown
 }
 
 
-
 /* =====================================================
    DROPDOWN STACKING
 ===================================================== */
 
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown:nth-child(1)
 {
     z-index:104;
 }
 
 
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown:nth-child(2)
 {
     z-index:103;
 }
 
 
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown:nth-child(3)
 {
     z-index:102;
 }
 
 
-.special-toolbar-right
+.activity-toolbar-right
 app-search-dropdown:nth-child(4)
 {
     z-index:101;
 }
 
 
-
 /* =====================================================
-   SPECIAL ADD BUTTON
+   ACTIVITY ADD BUTTON
 ===================================================== */
 
-.special-add-button
+.activity-add-button
 {
     display:inline-flex;
 
@@ -421,7 +449,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-add-button i
+.activity-add-button i
 {
     width:14px;
 
@@ -433,7 +461,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-add-button span
+.activity-add-button span
 {
     flex:1;
 
@@ -441,7 +469,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-add-button:hover:not(:disabled)
+.activity-add-button:hover:not(:disabled)
 {
     transform:translateY(-1px);
 
@@ -450,7 +478,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-add-button:active:not(:disabled)
+.activity-add-button:active:not(:disabled)
 {
     transform:translateY(0);
 
@@ -459,7 +487,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-add-button:disabled
+.activity-add-button:disabled
 {
     cursor:not-allowed;
 
@@ -479,7 +507,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-add-button:focus-visible
+.activity-add-button:focus-visible
 {
     outline:none;
 
@@ -488,12 +516,11 @@ app-search-dropdown:nth-child(4)
 }
 
 
-
 /* =====================================================
-   RESET BUTTON
+   ACTIVITY RESET BUTTON
 ===================================================== */
 
-.special-reset-button
+.activity-reset-button
 {
     display:inline-flex;
 
@@ -555,7 +582,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-reset-button:hover:not(:disabled)
+.activity-reset-button:hover:not(:disabled)
 {
     background:
         linear-gradient(
@@ -575,7 +602,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-reset-button:active:not(:disabled)
+.activity-reset-button:active:not(:disabled)
 {
     transform:translateY(0);
 
@@ -583,7 +610,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-reset-button:disabled
+.activity-reset-button:disabled
 {
     opacity:.55;
 
@@ -595,7 +622,7 @@ app-search-dropdown:nth-child(4)
 }
 
 
-.special-reset-button i
+.activity-reset-button i
 {
     width:14px;
 
@@ -605,7 +632,6 @@ app-search-dropdown:nth-child(4)
 
     flex-shrink:0;
 }
-
 
 
 /* =====================================================
@@ -635,7 +661,6 @@ app-empty-state
 
     text-align:center !important;
 }
-
 
 
 /* =====================================================
@@ -677,7 +702,6 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    EMPTY STATE — CONTENT WRAPPER
 ===================================================== */
@@ -706,7 +730,6 @@ app-empty-state
 
     text-align:center;
 }
-
 
 
 /* =====================================================
@@ -762,7 +785,6 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    EMPTY STATE — TITLE
 ===================================================== */
@@ -783,7 +805,6 @@ app-empty-state
 
     letter-spacing:-.1px;
 }
-
 
 
 /* =====================================================
@@ -808,7 +829,6 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    EMPTY STATE — ACTION
 ===================================================== */
@@ -819,7 +839,6 @@ app-empty-state
 {
     margin-top:16px;
 }
-
 
 
 /* =====================================================
@@ -846,7 +865,6 @@ app-empty-state:hover
         0 10px 28px rgba(37,99,235,.11),
         inset 0 1px 0 rgba(255,255,255,.95);
 }
-
 
 
 /* =====================================================
@@ -889,7 +907,6 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    PAGE HEADER ACTIONS
 ===================================================== */
@@ -902,7 +919,6 @@ app-empty-state
 
     gap:12px;
 }
-
 
 
 /* =====================================================
@@ -955,16 +971,15 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    RESPONSIVE — 1400px
 ===================================================== */
 
 @media (max-width:1400px)
 {
-    .special-toolbar-right
+    .activity-toolbar-right
     {
-        --special-dropdown-width:165px;
+        --activity-dropdown-width:165px;
 
         gap:5px;
 
@@ -972,8 +987,9 @@ app-empty-state
     }
 
 
-    .special-add-button,
-    .special-reset-button
+    .activity-add-button,
+
+    .activity-reset-button
     {
         flex-basis:72px;
 
@@ -986,14 +1002,13 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    RESPONSIVE — 1200px
 ===================================================== */
 
 @media (max-width:1200px)
 {
-    .special-toolbar-left
+    .activity-toolbar-left
     {
         flex-basis:130px;
 
@@ -1005,9 +1020,9 @@ app-empty-state
     }
 
 
-    .special-toolbar-right
+    .activity-toolbar-right
     {
-        --special-dropdown-width:145px;
+        --activity-dropdown-width:145px;
 
         gap:4px;
 
@@ -1015,8 +1030,9 @@ app-empty-state
     }
 
 
-    .special-add-button,
-    .special-reset-button
+    .activity-add-button,
+
+    .activity-reset-button
     {
         flex-basis:68px;
 
@@ -1028,8 +1044,15 @@ app-empty-state
 
         padding:0 6px;
     }
-}
 
+
+    .activity-header-search
+    {
+        width:220px;
+
+        flex-basis:220px;
+    }
+}
 
 
 /* =====================================================
@@ -1038,7 +1061,21 @@ app-empty-state
 
 @media (max-width:992px)
 {
-    .special-toolbar-left
+    .activity-header-center
+    {
+        gap:8px;
+    }
+
+
+    .activity-header-search
+    {
+        width:220px;
+
+        flex-basis:220px;
+    }
+
+
+    .activity-toolbar-left
     {
         flex:0 0 auto;
 
@@ -1050,9 +1087,9 @@ app-empty-state
     }
 
 
-    .special-toolbar-right
+    .activity-toolbar-right
     {
-        --special-dropdown-width:calc(50% - 4px);
+        --activity-dropdown-width:calc(50% - 4px);
 
         flex-wrap:wrap;
 
@@ -1067,12 +1104,12 @@ app-empty-state
 
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     {
-        flex:1 1 var(--special-dropdown-width) !important;
+        flex:1 1 var(--activity-dropdown-width) !important;
 
-        width:var(--special-dropdown-width) !important;
+        width:var(--activity-dropdown-width) !important;
 
         min-width:120px !important;
 
@@ -1081,22 +1118,22 @@ app-empty-state
 
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown-container,
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown,
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown-selector,
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown-panel
     {
@@ -1108,8 +1145,9 @@ app-empty-state
     }
 
 
-    .special-add-button,
-    .special-reset-button
+    .activity-add-button,
+
+    .activity-reset-button
     {
         flex:1 1 90px;
 
@@ -1160,16 +1198,39 @@ app-empty-state
 }
 
 
-
 /* =====================================================
    RESPONSIVE — 600px
 ===================================================== */
 
 @media (max-width:600px)
 {
-    .special-toolbar-right
+    .activity-header-center
     {
-        --special-dropdown-width:100%;
+        flex-direction:column;
+
+        align-items:stretch;
+
+        justify-content:center;
+
+        gap:6px;
+
+        width:100%;
+
+        height:auto;
+    }
+
+
+    .activity-header-search
+    {
+        width:100%;
+
+        flex:0 0 auto;
+    }
+
+
+    .activity-toolbar-right
+    {
+        --activity-dropdown-width:100%;
 
         flex-direction:column;
 
@@ -1182,7 +1243,7 @@ app-empty-state
 
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     {
         flex:0 0 auto !important;
@@ -1196,22 +1257,22 @@ app-empty-state
 
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown-container,
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown,
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown-selector,
 
     :host ::ng-deep
-    .special-toolbar-right
+    .activity-toolbar-right
     app-search-dropdown
     .dropdown-panel
     {
@@ -1223,8 +1284,9 @@ app-empty-state
     }
 
 
-    .special-add-button,
-    .special-reset-button
+    .activity-add-button,
+
+    .activity-reset-button
     {
         flex:0 0 auto;
 

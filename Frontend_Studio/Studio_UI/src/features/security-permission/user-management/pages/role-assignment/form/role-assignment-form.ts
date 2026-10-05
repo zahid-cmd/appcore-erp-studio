@@ -2447,6 +2447,10 @@ implements OnInit
         }
 
 
+        //=======================================================
+        // User Profile Validation
+        //=======================================================
+
         if
         (
             this.selectedUserProfileId == null
@@ -2458,13 +2462,27 @@ implements OnInit
                 'User Profile is required.'
             );
 
-
             return;
         }
 
 
+        //=======================================================
+        // Add Mode Validation
+        //
+        // A new Role Assignment must contain at least
+        // one Role Profile.
+        //
+        // Edit mode is intentionally allowed to have
+        // zero rows because zero rows means the assignment
+        // is being removed.
+        //=======================================================
+
         if
         (
+            this.mode === 'add'
+
+            &&
+
             this.roleAssignmentRows.length === 0
         )
         {
@@ -2474,10 +2492,13 @@ implements OnInit
                 'At least one role profile assignment is required.'
             );
 
-
             return;
         }
 
+
+        //=======================================================
+        // Save / Update
+        //=======================================================
 
         this.save();
     }
@@ -2552,7 +2573,13 @@ implements OnInit
 
             ||
 
-            this.roleAssignmentRows.length === 0
+            (
+                this.mode === 'add'
+
+                &&
+
+                this.roleAssignmentRows.length === 0
+            )
 
         );
     }

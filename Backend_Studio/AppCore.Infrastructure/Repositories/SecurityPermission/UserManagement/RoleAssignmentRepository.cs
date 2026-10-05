@@ -968,15 +968,276 @@ public class RoleAssignmentRepository
         }
 
 
+        //=======================================================
+        // User Profile Validation
+        //=======================================================
+
+        var userProfileExists =
+
+            await _context
+                .Set<UserProfile>()
+
+                .AnyAsync
+                (
+                    x =>
+
+                        x.UserProfileId ==
+                        dto.UserProfileId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
         if
         (
-            dto.Details == null ||
-            dto.Details.Count == 0
+            !userProfileExists
         )
         {
             throw new InvalidOperationException(
-                "At least one Role Profile assignment is required."
+                "Selected User Profile was not found."
             );
+        }
+
+
+        //=======================================================
+        // Duplicate User Profile Validation
+        //
+        // The current Role Assignment itself is excluded.
+        // This remains valid even when Details is empty.
+        //=======================================================
+
+        var duplicateUserProfile =
+
+            await _context
+                .Set<RoleAssignment>()
+
+                .AnyAsync
+                (
+                    x =>
+
+                        x.UserProfileId ==
+                        dto.UserProfileId
+
+                        &&
+
+                        x.RoleAssignmentId !=
+                        dto.RoleAssignmentId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            duplicateUserProfile
+        )
+        {
+            throw new InvalidOperationException(
+                $"A role assignment already exists for User Profile Id '{dto.UserProfileId}'."
+            );
+        }
+
+
+        //=======================================================
+        // Zero Detail Update
+        //
+        // IMPORTANT:
+        //
+        // An existing Role Assignment is allowed to be updated
+        // with zero Role Profiles.
+        //
+        // Zero Details means the user has removed every Role
+        // Profile from the assignment. In that case the complete
+        // Role Assignment is soft-deleted.
+        //
+        // This is intentionally handled BEFORE the normal
+        // Role Profile validations because there are no Role
+        // Profiles to validate.
+        //
+        // Create validation is not affected.
+        //=======================================================
+
+        if
+        (
+            dto.Details == null
+            ||
+            dto.Details.Count == 0
+        )
+        {
+            await using var deleteTransaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                //===================================================
+                // Load Header
+                //===================================================
+
+                var entity =
+
+                    await _context
+                        .Set<RoleAssignment>()
+
+                        .FirstOrDefaultAsync
+                        (
+                            x =>
+
+                                x.RoleAssignmentId ==
+                                dto.RoleAssignmentId
+
+                                &&
+
+                                !x.IsDeleted
+                        );
+
+
+                if
+                (
+                    entity ==
+                    null
+                )
+                {
+                    await deleteTransaction.RollbackAsync();
+
+                    return false;
+                }
+
+
+                //===================================================
+                // Soft Delete Header
+                //===================================================
+
+                entity.IsDeleted =
+                    true;
+
+                entity.DeletedBy =
+                    systemUserId;
+
+                entity.DeletedDate =
+                    DateTime.UtcNow;
+
+                entity.ModifiedBy =
+                    systemUserId;
+
+                entity.ModifiedDate =
+                    DateTime.UtcNow;
+
+
+                //===================================================
+                // Load Existing Details
+                //===================================================
+
+                var existingDetails =
+
+                    await _context
+                        .Set<RoleAssignmentDetail>()
+
+                        .Where
+                        (
+                            x =>
+
+                                x.RoleAssignmentId ==
+                                entity.RoleAssignmentId
+
+                                &&
+
+                                !x.IsDeleted
+                        )
+
+                        .ToListAsync();
+
+
+                //===================================================
+                // Soft Delete Details
+                //===================================================
+
+                foreach
+                (
+                    var detail
+                    in existingDetails
+                )
+                {
+                    detail.IsDeleted =
+                        true;
+
+                    detail.DeletedBy =
+                        systemUserId;
+
+                    detail.DeletedDate =
+                        DateTime.UtcNow;
+
+                    detail.ModifiedBy =
+                        systemUserId;
+
+                    detail.ModifiedDate =
+                        DateTime.UtcNow;
+                }
+
+
+                //===================================================
+                // Activity History
+                //===================================================
+
+                _context.ActivityHistories.Add(
+
+                    new ActivityHistory
+                    {
+                        Module =
+                            "Security & Permission",
+
+                        EntityName =
+                            "Role Assignment",
+
+                        EntityId =
+                            entity.RoleAssignmentId,
+
+                        ActivityType =
+                            "Delete",
+
+                        ActivityTitle =
+                            "Role Assignment Deleted",
+
+                        ActivityDescription =
+                            $"Role Assignment deleted because all Role Profiles were removed for User Profile Id '{entity.UserProfileId}'.",
+
+                        PerformedBy =
+                            systemUserId,
+
+                        PerformedByName =
+                            "System",
+
+                        PerformedDate =
+                            DateTime.UtcNow
+                    }
+                );
+
+
+                //===================================================
+                // Save
+                //===================================================
+
+                await _context.SaveChangesAsync();
+
+
+                //===================================================
+                // Commit
+                //===================================================
+
+                await deleteTransaction.CommitAsync();
+
+
+                return true;
+            }
+            catch
+            {
+                await deleteTransaction.RollbackAsync();
+
+                throw;
+            }
         }
 
 
@@ -1025,77 +1286,6 @@ public class RoleAssignmentRepository
         {
             throw new InvalidOperationException(
                 "Invalid Role Profile detected."
-            );
-        }
-
-
-        //=======================================================
-        // User Profile Validation
-        //=======================================================
-
-        var userProfileExists =
-
-            await _context
-                .Set<UserProfile>()
-
-                .AnyAsync
-                (
-                    x =>
-
-                        x.UserProfileId ==
-                        dto.UserProfileId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            !userProfileExists
-        )
-        {
-            throw new InvalidOperationException(
-                "Selected User Profile was not found."
-            );
-        }
-
-
-        //=======================================================
-        // Duplicate User Profile Validation
-        //=======================================================
-
-        var duplicateUserProfile =
-
-            await _context
-                .Set<RoleAssignment>()
-
-                .AnyAsync
-                (
-                    x =>
-
-                        x.UserProfileId ==
-                        dto.UserProfileId
-
-                        &&
-
-                        x.RoleAssignmentId !=
-                        dto.RoleAssignmentId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            duplicateUserProfile
-        )
-        {
-            throw new InvalidOperationException(
-                $"A role assignment already exists for User Profile Id '{dto.UserProfileId}'."
             );
         }
 
@@ -1152,7 +1342,6 @@ public class RoleAssignmentRepository
 
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
-
 
         try
         {
@@ -1258,6 +1447,7 @@ public class RoleAssignmentRepository
             )
             {
                 var detail =
+
                     new RoleAssignmentDetail
                     {
                         RoleAssignmentId =
@@ -1364,6 +1554,7 @@ public class RoleAssignmentRepository
             throw;
         }
     }
+
 
 
     //===========================================================

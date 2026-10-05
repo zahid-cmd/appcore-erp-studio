@@ -2,64 +2,31 @@
 // Imports
 //===============================================================
 
-import
-{
-    Injectable
-}
-from '@angular/core';
-
-import
-{
-    HttpClient
-}
-from '@angular/common/http';
-
-import
-{
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import {
     Observable,
     of,
     forkJoin,
+    BehaviorSubject,
     tap,
     map
-}
-from 'rxjs';
-
-import
-{
-    environment
-}
-from '../../environments/environment';
-
-import
-{
-    EffectiveAccess
-}
-from './effective-access.model';
-
-import
-{
-    MasterActivity
-}
-from '../../features/infrastructure-control/navigation-management/models/master-activity.model';
-
-import
-{
-    MasterActivityService
-}
-from '../../features/infrastructure-control/navigation-management/services/master-activity.service';
+} from 'rxjs';
+import { environment } from '../../environments/environment';
+import { EffectiveAccess } from './effective-access.model';
+import { MasterActivity } from '../../features/infrastructure-control/navigation-management/models/master-activity.model';
+import { MasterActivityService } from '../../features/infrastructure-control/navigation-management/services/master-activity.service';
 
 
 //===============================================================
 // Service
 //===============================================================
 
-@Injectable
-({
+@Injectable({
     providedIn: 'root'
 })
 export class EffectiveAccessService
 {
-
     //===========================================================
     // API URL
     //===========================================================
@@ -91,13 +58,22 @@ export class EffectiveAccessService
 
 
     //===========================================================
+    // Permission Loaded State
+    //===========================================================
+
+    private readonly permissionsLoadedSubject =
+        new BehaviorSubject<boolean>(false);
+
+    readonly permissionsLoaded$ =
+        this.permissionsLoadedSubject.asObservable();
+
+
+    //===========================================================
     // Constructor
     //===========================================================
 
-    constructor
-    (
+    constructor(
         private readonly http: HttpClient,
-
         private readonly masterActivityService:
             MasterActivityService
     )
@@ -109,29 +85,22 @@ export class EffectiveAccessService
     // Load Permissions
     //===========================================================
 
-    loadPermissions
-    (
+    loadPermissions(
         userProfileId: number
     ):
         Observable<EffectiveAccess[]>
     {
-        return forkJoin
-        (
-            {
-                effectiveAccess:
-                    this.http.get<EffectiveAccess[]>
-                    (
-                        `${this.apiUrl}/${userProfileId}`
-                    ),
+        return forkJoin({
+            effectiveAccess:
+                this.http.get<EffectiveAccess[]>(
+                    `${this.apiUrl}/${userProfileId}`
+                ),
 
-                masterActivities:
-                    this.loadMasterActivities()
-            }
-        )
-        .pipe
-        (
-            tap
-            (
+            masterActivities:
+                this.loadMasterActivities()
+        })
+        .pipe(
+            tap(
                 result =>
                 {
                     this.effectiveAccess =
@@ -145,11 +114,13 @@ export class EffectiveAccessService
 
                     this.masterActivitiesLoaded =
                         true;
+
+                    this.permissionsLoadedSubject.next(
+                        true
+                    );
                 }
             ),
-
-            map
-            (
+            map(
                 result =>
                     result.effectiveAccess
             )
@@ -161,28 +132,44 @@ export class EffectiveAccessService
     // Get Effective Access
     //===========================================================
 
-    getEffectiveAccess
-    (
+    getEffectiveAccess(
         userProfileId: number
     ):
         Observable<EffectiveAccess[]>
     {
-        return this.http.get<EffectiveAccess[]>
-        (
-            `${this.apiUrl}/${userProfileId}`
-        )
-        .pipe
-        (
-            tap
-            (
-                access =>
+        return forkJoin({
+            effectiveAccess:
+                this.http.get<EffectiveAccess[]>(
+                    `${this.apiUrl}/${userProfileId}`
+                ),
+
+            masterActivities:
+                this.loadMasterActivities()
+        })
+        .pipe(
+            tap(
+                result =>
                 {
                     this.effectiveAccess =
-                        access;
+                        result.effectiveAccess;
 
                     this.loadedUserProfileId =
                         userProfileId;
+
+                    this.masterActivities =
+                        result.masterActivities;
+
+                    this.masterActivitiesLoaded =
+                        true;
+
+                    this.permissionsLoadedSubject.next(
+                        true
+                    );
                 }
+            ),
+            map(
+                result =>
+                    result.effectiveAccess
             )
         );
     }
@@ -195,8 +182,7 @@ export class EffectiveAccessService
     private loadMasterActivities():
         Observable<MasterActivity[]>
     {
-        if
-        (
+        if (
             this.masterActivitiesLoaded
         )
         {
@@ -236,8 +222,7 @@ export class EffectiveAccessService
     // Check Loaded User
     //===========================================================
 
-    isLoadedForUser
-    (
+    isLoadedForUser(
         userProfileId: number
     ):
         boolean
@@ -254,8 +239,7 @@ export class EffectiveAccessService
     // Find Master Activity
     //===========================================================
 
-    private findMasterActivity
-    (
+    private findMasterActivity(
         activityName: string
     ):
         MasterActivity | null
@@ -266,13 +250,10 @@ export class EffectiveAccessService
                 .toLowerCase();
 
         return (
-            this.masterActivities.find
-            (
+            this.masterActivities.find(
                 activity =>
                     activity.isActive
-
                     &&
-
                     activity.name
                         .trim()
                         .toLowerCase()
@@ -289,36 +270,30 @@ export class EffectiveAccessService
     // Check Master Activity Permission
     //===========================================================
 
-    private hasMasterActivity
-    (
+    private hasMasterActivity(
         subMenuId: number,
         activityName: string
     ):
         boolean
     {
         const masterActivity =
-            this.findMasterActivity
-            (
+            this.findMasterActivity(
                 activityName
             );
 
-        if
-        (
+        if (
             !masterActivity
         )
         {
             return false;
         }
 
-        return this.effectiveAccess.some
-        (
+        return this.effectiveAccess.some(
             access =>
                 access.subMenuId
                 ===
                 subMenuId
-
                 &&
-
                 access.masterActivityId
                 ===
                 masterActivity.id
@@ -330,14 +305,12 @@ export class EffectiveAccessService
     // View Permission
     //===========================================================
 
-    canView
-    (
+    canView(
         subMenuId: number
     ):
         boolean
     {
-        return this.hasMasterActivity
-        (
+        return this.hasMasterActivity(
             subMenuId,
             'View'
         );
@@ -348,14 +321,12 @@ export class EffectiveAccessService
     // Add Permission
     //===========================================================
 
-    canAdd
-    (
+    canAdd(
         subMenuId: number
     ):
         boolean
     {
-        return this.hasMasterActivity
-        (
+        return this.hasMasterActivity(
             subMenuId,
             'Add'
         );
@@ -366,14 +337,12 @@ export class EffectiveAccessService
     // Update Permission
     //===========================================================
 
-    canUpdate
-    (
+    canUpdate(
         subMenuId: number
     ):
         boolean
     {
-        return this.hasMasterActivity
-        (
+        return this.hasMasterActivity(
             subMenuId,
             'Update'
         );
@@ -384,14 +353,12 @@ export class EffectiveAccessService
     // Delete Permission
     //===========================================================
 
-    canDelete
-    (
+    canDelete(
         subMenuId: number
     ):
         boolean
     {
-        return this.hasMasterActivity
-        (
+        return this.hasMasterActivity(
             subMenuId,
             'Delete'
         );
@@ -402,69 +369,14 @@ export class EffectiveAccessService
     // Restore Permission
     //===========================================================
 
-    canRestore
-    (
+    canRestore(
         subMenuId: number
     ):
         boolean
     {
-        return this.hasMasterActivity
-        (
+        return this.hasMasterActivity(
             subMenuId,
             'Restore'
-        );
-    }
-
-
-    //===========================================================
-    // Special Activity Permission
-    //===========================================================
-
-    hasSpecialActivity
-    (
-        moduleId: number,
-        navigationActivityId: number
-    ):
-        boolean
-    {
-        return this.effectiveAccess.some
-        (
-            access =>
-                access.moduleId
-                ===
-                moduleId
-
-                &&
-
-                access.navigationActivityId
-                ===
-                navigationActivityId
-        );
-    }
-
-
-    //===========================================================
-    // Get Module Special Activities
-    //===========================================================
-
-    getModuleSpecialActivities
-    (
-        moduleId: number
-    ):
-        EffectiveAccess[]
-    {
-        return this.effectiveAccess.filter
-        (
-            access =>
-                access.moduleId
-                ===
-                moduleId
-
-                &&
-
-                access.navigationActivityId
-                !==
-                null
         );
     }
 
@@ -487,5 +399,9 @@ export class EffectiveAccessService
 
         this.masterActivitiesLoaded =
             false;
+
+        this.permissionsLoadedSubject.next(
+            false
+        );
     }
 }

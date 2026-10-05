@@ -19,10 +19,13 @@ from '@angular/common';
 
 import
 {
-    ActivatedRoute,
     Router
 }
 from '@angular/router';
+
+//===============================================================
+// Shared Components
+//===============================================================
 
 import
 {
@@ -35,19 +38,6 @@ import
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-
-import
-{
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
-    PageCanvasComponent,
-    PageCanvasConfig
-}
-from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
 import
 {
@@ -70,6 +60,13 @@ from '../../../../../../shared/components/utilities/command-center/command-cente
 
 import
 {
+    PageCanvasComponent,
+    PageCanvasConfig
+}
+from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
     ListTableComponent,
     ListTableColumn
 }
@@ -86,18 +83,6 @@ import
     HistoryDrawerComponent
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
-
-import
-{
-    NavigationActivityService
-}
-from '../../../services/activity.service';
-
-import
-{
-    NavigationActivity
-}
-from '../../../models/navigation-activity.model';
 
 import
 {
@@ -123,6 +108,10 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+//===============================================================
+// Models & Services
+//===============================================================
+
 import
 {
     MasterActivityService
@@ -134,18 +123,6 @@ import
     MasterActivity
 }
 from '../../../models/master-activity.model';
-
-import
-{
-    ModuleService
-}
-from '../../../services/module.service';
-
-import
-{
-    NavigationModule
-}
-from '../../../models/navigation-module.model';
 
 //===============================================================
 // Component
@@ -160,39 +137,28 @@ from '../../../models/navigation-module.model';
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
-        SearchDropdownComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         ConfirmDialogComponent,
-
         ToastComponent,
-
         HistoryDrawerComponent
     ],
 
-    templateUrl:'./activity-list.html',
+    templateUrl:
+        './activity-list.html',
 
-    styleUrl:'./activity-list.css'
+    styleUrl:
+        './activity-list.css'
 })
 
 //===============================================================
-// Navigation Activity List Component
+// Master Activity List Component
 //===============================================================
 
 export class NavigationActivityListComponent
@@ -201,9 +167,6 @@ implements OnInit
     //===========================================================
     // Dependency Injection
     //===========================================================
-
-    private readonly navigationActivityService =
-        inject(NavigationActivityService);
 
     private readonly masterActivityService =
         inject(MasterActivityService);
@@ -214,32 +177,22 @@ implements OnInit
     private readonly toast =
         inject(ToastService);
 
-    private readonly route =
-        inject(ActivatedRoute);
-        
     private readonly router =
         inject(Router);
 
     private readonly cdr =
         inject(ChangeDetectorRef);
 
-    private readonly moduleService =
-        inject(ModuleService);
-
     //===========================================================
     // Page Tabs
     //===========================================================
 
-    tabs: ControlTab[] =
+    tabs:
+        ControlTab[] =
     [
         {
             id:'master',
             label:'Master Activities'
-        },
-
-        {
-            id:'navigation',
-            label:'Special Activities'
         }
     ];
 
@@ -247,26 +200,20 @@ implements OnInit
         'master';
 
     //===========================================================
-    // Current Mode
-    //===========================================================
-
-    get isMasterMode(): boolean
-    {
-        return this.selectedTab === 'master';
-    }
-
-    //===========================================================
     // Data Source
     //===========================================================
 
-    activities: NavigationActivity[] =
-    [];
+    activities:
+        MasterActivity[] =
+        [];
 
-    filteredActivities: NavigationActivity[] =
-    [];
+    filteredActivities:
+        MasterActivity[] =
+        [];
 
-    pagedActivities: NavigationActivity[] =
-    [];
+    pagedActivities:
+        MasterActivity[] =
+        [];
 
     //===========================================================
     // Search & Loading
@@ -292,19 +239,6 @@ implements OnInit
         10;
 
     //===========================================================
-    // Module Filter
-    //===========================================================
-
-    modules:
-        NavigationModule[] =
-    [
-    ];
-
-    selectedModuleId:
-        number =
-            0;
-
-    //===========================================================
     // History Drawer
     //===========================================================
 
@@ -312,109 +246,77 @@ implements OnInit
         false;
 
     historyTitle =
-        'Navigation Activity History';
+        'Master Activity Management History';
 
-    historyItems:any[] =
-    [];
+    historyItems:
+        any[] =
+        [];
 
     //===========================================================
     // Page Canvas Configuration
     //===========================================================
 
-    readonly canvasConfig: PageCanvasConfig =
+    readonly canvasConfig:
+        PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
 
     //===========================================================
-    // Table Columns Definition
+    // Table Columns
     //===========================================================
 
-    get columns(): ListTableColumn[]
-    {
-        const columns: ListTableColumn[] =
-        [
-            {
-                header:'#',
-                field:'serial',
-                type:'serial',
-                width:'60px',
-                align:'center'
-            }
-        ];
-
-        if (!this.isMasterMode)
+    readonly columns:
+        ListTableColumn[] =
+    [
         {
-            columns.push(
-
-            {
-                header:'Module',
-                field:'navigationModuleName',
-                width:'320px',
-                align:'left'
-            },
-        );
+            header:'#',
+            field:'serial',
+            type:'serial',
+            width:'60px',
+            align:'center'
+        },
+        {
+            header:'Code',
+            field:'code',
+            width:'260px',
+            align:'center'
+        },
+        {
+            header:'Activity Name',
+            field:'name',
+            align:'left'
+        },
+        {
+            header:'Order',
+            field:'displayOrder',
+            width:'220px',
+            align:'center'
+        },
+        {
+            header:'Status',
+            field:'isActive',
+            type:'status',
+            width:'220px',
+            align:'center'
+        },
+        {
+            header:'Actions',
+            field:'actions',
+            type:'actions',
+            width:'180px',
+            align:'center'
         }
-
-        columns.push(
-
-            {
-                header:'Code',
-                field:'code',
-                width:'260px',
-                align:'center'
-            },
-
-            {
-                header:'Activity Name',
-                field:'name',
-                align:'left'
-            },
-
-            {
-                header:'Order',
-                field:'displayOrder',
-                width:'220px',
-                align:'center'
-            },
-
-            {
-                header:'Status',
-                field:'isActive',
-                type:'status',
-                width:'220px',
-                align:'center'
-            },
-
-            {
-                header:'Actions',
-                field:'actions',
-                type:'actions',
-                width:'180px',
-                align:'center'
-            }
-        );
-
-        return columns;
-    }
+    ];
 
     //===========================================================
     // Component Initialization
@@ -423,241 +325,8 @@ implements OnInit
     ngOnInit():
         void
     {
-        const tab =
-            this.route.snapshot.queryParamMap.get('tab');
-
-        if
-        (
-            tab === 'master'
-            ||
-            tab === 'navigation'
-        )
-        {
-            this.selectedTab =
-                tab;
-        }
-
-        //=======================================================
-        // Load Module Filter
-        //=======================================================
-
-        this.loadModules();
-
-        //=======================================================
-        // Load Activities
-        //=======================================================
-
-        this.loadActivities();
+        this.loadMasterActivities();
     }
-
-    //===========================================================
-    // Tab Changed
-    //===========================================================
-
-    onTabChange(
-        tabId: string
-    ):
-        void
-    {
-        this.selectedTab =
-            tabId;
-
-        this.searchText =
-            '';
-
-        this.currentPage =
-            1;
-
-        this.loadActivities();
-    }
-
-    //===========================================================
-    // Load Modules
-    //===========================================================
-
-    private loadModules():
-        void
-    {
-        this.moduleService
-
-            .getAll()
-
-            .subscribe(
-            {
-                next:(response) =>
-                {
-                    this.modules =
-                    [
-                        {
-                            id:0,
-                            code:'',
-                            name:'All Modules',
-                            icon:'',
-                            routeKey:'',
-                            route:'',
-                            displayOrder:0,
-                            remarks:'',
-                            isActive:true
-                        },
-
-                        ...response
-                    ];
-                },
-
-                error:(error) =>
-                {
-                    console.error(error);
-
-                    this.toast.error(
-                        'Load Failed',
-                        'Unable to load modules.'
-                    );
-                }
-            });
-    }
-
-    //===========================================================
-    // Module Changed
-    //===========================================================
-
-    onModuleChanged
-    (
-        value:number
-    ):
-        void
-    {
-        this.selectedModuleId =
-            value;
-
-        this.loadActivities();
-    }
-
-    //===========================================================
-    // Load Activity Data
-    //===========================================================
-
-    loadActivities():
-        void
-    {
-        if (this.isMasterMode)
-        {
-            this.loadMasterActivities();
-        }
-        else
-        {
-            this.loadNavigationActivities();
-        }
-    }
-
-    //===========================================================
-    // Load Navigation Activities
-    //===========================================================
-
-    loadNavigationActivities():
-        void
-    {
-        this.loading =
-            true;
-
-        this.loadFailed =
-            false;
-
-        this.navigationActivityService
-
-            .getAll(
-                this.selectedModuleId > 0
-                    ? this.selectedModuleId
-                    : undefined
-            )
-
-            .subscribe(
-            {
-                next:(response) =>
-                {
-                    console.log('================================');
-
-                    console.log('Navigation Activities Response');
-
-                    console.log(response);
-
-                    console.log(
-                        'Total Records:',
-                        response.length
-                    );
-
-                    console.log('================================');
-
-                    this.activities =
-                    [
-                        ...response
-                    ];
-
-                    this.filteredActivities =
-                    [
-                        ...response
-                    ].sort(
-                        (a, b) =>
-                            a.code.localeCompare(
-                                b.code
-                            )
-                    );
-
-                    this.currentPage =
-                        1;
-
-                    this.updatePagination();
-
-                    this.loading =
-                        false;
-
-                    this.loadFailed =
-                        false;
-
-                    this.cdr.detectChanges();
-
-                    console.log(
-                        'Change Detection Triggered'
-                    );
-                },
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Load Activities Error'
-                    );
-
-                    console.error(
-                        error
-                    );
-
-                    this.activities =
-                    [
-                    ];
-
-                    this.filteredActivities =
-                    [
-                    ];
-
-                    this.pagedActivities =
-                    [
-                    ];
-
-                    this.loading =
-                        false;
-
-                    this.loadFailed =
-                        true;
-
-                    this.toast.error(
-                        'Load Failed',
-                        'Unable to load navigation activities.'
-                    );
-
-                    this.cdr.detectChanges();
-                }
-            });
-    }
-
 
     //===========================================================
     // Load Master Activities
@@ -676,90 +345,84 @@ implements OnInit
             .getAll()
             .subscribe(
             {
-                next:(response) =>
-                {
-                    console.log('================================');
+                next:
+                    (
+                        response
+                    ) =>
+                    {
+                        this.activities =
+                        [
+                            ...response
+                        ];
 
-                    console.log('Master Activities Response');
+                        this.filteredActivities =
+                        [
+                            ...this.activities
+                        ].sort(
+                            (
+                                a,
+                                b
+                            ) =>
+                                a.code.localeCompare(
+                                    b.code
+                                )
+                        );
 
-                    console.log(response);
+                        this.currentPage =
+                            1;
 
-                    console.log(
-                        'Total Records:',
-                        response.length
-                    );
+                        this.updatePagination();
 
-                    console.log('================================');
+                        this.loading =
+                            false;
 
-                    this.activities =
-                    [
-                        ...(response as any[])
-                    ];
+                        this.loadFailed =
+                            false;
 
-                    this.filteredActivities =
-                    [
-                        ...this.activities
-                    ].sort(
-                        (a, b) =>
-                            a.code.localeCompare(b.code)
-                    );
+                        this.cdr.detectChanges();
+                    },
 
-                    this.currentPage =
-                        1;
+                error:
+                    (
+                        error
+                    ) =>
+                    {
+                        console.error(
+                            error
+                        );
 
-                    this.updatePagination();
+                        this.activities =
+                            [];
 
-                    this.loading =
-                        false;
+                        this.filteredActivities =
+                            [];
 
-                    this.loadFailed =
-                        false;
+                        this.pagedActivities =
+                            [];
 
-                    this.cdr.detectChanges();
-                },
+                        this.loading =
+                            false;
 
-                error:(error) =>
-                {
-                    console.error(
-                        'Load Master Activities Error'
-                    );
+                        this.loadFailed =
+                            true;
 
-                    console.error(error);
+                        this.toast.error(
+                            'Load Failed',
+                            'Unable to load master activities.'
+                        );
 
-                    this.activities =
-                    [];
-
-                    this.filteredActivities =
-                    [];
-
-                    this.pagedActivities =
-                    [];
-
-                    this.loading =
-                        false;
-
-                    this.loadFailed =
-                        true;
-
-                    this.toast.error(
-                        'Load Failed',
-                        'Unable to load master activities.'
-                    );
-
-                    this.cdr.detectChanges();
-                }
+                        this.cdr.detectChanges();
+                    }
             });
     }
 
-
-
     //===========================================================
-    // Search Activities
+    // Search Master Activities
     //===========================================================
 
-    onSearch
-    (
-        value:string
+    onSearch(
+        value:
+            string
     ):
         void
     {
@@ -771,7 +434,10 @@ implements OnInit
                 .trim()
                 .toLowerCase();
 
-        if (!keyword)
+        if
+        (
+            !keyword
+        )
         {
             this.filteredActivities =
             [
@@ -781,40 +447,44 @@ implements OnInit
         else
         {
             this.filteredActivities =
-                this.activities.filter(x =>
-
-                    x.code
-                        .toLowerCase()
-                        .includes(keyword)
-
-                    ||
-
-                    x.name
-                        .toLowerCase()
-                        .includes(keyword)
-
-                    ||
-
-                    (
-                        ((x as any).navigationModuleName ?? '')
+                this.activities.filter(
+                    activity =>
+                        activity.code
                             .toLowerCase()
-                            .includes(keyword)
-                    )
+                            .includes(
+                                keyword
+                            )
 
-                    ||
+                        ||
 
-                    (
-                        (x.remarks ?? '')
+                        activity.name
                             .toLowerCase()
-                            .includes(keyword)
-                    )
+                            .includes(
+                                keyword
+                            )
 
+                        ||
+
+                        (
+                            activity.remarks
+                            ??
+                            ''
+                        )
+                            .toLowerCase()
+                            .includes(
+                                keyword
+                            )
                 );
         }
 
         this.filteredActivities.sort(
-            (a, b) =>
-                a.code.localeCompare(b.code)
+            (
+                a,
+                b
+            ) =>
+                a.code.localeCompare(
+                    b.code
+                )
         );
 
         this.currentPage =
@@ -823,17 +493,20 @@ implements OnInit
         this.updatePagination();
     }
 
-
     //===========================================================
-    // Sort Activity List
+    // Sort Master Activities
     //===========================================================
 
-    onSort
-    (
+    onSort(
         event:
         {
-            field:string;
-            direction:'asc' | 'desc';
+            field:
+                string;
+
+            direction:
+                'asc'
+                |
+                'desc';
         }
     ):
         void
@@ -844,48 +517,80 @@ implements OnInit
         ];
 
         this.filteredActivities.sort(
-            (a:any, b:any) =>
+            (
+                a:
+                    any,
+
+                b:
+                    any
+            ) =>
             {
                 const valueA =
-                    a[event.field];
+                    a[
+                        event.field
+                    ];
 
                 const valueB =
-                    b[event.field];
+                    b[
+                        event.field
+                    ];
 
-                if (valueA == null && valueB == null)
+                if
+                (
+                    valueA == null
+                    &&
+                    valueB == null
+                )
                 {
                     return 0;
                 }
 
-                if (valueA == null)
+                if
+                (
+                    valueA == null
+                )
                 {
                     return -1;
                 }
 
-                if (valueB == null)
+                if
+                (
+                    valueB == null
+                )
                 {
                     return 1;
                 }
 
                 if
                 (
-                    typeof valueA === 'string' &&
+                    typeof valueA === 'string'
+                    &&
                     typeof valueB === 'string'
                 )
                 {
                     return event.direction === 'asc'
-                        ? valueA.localeCompare(valueB)
-                        : valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(
+                            valueB
+                        )
+                        : valueB.localeCompare(
+                            valueA
+                        );
                 }
 
-                if (valueA < valueB)
+                if
+                (
+                    valueA < valueB
+                )
                 {
                     return event.direction === 'asc'
                         ? -1
                         : 1;
                 }
 
-                if (valueA > valueB)
+                if
+                (
+                    valueA > valueB
+                )
                 {
                     return event.direction === 'asc'
                         ? 1
@@ -893,7 +598,8 @@ implements OnInit
                 }
 
                 return 0;
-            });
+            }
+        );
 
         this.currentPage =
             1;
@@ -901,10 +607,8 @@ implements OnInit
         this.updatePagination();
     }
 
-
-
     //===========================================================
-    // Refresh Activity List
+    // Refresh
     //===========================================================
 
     refresh():
@@ -913,24 +617,25 @@ implements OnInit
         this.searchText =
             '';
 
-        this.selectedModuleId =
-            0;
-
         this.currentPage =
             1;
 
-        this.loadActivities();
+        this.loadMasterActivities();
     }
 
     //===========================================================
-    // Update Pagination Data
+    // Update Pagination
     //===========================================================
 
     updatePagination():
         void
     {
         const start =
-            (this.currentPage - 1)
+            (
+                this.currentPage
+                -
+                1
+            )
             *
             this.pageSize;
 
@@ -938,31 +643,19 @@ implements OnInit
         [
             ...this.filteredActivities.slice(
                 start,
-                start + this.pageSize
+                start +
+                this.pageSize
             )
         ];
-
-        console.log('========================');
-
-        console.log('Paged Activities');
-
-        console.log(this.pagedActivities);
-
-        console.log(
-            'Paged Length:',
-            this.pagedActivities.length
-        );
-
-        console.log('========================');
     }
 
-
     //===========================================================
-    // Page Change Event
+    // Page Change
     //===========================================================
 
     onPageChange(
-        page:number
+        page:
+            number
     ):
         void
     {
@@ -972,14 +665,13 @@ implements OnInit
         this.updatePagination();
     }
 
-
-
     //===========================================================
-    // Page Size Change Event
+    // Page Size Change
     //===========================================================
 
     onPageSizeChange(
-        size:number
+        size:
+            number
     ):
         void
     {
@@ -993,7 +685,7 @@ implements OnInit
     }
 
     //===========================================================
-    // Add Activity
+    // Add Master Activity
     //===========================================================
 
     add():
@@ -1002,184 +694,149 @@ implements OnInit
         this.router.navigate(
         [
             '/infrastructure-control/navigation-management/navigation-activities/add'
-        ],
-        {
-            queryParams:
-            {
-                tab:this.selectedTab
-            }
-        });
+        ]);
     }
 
     //===========================================================
-    // View Activity
+    // View Master Activity
     //===========================================================
 
     view(
-        item:any
+        item:
+            MasterActivity
     ):
         void
     {
         this.router.navigate(
         [
             '/infrastructure-control/navigation-management/navigation-activities/view',
-
             item.id
-        ],
-        {
-            queryParams:
-            {
-                tab:this.selectedTab
-            }
-        });
+        ]);
     }
 
     //===========================================================
-    // Edit Activity
+    // Edit Master Activity
     //===========================================================
 
     edit(
-        item:any
+        item:
+            MasterActivity
     ):
         void
     {
         this.router.navigate(
         [
             '/infrastructure-control/navigation-management/navigation-activities/edit',
-
             item.id
-        ],
-        {
-            queryParams:
-            {
-                tab:this.selectedTab
-            }
-        });
+        ]);
     }
 
     //===========================================================
-    // Delete Activity
+    // Delete Master Activity
     //===========================================================
 
     delete(
-        item:any
+        item:
+            MasterActivity
     ):
         void
     {
         this.confirmDialog.open(
-
-            this.isMasterMode
-                ? 'Delete Master Activity'
-                : 'Delete Navigation Activity',
-
+            'Delete Master Activity',
             `Are you sure you want to delete "${item.name}" ?`,
-
             () =>
             {
-                const request =
-                    this.isMasterMode
-                        ? this.masterActivityService.delete(item.id)
-                        : this.navigationActivityService.delete(item.id);
-
-                request.subscribe(
-                {
-                    next:() =>
+                this.masterActivityService
+                    .delete(
+                        item.id
+                    )
+                    .subscribe(
                     {
-                        this.toast.success(
-                            'Delete Successful',
-                            `${item.name} deleted successfully.`
-                        );
+                        next:() =>
+                        {
+                            this.toast.success(
+                                'Delete Successful',
+                                `${item.name} deleted successfully.`
+                            );
 
-                        this.loadActivities();
-                    },
+                            this.loadMasterActivities();
+                        },
 
-                    error:(error) =>
-                    {
-                        console.error(error);
+                        error:
+                            (
+                                error
+                            ) =>
+                            {
+                                console.error(
+                                    error
+                                );
 
-                        this.toast.error(
-                            'Delete Failed',
-                            'Failed to delete activity.'
-                        );
-                    }
-                });
+                                this.toast.error(
+                                    'Delete Failed',
+                                    'Failed to delete master activity.'
+                                );
+                            }
+                    });
             }
         );
     }
 
     //===========================================================
-    // Restore Activity
+    // Restore Master Activity
     //===========================================================
 
     restore():
         void
     {
         this.confirmDialog.open(
-
-            this.isMasterMode
-                ? 'Restore Master Activity'
-                : 'Restore Navigation Activity',
-
-            this.isMasterMode
-                ? 'Are you sure you want to restore the most recently deleted master activity?'
-                : 'Are you sure you want to restore the most recently deleted navigation activity?',
-
+            'Restore Master Activity',
+            'Are you sure you want to restore the most recently deleted master activity?',
             () =>
             {
-                this.restoreActivity();
+                this.restoreMasterActivity();
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
 
     //===========================================================
-    // Restore Activity
+    // Restore Master Activity
     //===========================================================
 
-    private restoreActivity():
+    private restoreMasterActivity():
         void
     {
-        const request =
-            this.isMasterMode
-                ? this.masterActivityService.restore()
-                : this.navigationActivityService.restore();
-
-        request.subscribe(
-        {
-            next:() =>
+        this.masterActivityService
+            .restore()
+            .subscribe(
             {
-                this.toast.success(
-                    'Restore Successful',
+                next:() =>
+                {
+                    this.toast.success(
+                        'Restore Successful',
+                        'The most recently deleted master activity has been restored.'
+                    );
 
-                    this.isMasterMode
-                        ? 'The most recently deleted master activity has been restored.'
-                        : 'The most recently deleted navigation activity has been restored.'
-                );
+                    this.loadMasterActivities();
+                },
 
-                this.loadActivities();
-            },
-
-            error:(error) =>
-            {
-                this.toast.error(
-                    'Restore Failed',
-
-                    error?.error ??
-
+                error:
                     (
-                        this.isMasterMode
-                            ? 'Failed to restore master activity.'
-                            : 'Failed to restore navigation activity.'
-                    )
-                );
-            }
-        });
+                        error
+                    ) =>
+                    {
+                        this.toast.error(
+                            'Restore Failed',
+                            error?.error
+                            ??
+                            'Failed to restore master activity.'
+                        );
+                    }
+            });
     }
+
     //===========================================================
     // Open History Drawer
     //===========================================================
@@ -1187,67 +844,68 @@ implements OnInit
     openHistory():
         void
     {
-        const request =
-            this.isMasterMode
-                ? this.masterActivityService.getHistory()
-                : this.navigationActivityService.getHistory();
-
-        request.subscribe(
-        {
-            next:(response:any[]) =>
+        this.masterActivityService
+            .getHistory()
+            .subscribe(
             {
-                this.historyItems =
-                    response.map(
-                        history =>
-                        ({
-                            title:
-                                history.activityTitle,
+                next:
+                    (
+                        response:
+                            any[]
+                    ) =>
+                    {
+                        this.historyItems =
+                            response.map(
+                                history =>
+                                ({
+                                    title:
+                                        history.activityTitle,
 
-                            description:
-                                history.activityDescription,
+                                    description:
+                                        history.activityDescription,
 
-                            user:
-                                history.performedByName
-                                ??
-                                'System',
+                                    user:
+                                        history.performedByName
+                                        ??
+                                        'System',
 
-                            dateTime:
-                                new Date(
-                                    history.performedDate
-                                )
-                                .toLocaleString(),
+                                    dateTime:
+                                        new Date(
+                                            history.performedDate
+                                        )
+                                        .toLocaleString(),
 
-                            badge:
-                                history.activityType
-                        })
-                    );
+                                    badge:
+                                        history.activityType
+                                })
+                            );
 
-                this.historyTitle =
-                    this.isMasterMode
-                        ? 'Master Activity Management History'
-                        : 'Navigation Activity Management History';
+                        this.historyTitle =
+                            'Master Activity Management History';
 
-                this.historyOpened =
-                    true;
+                        this.historyOpened =
+                            true;
 
-                this.cdr.detectChanges();
-            },
+                        this.cdr.detectChanges();
+                    },
 
-            error:(error:any) =>
-            {
-                console.error(
-                    'History Load Failed',
-                    error
-                );
+                error:
+                    (
+                        error:
+                            any
+                    ) =>
+                    {
+                        console.error(
+                            'History Load Failed',
+                            error
+                        );
 
-                this.toast.error(
-                    'History',
-                    this.isMasterMode
-                        ? 'Failed to load master activity history.'
-                        : 'Failed to load navigation activity history.'
-                );
-            }
-        });
+                        this.toast.error(
+                            'History',
+                            'Failed to load master activity history.'
+                        );
+                    }
+            });
     }
 
     //===========================================================

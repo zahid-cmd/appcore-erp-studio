@@ -3,12 +3,17 @@
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
+
 using Microsoft.EntityFrameworkCore;
 
+
 using AppCore.Application.Common.ActivityHistory.DTOs;
+
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
+
 using AppCore.Application.SecurityPermission.RoleManagement;
+
 using AppCore.Application.SecurityPermission.RoleManagement.ActivityAssignment.DTOs;
 
 
@@ -37,6 +42,7 @@ public class ActivityAssignmentController
     private readonly IActivityAssignmentRepository
         _repository;
 
+
     private readonly IActivityHistoryRepository
         _historyRepository;
 
@@ -54,6 +60,7 @@ public class ActivityAssignmentController
     {
         _repository =
             repository;
+
 
         _historyRepository =
             historyRepository;
@@ -75,6 +82,7 @@ public class ActivityAssignmentController
         ActivityAssignmentDefaultsDto result =
             await _repository.GetDefaultsAsync();
 
+
         return Ok(
             result
         );
@@ -95,6 +103,7 @@ public class ActivityAssignmentController
     {
         List<ActivityAssignmentDto> result =
             await _repository.GetAllAsync();
+
 
         return Ok(
             result
@@ -122,6 +131,7 @@ public class ActivityAssignmentController
                 "Activity Assignment"
             );
 
+
         return Ok(
             history
         );
@@ -148,6 +158,7 @@ public class ActivityAssignmentController
                 id
             );
 
+
         if
         (
             result
@@ -157,6 +168,7 @@ public class ActivityAssignmentController
         {
             return NotFound();
         }
+
 
         return Ok(
             result
@@ -185,6 +197,7 @@ public class ActivityAssignmentController
                 roleProfileId
             );
 
+
         if
         (
             result
@@ -194,6 +207,7 @@ public class ActivityAssignmentController
         {
             return NotFound();
         }
+
 
         return Ok(
             result
@@ -226,6 +240,7 @@ public class ActivityAssignmentController
                 id
             );
 
+
         return Ok(
             history
         );
@@ -250,6 +265,7 @@ public class ActivityAssignmentController
                 await _repository.CreateAsync(
                     dto
                 );
+
 
             return Ok(
                 id
@@ -362,6 +378,7 @@ public class ActivityAssignmentController
                     dto
                 );
 
+
             if
             (
                 !updated
@@ -369,6 +386,7 @@ public class ActivityAssignmentController
             {
                 return NotFound();
             }
+
 
             return NoContent();
         }
@@ -467,6 +485,7 @@ public class ActivityAssignmentController
                     id
                 );
 
+
             if
             (
                 !deleted
@@ -474,6 +493,7 @@ public class ActivityAssignmentController
             {
                 return NotFound();
             }
+
 
             return NoContent();
         }
@@ -521,6 +541,7 @@ public class ActivityAssignmentController
             bool restored =
                 await _repository.RestoreLastDeletedAsync();
 
+
             if
             (
                 !restored
@@ -528,6 +549,7 @@ public class ActivityAssignmentController
             {
                 return NotFound();
             }
+
 
             return NoContent();
         }

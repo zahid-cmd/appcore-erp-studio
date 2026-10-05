@@ -42,6 +42,8 @@ import
 }
 from '../../utilities/checkbox/checkbox';
 
+
+
 //===============================================================
 // Interfaces
 //===============================================================
@@ -68,12 +70,12 @@ export interface ItemCartColumn
         |
         'masterActivities'
         |
-        'specialActivities'
-        |
         'action';
 
     headerCheckbox?:boolean;
 }
+
+
 
 export interface ItemCartRow
 {
@@ -94,11 +96,10 @@ export interface ItemCartRow
     masterActivities:
         ActivityItem[];
 
-    specialActivities:
-        ActivityItem[];
-
     [key:string]:any;
 }
+
+
 
 //===============================================================
 // Component
@@ -138,33 +139,40 @@ export class ItemCart
     columns:
         ItemCartColumn[] = [];
 
+
     @Input()
     rows:
         ItemCartRow[] = [];
+
 
     @Input()
     loading =
         false;
 
+
     @Input()
     orbitLoading =
         false;
+
 
     @Input()
     error =
         false;
 
+
     @Input()
     serialOffset =
         0;
 
+
     //===========================================================
-    // Inputs
+    // Read Only
     //===========================================================
 
     @Input()
     readOnly =
         false;
+
 
     //===========================================================
     // Header Checkbox States
@@ -176,6 +184,7 @@ export class ItemCart
         [field:string]:boolean;
     } = {};
 
+
     //===========================================================
     // Outputs
     //===========================================================
@@ -184,17 +193,21 @@ export class ItemCart
     remove =
         new EventEmitter<ItemCartRow>();
 
+
     @Output()
     headerCheckboxStateChange =
         new EventEmitter<
         {
             field:string;
+
             checked:boolean;
         }>();
+
 
     @Output()
     activityChanged =
         new EventEmitter<void>();
+
 
     //===========================================================
     // Track Row
@@ -203,12 +216,14 @@ export class ItemCart
     trackRow
     (
         index:number,
+
         row:ItemCartRow
     ):
         number
     {
         return row.id;
     }
+
 
     //===========================================================
     // Remove
@@ -217,6 +232,7 @@ export class ItemCart
     onRemove
     (
         row:ItemCartRow,
+
         event:MouseEvent
     ):
         void
@@ -228,6 +244,7 @@ export class ItemCart
         );
     }
 
+
     //===========================================================
     // Header Checkbox Changed
     //===========================================================
@@ -235,6 +252,7 @@ export class ItemCart
     onHeaderCheckboxChanged
     (
         field:string,
+
         checked:boolean
     ):
         void
@@ -242,12 +260,15 @@ export class ItemCart
         this.headerCheckboxStates[field] =
             checked;
 
+
         this.headerCheckboxStateChange.emit(
         {
             field,
+
             checked
         });
     }
+
 
     //===========================================================
     // Activity Changed
@@ -259,6 +280,7 @@ export class ItemCart
         this.activityChanged.emit();
     }
 
+
     //===========================================================
     // Cell Value
     //===========================================================
@@ -266,6 +288,7 @@ export class ItemCart
     getCellValue
     (
         row:ItemCartRow,
+
         column:ItemCartColumn
     ):
         any
@@ -274,6 +297,7 @@ export class ItemCart
             column.field
         ];
     }
+
 
     //===========================================================
     // Serial
@@ -285,6 +309,10 @@ export class ItemCart
     ):
         number
     {
-        return this.serialOffset + index + 1;
+        return this.serialOffset
+            +
+            index
+            +
+            1;
     }
 }

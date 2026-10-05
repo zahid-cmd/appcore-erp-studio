@@ -36,7 +36,10 @@
 
                         <ng-container
 
-                            *ngIf="column.headerCheckbox; else normalHeader">
+                            *ngIf="
+                                column.headerCheckbox;
+                                else normalHeader
+                            ">
 
                             <div class="permission-header">
 
@@ -52,6 +55,7 @@
 
                                     </span>
 
+
                                     <!--========================
                                         Divider
                                     =========================-->
@@ -61,6 +65,7 @@
                                         |
 
                                     </span>
+
 
                                     <!--========================
                                         Select All
@@ -74,15 +79,21 @@
 
                                             [readOnly]="readOnly"
 
-                                            [value]="headerCheckboxStates[column.field]"
+                                            [value]="
+                                                headerCheckboxStates[
+                                                    column.field
+                                                ]
+                                            "
 
                                             (valueChange)="
                                                 onHeaderCheckboxChanged(
                                                     column.field,
                                                     $event
-                                                )">
+                                                )
+                                            ">
 
                                         </app-checkbox>
+
 
                                         <span class="permission-header-label">
 
@@ -97,6 +108,7 @@
                             </div>
 
                         </ng-container>
+
 
                         <!--========================================
                             Normal Header
@@ -118,6 +130,8 @@
 
     </div>
 
+
+
     <!--========================================================
         Body
     =========================================================-->
@@ -138,6 +152,8 @@
 
         </div>
 
+
+
         <!--====================================================
             Error
         =====================================================-->
@@ -154,6 +170,8 @@
             Unable to load activity assignments.
 
         </div>
+
+
 
         <!--====================================================
             Orbit Loader
@@ -173,7 +191,9 @@
 
                 title="Loading"
 
-                message="Please wait while data is being loaded."
+                message="
+                    Please wait while data is being loaded.
+                "
 
                 size="medium"
 
@@ -182,6 +202,8 @@
             </app-orbit-loader>
 
         </div>
+
+
 
         <!--====================================================
             Table
@@ -216,73 +238,87 @@
 
                         [style.width]="column.width"
 
-                        [class.left]="column.align === 'left'"
+                        [class.left]="
+                            column.align === 'left'
+                        "
 
-                        [class.center]="column.align === 'center'"
+                        [class.center]="
+                            column.align === 'center'
+                        "
 
-                        [class.right]="column.align === 'right'">
+                        [class.right]="
+                            column.align === 'right'
+                        ">
 
                         <!--========================================
                             Serial
                         =========================================-->
 
-                        <ng-container *ngIf="column.type === 'serial'">
+                        <ng-container
+
+                            *ngIf="
+                                column.type === 'serial'
+                            ">
 
                             {{ getSerial(i) }}
 
                         </ng-container>
 
+
+
                         <!--========================================
                             Text
                         =========================================-->
 
-                        <ng-container *ngIf="column.type === 'text'">
+                        <ng-container
+
+                            *ngIf="
+                                column.type === 'text'
+                            ">
 
                             {{ getCellValue(row, column) }}
 
                         </ng-container>
 
+
+
                         <!--========================================
                             Master Activities
                         =========================================-->
 
-                        <ng-container *ngIf="column.type === 'masterActivities'">
+                        <ng-container
+
+                            *ngIf="
+                                column.type === 'masterActivities'
+                            ">
 
                             <app-activity-selector
 
                                 [readOnly]="readOnly"
 
-                                [(activities)]="row.masterActivities"
+                                [(activities)]="
+                                    row.masterActivities
+                                "
 
-                                (changed)="onActivityChanged()">
-
-                            </app-activity-selector>
-
-                        </ng-container>
-
-                        <!--========================================
-                            Special Activities
-                        =========================================-->
-
-                        <ng-container *ngIf="column.type === 'specialActivities'">
-
-                            <app-activity-selector
-
-                                [readOnly]="readOnly"
-
-                                [(activities)]="row.specialActivities"
-
-                                (changed)="onActivityChanged()">
+                                (changed)="
+                                    onActivityChanged()
+                                ">
 
                             </app-activity-selector>
 
                         </ng-container>
+
+
 
                         <!--========================================
                             Action
                         =========================================-->
 
-                        <ng-container *ngIf="column.type === 'action'">
+                        <ng-container
+
+                            *ngIf="
+                                column.type === 'action'
+                            ">
 
                             <button
 
@@ -292,7 +328,12 @@
 
                                 class="remove-button"
 
-                                (click)="onRemove(row, $event)"
+                                (click)="
+                                    onRemove(
+                                        row,
+                                        $event
+                                    )
+                                "
 
                                 aria-label="Remove">
 
@@ -309,6 +350,8 @@
             </tbody>
 
         </table>
+
+
 
         <!--====================================================
             Empty State
@@ -331,7 +374,9 @@
 
                 title="No Activity Assignments"
 
-                subtitle="There are no activity assignments to display.">
+                subtitle="
+                    There are no activity assignments to display.
+                ">
 
             </app-empty-state>
 

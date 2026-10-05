@@ -466,7 +466,7 @@ implements OnInit
         },
 
         {
-            header:'Master Activities',
+            header:'Activities',
 
             field:'masterActivityCount',
 
@@ -475,15 +475,6 @@ implements OnInit
             align:'center'
         },
 
-        {
-            header:'Special Activities',
-
-            field:'specialActivityCount',
-
-            width:'200px',
-
-            align:'center'
-        },
 
         {
             header:'Status',
@@ -504,7 +495,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'150px',
+            width:'80px',
 
             align:'center'
         }

@@ -99,7 +99,38 @@ app-search-dropdown
     z-index:100;
 }
 
+/* =====================================================
+   PAGE HEADER CENTER
+===================================================== */
 
+.activity-header-center
+{
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    width: auto;
+
+    height: 100%;
+}
+
+
+/* =====================================================
+   ACTIVITY SEARCH
+===================================================== */
+
+.activity-header-search
+{
+    display: block;
+
+    width: 260px;
+
+    flex: 0 0 260px;
+}
 
 /* =====================================================
    SEARCH DROPDOWN — CONTAINER
@@ -353,7 +384,7 @@ app-search-dropdown:nth-child(4)
 
 /* =====================================================
    TOOLBAR ACTION AREA
-   Add + Reset remain fixed at the right side.
+   Dropdowns + Add + Reset form ONE compact group.
 ===================================================== */
 
 .activity-add-button,
@@ -369,9 +400,16 @@ app-search-dropdown:nth-child(4)
 }
 
 
+
+/* =====================================================
+   IMPORTANT:
+   DO NOT use margin-left:auto here.
+   It creates the large gap between Sub Menu and Add.
+===================================================== */
+
 .activity-add-button
 {
-    margin-left:auto;
+    margin-left:0;
 }
 
 
@@ -407,6 +445,8 @@ app-search-dropdown:nth-child(4)
     margin-right:0;
 
     margin-bottom:0;
+
+    margin-left:0;
 
     border:none;
 
@@ -943,11 +983,11 @@ span
 
 .assignment-left
 {
-    flex:0 0 300px;
+    flex:0 0 420px;
 
-    width:300px;
+    width:420px;
 
-    min-width:300px;
+    min-width:420px;
 
     box-sizing:border-box;
 }
@@ -1074,7 +1114,7 @@ span
 
         flex-wrap:wrap;
 
-        justify-content:flex-start;
+        justify-content:flex-end;
 
         width:100%;
 
@@ -1129,20 +1169,14 @@ span
     .activity-add-button,
     .activity-reset-button
     {
-        flex:1 1 90px;
+        flex:0 0 90px;
 
-        width:auto;
+        width:90px;
 
         min-width:90px;
 
-        max-width:none;
+        max-width:90px;
 
-        margin-left:0;
-    }
-
-
-    .activity-add-button
-    {
         margin-left:0;
     }
 
