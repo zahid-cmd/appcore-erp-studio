@@ -14,8 +14,6 @@ import
 }
 from './authentication.model';
 
-
-
 /* ============================================================
    Authentication Storage Service
 ============================================================ */
@@ -32,17 +30,17 @@ export class AuthenticationStorageService
         string =
             'appcore_authentication_token';
 
-
     private readonly userKey:
         string =
             'appcore_authentication_user';
-
 
     private readonly rememberedLoginIdKey:
         string =
             'appcore_remembered_login_id';
 
-
+    private readonly lastLoginBranchKey:
+        string =
+            'appcore_last_login_branch';
 
     /* ========================================================
        Set Authentication
@@ -67,6 +65,15 @@ export class AuthenticationStorageService
 
            The matching Branch Code and Branch Name are
            resolved from the Login Response branch list.
+
+       Last Login Branch:
+
+           The final authenticated Branch ID is also stored
+           separately against the Login ID.
+
+           This value survives logout and is used to
+           preselect the user's last successfully used
+           branch during the next multi-branch login.
     ======================================================== */
 
     setAuthentication
@@ -89,8 +96,6 @@ export class AuthenticationStorageService
         //=======================================================
 
         this.clearAuthentication();
-
-
 
         //=======================================================
         // Remember Login ID
@@ -118,8 +123,6 @@ export class AuthenticationStorageService
             );
         }
 
-
-
         //=======================================================
         // Select Authentication Storage
         //=======================================================
@@ -129,8 +132,6 @@ export class AuthenticationStorageService
                 rememberMe
                     ? localStorage
                     : sessionStorage;
-
-
 
         //=======================================================
         // Store Authentication Token
@@ -143,8 +144,6 @@ export class AuthenticationStorageService
             response.token
         );
 
-
-
         //=======================================================
         // Read Branch ID From JWT
         //=======================================================
@@ -155,8 +154,6 @@ export class AuthenticationStorageService
                 this.getBranchIdFromToken(
                     response.token
                 );
-
-
 
         //=======================================================
         // Resolve Branch Information
@@ -172,7 +169,29 @@ export class AuthenticationStorageService
             ??
             null;
 
+        //=======================================================
+        // Store Last Login Branch
+        //=======================================================
 
+        if
+        (
+            loginId.trim()
+            &&
+            branchId !== null
+            &&
+            Number.isFinite(
+                branchId
+            )
+            &&
+            branchId > 0
+        )
+        {
+            this.setLastLoginBranchId
+            (
+                loginId,
+                branchId
+            );
+        }
 
         //=======================================================
         // Store Authenticated User
@@ -239,7 +258,123 @@ export class AuthenticationStorageService
         );
     }
 
+    /* ========================================================
+       Set Last Login Branch
+       --------------------------------------------------------
+       Stores the last successfully used Branch ID against
+       the Login ID.
 
+       This is intentionally stored separately from the
+       authentication session.
+
+       Therefore logout does NOT remove this value.
+    ======================================================== */
+
+    setLastLoginBranchId
+    (
+        loginId:
+            string,
+
+        branchId:
+            number
+    ):
+        void
+    {
+        const normalizedLoginId:
+            string =
+                loginId.trim().toLowerCase();
+
+        if
+        (
+            !normalizedLoginId
+            ||
+            !Number.isFinite(
+                branchId
+            )
+            ||
+            branchId <=
+            0
+        )
+        {
+            return;
+        }
+
+        localStorage.setItem
+        (
+            `${this.lastLoginBranchKey}_${encodeURIComponent(normalizedLoginId)}`,
+
+            String(
+                branchId
+            )
+        );
+    }
+
+    /* ========================================================
+       Get Last Login Branch
+       --------------------------------------------------------
+       Returns the Branch ID previously used successfully by
+       the supplied Login ID.
+
+       Returns null when no previous branch exists.
+    ======================================================== */
+
+    getLastLoginBranchId
+    (
+        loginId:
+            string
+    ):
+        number
+        | null
+    {
+        const normalizedLoginId:
+            string =
+                loginId.trim().toLowerCase();
+
+        if
+        (
+            !normalizedLoginId
+        )
+        {
+            return null;
+        }
+
+        const storedBranchId:
+            string
+            | null =
+                localStorage.getItem
+                (
+                    `${this.lastLoginBranchKey}_${encodeURIComponent(normalizedLoginId)}`
+                );
+
+        if
+        (
+            !storedBranchId
+        )
+        {
+            return null;
+        }
+
+        const branchId:
+            number =
+                Number(
+                    storedBranchId
+                );
+
+        if
+        (
+            !Number.isFinite(
+                branchId
+            )
+            ||
+            branchId <=
+            0
+        )
+        {
+            return null;
+        }
+
+        return branchId;
+    }
 
     /* ========================================================
        Get Branch ID From Token
@@ -272,13 +407,11 @@ export class AuthenticationStorageService
             return null;
         }
 
-
         try
         {
             const tokenParts:
                 string[] =
                     token.split('.');
-
 
             if
             (
@@ -289,18 +422,15 @@ export class AuthenticationStorageService
                 return null;
             }
 
-
             const encodedPayload:
                 string =
                     tokenParts[1];
-
 
             const normalizedPayload:
                 string =
                     encodedPayload
                         .replace(/-/g, '+')
-                        .replace(/_/g, '/');
-
+                        .replace(/\_/g, '/');
 
             const paddedPayload:
                 string =
@@ -316,7 +446,6 @@ export class AuthenticationStorageService
                         '='
                     );
 
-
             const payload:
                 {
                     branchId?:
@@ -330,13 +459,11 @@ export class AuthenticationStorageService
                         )
                     );
 
-
             const branchId:
                 number =
                     Number(
                         payload.branchId
                     );
-
 
             if
             (
@@ -351,7 +478,6 @@ export class AuthenticationStorageService
                 return null;
             }
 
-
             return branchId;
         }
         catch
@@ -359,8 +485,6 @@ export class AuthenticationStorageService
             return null;
         }
     }
-
-
 
     /* ========================================================
        Get Token
@@ -378,7 +502,6 @@ export class AuthenticationStorageService
                     this.tokenKey
                 );
 
-
         if
         (
             sessionToken
@@ -387,15 +510,11 @@ export class AuthenticationStorageService
             return sessionToken;
         }
 
-
-
         return localStorage.getItem
         (
             this.tokenKey
         );
     }
-
-
 
     /* ========================================================
        Get User
@@ -438,7 +557,6 @@ export class AuthenticationStorageService
                     this.userKey
                 );
 
-
         const localUser:
             string | null =
                 localStorage.getItem
@@ -446,13 +564,11 @@ export class AuthenticationStorageService
                     this.userKey
                 );
 
-
         const user:
             string | null =
                 sessionUser
                 ??
                 localUser;
-
 
         if
         (
@@ -462,7 +578,6 @@ export class AuthenticationStorageService
             return null;
         }
 
-
         try
         {
             const parsedUser:
@@ -471,7 +586,6 @@ export class AuthenticationStorageService
                     (
                         user
                     );
-
 
             const normalizedUser =
             {
@@ -539,7 +653,6 @@ export class AuthenticationStorageService
                     ''
             };
 
-
             return normalizedUser;
         }
         catch
@@ -547,8 +660,6 @@ export class AuthenticationStorageService
             return null;
         }
     }
-
-
 
     /* ========================================================
        Get Remembered Login ID
@@ -564,8 +675,6 @@ export class AuthenticationStorageService
         );
     }
 
-
-
     /* ========================================================
        Has Remembered Login
     ======================================================== */
@@ -575,8 +684,6 @@ export class AuthenticationStorageService
     {
         return !!this.getRememberedLoginId();
     }
-
-
 
     /* ========================================================
        Clear Remembered Login
@@ -595,8 +702,6 @@ export class AuthenticationStorageService
         );
     }
 
-
-
     /* ========================================================
        Is Authenticated
     ======================================================== */
@@ -606,8 +711,6 @@ export class AuthenticationStorageService
     {
         return !!this.getToken();
     }
-
-
 
     /* ========================================================
        Logout
@@ -625,6 +728,8 @@ export class AuthenticationStorageService
            Remember Me unchecked
                -> no remembered Login ID exists.
 
+       The Last Login Branch is also intentionally preserved.
+
        IMPORTANT:
 
            This method does NOT navigate.
@@ -638,8 +743,6 @@ export class AuthenticationStorageService
     {
         this.clearAuthentication();
     }
-
-
 
     /* ========================================================
        Clear Authentication
@@ -659,6 +762,7 @@ export class AuthenticationStorageService
        Does NOT remove:
 
            - Remembered Login ID
+           - Last Login Branch
     ======================================================== */
 
     clearAuthentication():
@@ -677,8 +781,6 @@ export class AuthenticationStorageService
         (
             this.userKey
         );
-
-
 
         //=======================================================
         // Clear Session Authentication

@@ -618,6 +618,11 @@ public class ActivityAssignmentRepository
         const long systemUserId =
             1;
 
+        const long infrastructureControlModuleId =
+            2;
+
+        const long infrastructureControlRoleProfileId =
+            1;
 
         //=======================================================
         // Validation
@@ -633,7 +638,6 @@ public class ActivityAssignmentRepository
             );
         }
 
-
         if
         (
             dto.Details == null ||
@@ -645,13 +649,35 @@ public class ActivityAssignmentRepository
             );
         }
 
+        //=======================================================
+        // Infrastructure Control Validation
+        //=======================================================
+
+        var containsInfrastructureControl =
+            dto.Details.Any(
+                x =>
+                    x.ModuleId ==
+                    infrastructureControlModuleId
+            );
+
+        if
+        (
+            containsInfrastructureControl
+            &&
+            dto.RoleProfileId !=
+            infrastructureControlRoleProfileId
+        )
+        {
+            throw new InvalidOperationException(
+                "Infrastructure Control can only be assigned to Role Profile Id '1' (RP-001)."
+            );
+        }
 
         //=======================================================
         // Duplicate Detail Validation
         //=======================================================
 
         var duplicateDetails =
-
             dto.Details
                 .GroupBy
                 (
@@ -668,7 +694,6 @@ public class ActivityAssignmentRepository
                         x.Count() > 1
                 );
 
-
         if
         (
             duplicateDetails
@@ -679,39 +704,6 @@ public class ActivityAssignmentRepository
             );
         }
 
-
-        //=======================================================
-        // Existing Assignment Validation
-        //=======================================================
-
-        var existingAssignment =
-
-            await _context
-                .Set<ActivityAssignment>()
-                .AnyAsync
-                (
-                    x =>
-
-                        x.RoleProfileId ==
-                        dto.RoleProfileId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            existingAssignment
-        )
-        {
-            throw new InvalidOperationException(
-                $"An activity assignment already exists for Role Profile Id '{dto.RoleProfileId}'."
-            );
-        }
-
-
         //=======================================================
         // Transaction
         //=======================================================
@@ -719,9 +711,162 @@ public class ActivityAssignmentRepository
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
 
-
         try
         {
+            //===================================================
+            // Existing Assignment Validation
+            //===================================================
+
+            var existingAssignment =
+                await _context
+                    .Set<ActivityAssignment>()
+                    .FirstOrDefaultAsync
+                    (
+                        x =>
+                            x.RoleProfileId ==
+                            dto.RoleProfileId
+                    );
+
+            if
+            (
+                existingAssignment !=
+                null
+            )
+            {
+                //================================================
+                // Active Assignment
+                //================================================
+
+                if
+                (
+                    !existingAssignment.IsDeleted
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"An activity assignment already exists for Role Profile Id '{dto.RoleProfileId}'."
+                    );
+                }
+
+                //================================================
+                // Legacy Soft-Deleted Assignment
+                //
+                // Permanently remove the old graph because the
+                // database unique constraint still includes it.
+                //================================================
+
+                var existingDetails =
+                    await _context
+                        .Set<ActivityAssignmentDetail>()
+                        .Where
+                        (
+                            x =>
+                                x.ActivityAssignmentId ==
+                                existingAssignment.ActivityAssignmentId
+                        )
+                        .ToListAsync();
+
+                var existingDetailIds =
+                    existingDetails
+                        .Select
+                        (
+                            x =>
+                                x.ActivityAssignmentDetailId
+                        )
+                        .ToList();
+
+                //================================================
+                // Existing Permissions
+                //================================================
+
+                if
+                (
+                    existingDetailIds.Any()
+                )
+                {
+                    var existingPermissions =
+                        await _context
+                            .Set<ActivityAssignmentPermission>()
+                            .Where
+                            (
+                                x =>
+                                    existingDetailIds.Contains(
+                                        x.ActivityAssignmentDetailId
+                                    )
+                            )
+                            .ToListAsync();
+
+                    if
+                    (
+                        existingPermissions.Any()
+                    )
+                    {
+                        _context
+                            .Set<ActivityAssignmentPermission>()
+                            .RemoveRange(
+                                existingPermissions
+                            );
+                    }
+                }
+
+                //================================================
+                // Existing Details
+                //================================================
+
+                if
+                (
+                    existingDetails.Any()
+                )
+                {
+                    _context
+                        .Set<ActivityAssignmentDetail>()
+                        .RemoveRange(
+                            existingDetails
+                        );
+                }
+
+                //================================================
+                // Existing Assignment Header
+                //================================================
+
+                _context
+                    .Set<ActivityAssignment>()
+                    .Remove(
+                        existingAssignment
+                    );
+
+                await _context.SaveChangesAsync();
+
+                //================================================
+                // Legacy Assignment Activity History
+                //================================================
+
+                _context.ActivityHistories.Add(
+                    new ActivityHistory
+                    {
+                        Module =
+                            "Security & Permission",
+                        EntityName =
+                            "Activity Assignment",
+                        EntityId =
+                            existingAssignment.ActivityAssignmentId,
+                        ActivityType =
+                            "Delete",
+                        ActivityTitle =
+                            "Legacy Activity Assignment Permanently Deleted",
+                        ActivityDescription =
+                            $"Legacy soft-deleted Activity Assignment permanently deleted before creating a new assignment for Role Profile Id '{dto.RoleProfileId}'.",
+                        PerformedBy =
+                            systemUserId,
+                        PerformedByName =
+                            "System",
+                        PerformedDate =
+                            DateTime.UtcNow
+                    }
+                );
+
+                await _context.SaveChangesAsync();
+            }
+
             //===================================================
             // Header
             //===================================================
@@ -731,34 +876,23 @@ public class ActivityAssignmentRepository
                 {
                     RoleProfileId =
                         dto.RoleProfileId,
-
-                    // IMPORTANT:
-                    // Explicitly set database-required value.
                     IsActive =
                         true,
-
                     IsDeleted =
                         false,
-
                     CreatedBy =
                         systemUserId,
-
                     CreatedDate =
                         DateTime.UtcNow,
-
                     ModifiedBy =
                         null,
-
                     ModifiedDate =
                         null,
-
                     DeletedBy =
                         null,
-
                     DeletedDate =
                         null
                 };
-
 
             //===================================================
             // Details
@@ -775,40 +909,27 @@ public class ActivityAssignmentRepository
                     {
                         ModuleId =
                             detailDto.ModuleId,
-
                         MenuId =
                             detailDto.MenuId,
-
                         SubMenuId =
                             detailDto.SubMenuId,
-
-                        // IMPORTANT:
-                        // Explicitly set database-required value.
                         IsActive =
                             true,
-
                         IsDeleted =
                             false,
-
                         CreatedBy =
                             systemUserId,
-
                         CreatedDate =
                             DateTime.UtcNow,
-
                         ModifiedBy =
                             null,
-
                         ModifiedDate =
                             null,
-
                         DeletedBy =
                             null,
-
                         DeletedDate =
                             null
                     };
-
 
                 //================================================
                 // Permissions
@@ -827,7 +948,7 @@ public class ActivityAssignmentRepository
                     )
                     {
                         //========================================
-                        // Ignore empty permission
+                        // Ignore Empty Permission
                         //========================================
 
                         if
@@ -840,42 +961,30 @@ public class ActivityAssignmentRepository
                             continue;
                         }
 
-
                         var permission =
                             new ActivityAssignmentPermission
                             {
                                 MasterActivityId =
                                     permissionDto.MasterActivityId,
-
                                 NavigationActivityId =
                                     permissionDto.NavigationActivityId,
-
-                                // IMPORTANT
                                 IsActive =
                                     true,
-
                                 IsDeleted =
                                     false,
-
                                 CreatedBy =
                                     systemUserId,
-
                                 CreatedDate =
                                     DateTime.UtcNow,
-
                                 ModifiedBy =
                                     null,
-
                                 ModifiedDate =
                                     null,
-
                                 DeletedBy =
                                     null,
-
                                 DeletedDate =
                                     null
                             };
-
 
                         detail.ActivityAssignmentPermissions.Add(
                             permission
@@ -883,12 +992,10 @@ public class ActivityAssignmentRepository
                     }
                 }
 
-
                 entity.Details.Add(
                     detail
                 );
             }
-
 
             //===================================================
             // Add Complete Graph
@@ -900,54 +1007,41 @@ public class ActivityAssignmentRepository
                     entity
                 );
 
-
             //===================================================
             // Save Complete Graph
             //===================================================
 
             await _context.SaveChangesAsync();
 
-
             //===================================================
             // Activity History
             //===================================================
 
             _context.ActivityHistories.Add(
-
                 new ActivityHistory
                 {
                     Module =
                         "Security & Permission",
-
                     EntityName =
                         "Activity Assignment",
-
                     EntityId =
                         entity.ActivityAssignmentId,
-
                     ActivityType =
                         "Create",
-
                     ActivityTitle =
                         "Activity Assignment Created",
-
                     ActivityDescription =
                         $"Activity Assignment created for Role Profile Id '{entity.RoleProfileId}'.",
-
                     PerformedBy =
                         systemUserId,
-
                     PerformedByName =
                         "System",
-
                     PerformedDate =
                         DateTime.UtcNow
                 }
             );
 
-
             await _context.SaveChangesAsync();
-
 
             //===================================================
             // Commit
@@ -955,13 +1049,11 @@ public class ActivityAssignmentRepository
 
             await transaction.CommitAsync();
 
-
             return entity.ActivityAssignmentId;
         }
         catch
         {
             await transaction.RollbackAsync();
-
             throw;
         }
     }
@@ -970,6 +1062,7 @@ public class ActivityAssignmentRepository
     //===========================================================
     // Update
     //===========================================================
+
     public async Task<bool>
         UpdateAsync
         (
@@ -978,9 +1071,17 @@ public class ActivityAssignmentRepository
     {
         const long systemUserId =
             1;
+
+        const long infrastructureControlModuleId =
+            2;
+
+        const long infrastructureControlRoleProfileId =
+            1;
+
         //=======================================================
         // Validation
         //=======================================================
+
         if
         (
             dto.ActivityAssignmentId <= 0
@@ -990,6 +1091,7 @@ public class ActivityAssignmentRepository
                 "Activity Assignment Id is required."
             );
         }
+
         if
         (
             dto.RoleProfileId <= 0
@@ -999,6 +1101,7 @@ public class ActivityAssignmentRepository
                 "Role Profile is required."
             );
         }
+
         //=======================================================
         // Zero Detail Update
         //
@@ -1008,6 +1111,7 @@ public class ActivityAssignmentRepository
         // CreateAsync remains responsible for requiring at least
         // one detail when creating a new assignment.
         //=======================================================
+
         if
         (
             dto.Details == null ||
@@ -1016,11 +1120,13 @@ public class ActivityAssignmentRepository
         {
             await using var deleteTransaction =
                 await _context.Database.BeginTransactionAsync();
+
             try
             {
                 //===================================================
                 // Load Header
                 //===================================================
+
                 var entity =
                     await _context
                         .Set<ActivityAssignment>()
@@ -1032,6 +1138,7 @@ public class ActivityAssignmentRepository
                                 &&
                                 !x.IsDeleted
                         );
+
                 if
                 (
                     entity ==
@@ -1041,9 +1148,15 @@ public class ActivityAssignmentRepository
                     await deleteTransaction.RollbackAsync();
                     return false;
                 }
+
                 //===================================================
-                // Existing Details
+                // Load Existing Details
+                //
+                // Do NOT filter IsDeleted here.
+                // Any legacy soft-deleted children must also be
+                // physically removed.
                 //===================================================
+
                 var existingDetails =
                     await _context
                         .Set<ActivityAssignmentDetail>()
@@ -1052,10 +1165,9 @@ public class ActivityAssignmentRepository
                             x =>
                                 x.ActivityAssignmentId ==
                                 entity.ActivityAssignmentId
-                                &&
-                                !x.IsDeleted
                         )
                         .ToListAsync();
+
                 var existingDetailIds =
                     existingDetails
                         .Select
@@ -1064,15 +1176,16 @@ public class ActivityAssignmentRepository
                                 x.ActivityAssignmentDetailId
                         )
                         .ToList();
+
                 //===================================================
-                // Existing Permissions
+                // Load Existing Permissions
+                //
+                // Do NOT filter IsDeleted here.
                 //===================================================
-                if
-                (
+
+                var existingPermissions =
                     existingDetailIds.Any()
-                )
-                {
-                    var existingPermissions =
+                        ?
                         await _context
                             .Set<ActivityAssignmentPermission>()
                             .Where
@@ -1081,70 +1194,57 @@ public class ActivityAssignmentRepository
                                     existingDetailIds.Contains(
                                         x.ActivityAssignmentDetailId
                                     )
-                                    &&
-                                    !x.IsDeleted
                             )
-                            .ToListAsync();
-                    foreach
-                    (
-                        var permission
-                        in existingPermissions
-                    )
-                    {
-                        permission.IsActive =
-                            false;
-                        permission.IsDeleted =
-                            true;
-                        permission.ModifiedBy =
-                            systemUserId;
-                        permission.ModifiedDate =
-                            DateTime.UtcNow;
-                        permission.DeletedBy =
-                            systemUserId;
-                        permission.DeletedDate =
-                            DateTime.UtcNow;
-                    }
-                }
+                            .ToListAsync()
+                        :
+                        new List<ActivityAssignmentPermission>();
+
                 //===================================================
-                // Soft Delete Existing Details
+                // Permanently Delete Permissions
                 //===================================================
-                foreach
+
+                if
                 (
-                    var detail
-                    in existingDetails
+                    existingPermissions.Any()
                 )
                 {
-                    detail.IsActive =
-                        false;
-                    detail.IsDeleted =
-                        true;
-                    detail.ModifiedBy =
-                        systemUserId;
-                    detail.ModifiedDate =
-                        DateTime.UtcNow;
-                    detail.DeletedBy =
-                        systemUserId;
-                    detail.DeletedDate =
-                        DateTime.UtcNow;
+                    _context
+                        .Set<ActivityAssignmentPermission>()
+                        .RemoveRange(
+                            existingPermissions
+                        );
                 }
+
                 //===================================================
-                // Soft Delete Header
+                // Permanently Delete Details
                 //===================================================
-                entity.IsActive =
-                    false;
-                entity.IsDeleted =
-                    true;
-                entity.ModifiedBy =
-                    systemUserId;
-                entity.ModifiedDate =
-                    DateTime.UtcNow;
-                entity.DeletedBy =
-                    systemUserId;
-                entity.DeletedDate =
-                    DateTime.UtcNow;
+
+                if
+                (
+                    existingDetails.Any()
+                )
+                {
+                    _context
+                        .Set<ActivityAssignmentDetail>()
+                        .RemoveRange(
+                            existingDetails
+                        );
+                }
+
+                //===================================================
+                // Permanently Delete Header
+                //===================================================
+
+                _context
+                    .Set<ActivityAssignment>()
+                    .Remove(
+                        entity
+                    );
+
                 //===================================================
                 // Activity History
                 //===================================================
+
                 _context.ActivityHistories.Add(
                     new ActivityHistory
                     {
@@ -1159,7 +1259,7 @@ public class ActivityAssignmentRepository
                         ActivityTitle =
                             "Activity Assignment Deleted",
                         ActivityDescription =
-                            $"Activity Assignment removed because no Sub Menu assignments remain for Role Profile Id '{entity.RoleProfileId}'.",
+                            $"Activity Assignment permanently deleted because no Sub Menu assignments remain for Role Profile Id '{entity.RoleProfileId}'.",
                         PerformedBy =
                             systemUserId,
                         PerformedByName =
@@ -1168,14 +1268,19 @@ public class ActivityAssignmentRepository
                             DateTime.UtcNow
                     }
                 );
+
                 //===================================================
                 // Save
                 //===================================================
+
                 await _context.SaveChangesAsync();
+
                 //===================================================
                 // Commit
                 //===================================================
+
                 await deleteTransaction.CommitAsync();
+
                 return true;
             }
             catch
@@ -1184,9 +1289,35 @@ public class ActivityAssignmentRepository
                 throw;
             }
         }
+
+        //=======================================================
+        // Infrastructure Control Validation
+        //=======================================================
+
+        var containsInfrastructureControl =
+            dto.Details.Any(
+                x =>
+                    x.ModuleId ==
+                    infrastructureControlModuleId
+            );
+
+        if
+        (
+            containsInfrastructureControl
+            &&
+            dto.RoleProfileId !=
+            infrastructureControlRoleProfileId
+        )
+        {
+            throw new InvalidOperationException(
+                "Infrastructure Control can only be assigned to Role Profile Id '1' (RP-001)."
+            );
+        }
+
         //=======================================================
         // Duplicate Details
         //=======================================================
+
         var duplicateDetails =
             dto.Details
                 .GroupBy
@@ -1203,6 +1334,7 @@ public class ActivityAssignmentRepository
                     x =>
                         x.Count() > 1
                 );
+
         if
         (
             duplicateDetails
@@ -1212,9 +1344,11 @@ public class ActivityAssignmentRepository
                 "Duplicate submenu assignment detected."
             );
         }
+
         //=======================================================
         // Duplicate Role Profile
         //=======================================================
+
         var duplicateRoleProfile =
             await _context
                 .Set<ActivityAssignment>()
@@ -1229,6 +1363,7 @@ public class ActivityAssignmentRepository
                         &&
                         !x.IsDeleted
                 );
+
         if
         (
             duplicateRoleProfile
@@ -1238,16 +1373,20 @@ public class ActivityAssignmentRepository
                 $"An activity assignment already exists for Role Profile Id '{dto.RoleProfileId}'."
             );
         }
+
         //=======================================================
         // Transaction
         //=======================================================
+
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
+
         try
         {
             //===================================================
             // Load Header
             //===================================================
+
             var entity =
                 await _context
                     .Set<ActivityAssignment>()
@@ -1259,6 +1398,7 @@ public class ActivityAssignmentRepository
                             &&
                             !x.IsDeleted
                     );
+
             if
             (
                 entity ==
@@ -1267,20 +1407,27 @@ public class ActivityAssignmentRepository
             {
                 return false;
             }
+
             //===================================================
             // Update Header
             //===================================================
+
             entity.RoleProfileId =
                 dto.RoleProfileId;
+
             entity.IsActive =
                 true;
+
             entity.ModifiedBy =
                 systemUserId;
+
             entity.ModifiedDate =
                 DateTime.UtcNow;
+
             //===================================================
             // Existing Details
             //===================================================
+
             var existingDetails =
                 await _context
                     .Set<ActivityAssignmentDetail>()
@@ -1291,6 +1438,7 @@ public class ActivityAssignmentRepository
                             entity.ActivityAssignmentId
                     )
                     .ToListAsync();
+
             var existingDetailIds =
                 existingDetails
                     .Select
@@ -1299,9 +1447,11 @@ public class ActivityAssignmentRepository
                             x.ActivityAssignmentDetailId
                     )
                     .ToList();
+
             //===================================================
             // Existing Permissions
             //===================================================
+
             if
             (
                 existingDetailIds.Any()
@@ -1318,6 +1468,7 @@ public class ActivityAssignmentRepository
                                 )
                         )
                         .ToListAsync();
+
                 if
                 (
                     existingPermissions.Any()
@@ -1330,9 +1481,11 @@ public class ActivityAssignmentRepository
                         );
                 }
             }
+
             //===================================================
             // Remove Existing Details
             //===================================================
+
             if
             (
                 existingDetails.Any()
@@ -1344,10 +1497,13 @@ public class ActivityAssignmentRepository
                         existingDetails
                     );
             }
+
             await _context.SaveChangesAsync();
+
             //===================================================
             // Insert New Details
             //===================================================
+
             foreach
             (
                 var detailDto
@@ -1382,9 +1538,11 @@ public class ActivityAssignmentRepository
                         DeletedDate =
                             null
                     };
+
                 //================================================
                 // Permissions
                 //================================================
+
                 if
                 (
                     detailDto.ActivityAssignmentPermissions !=
@@ -1406,6 +1564,7 @@ public class ActivityAssignmentRepository
                         {
                             continue;
                         }
+
                         var permission =
                             new ActivityAssignmentPermission
                             {
@@ -1430,24 +1589,30 @@ public class ActivityAssignmentRepository
                                 DeletedDate =
                                     null
                             };
+
                         detail.ActivityAssignmentPermissions.Add(
                             permission
                         );
                     }
                 }
+
                 _context
                     .Set<ActivityAssignmentDetail>()
                     .Add(
                         detail
                     );
             }
+
             //===================================================
             // Save
             //===================================================
+
             await _context.SaveChangesAsync();
+
             //===================================================
             // Activity History
             //===================================================
+
             _context.ActivityHistories.Add(
                 new ActivityHistory
                 {
@@ -1471,11 +1636,15 @@ public class ActivityAssignmentRepository
                         DateTime.UtcNow
                 }
             );
+
             await _context.SaveChangesAsync();
+
             //===================================================
             // Commit
             //===================================================
+
             await transaction.CommitAsync();
+
             return true;
         }
         catch

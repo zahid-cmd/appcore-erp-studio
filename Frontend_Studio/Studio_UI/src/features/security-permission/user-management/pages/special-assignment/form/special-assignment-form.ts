@@ -497,7 +497,12 @@ implements OnInit
         [field:string]:boolean;
     } =
     {
-        masterActivities:false,
+        all:false,
+        view:false,
+        add:false,
+        update:false,
+        delete:false,
+        restore:false
     };
 
 
@@ -712,6 +717,109 @@ implements OnInit
     ];
 
 
+    private infrastructureControlModuleIds:
+        number[] =
+    [
+    ];
+
+
+    //===========================================================
+    // Infrastructure Control Access
+    //===========================================================
+
+    private isInfrastructureControlAllowed():
+        boolean
+    {
+        const userProfile =
+            this.userProfiles.find(
+                profile =>
+                    Number(
+                        profile?.id
+                        ??
+                        profile?.userProfileId
+                        ??
+                        profile?.UserProfileId
+                    )
+                    ===
+                    Number(
+                        this.selectedUserProfileId
+                    )
+            );
+
+
+        const userProfileCode =
+            userProfile?.profileCode
+            ??
+            userProfile?.ProfileCode
+            ??
+            userProfile?.code
+            ??
+            userProfile?.Code
+            ??
+            '';
+
+
+        return String(
+            userProfileCode
+        )
+            .trim()
+            .toUpperCase()
+            ===
+            'RP001';
+    }
+
+
+    private isInfrastructureControlModule
+    (
+        module:any
+    ):
+        boolean
+    {
+        return String(
+            module?.name
+            ??
+            module?.moduleName
+            ??
+            module?.Name
+            ??
+            module?.ModuleName
+            ??
+            ''
+        )
+            .trim()
+            .toLowerCase()
+            ===
+            'infrastructure control';
+    }
+
+
+    private isInfrastructureControlModuleId
+    (
+        moduleId:number | null
+    ):
+        boolean
+    {
+        return this.infrastructureControlModuleIds.includes(
+            Number(
+                moduleId
+            )
+        );
+    }
+
+
+    private containsInfrastructureControlRow():
+        boolean
+    {
+        return this.itemCartRows.some(
+            row =>
+                this.isInfrastructureControlModuleId(
+                    row.moduleId
+                )
+        );
+    }
+
+
+
     //===========================================================
     // Item Cart Rows
     //===========================================================
@@ -808,7 +916,6 @@ implements OnInit
         event:
         {
             field:string;
-
             checked:boolean;
         }
     ):
@@ -819,58 +926,196 @@ implements OnInit
         ] =
             event.checked;
 
-
         switch(event.field)
         {
-            case 'masterActivities':
-
-                this.toggleMasterActivities(
+            case 'all':
+                this.toggleAllActivities(
                     event.checked
                 );
-
                 break;
 
+            case 'view':
+                this.toggleActivityByType(
+                    'view',
+                    event.checked
+                );
+                break;
+
+            case 'add':
+                this.toggleActivityByType(
+                    'add',
+                    event.checked
+                );
+                break;
+
+            case 'update':
+                this.toggleActivityByType(
+                    'update',
+                    event.checked
+                );
+                break;
+
+            case 'delete':
+                this.toggleActivityByType(
+                    'delete',
+                    event.checked
+                );
+                break;
+
+            case 'restore':
+                this.toggleActivityByType(
+                    'restore',
+                    event.checked
+                );
+                break;
         }
 
-
         this.updatePagination();
-
-
+        this.updateHeaderCheckboxStates();
         this.detectChanges();
-
-
         this.cdr.detectChanges();
     }
 
-
     //===========================================================
-    // Toggle Master Activities
+    // Toggle All Activities
     //===========================================================
 
-    toggleMasterActivities
+    private toggleAllActivities
     (
         checked:boolean
     ):
         void
     {
         this.itemCartRows =
-            this.itemCartRows.map(row =>
-            ({
-                ...row,
+            this.itemCartRows.map(
+                row =>
+                ({
+                    ...row,
 
-                masterActivities:
-                    row.masterActivities.map(activity =>
-                    ({
-                        ...activity,
-
-                        checked
-                    }))
-            }));
-
+                    masterActivities:
+                        row.masterActivities.map(
+                            activity =>
+                            ({
+                                ...activity,
+                                checked
+                            })
+                        )
+                })
+            );
 
         this.updatePagination();
-
         this.updateHeaderCheckboxStates();
+    }
+
+    //===========================================================
+    // Toggle Activity By Type
+    //===========================================================
+
+    private toggleActivityByType
+    (
+        type:
+            'view'
+            |
+            'add'
+            |
+            'update'
+            |
+            'delete'
+            |
+            'restore',
+        checked:boolean
+    ):
+        void
+    {
+        this.itemCartRows =
+            this.itemCartRows.map(
+                row =>
+                ({
+                    ...row,
+
+                    masterActivities:
+                        row.masterActivities.map(
+                            activity =>
+                            this.isActivityType(
+                                activity,
+                                type
+                            )
+                            ?
+                            {
+                                ...activity,
+                                checked
+                            }
+                            :
+                            activity
+                        )
+                })
+            );
+
+        this.updatePagination();
+        this.updateHeaderCheckboxStates();
+    }
+
+    //===========================================================
+    // Activity Type
+    //===========================================================
+
+    private isActivityType
+    (
+        activity:ActivityItem,
+        type:
+            'view'
+            |
+            'add'
+            |
+            'update'
+            |
+            'delete'
+            |
+            'restore'
+    ):
+        boolean
+    {
+        const activityText =
+            String(
+                activity?.text
+                ??
+                ''
+            )
+                .trim()
+                .toLowerCase()
+                .replace(
+                    /[^a-z]/g,
+                    ''
+                );
+
+        switch(type)
+        {
+            case 'view':
+                return activityText === 'view';
+
+            case 'add':
+                return (
+                    activityText === 'add'
+                    ||
+                    activityText === 'create'
+                );
+
+            case 'update':
+                return (
+                    activityText === 'update'
+                    ||
+                    activityText === 'edit'
+                );
+
+            case 'delete':
+                return activityText === 'delete';
+
+            case 'restore':
+                return activityText === 'restore';
+
+            default:
+                return false;
+        }
     }
 
 
@@ -926,27 +1171,71 @@ implements OnInit
     updateHeaderCheckboxStates():
         void
     {
-        const hasMasterActivities =
-            this.itemCartRows.some(
-                row => row.masterActivities.length > 0
+        const activities =
+            this.itemCartRows.flatMap(
+                row =>
+                    row.masterActivities
             );
 
+        const getState =
+            (
+                type:
+                    'view'
+                    |
+                    'add'
+                    |
+                    'update'
+                    |
+                    'delete'
+                    |
+                    'restore'
+            ):
+                boolean =>
+            {
+                const matchingActivities =
+                    activities.filter(
+                        activity =>
+                            this.isActivityType(
+                                activity,
+                                type
+                            )
+                    );
+
+                return (
+                    matchingActivities.length > 0
+                    &&
+                    matchingActivities.every(
+                        activity =>
+                            activity.checked
+                    )
+                );
+            };
 
         this.headerCheckboxStates =
         {
-            masterActivities:
-                hasMasterActivities
+            all:
+                activities.length > 0
                 &&
-                this.itemCartRows.every(
-                    row =>
-                        row.masterActivities.length === 0
-                        ||
-                        row.masterActivities.every(
-                            activity => activity.checked
-                        )
-                )
-        };
+                activities.every(
+                    activity =>
+                        activity.checked
+                ),
 
+            view:
+                getState('view'),
+
+            add:
+                getState('add'),
+
+            update:
+                getState('update'),
+
+            delete:
+                getState('delete'),
+
+            restore:
+                getState('restore')
+        };
 
         this.cdr.detectChanges();
     }
@@ -1351,6 +1640,9 @@ implements OnInit
                     ];
 
 
+                    this.loadModules();
+
+
                     this.cdr.detectChanges();
                 },
 
@@ -1403,11 +1695,48 @@ implements OnInit
             {
                 next:(response) =>
                 {
+                    this.infrastructureControlModuleIds =
+                        response
+                            .filter(
+                                module =>
+                                    this.isInfrastructureControlModule(
+                                        module
+                                    )
+                            )
+                            .map(
+                                module =>
+                                    Number(
+                                        module.id
+                                    )
+                            )
+                            .filter(
+                                id =>
+                                    id > 0
+                            );
+
+
+                    const availableModules =
+                        response.filter(
+                            module =>
+                                this.isInfrastructureControlAllowed()
+                                ||
+                                !this.isInfrastructureControlModule(
+                                    module
+                                )
+                        );
+
+
                     this.modules =
+                    this.isInfrastructureControlAllowed()
+                    ?
                     [
                         ...this.defaultModules,
 
-                        ...response
+                        ...availableModules
+                    ]
+                    :
+                    [
+                        ...availableModules
                     ];
 
                     this.cdr.detectChanges();
@@ -1776,6 +2105,9 @@ implements OnInit
             data.userProfileId;
 
 
+        this.loadModules();
+
+
         //=======================================================
         // Restore Saved Navigation Selection
         //
@@ -1935,6 +2267,44 @@ implements OnInit
         }
 
 
+        this.loadModules();
+
+
+        if
+        (
+            this.selectedModuleId != null
+            &&
+            !this.isInfrastructureControlAllowed()
+            &&
+            this.isInfrastructureControlModuleId(
+                this.selectedModuleId
+            )
+        )
+        {
+            this.selectedModuleId =
+                null;
+
+            this.selectedMenuId =
+                null;
+
+            this.selectedSubMenuId =
+                null;
+
+            this.menus =
+            [
+                ...this.defaultMenus
+            ];
+
+            this.subMenus =
+            [
+                ...this.defaultSubMenus
+            ];
+
+            this.isAddDisabled =
+                true;
+        }
+
+
         this.detectChanges();
     }
 
@@ -1949,6 +2319,38 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            value != null
+            &&
+            !this.isInfrastructureControlAllowed()
+            &&
+            this.isInfrastructureControlModuleId(
+                value
+            )
+        )
+        {
+            this.toast.warning(
+                'Access Restricted',
+                'Infrastructure Control is reserved for User Profile RP001.'
+            );
+
+            this.selectedModuleId =
+                null;
+
+            this.selectedMenuId =
+                null;
+
+            this.selectedSubMenuId =
+                null;
+
+            this.isAddDisabled =
+                true;
+
+            return;
+        }
+
+
         this.selectedModuleId =
             value;
 
@@ -3409,6 +3811,21 @@ implements OnInit
             );
 
 
+        if
+        (
+            !this.isInfrastructureControlAllowed()
+        )
+        {
+            selectedSubMenus =
+                selectedSubMenus.filter(
+                    subMenu =>
+                        !this.isInfrastructureControlModuleId(
+                            subMenu?.navigationModuleId
+                        )
+                );
+        }
+
+
         //=======================================================
         // Specific Sub Menu Selected
         //=======================================================
@@ -3514,6 +3931,27 @@ implements OnInit
             this.buildSelectedRows();
 
 
+        if
+        (
+            !this.isInfrastructureControlAllowed()
+            &&
+            selectedSubMenus.some(
+                row =>
+                    this.isInfrastructureControlModuleId(
+                        row.moduleId
+                    )
+            )
+        )
+        {
+            this.toast.warning(
+                'Access Restricted',
+                'Infrastructure Control is reserved for User Profile RP001.'
+            );
+
+            return;
+        }
+
+
         let duplicateFound =
             false;
 
@@ -3614,7 +4052,12 @@ implements OnInit
 
         this.headerCheckboxStates =
         {
-            masterActivities:false
+            all:false,
+            view:false,
+            add:false,
+            update:false,
+            delete:false,
+            restore:false
         };
 
 
@@ -3652,6 +4095,24 @@ implements OnInit
             );
             return;
         }
+
+
+        if
+        (
+            !this.isInfrastructureControlAllowed()
+            &&
+            this.containsInfrastructureControlRow()
+        )
+        {
+            this.toast.error(
+                'Access Restricted',
+                'Infrastructure Control is reserved for User Profile RP001.'
+            );
+
+            return;
+        }
+
+
         if
         (
             this.mode === 'add'

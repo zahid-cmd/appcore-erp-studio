@@ -1,15 +1,21 @@
 <!-- ===========================================================
+
      LOGIN PAGE LOGIN PANEL
+
      -----------------------------------------------------------
+
      FINAL FUNCTIONAL LOGIN PANEL
 
      MASTER GEOMETRY:
 
          Width:
+
              590px
 
          Height:
+
              Available panel height
+
              with 20px top + 20px bottom breathing space.
 
      IMPORTANT:
@@ -20,6 +26,7 @@
          component.
 
          No:
+
          - Language selector
          - Background artwork
          - Powered By
@@ -31,9 +38,11 @@
          from Company Setup through CompanyService.
 
          Client Display Name:
+
              Company Short Name
 
          Client Logo:
+
              Company Logo Path
 
      AUTHENTICATION:
@@ -65,21 +74,23 @@
          to the authenticated Login ID.
 
          One active branch:
+
              Backend selects automatically.
 
          Multiple active branches:
+
              User must select a branch before login completes.
 
          Zero active branches:
-             Backend blocks authentication and returns an error.
-============================================================ -->
 
+             Backend blocks authentication and returns an error.
+
+============================================================ -->
 
 <div
     class="login-page-login-panel"
     *ngIf="config.visible"
 >
-
 
     <!-- =======================================================
          LOGIN PANEL CONTENT
@@ -89,7 +100,6 @@
         class="login-panel-content"
     >
 
-
         <!-- ===================================================
              LOGIN CARD
         ==================================================== -->
@@ -98,7 +108,6 @@
             class="login-card"
         >
 
-
             <!-- ===============================================
                  CARD HEADER
             ================================================ -->
@@ -106,7 +115,6 @@
             <div
                 class="login-card-header"
             >
-
 
                 <!-- ===========================================
                      TOP META
@@ -142,7 +150,6 @@
 
                 </div>
 
-
                 <!-- ===========================================
                      BLUE ACCENT
                 ============================================ -->
@@ -152,7 +159,6 @@
                 >
                 </div>
 
-
                 <!-- ===========================================
                      CLIENT BRANDING
                 ============================================ -->
@@ -160,7 +166,6 @@
                 <div
                     class="login-card-client-branding"
                 >
-
 
                     <!-- =======================================
                          CLIENT LOGO
@@ -182,7 +187,6 @@
                         >
 
                     </div>
-
 
                     <!-- =======================================
                          CLIENT BRAND SEPARATOR
@@ -210,7 +214,6 @@
 
                     </div>
 
-
                     <!-- =======================================
                          CLIENT DISPLAY NAME
                     ======================================== -->
@@ -226,7 +229,6 @@
                             {{ clientCompanyName }}
                         </div>
 
-
                         <div
                             class="login-client-name-accent"
                         >
@@ -234,9 +236,7 @@
 
                     </div>
 
-
                 </div>
-
 
                 <!-- ===========================================
                      HEADING AREA
@@ -252,7 +252,6 @@
                         {{ config.heading }}
                     </h2>
 
-
                     <p
                         class="login-card-subtitle"
                     >
@@ -261,9 +260,7 @@
 
                 </div>
 
-
             </div>
-
 
             <!-- ===============================================
                  LOGIN FORM
@@ -275,7 +272,6 @@
                 autocomplete="on"
                 novalidate
             >
-
 
                 <!-- ===========================================
                      LOGIN ID
@@ -294,7 +290,6 @@
 
                     </label>
 
-
                     <div
                         class="login-input-wrapper"
                     >
@@ -311,27 +306,20 @@
 
                         </span>
 
-
                         <input
                             id="login-page-login-id"
                             class="login-form-input"
                             type="text"
                             name="loginId"
-
                             [value]="loginId"
-
                             [placeholder]="config.loginIdPlaceholder"
-
                             autocomplete="username"
-
                             [disabled]="isSigningIn"
-
                             [attr.aria-invalid]="
                                 loginError
                                     ? 'true'
                                     : null
                             "
-
                             (input)="
                                 onLoginIdChange(
                                     $any($event.target).value
@@ -342,7 +330,6 @@
                     </div>
 
                 </div>
-
 
                 <!-- ===========================================
                      PASSWORD
@@ -361,7 +348,6 @@
 
                     </label>
 
-
                     <div
                         class="login-input-wrapper"
                     >
@@ -378,7 +364,6 @@
 
                         </span>
 
-
                         <input
                             id="login-page-password"
                             class="login-form-input login-password-input"
@@ -388,33 +373,25 @@
                                     : 'password'
                             "
                             name="password"
-
                             [(ngModel)]="password"
-
                             [placeholder]="config.passwordPlaceholder"
-
                             autocomplete="current-password"
-
                             [disabled]="isSigningIn"
-
                             [attr.aria-invalid]="
                                 loginError
                                     ? 'true'
                                     : null
                             "
-
                             (ngModelChange)="
                                 onPasswordChange($event)
                             "
                         />
-
 
                         <button
                             type="button"
                             class="password-visibility-button"
                             aria-label="Show or hide password"
                             [disabled]="isSigningIn"
-
                             (click)="
                                 togglePasswordVisibility()
                             "
@@ -435,7 +412,6 @@
                     </div>
 
                 </div>
-
 
                 <!-- ===========================================
                      BRANCH SELECTION
@@ -462,23 +438,14 @@
 
                     </label>
 
-
                     <app-search-dropdown
                         id="login-page-branch"
                         class="login-branch-dropdown"
-
                         [items]="assignedBranches"
-
                         labelField="branchName"
-
                         valueField="branchId"
-
                         [value]="selectedBranchId"
-
                         [disabled]="isSigningIn"
-
-                        [value]="selectedBranchId"
-
                         (valueChange)="
                             onBranchChange($event)
                         "
@@ -487,7 +454,6 @@
 
                 </div>
 
-
                 <!-- ===========================================
                      LOGIN OPTIONS
                 ============================================ -->
@@ -495,7 +461,6 @@
                 <div
                     class="login-form-options"
                 >
-
 
                     <!-- =======================================
                          REMEMBER ME
@@ -509,11 +474,8 @@
                         <input
                             type="checkbox"
                             name="rememberMe"
-
                             [checked]="rememberMe"
-
                             [disabled]="isSigningIn"
-
                             (change)="
                                 onRememberMeChange(
                                     $any($event.target).checked
@@ -521,12 +483,10 @@
                             "
                         />
 
-
                         <span
                             class="remember-checkbox"
                         >
                         </span>
-
 
                         <span
                             class="remember-text"
@@ -535,7 +495,6 @@
                         </span>
 
                     </label>
-
 
                     <!-- =======================================
                          FORGOT PASSWORD
@@ -546,7 +505,6 @@
                         class="forgot-password-button"
                         *ngIf="config.forgotPasswordVisible"
                         [disabled]="isSigningIn"
-
                         (click)="onForgotPassword()"
                     >
 
@@ -554,9 +512,7 @@
 
                     </button>
 
-
                 </div>
-
 
                 <!-- ===========================================
                      LOGIN ERROR
@@ -581,7 +537,6 @@
 
                 </div>
 
-
                 <!-- ===========================================
                      SIGN IN BUTTON
                 ============================================ -->
@@ -604,7 +559,6 @@
                         >
                         </i>
 
-
                         <i
                             *ngIf="isSigningIn"
                             class="fas fa-spinner fa-spin"
@@ -613,7 +567,6 @@
                         </i>
 
                     </span>
-
 
                     <span
                         class="sign-in-text"
@@ -624,7 +577,6 @@
                                 : config.signInButtonText
                         }}
                     </span>
-
 
                     <span
                         class="sign-in-arrow"
@@ -641,9 +593,7 @@
 
                 </button>
 
-
             </form>
-
 
             <!-- =================================================
                  OR SEPARATOR
@@ -658,13 +608,11 @@
                 >
                 </span>
 
-
                 <span
                     class="separator-text"
                 >
                     {{ config.orText }}
                 </span>
-
 
                 <span
                     class="separator-line"
@@ -672,7 +620,6 @@
                 </span>
 
             </div>
-
 
             <!-- =================================================
                  REGISTRATION
@@ -695,7 +642,6 @@
 
                 </div>
 
-
                 <div
                     class="registration-content"
                 >
@@ -706,7 +652,6 @@
                         {{ config.registrationHeading }}
                     </div>
 
-
                     <div
                         class="registration-description"
                     >
@@ -715,12 +660,10 @@
 
                 </div>
 
-
                 <button
                     type="button"
                     class="registration-button"
                     [disabled]="isSigningIn"
-
                     (click)="onRegister()"
                 >
 
@@ -728,9 +671,7 @@
 
                 </button>
 
-
             </div>
-
 
             <!-- =================================================
                  BOTTOM META
@@ -766,11 +707,8 @@
 
             </div>
 
-
         </div>
 
-
     </div>
-
 
 </div>

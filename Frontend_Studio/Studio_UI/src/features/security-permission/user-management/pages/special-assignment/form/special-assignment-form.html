@@ -5,195 +5,111 @@
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-user-shield"
-
         [title]="pageTitle"
-
         subtitle="Manage special assignments.">
 
-        <!-- =================================================
-             CENTER
-        ================================================== -->
-
         <div
-
             pageHeaderCenter
-
             class="activity-header-center">
 
             <app-record-counter
-
                 [sections]="recordCounterSections"
-
                 [compact]="true">
-
             </app-record-counter>
 
-
             <app-search-box
-
                 class="activity-header-search"
-
                 placeholder="Search menu or sub menu..."
-
                 [value]="activitySearchText"
-
                 [disabled]="loading"
-
                 (search)="onActivitySearch($event)">
-
             </app-search-box>
 
         </div>
 
-
-        <!-- =================================================
-             RIGHT
-        ================================================== -->
-
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
-
-
 
     <!-- =====================================================
          PAGE TOOLBAR
     ====================================================== -->
 
     <app-page-toolbar
-
         leftFlex="0 0 auto"
-
         rightFlex="1 1 auto">
 
-        <!-- =================================================
-             LEFT
-        ================================================== -->
-
         <div
-
             pageToolbarLeft
-
             class="activity-toolbar-left">
 
             <app-control-tabs
-
                 [tabs]="tabs"
-
                 [(selectedTab)]="selectedTab"
-
                 (selectedTabChange)="onTabChange($event)">
-
             </app-control-tabs>
 
         </div>
 
-
-        <!-- =================================================
-             RIGHT
-        ================================================== -->
-
         <div
-
             pageToolbarRight
-
             class="activity-toolbar-right">
-
 
             <!-- =============================================
                  USER PROFILE
             ============================================== -->
 
             <app-search-dropdown
-
                 placeholder="Select User Profile"
-
                 [items]="userProfiles"
-
                 labelField="displayName"
-
                 valueField="userProfileId"
-
                 [disabled]="
                     isViewMode
                     ||
                     isUserProfileLocked
                 "
-
                 [(value)]="selectedUserProfileId"
-
                 (valueChange)="onUserProfileChanged($event)">
-
             </app-search-dropdown>
-
-
 
             <!-- =============================================
                  MODULE
             ============================================== -->
 
             <app-search-dropdown
-
                 placeholder="Select Module"
-
                 [items]="modules"
-
                 labelField="name"
-
                 valueField="id"
-
                 [disabled]="isViewMode"
-
                 [(value)]="selectedModuleId"
-
                 (valueChange)="onModuleChanged($event)">
-
             </app-search-dropdown>
-
-
 
             <!-- =============================================
                  MENU
             ============================================== -->
 
             <app-search-dropdown
-
                 placeholder="Select Menu"
-
                 [items]="menus"
-
                 labelField="name"
-
                 valueField="id"
-
                 [disabled]="
                     isViewMode
                     ||
@@ -201,29 +117,19 @@
                     ||
                     selectedModuleId === 0
                 "
-
                 [(value)]="selectedMenuId"
-
                 (valueChange)="onMenuChanged($event)">
-
             </app-search-dropdown>
-
-
 
             <!-- =============================================
                  SUB MENU
             ============================================== -->
 
             <app-search-dropdown
-
                 placeholder="Select Sub Menu"
-
                 [items]="subMenus"
-
                 labelField="name"
-
                 valueField="id"
-
                 [disabled]="
                     isViewMode
                     ||
@@ -233,27 +139,18 @@
                     ||
                     selectedMenuId === 0
                 "
-
                 [(value)]="selectedSubMenuId"
-
                 (valueChange)="onSubMenuChanged($event)">
-
             </app-search-dropdown>
-
-
 
             <!-- =============================================
                  ADD BUTTON
             ============================================== -->
 
             <button
-
                 type="button"
-
                 class="activity-add-button"
-
                 [disabled]="addDisabled"
-
                 (click)="onAddSelection()">
 
                 <i class="fas fa-plus"></i>
@@ -262,24 +159,18 @@
 
             </button>
 
-
-
             <!-- =============================================
                  RESET BUTTON
             ============================================== -->
 
             <button
-
                 type="button"
-
                 class="activity-reset-button"
-
                 [disabled]="
                     isViewMode
                     ||
                     itemCartRows.length === 0
                 "
-
                 (click)="onResetSelection()">
 
                 <i class="fas fa-arrows-rotate"></i>
@@ -292,78 +183,47 @@
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
          PAGE CANVAS
     ====================================================== -->
 
     <app-page-canvas
-
         [config]="canvasConfig">
-
-        <!-- =================================================
-             BODY
-        ================================================== -->
 
         <ng-container canvasBody>
 
             <app-item-cart
-
                 [columns]="itemCartColumns"
-
                 [rows]="pagedItemCartRows"
-
                 [serialOffset]="
                     (currentPage - 1) * pageSize
                 "
-
                 [loading]="loading"
-
                 [orbitLoading]="orbitLoading"
-
                 [error]="loadFailed"
-
                 [readOnly]="isViewMode"
-
                 [headerCheckboxStates]="headerCheckboxStates"
-
                 (headerCheckboxStateChange)="
                     onHeaderCheckboxStateChanged($event)
                 "
-
                 (activityChanged)="
                     updateHeaderCheckboxStates()
                 "
-
                 (remove)="onRemoveItem($event)">
-
             </app-item-cart>
 
         </ng-container>
 
-
-
-        <!-- =================================================
-             FOOTER
-        ================================================== -->
-
         <ng-container canvasFooter>
 
             <app-pagination
-
                 [totalRecords]="
                     getFilteredItemCartRows().length
                 "
-
                 [currentPage]="currentPage"
-
                 [pageSize]="pageSize"
-
                 (pageChange)="onPageChange($event)"
-
                 (pageSizeChange)="onPageSizeChange($event)">
-
             </app-pagination>
 
         </ng-container>
@@ -371,8 +231,6 @@
     </app-page-canvas>
 
 </div>
-
-
 
 <!-- =========================================================
      UTILITIES

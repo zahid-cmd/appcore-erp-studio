@@ -1,48 +1,31 @@
 //===============================================================
 // Namespaces
 //===============================================================
-
 using Microsoft.EntityFrameworkCore;
-
 using AppCore.Application.Common.ActivityHistory.DTOs;
-
 using AppCore.Application.SecurityPermission.UserManagement;
-
 using AppCore.Domain.Common;
-
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
-
+using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 using AppCore.Infrastructure.Persistence;
-
-
 //===============================================================
 // Namespace
 //===============================================================
-
 namespace AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
-
-
 //===============================================================
 // SpecialAssignmentRepository
 //===============================================================
-
 public class SpecialAssignmentRepository
     : ISpecialAssignmentRepository
 {
-
     //===========================================================
     // DbContext
     //===========================================================
-
     private readonly AppDbContext
         _context;
-
-
-
     //===========================================================
     // Constructor
     //===========================================================
-
     public SpecialAssignmentRepository
     (
         AppDbContext context
@@ -51,65 +34,48 @@ public class SpecialAssignmentRepository
         _context =
             context;
     }
-
-
-
     //===========================================================
     // Get All
     //===========================================================
-
     public async Task<IReadOnlyList<SpecialAssignment>>
         GetAllAsync()
     {
         var entities =
             await _context
                 .Set<SpecialAssignment>()
-
                 .AsNoTracking()
-
                 //================================================
                 // Details
                 //================================================
-
                 .Include(
                     x =>
                         x.Details
                 )
-
                 //================================================
                 // Permissions
                 //================================================
-
                 .ThenInclude(
                     x =>
                         x.SpecialAssignmentPermissions
                 )
-
                 //================================================
                 // Master Filter
                 //================================================
-
                 .Where(
                     x =>
                         !x.IsDeleted
                 )
-
                 //================================================
                 // Order
                 //================================================
-
                 .OrderBy(
                     x =>
                         x.UserProfileId
                 )
-
                 .ToListAsync();
-
-
         //=======================================================
         // Clean Deleted Details
         //=======================================================
-
         foreach
         (
             var entity
@@ -119,19 +85,14 @@ public class SpecialAssignmentRepository
         {
             entity.Details =
                 entity.Details
-
                     .Where(
                         detail =>
                             !detail.IsDeleted
                     )
-
                     .ToList();
-
-
             //===================================================
             // Clean Deleted Permissions
             //===================================================
-
             foreach
             (
                 var detail
@@ -142,21 +103,16 @@ public class SpecialAssignmentRepository
                 detail.SpecialAssignmentPermissions =
                     detail
                         .SpecialAssignmentPermissions
-
                         .Where(
                             permission =>
                                 !permission.IsDeleted
                         )
-
                         .ToList();
             }
         }
-
-
         //=======================================================
         // Break Serialization Cycles
         //=======================================================
-
         foreach
         (
             var entity
@@ -173,8 +129,6 @@ public class SpecialAssignmentRepository
             {
                 detail.SpecialAssignment =
                     null!;
-
-
                 foreach
                 (
                     var permission
@@ -187,17 +141,11 @@ public class SpecialAssignmentRepository
                 }
             }
         }
-
-
         return entities;
     }
-
-
-
     //===========================================================
     // Get By Id
     //===========================================================
-
     public async Task<SpecialAssignment?>
         GetByIdAsync
     (
@@ -207,38 +155,28 @@ public class SpecialAssignmentRepository
         var entity =
             await _context
                 .Set<SpecialAssignment>()
-
                 .AsNoTracking()
-
                 //================================================
                 // Details
                 //================================================
-
                 .Include(
                     x =>
                         x.Details
                 )
-
                 //================================================
                 // Permissions
                 //================================================
-
                 .ThenInclude(
                     x =>
                         x.SpecialAssignmentPermissions
                 )
-
                 .FirstOrDefaultAsync(
                     x =>
                         x.SpecialAssignmentId ==
                         id
-
                         &&
-
                         !x.IsDeleted
                 );
-
-
         if
         (
             entity is null
@@ -246,27 +184,19 @@ public class SpecialAssignmentRepository
         {
             return null;
         }
-
-
         //=======================================================
         // Remove Deleted Details
         //=======================================================
-
         entity.Details =
             entity.Details
-
                 .Where(
                     detail =>
                         !detail.IsDeleted
                 )
-
                 .ToList();
-
-
         //=======================================================
         // Remove Deleted Permissions
         //=======================================================
-
         foreach
         (
             var detail
@@ -277,20 +207,15 @@ public class SpecialAssignmentRepository
             detail.SpecialAssignmentPermissions =
                 detail
                     .SpecialAssignmentPermissions
-
                     .Where(
                         permission =>
                             !permission.IsDeleted
                     )
-
                     .ToList();
         }
-
-
         //=======================================================
         // Break Serialization Cycles
         //=======================================================
-
         foreach
         (
             var detail
@@ -300,8 +225,6 @@ public class SpecialAssignmentRepository
         {
             detail.SpecialAssignment =
                 null!;
-
-
             foreach
             (
                 var permission
@@ -313,17 +236,11 @@ public class SpecialAssignmentRepository
                     null!;
             }
         }
-
-
         return entity;
     }
-
-
-
     //===========================================================
     // Exists By User Profile Id
     //===========================================================
-
     public async Task<bool>
         ExistsByUserProfileIdAsync
     (
@@ -332,24 +249,18 @@ public class SpecialAssignmentRepository
     {
         return await _context
             .Set<SpecialAssignment>()
-
             .AsNoTracking()
-
             .AnyAsync(
                 x =>
                     x.UserProfileId ==
                     userProfileId
-
                     &&
-
                     !x.IsDeleted
             );
     }
-
     //===========================================================
     // Create
     //===========================================================
-
     public async Task<long>
         CreateAsync
     (
@@ -358,11 +269,12 @@ public class SpecialAssignmentRepository
     {
         const long userId =
             1;
-
         //=======================================================
+        await ValidateInfrastructureControlAccessAsync(
+            entity
+        );
         // Check Existing Active Assignment
         //=======================================================
-
         var existing =
             await _context
                 .Set<SpecialAssignment>()
@@ -374,7 +286,6 @@ public class SpecialAssignmentRepository
                         &&
                         !x.IsDeleted
                 );
-
         if
         (
             existing is not null
@@ -384,39 +295,28 @@ public class SpecialAssignmentRepository
                 $"An active Special Assignment already exists for User Profile '{entity.UserProfileId}'."
             );
         }
-
         //=======================================================
         // Master Audit
         //=======================================================
-
         entity.IsActive =
             true;
-
         entity.IsDeleted =
             false;
-
         entity.DeletedBy =
             null;
-
         entity.DeletedDate =
             null;
-
         entity.CreatedBy =
             userId;
-
         entity.CreatedDate =
             DateTime.UtcNow;
-
         entity.ModifiedBy =
             null;
-
         entity.ModifiedDate =
             null;
-
         //=======================================================
         // Detail Audit
         //=======================================================
-
         foreach
         (
             var detail
@@ -426,32 +326,23 @@ public class SpecialAssignmentRepository
         {
             detail.IsActive =
                 true;
-
             detail.IsDeleted =
                 false;
-
             detail.DeletedBy =
                 null;
-
             detail.DeletedDate =
                 null;
-
             detail.CreatedBy =
                 userId;
-
             detail.CreatedDate =
                 DateTime.UtcNow;
-
             detail.ModifiedBy =
                 null;
-
             detail.ModifiedDate =
                 null;
-
             //===================================================
             // Permission Audit
             //===================================================
-
             foreach
             (
                 var permission
@@ -461,87 +352,63 @@ public class SpecialAssignmentRepository
             {
                 permission.IsActive =
                     true;
-
                 permission.IsDeleted =
                     false;
-
                 permission.DeletedBy =
                     null;
-
                 permission.DeletedDate =
                     null;
-
                 permission.CreatedBy =
                     userId;
-
                 permission.CreatedDate =
                     DateTime.UtcNow;
-
                 permission.ModifiedBy =
                     null;
-
                 permission.ModifiedDate =
                     null;
             }
         }
-
         //=======================================================
         // Add Graph
         //=======================================================
-
         await _context
             .Set<SpecialAssignment>()
             .AddAsync(
                 entity
             );
-
         await _context.SaveChangesAsync();
-
         //=======================================================
         // Activity History
         //=======================================================
-
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
                     "SecurityPermission",
-
                 EntityName =
                     "SpecialAssignment",
-
                 EntityId =
                     entity.SpecialAssignmentId,
-
                 ActivityType =
                     "Create",
-
                 ActivityTitle =
                     "SpecialAssignment Created",
-
                 ActivityDescription =
                     $"SpecialAssignment for UserProfile '{entity.UserProfileId}' was created.",
-
                 PerformedBy =
                     userId,
-
                 PerformedByName =
                     "System",
-
                 PerformedDate =
                     DateTime.UtcNow
             }
         );
-
         await _context.SaveChangesAsync();
-
         return entity.SpecialAssignmentId;
     }
-
     //===========================================================
     // Update
     //===========================================================
-
     public async Task
         UpdateAsync
     (
@@ -550,11 +417,12 @@ public class SpecialAssignmentRepository
     {
         const long userId =
             1;
-
         //=======================================================
+        await ValidateInfrastructureControlAccessAsync(
+            entity
+        );
         // Load Existing Graph
         //=======================================================
-
         var existing =
             await _context
                 .Set<SpecialAssignment>()
@@ -573,7 +441,6 @@ public class SpecialAssignmentRepository
                         &&
                         !x.IsDeleted
                 );
-
         if
         (
             existing is null
@@ -583,11 +450,9 @@ public class SpecialAssignmentRepository
                 "SpecialAssignment record was not found."
             );
         }
-
         //=======================================================
         // Empty Details = Delete Entire Assignment
         //=======================================================
-
         if
         (
             entity.Details == null
@@ -595,152 +460,91 @@ public class SpecialAssignmentRepository
             entity.Details.Count == 0
         )
         {
-            var now =
-                DateTime.UtcNow;
-
-            //===================================================
-            // Soft Delete Existing Permissions
-            //===================================================
-
-            foreach
-            (
-                var detail
-                in
-                existing.Details
-            )
+            await using var deleteTransaction =
+                await _context.Database.BeginTransactionAsync();
+            try
             {
+                //===================================================
+                // Permanently Delete Existing Permissions
+                //===================================================
                 foreach
                 (
-                    var permission
+                    var detail
                     in
-                    detail.SpecialAssignmentPermissions
+                    existing.Details
                 )
                 {
-                    permission.IsActive =
-                        false;
-
-                    permission.IsDeleted =
-                        true;
-
-                    permission.ModifiedBy =
-                        userId;
-
-                    permission.ModifiedDate =
-                        now;
-
-                    permission.DeletedBy =
-                        userId;
-
-                    permission.DeletedDate =
-                        now;
+                    _context
+                        .Set<SpecialAssignmentPermission>()
+                        .RemoveRange(
+                            detail.SpecialAssignmentPermissions
+                        );
                 }
-
-                //================================================
-                // Soft Delete Existing Detail
-                //================================================
-
-                detail.IsActive =
-                    false;
-
-                detail.IsDeleted =
-                    true;
-
-                detail.ModifiedBy =
-                    userId;
-
-                detail.ModifiedDate =
-                    now;
-
-                detail.DeletedBy =
-                    userId;
-
-                detail.DeletedDate =
-                    now;
+                //===================================================
+                // Permanently Delete Existing Details
+                //===================================================
+                _context
+                    .Set<SpecialAssignmentDetail>()
+                    .RemoveRange(
+                        existing.Details
+                    );
+                //===================================================
+                // Permanently Delete Master
+                //===================================================
+                _context
+                    .Set<SpecialAssignment>()
+                    .Remove(
+                        existing
+                    );
+                //===================================================
+                // Activity History
+                //===================================================
+                _context.ActivityHistories.Add(
+                    new ActivityHistory
+                    {
+                        Module =
+                            "SecurityPermission",
+                        EntityName =
+                            "SpecialAssignment",
+                        EntityId =
+                            existing.SpecialAssignmentId,
+                        ActivityType =
+                            "Delete",
+                        ActivityTitle =
+                            "SpecialAssignment Deleted",
+                        ActivityDescription =
+                            $"SpecialAssignment permanently deleted because all Special Assignment details were removed for UserProfile '{existing.UserProfileId}'.",
+                        PerformedBy =
+                            userId,
+                        PerformedByName =
+                            "System",
+                        PerformedDate =
+                            DateTime.UtcNow
+                    }
+                );
+                await _context.SaveChangesAsync();
+                await deleteTransaction.CommitAsync();
             }
-
-            //===================================================
-            // Soft Delete Master
-            //===================================================
-
-            existing.IsActive =
-                false;
-
-            existing.IsDeleted =
-                true;
-
-            existing.ModifiedBy =
-                userId;
-
-            existing.ModifiedDate =
-                now;
-
-            existing.DeletedBy =
-                userId;
-
-            existing.DeletedDate =
-                now;
-
-            //===================================================
-            // Activity History
-            //===================================================
-
-            _context.ActivityHistories.Add(
-                new ActivityHistory
-                {
-                    Module =
-                        "SecurityPermission",
-
-                    EntityName =
-                        "SpecialAssignment",
-
-                    EntityId =
-                        existing.SpecialAssignmentId,
-
-                    ActivityType =
-                        "Delete",
-
-                    ActivityTitle =
-                        "SpecialAssignment Deleted",
-
-                    ActivityDescription =
-                        $"SpecialAssignment for UserProfile '{existing.UserProfileId}' was deleted.",
-
-                    PerformedBy =
-                        userId,
-
-                    PerformedByName =
-                        "System",
-
-                    PerformedDate =
-                        now
-                }
-            );
-
-            await _context.SaveChangesAsync();
-
+            catch
+            {
+                await deleteTransaction.RollbackAsync();
+                throw;
+            }
             return;
         }
-
-        //=======================================================
         // Master
         //=======================================================
-
         existing.UserProfileId =
             entity.UserProfileId;
-
         existing.IsActive =
             entity.IsActive;
-
         existing.ModifiedBy =
             userId;
-
         existing.ModifiedDate =
             DateTime.UtcNow;
-
         //=======================================================
         // Remove Existing Permissions
         //=======================================================
-
         foreach
         (
             var detail
@@ -754,24 +558,19 @@ public class SpecialAssignmentRepository
                     detail.SpecialAssignmentPermissions
                 );
         }
-
         //=======================================================
         // Remove Existing Details
         //=======================================================
-
         _context
             .Set<SpecialAssignmentDetail>()
             .RemoveRange(
                 existing.Details
             );
-
         //=======================================================
         // Add New Details
         //=======================================================
-
         existing.Details =
             new List<SpecialAssignmentDetail>();
-
         foreach
         (
             var sourceDetail
@@ -784,48 +583,34 @@ public class SpecialAssignmentRepository
                 {
                     SpecialAssignmentId =
                         existing.SpecialAssignmentId,
-
                     ModuleId =
                         sourceDetail.ModuleId,
-
                     MenuId =
                         sourceDetail.MenuId,
-
                     SubMenuId =
                         sourceDetail.SubMenuId,
-
                     IsActive =
                         sourceDetail.IsActive,
-
                     IsDeleted =
                         false,
-
                     DeletedBy =
                         null,
-
                     DeletedDate =
                         null,
-
                     CreatedBy =
                         userId,
-
                     CreatedDate =
                         DateTime.UtcNow,
-
                     ModifiedBy =
                         null,
-
                     ModifiedDate =
                         null,
-
                     SpecialAssignmentPermissions =
                         new List<SpecialAssignmentPermission>()
                 };
-
             //===================================================
             // Add Permissions
             //===================================================
-
             foreach
             (
                 var sourcePermission
@@ -838,93 +623,68 @@ public class SpecialAssignmentRepository
                     {
                         MasterActivityId =
                             sourcePermission.MasterActivityId,
-
                         NavigationActivityId =
                             sourcePermission.NavigationActivityId,
-
                         IsActive =
                             sourcePermission.IsActive,
-
                         IsDeleted =
                             false,
-
                         DeletedBy =
                             null,
-
                         DeletedDate =
                             null,
-
                         CreatedBy =
                             userId,
-
                         CreatedDate =
                             DateTime.UtcNow,
-
                         ModifiedBy =
                             null,
-
                         ModifiedDate =
                             null
                     };
-
                 detail
                     .SpecialAssignmentPermissions
                     .Add(
                         permission
                     );
             }
-
             existing
                 .Details
                 .Add(
                     detail
                 );
         }
-
         //=======================================================
         // Activity History
         //=======================================================
-
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
                     "SecurityPermission",
-
                 EntityName =
                     "SpecialAssignment",
-
                 EntityId =
                     existing.SpecialAssignmentId,
-
                 ActivityType =
                     "Update",
-
                 ActivityTitle =
                     "SpecialAssignment Updated",
-
                 ActivityDescription =
                     $"SpecialAssignment for UserProfile '{existing.UserProfileId}' was updated.",
-
                 PerformedBy =
                     userId,
-
                 PerformedByName =
                     "System",
-
                 PerformedDate =
                     DateTime.UtcNow
             }
         );
-
         await _context.SaveChangesAsync();
     }
-
-
     //===========================================================
     // Delete
     //===========================================================
-
     public async Task
         DeleteAsync
     (
@@ -933,23 +693,16 @@ public class SpecialAssignmentRepository
     {
         const long userId =
             1;
-
-
         var entity =
             await _context
                 .Set<SpecialAssignment>()
-
                 .FirstOrDefaultAsync(
                     x =>
                         x.SpecialAssignmentId ==
                         id
-
                         &&
-
                         !x.IsDeleted
                 );
-
-
         if
         (
             entity is null
@@ -957,119 +710,79 @@ public class SpecialAssignmentRepository
         {
             return;
         }
-
-
         //=======================================================
         // Soft Delete
         //=======================================================
-
         entity.IsDeleted =
             true;
-
-
         entity.IsActive =
             false;
-
-
         entity.DeletedBy =
             userId;
-
-
         entity.DeletedDate =
             DateTime.UtcNow;
-
-
         entity.ModifiedBy =
             userId;
-
-
         entity.ModifiedDate =
             DateTime.UtcNow;
-
-
         //=======================================================
         // Activity History
         //=======================================================
-
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
                     "SecurityPermission",
-
                 EntityName =
                     "SpecialAssignment",
-
                 EntityId =
                     entity.SpecialAssignmentId,
-
                 ActivityType =
                     "Delete",
-
                 ActivityTitle =
                     "SpecialAssignment Deleted",
-
                 ActivityDescription =
                     $"SpecialAssignment for UserProfile '{entity.UserProfileId}' was deleted.",
-
                 PerformedBy =
                     userId,
-
                 PerformedByName =
                     "System",
-
                 PerformedDate =
                     DateTime.UtcNow
             }
         );
-
-
         await _context.SaveChangesAsync();
     }
-
-
-
     //===========================================================
     // Restore Last Deleted
     //===========================================================
-
     public async Task<bool>
         RestoreLastDeletedAsync()
     {
         const long userId =
             1;
-
-
         //=======================================================
         // Find Most Recently Deleted Record
         //=======================================================
-
         var entity =
             await _context
                 .Set<SpecialAssignment>()
-
                 .Where(
                     x =>
                         x.IsDeleted
                 )
-
                 .OrderByDescending(
                     x =>
                         x.DeletedDate
                 )
-
                 .ThenByDescending(
                     x =>
                         x.SpecialAssignmentId
                 )
-
                 .FirstOrDefaultAsync();
-
-
         //=======================================================
         // Nothing To Restore
         //=======================================================
-
         if
         (
             entity is null
@@ -1077,40 +790,24 @@ public class SpecialAssignmentRepository
         {
             return false;
         }
-
-
         //=======================================================
         // Restore Master
         //=======================================================
-
         entity.IsDeleted =
             false;
-
-
         entity.IsActive =
             true;
-
-
         entity.DeletedBy =
             null;
-
-
         entity.DeletedDate =
             null;
-
-
         entity.ModifiedBy =
             userId;
-
-
         entity.ModifiedDate =
             DateTime.UtcNow;
-
-
         //=======================================================
         // Restore Details
         //=======================================================
-
         var details =
             await _context
                 .Set<SpecialAssignmentDetail>()
@@ -1120,8 +817,6 @@ public class SpecialAssignmentRepository
                         entity.SpecialAssignmentId
                 )
                 .ToListAsync();
-
-
         foreach
         (
             var detail
@@ -1131,33 +826,20 @@ public class SpecialAssignmentRepository
         {
             detail.IsDeleted =
                 false;
-
-
             detail.IsActive =
                 true;
-
-
             detail.DeletedBy =
                 null;
-
-
             detail.DeletedDate =
                 null;
-
-
             detail.ModifiedBy =
                 userId;
-
-
             detail.ModifiedDate =
                 DateTime.UtcNow;
         }
-
-
         //=======================================================
         // Restore Permissions
         //=======================================================
-
         var detailIds =
             details
                 .Select(
@@ -1165,8 +847,6 @@ public class SpecialAssignmentRepository
                         x.SpecialAssignmentDetailId
                 )
                 .ToList();
-
-
         if
         (
             detailIds.Count > 0
@@ -1182,8 +862,6 @@ public class SpecialAssignmentRepository
                             )
                     )
                     .ToListAsync();
-
-
             foreach
             (
                 var permission
@@ -1193,152 +871,102 @@ public class SpecialAssignmentRepository
             {
                 permission.IsDeleted =
                     false;
-
-
                 permission.IsActive =
                     true;
-
-
                 permission.DeletedBy =
                     null;
-
-
                 permission.DeletedDate =
                     null;
-
-
                 permission.ModifiedBy =
                     userId;
-
-
                 permission.ModifiedDate =
                     DateTime.UtcNow;
             }
         }
-
-
         //=======================================================
         // Activity History
         //=======================================================
-
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
                     "SecurityPermission",
-
                 EntityName =
                     "SpecialAssignment",
-
                 EntityId =
                     entity.SpecialAssignmentId,
-
                 ActivityType =
                     "Restore",
-
                 ActivityTitle =
                     "SpecialAssignment Restored",
-
                 ActivityDescription =
                     $"SpecialAssignment for UserProfile '{entity.UserProfileId}' was restored.",
-
                 PerformedBy =
                     userId,
-
                 PerformedByName =
                     "System",
-
                 PerformedDate =
                     DateTime.UtcNow
             }
         );
-
-
         //=======================================================
         // Save
         //=======================================================
-
         await _context.SaveChangesAsync();
-
-
         return true;
     }
-
-
-
     //===========================================================
     // Get History
     //===========================================================
-
     public async Task<IReadOnlyList<ActivityHistoryDto>>
         GetHistoryAsync()
     {
         return await _context
             .ActivityHistories
-
             .AsNoTracking()
-
             .Where(
                 x =>
                     x.Module ==
                     "SecurityPermission"
-
                     &&
-
                     x.EntityName ==
                     "SpecialAssignment"
             )
-
             .OrderByDescending(
                 x =>
                     x.PerformedDate
             )
-
             .Select(
                 x =>
                     new ActivityHistoryDto
                     {
                         Id =
                             x.Id,
-
                         Module =
                             x.Module,
-
                         EntityName =
                             x.EntityName,
-
                         EntityId =
                             x.EntityId,
-
                         ActivityType =
                             x.ActivityType,
-
                         ActivityTitle =
                             x.ActivityTitle,
-
                         ActivityDescription =
                             x.ActivityDescription,
-
                         PerformedBy =
                             x.PerformedBy,
-
                         PerformedByName =
                             x.PerformedByName,
-
                         PerformedDate =
                             x.PerformedDate
                     }
             )
-
             .ToListAsync();
     }
-
-
-
     //===========================================================
     // Get Entity History
     //===========================================================
-
     public async Task<IReadOnlyList<ActivityHistoryDto>>
         GetEntityHistoryAsync
     (
@@ -1347,67 +975,144 @@ public class SpecialAssignmentRepository
     {
         return await _context
             .ActivityHistories
-
             .AsNoTracking()
-
             .Where(
                 x =>
                     x.Module ==
                     "SecurityPermission"
-
                     &&
-
                     x.EntityName ==
                     "SpecialAssignment"
-
                     &&
-
                     x.EntityId ==
                     id
             )
-
             .OrderByDescending(
                 x =>
                     x.PerformedDate
             )
-
             .Select(
                 x =>
                     new ActivityHistoryDto
                     {
                         Id =
                             x.Id,
-
                         Module =
                             x.Module,
-
                         EntityName =
                             x.EntityName,
-
                         EntityId =
                             x.EntityId,
-
                         ActivityType =
                             x.ActivityType,
-
                         ActivityTitle =
                             x.ActivityTitle,
-
                         ActivityDescription =
                             x.ActivityDescription,
-
                         PerformedBy =
                             x.PerformedBy,
-
                         PerformedByName =
                             x.PerformedByName,
-
                         PerformedDate =
                             x.PerformedDate
                     }
             )
-
             .ToListAsync();
     }
-
+    //===========================================================
+    // Validate Infrastructure Control Access
+    //===========================================================
+    private async Task
+        ValidateInfrastructureControlAccessAsync
+        (
+            SpecialAssignment entity
+        )
+    {
+        if
+        (
+            entity.Details == null
+            ||
+            entity.Details.Count == 0
+        )
+        {
+            return;
+        }
+        string? profileCode =
+            await _context
+                .Set<UserProfile>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.UserProfileId ==
+                        entity.UserProfileId
+                        &&
+                        !x.IsDeleted
+                )
+                .Select
+                (
+                    x =>
+                        x.ProfileCode
+                )
+                .FirstOrDefaultAsync();
+        bool isRp001 =
+            string.Equals
+            (
+                profileCode?.Trim(),
+                "RP001",
+                StringComparison.OrdinalIgnoreCase
+            );
+        if
+        (
+            isRp001
+        )
+        {
+            return;
+        }
+        List<long> infrastructureControlModuleIds =
+            await _context
+                .Set<NavigationModule>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.Name ==
+                        "Infrastructure Control"
+                )
+                .Select
+                (
+                    x =>
+                        x.Id
+                )
+                .ToListAsync();
+        if
+        (
+            infrastructureControlModuleIds.Count == 0
+        )
+        {
+            return;
+        }
+        bool containsInfrastructureControl =
+            entity.Details.Any
+            (
+                detail =>
+                    infrastructureControlModuleIds.Contains
+                    (
+                        detail.ModuleId
+                    )
+            );
+        if
+        (
+            containsInfrastructureControl
+        )
+        {
+            throw new InvalidOperationException
+            (
+                "Infrastructure Control can only be assigned to User Profile RP001."
+            );
+        }
+    }
 }
+
