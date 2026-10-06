@@ -76,15 +76,12 @@ public class UserProfileRepository : IUserProfileRepository
     {
         return _context
             .Set<UserProfileEntity>()
-
             .AsNoTracking()
-
             .Where
             (
                 x =>
                     !x.IsDeleted
             )
-
             .Select
             (
                 x =>
@@ -105,6 +102,37 @@ public class UserProfileRepository : IUserProfileRepository
                         FullName =
                             x.FullName,
 
+
+                        //===================================================
+                        // Designation
+                        //===================================================
+
+                        DesignationId =
+                            x.DesignationId,
+
+                        DesignationName =
+                            _context
+                                .Set<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
+                                .Where
+                                (
+                                    designation =>
+                                        designation.DesignationId ==
+                                        x.DesignationId
+
+                                        &&
+
+                                        !designation.IsDeleted
+                                )
+                                .Select
+                                (
+                                    designation =>
+                                        designation.DesignationName
+                                )
+                                .FirstOrDefault()
+                            ??
+                                string.Empty,
+
+
                         Email =
                             x.Email,
 
@@ -113,6 +141,7 @@ public class UserProfileRepository : IUserProfileRepository
 
                         UserPhotoPath =
                             x.UserPhotoPath,
+
 
                         //===================================================
                         // User Profile Photo Data
@@ -218,7 +247,7 @@ public class UserProfileRepository : IUserProfileRepository
                             )
                             .FirstOrDefault()
                             ??
-                            "Not Assigned",
+                                "Not Assigned",
 
 
                         //===================================================
@@ -416,18 +445,23 @@ public class UserProfileRepository : IUserProfileRepository
                     string.Empty,
 
                 DisplayName =
+
                     dto.DisplayName?.Trim()
-                    ??
+                ??
                     string.Empty,
 
                 FullName =
                     dto.FullName?.Trim()
-                    ??
+                ??
                     string.Empty,
+
+                DesignationId =
+                    dto.DesignationId,
 
                 Email =
                     dto.Email?.Trim()
-                    ??
+
+                ??
                     string.Empty,
 
                 MobileNo =
@@ -550,60 +584,52 @@ public class UserProfileRepository : IUserProfileRepository
             );
         }
 
-
         entity.ProfileCode =
             dto.ProfileCode?.Trim()
             ??
             string.Empty;
-
 
         entity.UserName =
             dto.UserName?.Trim()
             ??
             string.Empty;
 
-
         entity.DisplayName =
             dto.DisplayName?.Trim()
             ??
             string.Empty;
 
-
         entity.FullName =
             dto.FullName?.Trim()
-            ??
+        ??
             string.Empty;
 
+        entity.DesignationId =
+            dto.DesignationId;
 
         entity.Email =
             dto.Email?.Trim()
-            ??
+        ??
             string.Empty;
-
 
         entity.MobileNo =
             dto.MobileNo?.Trim()
             ??
             string.Empty;
 
-
         entity.UserPhotoPath =
             dto.UserPhotoPath?.Trim()
             ??
             string.Empty;
 
-
         entity.IsActive =
             dto.IsActive;
-
 
         entity.ModifiedBy =
             userId;
 
-
         entity.ModifiedDate =
             DateTime.UtcNow;
-
 
         await _context.SaveChangesAsync();
 

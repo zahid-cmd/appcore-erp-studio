@@ -2,24 +2,22 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup.Department.DTOs;
 
 
 //===============================================================
-// DepartmentDefaultsDto
+// Department Defaults DTO
 //===============================================================
 
 public class DepartmentDefaultsDto
 {
     //===========================================================
-    // Code
+    // Department Code
     //===========================================================
 
     public string Code
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 }

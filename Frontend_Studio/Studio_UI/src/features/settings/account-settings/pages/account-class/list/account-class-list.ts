@@ -11,11 +11,20 @@ import
 }
 from '@angular/core';
 
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+
 import
 {
     CommonModule
 }
 from '@angular/common';
+
 
 import
 {
@@ -46,11 +55,13 @@ import
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
 
+
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
 
 import
 {
@@ -59,6 +70,7 @@ import
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
+
 import
 {
     ControlTabsComponent,
@@ -66,23 +78,20 @@ import
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
+
 import
 {
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
 
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
+
 
 import
 {
@@ -91,11 +100,13 @@ import
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
 
+
 import
 {
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
+
 
 import
 {
@@ -103,11 +114,13 @@ import
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 
+
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
 
 import
 {
@@ -115,11 +128,13 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
+
 
 import
 {
@@ -145,58 +160,43 @@ from '../../../services/account-class.service';
 
 @Component(
 {
-    selector:'accountClass-list',
-
+    selector:'account-class-list',
     standalone:true,
-
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
         ToastComponent
     ],
-
     templateUrl:'./account-class-list.html',
-
     styleUrl:'./account-class-list.css'
 })
 
 
 //===============================================================
-// Account Class List Component
+// Account Class List
 //===============================================================
 
 export class AccountClassList
 implements OnInit
 {
 
+
     //===========================================================
     // Dependency Injection
     //===========================================================
 
-    private readonly accountclassservice =
+
+    private readonly accountClassService =
         inject(AccountClassService);
 
 
@@ -220,233 +220,209 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
     // Page Tabs
     //===========================================================
 
+
     tabs:
         ControlTab[] =
+
     [
         {
             id:'all',
-
-            label:'All AccountClasses'
+            label:'All Account Classes'
         }
     ];
 
 
     selectedTab:
         string =
+
         'all';
 
 
-
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
-    accountclasses:
+
+    accountClasses:
         AccountClass[] =
+
     [];
 
 
     filteredAccountClasses:
         AccountClass[] =
+
     [];
 
 
     pagedAccountClasses:
         AccountClass[] =
-    [];
 
+    [];
 
 
     //===========================================================
     // Search & Loading
     //===========================================================
 
+
     searchText:
         string =
+
         '';
 
 
     loading:
         boolean =
+
         false;
 
 
     loadFailed:
         boolean =
-        false;
 
+        false;
 
 
     //===========================================================
     // Pagination
     //===========================================================
 
+
     currentPage:
         number =
+
         1;
 
 
     pageSize:
         number =
-        10;
 
+        10;
 
 
     //===========================================================
     // History
     //===========================================================
 
+
     historyOpened:
         boolean =
+
         false;
 
 
     historyTitle:
         string =
+
         'Account Class History';
 
 
     historyItems:
         any[] =
-    [];
 
+    [];
 
 
     //===========================================================
     // Page Canvas Configuration
     //===========================================================
 
+
     readonly canvasConfig:
         PageCanvasConfig =
+
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
 
 
     //===========================================================
     // Table Columns
     //===========================================================
 
+
     readonly columns:
         ListTableColumn[] =
+
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'60px',
-
+            width:'50px',
             align:'center'
         },
-
         {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
-
+            header:'Class Type',
+            field:'ClassType',
+            width:'160px',
             align:'left'
         },
-
         {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:'120px',
-
+            header:'Class Code',
+            field:'ClassCode',
+            width:'150px',
             align:'center'
         },
-
+        {
+            header:'Class Name',
+            field:'ClassName',
+            width:'240px',
+            align:'left'
+        },
+        {
+            header:'Mode',
+            field:'Mode',
+            width:'120px',
+            align:'center'
+        },
+        {
+            header:'Class Prefix',
+            field:'ClassPrefix',
+            width:'130px',
+            align:'center'
+        },
+        {
+            header:'Manual Group Creation',
+            field:'AllowManualGroupCreation',
+            width:'180px',
+            align:'center',
+            type:'boolean'
+        },
+        {
+            header:'Status',
+            field:'IsActive',
+            width:'120px',
+            align:'center',
+            type:'status'
+        },
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'180px',
-
+            width:'80px',
             align:'center'
         }
     ];
 
-
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
+
 
     ngOnInit():
         void
@@ -455,10 +431,134 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Normalize API Response
+    //===========================================================
+
+
+    private normalizeAccountClass
+    (
+        item:
+            any
+    ):
+        AccountClass
+    {
+        return {
+
+            AccountClassId:
+                Number
+                (
+                    item?.AccountClassId
+                    ??
+                    item?.accountClassId
+                    ??
+                    item?.id
+                    ??
+                    item?.Id
+                    ??
+                    0
+                ),
+
+            ClassType:
+                item?.ClassType
+                ??
+                item?.classType
+                ??
+                '',
+
+            ClassCode:
+                item?.ClassCode
+                ??
+                item?.classCode
+                ??
+                '',
+
+            ClassName:
+                item?.ClassName
+                ??
+                item?.className
+                ??
+                '',
+
+            Mode:
+                item?.Mode
+                ??
+                item?.mode
+                ??
+                '',
+
+            ClassPrefix:
+                item?.ClassPrefix
+                ??
+                item?.classPrefix
+                ??
+                '',
+
+            AllowManualGroupCreation:
+                Boolean
+                (
+                    item?.AllowManualGroupCreation
+                    ??
+                    item?.allowManualGroupCreation
+                    ??
+                    false
+                ),
+
+            Remarks:
+                item?.Remarks
+                ??
+                item?.remarks
+                ??
+                '',
+
+            IsActive:
+                Boolean
+                (
+                    item?.IsActive
+                    ??
+                    item?.isActive
+                    ??
+                    true
+                )
+        };
+    }
+
 
     //===========================================================
-    // Load AccountClasses
+    // Normalize API Response List
     //===========================================================
+
+
+    private normalizeAccountClasses
+    (
+        response:
+            any
+    ):
+        AccountClass[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+        return response.map
+        (
+            item =>
+
+                this.normalizeAccountClass(
+                    item
+                )
+        );
+    }
+
+
+    //===========================================================
+    // Load Items
+    //===========================================================
+
 
     loadItems():
         void
@@ -466,12 +566,10 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-        this.accountclassservice
+        this.accountClassService
             .getAll()
             .subscribe
             ({
@@ -479,70 +577,70 @@ implements OnInit
                 (
                     response:
                         AccountClass[]
-                ): void =>
+                ):
+                    void =>
                 {
-                    this.accountclasses =
-                    [
-                        ...response
-                    ];
+                    console.log
+                    (
+                        'Account Class API Response:',
+                        response
+                    );
 
+                    this.accountClasses =
+                        this.normalizeAccountClasses(
+                            response
+                        );
+
+                    console.log
+                    (
+                        'Normalized Account Classes:',
+                        this.accountClasses
+                    );
 
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         false;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load AccountClasses Error',
-
+                        'Load Account Classes Error:',
                         error
                     );
 
-
-                    this.accountclasses =
-                    [];
-
+                    this.accountClasses =
+                        [];
 
                     this.filteredAccountClasses =
-                    [];
-
+                        [];
 
                     this.pagedAccountClasses =
-                    [];
-
+                        [];
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         true;
-
 
                     this.toast.error
                     (
                         'Load Failed',
-
-                        'Unable to load accountclasses.'
+                        'Unable to load account classes.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
@@ -550,30 +648,10 @@ implements OnInit
     }
 
 
-
-    //===========================================================
-    // Status Filter Changed
-    //===========================================================
-
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
-
     //===========================================================
     // Apply Filters
     //===========================================================
+
 
     applyFilters():
         void
@@ -583,63 +661,108 @@ implements OnInit
                 .trim()
                 .toLowerCase();
 
-
         this.filteredAccountClasses =
-            this.accountclasses
-                .filter
+            this.accountClasses.filter
+            (
                 (
-                    (
-                        x:
-                            AccountClass
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                    item:
+                        AccountClass
+                ):
+                    boolean =>
+                {
+                    const classType =
+                        item.ClassType
+                        ??
+                        '';
 
+                    const classCode =
+                        item.ClassCode
+                        ??
+                        '';
 
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
+                    const className =
+                        item.ClassName
+                        ??
+                        '';
 
+                    const classPrefix =
+                        item.ClassPrefix
+                        ??
+                        '';
 
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
+                    const mode =
+                        item.Mode
+                        ??
+                        '';
 
+                    const remarks =
+                        item.Remarks
+                        ??
+                        '';
+
+                    const status =
+                        item.IsActive
+                            ? 'active'
+                            : 'inactive';
+
+                    return (
+                        !keyword
+
+                        ||
+
+                        classType
+                            .toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        classCode
+                            .toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        className
+                            .toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        classPrefix
+                            .toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        mode
+                            .toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        remarks
+                            .toLowerCase()
+                            .includes(keyword)
+
+                        ||
+
+                        status
+                            .includes(keyword)
+                    );
+                }
+            );
 
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
 
-
     //===========================================================
     // Search
     //===========================================================
+
 
     onSearch
     (
@@ -649,17 +772,18 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
+            value
+            ??
+            '';
 
         this.applyFilters();
     }
 
 
-
     //===========================================================
     // Sort
     //===========================================================
+
 
     onSort
     (
@@ -679,7 +803,6 @@ implements OnInit
             ...this.filteredAccountClasses
         ];
 
-
         this.filteredAccountClasses.sort
         (
             (
@@ -693,17 +816,17 @@ implements OnInit
             {
                 const valueA:
                     any =
+
                     a[
                         event.field as keyof AccountClass
                     ];
 
-
                 const valueB:
                     any =
+
                     b[
                         event.field as keyof AccountClass
                     ];
-
 
                 if
                 (
@@ -715,7 +838,6 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
@@ -724,7 +846,6 @@ implements OnInit
                     return -1;
                 }
 
-
                 if
                 (
                     valueB == null
@@ -732,7 +853,6 @@ implements OnInit
                 {
                     return 1;
                 }
-
 
                 if
                 (
@@ -743,11 +863,10 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        valueA.localeCompare(valueB)
+                            valueA.localeCompare(valueB)
                         :
-                        valueB.localeCompare(valueA);
+                            valueB.localeCompare(valueA);
                 }
-
 
                 if
                 (
@@ -756,11 +875,10 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        -1
+                            -1
                         :
-                        1;
+                            1;
                 }
-
 
                 if
                 (
@@ -769,29 +887,26 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        1
+                            1
                         :
-                        -1;
+                            -1;
                 }
-
 
                 return 0;
             }
         );
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
 
-
     //===========================================================
     // Refresh
     //===========================================================
+
 
     refresh():
         void
@@ -799,49 +914,45 @@ implements OnInit
         this.searchText =
             '';
 
-
-        this.selectedStatus =
-            null;
-
+        this.currentPage =
+            1;
 
         this.loadItems();
     }
-
 
 
     //===========================================================
     // Update Pagination
     //===========================================================
 
+
     updatePagination():
         void
     {
         const start:
             number =
+
             (
                 this.currentPage - 1
             )
             *
             this.pageSize;
 
-
         this.pagedAccountClasses =
         [
-            ...this.filteredAccountClasses
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
+            ...this.filteredAccountClasses.slice
+            (
+                start,
+                start + this.pageSize
+            )
         ];
     }
-
 
 
     //===========================================================
     // Page Change
     //===========================================================
+
 
     onPageChange
     (
@@ -853,15 +964,14 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
 
 
     //===========================================================
     // Page Size Change
     //===========================================================
+
 
     onPageSizeChange
     (
@@ -873,19 +983,17 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
 
-
     //===========================================================
     // Add
     //===========================================================
+
 
     add():
         void
@@ -895,7 +1003,6 @@ implements OnInit
             [
                 'add'
             ],
-
             {
                 relativeTo:
                     this.route.parent
@@ -904,10 +1011,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View
     //===========================================================
+
 
     view
     (
@@ -920,10 +1027,8 @@ implements OnInit
         (
             [
                 'view',
-
-                item.id
+                item.AccountClassId
             ],
-
             {
                 relativeTo:
                     this.route.parent
@@ -932,10 +1037,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Edit
     //===========================================================
+
 
     edit
     (
@@ -948,10 +1053,8 @@ implements OnInit
         (
             [
                 'edit',
-
-                item.id
+                item.AccountClassId
             ],
-
             {
                 relativeTo:
                     this.route.parent
@@ -960,10 +1063,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
+
 
     delete
     (
@@ -975,52 +1078,105 @@ implements OnInit
         this.confirmDialog.open
         (
             'Delete Account Class',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
-            (): void =>
+            `Are you sure you want to delete "${item.ClassName}" ?`,
+            ():
+                void =>
             {
-                this.accountclassservice
+                this.accountClassService
                     .delete
                     (
-                        item.id
+                        item.AccountClassId
                     )
                     .subscribe
                     ({
                         next:
-                        (): void =>
+                        ():
+                            void =>
                         {
                             this.toast.success
                             (
                                 'Delete Successful',
-
-                                `${item.name} deleted successfully.`
+                                `${item.ClassName} deleted successfully.`
                             );
-
 
                             this.loadItems();
                         },
-
 
                         error:
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Account Class Error',
-
+                                'Delete Account Class Error:',
                                 error
                             );
+
+
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'Account Class cannot be deleted because it is already configured.';
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+                                    message
+                                );
+
+                                return;
+                            }
+
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
 
                             this.toast.error
                             (
                                 'Delete Failed',
-
-                                'Failed to delete accountClass.'
+                                'Failed to delete account class.'
                             );
                         }
                     });
@@ -1029,10 +1185,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
+
 
     restore():
         void
@@ -1040,84 +1196,92 @@ implements OnInit
         this.confirmDialog.open
         (
             'Restore Account Class',
-
-            'Are you sure you want to restore the most recently deleted accountClass?',
-
-            (): void =>
+            'Are you sure you want to restore the most recently deleted account class?',
+            ():
+                void =>
             {
                 this.restoreItem();
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
 
 
     //===========================================================
     // Restore Item
     //===========================================================
 
+
     private restoreItem():
         void
     {
-        this.accountclassservice
+        this.accountClassService
             .restore()
             .subscribe
             ({
                 next:
-                (): void =>
+                ():
+                    void =>
                 {
                     this.toast.success
                     (
                         'Restore Successful',
-
-                        'The most recently deleted accountClass has been restored.'
+                        'The most recently deleted account class has been restored.'
                     );
-
 
                     this.loadItems();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
                         'Restore Account Class Error',
-
                         error
                     );
 
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+                            'There is no deleted account class record to restore.'
+                        );
+
+                        return;
+                    }
 
                     this.toast.error
                     (
                         'Restore Failed',
-
-                        'Failed to restore accountClass.'
+                        'Failed to restore account class.'
                     );
                 }
             });
     }
 
 
-
     //===========================================================
     // Open History
     //===========================================================
 
+
     openHistory():
         void
     {
-        this.accountclassservice
+        this.accountClassService
             .getHistory()
             .subscribe
             ({
@@ -1125,7 +1289,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,74 +1298,74 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
                                 description:
-                                    history.activityDescription,
-
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
                                 user:
                                     history.performedByName
                                     ??
+                                    history.PerformedByName
+                                    ??
                                     'System',
-
 
                                 dateTime:
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
-
 
                     this.historyTitle =
                         'Account Class Management History';
 
-
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
-
 
                     this.toast.error
                     (
                         'History',
-
-                        'Failed to load accountClass history.'
+                        'Failed to load account class history.'
                     );
                 }
             });
     }
 
 
-
     //===========================================================
     // Close History
     //===========================================================
+
 
     closeHistory():
         void

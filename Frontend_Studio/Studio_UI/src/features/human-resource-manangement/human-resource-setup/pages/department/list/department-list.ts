@@ -11,11 +11,20 @@ import
 }
 from '@angular/core';
 
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+
 import
 {
     CommonModule
 }
 from '@angular/common';
+
 
 import
 {
@@ -46,11 +55,13 @@ import
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
 
+
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
 
 import
 {
@@ -59,6 +70,7 @@ import
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
+
 import
 {
     ControlTabsComponent,
@@ -66,23 +78,20 @@ import
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
+
 import
 {
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
 
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
+
 
 import
 {
@@ -91,11 +100,13 @@ import
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
 
+
 import
 {
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
+
 
 import
 {
@@ -103,11 +114,13 @@ import
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 
+
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
 
 import
 {
@@ -115,11 +128,13 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
+
 
 import
 {
@@ -161,8 +176,6 @@ from '../../../services/department.service';
 
         SearchBoxComponent,
 
-        DropdownComponent,
-
         CommandCenterComponent,
 
         PageCanvasComponent,
@@ -185,13 +198,12 @@ from '../../../services/department.service';
 
 
 //===============================================================
-// Department List Component
+// Department List
 //===============================================================
 
 export class DepartmentList
 implements OnInit
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
@@ -220,7 +232,6 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
     // Page Tabs
     //===========================================================
@@ -241,42 +252,8 @@ implements OnInit
         'all';
 
 
-
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
     departments:
@@ -292,7 +269,6 @@ implements OnInit
     pagedDepartments:
         Department[] =
     [];
-
 
 
     //===========================================================
@@ -314,7 +290,6 @@ implements OnInit
         false;
 
 
-
     //===========================================================
     // Pagination
     //===========================================================
@@ -327,7 +302,6 @@ implements OnInit
     pageSize:
         number =
         10;
-
 
 
     //===========================================================
@@ -347,7 +321,6 @@ implements OnInit
     historyItems:
         any[] =
     [];
-
 
 
     //===========================================================
@@ -379,7 +352,6 @@ implements OnInit
     };
 
 
-
     //===========================================================
     // Table Columns
     //===========================================================
@@ -394,15 +366,15 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'50px',
 
             align:'center'
         },
 
         {
-            header:'Code',
+            header:'Department Code',
 
-            field:'code',
+            field:'DepartmentCode',
 
             width:'180px',
 
@@ -410,9 +382,21 @@ implements OnInit
         },
 
         {
-            header:'Name',
+            header:'Department Name',
 
-            field:'name',
+            field:'DepartmentName',
+
+            width:'280px',
+
+            align:'left'
+        },
+
+        {
+            header:'Short Name',
+
+            field:'DepartmentShortName',
+
+            width:'180px',
 
             align:'left'
         },
@@ -420,13 +404,13 @@ implements OnInit
         {
             header:'Status',
 
-            field:'status',
-
-            type:'status',
+            field:'IsActive',
 
             width:'120px',
 
-            align:'center'
+            align:'center',
+
+            type:'status'
         },
 
         {
@@ -436,16 +420,15 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'80px',
 
             align:'center'
         }
     ];
 
 
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -455,9 +438,104 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Normalize API Response
+    //===========================================================
+
+    private normalizeDepartment
+    (
+        item:
+            any
+    ):
+        Department
+    {
+        return {
+            DepartmentId:
+                Number
+                (
+                    item?.DepartmentId
+                    ??
+                    item?.departmentId
+                    ??
+                    item?.id
+                    ??
+                    item?.Id
+                    ??
+                    0
+                ),
+
+        DepartmentCode:
+            item?.DepartmentCode
+            ??
+            item?.departmentCode
+            ??
+            '',
+
+        DepartmentName:
+            item?.DepartmentName
+            ??
+            item?.departmentName
+            ??
+            '',
+
+        DepartmentShortName:
+            item?.DepartmentShortName
+            ??
+            item?.departmentShortName
+            ??
+            '',
+
+        Remarks:
+            item?.Remarks
+            ??
+            item?.remarks
+            ??
+            '',
+
+        IsActive:
+            Boolean
+            (
+                item?.IsActive
+                ??
+                item?.isActive
+                ??
+                true
+            )
+        };
+    }
 
     //===========================================================
-    // Load Departments
+    // Normalize API Response List
+    //===========================================================
+
+    private normalizeDepartments
+    (
+        response:
+            any
+    ):
+        Department[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+
+        return response.map
+        (
+            item =>
+                this.normalizeDepartment(
+                    item
+                )
+        );
+    }
+
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -479,12 +557,27 @@ implements OnInit
                 (
                     response:
                         Department[]
-                ): void =>
+                ):
+                    void =>
                 {
+                    console.log
+                    (
+                        'Department API Response:',
+                        response
+                    );
+
+
                     this.departments =
-                    [
-                        ...response
-                    ];
+                        this.normalizeDepartments(
+                            response
+                        );
+
+
+                    console.log
+                    (
+                        'Normalized Departments:',
+                        this.departments
+                    );
 
 
                     this.applyFilters();
@@ -506,26 +599,26 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load Departments Error',
-
+                        'Load Departments Error:',
                         error
                     );
 
 
                     this.departments =
-                    [];
+                        [];
 
 
                     this.filteredDepartments =
-                    [];
+                        [];
 
 
                     this.pagedDepartments =
-                    [];
+                        [];
 
 
                     this.loading =
@@ -550,27 +643,6 @@ implements OnInit
     }
 
 
-
-    //===========================================================
-    // Status Filter Changed
-    //===========================================================
-
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
-
     //===========================================================
     // Apply Filters
     //===========================================================
@@ -585,47 +657,70 @@ implements OnInit
 
 
         this.filteredDepartments =
-            this.departments
-                .filter
+            this.departments.filter
+            (
                 (
-                    (
-                        x:
-                            Department
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                    item:
+                        Department
+                ):
+                    boolean =>
+                {
+                    const departmentCode =
+                        item.DepartmentCode
+                        ??
+                        '';
 
 
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
+                    const departmentName =
+                        item.DepartmentName
+                        ??
+                        '';
 
 
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
+                    const departmentShortName =
+                        item.DepartmentShortName
+                        ??
+                        '';
+
+
+                    const remarks =
+                        item.Remarks
+                        ??
+                        '';
+
+
+                    const status =
+                        item.IsActive
+                            ? 'active'
+                            : 'inactive';
+
+
+                    const searchMatch =
+                        !keyword
+                        ||
+                        departmentCode
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        departmentName
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        departmentShortName
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        remarks
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        status
+                            .includes(keyword);
+
+
+                    return searchMatch;
+                }
+            );
 
 
         this.currentPage =
@@ -634,7 +729,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -649,12 +743,13 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
+            value
+            ??
+            '';
 
 
         this.applyFilters();
     }
-
 
 
     //===========================================================
@@ -743,9 +838,9 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        valueA.localeCompare(valueB)
+                            valueA.localeCompare(valueB)
                         :
-                        valueB.localeCompare(valueA);
+                            valueB.localeCompare(valueA);
                 }
 
 
@@ -756,9 +851,9 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        -1
+                            -1
                         :
-                        1;
+                            1;
                 }
 
 
@@ -769,9 +864,9 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        1
+                            1
                         :
-                        -1;
+                            -1;
                 }
 
 
@@ -788,7 +883,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Refresh
     //===========================================================
@@ -800,13 +894,12 @@ implements OnInit
             '';
 
 
-        this.selectedStatus =
-            null;
+        this.currentPage =
+            1;
 
 
         this.loadItems();
     }
-
 
 
     //===========================================================
@@ -827,16 +920,14 @@ implements OnInit
 
         this.pagedDepartments =
         [
-            ...this.filteredDepartments
-                .slice
-                (
-                    start,
+            ...this.filteredDepartments.slice
+            (
+                start,
 
-                    start + this.pageSize
-                )
+                start + this.pageSize
+            )
         ];
     }
-
 
 
     //===========================================================
@@ -856,7 +947,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -882,7 +972,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Add
     //===========================================================
@@ -904,7 +993,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View
     //===========================================================
@@ -921,7 +1009,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.DepartmentId
             ],
 
             {
@@ -930,7 +1018,6 @@ implements OnInit
             }
         );
     }
-
 
 
     //===========================================================
@@ -949,7 +1036,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.DepartmentId
             ],
 
             {
@@ -958,7 +1045,6 @@ implements OnInit
             }
         );
     }
-
 
 
     //===========================================================
@@ -976,25 +1062,26 @@ implements OnInit
         (
             'Delete Department',
 
-            `Are you sure you want to delete "${item.name}" ?`,
+            `Are you sure you want to delete "${item.DepartmentName}" ?`,
 
             (): void =>
             {
                 this.departmentservice
                     .delete
                     (
-                        item.id
+                        item.DepartmentId
                     )
                     .subscribe
                     ({
                         next:
-                        (): void =>
+                        ():
+                            void =>
                         {
                             this.toast.success
                             (
                                 'Delete Successful',
 
-                                `${item.name} deleted successfully.`
+                                `${item.DepartmentName} deleted successfully.`
                             );
 
 
@@ -1006,15 +1093,74 @@ implements OnInit
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Department Error',
-
+                                'Delete Department Error:',
                                 error
                             );
 
+
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'Department cannot be deleted because it is already configured.';
+
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+
+                                    message
+                                );
+
+
+                                return;
+                            }
+
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
                             this.toast.error
                             (
@@ -1027,7 +1173,6 @@ implements OnInit
             }
         );
     }
-
 
 
     //===========================================================
@@ -1043,7 +1188,8 @@ implements OnInit
 
             'Are you sure you want to restore the most recently deleted department?',
 
-            (): void =>
+            ():
+                void =>
             {
                 this.restoreItem();
             },
@@ -1055,7 +1201,6 @@ implements OnInit
             'primary'
         );
     }
-
 
 
     //===========================================================
@@ -1070,7 +1215,8 @@ implements OnInit
             .subscribe
             ({
                 next:
-                (): void =>
+                ():
+                    void =>
                 {
                     this.toast.success
                     (
@@ -1088,7 +1234,8 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
@@ -1096,6 +1243,25 @@ implements OnInit
 
                         error
                     );
+
+
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted department record to restore.'
+                        );
+
+
+                        return;
+                    }
 
 
                     this.toast.error
@@ -1107,7 +1273,6 @@ implements OnInit
                 }
             });
     }
-
 
 
     //===========================================================
@@ -1125,7 +1290,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,15 +1299,21 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
 
                                 description:
-                                    history.activityDescription,
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
 
                                 user:
                                     history.performedByName
+                                    ??
+                                    history.PerformedByName
                                     ??
                                     'System',
 
@@ -1150,12 +1322,16 @@ implements OnInit
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
 
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
 
@@ -1176,11 +1352,12 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
+                        'History Load Failed:',
 
                         error
                     );
@@ -1197,7 +1374,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Close History
     //===========================================================
@@ -1208,5 +1384,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

@@ -55,6 +55,24 @@ public class UserProfileDto
 
 
     //===========================================================
+    // Designation
+    //===========================================================
+
+    public long? DesignationId
+    {
+        get;
+        set;
+    }
+
+
+    public string DesignationName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
     // Contact Information
     //===========================================================
 

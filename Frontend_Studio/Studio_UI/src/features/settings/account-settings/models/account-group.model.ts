@@ -4,26 +4,52 @@
 
 export interface AccountGroup
 {
-    id:
+    AccountGroupId:
         number;
 
-    code:
+
+    AccountClassId:
+        number;
+
+
+    AccountClassName:
         string;
 
-    name:
+
+    ClassCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    Mode:
         string;
 
-    status:
+
+    GroupCode:
         string;
 
-    remarks:
+
+    GroupName:
         string;
+
+
+    AllowManualSubGroup:
+        boolean;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -34,20 +60,44 @@ export interface AccountGroup
 
 export interface CreateAccountGroup
 {
-    name:
+    AccountClassId:
+        number;
+
+
+    ClassCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    Mode:
         string;
 
-    status:
+
+    GroupCode:
         string;
 
-    remarks:
+
+    GroupName:
         string;
+
+
+    AllowManualSubGroup:
+        boolean;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -58,23 +108,48 @@ export interface CreateAccountGroup
 
 export interface UpdateAccountGroup
 {
-    id:
+    AccountGroupId:
         number;
 
-    name:
+
+    AccountClassId:
+        number;
+
+
+    ClassCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    Mode:
         string;
 
-    status:
+
+    GroupCode:
         string;
 
-    remarks:
+
+    GroupName:
         string;
+
+
+    AllowManualSubGroup:
+        boolean;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -85,6 +160,6 @@ export interface UpdateAccountGroup
 
 export interface AccountGroupDefaults
 {
-    code:
+    Code:
         string;
 }

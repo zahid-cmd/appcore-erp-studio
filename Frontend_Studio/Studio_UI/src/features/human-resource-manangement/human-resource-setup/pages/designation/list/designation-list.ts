@@ -10,20 +10,22 @@ import
     ChangeDetectorRef
 }
 from '@angular/core';
-
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 import
 {
     CommonModule
 }
 from '@angular/common';
-
 import
 {
     ActivatedRoute,
     Router
 }
 from '@angular/router';
-
 
 //===============================================================
 // Models
@@ -35,7 +37,6 @@ import
 }
 from '../../../models/designation.model';
 
-
 //===============================================================
 // Shared Components
 //===============================================================
@@ -45,88 +46,69 @@ import
     PageHeaderComponent
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
-
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-
 import
 {
     PageCanvasComponent,
     PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
-
 import
 {
     ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
-
 import
 {
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
-
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
-
 import
 {
     ListTableComponent,
     ListTableColumn
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
-
 import
 {
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
-
 import
 {
     HistoryDrawerComponent
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
-
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
-
 import
 {
     ConfirmDialogComponent
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
-
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
-
 import
 {
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
-
 
 //===============================================================
 // Service
@@ -138,7 +120,6 @@ import
 }
 from '../../../services/designation.service';
 
-
 //===============================================================
 // Component
 //===============================================================
@@ -146,46 +127,28 @@ from '../../../services/designation.service';
 @Component(
 {
     selector:'designation-list',
-
     standalone:true,
-
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
         ToastComponent
     ],
-
     templateUrl:'./designation-list.html',
-
     styleUrl:'./designation-list.css'
 })
 
-
 //===============================================================
-// Designation List Component
+// Designation List
 //===============================================================
 
 export class DesignationList
@@ -198,28 +161,16 @@ implements OnInit
 
     private readonly designationservice =
         inject(DesignationService);
-
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
-
-
     private readonly toast =
         inject(ToastService);
-
-
     private readonly router =
         inject(Router);
-
-
     private readonly route =
         inject(ActivatedRoute);
-
-
     private readonly cdr =
         inject(ChangeDetectorRef);
-
-
 
     //===========================================================
     // Page Tabs
@@ -230,70 +181,26 @@ implements OnInit
     [
         {
             id:'all',
-
             label:'All Designations'
         }
     ];
-
-
     selectedTab:
         string =
         'all';
 
-
-
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
     designations:
         Designation[] =
     [];
-
-
     filteredDesignations:
         Designation[] =
     [];
-
-
     pagedDesignations:
         Designation[] =
     [];
-
-
 
     //===========================================================
     // Search & Loading
@@ -302,18 +209,12 @@ implements OnInit
     searchText:
         string =
         '';
-
-
     loading:
         boolean =
         false;
-
-
     loadFailed:
         boolean =
         false;
-
-
 
     //===========================================================
     // Pagination
@@ -322,13 +223,9 @@ implements OnInit
     currentPage:
         number =
         1;
-
-
     pageSize:
         number =
         10;
-
-
 
     //===========================================================
     // History
@@ -337,18 +234,12 @@ implements OnInit
     historyOpened:
         boolean =
         false;
-
-
     historyTitle:
         string =
         'Designation History';
-
-
     historyItems:
         any[] =
     [];
-
-
 
     //===========================================================
     // Page Canvas Configuration
@@ -358,27 +249,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
-
 
     //===========================================================
     // Table Columns
@@ -389,63 +269,47 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'60px',
-
+            width:'50px',
             align:'center'
         },
-
         {
-            header:'Code',
-
-            field:'code',
-
+            header:'Designation Code',
+            field:'DesignationCode',
             width:'180px',
-
             align:'center'
         },
-
         {
-            header:'Name',
-
-            field:'name',
-
+            header:'Designation Name',
+            field:'DesignationName',
+            width:'280px',
             align:'left'
         },
-
+        {
+            header:'Short Name',
+            field:'DesignationShortName',
+            width:'180px',
+            align:'left'
+        },
         {
             header:'Status',
-
-            field:'status',
-
-            type:'status',
-
+            field:'IsActive',
             width:'120px',
-
-            align:'center'
+            align:'center',
+            type:'status'
         },
-
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'180px',
-
+            width:'80px',
             align:'center'
         }
     ];
 
-
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -454,10 +318,96 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Normalize API Response
+    //===========================================================
 
+    private normalizeDesignation
+    (
+        item:
+            any
+    ):
+        Designation
+    {
+        return {
+            DesignationId:
+                Number
+                (
+                    item?.DesignationId
+                    ??
+                    item?.designationId
+                    ??
+                    item?.id
+                    ??
+                    item?.Id
+                    ??
+                    0
+                ),
+            DesignationCode:
+                item?.DesignationCode
+                ??
+                item?.designationCode
+                ??
+                '',
+            DesignationName:
+                item?.DesignationName
+                ??
+                item?.designationName
+                ??
+                '',
+            DesignationShortName:
+                item?.DesignationShortName
+                ??
+                item?.designationShortName
+                ??
+                '',
+            Remarks:
+                item?.Remarks
+                ??
+                item?.remarks
+                ??
+                '',
+            IsActive:
+                Boolean
+                (
+                    item?.IsActive
+                    ??
+                    item?.isActive
+                    ??
+                    true
+                )
+        };
+    }
 
     //===========================================================
-    // Load Designations
+    // Normalize API Response List
+    //===========================================================
+
+    private normalizeDesignations
+    (
+        response:
+            any
+    ):
+        Designation[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+        return response.map
+        (
+            item =>
+                this.normalizeDesignation(
+                    item
+                )
+        );
+    }
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -465,12 +415,8 @@ implements OnInit
     {
         this.loading =
             true;
-
-
         this.loadFailed =
             false;
-
-
         this.designationservice
             .getAll()
             .subscribe
@@ -479,97 +425,61 @@ implements OnInit
                 (
                     response:
                         Designation[]
-                ): void =>
+                ):
+                    void =>
                 {
+                    console.log
+                    (
+                        'Designation API Response:',
+                        response
+                    );
                     this.designations =
-                    [
-                        ...response
-                    ];
-
-
+                        this.normalizeDesignations(
+                            response
+                        );
+                    console.log
+                    (
+                        'Normalized Designations:',
+                        this.designations
+                    );
                     this.applyFilters();
-
-
                     this.loading =
                         false;
-
-
                     this.loadFailed =
                         false;
-
-
                     this.cdr.detectChanges();
                 },
-
-
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load Designations Error',
-
+                        'Load Designations Error:',
                         error
                     );
-
-
                     this.designations =
-                    [];
-
-
+                        [];
                     this.filteredDesignations =
-                    [];
-
-
+                        [];
                     this.pagedDesignations =
-                    [];
-
-
+                        [];
                     this.loading =
                         false;
-
-
                     this.loadFailed =
                         true;
-
-
                     this.toast.error
                     (
                         'Load Failed',
-
                         'Unable to load designations.'
                     );
-
-
                     this.cdr.detectChanges();
                 }
             });
     }
-
-
-
-    //===========================================================
-    // Status Filter Changed
-    //===========================================================
-
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
 
     //===========================================================
     // Apply Filters
@@ -582,60 +492,63 @@ implements OnInit
             this.searchText
                 .trim()
                 .toLowerCase();
-
-
         this.filteredDesignations =
-            this.designations
-                .filter
+            this.designations.filter
+            (
                 (
-                    (
-                        x:
-                            Designation
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
-
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
-
-
+                    item:
+                        Designation
+                ):
+                    boolean =>
+                {
+                    const designationCode =
+                        item.DesignationCode
+                        ??
+                        '';
+                    const designationName =
+                        item.DesignationName
+                        ??
+                        '';
+                    const designationShortName =
+                        item.DesignationShortName
+                        ??
+                        '';
+                    const remarks =
+                        item.Remarks
+                        ??
+                        '';
+                    const status =
+                        item.IsActive
+                            ? 'active'
+                            : 'inactive';
+                    return (
+                        !keyword
+                        ||
+                        designationCode
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        designationName
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        designationShortName
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        remarks
+                            .toLowerCase()
+                            .includes(keyword)
+                        ||
+                        status
+                            .includes(keyword)
+                    );
+                }
+            );
         this.currentPage =
             1;
-
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Search
@@ -649,13 +562,11 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
-
+            value
+            ??
+            '';
         this.applyFilters();
     }
-
-
 
     //===========================================================
     // Sort
@@ -667,7 +578,6 @@ implements OnInit
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
@@ -678,14 +588,11 @@ implements OnInit
         [
             ...this.filteredDesignations
         ];
-
-
         this.filteredDesignations.sort
         (
             (
                 a:
                     Designation,
-
                 b:
                     Designation
             ):
@@ -696,15 +603,11 @@ implements OnInit
                     a[
                         event.field as keyof Designation
                     ];
-
-
                 const valueB:
                     any =
                     b[
                         event.field as keyof Designation
                     ];
-
-
                 if
                 (
                     valueA == null
@@ -714,8 +617,6 @@ implements OnInit
                 {
                     return 0;
                 }
-
-
                 if
                 (
                     valueA == null
@@ -723,8 +624,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
-
                 if
                 (
                     valueB == null
@@ -732,8 +631,6 @@ implements OnInit
                 {
                     return 1;
                 }
-
-
                 if
                 (
                     typeof valueA === 'string'
@@ -743,12 +640,10 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        valueA.localeCompare(valueB)
+                            valueA.localeCompare(valueB)
                         :
-                        valueB.localeCompare(valueA);
+                            valueB.localeCompare(valueA);
                 }
-
-
                 if
                 (
                     valueA < valueB
@@ -756,12 +651,10 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        -1
+                            -1
                         :
-                        1;
+                            1;
                 }
-
-
                 if
                 (
                     valueA > valueB
@@ -769,25 +662,17 @@ implements OnInit
                 {
                     return event.direction === 'asc'
                         ?
-                        1
+                            1
                         :
-                        -1;
+                            -1;
                 }
-
-
                 return 0;
             }
         );
-
-
         this.currentPage =
             1;
-
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -798,16 +683,10 @@ implements OnInit
     {
         this.searchText =
             '';
-
-
-        this.selectedStatus =
-            null;
-
-
+        this.currentPage =
+            1;
         this.loadItems();
     }
-
-
 
     //===========================================================
     // Update Pagination
@@ -823,21 +702,15 @@ implements OnInit
             )
             *
             this.pageSize;
-
-
         this.pagedDesignations =
         [
-            ...this.filteredDesignations
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
+            ...this.filteredDesignations.slice
+            (
+                start,
+                start + this.pageSize
+            )
         ];
     }
-
-
 
     //===========================================================
     // Page Change
@@ -852,12 +725,8 @@ implements OnInit
     {
         this.currentPage =
             page;
-
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Page Size Change
@@ -872,16 +741,10 @@ implements OnInit
     {
         this.pageSize =
             size;
-
-
         this.currentPage =
             1;
-
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Add
@@ -895,15 +758,12 @@ implements OnInit
             [
                 'add'
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // View
@@ -920,18 +780,14 @@ implements OnInit
         (
             [
                 'view',
-
-                item.id
+                item.DesignationId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // Edit
@@ -948,18 +804,14 @@ implements OnInit
         (
             [
                 'edit',
-
-                item.id
+                item.DesignationId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // Delete
@@ -975,51 +827,94 @@ implements OnInit
         this.confirmDialog.open
         (
             'Delete Designation',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
+            `Are you sure you want to delete "${item.DesignationName}" ?`,
             (): void =>
             {
                 this.designationservice
                     .delete
                     (
-                        item.id
+                        item.DesignationId
                     )
                     .subscribe
                     ({
                         next:
-                        (): void =>
+                        ():
+                            void =>
                         {
                             this.toast.success
                             (
                                 'Delete Successful',
-
-                                `${item.name} deleted successfully.`
+                                `${item.DesignationName} deleted successfully.`
                             );
-
-
                             this.loadItems();
                         },
-
-
                         error:
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Designation Error',
-
+                                'Delete Designation Error:',
                                 error
                             );
 
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'Designation cannot be deleted because it is already configured.';
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+                                    message
+                                );
+                                return;
+                            }
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
                             this.toast.error
                             (
                                 'Delete Failed',
-
                                 'Failed to delete designation.'
                             );
                         }
@@ -1027,8 +922,6 @@ implements OnInit
             }
         );
     }
-
-
 
     //===========================================================
     // Restore
@@ -1040,23 +933,17 @@ implements OnInit
         this.confirmDialog.open
         (
             'Restore Designation',
-
             'Are you sure you want to restore the most recently deleted designation?',
-
-            (): void =>
+            ():
+                void =>
             {
                 this.restoreItem();
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Restore Item
@@ -1070,45 +957,50 @@ implements OnInit
             .subscribe
             ({
                 next:
-                (): void =>
+                ():
+                    void =>
                 {
                     this.toast.success
                     (
                         'Restore Successful',
-
                         'The most recently deleted designation has been restored.'
                     );
-
-
                     this.loadItems();
                 },
-
-
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
                         'Restore Designation Error',
-
                         error
                     );
-
-
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+                            'There is no deleted designation record to restore.'
+                        );
+                        return;
+                    }
                     this.toast.error
                     (
                         'Restore Failed',
-
                         'Failed to restore designation.'
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Open History
@@ -1125,7 +1017,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,70 +1026,59 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
-
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
                                 description:
-                                    history.activityDescription,
-
-
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
                                 user:
                                     history.performedByName
                                     ??
+                                    history.PerformedByName
+                                    ??
                                     'System',
-
-
                                 dateTime:
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
-
-
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
-
-
                     this.historyTitle =
                         'Designation Management History';
-
-
                     this.historyOpened =
                         true;
-
-
                     this.cdr.detectChanges();
                 },
-
-
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
-
-
                     this.toast.error
                     (
                         'History',
-
                         'Failed to load designation history.'
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Close History
@@ -1208,5 +1090,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup.Designation.DTOs;
 
 
 //===============================================================
-// DesignationDto
+// Designation DTO
 //===============================================================
 
 public class DesignationDto
@@ -15,7 +15,7 @@ public class DesignationDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long DesignationId
     {
         get;
         set;
@@ -23,75 +23,105 @@ public class DesignationDto
 
 
     //===========================================================
-    // Code
+    // Basic Information
     //===========================================================
 
-    public string Code
+    public string DesignationCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
+    public string DesignationName
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public string DesignationShortName
     {
         get;
         set;
-    }
+    } = string.Empty;
 
 
     //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
+
+
+    //===========================================================
+    // Soft Delete
+    //===========================================================
+
+    public bool IsDeleted
+    {
+        get;
+        set;
     }
-    =
-        string.Empty;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    public long CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

@@ -9,17 +9,21 @@ import
 }
 from '@angular/core';
 
+
 import
 {
     HttpClient
 }
 from '@angular/common/http';
 
+
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
+
 
 import
 {
@@ -27,13 +31,13 @@ import
 }
 from '../../../../environments/environment';
 
+
 import
 {
     AccountGroup,
-
     CreateAccountGroup,
-
-    UpdateAccountGroup
+    UpdateAccountGroup,
+    AccountGroupDefaults
 }
 from '../models/account-group.model';
 
@@ -50,14 +54,12 @@ from '../models/account-group.model';
 
 export class AccountGroupService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +70,20 @@ export class AccountGroupService
         `${environment.apiUrl}/settings/account-settings/account-group`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/+$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,19 +92,155 @@ export class AccountGroupService
     getAll():
         Observable<AccountGroup[]>
     {
-        return this.http.get<AccountGroup[]>(
-            this.apiUrl
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        response.map(
+                            accountGroup =>
+                            ({
+                                ...accountGroup,
+
+                                AccountGroupId:
+                                    Number(
+                                        accountGroup.AccountGroupId
+                                        ??
+                                        accountGroup.accountGroupId
+                                        ??
+                                        accountGroup.id
+                                        ??
+                                        accountGroup.Id
+                                    ),
+
+                                AccountClassId:
+                                    Number(
+                                        accountGroup.AccountClassId
+                                        ??
+                                        accountGroup.accountClassId
+                                        ??
+                                        0
+                                    ),
+
+                                AccountClassName:
+                                    accountGroup.AccountClassName
+                                    ??
+                                    accountGroup.accountClassName
+                                    ??
+                                    '',
+
+                                ClassCode:
+                                    accountGroup.ClassCode
+                                    ??
+                                    accountGroup.classCode
+                                    ??
+                                    '',
+
+                                Mode:
+                                    accountGroup.Mode
+                                    ??
+                                    accountGroup.mode
+                                    ??
+                                    '',
+
+                                GroupCode:
+                                    accountGroup.GroupCode
+                                    ??
+                                    accountGroup.groupCode
+                                    ??
+                                    '',
+
+                                GroupName:
+                                    accountGroup.GroupName
+                                    ??
+                                    accountGroup.groupName
+                                    ??
+                                    '',
+
+                                AllowManualSubGroup:
+                                    Boolean(
+                                        accountGroup.AllowManualSubGroup
+                                        ??
+                                        accountGroup.allowManualSubGroup
+                                        ??
+                                        false
+                                    ),
+
+                                Remarks:
+                                    accountGroup.Remarks
+                                    ??
+                                    accountGroup.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        accountGroup.IsActive
+                                        ??
+                                        accountGroup.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode(
+        accountClassId:
+            number
+    ):
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code/${accountClassId}`,
+            {
+                responseType:'text'
+            }
         );
     }
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<AccountGroupDefaults>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/defaults`
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Code:
+                            response.code
+                            ??
+                            response.Code
+                            ??
+                            ''
+                    })
+                )
+            );
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    getById
-    (
+    getById(
         id:
             number
     ):
@@ -100,13 +252,11 @@ export class AccountGroupService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
 
-    create
-    (
+    create(
         model:
             CreateAccountGroup
     ):
@@ -120,33 +270,29 @@ export class AccountGroupService
     }
 
 
-
     //===========================================================
     // Update
     //===========================================================
 
-    update
-    (
+    update(
         model:
             UpdateAccountGroup
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            this.apiUrl,
 
             model
         );
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
 
-    delete
-    (
+    delete(
         id:
             number
     ):
@@ -156,7 +302,6 @@ export class AccountGroupService
             `${this.apiUrl}/${id}`
         );
     }
-
 
 
     //===========================================================
@@ -174,7 +319,6 @@ export class AccountGroupService
     }
 
 
-
     //===========================================================
     // Get History
     //===========================================================
@@ -186,23 +330,4 @@ export class AccountGroupService
             `${this.apiUrl}/history`
         );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
 }

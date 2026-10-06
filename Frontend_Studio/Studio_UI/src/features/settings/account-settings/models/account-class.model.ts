@@ -4,26 +4,48 @@
 
 export interface AccountClass
 {
-    id:
+    AccountClassId:
         number;
 
-    code:
+
+    ClassType:
         string;
 
-    name:
+
+    ClassCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    ClassName:
         string;
 
-    status:
+
+    Mode:
         string;
 
-    remarks:
+
+    ClassPrefix:
         string;
+
+
+    AllowManualGroupCreation:
+        boolean;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -34,20 +56,44 @@ export interface AccountClass
 
 export interface CreateAccountClass
 {
-    name:
+    ClassType:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    ClassCode:
         string;
 
-    status:
+
+    ClassName:
         string;
 
-    remarks:
+
+    Mode:
         string;
+
+
+    ClassPrefix:
+        string;
+
+
+    AllowManualGroupCreation:
+        boolean;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -58,23 +104,48 @@ export interface CreateAccountClass
 
 export interface UpdateAccountClass
 {
-    id:
+    AccountClassId:
         number;
 
-    name:
+
+    ClassType:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    ClassCode:
         string;
 
-    status:
+
+    ClassName:
         string;
 
-    remarks:
+
+    Mode:
         string;
+
+
+    ClassPrefix:
+        string;
+
+
+    AllowManualGroupCreation:
+        boolean;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -85,6 +156,6 @@ export interface UpdateAccountClass
 
 export interface AccountClassDefaults
 {
-    code:
+    Code:
         string;
 }

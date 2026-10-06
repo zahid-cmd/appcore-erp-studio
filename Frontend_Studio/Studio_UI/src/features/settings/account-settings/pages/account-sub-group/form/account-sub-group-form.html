@@ -1,0 +1,328 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-layer-group"
+
+        [title]="pageTitle"
+
+        subtitle="Manage account sub groups">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-layer-group">
+
+
+
+                <!-- Account Class -->
+
+                <app-search-dropdown
+
+                    label="Account Class"
+
+                    [items]="accountClassItems"
+
+                    [(value)]="entity.AccountClassId"
+
+                    (valueChange)="onAccountClassChange()"
+
+                    [disabled]="isEditMode || isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Class Code -->
+
+                <app-textbox
+
+                    label="Class Code"
+
+                    placeholder="Derived from Account Class"
+
+                    [(value)]="entity.ClassCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Mode -->
+
+                <app-textbox
+
+                    label="Mode"
+
+                    placeholder="Derived from Account Class"
+
+                    [(value)]="entity.Mode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 GROUP INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Sub Group Information"
+
+                icon="fas fa-tags">
+
+
+
+            <!-- Account Group -->
+
+            <app-search-dropdown
+
+                label="Account Group"
+
+                [items]="accountGroupItems"
+
+                [(value)]="entity.AccountGroupId"
+
+                (valueChange)="onAccountGroupChange()"
+
+                [disabled]="isEditMode || isViewMode"
+
+                [required]="true">
+
+            </app-search-dropdown>
+
+                <!-- Sub Group Code -->
+
+                <app-textbox
+
+                    label="Sub Group Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.SubGroupCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Sub Group Name -->
+
+                <app-textbox
+
+                    label="Sub Group Name"
+
+                    placeholder="Enter sub group name"
+
+                    [(value)]="entity.SubGroupName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 SUB GROUP INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+                
+                icon="fas fa-toggle-on">
+
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+
+                <!-- Allow Manual Ledger -->
+
+                <app-dropdown
+
+                    label="Allow Manual Ledger"
+
+                    [items]="manualLedgerItems"
+
+                    [(value)]="entity.AllowManualLedger"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Description"
+
+                icon="fas fa-sitemap">
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

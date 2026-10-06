@@ -16,7 +16,7 @@
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
 
-    z-index: 9999;
+    z-index: 99999;
 
     animation: overlayFade .18s ease;
 
@@ -70,11 +70,55 @@
 
 .about-title {
 
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
     color: #ffffff;
 
     font-size: 18px;
 
     font-weight: 600;
+
+}
+
+/* =====================================================
+   ABOUT HEADER ICON
+===================================================== */
+
+.about-title i {
+
+    width: 28px;
+    height: 28px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255,255,255,.35);
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.22),
+            rgba(255,255,255,.08)
+        );
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    box-shadow:
+        inset 0 1px 1px rgba(255,255,255,.25),
+        0 2px 6px rgba(0,0,0,.15);
+
+    text-shadow:
+        0 1px 2px rgba(0,0,0,.25);
 
 }
 

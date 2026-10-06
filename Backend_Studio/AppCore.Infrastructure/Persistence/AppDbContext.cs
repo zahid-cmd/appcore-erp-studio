@@ -160,27 +160,7 @@ public class AppDbContext
 
     // AUTO-BEGIN : AUTO REGISTER DBSETS
 
-    // AUTO-BEGIN : AccountClass
 
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>
-    AccountClasss
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : AccountClass
-
-    // AUTO-BEGIN : AccountGroup
-
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup>
-    AccountGroups
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : AccountGroup
 
 
     // AUTO-BEGIN : ControlComponents
@@ -538,6 +518,39 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : BranchAssignment
+
+    // AUTO-BEGIN : AccountClass
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>
+    AccountClasss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : AccountClass
+
+    // AUTO-BEGIN : AccountGroup
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup>
+    AccountGroups
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : AccountGroup
+
+    // AUTO-BEGIN : AccountSubGroup
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>
+    AccountSubGroups
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : AccountSubGroup
 
     // AUTO-END : AUTO REGISTER DBSETS
 

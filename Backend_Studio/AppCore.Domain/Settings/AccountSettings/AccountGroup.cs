@@ -6,7 +6,7 @@ namespace AppCore.Domain.Entities.Settings.AccountSettings;
 
 
 //===============================================================
-// AccountGroup
+// Account Group
 //===============================================================
 
 public class AccountGroup
@@ -15,7 +15,7 @@ public class AccountGroup
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long AccountGroupId
     {
         get;
         set;
@@ -23,36 +23,10 @@ public class AccountGroup
 
 
     //===========================================================
-    // Code
+    // Account Class
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountClassId
     {
         get;
         set;
@@ -60,58 +34,85 @@ public class AccountGroup
 
 
     //===========================================================
-    // Sample Field
+    // Basic Information
     //===========================================================
 
-    public string SampleField
+    public string ClassCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
+    public string Mode
     {
         get;
         set;
-    }
+    } = string.Empty;
+
+
+    public string GroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public bool AllowManualSubGroup
+    {
+        get;
+        set;
+    } = false;
 
 
     //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
     //===========================================================
-    // Active
+    // Status
     //===========================================================
 
     public bool IsActive
     {
         get;
         set;
-    }
+    } = true;
 
 
     //===========================================================
-    // Deleted
+    // Soft Delete
     //===========================================================
 
     public bool IsDeleted
+    {
+        get;
+        set;
+    } = false;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
     {
         get;
         set;
@@ -119,7 +120,7 @@ public class AccountGroup
 
 
     //===========================================================
-    // Created By
+    // Audit Information
     //===========================================================
 
     public long CreatedBy
@@ -129,10 +130,6 @@ public class AccountGroup
     }
 
 
-    //===========================================================
-    // Created Date
-    //===========================================================
-
     public DateTime CreatedDate
     {
         get;
@@ -140,20 +137,12 @@ public class AccountGroup
     }
 
 
-    //===========================================================
-    // Modified By
-    //===========================================================
-
     public long? ModifiedBy
     {
         get;
         set;
     }
 
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
 
     public DateTime? ModifiedDate
     {

@@ -4,13 +4,15 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.AccountClass.DTOs;
 
-using AppCore.Domain.Common;
+using AccountClassEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountClass;
 
 using AppCore.Infrastructure.Persistence;
-
-using global::AppCore.Application.Settings.AccountSettings;
+using AppCore.Domain.Common;
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
@@ -21,81 +23,287 @@ namespace AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
 
 //===============================================================
-// AccountClassRepository
+// Account Class Repository
 //===============================================================
 
-public class AccountClassRepository
-    : IAccountClassRepository
+public class AccountClassRepository : IAccountClassRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public AccountClassRepository
-    (
-        AppDbContext context
-    )
+    public AccountClassRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // Account Class Query
+    //===========================================================
+
+    private IQueryable<AccountClassDto> AccountClassQuery()
+    {
+        return _context
+            .Set<AccountClassEntity>()
+            .AsNoTracking()
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+            .Select
+            (
+                x =>
+                    new AccountClassDto
+                    {
+                        AccountClassId =
+                            x.AccountClassId,
+
+                        ClassType =
+                            x.ClassType,
+
+                        ClassCode =
+                            x.ClassCode,
+
+                        ClassName =
+                            x.ClassName,
+
+                        Mode =
+                            x.Mode,
+
+                        ClassPrefix =
+                            x.ClassPrefix,
+
+                        AllowManualGroupCreation =
+                            x.AllowManualGroupCreation,
+
+                        //===================================================
+                        // Configuration
+                        //===================================================
+
+                        Remarks =
+                            x.Remarks,
+
+                        //===================================================
+                        // Status
+                        //===================================================
+
+                        IsActive =
+                            x.IsActive,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>>
+    public async Task<List<AccountClassDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>()
-            .AsNoTracking()
-            .Where(
+        return await AccountClassQuery()
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
-            )
-            .OrderBy(
-                x =>
-                    x.Name
+                    x.ClassCode
             )
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass?>
+    public async Task<AccountClassDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await AccountClassQuery()
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.AccountClassId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync(
+            string classType)
+    {
+        string normalizedClassType =
+            classType?.Trim()
+            ??
+            string.Empty;
+
+        if
+        (
+            string.IsNullOrWhiteSpace(normalizedClassType)
+        )
+        {
+            normalizedClassType =
+                "Account Class";
+        }
+
+        string prefix =
+            string.Equals(
+                normalizedClassType,
+                "Inventory Class",
+                StringComparison.OrdinalIgnoreCase)
+                    ?
+                        "INV"
+                    :
+                        "ACC";
+
+        List<string> existingCodes =
+            await _context
+                .Set<AccountClassEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.ClassType ==
+                        normalizedClassType
+                )
+                .Select
+                (
+                    x =>
+                        x.ClassCode
+                )
+                .ToListAsync();
+
+        int highestSequenceNo =
+            0;
+
+        foreach
+        (
+            string code
+            in existingCodes
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(code)
+            )
+            {
+                continue;
+            }
+
+            string[] parts =
+                code.Split(
+                    '-',
+                    StringSplitOptions.RemoveEmptyEntries);
+
+            if
+            (
+                parts.Length !=
+                2
+            )
+            {
+                continue;
+            }
+
+            if
+            (
+                !string.Equals(
+                    parts[0].Trim(),
+                    prefix,
+                    StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                continue;
+            }
+
+            if
+            (
+                int.TryParse(
+                    parts[1].Trim(),
+                    out int sequenceNo)
+                &&
+                sequenceNo >
+                highestSequenceNo
+            )
+            {
+                highestSequenceNo =
+                    sequenceNo;
+            }
+        }
+
+        int nextSequenceNo =
+            highestSequenceNo +
+            1;
+
+        return
+            CodeGenerator.GenerateAccountClassCode(
+                nextSequenceNo,
+                normalizedClassType);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<AccountClassDefaultsDto>
+        GetDefaultsAsync()
+    {
+        return new AccountClassDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync(
+                    "Account Class")
+        };
+    }
 
 
     //===========================================================
@@ -104,68 +312,133 @@ public class AccountClassRepository
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass entity
-    )
+        (
+            CreateAccountClassDto dto,
+            long userId
+        )
     {
-        const long userId =
-            1;
+        string classType =
+            dto.ClassType?.Trim()
+            ??
+            string.Empty;
 
+        if
+        (
+            string.IsNullOrWhiteSpace(classType)
+        )
+        {
+            classType =
+                "Account Class";
+        }
 
-        entity.IsActive =
-            true;
+        string classPrefix =
+            string.Equals(
+                classType,
+                "Inventory Class",
+                StringComparison.OrdinalIgnoreCase)
+                    ?
+                        "INV"
+                    :
+                        "ACC";
 
+        string classCode =
+            dto.ClassCode?.Trim()
+            ??
+            string.Empty;
 
-        entity.IsDeleted =
-            false;
+        if
+        (
+            string.IsNullOrWhiteSpace(classCode)
+        )
+        {
+            classCode =
+                await GetNextCodeAsync(
+                    classType);
+        }
 
+        AccountClassEntity entity =
+            new AccountClassEntity
+            {
+                ClassType =
+                    classType,
 
-        entity.CreatedBy =
-            userId;
+                ClassCode =
+                    classCode,
 
+                ClassName =
+                    dto.ClassName?.Trim()
+                    ??
+                    string.Empty,
 
-        entity.CreatedDate =
-            DateTime.UtcNow;
+                Mode =
+                    dto.Mode?.Trim()
+                    ??
+                    string.Empty,
 
+                ClassPrefix =
+                    classPrefix,
 
-        entity.ModifiedBy =
-            null;
+                AllowManualGroupCreation =
+                    dto.AllowManualGroupCreation,
 
+                //=======================================================
+                // Configuration
+                //=======================================================
 
-        entity.ModifiedDate =
-            null;
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
 
+                //=======================================================
+                // Status
+                //=======================================================
 
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>()
-            .AddAsync(
+                IsActive =
+                    dto.IsActive,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
+
+        _context
+            .Set<AccountClassEntity>()
+            .Add(
                 entity
             );
 
-
         await _context.SaveChangesAsync();
 
+        //===========================================================
+        // Activity History
+        //===========================================================
 
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "AccountClass",
+                    "Account Class",
 
                 EntityId =
-                    entity.Id,
+                    entity.AccountClassId,
 
                 ActivityType =
                     "Create",
 
                 ActivityTitle =
-                    "AccountClass Created",
+                    "Account Class Created",
 
                 ActivityDescription =
-                    $"AccountClass '{entity.Name}' was created.",
+                    $"Account Class '{entity.ClassName}' created.",
 
                 PerformedBy =
                     userId,
@@ -178,13 +451,10 @@ public class AccountClassRepository
             }
         );
 
-
         await _context.SaveChangesAsync();
 
-
-        return entity.Id;
+        return entity.AccountClassId;
     }
-
 
 
     //===========================================================
@@ -193,88 +463,130 @@ public class AccountClassRepository
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass entity
-    )
+        (
+            UpdateAccountClassDto dto,
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var existing =
+        AccountClassEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>()
-                .FirstOrDefaultAsync(
+                .Set<AccountClassEntity>()
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+                        x.AccountClassId ==
+                        dto.AccountClassId
                         &&
                         !x.IsDeleted
                 );
 
-
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "AccountClass record was not found."
+            throw new KeyNotFoundException(
+                "Account Class not found."
             );
         }
 
+        string classType =
+            dto.ClassType?.Trim()
+            ??
+            string.Empty;
 
-        existing.Code =
-            entity.Code;
+        if
+        (
+            string.IsNullOrWhiteSpace(classType)
+        )
+        {
+            classType =
+                "Account Class";
+        }
 
+        string classPrefix =
+            string.Equals(
+                classType,
+                "Inventory Class",
+                StringComparison.OrdinalIgnoreCase)
+                    ?
+                        "INV"
+                    :
+                        "ACC";
 
-        existing.Name =
-            entity.Name;
+        entity.ClassType =
+            classType;
 
+        entity.ClassCode =
+            dto.ClassCode?.Trim()
+            ??
+            string.Empty;
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+        entity.ClassName =
+            dto.ClassName?.Trim()
+            ??
+            string.Empty;
 
+        entity.Mode =
+            dto.Mode?.Trim()
+            ??
+            string.Empty;
 
-        existing.SampleField =
-            entity.SampleField;
+        entity.ClassPrefix =
+            classPrefix;
 
+        entity.AllowManualGroupCreation =
+            dto.AllowManualGroupCreation;
 
-        existing.Status =
-            entity.Status;
+        //===========================================================
+        // Configuration
+        //===========================================================
 
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
 
-        existing.Remarks =
-            entity.Remarks;
+        //===========================================================
+        // Status
+        //===========================================================
 
+        entity.IsActive =
+            dto.IsActive;
 
-        existing.ModifiedBy =
+        entity.ModifiedBy =
             userId;
 
-
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
+        await _context.SaveChangesAsync();
+
+        //===========================================================
+        // Activity History
+        //===========================================================
 
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "AccountClass",
+                    "Account Class",
 
                 EntityId =
-                    existing.Id,
+                    entity.AccountClassId,
 
                 ActivityType =
                     "Update",
 
                 ActivityTitle =
-                    "AccountClass Updated",
+                    "Account Class Updated",
 
                 ActivityDescription =
-                    $"AccountClass '{existing.Name}' was updated.",
+                    $"Account Class '{entity.ClassName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -287,10 +599,8 @@ public class AccountClassRepository
             }
         );
 
-
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
@@ -299,70 +609,77 @@ public class AccountClassRepository
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve Account Class
+        //===========================================================
 
-
-        var entity =
+        AccountClassEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>()
-                .FirstOrDefaultAsync(
+                .Set<AccountClassEntity>()
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+                        x.AccountClassId ==
+                        id
                         &&
                         !x.IsDeleted
                 );
 
-
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "Account Class not found."
+            );
         }
 
+        //===========================================================
+        // Soft Delete Account Class
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
-
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
-
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
+        await _context.SaveChangesAsync();
+
+        //===========================================================
+        // Activity History
+        //===========================================================
 
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "AccountClass",
+                    "Account Class",
 
                 EntityId =
-                    entity.Id,
+                    entity.AccountClassId,
 
                 ActivityType =
                     "Delete",
 
                 ActivityTitle =
-                    "AccountClass Deleted",
+                    "Account Class Deleted",
 
                 ActivityDescription =
-                    $"AccountClass '{entity.Name}' was deleted.",
+                    $"Account Class '{entity.ClassName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -375,82 +692,85 @@ public class AccountClassRepository
             }
         );
 
-
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var entity =
+        AccountClassEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountClass>()
-                .FirstOrDefaultAsync(
+                .Set<AccountClassEntity>()
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
-
+                )
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+                .FirstOrDefaultAsync();
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
-
 
         entity.IsDeleted =
             false;
 
+        entity.DeletedBy =
+            null;
 
-        entity.IsActive =
-            true;
-
+        entity.DeletedDate =
+            null;
 
         entity.ModifiedBy =
             userId;
 
-
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+        await _context.SaveChangesAsync();
+
+        //===========================================================
+        // Activity History
+        //===========================================================
 
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "AccountClass",
+                    "Account Class",
 
                 EntityId =
-                    entity.Id,
+                    entity.AccountClassId,
 
                 ActivityType =
                     "Restore",
 
                 ActivityTitle =
-                    "AccountClass Restored",
+                    "Account Class Restored",
 
                 ActivityDescription =
-                    $"AccountClass '{entity.Name}' was restored.",
+                    $"Account Class '{entity.ClassName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -463,152 +783,31 @@ public class AccountClassRepository
             }
         );
 
-
         await _context.SaveChangesAsync();
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
+        return await _context
+            .Set<AccountClassEntity>()
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "AccountClass"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "AccountClass"
-
-                    &&
-
-                    x.EntityId ==
+                    x.AccountClassId ==
                     id
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    &&
+                    !x.IsDeleted
+            );
     }
-
 }

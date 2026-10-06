@@ -30,7 +30,6 @@ import
 }
 from '@angular/forms';
 
-
 //===============================================================
 // Shared Components
 //===============================================================
@@ -78,7 +77,6 @@ import
 }
 from '../../../../../../shared/components/layout/form-section/form-section';
 
-
 //===============================================================
 // Form Controls
 //===============================================================
@@ -97,16 +95,15 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 //===============================================================
 // Utilities
@@ -136,7 +133,6 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
-
 //===============================================================
 // Models & Services
 //===============================================================
@@ -151,10 +147,21 @@ from '../../../models/account-group.model';
 
 import
 {
+    AccountClass
+}
+from '../../../models/account-class.model';
+
+import
+{
     AccountGroupService
 }
 from '../../../services/account-group.service';
 
+import
+{
+    AccountClassService
+}
+from '../../../services/account-class.service';
 
 //===============================================================
 // Component
@@ -162,61 +169,44 @@ from '../../../services/account-group.service';
 
 @Component(
 {
-    selector:'accountGroup-form',
+    selector:'account-group-form',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         FormsModule,
-
 
         //=======================================================
         // Layout
         //=======================================================
 
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         CommandCenterComponent,
-
         ControlTabsComponent,
-
         PageCanvasComponent,
-
         FormGridComponent,
-
         FormSectionComponent,
-
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-
         TextareaComponent,
-
-        SearchDropdownComponent,
-
         DropdownComponent,
-
-
+        SearchDropdownComponent,
         //=======================================================
         // Utilities
         //=======================================================
 
         ToastComponent,
-
         ConfirmDialogComponent
     ],
 
-
     templateUrl:'./account-group-form.html',
-
 
     styleUrls:
     [
@@ -224,11 +214,13 @@ from '../../../services/account-group.service';
     ]
 })
 
+//===============================================================
+// Account Group Form
+//===============================================================
 
 export class AccountGroupForm
 implements OnInit
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
@@ -236,27 +228,23 @@ implements OnInit
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly router =
         inject(Router);
 
-
-    private readonly accountgroupservice =
+    private readonly accountGroupService =
         inject(AccountGroupService);
 
+    private readonly accountClassService =
+        inject(AccountClassService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
-
     private readonly toast =
         inject(ToastService);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
-
-
 
     //===========================================================
     // Mode
@@ -266,12 +254,9 @@ implements OnInit
         'add' | 'edit' | 'view' =
         'add';
 
-
     entityId:
         number =
         0;
-
-
 
     //===========================================================
     // Page Header
@@ -281,12 +266,9 @@ implements OnInit
         string =
         'Account Group';
 
-
     entityName:
         string =
         'Account Group';
-
-
 
     //===========================================================
     // Selected Tab
@@ -295,8 +277,6 @@ implements OnInit
     selectedTab:
         string =
         'general';
-
-
 
     //===========================================================
     // Tabs
@@ -308,13 +288,10 @@ implements OnInit
         return [
             {
                 id:'general',
-
                 label:this.tabTitle
             }
         ];
     }
-
-
 
     //===========================================================
     // Tab Title
@@ -329,38 +306,48 @@ implements OnInit
         )
         {
             case 'add':
-
                 return `Add ${this.entityName}`;
 
-
             case 'edit':
-
                 return `Update ${this.entityName}`;
 
-
             case 'view':
-
                 return `View ${this.entityName}`;
 
-
             default:
-
                 return this.entityName;
         }
     }
 
-
-
     //===========================================================
-    // Sample Search Dropdown Items
+    // Account Classes
     //===========================================================
 
-    items:
+    accountClasses:
+        AccountClass[]
+        = [];
+
+    accountClassItems:
         any[]
-    =
-        [];
+        = [];
 
+    //===========================================================
+    // Manual Sub Group Items
+    //===========================================================
 
+    manualSubGroupItems:
+        any[]
+        =
+        [
+            {
+                label:'Yes',
+                value:true
+            },
+            {
+                label:'No',
+                value:false
+            }
+        ];
 
     //===========================================================
     // Status Items
@@ -368,22 +355,17 @@ implements OnInit
 
     statusItems:
         any[]
-    =
+        =
         [
             {
-                text:'Active',
-
-                value:'Active'
+                label:'Active',
+                value:true
             },
-
             {
-                text:'Inactive',
-
-                value:'Inactive'
+                label:'Inactive',
+                value:false
             }
         ];
-
-
 
     //===========================================================
     // Entity
@@ -391,24 +373,19 @@ implements OnInit
 
     entity:
         AccountGroup
-    =
-    {
-        id:0,
-
-        code:'',
-
-        name:'',
-
-        sampleSearchDropdownId:0,
-
-        sampleField:'',
-
-        status:'Active',
-
-        remarks:''
-    };
-
-
+        =
+        {
+            AccountGroupId:0,
+            AccountClassId:0,
+            AccountClassName:'',
+            ClassCode:'',
+            Mode:'',
+            GroupCode:'',
+            GroupName:'',
+            AllowManualSubGroup:false,
+            Remarks:'',
+            IsActive:true
+        };
 
     //===========================================================
     // Form State
@@ -418,12 +395,9 @@ implements OnInit
         string =
         '';
 
-
     hasChanges:
         boolean =
         false;
-
-
 
     //===========================================================
     // Initialize
@@ -432,10 +406,9 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadAccountClasses();
         this.initializeMode();
     }
-
-
 
     //===========================================================
     // Initialize Mode
@@ -444,15 +417,8 @@ implements OnInit
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
-
 
         //=======================================================
         // View Mode
@@ -467,7 +433,6 @@ implements OnInit
                 'view';
         }
 
-
         //=======================================================
         // Edit Mode
         //=======================================================
@@ -481,7 +446,6 @@ implements OnInit
                 'edit';
         }
 
-
         //=======================================================
         // Add Mode
         //=======================================================
@@ -492,6 +456,12 @@ implements OnInit
                 'add';
         }
 
+        //=======================================================
+        // Resolve Entity Id
+        //=======================================================
+
+        const id =
+            this.resolveEntityId();
 
         //=======================================================
         // Existing Entity
@@ -505,13 +475,10 @@ implements OnInit
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
-
 
         //=======================================================
         // New Entity
@@ -520,7 +487,113 @@ implements OnInit
         this.initializeEntity();
     }
 
+    //===========================================================
+    // Resolve Entity Id
+    //===========================================================
 
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+            this.route;
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+        return 0;
+    }
+
+    //===========================================================
+    // Load Account Classes
+    //===========================================================
+
+    private loadAccountClasses():
+        void
+    {
+        this.accountClassService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        AccountClass[]
+                ): void =>
+                {
+                    this.accountClasses =
+                        (response ?? [])
+                            .filter
+                            (
+                                (
+                                    item:
+                                        AccountClass
+                                ): boolean =>
+                                {
+                                    return (
+                                        item.IsActive
+                                        &&
+                                        item.AllowManualGroupCreation
+                                    );
+                                }
+                            );
+
+                    this.accountClassItems =
+                        this.accountClasses.map
+                        (
+                            (
+                                item:
+                                    AccountClass
+                            ) =>
+                            ({
+                                label:
+                                    `${item.ClassCode} - ${item.ClassName}`,
+
+                                value:
+                                    item.AccountClassId
+                            })
+                        );
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Load Account Classes Error',
+                        error
+                    );
+
+                    this.toast.error(
+                        'Error',
+                        'Failed to load Account Classes.'
+                    );
+                }
+            });
+    }
 
     //===========================================================
     // Initialize Entity
@@ -531,33 +604,246 @@ implements OnInit
     {
         this.entity =
         {
-            id:0,
-
-            code:'',
-
-            name:'',
-
-            sampleSearchDropdownId:0,
-
-            sampleField:'',
-
-            status:'Active',
-
-            remarks:''
+            AccountGroupId:0,
+            AccountClassId:0,
+            AccountClassName:'',
+            ClassCode:'',
+            Mode:'',
+            GroupCode:'',
+            GroupName:'',
+            AllowManualSubGroup:true,
+            Remarks:'',
+            IsActive:true
         };
 
+        this.generateDefaults();
+    }
 
+    //===========================================================
+    // Generate Defaults
+    //===========================================================
+
+    private generateDefaults():
+        void
+    {
+        //=======================================================
+        // Existing Record
+        //=======================================================
+
+        if
+        (
+            this.entityId > 0
+        )
+        {
+            return;
+        }
+
+        //=======================================================
+        // No Account Class Selected
+        //=======================================================
+
+        if
+        (
+            !this.entity.AccountClassId
+            ||
+            this.entity.AccountClassId <= 0
+        )
+        {
+            this.entity.ClassCode =
+                '';
+
+            this.entity.Mode =
+                '';
+
+            this.entity.GroupCode =
+                '';
+
+            this.setInitialFormState();
+
+            return;
+        }
+
+        //=======================================================
+        // Generate Group Code
+        //=======================================================
+
+        this.generateNextCode();
+    }
+
+    //===========================================================
+    // Generate Next Code
+    //===========================================================
+
+    private generateNextCode():
+        void
+    {
+        const accountClassId =
+            Number(
+                this.entity.AccountClassId
+            );
+
+        if
+        (
+            !accountClassId
+            ||
+            accountClassId <= 0
+        )
+        {
+            this.entity.GroupCode =
+                '';
+
+            return;
+        }
+
+        this.accountGroupService
+            .getNextCode(
+                accountClassId
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    code:
+                        string
+                ): void =>
+                {
+                    if
+                    (
+                        !code?.trim()
+                    )
+                    {
+                        console.error(
+                            'Generate Account Group Code Error',
+                            'Empty code returned from server.'
+                        );
+
+                        this.toast.error(
+                            'Error',
+                            'Failed to generate Account Group code.'
+                        );
+
+                        return;
+                    }
+
+                    this.entity.GroupCode =
+                        code.trim();
+
+                    this.entity.IsActive =
+                        true;
+
+                    this.setInitialFormState();
+                },
+
+                error:
+                (
+                    codeError:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Generate Account Group Code Error',
+                        codeError
+                    );
+
+                    this.toast.error(
+                        'Error',
+                        'Failed to generate Account Group code.'
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Account Class Change
+    //===========================================================
+
+    onAccountClassChange():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+        const accountClassId =
+            Number(
+                this.entity.AccountClassId
+            );
+
+        const selectedClass =
+            this.accountClasses.find
+            (
+                (
+                    item:
+                        AccountClass
+                ): boolean =>
+                {
+                    return item.AccountClassId ===
+                        accountClassId;
+                }
+            );
+
+        if
+        (
+            !selectedClass
+        )
+        {
+            this.entity.ClassCode =
+                '';
+
+            this.entity.Mode =
+                '';
+
+            this.entity.GroupCode =
+                '';
+
+            this.checkForChanges();
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        this.entity.ClassCode =
+            selectedClass.ClassCode
+            ??
+            '';
+
+        this.entity.Mode =
+            selectedClass.Mode
+            ??
+            '';
+
+        this.entity.GroupCode =
+            '';
+
+        this.generateNextCode();
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+    private setInitialFormState():
+        void
+    {
         this.originalEntity =
             JSON.stringify(
                 this.entity
             );
 
-
         this.hasChanges =
             false;
+
+        this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Load Entity
@@ -566,66 +852,130 @@ implements OnInit
     private loadEntity():
         void
     {
-        this.accountgroupservice
+        this.accountGroupService
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any
+                ): void =>
                 {
                     this.entity =
-                        response;
+                    {
+                        AccountGroupId:
+                            Number(
+                                response?.AccountGroupId
+                                ??
+                                response?.accountGroupId
+                                ??
+                                0
+                            ),
 
+                        AccountClassId:
+                            Number(
+                                response?.AccountClassId
+                                ??
+                                response?.accountClassId
+                                ??
+                                0
+                            ),
+
+                        AccountClassName:
+                            response?.AccountClassName
+                            ??
+                            response?.accountClassName
+                            ??
+                            '',
+
+                        ClassCode:
+                            response?.ClassCode
+                            ??
+                            response?.classCode
+                            ??
+                            '',
+
+                        Mode:
+                            response?.Mode
+                            ??
+                            response?.mode
+                            ??
+                            '',
+
+                        GroupCode:
+                            response?.GroupCode
+                            ??
+                            response?.groupCode
+                            ??
+                            '',
+
+                        GroupName:
+                            response?.GroupName
+                            ??
+                            response?.groupName
+                            ??
+                            '',
+
+                        AllowManualSubGroup:
+                            Boolean(
+                                response?.AllowManualSubGroup
+                                ??
+                                response?.allowManualSubGroup
+                                ??
+                                false
+                            ),
+
+                        Remarks:
+                            response?.Remarks
+                            ??
+                            response?.remarks
+                            ??
+                            '',
+
+                        IsActive:
+                            Boolean(
+                                response?.IsActive
+                                ??
+                                response?.isActive
+                                ??
+                                true
+                            )
+                    };
 
                     this.originalEntity =
                         JSON.stringify(
                             this.entity
                         );
 
-
                     this.hasChanges =
                         false;
-
 
                     this.cdr.detectChanges();
                 },
 
-
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
                         'Load Account Group Error',
                         error
                     );
 
-
                     this.toast.error(
                         'Error',
-
                         'Failed to load Account Group.'
                     );
-
 
                     this.onBackToList();
                 }
             });
     }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Changed
-    //===========================================================
-
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
-
-
     //===========================================================
     // Track Changes
     //===========================================================
@@ -641,8 +991,6 @@ implements OnInit
             this.originalEntity;
     }
 
-
-
     //===========================================================
     // Tab Change
     //===========================================================
@@ -657,8 +1005,6 @@ implements OnInit
         this.selectedTab =
             tabId;
     }
-
-
 
     //===========================================================
     // Save
@@ -679,28 +1025,79 @@ implements OnInit
             return;
         }
 
-
         //=======================================================
         // Validation
         //=======================================================
 
         if
         (
-            !this.entity.name?.trim()
+            !this.entity.AccountClassId
+            ||
+            this.entity.AccountClassId <= 0
         )
         {
             this.toast.error(
                 'Validation',
-
-                'Name is required.'
+                'Account Class is required.'
             );
 
             return;
         }
 
+        if
+        (
+            !this.entity.ClassCode?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Class Code is required.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            !this.entity.Mode?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Mode is required.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            !this.entity.GroupCode?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Group Code is required.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            !this.entity.GroupName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Group Name is required.'
+            );
+
+            return;
+        }
 
         //=======================================================
-        // Create
+        // Add
         //=======================================================
 
         if
@@ -708,162 +1105,196 @@ implements OnInit
             this.mode === 'add'
         )
         {
-            const model:
-                CreateAccountGroup =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.accountgroupservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Account Group created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Account Group Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.saveCreate();
 
             return;
         }
-
 
         //=======================================================
         // Update
         //=======================================================
 
+        this.saveUpdate();
+    }
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
         const model:
-            UpdateAccountGroup =
+            CreateAccountGroup =
         {
-            id:
-                this.entity.id,
+            AccountClassId:
+                this.entity.AccountClassId,
 
-            name:
-                this.entity.name,
+            ClassCode:
+                this.entity.ClassCode.trim(),
 
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
+            Mode:
+                this.entity.Mode,
 
-            sampleField:
-                this.entity.sampleField,
+            GroupCode:
+                this.entity.GroupCode.trim(),
 
-            status:
-                this.entity.status,
+            GroupName:
+                this.entity.GroupName.trim(),
 
-            remarks:
-                this.entity.remarks
+            AllowManualSubGroup:
+                this.entity.AllowManualSubGroup,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
         };
 
-
-        this.accountgroupservice
-            .update(
+        this.accountGroupService
+            .create(
                 model
             )
-            .subscribe(
-            {
-                next:() =>
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
                 {
                     this.originalEntity =
                         JSON.stringify(
                             this.entity
                         );
 
-
                     this.hasChanges =
                         false;
 
-
                     this.toast.success(
                         'Success',
-
-                        'Account Group updated successfully.'
+                        'Account Group created successfully.'
                     );
-
 
                     this.onBackToList();
                 },
 
-
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
                 {
                     console.error(
-                        'Update Account Group Error',
+                        'Create Account Group Error',
                         error
                     );
 
-
                     const message =
-                        error?.error
+                        (error as any)?.error
                         ??
-                        'Failed to update {{ENTITY_NAME}.';
-
+                        'Failed to create Account Group.';
 
                     this.toast.error(
                         'Validation',
-
                         message
                     );
                 }
             });
     }
 
+    //===========================================================
+    // Update
+    //===========================================================
 
+    private saveUpdate():
+        void
+    {
+        const model:
+            UpdateAccountGroup =
+        {
+            AccountGroupId:
+                this.entity.AccountGroupId,
+
+            AccountClassId:
+                this.entity.AccountClassId,
+
+            ClassCode:
+                this.entity.ClassCode.trim(),
+
+            Mode:
+                this.entity.Mode,
+
+            GroupCode:
+                this.entity.GroupCode.trim(),
+
+            GroupName:
+                this.entity.GroupName.trim(),
+
+            AllowManualSubGroup:
+                this.entity.AllowManualSubGroup,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+
+        this.accountGroupService
+            .update(
+                model
+            )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.originalEntity =
+                        JSON.stringify(
+                            this.entity
+                        );
+
+                    this.hasChanges =
+                        false;
+
+                    this.toast.success(
+                        'Success',
+                        'Account Group updated successfully.'
+                    );
+
+                    this.onBackToList();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Update Account Group Error',
+                        error
+                    );
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'Failed to update Account Group.';
+
+                    this.toast.error(
+                        'Validation',
+                        message
+                    );
+                }
+            });
+    }
 
     //===========================================================
     // Clear
@@ -883,13 +1314,8 @@ implements OnInit
         {
             this.loadEntity();
 
-
-            this.checkForChanges();
-
-
             return;
         }
-
 
         //=======================================================
         // Add Mode
@@ -897,11 +1323,8 @@ implements OnInit
 
         this.initializeEntity();
 
-
         this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Back To List
@@ -915,53 +1338,39 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
+            void this.router.navigate
+            (
+                [
+                    '/settings',
+                    'account-settings',
+                    'account-group',
+                    'list'
+                ]
+            );
 
             return;
         }
 
-
         this.confirmDialog.open(
-
             'Cancel Changes',
-
             'Any unsaved changes will be lost. Do you want to leave this page?',
-
-
             () =>
             {
-                void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                void this.router.navigate
+                (
+                    [
+                        '/settings',
+                        'account-settings',
+                        'account-group',
+                        'list'
+                    ]
+                );
             },
-
-
             'Leave',
-
             'Stay',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Save Button Text
@@ -975,8 +1384,6 @@ implements OnInit
             : 'Save';
     }
 
-
-
     //===========================================================
     // View Mode
     //===========================================================
@@ -986,8 +1393,6 @@ implements OnInit
     {
         return this.mode === 'view';
     }
-
-
 
     //===========================================================
     // Edit Mode
@@ -999,8 +1404,6 @@ implements OnInit
         return this.mode === 'edit';
     }
 
-
-
     //===========================================================
     // Add Mode
     //===========================================================
@@ -1011,8 +1414,6 @@ implements OnInit
         return this.mode === 'add';
     }
 
-
-
     //===========================================================
     // Close
     //===========================================================
@@ -1022,8 +1423,6 @@ implements OnInit
     {
         this.onBackToList();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -1044,14 +1443,10 @@ implements OnInit
             return;
         }
 
-
         this.initializeEntity();
-
 
         this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Value Changed
@@ -1062,8 +1457,6 @@ implements OnInit
     {
         this.checkForChanges();
 
-
         this.cdr.detectChanges();
     }
-
 }

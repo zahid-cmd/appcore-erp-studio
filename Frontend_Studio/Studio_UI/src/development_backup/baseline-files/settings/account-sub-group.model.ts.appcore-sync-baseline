@@ -1,0 +1,90 @@
+/* ============================================================
+   Account Sub Group
+============================================================ */
+
+export interface AccountSubGroup
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Account Sub Group
+============================================================ */
+
+export interface CreateAccountSubGroup
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Account Sub Group
+============================================================ */
+
+export interface UpdateAccountSubGroup
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Account Sub Group Defaults
+============================================================ */
+
+export interface AccountSubGroupDefaults
+{
+    code:
+        string;
+}

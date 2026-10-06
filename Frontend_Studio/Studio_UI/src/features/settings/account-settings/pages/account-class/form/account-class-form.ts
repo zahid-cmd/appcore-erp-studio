@@ -11,11 +11,13 @@ import
 }
 from '@angular/core';
 
+
 import
 {
     CommonModule
 }
 from '@angular/common';
+
 
 import
 {
@@ -23,6 +25,7 @@ import
     Router
 }
 from '@angular/router';
+
 
 import
 {
@@ -41,17 +44,20 @@ import
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
 
+
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
 
+
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
+
 
 import
 {
@@ -60,17 +66,20 @@ import
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
+
 import
 {
     PageCanvasComponent
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
+
 import
 {
     FormGridComponent
 }
 from '../../../../../../shared/components/layout/form-grid/form-grid';
+
 
 import
 {
@@ -89,17 +98,13 @@ import
 }
 from '../../../../../../shared/components/controls/textbox/textbox';
 
+
 import
 {
     TextareaComponent
 }
 from '../../../../../../shared/components/controls/textarea/textarea';
 
-import
-{
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
@@ -118,17 +123,20 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
 
+
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
 
 import
 {
@@ -145,9 +153,11 @@ import
 {
     AccountClass,
     CreateAccountClass,
-    UpdateAccountClass
+    UpdateAccountClass,
+    AccountClassDefaults
 }
 from '../../../models/account-class.model';
+
 
 import
 {
@@ -162,61 +172,44 @@ from '../../../services/account-class.service';
 
 @Component(
 {
-    selector:'accountClass-form',
+    selector:'account-class-form',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         FormsModule,
-
 
         //=======================================================
         // Layout
         //=======================================================
 
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         CommandCenterComponent,
-
         ControlTabsComponent,
-
         PageCanvasComponent,
-
         FormGridComponent,
-
         FormSectionComponent,
-
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-
         TextareaComponent,
-
-        SearchDropdownComponent,
-
         DropdownComponent,
-
 
         //=======================================================
         // Utilities
         //=======================================================
 
         ToastComponent,
-
         ConfirmDialogComponent
     ],
 
-
     templateUrl:'./account-class-form.html',
-
 
     styleUrls:
     [
@@ -225,13 +218,19 @@ from '../../../services/account-class.service';
 })
 
 
+//===============================================================
+// Account Class Form
+//===============================================================
+
 export class AccountClassForm
 implements OnInit
 {
 
+
     //===========================================================
     // Dependency Injection
     //===========================================================
+
 
     private readonly route =
         inject(ActivatedRoute);
@@ -241,7 +240,7 @@ implements OnInit
         inject(Router);
 
 
-    private readonly accountclassservice =
+    private readonly accountClassService =
         inject(AccountClassService);
 
 
@@ -257,50 +256,55 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
     // Mode
     //===========================================================
 
+
     mode:
         'add' | 'edit' | 'view' =
+
         'add';
 
 
     entityId:
         number =
-        0;
 
+        0;
 
 
     //===========================================================
     // Page Header
     //===========================================================
 
+
     pageTitle:
         string =
+
         'Account Class';
 
 
     entityName:
         string =
-        'Account Class';
 
+        'Account Class';
 
 
     //===========================================================
     // Selected Tab
     //===========================================================
 
+
     selectedTab:
         string =
-        'general';
 
+        'general';
 
 
     //===========================================================
     // Tabs
     //===========================================================
+
 
     get tabs():
         ControlTab[]
@@ -308,17 +312,16 @@ implements OnInit
         return [
             {
                 id:'general',
-
                 label:this.tabTitle
             }
         ];
     }
 
 
-
     //===========================================================
     // Tab Title
     //===========================================================
+
 
     get tabTitle():
         string
@@ -350,84 +353,145 @@ implements OnInit
     }
 
 
-
     //===========================================================
-    // Sample Search Dropdown Items
+    // Class Type Items
     //===========================================================
 
-    items:
+
+    classTypeItems:
         any[]
     =
-        [];
 
+    [
+        {
+            label:'Account Class',
+            value:'Account Class'
+        },
+
+        {
+            label:'Inventory Class',
+            value:'Inventory Class'
+        }
+    ];
+
+
+    //===========================================================
+    // Mode Items
+    //===========================================================
+
+
+    modeItems:
+        any[]
+    =
+
+    [
+        {
+            label:'Debit',
+            value:'Debit'
+        },
+
+        {
+            label:'Credit',
+            value:'Credit'
+        }
+    ];
+
+
+    //===========================================================
+    // Manual Group Creation Items
+    //===========================================================
+
+
+    manualGroupCreationItems:
+        any[]
+    =
+
+    [
+        {
+            label:'Yes',
+            value:true
+        },
+
+        {
+            label:'No',
+            value:false
+        }
+    ];
 
 
     //===========================================================
     // Status Items
     //===========================================================
 
+
     statusItems:
         any[]
     =
-        [
-            {
-                text:'Active',
 
-                value:'Active'
-            },
+    [
+        {
+            label:'Active',
+            value:true
+        },
 
-            {
-                text:'Inactive',
-
-                value:'Inactive'
-            }
-        ];
-
+        {
+            label:'Inactive',
+            value:false
+        }
+    ];
 
 
     //===========================================================
     // Entity
     //===========================================================
 
+
     entity:
         AccountClass
     =
+
     {
-        id:0,
+        AccountClassId:0,
 
-        code:'',
+        ClassType:'Account Class',
 
-        name:'',
+        ClassCode:'',
 
-        sampleSearchDropdownId:0,
+        ClassName:'',
 
-        sampleField:'',
+        Mode:'Debit',
 
-        status:'Active',
+        ClassPrefix:'ACC',
 
-        remarks:''
+        AllowManualGroupCreation:false,
+
+        Remarks:'',
+
+        IsActive:true
     };
-
 
 
     //===========================================================
     // Form State
     //===========================================================
 
+
     private originalEntity:
         string =
+
         '';
 
 
     hasChanges:
         boolean =
-        false;
 
+        false;
 
 
     //===========================================================
     // Initialize
     //===========================================================
+
 
     ngOnInit():
         void
@@ -436,20 +500,14 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Initialize Mode
     //===========================================================
 
+
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
 
@@ -494,6 +552,14 @@ implements OnInit
 
 
         //=======================================================
+        // Resolve Entity Id
+        //=======================================================
+
+        const id =
+            this.resolveEntityId();
+
+
+        //=======================================================
         // Existing Entity
         //=======================================================
 
@@ -505,9 +571,7 @@ implements OnInit
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
@@ -521,6 +585,48 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+
+            this.route;
+
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+
+        return 0;
+    }
+
 
     //===========================================================
     // Initialize Entity
@@ -531,51 +637,296 @@ implements OnInit
     {
         this.entity =
         {
-            id:0,
+            AccountClassId:0,
 
-            code:'',
+            ClassType:'Account Class',
 
-            name:'',
+            ClassCode:'',
 
-            sampleSearchDropdownId:0,
+            ClassName:'',
 
-            sampleField:'',
+            Mode:'Debit',
 
-            status:'Active',
+            ClassPrefix:'ACC',
 
-            remarks:''
+            AllowManualGroupCreation:true,
+
+            Remarks:'',
+
+            IsActive:true
         };
 
 
+        this.updateClassPrefix();
+
+
+        this.generateDefaults();
+    }
+
+
+    //===========================================================
+    // Generate Defaults
+    //===========================================================
+
+
+    private generateDefaults():
+        void
+    {
+        //=======================================================
+        // Existing Record
+        //=======================================================
+
+        if
+        (
+            this.entityId > 0
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Generate Code From Class Type
+        //=======================================================
+
+        this.generateNextCode();
+    }
+
+    //===========================================================
+    // Generate Next Code
+    //===========================================================
+
+    private generateNextCode():
+        void
+    {
+        this.updateClassPrefix();
+
+        const classType =
+            this.entity.ClassType;
+
+        this.accountClassService
+            .getNextCode(
+                classType
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    code:
+                        string
+                ): void =>
+                {
+                    if
+                    (
+                        !code?.trim()
+                    )
+                    {
+                        console.error(
+                            'Generate Account Class Code Error',
+                            'Empty code returned from server.'
+                        );
+
+                        this.toast.error(
+                            'Error',
+                            'Failed to generate Account Class code.'
+                        );
+
+                        return;
+                    }
+
+                    this.entity.ClassCode =
+                        code.trim();
+
+                    this.entity.IsActive =
+                        true;
+
+                    this.setInitialFormState();
+                },
+
+                error:
+                (
+                    codeError:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Generate Account Class Code Error',
+                        codeError
+                    );
+
+                    this.toast.error(
+                        'Error',
+                        'Failed to generate Account Class code.'
+                    );
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Update Class Prefix
+    //===========================================================
+
+
+    updateClassPrefix():
+        void
+    {
+        this.entity.ClassPrefix =
+            this.entity.ClassType === 'Inventory Class'
+                ?
+                    'INV'
+                :
+                    'ACC';
+    }
+
+
+    //===========================================================
+    // Class Type Change
+    //===========================================================
+
+
+    onClassTypeChange():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        this.updateClassPrefix();
+
+
+        this.entity.ClassCode =
+            '';
+
+
+        this.generateNextCode();
+
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+
+    private setInitialFormState():
+        void
+    {
         this.originalEntity =
             JSON.stringify(
                 this.entity
             );
 
-
         this.hasChanges =
             false;
-    }
 
+        this.cdr.detectChanges();
+    }
 
 
     //===========================================================
     // Load Entity
     //===========================================================
 
+
     private loadEntity():
         void
     {
-        this.accountclassservice
+        this.accountClassService
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any
+                ): void =>
                 {
                     this.entity =
-                        response;
+                    {
+                        AccountClassId:
+                            Number(
+                                response?.AccountClassId
+                                ??
+                                response?.accountClassId
+                                ??
+                                0
+                            ),
+
+                        ClassType:
+                            response?.ClassType
+                            ??
+                            response?.classType
+                            ??
+                            'Account Class',
+
+                        ClassCode:
+                            response?.ClassCode
+                            ??
+                            response?.classCode
+                            ??
+                            '',
+
+                        ClassName:
+                            response?.ClassName
+                            ??
+                            response?.className
+                            ??
+                            '',
+
+                        Mode:
+                            response?.Mode
+                            ??
+                            response?.mode
+                            ??
+                            'Debit',
+
+                        ClassPrefix:
+                            response?.ClassPrefix
+                            ??
+                            response?.classPrefix
+                            ??
+                            '',
+
+                        AllowManualGroupCreation:
+                            Boolean(
+                                response?.AllowManualGroupCreation
+                                ??
+                                response?.allowManualGroupCreation
+                                ??
+                                false
+                            ),
+
+                        Remarks:
+                            response?.Remarks
+                            ??
+                            response?.remarks
+                            ??
+                            '',
+
+                        IsActive:
+                            Boolean(
+                                response?.IsActive
+                                ??
+                                response?.isActive
+                                ??
+                                true
+                            )
+                    };
+
+
+                    this.updateClassPrefix();
 
 
                     this.originalEntity =
@@ -583,16 +934,17 @@ implements OnInit
                             this.entity
                         );
 
-
                     this.hasChanges =
                         false;
-
 
                     this.cdr.detectChanges();
                 },
 
-
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
                         'Load Account Class Error',
@@ -602,7 +954,6 @@ implements OnInit
 
                     this.toast.error(
                         'Error',
-
                         'Failed to load Account Class.'
                     );
 
@@ -613,22 +964,10 @@ implements OnInit
     }
 
 
-
-    //===========================================================
-    // Sample Search Dropdown Changed
-    //===========================================================
-
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
-
-
     //===========================================================
     // Track Changes
     //===========================================================
+
 
     checkForChanges():
         void
@@ -642,10 +981,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Tab Change
     //===========================================================
+
 
     onTabChange
     (
@@ -659,10 +998,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Save
     //===========================================================
+
 
     onSave():
         void
@@ -686,13 +1025,40 @@ implements OnInit
 
         if
         (
-            !this.entity.name?.trim()
+            !this.entity.ClassType?.trim()
         )
         {
             this.toast.error(
                 'Validation',
+                'Class Type is required.'
+            );
 
-                'Name is required.'
+            return;
+        }
+
+
+        if
+        (
+            !this.entity.ClassCode?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Class Code is required.'
+            );
+
+            return;
+        }
+
+
+        if
+        (
+            !this.entity.ClassName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Class Name is required.'
             );
 
             return;
@@ -700,7 +1066,7 @@ implements OnInit
 
 
         //=======================================================
-        // Create
+        // Add
         //=======================================================
 
         if
@@ -708,77 +1074,7 @@ implements OnInit
             this.mode === 'add'
         )
         {
-            const model:
-                CreateAccountClass =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.accountclassservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Account Class created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Account Class Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.saveCreate();
 
             return;
         }
@@ -788,59 +1084,179 @@ implements OnInit
         // Update
         //=======================================================
 
+        this.saveUpdate();
+    }
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+
+    private saveCreate():
+        void
+    {
         const model:
-            UpdateAccountClass =
+            CreateAccountClass =
+
         {
-            id:
-                this.entity.id,
+            ClassType:
+                this.entity.ClassType,
 
-            name:
-                this.entity.name,
+            ClassCode:
+                this.entity.ClassCode.trim(),
 
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
+            ClassName:
+                this.entity.ClassName.trim(),
 
-            sampleField:
-                this.entity.sampleField,
+            Mode:
+                this.entity.Mode,
 
-            status:
-                this.entity.status,
+            ClassPrefix:
+                this.entity.ClassPrefix,
 
-            remarks:
-                this.entity.remarks
+            AllowManualGroupCreation:
+                this.entity.AllowManualGroupCreation,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
         };
 
 
-        this.accountclassservice
-            .update(
+        this.accountClassService
+            .create(
                 model
             )
-            .subscribe(
-            {
-                next:() =>
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
                 {
                     this.originalEntity =
                         JSON.stringify(
                             this.entity
                         );
 
-
                     this.hasChanges =
                         false;
 
-
                     this.toast.success(
                         'Success',
-
-                        'Account Class updated successfully.'
+                        'Account Class created successfully.'
                     );
-
 
                     this.onBackToList();
                 },
 
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Create Account Class Error',
+                        error
+                    );
 
-                error:(error) =>
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'Failed to create Account Class.';
+
+
+                    this.toast.error(
+                        'Validation',
+                        message
+                    );
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+
+    private saveUpdate():
+        void
+    {
+        const model:
+            UpdateAccountClass =
+
+        {
+            AccountClassId:
+                this.entity.AccountClassId,
+
+            ClassType:
+                this.entity.ClassType,
+
+            ClassCode:
+                this.entity.ClassCode.trim(),
+
+            ClassName:
+                this.entity.ClassName.trim(),
+
+            Mode:
+                this.entity.Mode,
+
+            ClassPrefix:
+                this.entity.ClassPrefix,
+
+            AllowManualGroupCreation:
+                this.entity.AllowManualGroupCreation,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+
+
+        this.accountClassService
+            .update(
+                model
+            )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.originalEntity =
+                        JSON.stringify(
+                            this.entity
+                        );
+
+                    this.hasChanges =
+                        false;
+
+                    this.toast.success(
+                        'Success',
+                        'Account Class updated successfully.'
+                    );
+
+                    this.onBackToList();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
                 {
                     console.error(
                         'Update Account Class Error',
@@ -849,14 +1265,13 @@ implements OnInit
 
 
                     const message =
-                        error?.error
+                        (error as any)?.error
                         ??
-                        'Failed to update {{ENTITY_NAME}.';
+                        'Failed to update Account Class.';
 
 
                     this.toast.error(
                         'Validation',
-
                         message
                     );
                 }
@@ -864,10 +1279,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Clear
     //===========================================================
+
 
     onClear():
         void
@@ -883,10 +1298,6 @@ implements OnInit
         {
             this.loadEntity();
 
-
-            this.checkForChanges();
-
-
             return;
         }
 
@@ -897,15 +1308,14 @@ implements OnInit
 
         this.initializeEntity();
 
-
         this.cdr.detectChanges();
     }
-
 
 
     //===========================================================
     // Back To List
     //===========================================================
+
 
     onBackToList():
         void
@@ -915,57 +1325,48 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
+            void this.router.navigate
+            (
+                [
+                    '/settings',
+                    'account-settings',
+                    'account-class',
+                    'list'
+                ]
+            );
 
             return;
         }
 
 
         this.confirmDialog.open(
-
             'Cancel Changes',
-
             'Any unsaved changes will be lost. Do you want to leave this page?',
-
 
             () =>
             {
-                void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                void this.router.navigate
+                (
+                    [
+                        '/settings',
+                        'account-settings',
+                        'account-class',
+                        'list'
+                    ]
+                );
             },
 
-
             'Leave',
-
             'Stay',
-
             'primary'
         );
     }
 
 
-
     //===========================================================
     // Save Button Text
     //===========================================================
+
 
     get saveButtonText():
         string
@@ -976,10 +1377,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View Mode
     //===========================================================
+
 
     get isViewMode():
         boolean
@@ -988,10 +1389,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Edit Mode
     //===========================================================
+
 
     get isEditMode():
         boolean
@@ -1000,10 +1401,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Add Mode
     //===========================================================
+
 
     get isAddMode():
         boolean
@@ -1012,10 +1413,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Close
     //===========================================================
+
 
     close():
         void
@@ -1024,10 +1425,10 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Refresh
     //===========================================================
+
 
     refresh():
         void
@@ -1047,23 +1448,22 @@ implements OnInit
 
         this.initializeEntity();
 
-
         this.cdr.detectChanges();
     }
-
 
 
     //===========================================================
     // Value Changed
     //===========================================================
 
+
     onValueChange():
         void
     {
         this.checkForChanges();
 
-
         this.cdr.detectChanges();
     }
+
 
 }

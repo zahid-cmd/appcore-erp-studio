@@ -59,15 +59,21 @@ from '../../shared/components/layout/breadcrumb/breadcrumb';
 
 import
 {
-    SidebarService
-}
-from '../sidebar/sidebar.service';
-
-import
-{
     ToastComponent
 }
 from '../../shared/components/utilities/toast/toast';
+
+import
+{
+    AboutAppCoreComponent
+}
+from '../../shared/components/utilities/about-appcore/about-appcore';
+
+import
+{
+    SidebarService
+}
+from '../sidebar/sidebar.service';
 
 import
 {
@@ -108,7 +114,9 @@ from '../effective-access/effective-access.service';
 
         BreadcrumbComponent,
 
-        ToastComponent
+        ToastComponent,
+
+        AboutAppCoreComponent
     ],
 
     templateUrl:
@@ -161,6 +169,9 @@ implements
     isDashboard =
         false;
 
+    showAbout =
+        false;
+
     private readonly subscriptions =
         new Subscription();
 
@@ -209,6 +220,26 @@ implements
                     }
                 )
         );
+    }
+
+
+    //===========================================================
+    // About
+    //===========================================================
+
+    openAbout():
+        void
+    {
+        this.showAbout =
+            true;
+    }
+
+
+    closeAbout():
+        void
+    {
+        this.showAbout =
+            false;
     }
 
 

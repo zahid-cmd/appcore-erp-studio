@@ -97,12 +97,6 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
@@ -145,7 +139,8 @@ import
 {
     Designation,
     CreateDesignation,
-    UpdateDesignation
+    UpdateDesignation,
+    DesignationDefaults
 }
 from '../../../models/designation.model';
 
@@ -169,54 +164,37 @@ from '../../../services/designation.service';
     imports:
     [
         CommonModule,
-
         FormsModule,
-
 
         //=======================================================
         // Layout
         //=======================================================
 
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         CommandCenterComponent,
-
         ControlTabsComponent,
-
         PageCanvasComponent,
-
         FormGridComponent,
-
         FormSectionComponent,
-
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-
         TextareaComponent,
-
-        SearchDropdownComponent,
-
         DropdownComponent,
-
 
         //=======================================================
         // Utilities
         //=======================================================
 
         ToastComponent,
-
         ConfirmDialogComponent
     ],
 
-
     templateUrl:'./designation-form.html',
-
 
     styleUrls:
     [
@@ -236,26 +214,20 @@ implements OnInit
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly designationservice =
         inject(DesignationService);
 
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
-
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
-
 
 
     //===========================================================
@@ -266,11 +238,9 @@ implements OnInit
         'add' | 'edit' | 'view' =
         'add';
 
-
     entityId:
         number =
         0;
-
 
 
     //===========================================================
@@ -281,11 +251,9 @@ implements OnInit
         string =
         'Designation';
 
-
     entityName:
         string =
         'Designation';
-
 
 
     //===========================================================
@@ -295,7 +263,6 @@ implements OnInit
     selectedTab:
         string =
         'general';
-
 
 
     //===========================================================
@@ -308,12 +275,10 @@ implements OnInit
         return [
             {
                 id:'general',
-
                 label:this.tabTitle
             }
         ];
     }
-
 
 
     //===========================================================
@@ -332,34 +297,19 @@ implements OnInit
 
                 return `Add ${this.entityName}`;
 
-
             case 'edit':
 
                 return `Update ${this.entityName}`;
 
-
             case 'view':
 
                 return `View ${this.entityName}`;
-
 
             default:
 
                 return this.entityName;
         }
     }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Items
-    //===========================================================
-
-    items:
-        any[]
-    =
-        [];
-
 
 
     //===========================================================
@@ -369,20 +319,17 @@ implements OnInit
     statusItems:
         any[]
     =
-        [
-            {
-                text:'Active',
+    [
+        {
+            label:'Active',
+            value:true
+        },
 
-                value:'Active'
-            },
-
-            {
-                text:'Inactive',
-
-                value:'Inactive'
-            }
-        ];
-
+        {
+            label:'Inactive',
+            value:false
+        }
+    ];
 
 
     //===========================================================
@@ -393,21 +340,18 @@ implements OnInit
         Designation
     =
     {
-        id:0,
+        DesignationId:0,
 
-        code:'',
+        DesignationCode:'',
 
-        name:'',
+        DesignationName:'',
 
-        sampleSearchDropdownId:0,
+        DesignationShortName:'',
 
-        sampleField:'',
+        Remarks:'',
 
-        status:'Active',
-
-        remarks:''
+        IsActive:true
     };
-
 
 
     //===========================================================
@@ -418,11 +362,9 @@ implements OnInit
         string =
         '';
 
-
     hasChanges:
         boolean =
         false;
-
 
 
     //===========================================================
@@ -436,7 +378,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Initialize Mode
     //===========================================================
@@ -444,12 +385,6 @@ implements OnInit
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
 
@@ -494,6 +429,14 @@ implements OnInit
 
 
         //=======================================================
+        // Resolve Entity Id
+        //=======================================================
+
+        const id =
+            this.resolveEntityId();
+
+
+        //=======================================================
         // Existing Entity
         //=======================================================
 
@@ -505,9 +448,7 @@ implements OnInit
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
@@ -521,6 +462,42 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+            this.route;
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+        return 0;
+    }
+
 
     //===========================================================
     // Initialize Entity
@@ -531,32 +508,148 @@ implements OnInit
     {
         this.entity =
         {
-            id:0,
+            DesignationId:0,
 
-            code:'',
+            DesignationCode:'',
 
-            name:'',
+            DesignationName:'',
 
-            sampleSearchDropdownId:0,
+            DesignationShortName:'',
 
-            sampleField:'',
+            Remarks:'',
 
-            status:'Active',
-
-            remarks:''
+            IsActive:true
         };
 
+        this.generateDefaults();
+    }
 
+
+    //===========================================================
+    // Generate Defaults
+    //===========================================================
+
+    private generateDefaults():
+        void
+    {
+        //=======================================================
+        // Existing Record
+        //=======================================================
+
+        if
+        (
+            this.entityId > 0
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Get Defaults
+        //=======================================================
+
+        this.designationservice
+            .getDefaults()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        DesignationDefaults
+                ): void =>
+                {
+                    this.entity.DesignationCode =
+                        response.Code;
+
+                    this.entity.IsActive =
+                        true;
+
+                    this.setInitialFormState();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Generate Designation Defaults Error',
+                        error
+                    );
+
+
+                    //===================================================
+                    // Fallback Code
+                    //===================================================
+
+                    this.designationservice
+                        .getNextCode()
+                        .subscribe
+                        ({
+                            next:
+                            (
+                                code:
+                                    string
+                            ): void =>
+                            {
+                                this.entity.DesignationCode =
+                                    code;
+
+                                this.entity.IsActive =
+                                    true;
+
+                                this.setInitialFormState();
+                            },
+
+                            error:
+                            (
+                                codeError:
+                                    unknown
+                            ): void =>
+                            {
+                                console.error(
+                                    'Generate Designation Code Error',
+                                    codeError
+                                );
+
+
+                                //===========================================
+                                // Final Fallback Code
+                                //===========================================
+
+                                this.entity.DesignationCode =
+                                    'DSG-001';
+
+                                this.entity.IsActive =
+                                    true;
+
+                                this.setInitialFormState();
+                            }
+                        });
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+    private setInitialFormState():
+        void
+    {
         this.originalEntity =
             JSON.stringify(
                 this.entity
             );
 
-
         this.hasChanges =
             false;
-    }
 
+        this.cdr.detectChanges();
+    }
 
 
     //===========================================================
@@ -570,60 +663,94 @@ implements OnInit
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any
+                ): void =>
                 {
                     this.entity =
-                        response;
+                    {
+                        DesignationId:
+                            Number(
+                                response?.DesignationId
+                                ??
+                                response?.designationId
+                                ??
+                                0
+                            ),
 
+                        DesignationCode:
+                            response?.DesignationCode
+                            ??
+                            response?.designationCode
+                            ??
+                            '',
+
+                        DesignationName:
+                            response?.DesignationName
+                            ??
+                            response?.designationName
+                            ??
+                            '',
+
+                        DesignationShortName:
+                            response?.DesignationShortName
+                            ??
+                            response?.designationShortName
+                            ??
+                            '',
+
+                        Remarks:
+                            response?.Remarks
+                            ??
+                            response?.remarks
+                            ??
+                            '',
+
+                        IsActive:
+                            Boolean(
+                                response?.IsActive
+                                ??
+                                response?.isActive
+                                ??
+                                true
+                            )
+                    };
 
                     this.originalEntity =
                         JSON.stringify(
                             this.entity
                         );
 
-
                     this.hasChanges =
                         false;
-
 
                     this.cdr.detectChanges();
                 },
 
-
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
                         'Load Designation Error',
                         error
                     );
 
-
                     this.toast.error(
                         'Error',
-
                         'Failed to load Designation.'
                     );
-
 
                     this.onBackToList();
                 }
             });
     }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Changed
-    //===========================================================
-
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
 
 
     //===========================================================
@@ -642,7 +769,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Tab Change
     //===========================================================
@@ -657,7 +783,6 @@ implements OnInit
         this.selectedTab =
             tabId;
     }
-
 
 
     //===========================================================
@@ -686,13 +811,26 @@ implements OnInit
 
         if
         (
-            !this.entity.name?.trim()
+            !this.entity.DesignationCode?.trim()
         )
         {
             this.toast.error(
                 'Validation',
+                'Designation Code is required.'
+            );
 
-                'Name is required.'
+            return;
+        }
+
+
+        if
+        (
+            !this.entity.DesignationName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Designation Name is required.'
             );
 
             return;
@@ -700,7 +838,7 @@ implements OnInit
 
 
         //=======================================================
-        // Create
+        // Add
         //=======================================================
 
         if
@@ -708,77 +846,7 @@ implements OnInit
             this.mode === 'add'
         )
         {
-            const model:
-                CreateDesignation =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.designationservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Designation created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Designation Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.saveCreate();
 
             return;
         }
@@ -788,26 +856,122 @@ implements OnInit
         // Update
         //=======================================================
 
+        this.saveUpdate();
+    }
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
+        const model:
+            CreateDesignation =
+        {
+            DesignationCode:
+                this.entity.DesignationCode.trim(),
+
+            DesignationName:
+                this.entity.DesignationName.trim(),
+
+            DesignationShortName:
+                this.entity.DesignationShortName?.trim()
+                ??
+                '',
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+
+
+        this.designationservice
+            .create(
+                model
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.originalEntity =
+                        JSON.stringify(
+                            this.entity
+                        );
+
+                    this.hasChanges =
+                        false;
+
+                    this.toast.success(
+                        'Success',
+                        'Designation created successfully.'
+                    );
+
+                    this.onBackToList();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Create Designation Error',
+                        error
+                    );
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'Failed to create Designation.';
+
+                    this.toast.error(
+                        'Validation',
+                        message
+                    );
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    private saveUpdate():
+        void
+    {
         const model:
             UpdateDesignation =
         {
-            id:
-                this.entity.id,
+            DesignationId:
+                this.entity.DesignationId,
 
-            name:
-                this.entity.name,
+            DesignationCode:
+                this.entity.DesignationCode.trim(),
 
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
+            DesignationName:
+                this.entity.DesignationName.trim(),
 
-            sampleField:
-                this.entity.sampleField,
+            DesignationShortName:
+                this.entity.DesignationShortName?.trim()
+                ??
+                '',
 
-            status:
-                this.entity.status,
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
 
-            remarks:
-                this.entity.remarks
+            IsActive:
+                this.entity.IsActive
         };
 
 
@@ -815,54 +979,50 @@ implements OnInit
             .update(
                 model
             )
-            .subscribe(
-            {
-                next:() =>
+            .subscribe
+            ({
+                next:
+                (): void =>
                 {
                     this.originalEntity =
                         JSON.stringify(
                             this.entity
                         );
 
-
                     this.hasChanges =
                         false;
 
-
                     this.toast.success(
                         'Success',
-
                         'Designation updated successfully.'
                     );
-
 
                     this.onBackToList();
                 },
 
-
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
                         'Update Designation Error',
                         error
                     );
 
-
                     const message =
-                        error?.error
+                        (error as any)?.error
                         ??
-                        'Failed to update {{ENTITY_NAME}.';
-
+                        'Failed to update Designation.';
 
                     this.toast.error(
                         'Validation',
-
                         message
                     );
                 }
             });
     }
-
 
 
     //===========================================================
@@ -883,10 +1043,6 @@ implements OnInit
         {
             this.loadEntity();
 
-
-            this.checkForChanges();
-
-
             return;
         }
 
@@ -897,10 +1053,8 @@ implements OnInit
 
         this.initializeEntity();
 
-
         this.cdr.detectChanges();
     }
-
 
 
     //===========================================================
@@ -915,52 +1069,42 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
+            void this.router.navigate
+            (
+                [
+                    '/human-resource-manangement',
+                    'human-resource-setup',
+                    'designation',
+                    'list'
+                ]
+            );
 
             return;
         }
 
 
         this.confirmDialog.open(
-
             'Cancel Changes',
-
             'Any unsaved changes will be lost. Do you want to leave this page?',
-
 
             () =>
             {
-                void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                void this.router.navigate
+                (
+                    [
+                        '/human-resource-manangement',
+                        'human-resource-setup',
+                        'designation',
+                        'list'
+                    ]
+                );
             },
 
-
             'Leave',
-
             'Stay',
-
             'primary'
         );
     }
-
 
 
     //===========================================================
@@ -976,7 +1120,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View Mode
     //===========================================================
@@ -986,7 +1129,6 @@ implements OnInit
     {
         return this.mode === 'view';
     }
-
 
 
     //===========================================================
@@ -1000,7 +1142,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Add Mode
     //===========================================================
@@ -1012,7 +1153,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Close
     //===========================================================
@@ -1022,7 +1162,6 @@ implements OnInit
     {
         this.onBackToList();
     }
-
 
 
     //===========================================================
@@ -1044,13 +1183,10 @@ implements OnInit
             return;
         }
 
-
         this.initializeEntity();
-
 
         this.cdr.detectChanges();
     }
-
 
 
     //===========================================================
@@ -1061,7 +1197,6 @@ implements OnInit
         void
     {
         this.checkForChanges();
-
 
         this.cdr.detectChanges();
     }

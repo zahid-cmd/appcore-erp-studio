@@ -2,72 +2,58 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup.Department.DTOs;
 
 
 //===============================================================
-// CreateDepartmentDto
+// Create Department DTO
 //===============================================================
 
 public class CreateDepartmentDto
 {
     //===========================================================
-    // Name
+    // Basic Information
     //===========================================================
 
-    public string Name
+    public string DepartmentCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public string DepartmentName
     {
         get;
         set;
-    }
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
+    public string DepartmentShortName
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
     //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 }

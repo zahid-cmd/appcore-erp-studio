@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.AccountClass.DTOs;
 
 
 //===============================================================
-// AccountClassDto
+// Account Class DTO
 //===============================================================
 
 public class AccountClassDto
@@ -15,7 +15,7 @@ public class AccountClassDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long AccountClassId
     {
         get;
         set;
@@ -23,60 +23,45 @@ public class AccountClassDto
 
 
     //===========================================================
-    // Code
+    // Basic Information
     //===========================================================
 
-    public string Code
+    public string ClassType
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
+    public string ClassCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public string ClassName
     {
         get;
         set;
-    }
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
+    public string Mode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Status
-    //===========================================================
+    public string ClassPrefix
+    {
+        get;
+        set;
+    } = string.Empty;
 
-    public bool Status
+
+    public bool AllowManualGroupCreation
     {
         get;
         set;
@@ -84,14 +69,80 @@ public class AccountClassDto
 
 
     //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
+
+
+    //===========================================================
+    // Soft Delete
+    //===========================================================
+
+    public bool IsDeleted
+    {
+        get;
+        set;
     }
-    =
-        string.Empty;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    public long CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

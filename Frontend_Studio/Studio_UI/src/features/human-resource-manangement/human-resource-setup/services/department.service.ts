@@ -9,17 +9,21 @@ import
 }
 from '@angular/core';
 
+
 import
 {
     HttpClient
 }
 from '@angular/common/http';
 
+
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
+
 
 import
 {
@@ -27,13 +31,13 @@ import
 }
 from '../../../../environments/environment';
 
+
 import
 {
     Department,
-
     CreateDepartment,
-
-    UpdateDepartment
+    UpdateDepartment,
+    DepartmentDefaults
 }
 from '../models/department.model';
 
@@ -50,14 +54,12 @@ from '../models/department.model';
 
 export class DepartmentService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +70,20 @@ export class DepartmentService
         `${environment.apiUrl}/human-resource-manangement/human-resource-setup/department`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,19 +92,117 @@ export class DepartmentService
     getAll():
         Observable<Department[]>
     {
-        return this.http.get<Department[]>(
-            this.apiUrl
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        response.map(
+                            department =>
+                            ({
+                                ...department,
+
+                                DepartmentId:
+                                    Number(
+                                        department.DepartmentId
+                                        ??
+                                        department.departmentId
+                                        ??
+                                        department.id
+                                        ??
+                                        department.Id
+                                    ),
+
+                                DepartmentCode:
+                                    department.DepartmentCode
+                                    ??
+                                    department.departmentCode
+                                    ??
+                                    '',
+
+                                DepartmentName:
+                                    department.DepartmentName
+                                    ??
+                                    department.departmentName
+                                    ??
+                                    '',
+
+                                DepartmentShortName:
+                                    department.DepartmentShortName
+                                    ??
+                                    department.departmentShortName
+                                    ??
+                                    '',
+
+                                Remarks:
+                                    department.Remarks
+                                    ??
+                                    department.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        department.IsActive
+                                        ??
+                                        department.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode():
+        Observable<string>
+    {
+        return this.http.get<string>(
+            `${this.apiUrl}/next-code`
         );
     }
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<DepartmentDefaults>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/defaults`
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Code:
+                            response.code
+                            ??
+                            response.Code
+                            ??
+                            ''
+                    })
+                )
+            );
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    getById
-    (
+    getById(
         id:
             number
     ):
@@ -100,13 +214,11 @@ export class DepartmentService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
 
-    create
-    (
+    create(
         model:
             CreateDepartment
     ):
@@ -120,33 +232,29 @@ export class DepartmentService
     }
 
 
-
     //===========================================================
     // Update
     //===========================================================
 
-    update
-    (
+    update(
         model:
             UpdateDepartment
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            this.apiUrl,
 
             model
         );
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
 
-    delete
-    (
+    delete(
         id:
             number
     ):
@@ -158,21 +266,19 @@ export class DepartmentService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
     restore():
-        Observable<void>
+        Observable<boolean>
     {
-        return this.http.put<void>(
+        return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
 
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,23 +292,4 @@ export class DepartmentService
             `${this.apiUrl}/history`
         );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
 }

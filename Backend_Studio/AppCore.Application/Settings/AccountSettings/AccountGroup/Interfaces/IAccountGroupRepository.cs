@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.AccountGroup.DTOs;
 
 
 //===============================================================
@@ -13,98 +13,80 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// IAccountGroupRepository
+// Account Group Repository Interface
 //===============================================================
 
 public interface IAccountGroupRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup>>
-        GetAllAsync();
-
+    Task<List<AccountGroupDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<AccountGroupDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup entity
-    );
-
+    Task<long> CreateAsync(
+        CreateAccountGroupDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup entity
-    );
-
+    Task UpdateAsync(
+        UpdateAccountGroupDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync(
+        long accountClassId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<AccountGroupDefaultsDto> GetDefaultsAsync();
 }

@@ -8,9 +8,9 @@
 
         title="Account Group"
 
-        subtitle="Manage accountgroups"
+        subtitle="Manage account groups"
 
-        icon="fas fa-list">
+        icon="fas fa-layer-group">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search accountgroups..."
+                placeholder="Search account groups..."
 
                 (valueChange)="onSearch($event)">
 
@@ -79,26 +79,49 @@
 
 
         <!-- =================================================
+             ACCOUNT CLASS FILTER
+        ================================================== -->
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Account Classes"
+
+            [items]="accountClassFilterItems"
+
+            labelField="label"
+
+            valueField="value"
+
+            [value]="selectedAccountClassId"
+
+            (valueChange)="onAccountClassFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <!-- =================================================
              STATUS FILTER
         ================================================== -->
 
-        <app-dropdown
+        <app-search-dropdown
 
             pageToolbarRight
 
             placeholder="All Status"
 
-            [items]="statusItems"
+            [items]="statusFilterItems"
 
-            labelField="text"
+            labelField="label"
 
             valueField="value"
 
-            [(value)]="selectedStatus"
+            [value]="selectedStatus"
 
             (valueChange)="onStatusFilterChange($event)">
 
-        </app-dropdown>
+        </app-search-dropdown>
 
     </app-page-toolbar>
 

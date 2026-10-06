@@ -1,49 +1,31 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
          SECTION 01 : PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-user"
-
         [title]="pageTitle"
-
         subtitle="Manage user profiles">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
             (rightCommandClick)="onBackToList()">
 
         </app-command-center>
 
     </app-page-header>
-
-
 
     <!-- =====================================================
          SECTION 02 : PAGE TOOLBAR
@@ -52,18 +34,13 @@
     <app-page-toolbar>
 
         <app-control-tabs
-
             pageToolbarLeft
-
             [tabs]="tabs"
-
             [(selectedTab)]="selectedTab">
 
         </app-control-tabs>
 
     </app-page-toolbar>
-
-
 
     <!-- =====================================================
          SECTION 03 : PAGE CANVAS
@@ -72,12 +49,8 @@
     <app-page-canvas>
 
         <app-form-grid
-
             canvasBody
-
             [columns]="4">
-
-
 
             <!-- =============================================
                  SECTION 01
@@ -85,56 +58,37 @@
             ============================================== -->
 
             <app-form-section
-
                 title="User Profile Identification"
-
                 icon="fas fa-id-card">
-
 
                 <!-- =========================================
                      USER PROFILE CODE
                 ========================================== -->
 
                 <app-textbox
-
                     label="User Profile Code"
-
                     placeholder="Auto generated"
-
                     [(value)]="entity.ProfileCode"
-
                     [readonly]="true"
-
                     [required]="true">
 
                 </app-textbox>
-
-
 
                 <!-- =========================================
                      USER NAME / LOGIN ID
                 ========================================== -->
 
                 <app-textbox
-
                     label="User Name / Login ID"
-
                     placeholder="Enter user name / login ID"
-
                     [(value)]="entity.UserName"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
 
                 </app-textbox>
 
-
             </app-form-section>
-
-
 
             <!-- =============================================
                  SECTION 02
@@ -142,58 +96,53 @@
             ============================================== -->
 
             <app-form-section
-
                 title="Personal Information"
-
                 icon="fas fa-user">
-
 
                 <!-- =========================================
                      DISPLAY NAME
                 ========================================== -->
 
                 <app-textbox
-
                     label="Display Name"
-
                     placeholder="Enter display name"
-
                     [(value)]="entity.DisplayName"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
 
                 </app-textbox>
-
-
 
                 <!-- =========================================
                      FULL NAME
                 ========================================== -->
 
                 <app-textbox
-
                     label="Full Name"
-
                     placeholder="Enter full name"
-
                     [(value)]="entity.FullName"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
 
                 </app-textbox>
 
+                <!-- =========================================
+                     DESIGNATION
+                ========================================== -->
+
+                <app-search-dropdown
+                    label="Designation"
+                    [items]="designations"
+                    labelField="DesignationName"
+                    valueField="DesignationId"
+                    [(value)]="entity.DesignationId"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode">
+
+                </app-search-dropdown>
 
             </app-form-section>
-
-
 
             <!-- =============================================
                  SECTION 03
@@ -201,80 +150,52 @@
             ============================================== -->
 
             <app-form-section
-
                 title="Contact Information"
-
                 icon="fas fa-address-card">
-
 
                 <!-- =========================================
                      EMAIL
                 ========================================== -->
 
                 <app-textbox
-
                     label="Email"
-
                     placeholder="Enter email address"
-
                     [(value)]="entity.Email"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
 
                 </app-textbox>
-
-
 
                 <!-- =========================================
                      MOBILE NO.
                 ========================================== -->
 
                 <app-textbox
-
                     label="Mobile No."
-
                     placeholder="Enter mobile number"
-
                     [(value)]="entity.MobileNo"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
 
                 </app-textbox>
-
-
 
                 <!-- =========================================
                      STATUS
                 ========================================== -->
 
                 <app-dropdown
-
                     label="Status"
-
                     [items]="statusItems"
-
                     [(value)]="entity.IsActive"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
 
                 </app-dropdown>
 
-
             </app-form-section>
-
-
 
             <!-- =============================================
                  SECTION 04
@@ -282,33 +203,23 @@
             ============================================== -->
 
             <app-form-section
-
                 title="Status & Profile Photo"
-
                 icon="fas fa-right-to-bracket">
-
 
                 <!-- =========================================
                      USER PROFILE PHOTO
                 ========================================== -->
 
                 <app-image-hub
-
                     [imageUrl]="userPhotoPreviewUrl"
-
                     placeholder="No Profile Photo"
-
                     [disabled]="isViewMode"
-
                     [readonly]="isViewMode"
-
                     (imageChange)="onUserPhotoChange($event)">
 
                 </app-image-hub>
 
-
             </app-form-section>
-
 
         </app-form-grid>
 
@@ -316,13 +227,10 @@
 
 </div>
 
-
-
 <!-- =====================================================
      SECTION 04 : UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>
-
 
 <app-confirm-dialog></app-confirm-dialog>

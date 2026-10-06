@@ -74,12 +74,14 @@ export class WelcomeWidgetComponent
     userDesignation =
         '';
 
+    userRoleProfile =
+        '';
+
     userFirstName =
         '';
 
     userLastName =
         '';
-
 
     //===========================================================
     // Logged In Branch
@@ -88,7 +90,6 @@ export class WelcomeWidgetComponent
     userBranchName =
         '';
 
-
     //===========================================================
     // User Profile Photo
     //===========================================================
@@ -96,14 +97,12 @@ export class WelcomeWidgetComponent
     userPhotoUrl =
         '';
 
-
     //===========================================================
     // Greeting
     //===========================================================
 
     greeting =
         'Good Morning';
-
 
     //===========================================================
     // Current Date & Time
@@ -114,7 +113,6 @@ export class WelcomeWidgetComponent
 
     currentTime =
         new Date();
-
 
     //===========================================================
     // Statistics
@@ -183,7 +181,6 @@ export class WelcomeWidgetComponent
         }
     };
 
-
     //===========================================================
     // Quote
     //===========================================================
@@ -197,7 +194,6 @@ export class WelcomeWidgetComponent
     quoteFooter =
         "Keep going, you're doing great!";
 
-
     //===========================================================
     // Clock Timer
     //===========================================================
@@ -207,7 +203,6 @@ export class WelcomeWidgetComponent
         |
         null =
         null;
-
 
     //===========================================================
     // Constructor
@@ -225,7 +220,6 @@ export class WelcomeWidgetComponent
     )
     {}
 
-
     //===========================================================
     // Initialization
     //===========================================================
@@ -240,7 +234,6 @@ export class WelcomeWidgetComponent
         this.startClock();
     }
 
-
     //===========================================================
     // Load Authenticated User
     //===========================================================
@@ -251,7 +244,6 @@ export class WelcomeWidgetComponent
         const user =
             this.authenticationStorageService.getUser();
 
-
         if
         (
             !user
@@ -261,7 +253,6 @@ export class WelcomeWidgetComponent
 
             return;
         }
-
 
         //=======================================================
         // Initial Display Name
@@ -282,7 +273,6 @@ export class WelcomeWidgetComponent
             )
             .trim();
 
-
         //=======================================================
         // Initial Full Name
         //=======================================================
@@ -296,7 +286,6 @@ export class WelcomeWidgetComponent
                 ''
             )
             .trim();
-
 
         //=======================================================
         // Initial Logged In Branch
@@ -313,13 +302,11 @@ export class WelcomeWidgetComponent
             )
             .trim();
 
-
         //=======================================================
         // Initial Name Split
         //=======================================================
 
         this.updateNameParts();
-
 
         //=======================================================
         // User Profile ID
@@ -329,7 +316,6 @@ export class WelcomeWidgetComponent
             Number(
                 user.userProfileId
             );
-
 
         if
         (
@@ -348,7 +334,6 @@ export class WelcomeWidgetComponent
             return;
         }
 
-
         //=======================================================
         // Load Latest User Profile
         //=======================================================
@@ -357,7 +342,6 @@ export class WelcomeWidgetComponent
             userProfileId
         );
     }
-
 
     //===========================================================
     // Load User Profile
@@ -398,7 +382,6 @@ export class WelcomeWidgetComponent
                             ??
                             '';
 
-
                         if
                         (
                             displayName.length > 0
@@ -410,7 +393,6 @@ export class WelcomeWidgetComponent
                             this.updateNameParts();
                         }
 
-
                         //========================================
                         // Full Name
                         //========================================
@@ -419,7 +401,6 @@ export class WelcomeWidgetComponent
                             profile.FullName?.trim()
                             ??
                             '';
-
 
                         if
                         (
@@ -430,27 +411,47 @@ export class WelcomeWidgetComponent
                                 fullName;
                         }
 
-
                         //========================================
                         // Designation
                         //========================================
                         //
-                        // PrimaryRoleName is used as the current
-                        // designation source because the current
-                        // UserProfile DTO does not contain a
-                        // separate Designation property.
+                        // DesignationName is the actual HR
+                        // Designation assigned to this User Profile.
+                        //
+                        // PrimaryRoleName is intentionally NOT used
+                        // here because it represents the Role Profile
+                        // shown separately above the Branch.
+                        //
+                        // If no Designation is assigned, keep the
+                        // value empty so the template leaves the
+                        // designation line blank.
                         //
                         //========================================
 
                         const designation =
-                            profile.PrimaryRoleName?.trim()
+                            profile.DesignationName?.trim()
                             ??
                             '';
-
 
                         this.userDesignation =
                             designation;
 
+                        //========================================
+                        // Role Profile
+                        //========================================
+                        //
+                        // PrimaryRoleName is the Role Profile.
+                        // It remains separate from the HR Designation.
+                        //
+                        //========================================
+
+                        const roleProfile =
+                            profile.PrimaryRoleName?.trim()
+                            ??
+                            '';
+
+                        this.userRoleProfile =
+                            roleProfile;
 
                         //========================================
                         // User Photo Data
@@ -460,7 +461,6 @@ export class WelcomeWidgetComponent
                             profile.UserPhotoData?.trim()
                             ??
                             '';
-
 
                         //========================================
                         // Set Profile Photo
@@ -480,13 +480,11 @@ export class WelcomeWidgetComponent
                                 '';
                         }
 
-
                         //========================================
                         // Change Detection
                         //========================================
 
                         this.changeDetectorRef.detectChanges();
-
 
                         //========================================
                         // Debug
@@ -546,11 +544,13 @@ export class WelcomeWidgetComponent
                         this.userDesignation =
                             '';
 
+                        this.userRoleProfile =
+                            '';
+
                         this.changeDetectorRef.detectChanges();
                     }
             });
     }
-
 
     //===========================================================
     // Update Name Parts
@@ -567,12 +567,10 @@ export class WelcomeWidgetComponent
                         part.length > 0
                 );
 
-
         this.userFirstName =
             nameParts.length > 0
                 ? nameParts[0]
                 : '';
-
 
         this.userLastName =
             nameParts.length > 1
@@ -581,7 +579,6 @@ export class WelcomeWidgetComponent
                     .join(' ')
                 : '';
     }
-
 
     //===========================================================
     // Profile Photo Error
@@ -594,7 +591,6 @@ export class WelcomeWidgetComponent
             'WELCOME WIDGET - PROFILE PHOTO FAILED'
         );
     }
-
 
     //===========================================================
     // Clear User Information
@@ -612,6 +608,9 @@ export class WelcomeWidgetComponent
         this.userDesignation =
             '';
 
+        this.userRoleProfile =
+            '';
+
         this.userFirstName =
             '';
 
@@ -624,7 +623,6 @@ export class WelcomeWidgetComponent
         this.userPhotoUrl =
             '';
     }
-
 
     //===========================================================
     // Start Clock
@@ -642,7 +640,6 @@ export class WelcomeWidgetComponent
             return;
         }
 
-
         this.clockTimer =
             setInterval
             (
@@ -657,7 +654,6 @@ export class WelcomeWidgetComponent
             );
     }
 
-
     //===========================================================
     // Update Date & Time
     //===========================================================
@@ -668,19 +664,16 @@ export class WelcomeWidgetComponent
         const now =
             new Date();
 
-
         this.currentDate =
             now;
 
         this.currentTime =
             now;
 
-
         this.updateGreeting(
             now
         );
     }
-
 
     //===========================================================
     // Update Greeting
@@ -695,7 +688,6 @@ export class WelcomeWidgetComponent
         const hour =
             date.getHours();
 
-
         if
         (
             hour >= 5
@@ -708,7 +700,6 @@ export class WelcomeWidgetComponent
 
             return;
         }
-
 
         if
         (
@@ -723,7 +714,6 @@ export class WelcomeWidgetComponent
             return;
         }
 
-
         if
         (
             hour >= 17
@@ -737,11 +727,9 @@ export class WelcomeWidgetComponent
             return;
         }
 
-
         this.greeting =
             'Good Night';
     }
-
 
     //===========================================================
     // First Name Display
@@ -753,7 +741,6 @@ export class WelcomeWidgetComponent
         return this.userFirstName;
     }
 
-
     //===========================================================
     // Last Name Display
     //===========================================================
@@ -763,7 +750,6 @@ export class WelcomeWidgetComponent
     {
         return this.userLastName;
     }
-
 
     //===========================================================
     // Formatted Date
@@ -790,7 +776,6 @@ export class WelcomeWidgetComponent
         );
     }
 
-
     //===========================================================
     // Formatted Time
     //===========================================================
@@ -812,7 +797,6 @@ export class WelcomeWidgetComponent
             }
         );
     }
-
 
     //===========================================================
     // Time Value
@@ -841,7 +825,6 @@ export class WelcomeWidgetComponent
             );
     }
 
-
     //===========================================================
     // Time Period
     //===========================================================
@@ -865,7 +848,6 @@ export class WelcomeWidgetComponent
             ??
             '';
     }
-
 
     //===========================================================
     // Destroy

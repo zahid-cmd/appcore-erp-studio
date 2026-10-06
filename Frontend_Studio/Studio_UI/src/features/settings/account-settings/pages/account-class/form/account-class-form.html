@@ -1,16 +1,17 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-layer-group"
 
         [title]="pageTitle"
 
-        subtitle="Manage accountclasses">
+        subtitle="Manage account classes">
 
         <app-command-center
 
@@ -45,7 +46,7 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : PAGE TOOLBAR
     ====================================================== -->
 
     <app-page-toolbar>
@@ -65,7 +66,7 @@
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
     <app-page-canvas>
@@ -77,27 +78,49 @@
             [columns]="4">
 
 
+
             <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
+                 SECTION 01
+                 BASIC INFORMATION
             ============================================== -->
 
             <app-form-section
 
-                title="General Information"
+                title="Basic Information"
 
-                icon="fas fa-circle-info">
+                icon="fas fa-layer-group">
 
 
-                <!-- Code -->
+
+            <!-- Class Type -->
+
+            <app-dropdown
+
+                label="Class Type"
+
+                [items]="classTypeItems"
+
+                [(value)]="entity.ClassType"
+
+                (valueChange)="onClassTypeChange()"
+
+                [disabled]="isEditMode || isViewMode"
+
+                [required]="true">
+
+            </app-dropdown>
+
+
+
+                <!-- Class Code -->
 
                 <app-textbox
 
-                    label="Code"
+                    label="Class Code"
 
                     placeholder="Auto generated"
 
-                    [(value)]="entity.code"
+                    [(value)]="entity.ClassCode"
 
                     [readonly]="true"
 
@@ -107,15 +130,49 @@
 
 
 
-                <!-- Name -->
+                <!-- Class Prefix -->
 
                 <app-textbox
 
-                    label="Name"
+                    label="Class Prefix"
 
-                    placeholder="Enter name"
+                    placeholder="Auto generated"
 
-                    [(value)]="entity.name"
+                    [(value)]="entity.ClassPrefix"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 CLASS INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Class Information"
+
+                icon="fas fa-tags">
+
+
+
+                <!-- Class Name -->
+
+                <app-textbox
+
+                    label="Class Name"
+
+                    placeholder="Enter class name"
+
+                    [(value)]="entity.ClassName"
 
                     (valueChange)="onValueChange()"
 
@@ -126,90 +183,16 @@
                 </app-textbox>
 
 
-            </app-form-section>
 
-
-
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Sample Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Sample Search Dropdown -->
-
-                <app-search-dropdown
-
-                    label="Sample Search Dropdown"
-
-                    [items]="items"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.sampleSearchDropdownId"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sample Field -->
-
-                <app-textbox
-
-                    label="Sample Field"
-
-                    placeholder="Enter sample value"
-
-                    [(value)]="entity.sampleField"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status Information"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status -->
+                <!-- Mode -->
 
                 <app-dropdown
 
-                    label="Status"
+                    label="Mode"
 
-                    [items]="statusItems"
+                    [items]="modeItems"
 
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.status"
+                    [(value)]="entity.Mode"
 
                     (valueChange)="onValueChange()"
 
@@ -225,15 +208,72 @@
 
 
             <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
+                 SECTION 03
+                 STATUS & CONTROL
             ============================================== -->
 
             <app-form-section
 
-                title="Additional Information"
+                title="Status & Control"
 
-                icon="fas fa-clipboard">
+                icon="fas fa-toggle-on">
+
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+
+                <!-- Allow Manual Group Creation -->
+
+                <app-dropdown
+
+                    label="Allow Manual Group Creation"
+
+                    [items]="manualGroupCreationItems"
+
+                    [(value)]="entity.AllowManualGroupCreation"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 CONFIGURATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Description"
+
+                icon="fas fa-sliders">
+
 
 
                 <!-- Remarks -->
@@ -244,7 +284,9 @@
 
                     placeholder="Enter remarks"
 
-                    [(value)]="entity.remarks"
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
 
                     (valueChange)="onValueChange()"
 
@@ -253,7 +295,9 @@
                 </app-textarea>
 
 
+
             </app-form-section>
+
 
 
         </app-form-grid>
@@ -265,7 +309,7 @@
 
 
 <!-- =====================================================
-     UTILITIES
+     SECTION 04 : UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

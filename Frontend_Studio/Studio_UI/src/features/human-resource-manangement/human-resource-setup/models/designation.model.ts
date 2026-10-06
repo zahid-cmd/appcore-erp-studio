@@ -4,26 +4,36 @@
 
 export interface Designation
 {
-    id:
+    DesignationId:
         number;
 
-    code:
+
+    DesignationCode:
         string;
 
-    name:
+
+    DesignationName:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    DesignationShortName:
         string;
 
-    status:
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
         string;
 
-    remarks:
-        string;
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -34,20 +44,32 @@ export interface Designation
 
 export interface CreateDesignation
 {
-    name:
+    DesignationCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    DesignationName:
         string;
 
-    status:
+
+    DesignationShortName:
         string;
 
-    remarks:
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
         string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -58,23 +80,36 @@ export interface CreateDesignation
 
 export interface UpdateDesignation
 {
-    id:
+    DesignationId:
         number;
 
-    name:
+
+    DesignationCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    DesignationName:
         string;
 
-    status:
+
+    DesignationShortName:
         string;
 
-    remarks:
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
         string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -85,6 +120,6 @@ export interface UpdateDesignation
 
 export interface DesignationDefaults
 {
-    code:
+    Code:
         string;
 }

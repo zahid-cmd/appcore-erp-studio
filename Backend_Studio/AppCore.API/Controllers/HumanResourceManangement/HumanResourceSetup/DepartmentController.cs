@@ -4,313 +4,248 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup.Department.DTOs;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Api.Controllers.HumanResourceManangement.HumanResourceSetup;
+namespace AppCore.API.Controllers.HumanResourceManangement.HumanResourceSetup;
 
 
 //===============================================================
-// DepartmentController
+// Department Controller
 //===============================================================
 
 [ApiController]
 
 [Route("api/human-resource-manangement/human-resource-setup/department")]
 
-public class DepartmentController
-    : ControllerBase
+public class DepartmentController : ControllerBase
 {
-    //===========================================================
-    // Repository
-    //===========================================================
+    //===============================================================
+    // Fields
+    //===============================================================
 
     private readonly IDepartmentRepository _repository;
 
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
 
-    //===========================================================
+
+    //===============================================================
     // Constructor
-    //===========================================================
+    //===============================================================
 
-    public DepartmentController
-    (
-        IDepartmentRepository repository
-    )
+    public DepartmentController(
+        IDepartmentRepository repository,
+        IActivityHistoryRepository activityHistoryRepository)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
     }
 
 
-    //===========================================================
+    //===============================================================
     // Get All
-    //===========================================================
+    //===============================================================
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<DepartmentDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
+        List<DepartmentDto> departments =
+            await _repository.GetAllAsync();
 
-
-        return Ok(
-            entities
-        );
+        return Ok(departments);
     }
 
 
-    //===========================================================
+    //===============================================================
+    // Get Next Code
+    //===============================================================
+
+    [HttpGet("next-code")]
+
+    public async Task<ActionResult<string>> GetNextCode()
+    {
+        return Ok(
+            await _repository.GetNextCodeAsync());
+    }
+
+
+    //===============================================================
+    // Get Defaults
+    //===============================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<DepartmentDefaultsDto>> GetDefaults()
+    {
+        return Ok(
+            await _repository.GetDefaultsAsync());
+    }
+
+
+    //===============================================================
     // Get By Id
-    //===========================================================
+    //===============================================================
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<DepartmentDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        DepartmentDto? department =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
+        if (department == null)
         {
             return NotFound();
         }
 
-
-        return Ok(
-            entity
-        );
+        return Ok(department);
     }
 
 
-    //===========================================================
+    //===============================================================
     // Create
-    //===========================================================
+    //===============================================================
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateDepartmentDto dto
-    )
+    public async Task<ActionResult<long>> Create(
+        CreateDepartmentDto dto)
     {
-        var entity =
-            new Department
-            {
-                Name =
-                    dto.Name,
+        long userId = 1;
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+        long id =
+            await _repository.CreateAsync(
+                dto,
+                userId);
 
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+        return Ok(id);
     }
 
 
-    //===========================================================
+    //===============================================================
     // Update
-    //===========================================================
+    //===============================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut]
 
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateDepartmentDto dto
-    )
+    public async Task<IActionResult> Update(
+        UpdateDepartmentDto dto)
     {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(
+                dto.DepartmentId))
         {
             return NotFound();
         }
 
+        long userId = 1;
 
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
+        await _repository.UpdateAsync(
+            dto,
+            userId);
 
         return NoContent();
     }
 
 
-    //===========================================================
+    //===============================================================
     // Delete
-    //===========================================================
+    //===============================================================
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public async Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        //===========================================================
+        // Verify Department Exists
+        //===========================================================
 
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(id))
         {
             return NotFound();
         }
 
 
-        await _repository
-            .DeleteAsync(
-                id
-            );
+        //===========================================================
+        // Current User
+        //===========================================================
 
+        long userId = 1;
+
+
+        //===========================================================
+        // Delete
+        //===========================================================
+
+        try
+        {
+            await _repository.DeleteAsync(
+                id,
+                userId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return Conflict(ex.Message);
+        }
+
+
+        //===========================================================
+        // Delete Successful
+        //===========================================================
 
         return NoContent();
     }
 
 
-    //===========================================================
+    //===============================================================
     // Restore
-    //===========================================================
+    //===============================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        long userId = 1;
 
+        bool restored =
+            await _repository.RestoreAsync(
+                userId);
+
+        if (!restored)
+        {
+            return NotFound(
+                "There are no deleted departments available to restore.");
+        }
 
         return NoContent();
     }
 
 
-    //===========================================================
+    //===============================================================
     // Get History
-    //===========================================================
+    //===============================================================
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Human Resource Setup",
+                "Department"));
     }
 }

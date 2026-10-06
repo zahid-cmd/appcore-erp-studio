@@ -9,17 +9,21 @@ import
 }
 from '@angular/core';
 
+
 import
 {
     HttpClient
 }
 from '@angular/common/http';
 
+
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
+
 
 import
 {
@@ -27,13 +31,13 @@ import
 }
 from '../../../../environments/environment';
 
+
 import
 {
     Designation,
-
     CreateDesignation,
-
-    UpdateDesignation
+    UpdateDesignation,
+    DesignationDefaults
 }
 from '../models/designation.model';
 
@@ -50,14 +54,12 @@ from '../models/designation.model';
 
 export class DesignationService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +70,20 @@ export class DesignationService
         `${environment.apiUrl}/human-resource-manangement/human-resource-setup/designation`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,19 +92,117 @@ export class DesignationService
     getAll():
         Observable<Designation[]>
     {
-        return this.http.get<Designation[]>(
-            this.apiUrl
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        response.map(
+                            designation =>
+                            ({
+                                ...designation,
+
+                                DesignationId:
+                                    Number(
+                                        designation.DesignationId
+                                        ??
+                                        designation.designationId
+                                        ??
+                                        designation.id
+                                        ??
+                                        designation.Id
+                                    ),
+
+                                DesignationCode:
+                                    designation.DesignationCode
+                                    ??
+                                    designation.designationCode
+                                    ??
+                                    '',
+
+                                DesignationName:
+                                    designation.DesignationName
+                                    ??
+                                    designation.designationName
+                                    ??
+                                    '',
+
+                                DesignationShortName:
+                                    designation.DesignationShortName
+                                    ??
+                                    designation.designationShortName
+                                    ??
+                                    '',
+
+                                Remarks:
+                                    designation.Remarks
+                                    ??
+                                    designation.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        designation.IsActive
+                                        ??
+                                        designation.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode():
+        Observable<string>
+    {
+        return this.http.get<string>(
+            `${this.apiUrl}/next-code`
         );
     }
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<DesignationDefaults>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/defaults`
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Code:
+                            response.code
+                            ??
+                            response.Code
+                            ??
+                            ''
+                    })
+                )
+            );
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    getById
-    (
+    getById(
         id:
             number
     ):
@@ -100,13 +214,11 @@ export class DesignationService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
 
-    create
-    (
+    create(
         model:
             CreateDesignation
     ):
@@ -120,33 +232,29 @@ export class DesignationService
     }
 
 
-
     //===========================================================
     // Update
     //===========================================================
 
-    update
-    (
+    update(
         model:
             UpdateDesignation
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            this.apiUrl,
 
             model
         );
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
 
-    delete
-    (
+    delete(
         id:
             number
     ):
@@ -158,21 +266,19 @@ export class DesignationService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
     restore():
-        Observable<void>
+        Observable<boolean>
     {
-        return this.http.put<void>(
+        return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
 
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,23 +292,4 @@ export class DesignationService
             `${this.apiUrl}/history`
         );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
 }

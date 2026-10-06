@@ -2,33 +2,20 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.AccountGroup.DTOs;
 
 
 //===============================================================
-// CreateAccountGroupDto
+// Create Account Group DTO
 //===============================================================
 
 public class CreateAccountGroupDto
 {
     //===========================================================
-    // Name
+    // Account Class
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountClassId
     {
         get;
         set;
@@ -36,38 +23,62 @@ public class CreateAccountGroupDto
 
 
     //===========================================================
-    // Sample Field
+    // Basic Information
     //===========================================================
 
-    public string SampleField
+    public string ClassCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Mode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public bool AllowManualSubGroup
     {
         get;
         set;
     }
-    =
-        string.Empty;
 
 
     //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 }

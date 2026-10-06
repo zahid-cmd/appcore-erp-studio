@@ -156,6 +156,27 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : AccountSubGroup
+
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
+
+// AUTO-END : AccountSubGroup
+
+// AUTO-BEGIN : AccountGroup
+
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
+
+// AUTO-END : AccountGroup
+
+// AUTO-BEGIN : AccountClass
+
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
+
+// AUTO-END : AccountClass
+
 // AUTO-BEGIN : BranchAssignment
 
 using AppCore.Application.SecurityPermission.UserManagement;
@@ -425,21 +446,9 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 
 
-// AUTO-BEGIN : AccountGroup
-
-using AppCore.Application.Settings.AccountSettings;
-using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
-
-// AUTO-END : AccountGroup
 
 
 
-// AUTO-BEGIN : AccountClass
-
-using AppCore.Application.Settings.AccountSettings;
-using AppCore.Infrastructure.Configurations.Settings.AccountSettings;
-
-// AUTO-END : AccountClass
 
 
 // AUTO-END : AUTO REGISTER NAMESPACES
@@ -589,6 +598,36 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : AccountSubGroup
+
+        services.AddScoped
+        <
+            IAccountSubGroupRepository,
+            AccountSubGroupRepository
+        >();
+
+        // AUTO-END : AccountSubGroup
+
+        // AUTO-BEGIN : AccountGroup
+
+        services.AddScoped
+        <
+            IAccountGroupRepository,
+            AccountGroupRepository
+        >();
+
+        // AUTO-END : AccountGroup
+
+        // AUTO-BEGIN : AccountClass
+
+        services.AddScoped
+        <
+            IAccountClassRepository,
+            AccountClassRepository
+        >();
+
+        // AUTO-END : AccountClass
 
         // AUTO-BEGIN : BranchAssignment
 
@@ -941,27 +980,9 @@ public static class DependencyInjection
 
 
 
-        // AUTO-BEGIN : AccountGroup
-
-        services.AddScoped
-        <
-            IAccountGroupRepository,
-            AccountGroupRepository
-        >();
-
-        // AUTO-END : AccountGroup
 
 
 
-        // AUTO-BEGIN : AccountClass
-
-        services.AddScoped
-        <
-            IAccountClassRepository,
-            AccountClassRepository
-        >();
-
-        // AUTO-END : AccountClass
 
         // AUTO-END : AUTO REGISTER SERVICES
 

@@ -63,8 +63,20 @@
          FOOTER
     ====================================================== -->
 
-    <app-footer>
+    <app-footer
+        (aboutClick)="openAbout()">
     </app-footer>
+
+
+
+    <!-- =====================================================
+         ABOUT APPCORE
+    ====================================================== -->
+
+    <app-about-appcore
+        [visible]="showAbout"
+        (close)="closeAbout()">
+    </app-about-appcore>
 
 
 

@@ -2,24 +2,22 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.AccountClass.DTOs;
 
 
 //===============================================================
-// AccountClassDefaultsDto
+// Account Class Defaults DTO
 //===============================================================
 
 public class AccountClassDefaultsDto
 {
     //===========================================================
-    // Code
+    // Account Class Code
     //===========================================================
 
     public string Code
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 }

@@ -1,8 +1,19 @@
-import { Component } from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    Output
+}
+from '@angular/core';
 
-import { FooterVersionComponent } from '../../shared/components/layout/footer-version/footer-version';
+import {
+    FooterVersionComponent
+}
+from '../../shared/components/layout/footer-version/footer-version';
 
-import { FooterBrandComponent } from '../../shared/components/layout/footer-brand/footer-brand';
+import {
+    FooterBrandComponent
+}
+from '../../shared/components/layout/footer-brand/footer-brand';
 
 @Component({
     selector: 'app-footer',
@@ -15,5 +26,15 @@ import { FooterBrandComponent } from '../../shared/components/layout/footer-bran
     styleUrls: ['./footer.css']
 })
 export class FooterComponent {
+
+    @Output()
+    aboutClick =
+        new EventEmitter<void>();
+
+    openAbout(): void {
+
+        this.aboutClick.emit();
+
+    }
 
 }

@@ -103,6 +103,12 @@ from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+import
+{
     ImageHubComponent
 }
 from '../../../../../../shared/components/controls/image-hub/image-hub';
@@ -159,6 +165,17 @@ import
 }
 from '../../../services/user-profile.service';
 
+import
+{
+    Designation
+}
+from '../../../../../human-resource-manangement/human-resource-setup/models/designation.model';
+
+import
+{
+    DesignationService
+}
+from '../../../../../human-resource-manangement/human-resource-setup/services/designation.service';
 
 //===============================================================
 // Component
@@ -203,6 +220,7 @@ from '../../../services/user-profile.service';
         TextboxComponent,
 
         DropdownComponent,
+        SearchDropdownComponent,
 
         ImageHubComponent,
 
@@ -258,7 +276,8 @@ implements OnInit
     private readonly cdr =
         inject(ChangeDetectorRef);
 
-
+    private readonly designationservice =
+        inject(DesignationService);
 
     //===========================================================
     // Mode
@@ -404,7 +423,14 @@ implements OnInit
         }
     ];
 
+    //===========================================================
+    // Designations
+    //===========================================================
 
+    designations:
+        Designation[]
+    =
+    [];
 
     //===========================================================
     // Entity
@@ -423,6 +449,9 @@ implements OnInit
         DisplayName:'',
 
         FullName:'',
+
+        DesignationId:
+            null,
 
         Email:'',
 
@@ -477,10 +506,56 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadDesignations();
+
         this.initializeMode();
     }
 
 
+    //===========================================================
+    // Load Designations
+    //===========================================================
+
+    private loadDesignations():
+        void
+    {
+        this.designationservice
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        Designation[]
+                ): void =>
+                {
+                    this.designations =
+                        response
+                        .filter
+                        (
+                            item =>
+                                item.IsActive
+                        );
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Load Designations Error',
+                        error
+                    );
+
+                    this.designations =
+                        [];
+                }
+            });
+    }
 
     //===========================================================
     // Initialize Mode
@@ -902,6 +977,13 @@ implements OnInit
                             response?.fullName
                             ??
                             '',
+
+                        DesignationId:
+                            response?.DesignationId
+                            ??
+                            response?.designationId
+                            ??
+                            null,
 
                         Email:
                             response?.Email
@@ -1596,6 +1678,11 @@ implements OnInit
             FullName:
                 this.entity.FullName.trim(),
 
+            DesignationId:
+                this.entity.DesignationId
+                ??
+                null,
+
             Email:
                 this.entity.Email.trim(),
 
@@ -1701,6 +1788,11 @@ implements OnInit
 
             FullName:
                 this.entity.FullName.trim(),
+
+            DesignationId:
+                this.entity.DesignationId
+                ??
+                null,
 
             Email:
                 this.entity.Email.trim(),

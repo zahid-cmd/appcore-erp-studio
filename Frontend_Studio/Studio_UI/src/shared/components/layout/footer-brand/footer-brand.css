@@ -59,7 +59,7 @@
         ); 
  
     overflow: 
-        hidden; 
+        visible; 
  
     /* 
         Footer application layer. 
@@ -68,9 +68,7 @@
     */ 
     z-index: 
         50; 
-} 
- 
- 
+}
  
 /* ===================================================== 
    TOP EDGE 

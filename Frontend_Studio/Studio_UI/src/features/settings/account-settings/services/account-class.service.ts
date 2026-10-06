@@ -9,17 +9,21 @@ import
 }
 from '@angular/core';
 
+
 import
 {
     HttpClient
 }
 from '@angular/common/http';
 
+
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
+
 
 import
 {
@@ -27,13 +31,13 @@ import
 }
 from '../../../../environments/environment';
 
+
 import
 {
     AccountClass,
-
     CreateAccountClass,
-
-    UpdateAccountClass
+    UpdateAccountClass,
+    AccountClassDefaults
 }
 from '../models/account-class.model';
 
@@ -50,14 +54,12 @@ from '../models/account-class.model';
 
 export class AccountClassService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +70,20 @@ export class AccountClassService
         `${environment.apiUrl}/settings/account-settings/account-class`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/+$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,19 +92,146 @@ export class AccountClassService
     getAll():
         Observable<AccountClass[]>
     {
-        return this.http.get<AccountClass[]>(
-            this.apiUrl
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        response.map(
+                            accountClass =>
+                            ({
+                                ...accountClass,
+
+                                AccountClassId:
+                                    Number(
+                                        accountClass.AccountClassId
+                                        ??
+                                        accountClass.accountClassId
+                                        ??
+                                        accountClass.id
+                                        ??
+                                        accountClass.Id
+                                    ),
+
+                                ClassType:
+                                    accountClass.ClassType
+                                    ??
+                                    accountClass.classType
+                                    ??
+                                    '',
+
+                                ClassCode:
+                                    accountClass.ClassCode
+                                    ??
+                                    accountClass.classCode
+                                    ??
+                                    '',
+
+                                ClassName:
+                                    accountClass.ClassName
+                                    ??
+                                    accountClass.className
+                                    ??
+                                    '',
+
+                                Mode:
+                                    accountClass.Mode
+                                    ??
+                                    accountClass.mode
+                                    ??
+                                    '',
+
+                                ClassPrefix:
+                                    accountClass.ClassPrefix
+                                    ??
+                                    accountClass.classPrefix
+                                    ??
+                                    '',
+
+                                AllowManualGroupCreation:
+                                    Boolean(
+                                        accountClass.AllowManualGroupCreation
+                                        ??
+                                        accountClass.allowManualGroupCreation
+                                        ??
+                                        false
+                                    ),
+
+                                Remarks:
+                                    accountClass.Remarks
+                                    ??
+                                    accountClass.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        accountClass.IsActive
+                                        ??
+                                        accountClass.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode(
+        classType:
+            string
+    ):
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code/${encodeURIComponent(classType)}`,
+            {
+                responseType:'text'
+            }
         );
     }
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<AccountClassDefaults>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/defaults`
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Code:
+                            response.code
+                            ??
+                            response.Code
+                            ??
+                            ''
+                    })
+                )
+            );
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    getById
-    (
+    getById(
         id:
             number
     ):
@@ -100,13 +243,11 @@ export class AccountClassService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
 
-    create
-    (
+    create(
         model:
             CreateAccountClass
     ):
@@ -120,33 +261,29 @@ export class AccountClassService
     }
 
 
-
     //===========================================================
     // Update
     //===========================================================
 
-    update
-    (
+    update(
         model:
             UpdateAccountClass
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            this.apiUrl,
 
             model
         );
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
 
-    delete
-    (
+    delete(
         id:
             number
     ):
@@ -156,7 +293,6 @@ export class AccountClassService
             `${this.apiUrl}/${id}`
         );
     }
-
 
 
     //===========================================================
@@ -174,7 +310,6 @@ export class AccountClassService
     }
 
 
-
     //===========================================================
     // Get History
     //===========================================================
@@ -186,23 +321,4 @@ export class AccountClassService
             `${this.apiUrl}/history`
         );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
 }

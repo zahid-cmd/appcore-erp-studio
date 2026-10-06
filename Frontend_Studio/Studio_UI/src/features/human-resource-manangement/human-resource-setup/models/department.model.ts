@@ -4,26 +4,36 @@
 
 export interface Department
 {
-    id:
+    DepartmentId:
         number;
 
-    code:
+
+    DepartmentCode:
         string;
 
-    name:
+
+    DepartmentName:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    DepartmentShortName:
         string;
 
-    status:
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
         string;
 
-    remarks:
-        string;
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -34,20 +44,32 @@ export interface Department
 
 export interface CreateDepartment
 {
-    name:
+    DepartmentCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    DepartmentName:
         string;
 
-    status:
+
+    DepartmentShortName:
         string;
 
-    remarks:
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
         string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -58,23 +80,36 @@ export interface CreateDepartment
 
 export interface UpdateDepartment
 {
-    id:
+    DepartmentId:
         number;
 
-    name:
+
+    DepartmentCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    DepartmentName:
         string;
 
-    status:
+
+    DepartmentShortName:
         string;
 
-    remarks:
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    Remarks:
         string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
@@ -85,6 +120,6 @@ export interface UpdateDepartment
 
 export interface DepartmentDefaults
 {
-    code:
+    Code:
         string;
 }

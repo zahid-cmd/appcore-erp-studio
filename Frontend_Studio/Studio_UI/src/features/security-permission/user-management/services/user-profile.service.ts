@@ -9,24 +9,19 @@ import
 }
 from '@angular/core';
 
-
 import
 {
     HttpClient
 }
 from '@angular/common/http';
 
-
 import
 {
     Observable,
-
     map,
-
     tap
 }
 from 'rxjs';
-
 
 import
 {
@@ -34,15 +29,11 @@ import
 }
 from '../../../../environments/environment';
 
-
 import
 {
     UserProfile,
-
     CreateUserProfile,
-
     UpdateUserProfile,
-
     UserProfileDefaults
 }
 from '../models/user-profile.model';
@@ -52,8 +43,8 @@ from '../models/user-profile.model';
 // User Profile Service
 //===============================================================
 
-@Injectable(
-{
+@Injectable
+({
     providedIn:
         'root'
 })
@@ -66,14 +57,12 @@ export class UserProfileService
     private readonly http =
         inject(HttpClient);
 
-
     //===========================================================
     // API
     //===========================================================
 
     private readonly apiUrl =
         `${environment.apiUrl}/security-permission/user-management/user-profile`;
-
 
     //===========================================================
     // Get First Non-Empty Value
@@ -113,7 +102,6 @@ export class UserProfileService
         return '';
     }
 
-
     //===========================================================
     // Get All
     //===========================================================
@@ -122,20 +110,16 @@ export class UserProfileService
         Observable<UserProfile[]>
     {
         return this.http
-
             .get<any[]>(
                 this.apiUrl
             )
-
             .pipe(
-
                 map(
                     response =>
                         response.map(
                             profile =>
                             ({
                                 ...profile,
-
                                 userProfileId:
                                     Number
                                     (
@@ -149,96 +133,80 @@ export class UserProfileService
                                         ??
                                         0
                                     ),
-
-
                                 //================================
                                 // Display Name
                                 //================================
                                 // Use Full Name first so the UI
                                 // displays the complete user name.
                                 //================================
-
                                 displayName:
                                     this.getFirstNonEmptyValue
                                     (
                                         profile.fullName,
-
                                         profile.FullName,
-
                                         profile.displayName,
-
                                         profile.DisplayName,
-
                                         profile.userName,
-
                                         profile.UserName
                                     ),
-
-
                                 //================================
                                 // Full Name
                                 //================================
-
                                 fullName:
                                     this.getFirstNonEmptyValue
                                     (
                                         profile.fullName,
-
                                         profile.FullName
                                     ),
-
-
+                                //================================
+                                // Designation
+                                //================================
+                                DesignationId:
+                                    profile.DesignationId
+                                    ??
+                                    profile.designationId
+                                    ??
+                                    null,
+                                DesignationName:
+                                    this.getFirstNonEmptyValue
+                                    (
+                                        profile.DesignationName,
+                                        profile.designationName
+                                    ),
                                 //================================
                                 // Primary Role / Designation
                                 //================================
-
                                 PrimaryRoleName:
                                     this.getFirstNonEmptyValue
                                     (
                                         profile.PrimaryRoleName,
-
                                         profile.primaryRoleName,
-
                                         profile.RoleProfileName,
-
                                         profile.roleProfileName,
-
                                         profile.RoleName,
-
                                         profile.roleName
                                     ),
-
-
                                 //================================
                                 // User Photo Path
                                 //================================
-
                                 UserPhotoPath:
                                     this.getFirstNonEmptyValue
                                     (
                                         profile.UserPhotoPath,
-
                                         profile.userPhotoPath
                                     ),
-
-
                                 //================================
                                 // User Photo Data
                                 //================================
-
                                 UserPhotoData:
                                     this.getFirstNonEmptyValue
                                     (
                                         profile.UserPhotoData,
-
                                         profile.userPhotoData
                                     ),
-
-
                                 //================================
                                 // Active Status
                                 //================================
-
                                 IsActive:
                                     Boolean
                                     (
@@ -254,7 +222,6 @@ export class UserProfileService
             );
     }
 
-
     //===========================================================
     // Get Next Code
     //===========================================================
@@ -267,7 +234,6 @@ export class UserProfileService
         );
     }
 
-
     //===========================================================
     // Get Defaults
     //===========================================================
@@ -276,13 +242,10 @@ export class UserProfileService
         Observable<UserProfileDefaults>
     {
         return this.http
-
             .get<any>(
                 `${this.apiUrl}/defaults`
             )
-
             .pipe(
-
                 map(
                     response =>
                     ({
@@ -292,7 +255,6 @@ export class UserProfileService
                 )
             );
     }
-
 
     //===========================================================
     // Get By Id
@@ -306,13 +268,10 @@ export class UserProfileService
         Observable<UserProfile>
     {
         return this.http
-
             .get<any>(
                 `${this.apiUrl}/${id}`
             )
-
             .pipe(
-
                 //================================================
                 // Debug API Response
                 //================================================
@@ -323,48 +282,50 @@ export class UserProfileService
                         console.log(
                             '========================================'
                         );
-
                         console.log(
                             'USER PROFILE SERVICE - GET BY ID'
                         );
-
                         console.log(
                             'USER PROFILE ID:',
                             id
                         );
-
                         console.log(
                             'RAW API RESPONSE:',
                             response
                         );
-
                         console.log(
                             'RAW USER PHOTO PATH:',
                             response?.userPhotoPath
                         );
-
                         console.log(
                             'RAW USER PHOTO DATA:',
                             response?.userPhotoData
                         );
-
+                        console.log(
+                            'RAW DESIGNATION ID:',
+                            response?.DesignationId
+                            ??
+                            response?.designationId
+                        );
+                        console.log(
+                            'RAW DESIGNATION NAME:',
+                            response?.DesignationName
+                            ??
+                            response?.designationName
+                        );
                         console.log(
                             'RAW PRIMARY ROLE NAME:',
                             response?.primaryRoleName
                         );
-
                         console.log(
                             'RAW PRIMARY ROLE NAME - PASCAL:',
                             response?.PrimaryRoleName
                         );
-
                         console.log(
                             '========================================'
                         );
                     }
                 ),
-
-
                 //================================================
                 // Normalize Response
                 //================================================
@@ -380,10 +341,8 @@ export class UserProfileService
                             this.getFirstNonEmptyValue
                             (
                                 response?.UserPhotoPath,
-
                                 response?.userPhotoPath
                             );
-
 
                         //============================================
                         // Normalize Photo Data
@@ -393,10 +352,8 @@ export class UserProfileService
                             this.getFirstNonEmptyValue
                             (
                                 response?.UserPhotoData,
-
                                 response?.userPhotoData
                             );
-
 
                         //============================================
                         // Normalize Display Name
@@ -406,18 +363,12 @@ export class UserProfileService
                             this.getFirstNonEmptyValue
                             (
                                 response?.displayName,
-
                                 response?.DisplayName,
-
                                 response?.fullName,
-
                                 response?.FullName,
-
                                 response?.userName,
-
                                 response?.UserName
                             );
-
 
                         //============================================
                         // Normalize Full Name
@@ -427,10 +378,26 @@ export class UserProfileService
                             this.getFirstNonEmptyValue
                             (
                                 response?.fullName,
-
                                 response?.FullName
                             );
 
+                        //============================================
+                        // Normalize Designation
+                        //============================================
+
+                        const designationId =
+                            response?.DesignationId
+                            ??
+                            response?.designationId
+                            ??
+                            null;
+
+                        const designationName =
+                            this.getFirstNonEmptyValue
+                            (
+                                response?.DesignationName,
+                                response?.designationName
+                            );
 
                         //============================================
                         // Normalize Primary Role / Designation
@@ -440,18 +407,12 @@ export class UserProfileService
                             this.getFirstNonEmptyValue
                             (
                                 response?.PrimaryRoleName,
-
                                 response?.primaryRoleName,
-
                                 response?.RoleProfileName,
-
                                 response?.roleProfileName,
-
                                 response?.RoleName,
-
                                 response?.roleName
                             );
-
 
                         //============================================
                         // Build Normalized Profile
@@ -460,7 +421,6 @@ export class UserProfileService
                         const normalizedProfile =
                         {
                             ...response,
-
                             UserProfileId:
                                 Number
                                 (
@@ -474,58 +434,52 @@ export class UserProfileService
                                     ??
                                     0
                                 ),
-
                             ProfileCode:
                                 this.getFirstNonEmptyValue
                                 (
                                     response?.profileCode,
-
                                     response?.ProfileCode
                                 ),
-
                             UserName:
                                 this.getFirstNonEmptyValue
                                 (
                                     response?.userName,
-
                                     response?.UserName
                                 ),
-
                             DisplayName:
                                 displayName,
-
                             FullName:
                                 fullName,
-
                             Email:
                                 this.getFirstNonEmptyValue
                                 (
                                     response?.email,
-
                                     response?.Email
                                 ),
-
                             MobileNo:
                                 this.getFirstNonEmptyValue
                                 (
                                     response?.mobileNo,
-
                                     response?.MobileNo
                                 ),
+                            //========================================
+                            // Designation
+                            //========================================
 
+                            DesignationId:
+                                designationId,
+                            DesignationName:
+                                designationName,
                             //========================================
                             // Primary Role / Designation
                             //========================================
 
                             PrimaryRoleName:
                                 primaryRoleName,
-
                             UserPhotoPath:
                                 userPhotoPath,
-
                             UserPhotoData:
                                 userPhotoData,
-
                             IsActive:
                                 Boolean
                                 (
@@ -537,7 +491,6 @@ export class UserProfileService
                                 )
                         };
 
-
                         //============================================
                         // Debug Normalized Result
                         //============================================
@@ -546,29 +499,32 @@ export class UserProfileService
                             'USER PROFILE SERVICE - NORMALIZED PROFILE:',
                             normalizedProfile
                         );
-
                         console.log(
                             'USER PROFILE SERVICE - NORMALIZED FULL NAME:',
                             normalizedProfile.FullName
                         );
-
+                        console.log(
+                            'USER PROFILE SERVICE - NORMALIZED DESIGNATION ID:',
+                            normalizedProfile.DesignationId
+                        );
+                        console.log(
+                            'USER PROFILE SERVICE - NORMALIZED DESIGNATION NAME:',
+                            normalizedProfile.DesignationName
+                        );
                         console.log(
                             'USER PROFILE SERVICE - NORMALIZED PRIMARY ROLE:',
                             normalizedProfile.PrimaryRoleName
                         );
-
                         console.log(
                             'USER PROFILE SERVICE - NORMALIZED PHOTO DATA:',
                             normalizedProfile.UserPhotoData
                         );
-
 
                         return normalizedProfile;
                     }
                 )
             );
     }
-
 
     //===========================================================
     // Get User Profile Photo
@@ -591,45 +547,35 @@ export class UserProfileService
         Observable<Blob>
     {
         return this.http
-
-            .get
-            (
+            .get(
                 `${this.apiUrl}/${userProfileId}/photo`,
-
                 {
                     responseType:
                         'blob'
                 }
             )
-
             .pipe(
-
                 tap(
                     blob =>
                     {
                         console.log(
                             '========================================'
                         );
-
                         console.log(
                             'USER PROFILE SERVICE - PHOTO BLOB'
                         );
-
                         console.log(
                             'USER PROFILE ID:',
                             userProfileId
                         );
-
                         console.log(
                             'BLOB TYPE:',
                             blob.type
                         );
-
                         console.log(
                             'BLOB SIZE:',
                             blob.size
                         );
-
                         console.log(
                             '========================================'
                         );
@@ -637,7 +583,6 @@ export class UserProfileService
                 )
             );
     }
-
 
     //===========================================================
     // Create
@@ -652,11 +597,9 @@ export class UserProfileService
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
     //===========================================================
     // Update
@@ -671,11 +614,9 @@ export class UserProfileService
     {
         return this.http.put<void>(
             this.apiUrl,
-
             model
         );
     }
-
 
     //===========================================================
     // Upload User Profile Photo
@@ -685,7 +626,6 @@ export class UserProfileService
     (
         userProfileId:
             number,
-
         file:
             File
     ):
@@ -694,26 +634,20 @@ export class UserProfileService
         const formData =
             new FormData();
 
-
         formData.append(
             'file',
-
             file
         );
 
-
         return this.http.post(
             `${this.apiUrl}/${userProfileId}/photo`,
-
             formData,
-
             {
                 responseType:
                     'text'
             }
         );
     }
-
 
     //===========================================================
     // Delete User Profile Photo
@@ -731,7 +665,6 @@ export class UserProfileService
         );
     }
 
-
     //===========================================================
     // Delete
     //===========================================================
@@ -748,7 +681,6 @@ export class UserProfileService
         );
     }
 
-
     //===========================================================
     // Restore
     //===========================================================
@@ -758,11 +690,9 @@ export class UserProfileService
     {
         return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
     //===========================================================
     // Get History
@@ -775,7 +705,6 @@ export class UserProfileService
             `${this.apiUrl}/history`
         );
     }
-
 
     //===========================================================
     // Get Entity History

@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.AccountGroup.DTOs;
 
 
 //===============================================================
-// UpdateAccountGroupDto
+// Update Account Group DTO
 //===============================================================
 
 public class UpdateAccountGroupDto
@@ -15,7 +15,7 @@ public class UpdateAccountGroupDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long AccountGroupId
     {
         get;
         set;
@@ -23,23 +23,10 @@ public class UpdateAccountGroupDto
 
 
     //===========================================================
-    // Name
+    // Account Class
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountClassId
     {
         get;
         set;
@@ -47,38 +34,62 @@ public class UpdateAccountGroupDto
 
 
     //===========================================================
-    // Sample Field
+    // Basic Information
     //===========================================================
 
-    public string SampleField
+    public string ClassCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Mode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public bool AllowManualSubGroup
     {
         get;
         set;
     }
-    =
-        string.Empty;
 
 
     //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 }

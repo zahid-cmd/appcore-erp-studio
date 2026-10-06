@@ -4,13 +4,18 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
 
-using AppCore.Domain.Common;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup.Department.DTOs;
+
+using DepartmentEntity =
+    AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
@@ -21,81 +26,207 @@ namespace AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanRe
 
 
 //===============================================================
-// DepartmentRepository
+// Department Repository
 //===============================================================
 
-public class DepartmentRepository
-    : IDepartmentRepository
+public class DepartmentRepository : IDepartmentRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public DepartmentRepository
-    (
-        AppDbContext context
-    )
+    public DepartmentRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
-
     //===========================================================
-    // Get All
+    // Department Query
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>>
-        GetAllAsync()
+    private IQueryable<DepartmentDto> DepartmentQuery()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>()
+        return _context
+            .Set<DepartmentEntity>()
             .AsNoTracking()
             .Where(
                 x =>
                     !x.IsDeleted
             )
+            .Select(
+                x =>
+                    new DepartmentDto
+                    {
+                        DepartmentId =
+                            x.DepartmentId,
+
+                        DepartmentCode =
+                            x.DepartmentCode,
+
+                        DepartmentName =
+                            x.DepartmentName,
+
+                        DepartmentShortName =
+                            x.DepartmentShortName,
+
+
+                        //===================================================
+                        // Configuration
+                        //===================================================
+
+                        Remarks =
+                            x.Remarks,
+
+
+                        //===================================================
+                        // Status
+                        //===================================================
+
+                        IsActive =
+                            x.IsActive,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
+
+    //===========================================================
+    // Get All
+    //===========================================================
+
+    public async Task<List<DepartmentDto>>
+        GetAllAsync()
+    {
+        return await DepartmentQuery()
             .OrderBy(
                 x =>
-                    x.Name
+                    x.DepartmentCode
             )
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department?>
-        GetByIdAsync
-    (
-        long id
-    )
+    public async Task<DepartmentDto?>
+        GetByIdAsync(
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>()
-            .AsNoTracking()
+        return await DepartmentQuery()
             .FirstOrDefaultAsync(
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.DepartmentId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync()
+    {
+        List<string> existingCodes =
+            await _context
+                .Set<DepartmentEntity>()
+                .AsNoTracking()
+                .Where(
+                    x =>
+                        !x.IsDeleted
+                )
+                .Select(
+                    x =>
+                        x.DepartmentCode
+                )
+                .ToListAsync();
+
+
+        int nextSequenceNo =
+            1;
+
+
+        while
+        (
+            existingCodes.Any(
+                x =>
+                    string.Equals(
+                        x,
+
+                        CodeGenerator.GenerateDepartmentCode(
+                            nextSequenceNo),
+
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            )
+        )
+        {
+            nextSequenceNo++;
+        }
+
+
+        return CodeGenerator.GenerateDepartmentCode(
+            nextSequenceNo);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<DepartmentDefaultsDto>
+        GetDefaultsAsync()
+    {
+        return new DepartmentDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync()
+        };
+    }
 
 
     //===========================================================
@@ -103,42 +234,76 @@ public class DepartmentRepository
     //===========================================================
 
     public async Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department entity
-    )
+        CreateAsync(
+            CreateDepartmentDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        string departmentCode =
+            dto.DepartmentCode?.Trim()
+            ??
+            string.Empty;
 
 
-        entity.IsActive =
-            true;
+        if
+        (
+            string.IsNullOrWhiteSpace(departmentCode)
+        )
+        {
+            departmentCode =
+                await GetNextCodeAsync();
+        }
 
 
-        entity.IsDeleted =
-            false;
+        DepartmentEntity entity =
+            new DepartmentEntity
+            {
+                DepartmentCode =
+                    departmentCode,
+
+                DepartmentName =
+                    dto.DepartmentName?.Trim()
+                    ??
+                    string.Empty,
+
+                DepartmentShortName =
+                    dto.DepartmentShortName?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.CreatedBy =
-            userId;
+                //=======================================================
+                // Configuration
+                //=======================================================
+
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.CreatedDate =
-            DateTime.UtcNow;
+                //=======================================================
+                // Status
+                //=======================================================
+
+                IsActive =
+                    dto.IsActive,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>()
-            .AddAsync(
+        _context
+            .Set<DepartmentEntity>()
+            .Add(
                 entity
             );
 
@@ -146,17 +311,21 @@ public class DepartmentRepository
         await _context.SaveChangesAsync();
 
 
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Department",
 
                 EntityId =
-                    entity.Id,
+                    entity.DepartmentId,
 
                 ActivityType =
                     "Create",
@@ -165,7 +334,7 @@ public class DepartmentRepository
                     "Department Created",
 
                 ActivityDescription =
-                    $"Department '{entity.Name}' was created.",
+                    $"Department '{entity.DepartmentName}' created.",
 
                 PerformedBy =
                     userId,
@@ -182,9 +351,8 @@ public class DepartmentRepository
         await _context.SaveChangesAsync();
 
 
-        return entity.Id;
+        return entity.DepartmentId;
     }
-
 
 
     //===========================================================
@@ -192,80 +360,100 @@ public class DepartmentRepository
     //===========================================================
 
     public async Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department entity
-    )
+        UpdateAsync(
+            UpdateDepartmentDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var existing =
+        DepartmentEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>()
+                .Set<DepartmentEntity>()
                 .FirstOrDefaultAsync(
                     x =>
-                        x.Id == entity.Id
+                        x.DepartmentId ==
+                        dto.DepartmentId
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "Department record was not found."
+            throw new KeyNotFoundException(
+                "Department not found."
             );
         }
 
 
-        existing.Code =
-            entity.Code;
+        entity.DepartmentCode =
+            dto.DepartmentCode?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Name =
-            entity.Name;
+        entity.DepartmentName =
+            dto.DepartmentName?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+        entity.DepartmentShortName =
+            dto.DepartmentShortName?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.SampleField =
-            entity.SampleField;
+        //===========================================================
+        // Configuration
+        //===========================================================
+
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Status =
-            entity.Status;
+        //===========================================================
+        // Status
+        //===========================================================
+
+        entity.IsActive =
+            dto.IsActive;
 
 
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
+        entity.ModifiedBy =
             userId;
 
 
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
+
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
 
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Department",
 
                 EntityId =
-                    existing.Id,
+                    entity.DepartmentId,
 
                 ActivityType =
                     "Update",
@@ -274,7 +462,7 @@ public class DepartmentRepository
                     "Department Updated",
 
                 ActivityDescription =
-                    $"Department '{existing.Name}' was updated.",
+                    $"Department '{entity.DepartmentName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -292,68 +480,81 @@ public class DepartmentRepository
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
 
     public async Task
-        DeleteAsync
-    (
-        long id
-    )
+        DeleteAsync(
+            long id,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve Department
+        //===========================================================
 
-
-        var entity =
+        DepartmentEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>()
+                .Set<DepartmentEntity>()
                 .FirstOrDefaultAsync(
                     x =>
-                        x.Id == id
+                        x.DepartmentId ==
+                        id
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "Department not found."
+            );
         }
 
+
+        //===========================================================
+        // Soft Delete Department
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
 
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
 
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
+
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
 
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Department",
 
                 EntityId =
-                    entity.Id,
+                    entity.DepartmentId,
 
                 ActivityType =
                     "Delete",
@@ -362,7 +563,7 @@ public class DepartmentRepository
                     "Department Deleted",
 
                 ActivityDescription =
-                    $"Department '{entity.Name}' was deleted.",
+                    $"Department '{entity.DepartmentName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -380,38 +581,36 @@ public class DepartmentRepository
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task
-        RestoreAsync
-    (
-        long id
-    )
+    public async Task<bool>
+        RestoreAsync(
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var entity =
+        DepartmentEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Department>()
-                .FirstOrDefaultAsync(
+                .Set<DepartmentEntity>()
+                .Where(
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
+                )
+                .OrderByDescending(
+                    x =>
+                        x.DeletedDate
+                )
+                .FirstOrDefaultAsync();
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
 
 
@@ -419,8 +618,12 @@ public class DepartmentRepository
             false;
 
 
-        entity.IsActive =
-            true;
+        entity.DeletedBy =
+            null;
+
+
+        entity.DeletedDate =
+            null;
 
 
         entity.ModifiedBy =
@@ -431,17 +634,24 @@ public class DepartmentRepository
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Department",
 
                 EntityId =
-                    entity.Id,
+                    entity.DepartmentId,
 
                 ActivityType =
                     "Restore",
@@ -450,7 +660,7 @@ public class DepartmentRepository
                     "Department Restored",
 
                 ActivityDescription =
-                    $"Department '{entity.Name}' was restored.",
+                    $"Department '{entity.DepartmentName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -465,150 +675,31 @@ public class DepartmentRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync(
+            long id
+        )
     {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
+        return await _context
+            .Set<DepartmentEntity>()
+            .AnyAsync(
                 x =>
-                    x.Module ==
-                    "HumanResourceManangement"
-
-                    &&
-
-                    x.EntityName ==
-                    "Department"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "HumanResourceManangement"
-
-                    &&
-
-                    x.EntityName ==
-                    "Department"
-
-                    &&
-
-                    x.EntityId ==
+                    x.DepartmentId ==
                     id
-            )
 
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
+                    &&
 
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
 }

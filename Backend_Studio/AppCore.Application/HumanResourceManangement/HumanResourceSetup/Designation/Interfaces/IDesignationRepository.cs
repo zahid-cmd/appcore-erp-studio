@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup.Designation.DTOs;
 
 
 //===============================================================
@@ -13,98 +13,79 @@ namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup;
 
 
 //===============================================================
-// IDesignationRepository
+// Designation Repository Interface
 //===============================================================
 
 public interface IDesignationRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>>
-        GetAllAsync();
-
+    Task<List<DesignationDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<DesignationDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation entity
-    );
-
+    Task<long> CreateAsync(
+        CreateDesignationDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation entity
-    );
-
+    Task UpdateAsync(
+        UpdateDesignationDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync();
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<DesignationDefaultsDto> GetDefaultsAsync();
 }

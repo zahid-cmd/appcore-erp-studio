@@ -4,13 +4,18 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
 
-using AppCore.Domain.Common;
+using AppCore.Application.HumanResourceManangement.HumanResourceSetup.Designation.DTOs;
+
+using DesignationEntity =
+    AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
@@ -21,81 +26,226 @@ namespace AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanRe
 
 
 //===============================================================
-// DesignationRepository
+// Designation Repository
 //===============================================================
 
-public class DesignationRepository
-    : IDesignationRepository
+public class DesignationRepository : IDesignationRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public DesignationRepository
-    (
-        AppDbContext context
-    )
+    public DesignationRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // Designation Query
+    //===========================================================
+
+    private IQueryable<DesignationDto> DesignationQuery()
+    {
+        return _context
+            .Set<DesignationEntity>()
+
+            .AsNoTracking()
+
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+
+            .Select
+            (
+                x =>
+                    new DesignationDto
+                    {
+                        DesignationId =
+                            x.DesignationId,
+
+                        DesignationCode =
+                            x.DesignationCode,
+
+                        DesignationName =
+                            x.DesignationName,
+
+                        DesignationShortName =
+                            x.DesignationShortName,
+
+
+                        //===================================================
+                        // Configuration
+                        //===================================================
+
+                        Remarks =
+                            x.Remarks,
+
+
+                        //===================================================
+                        // Status
+                        //===================================================
+
+                        IsActive =
+                            x.IsActive,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>>
+    public async Task<List<DesignationDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
-            .AsNoTracking()
-            .Where(
+        return await DesignationQuery()
+
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
+                    x.DesignationCode
             )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
+
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation?>
+    public async Task<DesignationDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await DesignationQuery()
+
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.DesignationId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync()
+    {
+        List<string> existingCodes =
+            await _context
+                .Set<DesignationEntity>()
+
+                .AsNoTracking()
+
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                )
+
+                .Select
+                (
+                    x =>
+                        x.DesignationCode
+                )
+
+                .ToListAsync();
+
+
+        int nextSequenceNo =
+            1;
+
+
+        while
+        (
+            existingCodes.Any
+            (
+                x =>
+                    string.Equals
+                    (
+                        x,
+
+                        CodeGenerator.GenerateDesignationCode(
+                            nextSequenceNo),
+
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            )
+        )
+        {
+            nextSequenceNo++;
+        }
+
+
+        return CodeGenerator.GenerateDesignationCode(
+            nextSequenceNo);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<DesignationDefaultsDto>
+        GetDefaultsAsync()
+    {
+        return new DesignationDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync()
+        };
+    }
 
 
     //===========================================================
@@ -104,41 +254,76 @@ public class DesignationRepository
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation entity
-    )
+        (
+            CreateDesignationDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        string designationCode =
+            dto.DesignationCode?.Trim()
+            ??
+            string.Empty;
 
 
-        entity.IsActive =
-            true;
+        if
+        (
+            string.IsNullOrWhiteSpace(designationCode)
+        )
+        {
+            designationCode =
+                await GetNextCodeAsync();
+        }
 
 
-        entity.IsDeleted =
-            false;
+        DesignationEntity entity =
+            new DesignationEntity
+            {
+                DesignationCode =
+                    designationCode,
+
+                DesignationName =
+                    dto.DesignationName?.Trim()
+                    ??
+                    string.Empty,
+
+                DesignationShortName =
+                    dto.DesignationShortName?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.CreatedBy =
-            userId;
+                //=======================================================
+                // Configuration
+                //=======================================================
+
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
 
 
-        entity.CreatedDate =
-            DateTime.UtcNow;
+                //=======================================================
+                // Status
+                //=======================================================
+
+                IsActive =
+                    dto.IsActive,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
-            .AddAsync(
+        _context
+            .Set<DesignationEntity>()
+            .Add(
                 entity
             );
 
@@ -146,17 +331,22 @@ public class DesignationRepository
         await _context.SaveChangesAsync();
 
 
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Designation",
 
                 EntityId =
-                    entity.Id,
+                    entity.DesignationId,
 
                 ActivityType =
                     "Create",
@@ -165,7 +355,7 @@ public class DesignationRepository
                     "Designation Created",
 
                 ActivityDescription =
-                    $"Designation '{entity.Name}' was created.",
+                    $"Designation '{entity.DesignationName}' created.",
 
                 PerformedBy =
                     userId,
@@ -182,9 +372,8 @@ public class DesignationRepository
         await _context.SaveChangesAsync();
 
 
-        return entity.Id;
+        return entity.DesignationId;
     }
-
 
 
     //===========================================================
@@ -193,79 +382,105 @@ public class DesignationRepository
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation entity
-    )
+        (
+            UpdateDesignationDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        DesignationEntity? entity =
 
-
-        var existing =
             await _context
-                .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
-                .FirstOrDefaultAsync(
+                .Set<DesignationEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+
+                        x.DesignationId ==
+                        dto.DesignationId
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "Designation record was not found."
+            throw new KeyNotFoundException(
+                "Designation not found."
             );
         }
 
 
-        existing.Code =
-            entity.Code;
+        entity.DesignationCode =
+            dto.DesignationCode?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Name =
-            entity.Name;
+        entity.DesignationName =
+            dto.DesignationName?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+        entity.DesignationShortName =
+            dto.DesignationShortName?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.SampleField =
-            entity.SampleField;
+        //===========================================================
+        // Configuration
+        //===========================================================
+
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Status =
-            entity.Status;
+        //===========================================================
+        // Status
+        //===========================================================
+
+        entity.IsActive =
+            dto.IsActive;
 
 
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
+        entity.ModifiedBy =
             userId;
 
 
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Designation",
 
                 EntityId =
-                    existing.Id,
+                    entity.DesignationId,
 
                 ActivityType =
                     "Update",
@@ -274,7 +489,7 @@ public class DesignationRepository
                     "Designation Updated",
 
                 ActivityDescription =
-                    $"Designation '{existing.Name}' was updated.",
+                    $"Designation '{entity.DesignationName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -290,7 +505,6 @@ public class DesignationRepository
 
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
@@ -299,61 +513,81 @@ public class DesignationRepository
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve Designation
+        //===========================================================
 
+        DesignationEntity? entity =
 
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
-                .FirstOrDefaultAsync(
+                .Set<DesignationEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+
+                        x.DesignationId ==
+                        id
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "Designation not found."
+            );
         }
 
+
+        //===========================================================
+        // Soft Delete Designation
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
 
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
 
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Designation",
 
                 EntityId =
-                    entity.Id,
+                    entity.DesignationId,
 
                 ActivityType =
                     "Delete",
@@ -362,7 +596,7 @@ public class DesignationRepository
                     "Designation Deleted",
 
                 ActivityDescription =
-                    $"Designation '{entity.Name}' was deleted.",
+                    $"Designation '{entity.DesignationName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -380,38 +614,43 @@ public class DesignationRepository
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
+        DesignationEntity? entity =
 
-
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.Designation>()
-                .FirstOrDefaultAsync(
+                .Set<DesignationEntity>()
+
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
+                )
+
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+
+                .FirstOrDefaultAsync();
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
 
 
@@ -419,8 +658,12 @@ public class DesignationRepository
             false;
 
 
-        entity.IsActive =
-            true;
+        entity.DeletedBy =
+            null;
+
+
+        entity.DeletedDate =
+            null;
 
 
         entity.ModifiedBy =
@@ -431,17 +674,25 @@ public class DesignationRepository
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "HumanResourceManangement",
+                    "Human Resource Setup",
 
                 EntityName =
                     "Designation",
 
                 EntityId =
-                    entity.Id,
+                    entity.DesignationId,
 
                 ActivityType =
                     "Restore",
@@ -450,7 +701,7 @@ public class DesignationRepository
                     "Designation Restored",
 
                 ActivityDescription =
-                    $"Designation '{entity.Name}' was restored.",
+                    $"Designation '{entity.DesignationName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -465,150 +716,35 @@ public class DesignationRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
+        return await _context
+            .Set<DesignationEntity>()
 
-            .AsNoTracking()
-
-            .Where(
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "HumanResourceManangement"
 
-                    &&
-
-                    x.EntityName ==
-                    "Designation"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "HumanResourceManangement"
-
-                    &&
-
-                    x.EntityName ==
-                    "Designation"
-
-                    &&
-
-                    x.EntityId ==
+                    x.DesignationId ==
                     id
-            )
 
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
+                    &&
 
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
 }

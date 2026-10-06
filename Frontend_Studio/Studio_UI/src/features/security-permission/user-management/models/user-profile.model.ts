@@ -7,30 +7,33 @@ export interface UserProfile
     UserProfileId:
         number;
 
-
     ProfileCode:
         string;
-
 
     UserName:
         string;
 
-
     DisplayName:
         string;
-
 
     FullName:
         string;
 
-
     Email:
         string;
-
 
     MobileNo:
         string;
 
+    //===========================================================
+    // Designation
+    //===========================================================
+
+    DesignationId?:
+        number | null;
+
+    DesignationName?:
+        string;
 
     //===========================================================
     // User Profile Photo
@@ -39,10 +42,8 @@ export interface UserProfile
     UserPhotoPath?:
         string;
 
-
     UserPhotoData?:
         string;
-
 
     //===========================================================
     // Role Assignment
@@ -51,14 +52,11 @@ export interface UserProfile
     HasRoleAssignment?:
         boolean;
 
-
     RoleProfileCount?:
         number;
 
-
     PrimaryRoleName?:
         string;
-
 
     //===========================================================
     // Status
@@ -79,26 +77,27 @@ export interface CreateUserProfile
     ProfileCode:
         string;
 
-
     UserName:
         string;
-
 
     DisplayName:
         string;
 
-
     FullName:
         string;
-
 
     Email:
         string;
 
-
     MobileNo:
         string;
 
+    //===========================================================
+    // Designation
+    //===========================================================
+
+    DesignationId?:
+        number | null;
 
     //===========================================================
     // User Profile Photo
@@ -106,7 +105,6 @@ export interface CreateUserProfile
 
     UserPhotoPath?:
         string;
-
 
     IsActive:
         boolean;
@@ -123,30 +121,30 @@ export interface UpdateUserProfile
     UserProfileId:
         number;
 
-
     ProfileCode:
         string;
-
 
     UserName:
         string;
 
-
     DisplayName:
         string;
-
 
     FullName:
         string;
 
-
     Email:
         string;
-
 
     MobileNo:
         string;
 
+    //===========================================================
+    // Designation
+    //===========================================================
+
+    DesignationId?:
+        number | null;
 
     //===========================================================
     // User Profile Photo
@@ -155,11 +153,9 @@ export interface UpdateUserProfile
     UserPhotoPath?:
         string;
 
-
     IsActive:
         boolean;
 }
-
 
 
 /* ============================================================

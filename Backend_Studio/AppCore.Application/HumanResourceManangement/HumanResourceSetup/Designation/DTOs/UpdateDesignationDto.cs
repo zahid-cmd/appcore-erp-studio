@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+namespace AppCore.Application.HumanResourceManangement.HumanResourceSetup.Designation.DTOs;
 
 
 //===============================================================
-// UpdateDesignationDto
+// Update Designation DTO
 //===============================================================
 
 public class UpdateDesignationDto
@@ -15,7 +15,7 @@ public class UpdateDesignationDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long DesignationId
     {
         get;
         set;
@@ -23,62 +23,48 @@ public class UpdateDesignationDto
 
 
     //===========================================================
-    // Name
+    // Basic Information
     //===========================================================
 
-    public string Name
+    public string DesignationCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public string DesignationName
     {
         get;
         set;
-    }
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
+    public string DesignationShortName
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
     //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 }

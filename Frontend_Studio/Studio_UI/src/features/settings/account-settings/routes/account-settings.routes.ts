@@ -85,6 +85,32 @@ Routes =
 
                 // AUTO-END : SUB-003-002-001
 
+            // AUTO-BEGIN : SUB-003-002-003
+
+                //===========================================================
+                // Account Sub Group
+                //===========================================================
+
+                {
+                    path:'account-sub-group',
+
+                    data:
+                    {
+                        breadcrumb:'Account Sub Group'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './account-sub-group.routes'
+                        )
+                        .then(
+                            m =>
+                                m.AccountSubGroupRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-003
+
         ]
 
     }

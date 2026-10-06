@@ -15,7 +15,7 @@ public class Department
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long DepartmentId
     {
         get;
         set;
@@ -23,95 +23,71 @@ public class Department
 
 
     //===========================================================
-    // Code
+    // Basic Information
     //===========================================================
 
-    public string Code
+    public string DepartmentCode
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
+    public string DepartmentName
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public string DepartmentShortName
     {
         get;
         set;
-    }
+    } = string.Empty;
 
 
     //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
+    // Configuration
     //===========================================================
 
     public string Remarks
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 
 
     //===========================================================
-    // Active
+    // Status
     //===========================================================
 
     public bool IsActive
     {
         get;
         set;
-    }
+    } = true;
 
 
     //===========================================================
-    // Deleted
+    // Soft Delete
     //===========================================================
 
     public bool IsDeleted
+    {
+        get;
+        set;
+    } = false;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
     {
         get;
         set;
@@ -119,7 +95,7 @@ public class Department
 
 
     //===========================================================
-    // Created By
+    // Audit Information
     //===========================================================
 
     public long CreatedBy
@@ -129,10 +105,6 @@ public class Department
     }
 
 
-    //===========================================================
-    // Created Date
-    //===========================================================
-
     public DateTime CreatedDate
     {
         get;
@@ -140,20 +112,12 @@ public class Department
     }
 
 
-    //===========================================================
-    // Modified By
-    //===========================================================
-
     public long? ModifiedBy
     {
         get;
         set;
     }
 
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
 
     public DateTime? ModifiedDate
     {
