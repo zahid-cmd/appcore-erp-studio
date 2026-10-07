@@ -634,5 +634,151 @@ public static class CodeGenerator
 
         return $"SUB-{classSequenceNo:D3}-{groupSequenceNo:D3}-{subGroupSequenceNo:D3}";
     }
+
+    //===============================================================
+    // PRODUCT SETTINGS
+    //===============================================================
+    //===============================================================
+    // Product Category Code
+    //===============================================================
+
+    public static string GenerateProductCategoryCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo)
+    {
+        if (inventoryClassSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid inventory class sequence number.");
+        }
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        return $"CAT-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}";
+    }
+
+    //===============================================================
+    // Product Sub Category Code
+    //===============================================================
+
+    public static string GenerateProductSubCategoryCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo,
+        int subCategorySequenceNo)
+    {
+        if (inventoryClassSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid inventory class sequence number.");
+        }
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product sub category sequence number.");
+        }
+
+        return $"SCG-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D5}";
+    }
+
+    //===============================================================
+    // Inventory Sub Category Code
+    //===============================================================
+
+    public static string GenerateInventorySubCategoryCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo,
+        int subCategorySequenceNo)
+    {
+        if (inventoryClassSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid inventory class sequence number.");
+        }
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product sub category sequence number.");
+        }
+
+        return $"INV-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D5}";
+    }
+
+    //===============================================================
+    // WIP Sub Category Code
+    //===============================================================
+
+    public static string GenerateWipSubCategoryCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo,
+        int subCategorySequenceNo)
+    {
+        if (inventoryClassSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid inventory class sequence number.");
+        }
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product sub category sequence number.");
+        }
+
+        return $"WIP-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D5}";
+    }
+
+    //===============================================================
+    // COGS Sub Category Code
+    //===============================================================
+
+    public static string GenerateCogsSubCategoryCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo,
+        int subCategorySequenceNo)
+    {
+        if (inventoryClassSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid inventory class sequence number.");
+        }
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product sub category sequence number.");
+        }
+
+        return $"COGS-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D5}";
+    }
     
 }

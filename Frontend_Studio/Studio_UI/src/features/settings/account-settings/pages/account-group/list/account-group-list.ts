@@ -1,7 +1,6 @@
 //===============================================================
 // Imports
 //===============================================================
-
 import
 {
     Component,
@@ -10,143 +9,106 @@ import
     ChangeDetectorRef
 }
 from '@angular/core';
-
-
 import
 {
     HttpErrorResponse
 }
 from '@angular/common/http';
-
-
 import
 {
     CommonModule
 }
 from '@angular/common';
-
-
 import
 {
     ActivatedRoute,
     Router
 }
 from '@angular/router';
-
-
 //===============================================================
 // Models
 //===============================================================
-
 import
 {
     AccountGroup
 }
 from '../../../models/account-group.model';
-
 import
 {
     AccountClass
 }
 from '../../../models/account-class.model';
-
 //===============================================================
 // Shared Components
 //===============================================================
-
 import
 {
     PageHeaderComponent
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
-
-
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-
-
 import
 {
     PageCanvasComponent,
     PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
-
-
 import
 {
     ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
-
-
 import
 {
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
-
-
 import
 {
     ListTableComponent,
     ListTableColumn
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
-
-
 import
 {
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
-
-
 import
 {
     HistoryDrawerComponent
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
-
-
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
-
-
 import
 {
     ConfirmDialogComponent
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
-
-
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
-
-
 import
 {
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
-
 import
 {
     SearchDropdownComponent
@@ -155,13 +117,11 @@ from '../../../../../../shared/components/controls/search-dropdown/search-dropdo
 //===============================================================
 // Service
 //===============================================================
-
 import
 {
     AccountGroupService
 }
 from '../../../services/account-group.service';
-
 import
 {
     AccountClassService
@@ -171,7 +131,6 @@ from '../../../services/account-class.service';
 //===============================================================
 // Component
 //===============================================================
-
 @Component(
 {
     selector:'account-group-list',
@@ -196,156 +155,103 @@ from '../../../services/account-class.service';
     styleUrl:'./account-group-list.css'
 })
 
-
 //===============================================================
 // Account Group List
 //===============================================================
-
 export class AccountGroupList
 implements OnInit
 {
     //===========================================================
     // Dependency Injection
     //===========================================================
-
     private readonly accountGroupService =
         inject(AccountGroupService);
-
-
     private readonly accountClassService =
         inject(AccountClassService);
-
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
-
-
     private readonly toast =
         inject(ToastService);
-
-
     private readonly router =
         inject(Router);
-
-
     private readonly route =
         inject(ActivatedRoute);
-
-
     private readonly cdr =
         inject(ChangeDetectorRef);
-
 
     //===========================================================
     // Page Tabs
     //===========================================================
-
     tabs:
         ControlTab[] =
-
     [
         {
             id:'all',
             label:'All Account Groups'
+        },
+        {
+            id:'inventory-auto',
+            label:'Inventory Auto Groups'
         }
     ];
-
-
     selectedTab:
         string =
-
         'all';
-
 
     //===========================================================
     // Data
     //===========================================================
-
     accountGroups:
         AccountGroup[] =
-
     [];
-
-
     filteredAccountGroups:
         AccountGroup[] =
-
     [];
-
-
     pagedAccountGroups:
         AccountGroup[] =
-
     [];
-
 
     //===========================================================
     // Search & Loading
     //===========================================================
-
     searchText:
         string =
-
         '';
-
-
     loading:
         boolean =
-
         false;
-
-
     loadFailed:
         boolean =
-
         false;
-
 
     //===========================================================
     // Pagination
     //===========================================================
-
     currentPage:
         number =
-
         1;
-
-
     pageSize:
         number =
-
         10;
-
 
     //===========================================================
     // History
     //===========================================================
-
     historyOpened:
         boolean =
-
         false;
-
-
     historyTitle:
         string =
-
         'Account Group History';
-
-
     historyItems:
         any[] =
-
     [];
-
 
     //===========================================================
     // Page Canvas Configuration
     //===========================================================
-
     readonly canvasConfig:
         PageCanvasConfig =
-
     {
         mode:'list',
         showHeader:false,
@@ -359,14 +265,11 @@ implements OnInit
         footerHeight:56
     };
 
-
     //===========================================================
     // Table Columns
     //===========================================================
-
     readonly columns:
         ListTableColumn[] =
-
     [
         {
             header:'#',
@@ -375,21 +278,18 @@ implements OnInit
             width:'50px',
             align:'center'
         },
-
         {
             header:'Account Class',
             field:'AccountClassName',
             width:'180px',
             align:'left'
         },
-
         {
             header:'Group Code',
             field:'GroupCode',
             width:'140px',
             align:'center'
         },
-
         {
             header:'Group Name',
             field:'GroupName',
@@ -409,7 +309,6 @@ implements OnInit
             align:'center',
             type:'boolean'
         },
-
         {
             header:'Status',
             field:'IsActive',
@@ -417,7 +316,6 @@ implements OnInit
             width:'120px',
             align:'center'
         },
-
         {
             header:'Actions',
             field:'actions',
@@ -426,7 +324,63 @@ implements OnInit
             align:'center'
         }
     ];
+    readonly inventoryAutoGroupColumns:
+        ListTableColumn[] =
+    [
+        {
+            header:'#',
+            field:'serial',
+            type:'serial',
+            width:'50px',
+            align:'center'
+        },
+        {
+            header:'Account Class',
+            field:'AccountClassName',
+            width:'180px',
+            align:'left'
+        },
+        {
+            header:'Group Code',
+            field:'GroupCode',
+            width:'140px',
+            align:'center'
+        },
+        {
+            header:'Group Name',
+            field:'GroupName',
+            width:'240px',
+            align:'left'
+        },
+        {
+            header:'Mode',
+            field:'Mode',
+            width:'100px',
+            align:'center'
+        },
+        {
+            header:'Manual Sub Group',
+            field:'AllowManualSubGroup',
+            width:'170px',
+            align:'center',
+            type:'boolean'
+        },
+        {
+            header:'Status',
+            field:'IsActive',
+            type:'status',
+            width:'120px',
+            align:'center'
+        }
+    ];
 
+    get displayColumns():
+        ListTableColumn[]
+    {
+        return this.selectedTab === 'inventory-auto'
+            ? this.inventoryAutoGroupColumns
+            : this.columns;
+    }
 
     //===========================================================
     // Initialize
@@ -435,14 +389,14 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadAccountClasses();
+
         this.loadItems();
     }
-
 
     //===========================================================
     // Normalize API Response
     //===========================================================
-
     private normalizeAccountGroup
     (
         item:
@@ -463,7 +417,6 @@ implements OnInit
                     ??
                     0
                 ),
-
             AccountClassId:
                 Number(
                     item?.AccountClassId
@@ -472,7 +425,6 @@ implements OnInit
                     ??
                     0
                 ),
-
             AccountClassName:
                 [
                     item?.ClassCode
@@ -480,7 +432,6 @@ implements OnInit
                     item?.classCode
                     ??
                     '',
-
                     item?.AccountClassName
                     ??
                     item?.accountClassName
@@ -494,35 +445,30 @@ implements OnInit
                             String(value).trim()
                     )
                     .join(' - '),
-
             ClassCode:
                 item?.ClassCode
                 ??
                 item?.classCode
                 ??
                 '',
-
             Mode:
                 item?.Mode
                 ??
                 item?.mode
                 ??
                 '',
-
             GroupCode:
                 item?.GroupCode
                 ??
                 item?.groupCode
                 ??
                 '',
-
             GroupName:
                 item?.GroupName
                 ??
                 item?.groupName
                 ??
                 '',
-
             AllowManualSubGroup:
                 Boolean(
                     item?.AllowManualSubGroup
@@ -531,14 +477,12 @@ implements OnInit
                     ??
                     false
                 ),
-
             Remarks:
                 item?.Remarks
                 ??
                 item?.remarks
                 ??
                 '',
-
             IsActive:
                 Boolean(
                     item?.IsActive
@@ -550,11 +494,9 @@ implements OnInit
         };
     }
 
-
     //===========================================================
     // Normalize API Response List
     //===========================================================
-
     private normalizeAccountGroups
     (
         response:
@@ -569,7 +511,6 @@ implements OnInit
         {
             return [];
         }
-
         return response.map
         (
             item =>
@@ -584,86 +525,201 @@ implements OnInit
     //===========================================================
 
     private loadAccountClasses():
+
         void
+
     {
+
         this.accountClassService
+
             .getAll()
+
             .subscribe
+
             ({
+
                 next:
+
                 (
+
                     response:
+
                         AccountClass[]
+
                 ):
+
                     void =>
+
                 {
+
+                    const classes =
+
+                        response
+
+                            .filter(
+
+                                item =>
+
+                                {
+
+                                    const classCode =
+
+                                        String(
+
+                                            item.ClassCode
+
+                                            ??
+
+                                            ''
+
+                                        )
+
+                                            .trim()
+
+                                            .toUpperCase();
+
+                                    if
+
+                                    (
+
+                                        !item.IsActive
+
+                                    )
+
+                                    {
+
+                                        return false;
+
+                                    }
+
+                                    if
+
+                                    (
+
+                                        this.selectedTab ===
+
+                                        'inventory-auto'
+
+                                    )
+
+                                    {
+
+                                        return classCode.startsWith(
+
+                                            'INV-'
+
+                                        );
+
+                                    }
+
+                                    return !classCode.startsWith(
+
+                                        'INV-'
+
+                                    );
+
+                                }
+
+                            );
+
                     this.accountClassFilterItems =
+
                     [
+
                         {
+
                             label:'All Account Classes',
+
                             value:null
+
                         },
 
-                        ...response
-                            .filter(
-                                item =>
-                                    item.IsActive
-                            )
+                        ...classes
+
                             .map
+
                             (
+
                                 (
+
                                     item:
+
                                         AccountClass
+
                                 ) =>
+
                                 ({
+
                                     label:
+
                                         `${item.ClassCode} - ${item.ClassName}`,
 
                                     value:
+
                                         item.AccountClassId
+
                                 })
+
                             )
+
                     ];
 
                     this.cdr.detectChanges();
+
                 },
 
                 error:
+
                 (
+
                     error:
+
                         unknown
+
                 ):
+
                     void =>
+
                 {
+
                     console.error(
+
                         'Load Account Classes Error:',
+
                         error
+
                     );
 
                     this.accountClassFilterItems =
+
                     [
+
                         {
+
                             label:'All Account Classes',
+
                             value:null
+
                         }
+
                     ];
+
                 }
+
             });
+
     }
 
     //===========================================================
     // Load Items
     //===========================================================
-
     loadItems():
         void
     {
         this.loading =
             true;
-
         this.loadFailed =
             false;
-
         this.accountGroupService
             .getAll()
             .subscribe
@@ -680,29 +736,22 @@ implements OnInit
                         'Account Group API Response:',
                         response
                     );
-
                     this.accountGroups =
                         this.normalizeAccountGroups(
                             response
                         );
-
                     console.log
                     (
                         'Normalized Account Groups:',
                         this.accountGroups
                     );
-
                     this.applyFilters();
-
                     this.loading =
                         false;
-
                     this.loadFailed =
                         false;
-
                     this.cdr.detectChanges();
                 },
-
                 error:
                 (
                     error:
@@ -715,38 +764,29 @@ implements OnInit
                         'Load Account Groups Error:',
                         error
                     );
-
                     this.accountGroups =
                         [];
-
                     this.filteredAccountGroups =
                         [];
-
                     this.pagedAccountGroups =
                         [];
-
                     this.loading =
                         false;
-
                     this.loadFailed =
                         true;
-
                     this.toast.error
                     (
                         'Load Failed',
                         'Unable to load account groups.'
                     );
-
                     this.cdr.detectChanges();
                 }
             });
     }
 
-
     //===========================================================
     // Apply Filters
     //===========================================================
-
     applyFilters():
         void
     {
@@ -754,7 +794,6 @@ implements OnInit
             this.searchText
                 .trim()
                 .toLowerCase();
-
         this.filteredAccountGroups =
             this.accountGroups.filter
             (
@@ -768,50 +807,49 @@ implements OnInit
                         item.AccountClassName
                         ??
                         '';
-
                     const accountClassMatch =
                         this.selectedAccountClassId === null
                         ||
                         item.AccountClassId ===
                         this.selectedAccountClassId;
-
                     const statusMatch =
                         this.selectedStatus === null
                         ||
                         item.IsActive ===
                         this.selectedStatus;
-
+                    const inventoryAutoGroupMatch =
+                        this.selectedTab !== 'inventory-auto'
+                        ||
+                        this.isInventoryAutoGroup(
+                            item.GroupCode
+                        );
                     const classCode =
                         item.ClassCode
                         ??
                         '';
-
                     const mode =
                         item.Mode
                         ??
                         '';
-
                     const groupCode =
                         item.GroupCode
                         ??
                         '';
-
                     const groupName =
                         item.GroupName
                         ??
                         '';
-
                     const remarks =
                         item.Remarks
                         ??
                         '';
-
                     const status =
                         item.IsActive
                             ? 'active'
                             : 'inactive';
-
                     return (
+                        inventoryAutoGroupMatch
+                        &&
                         accountClassMatch
                         &&
                         statusMatch
@@ -849,17 +887,68 @@ implements OnInit
                     );
                 }
             );
-
         this.currentPage =
             1;
-
         this.updatePagination();
+    }
+
+    //===========================================================
+    // Tab Change
+    //===========================================================
+
+    onTabChange(
+
+        value:
+
+            string
+
+    ):
+
+        void
+
+    {
+
+        this.selectedTab =
+
+            value;
+
+        this.selectedAccountClassId =
+
+            null;
+
+        this.currentPage =
+
+            1;
+
+        this.loadAccountClasses();
+
+        this.applyFilters();
+
+    }
+
+    //===========================================================
+    // Inventory Auto Group
+    //===========================================================
+    private isInventoryAutoGroup(
+        groupCode:
+            string
+    ):
+        boolean
+    {
+        const code =
+            String(
+                groupCode
+                ??
+                ''
+            ).trim();
+        return /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
+            code
+        );
     }
 
     //===========================================================
     // Search
     //===========================================================
-
     onSearch
     (
         value:
@@ -871,14 +960,11 @@ implements OnInit
             value
             ??
             '';
-
         this.applyFilters();
     }
-
     //===========================================================
     // Account Class Filter Change
     //===========================================================
-
     onAccountClassFilterChange
     (
         value:
@@ -890,14 +976,11 @@ implements OnInit
             value === null
                 ? null
                 : Number(value);
-
         this.applyFilters();
     }
-
     //===========================================================
     // Status Filter Change
     //===========================================================
-
     onStatusFilterChange
     (
         value:
@@ -909,21 +992,17 @@ implements OnInit
             value === null
                 ? null
                 : Boolean(value);
-
         this.applyFilters();
     }
-
     //===========================================================
     // Sort
     //===========================================================
-
     onSort
     (
         event:
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
@@ -934,13 +1013,11 @@ implements OnInit
         [
             ...this.filteredAccountGroups
         ];
-
         this.filteredAccountGroups.sort
         (
             (
                 a:
                     AccountGroup,
-
                 b:
                     AccountGroup
             ):
@@ -948,18 +1025,14 @@ implements OnInit
             {
                 const valueA:
                     any =
-
                     a[
                         event.field as keyof AccountGroup
                     ];
-
                 const valueB:
                     any =
-
                     b[
                         event.field as keyof AccountGroup
                     ];
-
                 if
                 (
                     valueA == null
@@ -969,7 +1042,6 @@ implements OnInit
                 {
                     return 0;
                 }
-
                 if
                 (
                     valueA == null
@@ -977,7 +1049,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
                 if
                 (
                     valueB == null
@@ -985,7 +1056,6 @@ implements OnInit
                 {
                     return 1;
                 }
-
                 if
                 (
                     typeof valueA === 'string'
@@ -999,7 +1069,6 @@ implements OnInit
                         :
                             valueB.localeCompare(valueA);
                 }
-
                 if
                 (
                     valueA < valueB
@@ -1011,7 +1080,6 @@ implements OnInit
                         :
                             1;
                 }
-
                 if
                 (
                     valueA > valueB
@@ -1023,46 +1091,36 @@ implements OnInit
                         :
                             -1;
                 }
-
                 return 0;
             }
         );
-
         this.currentPage =
             1;
-
         this.updatePagination();
     }
-
-
     //===========================================================
     // Refresh
     //===========================================================
-
     refresh():
         void
     {
         this.searchText =
             '';
-
+        this.selectedTab =
+            'all';
         this.selectedAccountClassId =
             null;
-
         this.selectedStatus =
             null;
-
         this.currentPage =
             1;
-
         this.loadAccountClasses();
-
         this.loadItems();
     }
 
     //===========================================================
     // Filters
     //===========================================================
-
     accountClassFilterItems:
         any[] =
         [
@@ -1071,13 +1129,9 @@ implements OnInit
                 value:null
             }
         ];
-
-
     selectedAccountClassId:
         number | null =
         null;
-
-
     statusFilterItems:
         any[] =
         [
@@ -1094,28 +1148,22 @@ implements OnInit
                 value:false
             }
         ];
-
-
     selectedStatus:
         boolean | null =
         null;
-        
     //===========================================================
     // Update Pagination
     //===========================================================
-
     updatePagination():
         void
     {
         const start:
             number =
-
             (
                 this.currentPage - 1
             )
             *
             this.pageSize;
-
         this.pagedAccountGroups =
         [
             ...this.filteredAccountGroups.slice
@@ -1125,12 +1173,9 @@ implements OnInit
             )
         ];
     }
-
-
     //===========================================================
     // Page Change
     //===========================================================
-
     onPageChange
     (
         page:
@@ -1140,15 +1185,11 @@ implements OnInit
     {
         this.currentPage =
             page;
-
         this.updatePagination();
     }
-
-
     //===========================================================
     // Page Size Change
     //===========================================================
-
     onPageSizeChange
     (
         size:
@@ -1158,18 +1199,13 @@ implements OnInit
     {
         this.pageSize =
             size;
-
         this.currentPage =
             1;
-
         this.updatePagination();
     }
-
-
     //===========================================================
     // Add
     //===========================================================
-
     add():
         void
     {
@@ -1184,12 +1220,9 @@ implements OnInit
             }
         );
     }
-
-
     //===========================================================
     // View
     //===========================================================
-
     view
     (
         item:
@@ -1209,12 +1242,9 @@ implements OnInit
             }
         );
     }
-
-
     //===========================================================
     // Edit
     //===========================================================
-
     edit
     (
         item:
@@ -1234,12 +1264,9 @@ implements OnInit
             }
         );
     }
-
-
     //===========================================================
     // Delete
     //===========================================================
-
     delete
     (
         item:
@@ -1270,10 +1297,8 @@ implements OnInit
                                 'Delete Successful',
                                 `${item.GroupName} deleted successfully.`
                             );
-
                             this.loadItems();
                         },
-
                         error:
                         (
                             error:
@@ -1286,11 +1311,9 @@ implements OnInit
                                 'Delete Account Group Error:',
                                 error
                             );
-
                             //===================================================
                             // Deletion Blocked
                             //===================================================
-
                             if
                             (
                                 error instanceof HttpErrorResponse
@@ -1300,7 +1323,6 @@ implements OnInit
                             {
                                 let message =
                                     'Account Group cannot be deleted because it is already configured.';
-
                                 if
                                 (
                                     typeof error.error === 'string'
@@ -1327,20 +1349,16 @@ implements OnInit
                                     message =
                                         error.error.title;
                                 }
-
                                 this.toast.info
                                 (
                                     'Delete Blocked',
                                     message
                                 );
-
                                 return;
                             }
-
                             //===================================================
                             // Delete Failed
                             //===================================================
-
                             this.toast.error
                             (
                                 'Delete Failed',
@@ -1351,12 +1369,9 @@ implements OnInit
             }
         );
     }
-
-
     //===========================================================
     // Restore
     //===========================================================
-
     restore():
         void
     {
@@ -1374,12 +1389,9 @@ implements OnInit
             'primary'
         );
     }
-
-
     //===========================================================
     // Restore Item
     //===========================================================
-
     private restoreItem():
         void
     {
@@ -1396,10 +1408,8 @@ implements OnInit
                         'Restore Successful',
                         'The most recently deleted account group has been restored.'
                     );
-
                     this.loadItems();
                 },
-
                 error:
                 (
                     error:
@@ -1412,7 +1422,6 @@ implements OnInit
                         'Restore Account Group Error:',
                         error
                     );
-
                     if
                     (
                         error instanceof HttpErrorResponse
@@ -1425,10 +1434,8 @@ implements OnInit
                             'No Data to Restore',
                             'There is no deleted account group record to restore.'
                         );
-
                         return;
                     }
-
                     this.toast.error
                     (
                         'Restore Failed',
@@ -1437,12 +1444,9 @@ implements OnInit
                 }
             });
     }
-
-
     //===========================================================
     // Open History
     //===========================================================
-
     openHistory():
         void
     {
@@ -1466,19 +1470,16 @@ implements OnInit
                                     history.activityTitle
                                     ??
                                     history.ActivityTitle,
-
                                 description:
                                     history.activityDescription
                                     ??
                                     history.ActivityDescription,
-
                                 user:
                                     history.performedByName
                                     ??
                                     history.PerformedByName
                                     ??
                                     'System',
-
                                 dateTime:
                                     new Date
                                     (
@@ -1487,23 +1488,18 @@ implements OnInit
                                         history.PerformedDate
                                     )
                                     .toLocaleString(),
-
                                 badge:
                                     history.activityType
                                     ??
                                     history.ActivityType
                             })
                         );
-
                     this.historyTitle =
                         'Account Group Management History';
-
                     this.historyOpened =
                         true;
-
                     this.cdr.detectChanges();
                 },
-
                 error:
                 (
                     error:
@@ -1516,7 +1512,6 @@ implements OnInit
                         'History Load Failed:',
                         error
                     );
-
                     this.toast.error
                     (
                         'History',
@@ -1525,12 +1520,9 @@ implements OnInit
                 }
             });
     }
-
-
     //===========================================================
     // Close History
     //===========================================================
-
     closeHistory():
         void
     {

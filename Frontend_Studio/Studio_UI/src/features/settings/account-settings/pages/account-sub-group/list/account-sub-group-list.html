@@ -73,7 +73,9 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [(selectedTab)]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
 

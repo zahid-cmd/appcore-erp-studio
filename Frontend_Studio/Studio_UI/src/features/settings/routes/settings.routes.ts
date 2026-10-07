@@ -82,4 +82,30 @@ export const settingsRoutes:
 
     // AUTO-END : MNU-003-002
 
+    // AUTO-BEGIN : MNU-003-003
+
+    //===========================================================
+    // Product Settings
+    //===========================================================
+
+    {
+        path:'product-settings',
+
+        data:
+        {
+            breadcrumb:'Product Settings'
+        },
+
+        loadChildren:() =>
+            import(
+                '../product-settings/routes/product-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu003003Routes
+            )
+    },
+
+    // AUTO-END : MNU-003-003
+
 ];

@@ -98,7 +98,7 @@ public class BackendRegistrationEngine
 
 
     //===========================================================
-    // Register
+    // Register Done
     //===========================================================
 
     public async Task<BackendRegistrationResultDto>
@@ -324,13 +324,15 @@ public class BackendRegistrationEngine
             entityNamespace =
                 ExtractNamespace(
                     entityContent
-                );
+                )
+                .Trim();
 
 
             entityClassName =
                 ExtractClassName(
                     entityContent
-                );
+                )
+                .Trim();
 
 
             if
@@ -372,13 +374,15 @@ public class BackendRegistrationEngine
             repositoryInterfaceNamespace =
                 ExtractNamespace(
                     repositoryInterfaceContent
-                );
+                )
+                .Trim();
 
 
             repositoryInterfaceName =
                 ExtractInterfaceName(
                     repositoryInterfaceContent
-                );
+                )
+                .Trim();
 
 
             if
@@ -420,13 +424,15 @@ public class BackendRegistrationEngine
             repositoryNamespace =
                 ExtractNamespace(
                     repositoryContent
-                );
+                )
+                .Trim();
 
 
             repositoryClassName =
                 ExtractClassName(
                     repositoryContent
-                );
+                )
+                .Trim();
 
 
             if
@@ -451,6 +457,47 @@ public class BackendRegistrationEngine
             {
                 return Failure(
                     "Backend registration failed: Repository class could not be determined."
+                );
+            }
+
+
+            //===================================================
+            // Normalize Namespace Values
+            //===================================================
+
+            repositoryInterfaceNamespace =
+                repositoryInterfaceNamespace
+                    .Trim()
+                    .TrimEnd(';');
+
+
+            repositoryNamespace =
+                repositoryNamespace
+                    .Trim()
+                    .TrimEnd(';');
+
+
+            entityNamespace =
+                entityNamespace
+                    .Trim()
+                    .TrimEnd(';');
+
+
+            //===================================================
+            // Validate Namespace Values
+            //===================================================
+
+            if
+            (
+                string.Equals(
+                    repositoryInterfaceNamespace,
+                    repositoryNamespace,
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                return Failure(
+                    $"Backend registration failed: Repository interface namespace and repository namespace are identical: '{repositoryInterfaceNamespace}'."
                 );
             }
 
@@ -508,6 +555,7 @@ public class BackendRegistrationEngine
                     repositoryInterfaceName
                 );
 
+
                 return namespaceResult.Result;
             }
 
@@ -542,6 +590,7 @@ public class BackendRegistrationEngine
                     entityClassName,
                     repositoryInterfaceName
                 );
+
 
                 return repositoryResult.Result;
             }
@@ -1344,7 +1393,7 @@ public class BackendRegistrationEngine
 
 
     //===========================================================
-    // Register Repository Namespaces
+    // Register Repository Namespaces Done
     //===========================================================
 
     private async Task
@@ -1434,28 +1483,60 @@ public class BackendRegistrationEngine
 
 
         //=======================================================
-        // Build Current Registration
+        // Check Existing Namespaces
         //=======================================================
 
-        var registration =
-            string.Join
-            (
-                Environment.NewLine,
-
-                $"// AUTO-BEGIN : {entityClassName}",
-
-                string.Empty,
-
-                $"using {repositoryInterfaceNamespace};",
-
-                $"using {repositoryNamespace};",
-
-                string.Empty,
-
-                $"// AUTO-END : {entityClassName}",
-
-                string.Empty
+        var namespaceRegion =
+            text.Substring(
+                regionStart,
+                regionEnd
+                - regionStart
             );
+
+
+        var interfaceUsing =
+            $"using {repositoryInterfaceNamespace};";
+
+
+        var repositoryUsing =
+            $"using {repositoryNamespace};";
+
+
+        var interfaceNamespaceExists =
+            namespaceRegion
+                .Contains(
+                    interfaceUsing,
+                    StringComparison.Ordinal
+                );
+
+
+        var repositoryNamespaceExists =
+            namespaceRegion
+                .Contains(
+                    repositoryUsing,
+                    StringComparison.Ordinal
+                );
+
+
+        //=======================================================
+        // Nothing To Register
+        //=======================================================
+
+        if
+        (
+            interfaceNamespaceExists
+            &&
+            repositoryNamespaceExists
+        )
+        {
+            return
+            (
+                Success(
+                    $"Repository namespaces already registered: {entityClassName}."
+                ),
+                false
+            );
+        }
 
 
         //=======================================================
@@ -1470,6 +1551,36 @@ public class BackendRegistrationEngine
                 StringComparison.Ordinal
             );
 
+
+        var missingNamespaces =
+            new List<string>();
+
+
+        if
+        (
+            !interfaceNamespaceExists
+        )
+        {
+            missingNamespaces.Add(
+                interfaceUsing
+            );
+        }
+
+
+        if
+        (
+            !repositoryNamespaceExists
+        )
+        {
+            missingNamespaces.Add(
+                repositoryUsing
+            );
+        }
+
+
+        //=======================================================
+        // Update Existing Registration
+        //=======================================================
 
         if
         (
@@ -1504,9 +1615,106 @@ public class BackendRegistrationEngine
             }
 
 
+            var existingBlockEnd =
+                FindLineEnd(
+                    text,
+                    blockEndMarker
+                );
+
+
+            var existingBlock =
+                text.Substring(
+                    blockStart,
+                    existingBlockEnd
+                    - blockStart
+                );
+
+
+            var registrationLines =
+                new List<string>
+                {
+                    $"// AUTO-BEGIN : {entityClassName}",
+                    string.Empty
+                };
+
+
             //===================================================
-            // Update Existing Registration
+            // Preserve Existing Namespace Entries
             //===================================================
+
+            if
+            (
+                existingBlock.Contains(
+                    interfaceUsing,
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                registrationLines.Add(
+                    interfaceUsing
+                );
+            }
+
+
+            if
+            (
+                existingBlock.Contains(
+                    repositoryUsing,
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                registrationLines.Add(
+                    repositoryUsing
+                );
+            }
+
+
+            //===================================================
+            // Add Missing Namespace Entries
+            //===================================================
+
+            foreach
+            (
+                var missingNamespace
+                    in missingNamespaces
+            )
+            {
+                if
+                (
+                    !registrationLines.Contains(
+                        missingNamespace
+                    )
+                )
+                {
+                    registrationLines.Add(
+                        missingNamespace
+                    );
+                }
+            }
+
+
+            registrationLines.Add(
+                string.Empty
+            );
+
+
+            registrationLines.Add(
+                $"// AUTO-END : {entityClassName}"
+            );
+
+
+            registrationLines.Add(
+                string.Empty
+            );
+
+
+            var registration =
+                string.Join(
+                    Environment.NewLine,
+                    registrationLines
+                );
+
 
             var removeStart =
                 FindLineStart(
@@ -1548,9 +1756,55 @@ public class BackendRegistrationEngine
                 Success(
                     $"Repository namespaces updated: {entityClassName}."
                 ),
-                false
+                true
             );
         }
+
+
+        //=======================================================
+        // Register Missing Namespace Block
+        //=======================================================
+
+        var registrationLinesNew =
+            new List<string>
+            {
+                $"// AUTO-BEGIN : {entityClassName}",
+                string.Empty
+            };
+
+
+        foreach
+        (
+            var missingNamespace
+                in missingNamespaces
+        )
+        {
+            registrationLinesNew.Add(
+                missingNamespace
+            );
+        }
+
+
+        registrationLinesNew.Add(
+            string.Empty
+        );
+
+
+        registrationLinesNew.Add(
+            $"// AUTO-END : {entityClassName}"
+        );
+
+
+        registrationLinesNew.Add(
+            string.Empty
+        );
+
+
+        var registrationNew =
+            string.Join(
+                Environment.NewLine,
+                registrationLinesNew
+            );
 
 
         //=======================================================
@@ -1568,7 +1822,7 @@ public class BackendRegistrationEngine
             text.Insert(
                 insertionIndex,
                 Environment.NewLine
-                + registration
+                + registrationNew
             );
 
 
@@ -1588,9 +1842,8 @@ public class BackendRegistrationEngine
     }
 
 
-
     //===========================================================
-    // Remove Repository Namespaces
+    // Remove Repository Namespaces Done
     //===========================================================
 
     private async Task<BackendRegistrationResultDto>
@@ -1705,25 +1958,240 @@ public class BackendRegistrationEngine
         }
 
 
-        var removeStart =
-            FindLineStart(
-                text,
-                blockStart
-            );
-
-
-        var removeEnd =
+        var blockEnd =
             FindLineEnd(
                 text,
                 blockEndMarker
             );
 
 
+        var blockText =
+            text.Substring(
+                blockStart,
+                blockEnd
+                - blockStart
+            );
+
+
+        var namespaceLines =
+            blockText
+                .Split(
+                    new[]
+                    {
+                        "\r\n",
+                        "\n"
+                    },
+                    StringSplitOptions.None
+                )
+                .Where
+                (
+                    line =>
+                    {
+                        var trimmed =
+                            line.Trim();
+
+                        return
+                            trimmed.StartsWith(
+                                "using ",
+                                StringComparison.Ordinal
+                            )
+                            &&
+                            trimmed.EndsWith(
+                                ";",
+                                StringComparison.Ordinal
+                            );
+                    }
+                )
+                .ToList();
+
+
+        //=======================================================
+        // Nothing To Remove
+        //=======================================================
+
+        if
+        (
+            namespaceLines.Count == 0
+        )
+        {
+            var removeStart =
+                FindLineStart(
+                    text,
+                    blockStart
+                );
+
+
+            text =
+                text.Remove(
+                    removeStart,
+                    blockEnd
+                    - removeStart
+                );
+
+
+            await File.WriteAllTextAsync(
+                dependencyInjectionFile,
+                text
+            );
+
+
+            return Success(
+                $"Repository namespaces removed: {entityClassName}."
+            );
+        }
+
+
+        //=======================================================
+        // Check Shared Namespaces
+        //=======================================================
+
+        var regionText =
+            text.Substring(
+                regionStart,
+                regionEnd
+                - regionStart
+            );
+
+
+        var otherRegionText =
+            regionText.Remove(
+                blockStart
+                - regionStart,
+                blockEnd
+                - blockStart
+            );
+
+
+        var retainedNamespaces =
+            new List<string>();
+
+
+        foreach
+        (
+            var namespaceLine
+                in namespaceLines
+        )
+        {
+            var namespaceUsing =
+                namespaceLine.Trim();
+
+
+            if
+            (
+                otherRegionText.Contains(
+                    namespaceUsing,
+                    StringComparison.Ordinal
+                )
+            )
+            {
+                retainedNamespaces.Add(
+                    namespaceUsing
+                );
+            }
+        }
+
+
+        //=======================================================
+        // Remove Complete Block
+        //=======================================================
+
+        if
+        (
+            retainedNamespaces.Count == 0
+        )
+        {
+            var removeStart =
+                FindLineStart(
+                    text,
+                    blockStart
+                );
+
+
+            text =
+                text.Remove(
+                    removeStart,
+                    blockEnd
+                    - removeStart
+                );
+
+
+            await File.WriteAllTextAsync(
+                dependencyInjectionFile,
+                text
+            );
+
+
+            return Success(
+                $"Repository namespaces removed: {entityClassName}."
+            );
+        }
+
+
+        //=======================================================
+        // Preserve Shared Namespaces
+        //=======================================================
+
+        var registrationLines =
+            new List<string>
+            {
+                $"// AUTO-BEGIN : {entityClassName}",
+                string.Empty
+            };
+
+
+        foreach
+        (
+            var retainedNamespace
+                in retainedNamespaces
+        )
+        {
+            registrationLines.Add(
+                retainedNamespace
+            );
+        }
+
+
+        registrationLines.Add(
+            string.Empty
+        );
+
+
+        registrationLines.Add(
+            $"// AUTO-END : {entityClassName}"
+        );
+
+
+        registrationLines.Add(
+            string.Empty
+        );
+
+
+        var registration =
+            string.Join(
+                Environment.NewLine,
+                registrationLines
+            );
+
+
+        var removeBlockStart =
+            FindLineStart(
+                text,
+                blockStart
+            );
+
+
         text =
             text.Remove(
-                removeStart,
-                removeEnd
-                - removeStart
+                removeBlockStart,
+                blockEnd
+                - removeBlockStart
+            );
+
+
+        text =
+            text.Insert(
+                removeBlockStart,
+                registration
             );
 
 
@@ -1734,7 +2202,7 @@ public class BackendRegistrationEngine
 
 
         return Success(
-            $"Repository namespaces removed: {entityClassName}."
+            $"Repository namespaces updated while preserving shared namespaces: {entityClassName}."
         );
     }
 
@@ -2069,7 +2537,7 @@ public class BackendRegistrationEngine
 
 
     //===========================================================
-    // Cleanup Registration
+    // Cleanup Registration Done
     //===========================================================
 
     private async Task

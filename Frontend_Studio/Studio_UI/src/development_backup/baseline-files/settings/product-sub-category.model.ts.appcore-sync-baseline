@@ -1,0 +1,90 @@
+/* ============================================================
+   Product Sub Category
+============================================================ */
+
+export interface ProductSubCategory
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Product Sub Category
+============================================================ */
+
+export interface CreateProductSubCategory
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Product Sub Category
+============================================================ */
+
+export interface UpdateProductSubCategory
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Product Sub Category Defaults
+============================================================ */
+
+export interface ProductSubCategoryDefaults
+{
+    code:
+        string;
+}

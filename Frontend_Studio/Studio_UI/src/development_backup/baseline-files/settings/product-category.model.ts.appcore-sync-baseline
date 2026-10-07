@@ -1,0 +1,90 @@
+/* ============================================================
+   Product Category
+============================================================ */
+
+export interface ProductCategory
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Product Category
+============================================================ */
+
+export interface CreateProductCategory
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Product Category
+============================================================ */
+
+export interface UpdateProductCategory
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Product Category Defaults
+============================================================ */
+
+export interface ProductCategoryDefaults
+{
+    code:
+        string;
+}

@@ -541,16 +541,6 @@ public class AppDbContext
 
     // AUTO-END : AccountGroup
 
-    // AUTO-BEGIN : AccountSubGroup
-
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>
-    AccountSubGroups
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : AccountSubGroup
 
     // AUTO-BEGIN : SystemConfigurations
 
@@ -573,6 +563,42 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : FinancialYears
+
+
+
+
+    // AUTO-BEGIN : ProductCategory
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory>
+    ProductCategorys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductCategory
+
+    // AUTO-BEGIN : AccountSubGroup
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>
+    AccountSubGroups
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : AccountSubGroup
+
+    // AUTO-BEGIN : ProductSubCategory
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory>
+    ProductSubCategorys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductSubCategory
 
     // AUTO-END : AUTO REGISTER DBSETS
 

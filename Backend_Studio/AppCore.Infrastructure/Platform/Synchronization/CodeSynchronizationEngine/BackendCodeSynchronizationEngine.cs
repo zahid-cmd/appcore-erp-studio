@@ -2331,7 +2331,7 @@ public class BackendCodeSynchronizationEngine
 
 
     //===========================================================
-    // Build Replacements
+    // Build Replacements Done
     //===========================================================
 
     private static Dictionary<string, string>
@@ -2467,7 +2467,7 @@ public class BackendCodeSynchronizationEngine
 
 
         var repositoryNamespace =
-            $"AppCore.Infrastructure.Repositories.{moduleNamespace}.{menuNamespace}";
+            infrastructureNamespace;
 
 
         var apiNamespace =
@@ -2606,7 +2606,6 @@ public class BackendCodeSynchronizationEngine
                 submenuCode
         };
     }
-
 
 
     //===========================================================

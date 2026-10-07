@@ -156,6 +156,14 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : ProductCategory
+
+using AppCore.Application.Settings.ProductSettings;
+using AppCore.Infrastructure.Configurations.Settings.ProductSettings;
+
+// AUTO-END : ProductCategory
+
+
 // AUTO-BEGIN : FinancialYears
 
 using AppCore.Application.Settings.GeneralSettings;
@@ -221,9 +229,6 @@ using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 
 // AUTO-END : Wings
-
-
-
 
 
 // AUTO-BEGIN : SubOrdinateComponents
@@ -613,6 +618,39 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : ProductSubCategory
+
+        services.AddScoped
+        <
+            IProductSubCategoryRepository,
+            ProductSubCategoryRepository
+        >();
+
+        // AUTO-END : ProductSubCategory
+
+        // AUTO-BEGIN : AccountSubGroup
+
+        services.AddScoped
+        <
+            IAccountSubGroupRepository,
+            AccountSubGroupRepository
+        >();
+
+        // AUTO-END : AccountSubGroup
+
+        // AUTO-BEGIN : ProductCategory
+
+        services.AddScoped
+        <
+            IProductCategoryRepository,
+            ProductCategoryRepository
+        >();
+
+        // AUTO-END : ProductCategory
+
+
+
+
         // AUTO-BEGIN : FinancialYears
 
         services.AddScoped
@@ -633,15 +671,6 @@ public static class DependencyInjection
 
         // AUTO-END : SystemConfigurations
 
-        // AUTO-BEGIN : AccountSubGroup
-
-        services.AddScoped
-        <
-            IAccountSubGroupRepository,
-            AccountSubGroupRepository
-        >();
-
-        // AUTO-END : AccountSubGroup
 
         // AUTO-BEGIN : AccountGroup
 

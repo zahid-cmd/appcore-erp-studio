@@ -1,0 +1,392 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-layer-group"
+
+        [title]="pageTitle"
+
+        subtitle="Manage product sub categories">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-layer-group">
+
+
+
+                <!-- Product Category -->
+
+                <app-dropdown
+
+                    label="Product Category"
+
+                    [items]="productCategoryItems"
+
+                    [(value)]="entity.ProductCategoryId"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+
+                <!-- Sub Category Code -->
+
+                <app-textbox
+
+                    label="Sub Category Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.SubCategoryCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- Sub Category Name -->
+
+                <app-textbox
+
+                    label="Sub Category Name"
+
+                    placeholder="Enter sub category name"
+
+                    [(value)]="entity.SubCategoryName"
+
+                    (valueChange)="onSubCategoryNameChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 INVENTORY ACCOUNT SUB GROUPS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Inventory Account Sub Groups"
+
+                icon="fas fa-tags">
+
+
+
+                <!-- Inventory Sub Group Code -->
+
+                <app-textbox
+
+                    label="Inventory Sub Group Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.InventorySubGroupCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- WIP Sub Group Code -->
+
+                <app-textbox
+
+                    label="WIP Sub Group Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.WipSubGroupCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- COGS Sub Group Code -->
+
+                <app-textbox
+
+                    label="COGS Sub Group Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.CogsSubGroupCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 ACCOUNT SUB GROUP NAMES
+            ============================================== -->
+
+            <app-form-section
+
+                title="Account Sub Group Names"
+
+                icon="fas fa-folder-tree">
+
+
+
+                <!-- Inventory Sub Group Name -->
+
+                <app-textbox
+
+                    label="Inventory Sub Group Name"
+
+                    placeholder="Enter inventory sub group name"
+
+                    [(value)]="entity.InventorySubGroupName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || mode === 'edit'"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- WIP Sub Group Name -->
+
+                <app-textbox
+
+                    label="WIP Sub Group Name"
+
+                    placeholder="Enter WIP sub group name"
+
+                    [(value)]="entity.WipSubGroupName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || mode === 'edit'"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <!-- COGS Sub Group Name -->
+
+                <app-textbox
+
+                    label="COGS Sub Group Name"
+
+                    placeholder="Enter COGS sub group name"
+
+                    [(value)]="entity.CogsSubGroupName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || mode === 'edit'"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+
+                <!-- Sub Category Creation Allowed -->
+
+                <app-dropdown
+
+                    label="Sub Category Creation Allowed"
+
+                    [items]="subCategoryCreationItems"
+
+                    [(value)]="entity.SubCategoryCreationAllowed"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
