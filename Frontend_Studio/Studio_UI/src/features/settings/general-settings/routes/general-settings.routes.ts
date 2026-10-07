@@ -132,6 +132,58 @@ Routes =
 
                 // AUTO-END : SUB-003-001-004
 
+            // AUTO-BEGIN : SUB-003-001-006
+
+                //===========================================================
+                // Financial Years
+                //===========================================================
+
+                {
+                    path:'financial-years',
+
+                    data:
+                    {
+                        breadcrumb:'Financial Years'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './financial-years.routes'
+                        )
+                        .then(
+                            m =>
+                                m.FinancialYearsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-006
+
+            // AUTO-BEGIN : SUB-003-001-005
+
+                //===========================================================
+                // System Configurations
+                //===========================================================
+
+                {
+                    path:'system-configurations',
+
+                    data:
+                    {
+                        breadcrumb:'System Configurations'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './system-configurations.routes'
+                        )
+                        .then(
+                            m =>
+                                m.SystemConfigurationsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-005
+
         ]
 
     }

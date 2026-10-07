@@ -111,6 +111,214 @@ Routes =
 
                 // AUTO-END : SUB-003-002-003
 
+            // AUTO-BEGIN : SUB-003-002-006
+
+                //===========================================================
+                // Bank Accounts
+                //===========================================================
+
+                {
+                    path:'bank-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'Bank Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './bank-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BankAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-006
+
+            // AUTO-BEGIN : SUB-003-002-009
+
+                //===========================================================
+                // Bank Setup
+                //===========================================================
+
+                {
+                    path:'bank-setup',
+
+                    data:
+                    {
+                        breadcrumb:'Bank Setup'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './bank-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BankSetupRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-009
+
+            // AUTO-BEGIN : SUB-003-002-011
+
+                //===========================================================
+                // Card Charges
+                //===========================================================
+
+                {
+                    path:'card-charges',
+
+                    data:
+                    {
+                        breadcrumb:'Card Charges'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './card-charges.routes'
+                        )
+                        .then(
+                            m =>
+                                m.CardChargesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-011
+
+            // AUTO-BEGIN : SUB-003-002-010
+
+                //===========================================================
+                // Card Setup
+                //===========================================================
+
+                {
+                    path:'card-setup',
+
+                    data:
+                    {
+                        breadcrumb:'Card Setup'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './card-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.CardSetupRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-010
+
+            // AUTO-BEGIN : SUB-003-002-005
+
+                //===========================================================
+                // Cash Accounts
+                //===========================================================
+
+                {
+                    path:'cash-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'Cash Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './cash-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.CashAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-005
+
+            // AUTO-BEGIN : SUB-003-002-004
+
+                //===========================================================
+                // General Ledgers
+                //===========================================================
+
+                {
+                    path:'general-ledgers',
+
+                    data:
+                    {
+                        breadcrumb:'General Ledgers'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './general-ledgers.routes'
+                        )
+                        .then(
+                            m =>
+                                m.GeneralLedgersRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-004
+
+            // AUTO-BEGIN : SUB-003-002-007
+
+                //===========================================================
+                // MFS Accounts
+                //===========================================================
+
+                {
+                    path:'mfs-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'MFS Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './mfs-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MfsAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-007
+
+            // AUTO-BEGIN : SUB-003-002-008
+
+                //===========================================================
+                // POS Accounts
+                //===========================================================
+
+                {
+                    path:'pos-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'POS Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './pos-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PosAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-008
+
         ]
 
     }

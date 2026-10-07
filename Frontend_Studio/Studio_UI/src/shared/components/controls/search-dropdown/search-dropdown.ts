@@ -7,7 +7,8 @@ import
     Component,
     EventEmitter,
     Input,
-    Output
+    Output,
+    ViewChild
 }
 from '@angular/core';
 
@@ -68,6 +69,10 @@ from '../../utilities/search-box/search-box';
 })
 export class SearchDropdownComponent
 {
+    @ViewChild('searchBox')
+    searchBox:
+        any;
+
     /* =====================================================
        INPUTS
     ====================================================== */
@@ -215,6 +220,16 @@ export class SearchDropdownComponent
 
         this.isOpen =
             !this.isOpen;
+
+        if (this.isOpen)
+        {
+            setTimeout(
+                () =>
+                {
+                    this.searchBox?.focus();
+                }
+            );
+        }
     }
 
     /* =====================================================

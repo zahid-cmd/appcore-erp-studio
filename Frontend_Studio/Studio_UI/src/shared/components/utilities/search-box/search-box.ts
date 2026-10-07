@@ -5,9 +5,11 @@
 import
 {
     Component,
+    ElementRef,
     EventEmitter,
     Input,
-    Output
+    Output,
+    ViewChild
 }
 from '@angular/core';
 
@@ -64,6 +66,14 @@ export class SearchBoxComponent
     autofocus = false;
 
     /* =====================================================
+       VIEW CHILD
+    ====================================================== */
+
+    @ViewChild('searchInput')
+    searchInput:
+        ElementRef<HTMLInputElement> | undefined;
+
+    /* =====================================================
        OUTPUTS
     ====================================================== */
 
@@ -92,6 +102,22 @@ export class SearchBoxComponent
         this.search.emit(
             value
         );
+    }
+
+    /* =====================================================
+       FOCUS
+    ====================================================== */
+
+    focus(): void
+    {
+        if (this.disabled)
+        {
+            return;
+        }
+
+        this.searchInput
+            ?.nativeElement
+            .focus();
     }
 
     /* =====================================================

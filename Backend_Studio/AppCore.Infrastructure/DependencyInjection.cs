@@ -156,6 +156,20 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : FinancialYears
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
+
+// AUTO-END : FinancialYears
+
+// AUTO-BEGIN : SystemConfigurations
+
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
+
+// AUTO-END : SystemConfigurations
+
 // AUTO-BEGIN : AccountSubGroup
 
 using AppCore.Application.Settings.AccountSettings;
@@ -598,6 +612,26 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : FinancialYears
+
+        services.AddScoped
+        <
+            IFinancialYearsRepository,
+            FinancialYearsRepository
+        >();
+
+        // AUTO-END : FinancialYears
+
+        // AUTO-BEGIN : SystemConfigurations
+
+        services.AddScoped
+        <
+            ISystemConfigurationsRepository,
+            SystemConfigurationsRepository
+        >();
+
+        // AUTO-END : SystemConfigurations
 
         // AUTO-BEGIN : AccountSubGroup
 

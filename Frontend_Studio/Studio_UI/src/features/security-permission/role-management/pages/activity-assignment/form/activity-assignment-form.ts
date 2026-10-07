@@ -561,14 +561,14 @@ implements OnInit
             header:'Menu',
             field:'menu',
             type:'text',
-            width:'360px',
+            width:'320px',
             align:'left'
         },
         {
             header:'Sub Menu',
             field:'subMenu',
             type:'text',
-            width:'460px',
+            width:'380px',
             align:'left'
         },
         {

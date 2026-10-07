@@ -552,6 +552,28 @@ public class AppDbContext
 
     // AUTO-END : AccountSubGroup
 
+    // AUTO-BEGIN : SystemConfigurations
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations>
+    SystemConfigurationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SystemConfigurations
+
+    // AUTO-BEGIN : FinancialYears
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>
+    FinancialYearss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : FinancialYears
+
     // AUTO-END : AUTO REGISTER DBSETS
 
     //===========================================================
