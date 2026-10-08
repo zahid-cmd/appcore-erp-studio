@@ -1,0 +1,446 @@
+<div class="clone-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-paste"
+        [title]="pageTitle"
+        subtitle="Configure target page for cloning">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Generate"
+            command1Icon="fas fa-wand-magic-sparkles"
+            (command1Click)="onGenerate()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToSource()">
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+        leftFlex="0 0 auto"
+        rightFlex="1 1 auto">
+
+        <!-- =================================================
+             LEFT : TARGET TAB
+        ================================================== -->
+
+        <div
+            pageToolbarLeft
+            class="clone-toolbar-left">
+
+            <app-control-tabs
+                [tabs]="tabs"
+                [(selectedTab)]="selectedTab">
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT : TARGET PAGE SELECTION
+        ================================================== -->
+
+        <div
+            pageToolbarRight
+            class="clone-toolbar-right">
+
+            <div class="clone-toolbar-group">
+
+                <!-- MODULE -->
+
+                <app-search-dropdown
+                    placeholder="Select Module"
+                    [items]="cloneToModules"
+                    labelField="name"
+                    valueField="id"
+                    [readonly]="isViewMode"
+                    [(value)]="selectedCloneToModuleId"
+                    (valueChange)="onCloneToModuleChange($event)">
+                </app-search-dropdown>
+
+
+                <!-- MENU -->
+
+                <app-search-dropdown
+                    placeholder="Select Menu"
+                    [items]="cloneToMenus"
+                    labelField="name"
+                    valueField="id"
+                    [readonly]="
+                        isViewMode ||
+                        !selectedCloneToModuleId
+                    "
+                    [(value)]="selectedCloneToMenuId"
+                    (valueChange)="onCloneToMenuChange($event)">
+                </app-search-dropdown>
+
+
+                <!-- SUBMENU -->
+
+                <app-search-dropdown
+                    placeholder="Select Submenu"
+                    [items]="cloneToSubmenus"
+                    labelField="name"
+                    valueField="id"
+                    [readonly]="
+                        isViewMode ||
+                        !selectedCloneToMenuId
+                    "
+                    [(value)]="selectedCloneToSubmenuId"
+                    (valueChange)="onCloneToSubmenuChange($event)">
+                </app-search-dropdown>
+
+
+                <!-- SUBMIT -->
+
+                <button
+                    type="button"
+                    class="clone-analyze-button"
+                    [disabled]="
+                        isViewMode ||
+                        !selectedCloneToSubmenuId ||
+                        isLoadingTarget
+                    "
+                    (click)="onSubmitTarget()">
+
+                    <i class="fas fa-check"></i>
+
+                    <span>
+                        {{ isLoadingTarget ? 'Loading...' : 'Submit' }}
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         SECTION 03 : CLONE ANALYSIS WORKSPACE
+    ====================================================== -->
+
+    <div class="clone-page-canvas">
+
+        <!-- =================================================
+             LEFT : TARGET FILES
+        ================================================== -->
+
+        <div class="clone-files-panel">
+
+            <!-- =================================================
+                 FILE PANEL HEADER
+            ================================================== -->
+
+            <div class="clone-panel-header">
+
+                <div class="clone-panel-title">
+
+                    <div class="clone-panel-icon">
+
+                        <i class="fas fa-file-code"></i>
+
+                    </div>
+
+                    <div class="clone-panel-heading">
+
+                        <div class="clone-panel-name">
+                            Target Files
+                        </div>
+
+                        <div class="clone-panel-subtitle">
+                            Files that will be generated for the target page
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="clone-file-count">
+                    0 / 15
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FILE LIST / EMPTY STATE
+            ================================================== -->
+
+            <div
+                class="clone-files-empty"
+                *ngIf="!targetPageLoaded">
+
+                <div class="clone-empty-icon">
+
+                    <i class="fas fa-folder"></i>
+
+                </div>
+
+                <div class="clone-empty-title">
+                    Target files not generated
+                </div>
+
+                <div class="clone-empty-text">
+                    Select Module, Menu and Submenu and Submit
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 TARGET FILES
+            ================================================== -->
+
+            <div
+                class="clone-files-list"
+                *ngIf="targetPageLoaded">
+
+                <!-- Target files will be rendered here -->
+
+            </div>
+
+
+            <!-- =================================================
+                 FILE FOOTER
+            ================================================== -->
+
+            <div class="clone-files-footer">
+
+                <i class="fas fa-circle-info"></i>
+
+                <span>
+                    Standard 15 files will be prepared for the target structure.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             WORKSPACE DIVIDER
+        ================================================== -->
+
+        <div class="clone-workspace-divider">
+
+            <div class="clone-workspace-divider-handle">
+
+                <i class="fas fa-grip-lines-vertical"></i>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT : TARGET MODEL CONFIGURATION
+        ================================================== -->
+
+        <div class="clone-model-panel">
+
+            <!-- =================================================
+                 MODEL PANEL HEADER
+            ================================================== -->
+
+            <div class="clone-panel-header">
+
+                <div class="clone-panel-title">
+
+                    <div class="clone-panel-icon model-icon">
+
+                        <i class="fas fa-database"></i>
+
+                    </div>
+
+                    <div class="clone-panel-heading">
+
+                        <div class="clone-panel-name">
+                            Model Configuration
+                        </div>
+
+                        <div class="clone-panel-subtitle">
+                            Configure model fields for the cloned page
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     MODEL HEADER RIGHT
+                ================================================== -->
+
+                <div class="clone-model-header-right">
+
+                    <!-- TARGET MODEL NAME -->
+
+                    <div
+                        class="clone-model-name"
+                        *ngIf="targetPageLoaded">
+
+                        <span>
+                            Target Model
+                        </span>
+
+                        <strong>
+                            {{ pageCloning.cloneToName || 'Target' }}
+                        </strong>
+
+                    </div>
+
+
+                    <!-- ADD FIELD -->
+
+                    <button
+                        type="button"
+                        class="clone-add-field-button"
+                        [disabled]="
+                            isViewMode ||
+                            !targetPageLoaded
+                        "
+                        (click)="onAddField()">
+
+                        <i class="fas fa-plus"></i>
+
+                        <span>
+                            Add Field
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 TARGET MODEL EMPTY STATE
+            ================================================== -->
+
+            <div
+                class="clone-model-empty"
+                *ngIf="!targetPageLoaded">
+
+                <div class="clone-model-empty-icon">
+
+                    <i class="fas fa-database"></i>
+
+                    <span>
+                        <i class="fas fa-gear"></i>
+                    </span>
+
+                </div>
+
+                <div class="clone-model-empty-title">
+                    Target model not loaded
+                </div>
+
+                <div class="clone-model-empty-text">
+                    Submit the target page to load.
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 TARGET MODEL CONTENT
+            ================================================== -->
+
+            <div
+                class="clone-model-content"
+                *ngIf="targetPageLoaded">
+
+                <div class="clone-model-summary">
+
+                    <div class="clone-model-summary-item">
+
+                        <span class="summary-value">
+                            0
+                        </span>
+
+                        <span class="summary-label">
+                            Model Fields
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="clone-model-table-wrapper">
+
+                    <table class="clone-model-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="field-number-column">
+                                    #
+                                </th>
+
+                                <th>
+                                    Field Name
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th>
+                                    Category
+                                </th>
+
+                                <th>
+                                    Required
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <!-- Target model fields will be rendered here -->
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SECTION 04 : UTILITIES
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+</div>

@@ -610,7 +610,16 @@ public static class DependencyInjection
             ICodeSynchronizationRepository,
             CodeSynchronizationRepository
         >();
+        
+        //=======================================================
+        // Page Cloning Repository
+        //=======================================================
 
+        services.AddScoped
+        <
+            IPageCloningRepository,
+            PageCloningRepository
+        >();
 
         //=======================================================
         // AUTO REGISTER SERVICES

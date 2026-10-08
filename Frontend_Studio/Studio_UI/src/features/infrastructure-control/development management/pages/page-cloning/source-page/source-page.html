@@ -1,0 +1,552 @@
+<div class="clone-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-copy"
+        [title]="pageTitle"
+        subtitle="Analyze source page for cloning">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Continue"
+            command1Icon="fas fa-arrow-right"
+            (command1Click)="onContinue()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+        leftFlex="0 0 auto"
+        rightFlex="1 1 auto">
+
+        <!-- =================================================
+             LEFT : SOURCE TAB
+        ================================================== -->
+
+        <div
+            pageToolbarLeft
+            class="clone-toolbar-left">
+
+            <app-control-tabs
+                [tabs]="tabs"
+                [(selectedTab)]="selectedTab">
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT : SOURCE PAGE SELECTION
+        ================================================== -->
+
+        <div
+            pageToolbarRight
+            class="clone-toolbar-right">
+
+            <div class="clone-toolbar-group">
+
+                <!-- MODULE -->
+
+                <app-search-dropdown
+                    placeholder="Select Module"
+                    [items]="cloneFromModules"
+                    labelField="name"
+                    valueField="id"
+                    [readonly]="isViewMode"
+                    [(value)]="selectedCloneFromModuleId"
+                    (valueChange)="onCloneFromModuleChange($event)">
+                </app-search-dropdown>
+
+
+                <!-- MENU -->
+
+                <app-search-dropdown
+                    placeholder="Select Menu"
+                    [items]="cloneFromMenus"
+                    labelField="name"
+                    valueField="id"
+                    [readonly]="
+                        isViewMode ||
+                        !selectedCloneFromModuleId
+                    "
+                    [(value)]="selectedCloneFromMenuId"
+                    (valueChange)="onCloneFromMenuChange($event)">
+                </app-search-dropdown>
+
+
+                <!-- SUBMENU -->
+
+                <app-search-dropdown
+                    placeholder="Select Submenu"
+                    [items]="cloneFromSubmenus"
+                    labelField="name"
+                    valueField="id"
+                    [readonly]="
+                        isViewMode ||
+                        !selectedCloneFromMenuId
+                    "
+                    [(value)]="selectedCloneFromSubmenuId"
+                    (valueChange)="onCloneFromSubmenuChange($event)">
+                </app-search-dropdown>
+
+
+                <!-- ANALYZE -->
+
+                <button
+                    type="button"
+                    class="clone-analyze-button"
+                    [disabled]="
+                        isViewMode ||
+                        selectedCloneFromSubmenuId <= 0 ||
+                        isAnalyzing
+                    "
+                    (click)="onAnalyze()">
+
+                    <i class="fas fa-magnifying-glass"></i>
+
+                    <span>
+                        {{ isAnalyzing ? 'Analyzing...' : 'Analyze' }}
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         SECTION 03 : CLONE ANALYSIS WORKSPACE
+    ====================================================== -->
+
+    <div class="clone-page-canvas">
+
+        <!-- =================================================
+             LEFT : FILES
+        ================================================== -->
+
+        <div class="clone-files-panel">
+
+            <!-- =================================================
+                 FILE PANEL HEADER
+            ================================================== -->
+
+            <div class="clone-panel-header">
+
+                <div class="clone-panel-title">
+
+                    <div class="clone-panel-icon">
+
+                        <i class="fas fa-file-code"></i>
+
+                    </div>
+
+                    <div class="clone-panel-heading">
+
+                        <div class="clone-panel-name">
+                            Source Files
+                        </div>
+
+                        <div class="clone-panel-subtitle">
+                            Standard 15 files for page cloning
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="clone-file-count">
+                    {{ sourceAnalysisFileCount || 0 }} / {{ standardFileCount }}
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FILE LIST
+            ================================================== -->
+
+            <div
+                class="clone-files-list"
+                *ngIf="
+                    sourceAnalysisReady &&
+                    pageCloningFiles.length > 0
+                ">
+
+                <div
+                    class="clone-file-row"
+                    *ngFor="
+                        let file of pageCloningFiles;
+                        let index = index
+                    "
+                    [class.clone-file-missing]="
+                        file.action === 'Missing'
+                    ">
+
+                    <div class="clone-file-number">
+                        {{ (index + 1).toString().padStart(2, '0') }}
+                    </div>
+
+                    <div class="clone-file-icon">
+
+                        <i
+                            *ngIf="file.fileType === 'TypeScript'"
+                            class="fas fa-file-code">
+                        </i>
+
+                        <i
+                            *ngIf="file.fileType === 'HTML'"
+                            class="fas fa-file-code">
+                        </i>
+
+                        <i
+                            *ngIf="file.fileType === 'C#'"
+                            class="fas fa-file-code">
+                        </i>
+
+                        <i
+                            *ngIf="
+                                file.fileType !== 'TypeScript' &&
+                                file.fileType !== 'HTML' &&
+                                file.fileType !== 'C#'
+                            "
+                            class="fas fa-file">
+                        </i>
+
+                    </div>
+
+                    <div class="clone-file-details">
+
+                        <div class="clone-file-name">
+                            {{ file.fileName }}
+                        </div>
+
+                        <div class="clone-file-path">
+                            {{ file.path }}
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="clone-file-status"
+                        [class.ready]="file.action !== 'Missing'"
+                        [class.missing]="file.action === 'Missing'">
+
+                        {{
+                            file.action === 'Missing'
+                                ? 'Missing'
+                                : 'Ready'
+                        }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FILE EMPTY STATE
+            ================================================== -->
+
+            <div
+                class="clone-files-empty"
+                *ngIf="
+                    !sourceAnalysisReady ||
+                    pageCloningFiles.length === 0
+                ">
+
+                <div class="clone-empty-icon">
+
+                    <i class="fas fa-folder"></i>
+
+                </div>
+
+                <div class="clone-empty-title">
+                    No source page analyzed
+                </div>
+
+                <div class="clone-empty-text">
+                    Select Module, Menu and Submenu and Analyze
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FILE FOOTER
+            ================================================== -->
+
+            <div class="clone-files-footer">
+
+                <i class="fas fa-circle-info"></i>
+
+                <span>
+                    Standard 15 files will be analyzed from the source structure.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             WORKSPACE DIVIDER
+        ================================================== -->
+
+        <div class="clone-workspace-divider">
+
+            <div class="clone-workspace-divider-handle">
+
+                <i class="fas fa-grip-lines-vertical"></i>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT : MODEL CONFIGURATION
+        ================================================== -->
+
+        <div class="clone-model-panel">
+
+            <!-- =================================================
+                 MODEL PANEL HEADER
+            ================================================== -->
+
+            <div class="clone-panel-header">
+
+                <div class="clone-panel-title">
+
+                    <div class="clone-panel-icon model-icon">
+
+                        <i class="fas fa-database"></i>
+
+                    </div>
+
+                    <div class="clone-panel-heading">
+
+                        <div class="clone-panel-name">
+                            Model Configuration
+                        </div>
+
+                        <div class="clone-panel-subtitle">
+                            Source model fields used for cloning
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="clone-model-name"
+                    *ngIf="sourceAnalysisReady">
+
+                    <span>
+                        Source Model
+                    </span>
+
+                    <strong>
+                        {{ pageCloning.cloneFromName || 'Source' }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 MODEL CONTENT
+            ================================================== -->
+
+            <div
+                class="clone-model-content"
+                *ngIf="
+                    sourceAnalysisReady &&
+                    sourceModelFields.length > 0
+                ">
+
+                <div class="clone-model-summary">
+
+                    <div class="clone-model-summary-item">
+
+                        <span class="summary-value">
+                            {{ sourceModelFields.length }}
+                        </span>
+
+                        <span class="summary-label">
+                            Model Fields
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="clone-model-table-wrapper">
+
+                    <table class="clone-model-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="field-number-column">
+                                    #
+                                </th>
+
+                                <th>
+                                    Field Name
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th>
+                                    Category
+                                </th>
+
+                                <th>
+                                    Required
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr
+                                *ngFor="
+                                    let field of sourceModelFields;
+                                    let index = index
+                                ">
+
+                                <td class="field-number-column">
+                                    {{ index + 1 }}
+                                </td>
+
+                                <td class="field-name">
+                                    {{ field.name }}
+                                </td>
+
+                                <td class="field-type">
+                                    {{ field.type }}
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        class="field-category"
+                                        [class.primary]="
+                                            field.category ===
+                                            'Primary & Navigation'
+                                        "
+                                        [class.business]="
+                                            field.category ===
+                                            'Business & Functional'
+                                        "
+                                        [class.audit]="
+                                            field.category ===
+                                            'Audit & System'
+                                        ">
+
+                                        {{ field.category }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <span
+                                        class="field-required"
+                                        [class.required]="field.required">
+
+                                        <i
+                                            class="fas"
+                                            [class.fa-check]="field.required"
+                                            [class.fa-minus]="!field.required">
+                                        </i>
+
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 MODEL EMPTY STATE
+            ================================================== -->
+
+            <div
+                class="clone-model-empty"
+                *ngIf="
+                    !sourceAnalysisReady ||
+                    sourceModelFields.length === 0
+                ">
+
+                <div class="clone-model-empty-icon">
+
+                    <i class="fas fa-database"></i>
+
+                    <span>
+                        <i class="fas fa-gear"></i>
+                    </span>
+
+                </div>
+
+                <div class="clone-model-empty-title">
+                    No source model loaded
+                </div>
+
+                <div class="clone-model-empty-text">
+                    Analyze the source page to load its model
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SECTION 04 : UTILITIES
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+</div>

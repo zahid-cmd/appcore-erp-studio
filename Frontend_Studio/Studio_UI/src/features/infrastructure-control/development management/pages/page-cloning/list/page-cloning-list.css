@@ -1,0 +1,130 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+
+/* =====================================================
+   PAGE CLONING TOOLBAR
+===================================================== */
+
+.page-cloning-toolbar-left
+{
+    display:flex;
+    align-items:center;
+    min-width:0;
+    flex:0 0 auto;
+}
+
+
+.page-cloning-toolbar-right
+{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    min-width:0;
+    flex:1 1 auto;
+    overflow:visible;
+}
+
+
+.page-cloning-toolbar-group
+{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    width:auto;
+    min-width:0;
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   PAGE CLONING DROPDOWNS
+===================================================== */
+
+.page-cloning-toolbar-group app-search-dropdown
+{
+    display:block;
+    width:300px;
+    min-width:300px;
+    flex:0 0 300px;
+}
+
+
+/* =====================================================
+   TOOLBAR RESPONSIVE
+===================================================== */
+
+@media (max-width:1400px)
+{
+    .page-cloning-toolbar-group
+    {
+        gap:7px;
+    }
+
+    .page-cloning-toolbar-group app-search-dropdown
+    {
+        width:240px;
+        min-width:240px;
+        flex-basis:240px;
+    }
+}
+
+
+@media (max-width:1200px)
+{
+    .page-cloning-toolbar-group
+    {
+        gap:6px;
+    }
+
+    .page-cloning-toolbar-group app-search-dropdown
+    {
+        width:210px;
+        min-width:210px;
+        flex-basis:210px;
+    }
+}
+
+
+@media (max-width:1000px)
+{
+    .page-cloning-toolbar-right
+    {
+        overflow-x:auto;
+        justify-content:flex-end;
+    }
+
+    .page-cloning-toolbar-group
+    {
+        gap:6px;
+    }
+
+    .page-cloning-toolbar-group app-search-dropdown
+    {
+        width:180px;
+        min-width:180px;
+        flex-basis:180px;
+    }
+}
+
+
+@media (max-width:768px)
+{
+    .page-cloning-toolbar-right
+    {
+        overflow-x:auto;
+        justify-content:flex-start;
+    }
+
+    .page-cloning-toolbar-group
+    {
+        justify-content:flex-start;
+    }
+
+    .page-cloning-toolbar-group app-search-dropdown
+    {
+        width:170px;
+        min-width:170px;
+        flex-basis:170px;
+    }
+}

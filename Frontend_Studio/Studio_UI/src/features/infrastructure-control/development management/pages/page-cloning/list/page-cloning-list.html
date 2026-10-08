@@ -1,0 +1,292 @@
+<div class="app-list-page">
+
+    <!-- =========================================================
+        PAGE HEADER
+    ========================================================= -->
+
+    <app-page-header
+
+        title="Page Cloning"
+
+        subtitle="Manage page cloning."
+
+        icon="fas fa-clone">
+
+
+        <!-- =====================================================
+            PAGE HEADER CENTER
+        ====================================================== -->
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search page cloning..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <!-- =====================================================
+            PAGE HEADER RIGHT
+        ====================================================== -->
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <!-- =========================================================
+        PAGE TOOLBAR
+    ========================================================= -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+
+        <!-- =====================================================
+            LEFT : PAGE TAB
+        ====================================================== -->
+
+        <div
+
+            pageToolbarLeft
+
+            class="page-cloning-toolbar-left">
+
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab">
+
+            </app-control-tabs>
+
+
+        </div>
+
+
+        <!-- =====================================================
+            RIGHT : PAGE FILTERS
+        ====================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            class="page-cloning-toolbar-right">
+
+
+            <div class="page-cloning-toolbar-group">
+
+
+                <!-- MODULE -->
+
+                <app-search-dropdown
+
+                    placeholder="Select Module"
+
+                    [items]="modules"
+
+                    labelField="name"
+
+                    valueField="id"
+
+                    [(value)]="selectedModuleId"
+
+                    (valueChange)="onModuleChange($event)">
+
+                </app-search-dropdown>
+
+
+                <!-- MENU -->
+
+                <app-search-dropdown
+
+                    placeholder="Select Menu"
+
+                    [items]="menus"
+
+                    labelField="name"
+
+                    valueField="id"
+
+                    [readonly]="!selectedModuleId"
+
+                    [(value)]="selectedMenuId"
+
+                    (valueChange)="onMenuChange($event)">
+
+                </app-search-dropdown>
+
+
+                <!-- SUBMENU -->
+
+                <app-search-dropdown
+
+                    placeholder="Select Submenu"
+
+                    [items]="submenus"
+
+                    labelField="name"
+
+                    valueField="id"
+
+                    [readonly]="!selectedMenuId"
+
+                    [(value)]="selectedSubmenuId"
+
+                    (valueChange)="onSubmenuChange($event)">
+
+                </app-search-dropdown>
+
+
+            </div>
+
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =========================================================
+        PAGE CANVAS
+    ========================================================= -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+
+        <!-- =====================================================
+            CANVAS BODY
+        ====================================================== -->
+
+        <div canvasBody>
+
+            <app-list-table
+
+                [columns]="columns"
+
+                [rows]="pagedPageClonings"
+
+                [serialOffset]="
+                    (currentPage - 1) * pageSize
+                "
+
+                [loading]="loading"
+
+                [error]="loadFailed"
+
+                (view)="view($event)"
+
+                (edit)="edit($event)"
+
+                (delete)="delete($event)"
+
+                (operation)="clone($event)"
+
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+
+        <!-- =====================================================
+            CANVAS FOOTER
+        ====================================================== -->
+
+        <app-pagination
+
+            canvasFooter
+
+            [totalRecords]="
+                filteredPageClonings.length
+            "
+
+            [currentPage]="currentPage"
+
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+
+    <!-- =========================================================
+        HISTORY DRAWER
+    ========================================================= -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+    <!-- =========================================================
+        TOAST
+    ========================================================= -->
+
+    <app-toast>
+
+    </app-toast>
+
+
+    <!-- =========================================================
+        CONFIRM DIALOG
+    ========================================================= -->
+
+    <app-confirm-dialog>
+
+    </app-confirm-dialog>
+
+</div>
