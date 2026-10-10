@@ -111,103 +111,49 @@
         ====================================================== -->
 
         <app-overlay
-
             [origin]="origin"
-
             [(visible)]="isOpen"
-
             [closeOnOutsideClick]="true"
-
+            [width]="width"
+            [matchOriginWidth]="width === null"
             (closed)="onOverlayClosed()">
 
-            <!-- =================================================
-                 DROPDOWN PANEL
-            ================================================== -->
-
             <div
-
                 class="dropdown-panel"
-
+                [class.page-cloning-model-dropdown]="width !== null"
                 (click)="$event.stopPropagation()">
 
-                <!-- =============================================
-                     OPTIONS
-                ============================================== -->
-
                 <div class="dropdown-options">
-
                     <ng-container
-
-                        *ngIf="
-                            items.length > 0;
-                            else noDataTemplate
-                        ">
+                        *ngIf="items.length > 0; else noDataTemplate">
 
                         <div
-
                             class="dropdown-option"
-
-                            *ngFor="
-                                let option of items
-                            "
-
-                            [class.selected]="
-                                option[valueField]
-                                ==
-                                value
-                            "
-
-                            (click)="
-                                selectOption(
-                                    option,
-                                    $event
-                                )
-                            ">
+                            *ngFor="let option of items"
+                            [class.selected]="option[valueField] == value"
+                            (click)="selectOption(option, $event)">
 
                             <div class="dropdown-option-label">
-
                                 {{ option[labelField] }}
-
                             </div>
 
                             <div
-
                                 class="dropdown-selected-icon"
-
-                                *ngIf="
-                                    option[valueField]
-                                    ==
-                                    value
-                                ">
+                                *ngIf="option[valueField] == value">
 
                                 <i class="fas fa-check"></i>
-
                             </div>
 
                         </div>
 
                     </ng-container>
 
-                    <!-- =========================================
-                         NO DATA
-                    ========================================== -->
-
                     <ng-template #noDataTemplate>
-
                         <div class="dropdown-no-data">
-
                             <i class="fas fa-circle-info"></i>
-
-                            <span>
-
-                                No records found
-
-                            </span>
-
+                            <span>No records found</span>
                         </div>
-
                     </ng-template>
-
                 </div>
 
             </div>

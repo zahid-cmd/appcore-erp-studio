@@ -2,24 +2,55 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.ProductSettings;
+namespace AppCore.Application.Settings.ProductSettings.ProductMaster.DTOs;
 
 
 //===============================================================
-// ProductMasterDefaultsDto
+// Product Master Defaults DTO
 //===============================================================
 
 public class ProductMasterDefaultsDto
 {
     //===========================================================
-    // Code
+    // Product Master Code
     //===========================================================
 
     public string Code
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Inventory Ledger Code
+    //===========================================================
+
+    public string InventoryLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // WIP Ledger Code
+    //===========================================================
+
+    public string WipLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // COGS Ledger Code
+    //===========================================================
+
+    public string CogsLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
 }

@@ -4,7 +4,6 @@ import
 }
 from '@angular/router';
 
-
 //===========================================================
 // MNU-003-002 Routes
 //===========================================================
@@ -12,7 +11,6 @@ from '@angular/router';
 export const mnu003002Routes:
 Routes =
 [
-
 
     //===========================================================
     // Menu Routes
@@ -23,7 +21,6 @@ Routes =
     //   • Activity routes
     //   • Page routes
     //===========================================================
-
 
     {
         path:'',
@@ -214,32 +211,6 @@ Routes =
                 },
 
                 // AUTO-END : SUB-003-002-010
-
-            // AUTO-BEGIN : SUB-003-002-005
-
-                //===========================================================
-                // Cash Accounts
-                //===========================================================
-
-                {
-                    path:'cash-accounts',
-
-                    data:
-                    {
-                        breadcrumb:'Cash Accounts'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './cash-accounts.routes'
-                        )
-                        .then(
-                            m =>
-                                m.CashAccountsRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-002-005
 
             // AUTO-BEGIN : SUB-003-002-004
 

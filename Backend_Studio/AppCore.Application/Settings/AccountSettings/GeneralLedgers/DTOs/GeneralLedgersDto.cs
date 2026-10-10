@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.GeneralLedgers.DTOs;
 
 
 //===============================================================
-// GeneralLedgersDto
+// General Ledgers DTO
 //===============================================================
 
 public class GeneralLedgersDto
@@ -15,7 +15,7 @@ public class GeneralLedgersDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long GeneralLedgerId
     {
         get;
         set;
@@ -23,60 +23,149 @@ public class GeneralLedgersDto
 
 
     //===========================================================
-    // Code
+    // Account Class
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountClassId
     {
         get;
         set;
     }
 
 
+    public string AccountClassName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     //===========================================================
-    // Sample Field
+    // Account Group
     //===========================================================
 
-    public string SampleField
+    public long AccountGroupId
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    public string AccountGroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Account Sub Group
+    //===========================================================
+
+    public long AccountSubGroupId
+    {
+        get;
+        set;
+    }
+
+
+    public string AccountSubGroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Basic Information
+    //===========================================================
+
+    public string ClassCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Mode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string SubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string LedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string LedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add General Ledger specific configuration fields here
+
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Status
     //===========================================================
 
-    public bool Status
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
+
+
+    //===========================================================
+    // Soft Delete
+    //===========================================================
+
+    public bool IsDeleted
+    {
+        get;
+        set;
+    }
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
     {
         get;
         set;
@@ -84,14 +173,33 @@ public class GeneralLedgersDto
 
 
     //===========================================================
-    // Remarks
+    // Audit Information
     //===========================================================
 
-    public string Remarks
+    public long CreatedBy
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

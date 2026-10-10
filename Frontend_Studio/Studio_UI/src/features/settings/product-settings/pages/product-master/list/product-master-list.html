@@ -8,9 +8,9 @@
 
         title="Product Master"
 
-        subtitle="Manage productmasters"
+        subtitle="Manage product masters"
 
-        icon="fas fa-list">
+        icon="fas fa-box">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search productmasters..."
+                placeholder="Search product masters..."
 
                 (valueChange)="onSearch($event)">
 
@@ -82,23 +82,23 @@
              STATUS FILTER
         ================================================== -->
 
-        <app-dropdown
+        <app-search-dropdown
 
             pageToolbarRight
 
             placeholder="All Status"
 
-            [items]="statusItems"
+            [items]="statusFilterItems"
 
-            labelField="text"
+            labelField="label"
 
             valueField="value"
 
-            [(value)]="selectedStatus"
+            [value]="selectedStatus"
 
             (valueChange)="onStatusFilterChange($event)">
 
-        </app-dropdown>
+        </app-search-dropdown>
 
     </app-page-toolbar>
 

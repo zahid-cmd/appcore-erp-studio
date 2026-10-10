@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.GeneralLedgers.DTOs;
 
 
 //===============================================================
-// UpdateGeneralLedgersDto
+// Update General Ledgers DTO
 //===============================================================
 
 public class UpdateGeneralLedgersDto
@@ -15,7 +15,7 @@ public class UpdateGeneralLedgersDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long GeneralLedgerId
     {
         get;
         set;
@@ -23,23 +23,10 @@ public class UpdateGeneralLedgersDto
 
 
     //===========================================================
-    // Name
+    // Account Class
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountClassId
     {
         get;
         set;
@@ -47,38 +34,94 @@ public class UpdateGeneralLedgersDto
 
 
     //===========================================================
-    // Sample Field
+    // Account Group
     //===========================================================
 
-    public string SampleField
+    public long AccountGroupId
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    //===========================================================
+    // Account Sub Group
+    //===========================================================
+
+    public long AccountSubGroupId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Basic Information
+    //===========================================================
+
+    public string ClassCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Mode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string SubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string LedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string LedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add General Ledger specific configuration fields here
+
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Status
     //===========================================================
 
-    public bool Status
+    public bool IsActive
     {
         get;
         set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    } = true;
 }

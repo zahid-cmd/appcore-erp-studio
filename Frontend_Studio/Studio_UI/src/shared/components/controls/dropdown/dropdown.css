@@ -9,6 +9,7 @@
 
     display:block;
     width:100%;
+    min-width:0;
     box-sizing:border-box;
 }
 
@@ -21,8 +22,10 @@
 {
     display:flex;
     flex-direction:column;
-    width:var(--dropdown-width);
+    width:100%;
+    min-width:0;
     margin-bottom:0;
+    box-sizing:border-box;
 }
 
 
@@ -63,7 +66,9 @@
 .dropdown
 {
     position:relative;
-    width:var(--dropdown-width);
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
 }
 
 
@@ -92,38 +97,29 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:12px;
-    width:var(--dropdown-width);
+    gap:8px;
+    width:100%;
+    min-width:0;
     height:var(--dropdown-height);
-    padding:0 8px 0 14px;
+    padding:0 8px 0 10px;
     box-sizing:border-box;
-    background:
-        linear-gradient(
-            180deg,
-            #ffffff 0%,
-            #fcfdff 100%
-        );
+    background:linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
     border:1px solid #d9e5f2;
-    border-radius:12px;
+    border-radius:10px;
     cursor:pointer;
-    transition:
-        border-color .20s ease,
-        box-shadow .20s ease,
-        background .20s ease;
+    transition:border-color .20s ease, box-shadow .20s ease, background .20s ease;
 }
 
 .dropdown-selector:hover
 {
     border-color:#9fc2f7;
-    box-shadow:
-        0 4px 10px rgba(37,99,235,.08);
+    box-shadow:0 4px 10px rgba(37,99,235,.08);
 }
 
 .dropdown-selector.open
 {
     border-color:#2563eb;
-    box-shadow:
-        0 0 0 3px rgba(37,99,235,.12);
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
 }
 
 .dropdown-selector.disabled
@@ -140,7 +136,7 @@
 
 .dropdown-selected-text
 {
-    flex:1;
+    flex:1 1 auto;
     min-width:0;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -167,15 +163,13 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    flex-shrink:0;
+    flex:0 0 24px;
     width:24px;
     height:100%;
     margin:0;
     color:#64748b;
     font-size:14px;
-    transition:
-        transform .20s ease,
-        color .20s ease;
+    transition:transform .20s ease, color .20s ease;
 }
 
 .dropdown-selector.open .dropdown-icon
@@ -191,15 +185,17 @@
 
 .dropdown-panel
 {
-    width:var(--dropdown-width);
-    min-width:240px;
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
     margin-top:6px;
     overflow:hidden;
     background:#ffffff;
     border:1px solid #d9e5f2;
     border-radius:12px;
-    box-shadow:
-        0 14px 34px rgba(15,23,42,.14);
+    box-shadow:0 14px 34px rgba(15,23,42,.14);
+    box-sizing:border-box;
 }
 
 
@@ -221,9 +217,13 @@
 
 .dropdown-options
 {
+    width:100%;
+    min-width:0;
     max-height:280px;
+    overflow-x:hidden;
     overflow-y:auto;
     padding:6px;
+    box-sizing:border-box;
 }
 
 
@@ -237,15 +237,16 @@
     align-items:center;
     justify-content:space-between;
     gap:12px;
+    width:100%;
+    min-width:0;
     min-height:40px;
     padding:0 14px;
     border:1px solid transparent;
     border-radius:8px;
     background:#ffffff;
     cursor:pointer;
-    transition:
-        background .15s ease,
-        border-color .15s ease;
+    box-sizing:border-box;
+    transition:background .15s ease, border-color .15s ease;
 }
 
 .dropdown-option:hover
@@ -272,7 +273,7 @@
 
 .dropdown-option-label
 {
-    flex:1;
+    flex:1 1 auto;
     min-width:0;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -298,8 +299,8 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    flex:0 0 20px;
     width:20px;
-    flex-shrink:0;
     color:#2563eb;
     font-size:13px;
 }
@@ -349,6 +350,32 @@
 
 
 /* =====================================================
+   PAGE CLONING MODEL DROPDOWN
+===================================================== */
+
+.page-cloning-model-dropdown
+{
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+}
+
+.page-cloning-model-dropdown .dropdown-container,
+.page-cloning-model-dropdown .dropdown,
+.page-cloning-model-dropdown .dropdown-selector,
+.page-cloning-model-dropdown .dropdown-panel,
+.page-cloning-model-dropdown .dropdown-options
+{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+}
+
+
+/* =====================================================
    RESPONSIVE
 ===================================================== */
 
@@ -359,7 +386,9 @@
     .dropdown-selector,
     .dropdown-panel
     {
-        width:var(--dropdown-width);
+        width:100%;
+        min-width:0;
+        max-width:100%;
     }
 
     .dropdown-label
@@ -374,6 +403,7 @@
 
     .dropdown-icon
     {
+        flex-basis:24px;
         width:24px;
     }
 }

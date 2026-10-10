@@ -627,6 +627,26 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : ProductMaster
+
+        services.AddScoped
+        <
+            IProductMasterRepository,
+            ProductMasterRepository
+        >();
+
+        // AUTO-END : ProductMaster
+
+        // AUTO-BEGIN : GeneralLedgers
+
+        services.AddScoped
+        <
+            IGeneralLedgersRepository,
+            GeneralLedgersRepository
+        >();
+
+        // AUTO-END : GeneralLedgers
+
         // AUTO-BEGIN : ProductSubCategory
 
         services.AddScoped

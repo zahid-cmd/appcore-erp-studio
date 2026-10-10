@@ -6,7 +6,7 @@ namespace AppCore.Domain.Entities.Settings.AccountSettings;
 
 
 //===============================================================
-// GeneralLedgers
+// General Ledgers
 //===============================================================
 
 public class GeneralLedgers
@@ -15,7 +15,7 @@ public class GeneralLedgers
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long GeneralLedgerId
     {
         get;
         set;
@@ -23,36 +23,10 @@ public class GeneralLedgers
 
 
     //===========================================================
-    // Code
+    // Account Class
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountClassId
     {
         get;
         set;
@@ -60,66 +34,126 @@ public class GeneralLedgers
 
 
     //===========================================================
-    // Sample Field
+    // Account Group
     //===========================================================
 
-    public string SampleField
+    public long AccountGroupId
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    //===========================================================
+    // Account Sub Group
+    //===========================================================
+
+    public long AccountSubGroupId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Basic Information
+    //===========================================================
+
+    public string ClassCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string Mode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string GroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string SubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string LedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string LedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add General Ledger specific configuration fields here
+    // (e.g. NormalBalance, IsControlAccount, OpeningBalance)
+
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Status
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Active
-    //===========================================================
-
     public bool IsActive
     {
         get;
         set;
-    }
+    } = true;
 
 
     //===========================================================
-    // Deleted
+    // Soft Delete
     //===========================================================
 
     public bool IsDeleted
     {
         get;
         set;
+    } = false;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
     }
 
 
     //===========================================================
-    // Created By
+    // Audit Information
     //===========================================================
 
     public long CreatedBy
@@ -129,10 +163,6 @@ public class GeneralLedgers
     }
 
 
-    //===========================================================
-    // Created Date
-    //===========================================================
-
     public DateTime CreatedDate
     {
         get;
@@ -140,20 +170,12 @@ public class GeneralLedgers
     }
 
 
-    //===========================================================
-    // Modified By
-    //===========================================================
-
     public long? ModifiedBy
     {
         get;
         set;
     }
 
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
 
     public DateTime? ModifiedDate
     {

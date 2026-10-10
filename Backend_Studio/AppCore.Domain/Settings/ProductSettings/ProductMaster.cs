@@ -6,7 +6,7 @@ namespace AppCore.Domain.Entities.Settings.ProductSettings;
 
 
 //===============================================================
-// ProductMaster
+// Product Master
 //===============================================================
 
 public class ProductMaster
@@ -15,7 +15,7 @@ public class ProductMaster
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long ProductMasterId
     {
         get;
         set;
@@ -23,36 +23,10 @@ public class ProductMaster
 
 
     //===========================================================
-    // Code
+    // Product Category
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long ProductCategoryId
     {
         get;
         set;
@@ -60,66 +34,144 @@ public class ProductMaster
 
 
     //===========================================================
-    // Sample Field
+    // Product Sub Category
     //===========================================================
 
-    public string SampleField
+    public long ProductSubCategoryId
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    //===========================================================
+    // Basic Information
+    //===========================================================
+
+    public string SubCategoryCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string ProductCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string ProductName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Auto General Ledger Codes
+    //===========================================================
+
+    public string InventoryLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string WipLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CogsLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Auto General Ledger Names
+    //===========================================================
+
+    public string InventoryLedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string WipLedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CogsLedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add Product Master specific configuration fields here
+    // (e.g. UnitId, Barcode, SalePrice, PurchasePrice, ReorderLevel)
+
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Status
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Active
-    //===========================================================
-
     public bool IsActive
     {
         get;
         set;
-    }
+    } = true;
 
 
     //===========================================================
-    // Deleted
+    // Soft Delete
     //===========================================================
 
     public bool IsDeleted
     {
         get;
         set;
+    } = false;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
     }
 
 
     //===========================================================
-    // Created By
+    // Audit Information
     //===========================================================
 
     public long CreatedBy
@@ -129,10 +181,6 @@ public class ProductMaster
     }
 
 
-    //===========================================================
-    // Created Date
-    //===========================================================
-
     public DateTime CreatedDate
     {
         get;
@@ -140,20 +188,12 @@ public class ProductMaster
     }
 
 
-    //===========================================================
-    // Modified By
-    //===========================================================
-
     public long? ModifiedBy
     {
         get;
         set;
     }
 
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
 
     public DateTime? ModifiedDate
     {

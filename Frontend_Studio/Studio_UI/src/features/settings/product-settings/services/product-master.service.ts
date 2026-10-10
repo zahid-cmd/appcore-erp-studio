@@ -17,7 +17,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -30,10 +31,9 @@ from '../../../../environments/environment';
 import
 {
     ProductMaster,
-
     CreateProductMaster,
-
-    UpdateProductMaster
+    UpdateProductMaster,
+    ProductMasterDefaults
 }
 from '../models/product-master.model';
 
@@ -47,17 +47,14 @@ from '../models/product-master.model';
     providedIn:'root'
 })
 
-
 export class ProductMasterService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +65,20 @@ export class ProductMasterService
         `${environment.apiUrl}/settings/product-settings/product-master`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/+$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,19 +87,235 @@ export class ProductMasterService
     getAll():
         Observable<ProductMaster[]>
     {
-        return this.http.get<ProductMaster[]>(
-            this.apiUrl
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        response.map(
+                            productMaster =>
+                            ({
+                                ...productMaster,
+
+                                ProductMasterId:
+                                    Number(
+                                        productMaster.ProductMasterId
+                                        ??
+                                        productMaster.productMasterId
+                                        ??
+                                        productMaster.id
+                                        ??
+                                        productMaster.Id
+                                    ),
+
+                                ProductCategoryId:
+                                    Number(
+                                        productMaster.ProductCategoryId
+                                        ??
+                                        productMaster.productCategoryId
+                                        ??
+                                        0
+                                    ),
+
+                                ProductCategoryName:
+                                    productMaster.ProductCategoryName
+                                    ??
+                                    productMaster.productCategoryName
+                                    ??
+                                    '',
+
+                                ProductSubCategoryId:
+                                    Number(
+                                        productMaster.ProductSubCategoryId
+                                        ??
+                                        productMaster.productSubCategoryId
+                                        ??
+                                        0
+                                    ),
+
+                                ProductSubCategoryName:
+                                    productMaster.ProductSubCategoryName
+                                    ??
+                                    productMaster.productSubCategoryName
+                                    ??
+                                    '',
+
+                                SubCategoryCode:
+                                    productMaster.SubCategoryCode
+                                    ??
+                                    productMaster.subCategoryCode
+                                    ??
+                                    '',
+
+                                ProductCode:
+                                    productMaster.ProductCode
+                                    ??
+                                    productMaster.productCode
+                                    ??
+                                    '',
+
+                                ProductName:
+                                    productMaster.ProductName
+                                    ??
+                                    productMaster.productName
+                                    ??
+                                    '',
+
+                                InventoryLedgerCode:
+                                    productMaster.InventoryLedgerCode
+                                    ??
+                                    productMaster.inventoryLedgerCode
+                                    ??
+                                    '',
+
+                                WipLedgerCode:
+                                    productMaster.WipLedgerCode
+                                    ??
+                                    productMaster.wipLedgerCode
+                                    ??
+                                    '',
+
+                                CogsLedgerCode:
+                                    productMaster.CogsLedgerCode
+                                    ??
+                                    productMaster.cogsLedgerCode
+                                    ??
+                                    '',
+
+                                InventoryLedgerName:
+                                    productMaster.InventoryLedgerName
+                                    ??
+                                    productMaster.inventoryLedgerName
+                                    ??
+                                    '',
+
+                                WipLedgerName:
+                                    productMaster.WipLedgerName
+                                    ??
+                                    productMaster.wipLedgerName
+                                    ??
+                                    '',
+
+                                CogsLedgerName:
+                                    productMaster.CogsLedgerName
+                                    ??
+                                    productMaster.cogsLedgerName
+                                    ??
+                                    '',
+
+                                // TODO: Map Product Master specific configuration fields here
+
+                                Remarks:
+                                    productMaster.Remarks
+                                    ??
+                                    productMaster.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        productMaster.IsActive
+                                        ??
+                                        productMaster.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode(
+        productSubCategoryId:
+            number
+    ):
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code`,
+            {
+                params:
+                {
+                    productSubCategoryId:
+                        productSubCategoryId
+                },
+                responseType:'text'
+            }
         );
     }
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults(
+        productSubCategoryId:
+            number
+    ):
+        Observable<ProductMasterDefaults>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/defaults`,
+                {
+                    params:
+                    {
+                        productSubCategoryId:
+                            productSubCategoryId
+                    }
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Code:
+                            response.code
+                            ??
+                            response.Code
+                            ??
+                            '',
+
+                        InventoryLedgerCode:
+                            response.inventoryLedgerCode
+                            ??
+                            response.InventoryLedgerCode
+                            ??
+                            '',
+
+                        WipLedgerCode:
+                            response.wipLedgerCode
+                            ??
+                            response.WipLedgerCode
+                            ??
+                            '',
+
+                        CogsLedgerCode:
+                            response.cogsLedgerCode
+                            ??
+                            response.CogsLedgerCode
+                            ??
+                            ''
+                    })
+                )
+            );
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    getById
-    (
+    getById(
         id:
             number
     ):
@@ -100,13 +327,11 @@ export class ProductMasterService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
 
-    create
-    (
+    create(
         model:
             CreateProductMaster
     ):
@@ -114,39 +339,33 @@ export class ProductMasterService
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    update
-    (
+    update(
         model:
             UpdateProductMaster
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
+            this.apiUrl,
             model
         );
     }
-
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    delete
-    (
+    delete(
         id:
             number
     ):
@@ -158,7 +377,6 @@ export class ProductMasterService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
@@ -168,11 +386,9 @@ export class ProductMasterService
     {
         return this.http.put<void>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,23 +402,4 @@ export class ProductMasterService
             `${this.apiUrl}/history`
         );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
 }

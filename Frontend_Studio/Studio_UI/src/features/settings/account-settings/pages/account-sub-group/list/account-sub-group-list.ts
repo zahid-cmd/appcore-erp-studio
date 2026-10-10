@@ -332,7 +332,7 @@ implements OnInit
             header:'Group Code',
             field:'GroupCode',
             width:'130px',
-            align:'center'
+            align:'left'
         },
         {
             header:'Group Name',
@@ -343,8 +343,8 @@ implements OnInit
         {
             header:'Sub Group Code',
             field:'SubGroupCode',
-            width:'160px',
-            align:'center'
+            width:'180px',
+            align:'left'
         },
         {
             header:'Sub Group Name',

@@ -3,7 +3,6 @@
 //===============================================================
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
-
 using AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
 
 
@@ -50,6 +49,16 @@ public interface IPageCloningRepository
 
 
     //===========================================================
+    // Analyze Target
+    //===========================================================
+
+    Task<PageCloningSourceAnalysisDto> AnalyzeTargetAsync
+    (
+        long submenuId
+    );
+
+
+    //===========================================================
     // Create
     //===========================================================
 
@@ -70,12 +79,13 @@ public interface IPageCloningRepository
 
 
     //===========================================================
-    // Clone
+    // Clone With Transformation Configuration
     //===========================================================
 
     Task CloneAsync
     (
-        long id
+        long id,
+        PageCloningDto? configuration = null
     );
 
 

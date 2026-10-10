@@ -1,9 +1,7 @@
 @import '../../../../../../shared/styles/app-form-page.css';
 
-
 /* =====================================================
    CLONE PAGE
-   FREE FORM FULL HEIGHT
 ===================================================== */
 
 :host
@@ -20,11 +18,6 @@
     box-sizing:border-box;
 }
 
-
-/* =====================================================
-   CLONE PAGE ROOT
-===================================================== */
-
 .clone-page
 {
     display:flex;
@@ -34,41 +27,21 @@
     min-width:0;
     min-height:0;
     flex:1 1 auto;
-    align-self:stretch;
     gap:12px;
     overflow:hidden;
     box-sizing:border-box;
 }
 
-
-/* =====================================================
-   PAGE HEADER
-===================================================== */
-
-.clone-page > app-page-header
-{
-    display:block;
-    width:100%;
-    height:auto;
-    flex:0 0 auto;
-}
-
-
-/* =====================================================
-   PAGE TOOLBAR
-===================================================== */
-
+.clone-page > app-page-header,
 .clone-page > app-page-toolbar
 {
     display:block;
     width:100%;
-    height:auto;
     flex:0 0 auto;
 }
 
-
 /* =====================================================
-   CLONE TOOLBAR LEFT
+   TOOLBAR
 ===================================================== */
 
 .clone-toolbar-left
@@ -79,11 +52,6 @@
     flex:0 0 auto;
 }
 
-
-/* =====================================================
-   CLONE TOOLBAR RIGHT
-===================================================== */
-
 .clone-toolbar-right
 {
     display:flex;
@@ -93,11 +61,6 @@
     flex:1 1 auto;
     overflow:visible;
 }
-
-
-/* =====================================================
-   CLONE TOOLBAR GROUP
-===================================================== */
 
 .clone-toolbar-group
 {
@@ -110,11 +73,6 @@
     white-space:nowrap;
 }
 
-
-/* =====================================================
-   CLONE DROPDOWNS
-===================================================== */
-
 .clone-toolbar-group app-search-dropdown
 {
     display:block;
@@ -123,18 +81,12 @@
     flex:0 0 300px;
 }
 
-
-/* =====================================================
-   ANALYZE BUTTON
-===================================================== */
-
 .clone-analyze-button
 {
     display:flex;
     align-items:center;
     justify-content:center;
     gap:7px;
-    width:auto;
     min-width:105px;
     height:38px;
     padding:0 16px;
@@ -147,39 +99,34 @@
     line-height:1;
     white-space:nowrap;
     cursor:pointer;
-    transition:all 0.2s ease;
+    transition:background .2s ease, transform .2s ease;
     box-sizing:border-box;
+    flex:0 0 auto;
 }
-
 
 .clone-analyze-button:hover:not(:disabled)
 {
     background:#1d327c;
 }
 
-
 .clone-analyze-button:active:not(:disabled)
 {
     transform:translateY(1px);
 }
 
-
 .clone-analyze-button:disabled
 {
-    opacity:0.55;
+    opacity:.55;
     cursor:not-allowed;
 }
-
 
 .clone-analyze-button i
 {
     font-size:12px;
 }
 
-
 /* =====================================================
-   CLONE PAGE CANVAS
-   35 / 65 WORKSPACE
+   WORKSPACE CANVAS
 ===================================================== */
 
 .clone-page-canvas
@@ -191,7 +138,6 @@
     min-width:0;
     min-height:0;
     flex:1 1 auto;
-    align-self:stretch;
     margin:0;
     padding:12px;
     gap:0;
@@ -202,43 +148,34 @@
     overflow:hidden;
 }
 
-
-/* =====================================================
-   CLONE FILES PANEL
-   35%
-===================================================== */
-
 .clone-files-panel
 {
     display:flex;
     flex-direction:column;
-    width:35%;
+    width:25%;
     min-width:0;
     height:100%;
+    min-height:0;
+    flex:3 1 25%;
     box-sizing:border-box;
     overflow:hidden;
 }
-
-
-/* =====================================================
-   CLONE MODEL PANEL
-   65%
-===================================================== */
 
 .clone-model-panel
 {
     display:flex;
     flex-direction:column;
-    width:65%;
+    width:75%;
     min-width:0;
     height:100%;
+    min-height:0;
+    flex:7 1 75%;
     box-sizing:border-box;
     overflow:hidden;
 }
 
-
 /* =====================================================
-   PANEL HEADER
+   PANEL HEADERS
 ===================================================== */
 
 .clone-panel-header
@@ -246,13 +183,13 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
+    gap:8px;
     width:100%;
     min-height:58px;
-    padding:4px 8px 12px 8px;
+    padding:4px 8px 12px;
     box-sizing:border-box;
     flex:0 0 auto;
 }
-
 
 .clone-panel-title
 {
@@ -261,7 +198,6 @@
     min-width:0;
     gap:10px;
 }
-
 
 .clone-panel-icon
 {
@@ -277,13 +213,11 @@
     font-size:16px;
 }
 
-
 .clone-panel-icon.model-icon
 {
     background:#eef5ff;
     color:#243b8f;
 }
-
 
 .clone-panel-heading
 {
@@ -293,11 +227,10 @@
     gap:2px;
 }
 
-
 .clone-panel-name
 {
     color:#17213d;
-    font-size:16px;
+    font-size:18px;
     font-weight:700;
     line-height:1.2;
     white-space:nowrap;
@@ -305,11 +238,10 @@
     text-overflow:ellipsis;
 }
 
-
 .clone-panel-subtitle
 {
     color:#7b8499;
-    font-size:11px;
+    font-size:14px;
     font-weight:400;
     line-height:1.3;
     white-space:nowrap;
@@ -317,9 +249,90 @@
     text-overflow:ellipsis;
 }
 
+.clone-model-header-right
+{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    min-width:0;
+    margin-left:auto;
+}
+
+.clone-model-count
+{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:7px;
+    min-width:0;
+    margin-left:auto;
+    padding:0 8px;
+    white-space:nowrap;
+}
+
+.clone-model-count .summary-value
+{
+    color:#243b8f;
+    font-size:18px;
+    font-weight:700;
+    line-height:1.2;
+}
+
+.clone-model-count .summary-label
+{
+    color:#7e879b;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.2;
+}
+
+.clone-add-field-button
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-width:105px;
+    height:38px;
+    padding:0 16px;
+    border:0;
+    border-radius:8px;
+    background:#243b8f;
+    color:#ffffff;
+    font-size:13px;
+    font-weight:600;
+    line-height:1;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:background .2s ease, transform .2s ease;
+    box-sizing:border-box;
+    flex:0 0 auto;
+}
+
+.clone-add-field-button:hover:not(:disabled)
+{
+    background:#1d327c;
+}
+
+.clone-add-field-button:active:not(:disabled)
+{
+    transform:translateY(1px);
+}
+
+.clone-add-field-button:disabled
+{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+.clone-add-field-button i
+{
+    font-size:12px;
+}
 
 /* =====================================================
-   FILE COUNT
+   FILE COUNTER AND LIST
 ===================================================== */
 
 .clone-file-count
@@ -334,16 +347,26 @@
     border-radius:8px;
     background:#f8faff;
     color:#52607a;
-    font-size:12px;
+    font-size:14px;
     font-weight:600;
     white-space:nowrap;
     box-sizing:border-box;
+    flex:0 0 auto;
 }
 
+.clone-file-count.complete
+{
+    border-color:#d5efdf;
+    background:#eaf8ef;
+    color:#219653;
+}
 
-/* =====================================================
-   CLONE FILE LIST
-===================================================== */
+.clone-file-count.incomplete
+{
+    border-color:#f4dfc4;
+    background:#fff6e9;
+    color:#d87919;
+}
 
 .clone-files-list
 {
@@ -351,69 +374,96 @@
     flex-direction:column;
     width:100%;
     min-width:0;
+    min-height:0;
     flex:1 1 auto;
     overflow-y:auto;
     overflow-x:hidden;
     border:1px solid #e4e8f0;
     border-radius:8px;
     box-sizing:border-box;
+    scrollbar-width:thin;
+    scrollbar-color:#2563eb transparent;
 }
 
+.clone-files-list::-webkit-scrollbar,
+.clone-model-table-wrapper::-webkit-scrollbar
+{
+    width:6px;
+    height:6px;
+}
+
+.clone-files-list::-webkit-scrollbar-track,
+.clone-model-table-wrapper::-webkit-scrollbar-track
+{
+    background:transparent;
+    margin:4px 0;
+}
+
+.clone-files-list::-webkit-scrollbar-thumb,
+.clone-model-table-wrapper::-webkit-scrollbar-thumb
+{
+    background:#2563eb;
+    border-radius:999px;
+    border:1px solid transparent;
+    background-clip:padding-box;
+}
+
+.clone-files-list::-webkit-scrollbar-thumb:hover,
+.clone-model-table-wrapper::-webkit-scrollbar-thumb:hover
+{
+    background:#1d4ed8;
+}
 
 .clone-file-row
 {
     display:flex;
     align-items:center;
     width:100%;
+    min-width:0;
     min-height:58px;
     padding:7px 10px;
     gap:8px;
     border-bottom:1px solid #edf0f5;
     box-sizing:border-box;
     background:#ffffff;
+    flex:0 0 auto;
 }
-
 
 .clone-file-row:last-child
 {
     border-bottom:0;
 }
 
-
 .clone-file-row:hover
 {
     background:#f8faff;
 }
-
 
 .clone-file-row.clone-file-missing
 {
     background:#fffaf4;
 }
 
-
 .clone-file-number
 {
     width:24px;
     min-width:24px;
     color:#8992a5;
-    font-size:10px;
+    font-size:12px;
     font-weight:600;
     text-align:center;
 }
-
 
 .clone-file-icon
 {
     display:flex;
     align-items:center;
     justify-content:center;
-    width:28px;
-    min-width:28px;
+    width:22px;
+    min-width:22px;
     color:#3155c8;
-    font-size:15px;
+    font-size:14px;
 }
-
 
 .clone-file-details
 {
@@ -422,13 +472,15 @@
     min-width:0;
     flex:1 1 auto;
     gap:3px;
+    overflow:hidden;
 }
-
 
 .clone-file-name
 {
+    width:100%;
+    min-width:0;
     color:#25304a;
-    font-size:12px;
+    font-size:13px;
     font-weight:600;
     line-height:1.2;
     white-space:nowrap;
@@ -436,45 +488,53 @@
     text-overflow:ellipsis;
 }
 
-
 .clone-file-path
 {
+    width:100%;
+    min-width:0;
     color:#8992a5;
-    font-size:10px;
+    font-size:11px;
     line-height:1.2;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
 }
-
 
 .clone-file-status
 {
     display:flex;
     align-items:center;
     justify-content:center;
-    min-width:58px;
-    height:24px;
-    padding:0 8px;
+    gap:4px;
+    min-width:52px;
+    height:23px;
+    padding:0 6px;
     border-radius:12px;
     background:#e9f8ef;
     color:#219653;
     font-size:10px;
     font-weight:600;
     white-space:nowrap;
+    box-sizing:border-box;
+    flex:0 0 auto;
 }
 
+.clone-file-status i
+{
+    font-size:10px;
+}
+
+.clone-file-status.ready
+{
+    background:#e9f8ef;
+    color:#219653;
+}
 
 .clone-file-status.missing
 {
     background:#fff0df;
     color:#d87919;
 }
-
-
-/* =====================================================
-   FILE EMPTY STATE
-===================================================== */
 
 .clone-files-empty
 {
@@ -493,7 +553,6 @@
     box-sizing:border-box;
 }
 
-
 .clone-empty-icon
 {
     display:flex;
@@ -508,7 +567,6 @@
     font-size:34px;
 }
 
-
 .clone-empty-title
 {
     color:#202a45;
@@ -516,7 +574,6 @@
     font-weight:700;
     line-height:1.3;
 }
-
 
 .clone-empty-text
 {
@@ -526,35 +583,6 @@
     font-size:11px;
     line-height:1.6;
 }
-
-
-/* =====================================================
-   FILE FOOTER
-===================================================== */
-
-.clone-files-footer
-{
-    display:flex;
-    align-items:center;
-    gap:7px;
-    min-height:38px;
-    margin-top:8px;
-    padding:0 10px;
-    border-radius:7px;
-    background:#f1f5ff;
-    color:#3155c8;
-    font-size:10px;
-    line-height:1.3;
-    box-sizing:border-box;
-}
-
-
-.clone-files-footer i
-{
-    flex:0 0 auto;
-    font-size:11px;
-}
-
 
 /* =====================================================
    WORKSPACE DIVIDER
@@ -572,7 +600,6 @@
     box-sizing:border-box;
 }
 
-
 .clone-workspace-divider-handle
 {
     display:flex;
@@ -585,52 +612,11 @@
     background:#ffffff;
     color:#73809a;
     font-size:10px;
-    box-shadow:0 2px 7px rgba(36,59,143,0.08);
+    box-shadow:0 2px 7px rgba(36,59,143,.08);
 }
-
 
 /* =====================================================
-   MODEL NAME
-===================================================== */
-
-.clone-model-name
-{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    justify-content:flex-end;
-    gap:2px;
-    min-width:0;
-    margin-left:auto;
-    padding-right:2px;
-    text-align:right;
-}
-
-
-.clone-model-name span
-{
-    color:#8a93a6;
-    font-size:9px;
-    font-weight:500;
-    line-height:1.2;
-}
-
-
-.clone-model-name strong
-{
-    max-width:180px;
-    color:#25304a;
-    font-size:12px;
-    font-weight:700;
-    line-height:1.2;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-
-/* =====================================================
-   MODEL CONTENT
+   MODEL CONTENT AND TABLE SCROLL
 ===================================================== */
 
 .clone-model-content
@@ -647,72 +633,31 @@
     box-sizing:border-box;
 }
 
-
-/* =====================================================
-   MODEL SUMMARY
-===================================================== */
-
-.clone-model-summary
-{
-    display:flex;
-    align-items:center;
-    min-height:46px;
-    padding:0 14px;
-    border-bottom:1px solid #e8ebf2;
-    background:#fbfcfe;
-    box-sizing:border-box;
-}
-
-
-.clone-model-summary-item
-{
-    display:flex;
-    align-items:baseline;
-    gap:7px;
-}
-
-
-.summary-value
-{
-    color:#243b8f;
-    font-size:16px;
-    font-weight:700;
-}
-
-
-.summary-label
-{
-    color:#7e879b;
-    font-size:10px;
-    font-weight:500;
-}
-
-
-/* =====================================================
-   MODEL TABLE WRAPPER
-===================================================== */
-
 .clone-model-table-wrapper
 {
     width:100%;
     min-width:0;
+    min-height:0;
     flex:1 1 auto;
     overflow:auto;
+    scrollbar-width:thin;
+    scrollbar-color:#2563eb transparent;
 }
-
 
 /* =====================================================
    MODEL TABLE
+   # | FIELD NAME | TYPE | CATEGORY | REQUIRED | ACTION
 ===================================================== */
 
 .clone-model-table
 {
     width:100%;
-    min-width:600px;
-    border-collapse:collapse;
-    table-layout:auto;
+    min-width:850px;
+    border-collapse:separate;
+    border-spacing:0;
+    table-layout:fixed;
+    background:#ffffff;
 }
-
 
 .clone-model-table thead
 {
@@ -721,58 +666,358 @@
     z-index:2;
 }
 
-
 .clone-model-table th
 {
-    height:38px;
+    height:34px;
     padding:0 10px;
-    border-bottom:1px solid #e2e6ee;
-    background:#f7f9fc;
-    color:#68738a;
-    font-size:10px;
+    background:#f5f7fc;
+    border-bottom:1px solid #e1e7f1;
+    color:#66718a;
+    font-size:11px;
     font-weight:700;
+    line-height:1.2;
     text-align:left;
+    vertical-align:middle;
     white-space:nowrap;
+    box-sizing:border-box;
 }
-
 
 .clone-model-table td
 {
-    height:43px;
-    padding:0 10px;
-    border-bottom:1px solid #edf0f5;
-    color:#536078;
-    font-size:11px;
-    white-space:nowrap;
+    height:42px;
+    padding:4px 6px;
+    border-bottom:1px solid #edf1f7;
+    color:#26314b;
+    font-size:12px;
+    line-height:1.2;
+    text-align:left;
+    vertical-align:middle;
+    box-sizing:border-box;
 }
 
+.clone-model-table tbody tr
+{
+    background:#ffffff;
+    transition:background .15s ease;
+}
 
 .clone-model-table tbody tr:hover
 {
     background:#f8faff;
 }
 
-
-.field-number-column
+.clone-model-table tbody tr:last-child td
 {
-    width:38px;
-    color:#8a93a6 !important;
-    text-align:center !important;
+    border-bottom:0;
 }
 
 
-.field-name
+/* =====================================================
+   MODEL CONFIGURATION TABLE
+   COLUMN WIDTHS
+===================================================== */
+
+.clone-model-table
 {
-    color:#26314b !important;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+/* =====================================================
+   COLUMN 01 : SERIAL NUMBER
+===================================================== */
+
+.clone-model-table th:nth-child(1),
+.clone-model-table td:nth-child(1)
+{
+    width: 32px;
+    min-width: 32px;
+    max-width: 32px;
+
+    padding-left: 4px;
+    padding-right: 4px;
+
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 02 : SOURCE FIELD
+===================================================== */
+
+.clone-model-table th:nth-child(2),
+.clone-model-table td:nth-child(2)
+{
+    width: 15%;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 03 : TARGET FIELD
+===================================================== */
+
+.clone-model-table th:nth-child(3),
+.clone-model-table td:nth-child(3)
+{
+    width: 15%;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 04 : OPERATION
+===================================================== */
+
+.clone-model-table th:nth-child(4),
+.clone-model-table td:nth-child(4)
+{
+    width: 13%;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 05 : TYPE
+===================================================== */
+
+.clone-model-table th:nth-child(5),
+.clone-model-table td:nth-child(5)
+{
+    width: 12%;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 06 : CATEGORY
+===================================================== */
+
+.clone-model-table th:nth-child(6),
+.clone-model-table td:nth-child(6)
+{
+    width: 20%;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 07 : REQUIRED
+===================================================== */
+
+.clone-model-table th:nth-child(7),
+.clone-model-table td:nth-child(7)
+{
+    width: 10%;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   COLUMN 08 : ACTION
+===================================================== */
+
+.clone-model-table th:nth-child(8),
+.clone-model-table td:nth-child(8)
+{
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   INPUTS AND SELECTS
+   KEEP CONTROLS INSIDE THEIR COLUMNS
+===================================================== */
+
+.clone-model-table th,
+.clone-model-table td
+{
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.clone-model-table td input,
+.clone-model-table td select
+{
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   ACTION BUTTON
+===================================================== */
+
+.clone-model-table td:nth-child(8) button
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 22px;
+    min-width: 22px;
+    height: 26px;
+
+    padding: 0;
+    margin: 0;
+}
+
+/* =====================================================
+   MODEL INPUTS
+===================================================== */
+
+.clone-model-table .field-number-column
+{
+    color:#8993a8;
+    font-size:11px;
+    font-weight:600;
+    text-align:center;
+}
+
+.clone-model-table td.field-name
+{
+    color:#26314b;
     font-weight:600;
 }
 
-
-.field-type
+.clone-model-input,
+.clone-model-type-input,
+.clone-model-select
 {
-    color:#657087 !important;
+    display:block;
+    width:100%;
+    min-width:0;
+    height:30px;
+    margin:0;
+    padding:0 8px;
+    border:1px solid #dce4f0;
+    border-radius:7px;
+    outline:none;
+    background:#ffffff;
+    color:#26314b;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.2;
+    box-sizing:border-box;
+    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
 }
 
+.clone-model-input::placeholder,
+.clone-model-type-input::placeholder
+{
+    color:#a0a8b8;
+    font-size:11px;
+    font-weight:400;
+}
+
+.clone-model-input:hover:not(:read-only),
+.clone-model-type-input:hover:not(:read-only),
+.clone-model-select:hover:not(:disabled)
+{
+    border-color:#b8c5df;
+}
+
+.clone-model-input:focus,
+.clone-model-type-input:focus,
+.clone-model-select:focus
+{
+    border-color:#4968d7;
+    box-shadow:0 0 0 2px rgba(49,85,200,.10);
+}
+
+.clone-model-input:read-only,
+.clone-model-type-input:read-only
+{
+    background:#f7f9fc;
+    color:#657087;
+    cursor:default;
+}
+
+.clone-model-select
+{
+    padding-right:5px;
+    cursor:pointer;
+}
+
+.clone-model-select:disabled
+{
+    background:#f7f9fc;
+    color:#657087;
+    cursor:not-allowed;
+    opacity:1;
+}
+
+/* =====================================================
+   DROPDOWN CELLS
+===================================================== */
+
+.clone-model-table td.field-type,
+.clone-model-table td.field-category-cell,
+.clone-model-table td.field-required-cell
+{
+    position:relative;
+    overflow:visible;
+    vertical-align:middle;
+}
+
+.clone-model-table td.field-type app-dropdown,
+.clone-model-table td.field-category-cell app-dropdown,
+.clone-model-table td.field-required-cell app-dropdown
+{
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+}
+
+.clone-model-table td.field-type app-dropdown .dropdown-container,
+.clone-model-table td.field-category-cell app-dropdown .dropdown-container,
+.clone-model-table td.field-required-cell app-dropdown .dropdown-container,
+.clone-model-table td.field-type app-dropdown .dropdown,
+.clone-model-table td.field-category-cell app-dropdown .dropdown,
+.clone-model-table td.field-required-cell app-dropdown .dropdown,
+.clone-model-table td.field-type app-dropdown .dropdown-selector,
+.clone-model-table td.field-category-cell app-dropdown .dropdown-selector,
+.clone-model-table td.field-required-cell app-dropdown .dropdown-selector
+{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+}
+
+.clone-model-table td.field-type app-dropdown .dropdown-selector,
+.clone-model-table td.field-category-cell app-dropdown .dropdown-selector,
+.clone-model-table td.field-required-cell app-dropdown .dropdown-selector
+{
+    height:30px;
+    padding:0 7px;
+    border-radius:7px;
+}
+
+.clone-model-table td.field-type app-dropdown .dropdown-selected-text,
+.clone-model-table td.field-category-cell app-dropdown .dropdown-selected-text,
+.clone-model-table td.field-required-cell app-dropdown .dropdown-selected-text
+{
+    min-width:0;
+    font-size:12px;
+    font-weight:500;
+}
+
+.clone-model-table td.field-type app-dropdown .dropdown-icon,
+.clone-model-table td.field-category-cell app-dropdown .dropdown-icon,
+.clone-model-table td.field-required-cell app-dropdown .dropdown-icon
+{
+    width:18px;
+    font-size:11px;
+}
+
+/* =====================================================
+   CATEGORY BADGES
+===================================================== */
 
 .field-category
 {
@@ -783,10 +1028,9 @@
     border-radius:11px;
     background:#edf3ff;
     color:#3155c8;
-    font-size:9px;
+    font-size:11px;
     font-weight:600;
 }
-
 
 .field-category.primary
 {
@@ -794,13 +1038,11 @@
     color:#3155c8;
 }
 
-
 .field-category.business
 {
     background:#eaf8ef;
     color:#249452;
 }
-
 
 .field-category.audit
 {
@@ -808,6 +1050,9 @@
     color:#d87919;
 }
 
+/* =====================================================
+   REQUIRED FIELD INDICATOR
+===================================================== */
 
 .field-required
 {
@@ -819,9 +1064,8 @@
     border-radius:50%;
     background:#f0f2f6;
     color:#a0a7b5;
-    font-size:9px;
+    font-size:11px;
 }
-
 
 .field-required.required
 {
@@ -829,6 +1073,65 @@
     color:#219653;
 }
 
+/* =====================================================
+   REMOVE FIELD BUTTON
+===================================================== */
+
+.clone-model-table td.field-action
+{
+    text-align:center;
+    vertical-align:middle;
+}
+
+.clone-model-table .clone-remove-field-button
+{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:27px;
+    height:27px;
+    padding:0;
+    border:1px solid #e2caca;
+    border-radius:6px;
+    background:#fff7f7;
+    color:#c24141;
+    font-size:12px;
+    line-height:1;
+    cursor:pointer;
+    transition:background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.clone-model-table .clone-remove-field-button:hover:not(:disabled)
+{
+    border-color:#e6a3a3;
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.clone-model-table .clone-remove-field-button:disabled
+{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
+/* =====================================================
+   EMPTY MODEL ROW
+===================================================== */
+
+.clone-model-empty-row
+{
+    height:54px !important;
+    padding:12px !important;
+    color:#8992a5 !important;
+    font-size:12px !important;
+    text-align:center !important;
+    vertical-align:middle;
+}
+
+.clone-model-empty-row i
+{
+    margin-right:6px;
+}
 
 /* =====================================================
    MODEL EMPTY STATE
@@ -843,6 +1146,7 @@
     width:100%;
     height:100%;
     min-height:0;
+    flex:1 1 auto;
     padding:40px;
     border:1px solid #e4e8f0;
     border-radius:8px;
@@ -850,7 +1154,6 @@
     text-align:center;
     box-sizing:border-box;
 }
-
 
 .clone-model-empty-icon
 {
@@ -866,7 +1169,6 @@
     color:#3155c8;
     font-size:34px;
 }
-
 
 .clone-model-empty-icon span
 {
@@ -884,7 +1186,6 @@
     font-size:12px;
 }
 
-
 .clone-model-empty-title
 {
     color:#202a45;
@@ -892,7 +1193,6 @@
     font-weight:700;
     line-height:1.3;
 }
-
 
 .clone-model-empty-text
 {
@@ -903,70 +1203,19 @@
     line-height:1.6;
 }
 
-
 /* =====================================================
-   FORCE FLEX CHAIN
+   FLEX CHAIN SAFETY
 ===================================================== */
 
 :host,
 .clone-page,
 .clone-page-canvas,
 .clone-files-panel,
-.clone-model-panel
+.clone-model-panel,
+.clone-model-content,
+.clone-model-table-wrapper
 {
     box-sizing:border-box;
-}
-
-/* =====================================================
-   ADD FIELD BUTTON
-===================================================== */
-
-.clone-add-field-button
-{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:7px;
-    width:auto;
-    min-width:105px;
-    height:38px;
-    padding:0 16px;
-    border:0;
-    border-radius:8px;
-    background:#243b8f;
-    color:#ffffff;
-    font-size:13px;
-    font-weight:600;
-    line-height:1;
-    white-space:nowrap;
-    cursor:pointer;
-    transition:all 0.2s ease;
-    box-sizing:border-box;
-}
-
-
-.clone-add-field-button:hover:not(:disabled)
-{
-    background:#1d327c;
-}
-
-
-.clone-add-field-button:active:not(:disabled)
-{
-    transform:translateY(1px);
-}
-
-
-.clone-add-field-button:disabled
-{
-    opacity:0.55;
-    cursor:not-allowed;
-}
-
-
-.clone-add-field-button i
-{
-    font-size:12px;
 }
 
 /* =====================================================
@@ -1006,11 +1255,45 @@
 
     .clone-file-status
     {
-        min-width:52px;
-        padding:0 6px;
+        min-width:48px;
+        padding:0 5px;
+    }
+
+    .clone-file-name
+    {
+        font-size:12px;
+    }
+
+    .clone-file-path
+    {
+        font-size:10px;
+    }
+
+    .clone-model-header-right
+    {
+        gap:6px;
+    }
+
+    .clone-add-field-button
+    {
+        min-width:90px;
+        padding:0 10px;
+    }
+
+    .clone-model-table th
+    {
+        font-size:10px;
+    }
+
+    .clone-model-input,
+    .clone-model-type-input,
+    .clone-model-select
+    {
+        padding-left:5px;
+        padding-right:5px;
+        font-size:11px;
     }
 }
-
 
 @media (max-width:1000px)
 {
@@ -1049,12 +1332,22 @@
         display:none;
     }
 
-    .clone-model-name
+    .clone-model-count
     {
-        display:none;
+        gap:4px;
+        padding-right:2px;
+    }
+
+    .clone-model-count .summary-value
+    {
+        font-size:16px;
+    }
+
+    .clone-model-table
+    {
+        min-width:800px;
     }
 }
-
 
 @media (max-width:768px)
 {
@@ -1093,9 +1386,9 @@
     .clone-model-panel
     {
         width:100%;
-        height:50%;
+        height:auto;
         min-height:300px;
-        flex:0 0 50%;
+        flex:0 0 auto;
     }
 
     .clone-workspace-divider
@@ -1112,8 +1405,23 @@
         height:22px;
     }
 
+    .clone-model-count
+    {
+        margin-left:auto;
+    }
+
+    .clone-model-header-right
+    {
+        gap:6px;
+    }
+
     .clone-model-empty
     {
         padding:25px;
+    }
+
+    .clone-model-table
+    {
+        min-width:800px;
     }
 }

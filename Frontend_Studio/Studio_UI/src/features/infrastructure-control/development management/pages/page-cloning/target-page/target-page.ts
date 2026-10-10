@@ -6,6 +6,8 @@ import
 {
     Component,
     OnInit,
+    ChangeDetectorRef,
+    NgZone,
     inject
 }
 from '@angular/core';
@@ -28,6 +30,14 @@ import
     Router
 }
 from '@angular/router';
+
+import {
+    timeout,
+    finalize,
+    map,
+    switchMap,
+    throwError
+} from 'rxjs';
 
 
 //===============================================================
@@ -77,6 +87,12 @@ import
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
+import
+{
+    DropdownComponent
+}
+from '../../../../../../shared/components/controls/dropdown/dropdown';
+
 
 //===============================================================
 // Models
@@ -84,7 +100,13 @@ from '../../../../../../shared/components/controls/search-dropdown/search-dropdo
 
 import
 {
-    PageCloning
+    PageCloning,
+    PageCloningSourceAnalysis,
+    PageCloningSourceFile,
+    PageCloningModelField,
+    PageCloningTransformation,
+    ModelFieldOperation,
+    TargetModelField
 }
 from '../../../model/page-cloning.model';
 
@@ -130,9 +152,8 @@ from '../../../../navigation-management/services/submenu.service';
 
 @Component
 ({
-    selector:'app-target-page',
-
-    standalone:true,
+    selector: 'app-target-page',
+    standalone: true,
 
     imports:
     [
@@ -143,11 +164,12 @@ from '../../../../navigation-management/services/submenu.service';
         PageToolbarComponent,
         ControlTabsComponent,
         SearchDropdownComponent,
+        DropdownComponent,
         ToastComponent,
         ConfirmDialogComponent
     ],
 
-    templateUrl:'./target-page.html',
+    templateUrl: './target-page.html',
 
     styleUrls:
     [
@@ -160,153 +182,204 @@ from '../../../../navigation-management/services/submenu.service';
 // Target Page
 //===============================================================
 
-export class TargetPageComponent
-implements OnInit
+export class TargetPageComponent implements OnInit
 {
-
     //===========================================================
     // Services
     //===========================================================
 
-    private router =
-        inject(Router);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly pageCloningService = inject(PageCloningService);
+    private readonly moduleService = inject(ModuleService);
+    private readonly menuService = inject(NavigationMenuService);
+    private readonly submenuService = inject(NavigationSubmenuService);
+    private readonly cdr = inject(ChangeDetectorRef);
+    private readonly zone = inject(NgZone);
 
-    private route =
-        inject(ActivatedRoute);
 
-    private pageCloningService =
-        inject(PageCloningService);
+    //===========================================================
+    // Target Analysis
+    //===========================================================
 
-    private moduleService =
-        inject(ModuleService);
+    targetAnalysis: PageCloningSourceAnalysis | null = null;
 
-    private menuService =
-        inject(NavigationMenuService);
+    targetFiles: PageCloningSourceFile[] = [];
 
-    private submenuService =
-        inject(NavigationSubmenuService);
+    targetModelFields: TargetModelField[] = [];
+
+    isAnalyzingTarget = false;
+
+    targetAnalysisReady = false;
 
 
     //===========================================================
     // Page State
     //===========================================================
 
-    pageTitle =
-        'Target Page Analysis';
+    pageTitle = 'Target Page Analysis';
 
-    mode:
-        'add' |
-        'edit' |
-        'view' =
-        'add';
+    mode: 'add' | 'edit' | 'view' = 'add';
 
-    pageCloningId =
-        0;
+    pageCloningId = 0;
 
-    selectedTab =
-        'target';
+    selectedTab = 'target';
 
-    isLoadingTarget =
-        false;
+    isLoadingTarget = false;
 
-    targetPageLoaded =
-        false;
+    isGenerating = false;
+
+    targetPageLoaded = false;
 
 
-    tabs:
-        ControlTab[] =
-        [
-            {
-                id:'target',
-                label:'Target Page Details'
-            }
-        ];
+    //===========================================================
+    // Tabs
+    //===========================================================
+
+    tabs: ControlTab[] =
+    [
+        {
+            id: 'target',
+            label: 'Target Page Details'
+        }
+    ];
 
 
     //===========================================================
     // Target Page Selection
     //===========================================================
 
-    cloneToModules:
-        NavigationModule[] =
-        [];
+    cloneToModules: NavigationModule[] = [];
 
-    cloneToMenus:
-        any[] =
-        [];
+    cloneToMenus: any[] = [];
 
-    cloneToSubmenus:
-        any[] =
-        [];
+    cloneToSubmenus: any[] = [];
 
-    selectedCloneToModuleId =
-        0;
+    selectedCloneToModuleId = 0;
 
-    selectedCloneToMenuId =
-        0;
+    selectedCloneToMenuId = 0;
 
-    selectedCloneToSubmenuId =
-        0;
+    selectedCloneToSubmenuId = 0;
 
 
     //===========================================================
-    // Page Cloning
+    // Page Cloning Configuration
     //===========================================================
 
-    pageCloning:
-        PageCloning =
+    pageCloning: PageCloning =
+    {
+        id: 0,
+
+        cloneFromId: 0,
+        cloneFromCode: '',
+        cloneFromName: '',
+
+        cloneToId: 0,
+        cloneToCode: '',
+        cloneToName: '',
+
+        cloningType: 'Page',
+        numberOfFiles: 15,
+        operation: 'Clone',
+        status: 'Pending',
+
+        remarks: null,
+
+        lastClonedBy: null,
+        lastClonedDate: null,
+        lastCloningResult: '',
+
+        isActive: true,
+
+        createdBy: 0,
+        createdDate: new Date(),
+
+        modifiedBy: null,
+        modifiedDate: null,
+
+        deletedBy: null,
+        deletedDate: null,
+
+        isDeleted: false
+    };
+
+
+    //===========================================================
+    // Model Transformation Options
+    //===========================================================
+
+    readonly modelOperationOptions:
+        { label: string; value: ModelFieldOperation }[] =
+    [
+        { label: 'Keep', value: 'Keep' },
+        { label: 'Modify', value: 'Modify' },
+        { label: 'Add', value: 'Add' },
+        { label: 'Exclude', value: 'Exclude' }
+    ];
+
+
+    //===========================================================
+    // Model Type Options
+    //===========================================================
+
+    readonly modelTypeOptions:
+        { label: string; value: string }[] =
+    [
+        { label: 'string', value: 'string' },
+        { label: 'number', value: 'number' },
+        { label: 'number | null', value: 'number | null' },
+        { label: 'boolean', value: 'boolean' },
+        { label: 'Date', value: 'Date' },
+        { label: 'Date | null', value: 'Date | null' },
+        { label: 'string | null', value: 'string | null' },
+        { label: 'number[]', value: 'number[]' },
+        { label: 'string[]', value: 'string[]' },
+        { label: 'object', value: 'object' }
+    ];
+
+
+    //===========================================================
+    // Model Category Options
+    //===========================================================
+
+    readonly modelCategoryOptions =
+    [
         {
-            id:0,
+            label: 'Primary & Navigation',
+            value: 'Primary & Navigation'
+        },
+        {
+            label: 'Business & Functional',
+            value: 'Business & Functional'
+        },
+        {
+            label: 'Audit & System',
+            value: 'Audit & System'
+        }
+    ];
 
-            cloneFromId:0,
-            cloneFromCode:'',
-            cloneFromName:'',
 
-            cloneToId:0,
-            cloneToCode:'',
-            cloneToName:'',
+    //===========================================================
+    // Model Required Options
+    //===========================================================
 
-            cloningType:'Page',
-
-            numberOfFiles:15,
-
-            operation:'Clone',
-
-            status:'Pending',
-
-            remarks:null,
-
-            lastClonedBy:null,
-            lastClonedDate:null,
-            lastCloningResult:'',
-
-            isActive:true,
-
-            createdBy:0,
-            createdDate:new Date(),
-
-            modifiedBy:0,
-            modifiedDate:null,
-
-            deletedBy:null,
-            deletedDate:null,
-
-            isDeleted:false
-        };
+    readonly modelRequiredOptions =
+    [
+        { label: 'Yes', value: true },
+        { label: 'No', value: false }
+    ];
 
 
     //===========================================================
     // Lifecycle
     //===========================================================
 
-    ngOnInit():
-        void
+    ngOnInit(): void
     {
-        this.loadPageMode();
-
-        this.loadModules();
-
         this.initializeTargetPage();
+        this.loadPageMode();
+        this.loadModules();
+        this.restoreSourceConfiguration();
     }
 
 
@@ -314,29 +387,56 @@ implements OnInit
     // Initialize Target Page
     //===========================================================
 
-    initializeTargetPage():
-        void
+    initializeTargetPage(): void
     {
-        this.cloneToMenus =
-            [];
+        this.cloneToMenus = [];
+        this.cloneToSubmenus = [];
 
-        this.cloneToSubmenus =
-            [];
+        this.selectedCloneToModuleId = 0;
+        this.selectedCloneToMenuId = 0;
+        this.selectedCloneToSubmenuId = 0;
 
-        this.selectedCloneToModuleId =
-            0;
+        this.isLoadingTarget = false;
+        this.isAnalyzingTarget = false;
+        this.isGenerating = false;
 
-        this.selectedCloneToMenuId =
-            0;
+        this.targetPageLoaded = false;
+        this.targetAnalysisReady = false;
 
-        this.selectedCloneToSubmenuId =
-            0;
+        this.targetAnalysis = null;
+        this.targetFiles = [];
+        this.targetModelFields = [];
+    }
 
-        this.isLoadingTarget =
-            false;
 
-        this.targetPageLoaded =
-            false;
+    //===========================================================
+    // Restore Source Configuration
+    //===========================================================
+
+    private restoreSourceConfiguration(): void
+    {
+        const state = this.pageCloningService.getWorkflowState();
+
+        if (!state)
+        {
+            return;
+        }
+
+        if (state.pageCloning)
+        {
+            this.pageCloning =
+            {
+                ...this.pageCloning,
+                ...state.pageCloning
+            };
+        }
+
+        this.pageCloning.cloneFromId =
+            state.selectedCloneFromSubmenuId ||
+            this.pageCloning.cloneFromId;
+
+        this.pageCloningId =
+            this.pageCloning.id || this.pageCloningId;
     }
 
 
@@ -344,52 +444,36 @@ implements OnInit
     // Load Page Mode
     //===========================================================
 
-    loadPageMode():
-        void
+    loadPageMode(): void
     {
-        const id =
-            this.route.snapshot.paramMap.get
-            (
-                'id'
-            );
+        const id = this.route.snapshot.paramMap.get('id');
+        const currentRoute = this.router.url;
 
-        const currentRoute =
-            this.router.url;
-
-        if
-        (
-            currentRoute.includes('/view/')
-        )
+        if (currentRoute.includes('/view/'))
         {
-            this.mode =
-                'view';
+            this.mode = 'view';
+            this.pageTitle = 'View Target Page Analysis';
         }
-        else if
-        (
-            currentRoute.includes('/edit/')
-        )
+        else if (currentRoute.includes('/edit/'))
         {
-            this.mode =
-                'edit';
+            this.mode = 'edit';
+            this.pageTitle = 'Edit Target Page Analysis';
         }
         else
         {
-            this.mode =
-                'add';
+            this.mode = 'add';
+            this.pageTitle = 'Target Page Analysis';
         }
 
-        if
-        (
-            id
-        )
+        if (id)
         {
-            this.pageCloningId =
-                Number(id);
+            const parsedId = Number(id);
 
-            this.loadPageCloning
-            (
-                this.pageCloningId
-            );
+            if (Number.isInteger(parsedId) && parsedId > 0)
+            {
+                this.pageCloningId = parsedId;
+                this.loadPageCloning(parsedId);
+            }
         }
     }
 
@@ -398,72 +482,79 @@ implements OnInit
     // Load Modules
     //===========================================================
 
-    loadModules():
-        void
+    loadModules(): void
     {
-        this.moduleService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                    modules =>
-                    {
-                        this.cloneToModules =
-                            modules;
-                    },
+        this.moduleService.getAll().subscribe(
+        {
+            next: modules =>
+            {
+                this.zone.run(() =>
+                {
+                    this.cloneToModules = modules ?? [];
+                    this.cdr.detectChanges();
+                });
+            },
 
-                error:
-                    error =>
-                    {
-                        console.error
-                        (
-                            'Failed to load modules.',
-                            error
-                        );
-                    }
-            });
+            error: error =>
+            {
+                console.error('Failed to load modules.', error);
+
+                this.showError(
+                    'Failed to load navigation modules.'
+                );
+            }
+        });
     }
 
 
     //===========================================================
-    // Load Page Cloning
+    // Load Page Cloning Record
     //===========================================================
 
-    loadPageCloning
-    (
-        id:number
-    ):
-        void
+    loadPageCloning(id: number): void
     {
-        this.pageCloningService
-            .getById(id)
-            .subscribe
-            ({
-                next:
-                    result =>
-                    {
-                        this.pageCloning =
-                            result;
+        this.pageCloningService.getById(id).subscribe(
+        {
+            next: result =>
+            {
+                this.zone.run(() =>
+                {
+                    this.pageCloning = result;
+                    this.pageCloningId = Number(result.id);
 
-                        this.selectedCloneToSubmenuId =
-                            result.cloneToId;
+                    this.restoreTargetSelection(
+                        Number(result.cloneToId)
+                    );
 
-                        this.loadTargetSubmenu
-                        (
-                            result.cloneToId
-                        );
-                    },
+                    this.cdr.detectChanges();
+                });
+            },
 
-                error:
-                    error =>
-                    {
-                        console.error
-                        (
-                            'Failed to load page cloning.',
-                            error
-                        );
-                    }
-            });
+            error: error =>
+            {
+                console.error('Failed to load page cloning.', error);
+
+                this.showError(
+                    'Failed to load the page-cloning record.'
+                );
+            }
+        });
+    }
+
+
+    //===========================================================
+    // Restore Target Selection
+    //===========================================================
+
+    private restoreTargetSelection(submenuId: number): void
+    {
+        if (submenuId <= 0)
+        {
+            return;
+        }
+
+        this.selectedCloneToSubmenuId = submenuId;
+        this.loadTargetSubmenu(submenuId);
     }
 
 
@@ -471,67 +562,316 @@ implements OnInit
     // Load Target Submenu
     //===========================================================
 
-    loadTargetSubmenu
-    (
-        submenuId:number
-    ):
-        void
+    loadTargetSubmenu(submenuId: number): void
     {
-        if
-        (
-            submenuId <= 0
-        )
+        if (submenuId <= 0)
         {
+            this.targetPageLoaded = false;
+            this.isLoadingTarget = false;
+            this.cdr.detectChanges();
             return;
         }
 
-        this.isLoadingTarget =
-            true;
+        this.isLoadingTarget = true;
+        this.targetPageLoaded = false;
 
-        this.submenuService
-            .getById
-            (
-                submenuId
+        this.cdr.detectChanges();
+
+        this.submenuService.getById(submenuId)
+            .pipe(
+                timeout(10000),
+
+                finalize(() =>
+                {
+                    this.zone.run(() =>
+                    {
+                        this.isLoadingTarget = false;
+                        this.cdr.detectChanges();
+                    });
+                })
             )
-            .subscribe
-            ({
-                next:
-                    submenu =>
+            .subscribe(
+            {
+                next: submenu =>
+                {
+                    this.zone.run(() =>
                     {
                         this.pageCloning.cloneToId =
                             Number(submenu.id);
 
                         this.pageCloning.cloneToCode =
-                            submenu.code ??
-                            '';
+                            submenu.code ?? '';
 
                         this.pageCloning.cloneToName =
-                            submenu.name ??
-                            '';
+                            submenu.name ?? '';
 
-                        this.targetPageLoaded =
-                            true;
+                        this.selectedCloneToSubmenuId =
+                            Number(submenu.id);
 
-                        this.isLoadingTarget =
-                            false;
-                    },
+                        this.targetPageLoaded = true;
 
-                error:
-                    error =>
+                        this.restoreTargetDropdowns();
+
+                        this.cdr.detectChanges();
+                    });
+                },
+
+                error: error =>
+                {
+                    this.zone.run(() =>
                     {
-                        console.error
-                        (
-                            'Failed to load target submenu.',
+                        this.targetPageLoaded = false;
+
+                        console.error(
+                            'Target submenu request failed:',
                             error
                         );
 
-                        this.targetPageLoaded =
-                            false;
+                        this.showError(
+                            'Unable to load the selected target submenu.'
+                        );
 
-                        this.isLoadingTarget =
-                            false;
-                    }
+                        this.cdr.detectChanges();
+                    });
+                }
             });
+    }
+
+
+    //===========================================================
+    // Restore Target Dropdowns
+    //===========================================================
+
+    private restoreTargetDropdowns(): void
+    {
+        const submenuId = this.selectedCloneToSubmenuId;
+
+        const selected = this.cloneToSubmenus.find(
+            submenu => Number(submenu.id) === submenuId
+        );
+
+        if (!selected)
+        {
+            return;
+        }
+
+        // Use the selected submenu's known parent from the
+        // already-loaded submenu list. Do not assume fields
+        // that are not declared in NavigationSubmenu.
+        const menuId = Number(
+            selected.menuId ?? selected.navigationMenuId ?? 0
+        );
+
+        if (menuId <= 0)
+        {
+            return;
+        }
+
+        this.selectedCloneToMenuId = menuId;
+
+        this.submenuService.getByMenu(menuId).subscribe(
+        {
+            next: submenus =>
+            {
+                this.zone.run(() =>
+                {
+                    this.cloneToSubmenus = submenus ?? [];
+                    this.cdr.detectChanges();
+                });
+            },
+
+            error: error =>
+            {
+                console.error(
+                    'Failed to restore target submenus.',
+                    error
+                );
+            }
+        });
+    }
+
+
+    //===========================================================
+    // Submit Target Page
+    //===========================================================
+
+    onSubmitTarget(): void
+    {
+        const targetSubmenuId =
+            Number(this.selectedCloneToSubmenuId);
+
+        const workflowState =
+            this.pageCloningService.getWorkflowState();
+
+        const sourceSubmenuId = Number(
+            workflowState?.selectedCloneFromSubmenuId ||
+            workflowState?.pageCloning?.cloneFromId ||
+            this.pageCloning.cloneFromId
+        );
+
+        if (
+            targetSubmenuId <= 0 ||
+            this.isLoadingTarget ||
+            this.isAnalyzingTarget ||
+            this.isGenerating
+        )
+        {
+            return;
+        }
+
+        if (sourceSubmenuId <= 0)
+        {
+            this.showError(
+                'Please select and analyze the source page first.'
+            );
+
+            return;
+        }
+
+        if (sourceSubmenuId === targetSubmenuId)
+        {
+            this.showError(
+                'Source and target pages must be different.'
+            );
+
+            return;
+        }
+
+        this.isAnalyzingTarget = true;
+        this.targetAnalysisReady = false;
+        this.targetAnalysis = null;
+        this.targetFiles = [];
+        this.targetModelFields = [];
+
+        this.cdr.detectChanges();
+
+        this.pageCloningService
+            .analyzeTarget(targetSubmenuId)
+            .pipe(
+                timeout(30000),
+
+                finalize(() =>
+                {
+                    this.zone.run(() =>
+                    {
+                        this.isAnalyzingTarget = false;
+                        this.cdr.detectChanges();
+                    });
+                })
+            )
+            .subscribe(
+            {
+                next: result =>
+                {
+                    this.zone.run(() =>
+                    {
+                        this.applyTargetAnalysis(result);
+
+                        if (!this.targetAnalysisReady)
+                        {
+                            this.showError(
+                                'Target analysis is incomplete. Verify that all 15 registered target files exist.'
+                            );
+                        }
+
+                        this.cdr.detectChanges();
+                    });
+                },
+
+                error: error =>
+                {
+                    this.zone.run(() =>
+                    {
+                        this.targetPageLoaded = false;
+                        this.targetAnalysisReady = false;
+                        this.targetAnalysis = null;
+                        this.targetFiles = [];
+                        this.targetModelFields = [];
+
+                        console.error(
+                            'Target analysis failed:',
+                            error
+                        );
+
+                        this.showError(
+                            this.getErrorMessage(
+                                error,
+                                'Target analysis failed.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    });
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Apply Target Analysis
+    //===========================================================
+
+    private applyTargetAnalysis(
+        result: PageCloningSourceAnalysis
+    ): void
+    {
+        this.targetAnalysis = result;
+
+        this.targetFiles = (result.files ?? []).map(file =>
+        ({
+            ...file,
+            id: Number(file.id),
+            exists: file.exists === true,
+            action: file.action ?? 'Missing',
+            path: file.path ?? ''
+        }));
+
+        const state = this.pageCloningService.getWorkflowState();
+
+        const sourceFields =
+            state?.sourceModelFields ?? [];
+
+        this.targetModelFields = sourceFields.map(
+            (field: PageCloningModelField): TargetModelField =>
+            ({
+                inputModel: field.inputModel ?? '',
+                sourceField: field.sourceField ?? field.name ?? '',
+                name: field.name ?? '',
+                type: field.type ?? 'string',
+                category: field.category ?? 'Business & Functional',
+                required: field.required ?? false,
+                operation: field.operation ?? 'Keep',
+                description: field.description,
+                defaultValue: field.defaultValue
+            })
+        );
+
+        this.pageCloning.cloneToId =
+            Number(result.submenuId);
+
+        this.pageCloning.cloneToCode =
+            result.submenuCode ?? '';
+
+        this.pageCloning.cloneToName =
+            result.submenuName ?? '';
+
+        this.selectedCloneToSubmenuId =
+            Number(result.submenuId);
+
+        this.pageCloning.numberOfFiles =
+            this.targetFiles.length;
+
+        this.targetAnalysisReady =
+            this.targetFiles.length === 15 &&
+            this.targetFiles.every(
+                file =>
+                    file.exists &&
+                    file.action !== 'Missing' &&
+                    !!file.path
+            );
+
+        this.targetPageLoaded =
+            this.targetAnalysisReady;
     }
 
 
@@ -539,70 +879,52 @@ implements OnInit
     // Clone To Module Changed
     //===========================================================
 
-    onCloneToModuleChange
-    (
-        moduleId:number
-    ):
-        void
+    onCloneToModuleChange(moduleId: number): void
     {
         this.selectedCloneToModuleId =
-            Number(moduleId);
+            Number(moduleId) || 0;
 
-        this.selectedCloneToMenuId =
-            0;
+        this.selectedCloneToMenuId = 0;
+        this.selectedCloneToSubmenuId = 0;
 
-        this.selectedCloneToSubmenuId =
-            0;
+        this.cloneToMenus = [];
+        this.cloneToSubmenus = [];
 
-        this.cloneToMenus =
-            [];
+        this.resetTargetAnalysis();
 
-        this.cloneToSubmenus =
-            [];
+        this.pageCloning.cloneToId = 0;
+        this.pageCloning.cloneToCode = '';
+        this.pageCloning.cloneToName = '';
 
-        this.pageCloning.cloneToId =
-            0;
-
-        this.pageCloning.cloneToCode =
-            '';
-
-        this.pageCloning.cloneToName =
-            '';
-
-        this.targetPageLoaded =
-            false;
-
-        if
-        (
-            this.selectedCloneToModuleId <= 0
-        )
+        if (this.selectedCloneToModuleId <= 0)
         {
             return;
         }
 
         this.menuService
-            .getByModule
-            (
-                this.selectedCloneToModuleId
-            )
-            .subscribe
-            ({
-                next:
-                    menus =>
+            .getByModule(this.selectedCloneToModuleId)
+            .subscribe(
+            {
+                next: menus =>
+                {
+                    this.zone.run(() =>
                     {
-                        this.cloneToMenus =
-                            menus;
-                    },
+                        this.cloneToMenus = menus ?? [];
+                        this.cdr.detectChanges();
+                    });
+                },
 
-                error:
-                    error =>
-                    {
-                        console.error
-                        (
-                            'Failed to load target menus.',
-                            error
-                        );
-                    }
+                error: error =>
+                {
+                    console.error(
+                        'Failed to load target menus.',
+                        error
+                    );
+
+                    this.showError(
+                        'Failed to load menus for the selected module.'
+                    );
+                }
             });
     }
 
@@ -611,64 +933,49 @@ implements OnInit
     // Clone To Menu Changed
     //===========================================================
 
-    onCloneToMenuChange
-    (
-        menuId:number
-    ):
-        void
+    onCloneToMenuChange(menuId: number): void
     {
         this.selectedCloneToMenuId =
-            Number(menuId);
+            Number(menuId) || 0;
 
-        this.selectedCloneToSubmenuId =
-            0;
+        this.selectedCloneToSubmenuId = 0;
+        this.cloneToSubmenus = [];
 
-        this.cloneToSubmenus =
-            [];
+        this.resetTargetAnalysis();
 
-        this.pageCloning.cloneToId =
-            0;
+        this.pageCloning.cloneToId = 0;
+        this.pageCloning.cloneToCode = '';
+        this.pageCloning.cloneToName = '';
 
-        this.pageCloning.cloneToCode =
-            '';
-
-        this.pageCloning.cloneToName =
-            '';
-
-        this.targetPageLoaded =
-            false;
-
-        if
-        (
-            this.selectedCloneToMenuId <= 0
-        )
+        if (this.selectedCloneToMenuId <= 0)
         {
             return;
         }
 
         this.submenuService
-            .getByMenu
-            (
-                this.selectedCloneToMenuId
-            )
-            .subscribe
-            ({
-                next:
-                    submenus =>
+            .getByMenu(this.selectedCloneToMenuId)
+            .subscribe(
+            {
+                next: submenus =>
+                {
+                    this.zone.run(() =>
                     {
-                        this.cloneToSubmenus =
-                            submenus;
-                    },
+                        this.cloneToSubmenus = submenus ?? [];
+                        this.cdr.detectChanges();
+                    });
+                },
 
-                error:
-                    error =>
-                    {
-                        console.error
-                        (
-                            'Failed to load target submenus.',
-                            error
-                        );
-                    }
+                error: error =>
+                {
+                    console.error(
+                        'Failed to load target submenus.',
+                        error
+                    );
+
+                    this.showError(
+                        'Failed to load submenus for the selected menu.'
+                    );
+                }
             });
     }
 
@@ -677,130 +984,530 @@ implements OnInit
     // Clone To Submenu Changed
     //===========================================================
 
-    onCloneToSubmenuChange
-    (
-        submenuId:number
-    ):
-        void
+    onCloneToSubmenuChange(submenuId: number): void
     {
         this.selectedCloneToSubmenuId =
-            Number(submenuId);
+            Number(submenuId) || 0;
 
-        this.targetPageLoaded =
-            false;
+        this.resetTargetAnalysis();
 
-        if
-        (
-            this.selectedCloneToSubmenuId <= 0
-        )
+        if (this.selectedCloneToSubmenuId <= 0)
         {
-            this.pageCloning.cloneToId =
-                0;
-
-            this.pageCloning.cloneToCode =
-                '';
-
-            this.pageCloning.cloneToName =
-                '';
-
+            this.pageCloning.cloneToId = 0;
+            this.pageCloning.cloneToCode = '';
+            this.pageCloning.cloneToName = '';
             return;
         }
 
-        const selected =
-            this.cloneToSubmenus.find
-            (
-                submenu =>
-                    Number(submenu.id) ===
-                    this.selectedCloneToSubmenuId
-            );
+        const selected = this.cloneToSubmenus.find(
+            submenu =>
+                Number(submenu.id) ===
+                this.selectedCloneToSubmenuId
+        );
 
         this.pageCloning.cloneToId =
             this.selectedCloneToSubmenuId;
 
         this.pageCloning.cloneToCode =
-            selected?.code ??
-            '';
+            selected?.code ?? '';
 
         this.pageCloning.cloneToName =
-            selected?.name ??
-            '';
+            selected?.name ?? '';
+
+        this.cdr.detectChanges();
     }
 
 
     //===========================================================
-    // Submit Target Page
+    // Reset Target Analysis
     //===========================================================
 
-    onSubmitTarget():
-        void
+    private resetTargetAnalysis(): void
     {
-        if
-        (
-            this.isViewMode ||
-            this.selectedCloneToSubmenuId <= 0 ||
-            this.isLoadingTarget
-        )
+        this.targetPageLoaded = false;
+        this.targetAnalysis = null;
+        this.targetFiles = [];
+        this.targetModelFields = [];
+        this.targetAnalysisReady = false;
+
+        this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Model Operation Changed
+    //===========================================================
+
+    onModelOperationChange(
+        field: TargetModelField,
+        operation: ModelFieldOperation
+    ): void
+    {
+        const validOperations: ModelFieldOperation[] =
+        [
+            'Keep',
+            'Modify',
+            'Add',
+            'Exclude'
+        ];
+
+        if (!validOperations.includes(operation))
         {
             return;
         }
 
-        this.loadTargetSubmenu
-        (
-            this.selectedCloneToSubmenuId
-        );
+        if (operation === 'Add')
+        {
+            field.operation = 'Add';
+            field.sourceField = '';
+            field.inputModel = '';
+            field.name = '';
+            field.type = field.type || 'string';
+
+            this.cdr.detectChanges();
+            return;
+        }
+
+        if (operation === 'Modify')
+        {
+            if (!String(field.sourceField ?? '').trim())
+            {
+                this.showError(
+                    'A source field is required for the Modify operation.'
+                );
+
+                return;
+            }
+
+            field.operation = 'Modify';
+            this.cdr.detectChanges();
+            return;
+        }
+
+        if (operation === 'Keep')
+        {
+            field.operation = 'Keep';
+            field.name = field.sourceField;
+
+            this.cdr.detectChanges();
+            return;
+        }
+
+        if (operation === 'Exclude')
+        {
+            field.operation = 'Exclude';
+            this.cdr.detectChanges();
+        }
     }
+
+
+    //===========================================================
+    // Add Model Type
+    //===========================================================
+
+    onAddModelType(value: string): void
+    {
+        const type = String(value ?? '').trim();
+
+        if (!type)
+        {
+            return;
+        }
+
+        const exists = this.modelTypeOptions.some(
+            option => option.value === type
+        );
+
+        if (!exists)
+        {
+            this.modelTypeOptions.push(
+            {
+                label: type,
+                value: type
+            });
+        }
+    }
+
 
     //===========================================================
     // Add Target Model Field
     //===========================================================
 
-    onAddField():
-        void
+    onAddField(): void
     {
-        if
-        (
+        if (
             this.isViewMode ||
+            this.isGenerating ||
             !this.targetPageLoaded
         )
         {
             return;
         }
 
-        console.log
-        (
-            'Add target model field.'
-        );
+        const newField: TargetModelField =
+        {
+            inputModel: '',
+            sourceField: '',
+            name: '',
+            type: 'string',
+            category: 'Business & Functional',
+            required: false,
+            operation: 'Add'
+        };
+
+        this.targetModelFields =
+        [
+            ...this.targetModelFields,
+            newField
+        ];
+
+        this.cdr.detectChanges();
     }
+
+
+    //===========================================================
+    // Remove Target Model Field
+    //===========================================================
+
+    onRemoveField(index: number): void
+    {
+        if (
+            this.isViewMode ||
+            this.isGenerating ||
+            index < 0 ||
+            index >= this.targetModelFields.length
+        )
+        {
+            return;
+        }
+
+        this.targetModelFields =
+            this.targetModelFields.filter(
+                (_, fieldIndex) => fieldIndex !== index
+            );
+
+        this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Validate Model Fields
+    //===========================================================
+
+    private validateModelFields(): string | null
+    {
+        const activeFields = this.targetModelFields.filter(
+            field => field.operation !== 'Exclude'
+        );
+
+        for (const field of activeFields)
+        {
+            const targetName =
+                String(field.name ?? '').trim();
+
+            const sourceName =
+                String(field.sourceField ?? '').trim();
+
+            const type =
+                String(field.type ?? '').trim();
+
+            if (!targetName)
+            {
+                return 'Every included target field must have a field name.';
+            }
+
+            if (!type)
+            {
+                return `Field '${targetName}' must have a data type.`;
+            }
+
+            if (
+                field.operation !== 'Add' &&
+                !sourceName
+            )
+            {
+                return `Field '${targetName}' must have a source field.`;
+            }
+        }
+
+        const normalizedNames = activeFields.map(
+            field => String(field.name ?? '').trim().toLowerCase()
+        );
+
+        const duplicateName = normalizedNames.find(
+            (name, index) =>
+                normalizedNames.indexOf(name) !== index
+        );
+
+        if (duplicateName)
+        {
+            return `Duplicate target field name: ${duplicateName}`;
+        }
+
+        return null;
+    }
+
+
+    //===========================================================
+    // Build Transformation Configuration
+    //===========================================================
+
+    private buildTransformationConfiguration():
+        PageCloningTransformation
+    {
+        return {
+            sourceSubmenuId: this.pageCloning.cloneFromId,
+            targetSubmenuId: this.pageCloning.cloneToId,
+
+            modelFields: this.targetModelFields.map(field =>
+            ({
+                ...field,
+                inputModel: field.inputModel ?? '',
+                sourceField: field.sourceField ?? '',
+                operation: field.operation ?? 'Keep'
+            })),
+
+            renameIdentifiers: true,
+            updateRoutes: true,
+            updateApiReferences: true,
+            updateModelReferences: true,
+            preserveTargetFilePaths: true
+        };
+    }
+
 
     //===========================================================
     // Generate
     //===========================================================
 
-    onGenerate():
-        void
+    onGenerate(): void
     {
-        if
-        (
-            this.isViewMode
-        )
+        if (this.isViewMode || this.isGenerating)
         {
             return;
         }
 
-        if
-        (
-            !this.targetPageLoaded ||
-            this.selectedCloneToSubmenuId <= 0
-        )
-        {
-            return;
-        }
+        const workflowState =
+            this.pageCloningService.getWorkflowState();
 
-        console.log
-        (
-            'Target page selected.',
-            this.pageCloning
+        const sourceSubmenuId = Number(
+            workflowState?.selectedCloneFromSubmenuId ||
+            workflowState?.pageCloning?.cloneFromId ||
+            this.pageCloning.cloneFromId
         );
+
+        const targetSubmenuId =
+            Number(this.selectedCloneToSubmenuId);
+
+        if (sourceSubmenuId <= 0)
+        {
+            this.showError(
+                'Source page is missing. Please select the source page first.'
+            );
+
+            return;
+        }
+
+        if (targetSubmenuId <= 0)
+        {
+            this.showError('Please select a target submenu.');
+            return;
+        }
+
+        if (sourceSubmenuId === targetSubmenuId)
+        {
+            this.showError(
+                'Source and target pages must be different.'
+            );
+
+            return;
+        }
+
+        if (
+            !this.targetPageLoaded ||
+            !this.targetAnalysisReady
+        )
+        {
+            this.showError(
+                'Please analyze the target page before generating.'
+            );
+
+            return;
+        }
+
+        if (this.targetFiles.length !== 15)
+        {
+            this.showError(
+                'Generate requires exactly 15 registered target files.'
+            );
+
+            return;
+        }
+
+        const invalidFiles = this.targetFiles.filter(
+            file =>
+                !file.exists ||
+                file.action === 'Missing' ||
+                !file.path
+        );
+
+        if (invalidFiles.length > 0)
+        {
+            this.showError(
+                `${invalidFiles.length} target file(s) are missing or have invalid paths.`
+            );
+
+            return;
+        }
+
+        const fieldError = this.validateModelFields();
+
+        if (fieldError)
+        {
+            this.showError(fieldError);
+            return;
+        }
+
+        const sourceConfiguration =
+            workflowState?.pageCloning;
+
+        this.pageCloning =
+        {
+            ...this.pageCloning,
+            ...(sourceConfiguration ?? {}),
+
+            id:
+                this.pageCloningId ||
+                this.pageCloning.id ||
+                0,
+
+            cloneFromId: sourceSubmenuId,
+
+            cloneFromCode:
+                sourceConfiguration?.cloneFromCode ??
+                this.pageCloning.cloneFromCode,
+
+            cloneFromName:
+                sourceConfiguration?.cloneFromName ??
+                this.pageCloning.cloneFromName,
+
+            cloneToId: targetSubmenuId,
+
+            cloneToCode:
+                this.targetAnalysis?.submenuCode ??
+                this.pageCloning.cloneToCode,
+
+            cloneToName:
+                this.targetAnalysis?.submenuName ??
+                this.pageCloning.cloneToName,
+
+            cloningType: 'Page',
+            numberOfFiles: this.targetFiles.length,
+            operation: 'Clone',
+            status: 'Pending',
+            lastCloningResult: ''
+        };
+
+        const transformation =
+            this.buildTransformationConfiguration();
+
+        this.isGenerating = true;
+        this.cdr.detectChanges();
+
+        const saveConfiguration$ =
+            this.pageCloning.id > 0
+                ? this.pageCloningService
+                    .update(this.pageCloning)
+                    .pipe(
+                        map(() => this.pageCloning.id)
+                    )
+                : this.pageCloningService
+                    .create(this.pageCloning);
+
+        saveConfiguration$
+            .pipe(
+                switchMap(id =>
+                    this.pageCloningService.clone(
+                        id,
+                        this.pageCloning,
+                        transformation
+                    ).pipe(
+                        switchMap(cloneResult => {
+                            if (
+                                String(cloneResult.status).toLowerCase() === 'failed'
+                            ) {
+                                return throwError(
+                                    () => new Error(
+                                        cloneResult.message ||
+                                        'The backend reported that cloning failed.'
+                                    )
+                                );
+                            }
+
+                            return this.pageCloningService.getById(id);
+                        })
+                    )
+                ),
+
+                timeout(120000),
+
+                finalize(() =>
+                {
+                    this.zone.run(() =>
+                    {
+                        this.isGenerating = false;
+                        this.cdr.detectChanges();
+                    });
+                })
+            )
+            .subscribe(
+            {
+                next: result =>
+                {
+                    this.zone.run(() =>
+                    {
+                        this.pageCloning = result;
+                        this.pageCloningId = Number(result.id);
+
+                        if (
+                            String(result.status).toLowerCase() === 'failed'
+                        )
+                        {
+                            this.showError(
+                                `Cloning failed: ${result.lastCloningResult || 'The backend reported a failure.'}`
+                            );
+                        }
+                        else
+                        {
+                            this.showSuccess(
+                                `Cloning request finished. Backend status: ${result.status}. Verify the target files before using the page.`
+                            );
+                        }
+
+                        this.cdr.detectChanges();
+                    });
+                },
+
+                error: error =>
+                {
+                    this.zone.run(() =>
+                    {
+                        console.error(
+                            'Page cloning failed:',
+                            error
+                        );
+
+                        this.showError(
+                            this.getErrorMessage(
+                                error,
+                                'Page cloning failed.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    });
+                }
+            });
     }
 
 
@@ -808,19 +1515,21 @@ implements OnInit
     // Back To Source
     //===========================================================
 
-    onBackToSource():
-        void
+    onBackToSource(): void
     {
-        this.router.navigate
-        (
-            [
-                '/infrastructure-control',
-                'development-management',
-                'page-cloning',
-                'source',
-                'new'
-            ]
-        );
+        if (this.isGenerating)
+        {
+            return;
+        }
+
+        this.router.navigate(
+        [
+            '/infrastructure-control',
+            'development-management',
+            'page-cloning',
+            'source',
+            'new'
+        ]);
     }
 
 
@@ -828,43 +1537,88 @@ implements OnInit
     // Clear
     //===========================================================
 
-    onClear():
-        void
+    onClear(): void
     {
-        if
-        (
-            this.isViewMode
+        if (
+            this.isViewMode ||
+            this.isGenerating
         )
         {
             return;
         }
 
-        this.selectedCloneToModuleId =
-            0;
+        this.selectedCloneToModuleId = 0;
+        this.selectedCloneToMenuId = 0;
+        this.selectedCloneToSubmenuId = 0;
 
-        this.selectedCloneToMenuId =
-            0;
+        this.cloneToMenus = [];
+        this.cloneToSubmenus = [];
 
-        this.selectedCloneToSubmenuId =
-            0;
-
-        this.cloneToMenus =
-            [];
-
-        this.cloneToSubmenus =
-            [];
-
-        this.targetPageLoaded =
-            false;
+        this.resetTargetAnalysis();
 
         this.pageCloning =
         {
             ...this.pageCloning,
 
-            cloneToId:0,
-            cloneToCode:'',
-            cloneToName:''
+            cloneToId: 0,
+            cloneToCode: '',
+            cloneToName: '',
+
+            numberOfFiles: 15,
+            status: 'Pending',
+            lastCloningResult: ''
         };
+
+        this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Error Message
+    //===========================================================
+
+    private getErrorMessage(
+        error: any,
+        fallback: string
+    ): string
+    {
+        if (error?.name === 'TimeoutError')
+        {
+            return 'The request timed out. Check the backend status before retrying.';
+        }
+
+        if (error?.status === 0)
+        {
+            return 'Cannot connect to the API. Check the backend and browser Network tab.';
+        }
+
+        return (
+            error?.error?.message ??
+            error?.error?.title ??
+            error?.message ??
+            fallback
+        );
+    }
+
+
+    //===========================================================
+    // Show Error
+    //===========================================================
+
+    private showError(message: string): void
+    {
+        console.error(message);
+        alert(message);
+    }
+
+
+    //===========================================================
+    // Show Success
+    //===========================================================
+
+    private showSuccess(message: string): void
+    {
+        alert(message);
     }
 
 
@@ -872,11 +1626,9 @@ implements OnInit
     // Mode Getters
     //===========================================================
 
-    get isViewMode():
-        boolean
+    get isViewMode(): boolean
     {
-        return this.mode ===
-            'view';
+        return this.mode === 'view';
     }
 
 
@@ -884,10 +1636,10 @@ implements OnInit
     // Page Button Text
     //===========================================================
 
-    get generateButtonText():
-        string
+    get generateButtonText(): string
     {
-        return 'Generate';
+        return this.isGenerating
+            ? 'Generating...'
+            : 'Generate';
     }
-
 }

@@ -4,42 +4,69 @@
 
 export interface PageCloning
 {
-    id:number;
+    //===========================================================
+    // Identity
+    //===========================================================
 
-    cloneFromId:number;
-    cloneFromCode:string;
-    cloneFromName:string;
+    id: number;
 
-    cloneToId:number;
-    cloneToCode:string;
-    cloneToName:string;
 
-    cloningType:string;
+    //===========================================================
+    // Source Submenu
+    //===========================================================
 
-    numberOfFiles:number;
+    cloneFromId: number;
+    cloneFromCode: string;
+    cloneFromName: string;
 
-    operation:string;
 
-    status:string;
+    //===========================================================
+    // Target Submenu
+    //===========================================================
 
-    remarks:string | null;
+    cloneToId: number;
+    cloneToCode: string;
+    cloneToName: string;
 
-    lastClonedBy:number | null;
-    lastClonedDate:Date | null;
-    lastCloningResult:string;
 
-    isActive:boolean;
+    //===========================================================
+    // Cloning Configuration
+    //===========================================================
 
-    createdBy:number;
-    createdDate:Date;
+    cloningType: string;
+    numberOfFiles: number;
+    operation: string;
+    status: string;
+    remarks: string | null;
 
-    modifiedBy:number | null;
-    modifiedDate:Date | null;
 
-    deletedBy:number | null;
-    deletedDate:Date | null;
+    //===========================================================
+    // Cloning Result
+    //===========================================================
 
-    isDeleted:boolean;
+    lastClonedBy: number | null;
+    lastClonedDate: Date | null;
+    lastCloningResult: string;
+
+
+    //===========================================================
+    // Record Status
+    //===========================================================
+
+    isActive: boolean;
+    isDeleted: boolean;
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    createdBy: number;
+    createdDate: Date;
+    modifiedBy: number | null;
+    modifiedDate: Date | null;
+    deletedBy: number | null;
+    deletedDate: Date | null;
 }
 
 
@@ -49,22 +76,42 @@ export interface PageCloning
 
 export interface PageCloningSourceFile
 {
-    id:number;
+    //===========================================================
+    // File Identity
+    //===========================================================
 
-    category:string;
+    id: number;
+    category: string;
+    fileType: string;
+    fileName: string;
 
-    fileType:string;
 
-    fileName:string;
+    //===========================================================
+    // File Location
+    //===========================================================
 
-    location:string;
+    location: string;
+    path: string;
 
-    path:string;
 
-    exists:boolean;
+    //===========================================================
+    // File Analysis
+    //===========================================================
 
-    action:string;
+    exists: boolean;
+    action: string;
 }
+
+
+//===============================================================
+// Model Field Operation
+//===============================================================
+
+export type ModelFieldOperation =
+    | 'Keep'
+    | 'Modify'
+    | 'Add'
+    | 'Exclude';
 
 
 //===============================================================
@@ -73,13 +120,92 @@ export interface PageCloningSourceFile
 
 export interface PageCloningModelField
 {
-    name:string;
+    //===========================================================
+    // Source Field
+    //===========================================================
 
-    type:string;
+    inputModel: string;
+    sourceField?: string;
 
-    category:string;
 
-    required:boolean;
+    //===========================================================
+    // Target Field Definition
+    //===========================================================
+
+    name: string;
+    type: string;
+    category: string;
+    required: boolean;
+
+
+    //===========================================================
+    // Transformation Operation
+    //===========================================================
+
+    operation?: ModelFieldOperation;
+
+
+    //===========================================================
+    // Optional Field Metadata
+    //===========================================================
+
+    description?: string;
+    defaultValue?: string | number | boolean | null;
+}
+
+
+//===============================================================
+// Target Model Field
+//===============================================================
+
+export interface TargetModelField
+    extends PageCloningModelField
+{
+    //===========================================================
+    // Source Mapping
+    //===========================================================
+
+    sourceField: string;
+
+
+    //===========================================================
+    // Transformation Operation
+    //===========================================================
+
+    operation: ModelFieldOperation;
+}
+
+
+//===============================================================
+// Page Cloning Transformation Configuration
+//===============================================================
+
+export interface PageCloningTransformation
+{
+    //===========================================================
+    // Source and Target
+    //===========================================================
+
+    sourceSubmenuId: number;
+    targetSubmenuId: number;
+
+
+    //===========================================================
+    // Model Field Mappings
+    //===========================================================
+
+    modelFields: TargetModelField[];
+
+
+    //===========================================================
+    // Transformation Options
+    //===========================================================
+
+    renameIdentifiers: boolean;
+    updateRoutes: boolean;
+    updateApiReferences: boolean;
+    updateModelReferences: boolean;
+    preserveTargetFilePaths: boolean;
 }
 
 
@@ -89,13 +215,25 @@ export interface PageCloningModelField
 
 export interface PageCloningSourceAnalysis
 {
-    submenuId:number;
+    //===========================================================
+    // Source Submenu
+    //===========================================================
 
-    submenuCode:string;
+    submenuId: number;
+    submenuCode: string;
+    submenuName: string;
 
-    submenuName:string;
 
-    files:PageCloningSourceFile[];
+    //===========================================================
+    // Analyzed Files
+    //===========================================================
 
-    modelFields:PageCloningModelField[];
+    files: PageCloningSourceFile[];
+
+
+    //===========================================================
+    // Analyzed Model Fields
+    //===========================================================
+
+    modelFields: PageCloningModelField[];
 }

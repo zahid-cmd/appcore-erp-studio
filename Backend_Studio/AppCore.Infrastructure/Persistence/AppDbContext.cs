@@ -610,6 +610,28 @@ public class AppDbContext
 
     // AUTO-END : ProductSubCategory
 
+    // AUTO-BEGIN : GeneralLedgers
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.GeneralLedgers>
+    GeneralLedgerss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : GeneralLedgers
+
+    // AUTO-BEGIN : ProductMaster
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster>
+    ProductMasters
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductMaster
+
     // AUTO-END : AUTO REGISTER DBSETS
 
     //===========================================================

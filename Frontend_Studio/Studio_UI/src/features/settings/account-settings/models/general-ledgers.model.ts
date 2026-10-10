@@ -1,90 +1,219 @@
-/* ============================================================
-   General Ledgers
-============================================================ */
+//===========================================================
+// General Ledger
+//===========================================================
 
-export interface GeneralLedgers
+export interface GeneralLedger
 {
-    id:
+    GeneralLedgerId:
         number;
 
-    code:
-        string;
 
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   Create General Ledgers
-============================================================ */
-
-export interface CreateGeneralLedgers
-{
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   Update General Ledgers
-============================================================ */
-
-export interface UpdateGeneralLedgers
-{
-    id:
+    AccountClassId:
         number;
 
-    name:
+
+    AccountClassName:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
 
-    sampleField:
+    AccountGroupId:
+        number;
+
+
+    AccountGroupName:
         string;
 
-    status:
+
+    AccountSubGroupId:
+        number;
+
+
+    AccountSubGroupName:
         string;
 
-    remarks:
+
+    ClassCode:
         string;
+
+
+    Mode:
+        string;
+
+
+    GroupCode:
+        string;
+
+
+    SubGroupCode:
+        string;
+
+
+    LedgerCode:
+        string;
+
+
+    LedgerName:
+        string;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add General Ledger specific configuration fields here
+    // (e.g. NormalBalance, IsControlAccount, OpeningBalance)
+
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
 
 
 
-/* ============================================================
-   General Ledgers Defaults
-============================================================ */
+//===========================================================
+// Create General Ledger
+//===========================================================
 
-export interface GeneralLedgersDefaults
+export interface CreateGeneralLedger
 {
-    code:
+    AccountClassId:
+        number;
+
+
+    AccountGroupId:
+        number;
+
+
+    AccountSubGroupId:
+        number;
+
+
+    ClassCode:
+        string;
+
+
+    Mode:
+        string;
+
+
+    GroupCode:
+        string;
+
+
+    SubGroupCode:
+        string;
+
+
+    LedgerCode:
+        string;
+
+
+    LedgerName:
+        string;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add General Ledger specific configuration fields here
+
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
+}
+
+
+
+//===========================================================
+// Update General Ledger
+//===========================================================
+
+export interface UpdateGeneralLedger
+{
+    GeneralLedgerId:
+        number;
+
+
+    AccountClassId:
+        number;
+
+
+    AccountGroupId:
+        number;
+
+
+    AccountSubGroupId:
+        number;
+
+
+    ClassCode:
+        string;
+
+
+    Mode:
+        string;
+
+
+    GroupCode:
+        string;
+
+
+    SubGroupCode:
+        string;
+
+
+    LedgerCode:
+        string;
+
+
+    LedgerName:
+        string;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add General Ledger specific configuration fields here
+
+
+    Remarks:
+        string;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
+}
+
+
+
+//===========================================================
+// General Ledger Defaults
+//===========================================================
+
+export interface GeneralLedgerDefaults
+{
+    Code:
         string;
 }

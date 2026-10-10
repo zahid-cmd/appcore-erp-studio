@@ -81,7 +81,9 @@ export class DropdownComponent
 
     @Input()
     value: any = null;
-
+    
+    @Input()
+    width: string | number | null = null;
     /* =====================================================
        OUTPUT
     ====================================================== */

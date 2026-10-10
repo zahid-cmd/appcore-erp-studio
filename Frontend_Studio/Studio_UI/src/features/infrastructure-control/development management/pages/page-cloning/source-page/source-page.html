@@ -1,3 +1,4 @@
+
 <div class="clone-page">
 
     <!-- =====================================================
@@ -26,7 +27,6 @@
 
     </app-page-header>
 
-
     <!-- =====================================================
          SECTION 02 : PAGE TOOLBAR
     ====================================================== -->
@@ -39,9 +39,7 @@
              LEFT : SOURCE TAB
         ================================================== -->
 
-        <div
-            pageToolbarLeft
-            class="clone-toolbar-left">
+        <div pageToolbarLeft class="clone-toolbar-left">
 
             <app-control-tabs
                 [tabs]="tabs"
@@ -50,14 +48,11 @@
 
         </div>
 
-
         <!-- =================================================
              RIGHT : SOURCE PAGE SELECTION
         ================================================== -->
 
-        <div
-            pageToolbarRight
-            class="clone-toolbar-right">
+        <div pageToolbarRight class="clone-toolbar-right">
 
             <div class="clone-toolbar-group">
 
@@ -73,7 +68,6 @@
                     (valueChange)="onCloneFromModuleChange($event)">
                 </app-search-dropdown>
 
-
                 <!-- MENU -->
 
                 <app-search-dropdown
@@ -81,14 +75,10 @@
                     [items]="cloneFromMenus"
                     labelField="name"
                     valueField="id"
-                    [readonly]="
-                        isViewMode ||
-                        !selectedCloneFromModuleId
-                    "
+                    [readonly]="isViewMode || !selectedCloneFromModuleId"
                     [(value)]="selectedCloneFromMenuId"
                     (valueChange)="onCloneFromMenuChange($event)">
                 </app-search-dropdown>
-
 
                 <!-- SUBMENU -->
 
@@ -97,25 +87,17 @@
                     [items]="cloneFromSubmenus"
                     labelField="name"
                     valueField="id"
-                    [readonly]="
-                        isViewMode ||
-                        !selectedCloneFromMenuId
-                    "
+                    [readonly]="isViewMode || !selectedCloneFromMenuId"
                     [(value)]="selectedCloneFromSubmenuId"
                     (valueChange)="onCloneFromSubmenuChange($event)">
                 </app-search-dropdown>
-
 
                 <!-- ANALYZE -->
 
                 <button
                     type="button"
                     class="clone-analyze-button"
-                    [disabled]="
-                        isViewMode ||
-                        selectedCloneFromSubmenuId <= 0 ||
-                        isAnalyzing
-                    "
+                    [disabled]="isViewMode || selectedCloneFromSubmenuId <= 0 || isAnalyzing"
                     (click)="onAnalyze()">
 
                     <i class="fas fa-magnifying-glass"></i>
@@ -132,7 +114,6 @@
 
     </app-page-toolbar>
 
-
     <!-- =====================================================
          SECTION 03 : CLONE ANALYSIS WORKSPACE
     ====================================================== -->
@@ -140,23 +121,19 @@
     <div class="clone-page-canvas">
 
         <!-- =================================================
-             LEFT : FILES
+             LEFT : SOURCE FILES
         ================================================== -->
 
         <div class="clone-files-panel">
 
-            <!-- =================================================
-                 FILE PANEL HEADER
-            ================================================== -->
+            <!-- FILE PANEL HEADER -->
 
             <div class="clone-panel-header">
 
                 <div class="clone-panel-title">
 
                     <div class="clone-panel-icon">
-
                         <i class="fas fa-file-code"></i>
-
                     </div>
 
                     <div class="clone-panel-heading">
@@ -173,33 +150,27 @@
 
                 </div>
 
-                <div class="clone-file-count">
+                <div
+                    class="clone-file-count"
+                    [class.complete]="sourceAnalysisReady"
+                    [class.incomplete]="!sourceAnalysisReady && sourceAnalysisFileCount > 0">
+
                     {{ sourceAnalysisFileCount || 0 }} / {{ standardFileCount }}
+
                 </div>
 
             </div>
 
-
-            <!-- =================================================
-                 FILE LIST
-            ================================================== -->
+            <!-- FILE LIST -->
 
             <div
-                class="clone-files-list"
-                *ngIf="
-                    sourceAnalysisReady &&
-                    pageCloningFiles.length > 0
-                ">
+                class="clone-files-list appcore-scrollbar"
+                *ngIf="pageCloningFiles.length > 0">
 
                 <div
                     class="clone-file-row"
-                    *ngFor="
-                        let file of pageCloningFiles;
-                        let index = index
-                    "
-                    [class.clone-file-missing]="
-                        file.action === 'Missing'
-                    ">
+                    *ngFor="let file of pageCloningFiles; let index = index"
+                    [class.clone-file-missing]="file.action === 'Missing' || file.exists === false">
 
                     <div class="clone-file-number">
                         {{ (index + 1).toString().padStart(2, '0') }}
@@ -208,25 +179,63 @@
                     <div class="clone-file-icon">
 
                         <i
-                            *ngIf="file.fileType === 'TypeScript'"
+                            *ngIf="
+                                file.fileType === 'TypeScript' ||
+                                file.fileType === 'TS' ||
+                                file.fileType === 'Model' ||
+                                file.fileType === 'Service' ||
+                                file.fileType === 'List TS' ||
+                                file.fileType === 'Form TS'
+                            "
                             class="fas fa-file-code">
                         </i>
 
                         <i
-                            *ngIf="file.fileType === 'HTML'"
-                            class="fas fa-file-code">
+                            *ngIf="
+                                file.fileType === 'HTML' ||
+                                file.fileType === 'List HTML' ||
+                                file.fileType === 'Form HTML'
+                            "
+                            class="fab fa-html5">
                         </i>
 
                         <i
-                            *ngIf="file.fileType === 'C#'"
+                            *ngIf="
+                                file.fileType === 'C#' ||
+                                file.fileType === 'Entity' ||
+                                file.fileType === 'Configuration' ||
+                                file.fileType === 'DTO' ||
+                                file.fileType === 'Default DTO' ||
+                                file.fileType === 'Create DTO' ||
+                                file.fileType === 'Update DTO' ||
+                                file.fileType === 'Repository Interface' ||
+                                file.fileType === 'Repository' ||
+                                file.fileType === 'Controller'
+                            "
                             class="fas fa-file-code">
                         </i>
 
                         <i
                             *ngIf="
                                 file.fileType !== 'TypeScript' &&
+                                file.fileType !== 'TS' &&
+                                file.fileType !== 'Model' &&
+                                file.fileType !== 'Service' &&
+                                file.fileType !== 'List TS' &&
+                                file.fileType !== 'Form TS' &&
                                 file.fileType !== 'HTML' &&
-                                file.fileType !== 'C#'
+                                file.fileType !== 'List HTML' &&
+                                file.fileType !== 'Form HTML' &&
+                                file.fileType !== 'C#' &&
+                                file.fileType !== 'Entity' &&
+                                file.fileType !== 'Configuration' &&
+                                file.fileType !== 'DTO' &&
+                                file.fileType !== 'Default DTO' &&
+                                file.fileType !== 'Create DTO' &&
+                                file.fileType !== 'Update DTO' &&
+                                file.fileType !== 'Repository Interface' &&
+                                file.fileType !== 'Repository' &&
+                                file.fileType !== 'Controller'
                             "
                             class="fas fa-file">
                         </i>
@@ -236,22 +245,28 @@
                     <div class="clone-file-details">
 
                         <div class="clone-file-name">
-                            {{ file.fileName }}
+                            {{ file.fileName || 'Unnamed file' }}
                         </div>
 
                         <div class="clone-file-path">
-                            {{ file.path }}
+                            {{ file.path || file.location || 'Path unavailable' }}
                         </div>
 
                     </div>
 
                     <div
                         class="clone-file-status"
-                        [class.ready]="file.action !== 'Missing'"
-                        [class.missing]="file.action === 'Missing'">
+                        [class.ready]="file.exists !== false && file.action !== 'Missing'"
+                        [class.missing]="file.exists === false || file.action === 'Missing'">
+
+                        <i
+                            class="fas"
+                            [class.fa-circle-check]="file.exists !== false && file.action !== 'Missing'"
+                            [class.fa-circle-exclamation]="file.exists === false || file.action === 'Missing'">
+                        </i>
 
                         {{
-                            file.action === 'Missing'
+                            file.exists === false || file.action === 'Missing'
                                 ? 'Missing'
                                 : 'Ready'
                         }}
@@ -262,51 +277,46 @@
 
             </div>
 
-
-            <!-- =================================================
-                 FILE EMPTY STATE
-            ================================================== -->
+            <!-- FILE EMPTY / LOADING STATE -->
 
             <div
                 class="clone-files-empty"
-                *ngIf="
-                    !sourceAnalysisReady ||
-                    pageCloningFiles.length === 0
-                ">
+                *ngIf="pageCloningFiles.length === 0">
 
                 <div class="clone-empty-icon">
 
-                    <i class="fas fa-folder"></i>
+                    <i
+                        class="fas"
+                        [class.fa-spinner]="isAnalyzing"
+                        [class.fa-folder]="!isAnalyzing"
+                        [class.fa-spin]="isAnalyzing">
+                    </i>
 
                 </div>
 
                 <div class="clone-empty-title">
-                    No source page analyzed
+                    {{
+                        isAnalyzing
+                            ? 'Analyzing source files'
+                            : analysisError
+                                ? 'Unable to load source files'
+                                : 'No source page analyzed'
+                    }}
                 </div>
 
                 <div class="clone-empty-text">
-                    Select Module, Menu and Submenu and Analyze
+                    {{
+                        isAnalyzing
+                            ? 'Discovering the standard source files...'
+                            : analysisError ||
+                              'Select Module, Menu and Submenu, then click Analyze.'
+                    }}
                 </div>
 
             </div>
 
 
-            <!-- =================================================
-                 FILE FOOTER
-            ================================================== -->
-
-            <div class="clone-files-footer">
-
-                <i class="fas fa-circle-info"></i>
-
-                <span>
-                    Standard 15 files will be analyzed from the source structure.
-                </span>
-
-            </div>
-
         </div>
-
 
         <!-- =================================================
              WORKSPACE DIVIDER
@@ -315,13 +325,10 @@
         <div class="clone-workspace-divider">
 
             <div class="clone-workspace-divider-handle">
-
                 <i class="fas fa-grip-lines-vertical"></i>
-
             </div>
 
         </div>
-
 
         <!-- =================================================
              RIGHT : MODEL CONFIGURATION
@@ -329,18 +336,14 @@
 
         <div class="clone-model-panel">
 
-            <!-- =================================================
-                 MODEL PANEL HEADER
-            ================================================== -->
+            <!-- MODEL PANEL HEADER -->
 
             <div class="clone-panel-header">
 
                 <div class="clone-panel-title">
 
                     <div class="clone-panel-icon model-icon">
-
                         <i class="fas fa-database"></i>
-
                     </div>
 
                     <div class="clone-panel-heading">
@@ -357,91 +360,40 @@
 
                 </div>
 
+                <!-- FIELD COUNT REPLACES SOURCE MODEL NAME -->
 
                 <div
-                    class="clone-model-name"
+                    class="clone-model-count"
                     *ngIf="sourceAnalysisReady">
 
-                    <span>
-                        Source Model
+                    <span class="summary-value">
+                        {{ sourceModelFields.length }}
                     </span>
 
-                    <strong>
-                        {{ pageCloning.cloneFromName || 'Source' }}
-                    </strong>
+                    <span class="summary-label">
+                        Model Fields
+                    </span>
 
                 </div>
 
             </div>
 
-
-            <!-- =================================================
-                 MODEL CONTENT
-            ================================================== -->
+            <!-- MODEL CONTENT -->
 
             <div
                 class="clone-model-content"
-                *ngIf="
-                    sourceAnalysisReady &&
-                    sourceModelFields.length > 0
-                ">
+                *ngIf="sourceAnalysisReady && sourceModelFields.length > 0">
 
-                <div class="clone-model-summary">
-
-                    <div class="clone-model-summary-item">
-
-                        <span class="summary-value">
-                            {{ sourceModelFields.length }}
-                        </span>
-
-                        <span class="summary-label">
-                            Model Fields
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="clone-model-table-wrapper">
+                <div class="clone-model-table-wrapper appcore-scrollbar">
 
                     <table class="clone-model-table">
 
-                        <thead>
-
-                            <tr>
-
-                                <th class="field-number-column">
-                                    #
-                                </th>
-
-                                <th>
-                                    Field Name
-                                </th>
-
-                                <th>
-                                    Type
-                                </th>
-
-                                <th>
-                                    Category
-                                </th>
-
-                                <th>
-                                    Required
-                                </th>
-
-                            </tr>
-
-                        </thead>
+                        <!-- No thead: field records appear directly -->
 
                         <tbody>
 
                             <tr
-                                *ngFor="
-                                    let field of sourceModelFields;
-                                    let index = index
-                                ">
+                                *ngFor="let field of sourceModelFields; let index = index">
 
                                 <td class="field-number-column">
                                     {{ index + 1 }}
@@ -459,36 +411,11 @@
 
                                     <span
                                         class="field-category"
-                                        [class.primary]="
-                                            field.category ===
-                                            'Primary & Navigation'
-                                        "
-                                        [class.business]="
-                                            field.category ===
-                                            'Business & Functional'
-                                        "
-                                        [class.audit]="
-                                            field.category ===
-                                            'Audit & System'
-                                        ">
+                                        [class.primary]="field.category === 'Primary & Navigation'"
+                                        [class.business]="field.category === 'Business & Functional'"
+                                        [class.audit]="field.category === 'Audit & System'">
 
                                         {{ field.category }}
-
-                                    </span>
-
-                                </td>
-
-                                <td>
-
-                                    <span
-                                        class="field-required"
-                                        [class.required]="field.required">
-
-                                        <i
-                                            class="fas"
-                                            [class.fa-check]="field.required"
-                                            [class.fa-minus]="!field.required">
-                                        </i>
 
                                     </span>
 
@@ -504,17 +431,11 @@
 
             </div>
 
-
-            <!-- =================================================
-                 MODEL EMPTY STATE
-            ================================================== -->
+            <!-- MODEL EMPTY STATE -->
 
             <div
                 class="clone-model-empty"
-                *ngIf="
-                    !sourceAnalysisReady ||
-                    sourceModelFields.length === 0
-                ">
+                *ngIf="!sourceAnalysisReady || sourceModelFields.length === 0">
 
                 <div class="clone-model-empty-icon">
 
@@ -539,7 +460,6 @@
         </div>
 
     </div>
-
 
     <!-- =====================================================
          SECTION 04 : UTILITIES

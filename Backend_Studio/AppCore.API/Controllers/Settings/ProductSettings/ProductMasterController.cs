@@ -4,47 +4,50 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.Settings.ProductSettings;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.Settings.ProductSettings;
+using AppCore.Application.Settings.ProductSettings;
+using AppCore.Application.Settings.ProductSettings.ProductMaster.DTOs;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Api.Controllers.Settings.ProductSettings;
+namespace AppCore.API.Controllers.Settings.ProductSettings;
 
 
 //===============================================================
-// ProductMasterController
+// Product Master Controller
 //===============================================================
 
 [ApiController]
 
 [Route("api/settings/product-settings/product-master")]
 
-public class ProductMasterController
-    : ControllerBase
+public class ProductMasterController : ControllerBase
 {
     //===========================================================
-    // Repository
+    // Fields
     //===========================================================
 
     private readonly IProductMasterRepository _repository;
+
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public ProductMasterController
-    (
-        IProductMasterRepository repository
-    )
+    public ProductMasterController(
+        IProductMasterRepository repository,
+        IActivityHistoryRepository activityHistoryRepository)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
     }
 
 
@@ -54,16 +57,42 @@ public class ProductMasterController
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<ProductMasterDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
+        List<ProductMasterDto> productMasters =
+            await _repository.GetAllAsync();
+
+        return Ok(productMasters);
+    }
 
 
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    [HttpGet("next-code")]
+
+    public async Task<ActionResult<string>> GetNextCode(
+        long productSubCategoryId)
+    {
         return Ok(
-            entities
-        );
+            await _repository.GetNextCodeAsync(
+                productSubCategoryId));
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<ProductMasterDefaultsDto>> GetDefaults(
+        long productSubCategoryId)
+    {
+        return Ok(
+            await _repository.GetDefaultsAsync(
+                productSubCategoryId));
     }
 
 
@@ -73,30 +102,18 @@ public class ProductMasterController
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<ProductMasterDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        ProductMasterDto? productMaster =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
+        if (productMaster == null)
         {
             return NotFound();
         }
 
-
-        return Ok(
-            entity
-        );
+        return Ok(productMaster);
     }
 
 
@@ -106,42 +123,17 @@ public class ProductMasterController
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateProductMasterDto dto
-    )
+    public async Task<ActionResult<long>> Create(
+        CreateProductMasterDto dto)
     {
-        var entity =
-            new ProductMaster
-            {
-                Name =
-                    dto.Name,
+        long userId = 1;
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+        long id =
+            await _repository.CreateAsync(
+                dto,
+                userId);
 
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+        return Ok(id);
     }
 
 
@@ -149,66 +141,22 @@ public class ProductMasterController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut]
 
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateProductMasterDto dto
-    )
+    public async Task<IActionResult> Update(
+        UpdateProductMasterDto dto)
     {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(
+                dto.ProductMasterId))
         {
             return NotFound();
         }
 
+        long userId = 1;
 
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
+        await _repository.UpdateAsync(
+            dto,
+            userId);
 
         return NoContent();
     }
@@ -220,32 +168,48 @@ public class ProductMasterController
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public async Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        //===========================================================
+        // Verify Product Master Exists
+        //===========================================================
 
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(id))
         {
             return NotFound();
         }
 
 
-        await _repository
-            .DeleteAsync(
-                id
-            );
+        //===========================================================
+        // Current User
+        //===========================================================
 
+        long userId = 1;
+
+
+        //===========================================================
+        // Delete
+        //===========================================================
+
+        try
+        {
+            await _repository.DeleteAsync(
+                id,
+                userId);
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+
+
+        //===========================================================
+        // Delete Successful
+        //===========================================================
 
         return NoContent();
     }
@@ -255,18 +219,21 @@ public class ProductMasterController
     // Restore
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        long userId = 1;
 
+        bool restored =
+            await _repository.RestoreAsync(
+                userId);
+
+        if (!restored)
+        {
+            return NotFound(
+                "There are no deleted product masters available to restore.");
+        }
 
         return NoContent();
     }
@@ -278,39 +245,11 @@ public class ProductMasterController
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Product Settings",
+                "Product Master"));
     }
 }

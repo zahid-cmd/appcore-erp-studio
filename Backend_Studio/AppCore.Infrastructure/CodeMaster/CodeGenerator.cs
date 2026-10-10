@@ -636,6 +636,56 @@ public static class CodeGenerator
     }
 
     //===============================================================
+    // General Ledger Code
+    //===============================================================
+
+    public static string GenerateGeneralLedgerCode(
+        int classSequenceNo,
+        int groupSequenceNo,
+        int subGroupSequenceNo,
+        int ledgerSequenceNo)
+
+    {
+        if (classSequenceNo < 1)
+
+        {
+            throw new ArgumentException(
+                "Invalid account class sequence number.");
+
+        }
+
+
+        if (groupSequenceNo < 1)
+
+        {
+            throw new ArgumentException(
+                "Invalid account group sequence number.");
+
+        }
+
+
+        if (subGroupSequenceNo < 1)
+
+        {
+            throw new ArgumentException(
+                "Invalid account sub group sequence number.");
+
+        }
+
+
+        if (ledgerSequenceNo < 1)
+
+        {
+            throw new ArgumentException(
+                "Invalid general ledger sequence number.");
+
+        }
+
+
+        return $"GLR-{classSequenceNo:D3}-{groupSequenceNo:D3}-{subGroupSequenceNo:D3}-{ledgerSequenceNo:D4}";
+    }
+
+    //===============================================================
     // PRODUCT SETTINGS
     //===============================================================
     //===============================================================
@@ -780,5 +830,125 @@ public static class CodeGenerator
 
         return $"COGS-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D5}";
     }
-    
+
+    //===============================================================
+    // Product Master Code
+    //===============================================================
+
+    public static string GenerateProductMasterCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int productSequenceNo)
+    {
+        if (inventoryClassSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid inventory class sequence number.");
+        }
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product sub category sequence number.");
+        }
+
+        if (productSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product master sequence number.");
+        }
+
+        return $"PRD-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D3}-{productSequenceNo:D4}";
+    }
+
+    //===============================================================
+    // Inventory Ledger Code
+    //===============================================================
+
+    public static string GenerateInventoryLedgerCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int ledgerSequenceNo)
+    {
+        return GenerateProductLedgerCode(
+            1,
+            categorySequenceNo,
+            subCategorySequenceNo,
+            ledgerSequenceNo);
+    }
+
+    //===============================================================
+    // WIP Ledger Code
+    //===============================================================
+
+    public static string GenerateWipLedgerCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int ledgerSequenceNo)
+    {
+        return GenerateProductLedgerCode(
+            2,
+            categorySequenceNo,
+            subCategorySequenceNo,
+            ledgerSequenceNo);
+    }
+
+    //===============================================================
+    // COGS Ledger Code
+    //===============================================================
+
+    public static string GenerateCogsLedgerCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int ledgerSequenceNo)
+    {
+        return GenerateProductLedgerCode(
+            3,
+            categorySequenceNo,
+            subCategorySequenceNo,
+            ledgerSequenceNo);
+    }
+
+    //===============================================================
+    // Product Ledger Code (shared)
+    //===============================================================
+
+    private static string GenerateProductLedgerCode(
+        int inventoryClassSequenceNo,
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int ledgerSequenceNo)
+    {
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid product sub category sequence number.");
+        }
+
+        if (ledgerSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid ledger sequence number.");
+        }
+
+        return GenerateGeneralLedgerCode(
+            inventoryClassSequenceNo,
+            categorySequenceNo,
+            subCategorySequenceNo,
+            ledgerSequenceNo);
+    }
+
 }

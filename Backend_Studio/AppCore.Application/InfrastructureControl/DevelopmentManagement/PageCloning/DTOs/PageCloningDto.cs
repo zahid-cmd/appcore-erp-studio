@@ -1,9 +1,9 @@
+
 //===============================================================
 // Namespaces
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
-
 
 //===============================================================
 // Page Cloning DTO
@@ -17,9 +17,8 @@ public class PageCloningDto
 
     public long Id { get; set; }
 
-
     //===========================================================
-    // Clone From
+    // Source Submenu
     //===========================================================
 
     public long CloneFromId { get; set; }
@@ -28,9 +27,8 @@ public class PageCloningDto
 
     public string CloneFromName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Clone To
+    // Target Submenu
     //===========================================================
 
     public long CloneToId { get; set; }
@@ -39,41 +37,39 @@ public class PageCloningDto
 
     public string CloneToName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Clone Type
+    // Cloning Configuration
     //===========================================================
 
     public string CloningType { get; set; } = "Page";
 
-
-    //===========================================================
-    // Files
-    //===========================================================
-
-    public int NumberOfFiles { get; set; }
-
-
-    //===========================================================
-    // Operation
-    //===========================================================
+    public int NumberOfFiles { get; set; } = 15;
 
     public string Operation { get; set; } = "Clone";
 
-
-    //===========================================================
-    // Status
-    //===========================================================
-
     public string Status { get; set; } = "Pending";
-
-
-    //===========================================================
-    // Configuration
-    //===========================================================
 
     public string? Remarks { get; set; }
 
+    //===========================================================
+    // Transformation Options
+    //===========================================================
+
+    public bool RenameIdentifiers { get; set; } = true;
+
+    public bool UpdateRoutes { get; set; } = true;
+
+    public bool UpdateApiReferences { get; set; } = true;
+
+    public bool UpdateModelReferences { get; set; } = true;
+
+    public bool PreserveTargetFilePaths { get; set; } = true;
+
+    //===========================================================
+    // Model Field Mappings
+    //===========================================================
+
+    public List<PageCloningModelFieldDto> ModelFields { get; set; } = new();
 
     //===========================================================
     // Last Cloning
@@ -85,16 +81,14 @@ public class PageCloningDto
 
     public string LastCloningResult { get; set; } = string.Empty;
 
-
     //===========================================================
     // Active Status
     //===========================================================
 
     public bool IsActive { get; set; }
 
-
     //===========================================================
-    // Audit
+    // Audit Information
     //===========================================================
 
     public long CreatedBy { get; set; }
@@ -104,7 +98,6 @@ public class PageCloningDto
     public long? ModifiedBy { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
-
 
     //===========================================================
     // Soft Delete
@@ -117,7 +110,6 @@ public class PageCloningDto
     public bool IsDeleted { get; set; }
 }
 
-
 //===============================================================
 // Page Cloning Source Analysis DTO
 //===============================================================
@@ -125,7 +117,7 @@ public class PageCloningDto
 public class PageCloningSourceAnalysisDto
 {
     //===========================================================
-    // Source Page
+    // Submenu Information
     //===========================================================
 
     public long SubmenuId { get; set; }
@@ -134,21 +126,26 @@ public class PageCloningSourceAnalysisDto
 
     public string SubmenuName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Source Files
+    // Analyzed Files
     //===========================================================
 
     public List<PageCloningSourceFileDto> Files { get; set; } = new();
 
-
     //===========================================================
-    // Model Fields
+    // Analyzed Model Fields
     //===========================================================
 
     public List<PageCloningModelFieldDto> ModelFields { get; set; } = new();
-}
 
+    //===========================================================
+    // Analysis Result
+    //===========================================================
+
+    public bool AnalysisCompleted { get; set; }
+
+    public string Message { get; set; } = string.Empty;
+}
 
 //===============================================================
 // Page Cloning Source File DTO
@@ -157,7 +154,7 @@ public class PageCloningSourceAnalysisDto
 public class PageCloningSourceFileDto
 {
     //===========================================================
-    // File Information
+    // File Identity
     //===========================================================
 
     public int Id { get; set; }
@@ -168,10 +165,13 @@ public class PageCloningSourceFileDto
 
     public string FileName { get; set; } = string.Empty;
 
+    //===========================================================
+    // File Location
+    //===========================================================
+
     public string Location { get; set; } = string.Empty;
 
     public string Path { get; set; } = string.Empty;
-
 
     //===========================================================
     // File Status
@@ -180,8 +180,15 @@ public class PageCloningSourceFileDto
     public bool Exists { get; set; }
 
     public string Action { get; set; } = string.Empty;
-}
 
+    //===========================================================
+    // Target Mapping
+    //===========================================================
+
+    public string TargetPath { get; set; } = string.Empty;
+
+    public bool TargetExists { get; set; }
+}
 
 //===============================================================
 // Page Cloning Model Field DTO
@@ -190,7 +197,15 @@ public class PageCloningSourceFileDto
 public class PageCloningModelFieldDto
 {
     //===========================================================
-    // Field Information
+    // Source Mapping
+    //===========================================================
+
+    public string InputModel { get; set; } = string.Empty;
+
+    public string SourceField { get; set; } = string.Empty;
+
+    //===========================================================
+    // Target Field Definition
     //===========================================================
 
     public string Name { get; set; } = string.Empty;
@@ -199,10 +214,19 @@ public class PageCloningModelFieldDto
 
     public string Category { get; set; } = string.Empty;
 
-
-    //===========================================================
-    // Validation
-    //===========================================================
-
     public bool Required { get; set; }
+
+    //===========================================================
+    // Transformation Operation
+    //===========================================================
+
+    public string Operation { get; set; } = "Keep";
+
+    //===========================================================
+    // Optional Field Metadata
+    //===========================================================
+
+    public string? Description { get; set; }
+
+    public string? DefaultValue { get; set; }
 }

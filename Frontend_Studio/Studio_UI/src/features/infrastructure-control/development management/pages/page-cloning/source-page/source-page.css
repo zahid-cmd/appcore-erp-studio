@@ -1,5 +1,5 @@
-@import '../../../../../../shared/styles/app-form-page.css';
 
+@import '../../../../../../shared/styles/app-form-page.css';
 
 /* =====================================================
    CLONE PAGE
@@ -20,7 +20,6 @@
     box-sizing:border-box;
 }
 
-
 /* =====================================================
    CLONE PAGE ROOT
 ===================================================== */
@@ -40,7 +39,6 @@
     box-sizing:border-box;
 }
 
-
 /* =====================================================
    PAGE HEADER
 ===================================================== */
@@ -52,7 +50,6 @@
     height:auto;
     flex:0 0 auto;
 }
-
 
 /* =====================================================
    PAGE TOOLBAR
@@ -66,7 +63,6 @@
     flex:0 0 auto;
 }
 
-
 /* =====================================================
    CLONE TOOLBAR LEFT
 ===================================================== */
@@ -78,7 +74,6 @@
     min-width:0;
     flex:0 0 auto;
 }
-
 
 /* =====================================================
    CLONE TOOLBAR RIGHT
@@ -93,7 +88,6 @@
     flex:1 1 auto;
     overflow:visible;
 }
-
 
 /* =====================================================
    CLONE TOOLBAR GROUP
@@ -110,7 +104,6 @@
     white-space:nowrap;
 }
 
-
 /* =====================================================
    CLONE DROPDOWNS
 ===================================================== */
@@ -122,7 +115,6 @@
     min-width:300px;
     flex:0 0 300px;
 }
-
 
 /* =====================================================
    ANALYZE BUTTON
@@ -151,18 +143,15 @@
     box-sizing:border-box;
 }
 
-
 .clone-analyze-button:hover:not(:disabled)
 {
     background:#1d327c;
 }
 
-
 .clone-analyze-button:active:not(:disabled)
 {
     transform:translateY(1px);
 }
-
 
 .clone-analyze-button:disabled
 {
@@ -170,12 +159,10 @@
     cursor:not-allowed;
 }
 
-
 .clone-analyze-button i
 {
     font-size:12px;
 }
-
 
 /* =====================================================
    CLONE PAGE CANVAS
@@ -202,10 +189,9 @@
     overflow:hidden;
 }
 
-
 /* =====================================================
    CLONE FILES PANEL
-   35%
+   45%
 ===================================================== */
 
 .clone-files-panel
@@ -218,7 +204,6 @@
     box-sizing:border-box;
     overflow:hidden;
 }
-
 
 /* =====================================================
    CLONE MODEL PANEL
@@ -236,7 +221,6 @@
     overflow:hidden;
 }
 
-
 /* =====================================================
    PANEL HEADER
 ===================================================== */
@@ -253,7 +237,6 @@
     flex:0 0 auto;
 }
 
-
 .clone-panel-title
 {
     display:flex;
@@ -261,7 +244,6 @@
     min-width:0;
     gap:10px;
 }
-
 
 .clone-panel-icon
 {
@@ -277,13 +259,11 @@
     font-size:16px;
 }
 
-
 .clone-panel-icon.model-icon
 {
     background:#eef5ff;
     color:#243b8f;
 }
-
 
 .clone-panel-heading
 {
@@ -293,11 +273,10 @@
     gap:2px;
 }
 
-
 .clone-panel-name
 {
     color:#17213d;
-    font-size:16px;
+    font-size:18px;
     font-weight:700;
     line-height:1.2;
     white-space:nowrap;
@@ -305,18 +284,16 @@
     text-overflow:ellipsis;
 }
 
-
 .clone-panel-subtitle
 {
     color:#7b8499;
-    font-size:11px;
+    font-size:14px;
     font-weight:400;
     line-height:1.3;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
 }
-
 
 /* =====================================================
    FILE COUNT
@@ -334,12 +311,57 @@
     border-radius:8px;
     background:#f8faff;
     color:#52607a;
-    font-size:12px;
+    font-size:14px;
     font-weight:600;
     white-space:nowrap;
     box-sizing:border-box;
 }
 
+.clone-file-count.complete
+{
+    border-color:#d5efdf;
+    background:#eaf8ef;
+    color:#219653;
+}
+
+.clone-file-count.incomplete
+{
+    border-color:#f4dfc4;
+    background:#fff6e9;
+    color:#d87919;
+}
+
+/* =====================================================
+   MODEL FIELD COUNT
+===================================================== */
+
+.clone-model-count
+{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:7px;
+    min-width:0;
+    margin-left:auto;
+    padding:0 8px;
+    white-space:nowrap;
+}
+
+.clone-model-count .summary-value
+{
+    color:#243b8f;
+    font-size:18px;
+    font-weight:700;
+    line-height:1.2;
+}
+
+.clone-model-count .summary-label
+{
+    color:#7e879b;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.2;
+}
 
 /* =====================================================
    CLONE FILE LIST
@@ -357,8 +379,36 @@
     border:1px solid #e4e8f0;
     border-radius:8px;
     box-sizing:border-box;
+    scrollbar-width:thin;
+    scrollbar-color:#2563eb transparent;
 }
 
+.clone-files-list::-webkit-scrollbar
+{
+    width:6px;
+    height:6px;
+}
+
+.clone-files-list::-webkit-scrollbar-track
+{
+    background:transparent;
+    margin-top:4px;
+    margin-bottom:4px;
+}
+
+.clone-files-list::-webkit-scrollbar-thumb
+{
+    background:#2563eb;
+    border-radius:999px;
+    border:1px solid transparent;
+    background-clip:padding-box;
+    transition:background 0.20s ease;
+}
+
+.clone-files-list::-webkit-scrollbar-thumb:hover
+{
+    background:#1d4ed8;
+}
 
 .clone-file-row
 {
@@ -373,35 +423,30 @@
     background:#ffffff;
 }
 
-
 .clone-file-row:last-child
 {
     border-bottom:0;
 }
-
 
 .clone-file-row:hover
 {
     background:#f8faff;
 }
 
-
 .clone-file-row.clone-file-missing
 {
     background:#fffaf4;
 }
-
 
 .clone-file-number
 {
     width:24px;
     min-width:24px;
     color:#8992a5;
-    font-size:10px;
+    font-size:14px;
     font-weight:600;
     text-align:center;
 }
-
 
 .clone-file-icon
 {
@@ -411,9 +456,8 @@
     width:28px;
     min-width:28px;
     color:#3155c8;
-    font-size:15px;
+    font-size:16px;
 }
-
 
 .clone-file-details
 {
@@ -424,11 +468,10 @@
     gap:3px;
 }
 
-
 .clone-file-name
 {
     color:#25304a;
-    font-size:12px;
+    font-size:16px;
     font-weight:600;
     line-height:1.2;
     white-space:nowrap;
@@ -436,17 +479,15 @@
     text-overflow:ellipsis;
 }
 
-
 .clone-file-path
 {
     color:#8992a5;
-    font-size:10px;
+    font-size:13px;
     line-height:1.2;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
 }
-
 
 .clone-file-status
 {
@@ -459,18 +500,16 @@
     border-radius:12px;
     background:#e9f8ef;
     color:#219653;
-    font-size:10px;
+    font-size:11px;
     font-weight:600;
     white-space:nowrap;
 }
-
 
 .clone-file-status.missing
 {
     background:#fff0df;
     color:#d87919;
 }
-
 
 /* =====================================================
    FILE EMPTY STATE
@@ -493,7 +532,6 @@
     box-sizing:border-box;
 }
 
-
 .clone-empty-icon
 {
     display:flex;
@@ -508,7 +546,6 @@
     font-size:34px;
 }
 
-
 .clone-empty-title
 {
     color:#202a45;
@@ -516,7 +553,6 @@
     font-weight:700;
     line-height:1.3;
 }
-
 
 .clone-empty-text
 {
@@ -526,35 +562,6 @@
     font-size:11px;
     line-height:1.6;
 }
-
-
-/* =====================================================
-   FILE FOOTER
-===================================================== */
-
-.clone-files-footer
-{
-    display:flex;
-    align-items:center;
-    gap:7px;
-    min-height:38px;
-    margin-top:8px;
-    padding:0 10px;
-    border-radius:7px;
-    background:#f1f5ff;
-    color:#3155c8;
-    font-size:10px;
-    line-height:1.3;
-    box-sizing:border-box;
-}
-
-
-.clone-files-footer i
-{
-    flex:0 0 auto;
-    font-size:11px;
-}
-
 
 /* =====================================================
    WORKSPACE DIVIDER
@@ -572,7 +579,6 @@
     box-sizing:border-box;
 }
 
-
 .clone-workspace-divider-handle
 {
     display:flex;
@@ -587,47 +593,6 @@
     font-size:10px;
     box-shadow:0 2px 7px rgba(36,59,143,0.08);
 }
-
-
-/* =====================================================
-   MODEL NAME
-===================================================== */
-
-.clone-model-name
-{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    justify-content:flex-end;
-    gap:2px;
-    min-width:0;
-    margin-left:auto;
-    padding-right:2px;
-    text-align:right;
-}
-
-
-.clone-model-name span
-{
-    color:#8a93a6;
-    font-size:9px;
-    font-weight:500;
-    line-height:1.2;
-}
-
-
-.clone-model-name strong
-{
-    max-width:180px;
-    color:#25304a;
-    font-size:12px;
-    font-weight:700;
-    line-height:1.2;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
 
 /* =====================================================
    MODEL CONTENT
@@ -647,47 +612,6 @@
     box-sizing:border-box;
 }
 
-
-/* =====================================================
-   MODEL SUMMARY
-===================================================== */
-
-.clone-model-summary
-{
-    display:flex;
-    align-items:center;
-    min-height:46px;
-    padding:0 14px;
-    border-bottom:1px solid #e8ebf2;
-    background:#fbfcfe;
-    box-sizing:border-box;
-}
-
-
-.clone-model-summary-item
-{
-    display:flex;
-    align-items:baseline;
-    gap:7px;
-}
-
-
-.summary-value
-{
-    color:#243b8f;
-    font-size:16px;
-    font-weight:700;
-}
-
-
-.summary-label
-{
-    color:#7e879b;
-    font-size:10px;
-    font-weight:500;
-}
-
-
 /* =====================================================
    MODEL TABLE WRAPPER
 ===================================================== */
@@ -696,10 +620,40 @@
 {
     width:100%;
     min-width:0;
+    min-height:0;
     flex:1 1 auto;
-    overflow:auto;
+    overflow-y:auto;
+    overflow-x:auto;
+    scrollbar-width:thin;
+    scrollbar-color:#2563eb transparent;
 }
 
+.clone-model-table-wrapper::-webkit-scrollbar
+{
+    width:6px;
+    height:6px;
+}
+
+.clone-model-table-wrapper::-webkit-scrollbar-track
+{
+    background:transparent;
+    margin-top:4px;
+    margin-bottom:4px;
+}
+
+.clone-model-table-wrapper::-webkit-scrollbar-thumb
+{
+    background:#2563eb;
+    border-radius:999px;
+    border:1px solid transparent;
+    background-clip:padding-box;
+    transition:background 0.20s ease;
+}
+
+.clone-model-table-wrapper::-webkit-scrollbar-thumb:hover
+{
+    background:#1d4ed8;
+}
 
 /* =====================================================
    MODEL TABLE
@@ -713,45 +667,20 @@
     table-layout:auto;
 }
 
-
-.clone-model-table thead
-{
-    position:sticky;
-    top:0;
-    z-index:2;
-}
-
-
-.clone-model-table th
-{
-    height:38px;
-    padding:0 10px;
-    border-bottom:1px solid #e2e6ee;
-    background:#f7f9fc;
-    color:#68738a;
-    font-size:10px;
-    font-weight:700;
-    text-align:left;
-    white-space:nowrap;
-}
-
-
 .clone-model-table td
 {
     height:43px;
     padding:0 10px;
     border-bottom:1px solid #edf0f5;
     color:#536078;
-    font-size:11px;
+    font-size:14px;
     white-space:nowrap;
 }
-
 
 .clone-model-table tbody tr:hover
 {
     background:#f8faff;
 }
-
 
 .field-number-column
 {
@@ -760,19 +689,16 @@
     text-align:center !important;
 }
 
-
 .field-name
 {
     color:#26314b !important;
     font-weight:600;
 }
 
-
 .field-type
 {
     color:#657087 !important;
 }
-
 
 .field-category
 {
@@ -783,10 +709,9 @@
     border-radius:11px;
     background:#edf3ff;
     color:#3155c8;
-    font-size:9px;
+    font-size:12px;
     font-weight:600;
 }
-
 
 .field-category.primary
 {
@@ -794,41 +719,17 @@
     color:#3155c8;
 }
 
-
 .field-category.business
 {
     background:#eaf8ef;
     color:#249452;
 }
 
-
 .field-category.audit
 {
     background:#fff1e3;
     color:#d87919;
 }
-
-
-.field-required
-{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:22px;
-    height:22px;
-    border-radius:50%;
-    background:#f0f2f6;
-    color:#a0a7b5;
-    font-size:9px;
-}
-
-
-.field-required.required
-{
-    background:#eaf8ef;
-    color:#219653;
-}
-
 
 /* =====================================================
    MODEL EMPTY STATE
@@ -843,6 +744,7 @@
     width:100%;
     height:100%;
     min-height:0;
+    flex:1 1 auto;
     padding:40px;
     border:1px solid #e4e8f0;
     border-radius:8px;
@@ -850,7 +752,6 @@
     text-align:center;
     box-sizing:border-box;
 }
-
 
 .clone-model-empty-icon
 {
@@ -866,7 +767,6 @@
     color:#3155c8;
     font-size:34px;
 }
-
 
 .clone-model-empty-icon span
 {
@@ -884,7 +784,6 @@
     font-size:12px;
 }
 
-
 .clone-model-empty-title
 {
     color:#202a45;
@@ -892,7 +791,6 @@
     font-weight:700;
     line-height:1.3;
 }
-
 
 .clone-model-empty-text
 {
@@ -902,7 +800,6 @@
     font-size:11px;
     line-height:1.6;
 }
-
 
 /* =====================================================
    FORCE FLEX CHAIN
@@ -916,7 +813,6 @@
 {
     box-sizing:border-box;
 }
-
 
 /* =====================================================
    RESPONSIVE
@@ -960,7 +856,6 @@
     }
 }
 
-
 @media (max-width:1000px)
 {
     .clone-toolbar-group app-search-dropdown
@@ -998,12 +893,17 @@
         display:none;
     }
 
-    .clone-model-name
+    .clone-model-count
     {
-        display:none;
+        gap:4px;
+        padding-right:2px;
+    }
+
+    .clone-model-count .summary-value
+    {
+        font-size:16px;
     }
 }
-
 
 @media (max-width:768px)
 {
@@ -1059,6 +959,11 @@
     {
         width:38px;
         height:22px;
+    }
+
+    .clone-model-count
+    {
+        margin-left:auto;
     }
 
     .clone-model-empty

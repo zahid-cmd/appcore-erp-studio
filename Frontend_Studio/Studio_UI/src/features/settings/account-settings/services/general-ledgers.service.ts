@@ -17,7 +17,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -29,17 +30,16 @@ from '../../../../environments/environment';
 
 import
 {
-    GeneralLedgers,
-
-    CreateGeneralLedgers,
-
-    UpdateGeneralLedgers
+    GeneralLedger,
+    CreateGeneralLedger,
+    UpdateGeneralLedger,
+    GeneralLedgerDefaults
 }
 from '../models/general-ledgers.model';
 
 
 //===============================================================
-// General Ledgers Service
+// General Ledger Service
 //===============================================================
 
 @Injectable(
@@ -48,9 +48,8 @@ from '../models/general-ledgers.model';
 })
 
 
-export class GeneralLedgersService
+export class GeneralLedgerService
 {
-
     //===========================================================
     // Injection
     //===========================================================
@@ -59,14 +58,27 @@ export class GeneralLedgersService
         inject(HttpClient);
 
 
-
     //===========================================================
     // API
     //===========================================================
 
     private readonly apiUrl =
-        `${environment.apiUrl}/settings/account-settings/general-ledgers`;
+        `${environment.apiUrl}/settings/account-settings/general-ledger`;
 
+
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/+$/,
+                ''
+            );
+    }
 
 
     //===========================================================
@@ -74,41 +86,216 @@ export class GeneralLedgersService
     //===========================================================
 
     getAll():
-        Observable<GeneralLedgers[]>
+        Observable<GeneralLedger[]>
     {
-        return this.http.get<GeneralLedgers[]>(
-            this.apiUrl
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        response.map(
+                            generalLedger =>
+                            ({
+                                ...generalLedger,
+
+                                GeneralLedgerId:
+                                    Number(
+                                        generalLedger.GeneralLedgerId
+                                        ??
+                                        generalLedger.generalLedgerId
+                                        ??
+                                        generalLedger.id
+                                        ??
+                                        generalLedger.Id
+                                        ??
+                                        0
+                                    ),
+
+                                AccountClassId:
+                                    Number(
+                                        generalLedger.AccountClassId
+                                        ??
+                                        generalLedger.accountClassId
+                                        ??
+                                        0
+                                    ),
+
+                                AccountClassName:
+                                    generalLedger.AccountClassName
+                                    ??
+                                    generalLedger.accountClassName
+                                    ??
+                                    '',
+
+                                AccountGroupId:
+                                    Number(
+                                        generalLedger.AccountGroupId
+                                        ??
+                                        generalLedger.accountGroupId
+                                        ??
+                                        0
+                                    ),
+
+                                AccountGroupName:
+                                    generalLedger.AccountGroupName
+                                    ??
+                                    generalLedger.accountGroupName
+                                    ??
+                                    '',
+
+                                AccountSubGroupId:
+                                    Number(
+                                        generalLedger.AccountSubGroupId
+                                        ??
+                                        generalLedger.accountSubGroupId
+                                        ??
+                                        0
+                                    ),
+
+                                AccountSubGroupName:
+                                    generalLedger.AccountSubGroupName
+                                    ??
+                                    generalLedger.accountSubGroupName
+                                    ??
+                                    '',
+
+                                ClassCode:
+                                    generalLedger.ClassCode
+                                    ??
+                                    generalLedger.classCode
+                                    ??
+                                    '',
+
+                                Mode:
+                                    generalLedger.Mode
+                                    ??
+                                    generalLedger.mode
+                                    ??
+                                    '',
+
+                                GroupCode:
+                                    generalLedger.GroupCode
+                                    ??
+                                    generalLedger.groupCode
+                                    ??
+                                    '',
+
+                                SubGroupCode:
+                                    generalLedger.SubGroupCode
+                                    ??
+                                    generalLedger.subGroupCode
+                                    ??
+                                    '',
+
+                                LedgerCode:
+                                    generalLedger.LedgerCode
+                                    ??
+                                    generalLedger.ledgerCode
+                                    ??
+                                    '',
+
+                                LedgerName:
+                                    generalLedger.LedgerName
+                                    ??
+                                    generalLedger.ledgerName
+                                    ??
+                                    '',
+
+                                // TODO: Map General Ledger specific configuration fields here
+
+                                Remarks:
+                                    generalLedger.Remarks
+                                    ??
+                                    generalLedger.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        generalLedger.IsActive
+                                        ??
+                                        generalLedger.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode(
+        accountSubGroupId:
+            number
+    ):
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code/${accountSubGroupId}`,
+            {
+                responseType:'text'
+            }
         );
     }
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    getDefaults():
+        Observable<GeneralLedgerDefaults>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/defaults`
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Code:
+                            response.code
+                            ??
+                            response.Code
+                            ??
+                            ''
+                    })
+                )
+            );
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    getById
-    (
+    getById(
         id:
             number
     ):
-        Observable<GeneralLedgers>
+        Observable<GeneralLedger>
     {
-        return this.http.get<GeneralLedgers>(
+        return this.http.get<GeneralLedger>(
             `${this.apiUrl}/${id}`
         );
     }
-
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    create
-    (
+    create(
         model:
-            CreateGeneralLedgers
+            CreateGeneralLedger
     ):
         Observable<number>
     {
@@ -120,33 +307,29 @@ export class GeneralLedgersService
     }
 
 
-
     //===========================================================
     // Update
     //===========================================================
 
-    update
-    (
+    update(
         model:
-            UpdateGeneralLedgers
+            UpdateGeneralLedger
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            this.apiUrl,
 
             model
         );
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
 
-    delete
-    (
+    delete(
         id:
             number
     ):
@@ -156,7 +339,6 @@ export class GeneralLedgersService
             `${this.apiUrl}/${id}`
         );
     }
-
 
 
     //===========================================================
@@ -174,7 +356,6 @@ export class GeneralLedgersService
     }
 
 
-
     //===========================================================
     // Get History
     //===========================================================
@@ -186,23 +367,4 @@ export class GeneralLedgersService
             `${this.apiUrl}/history`
         );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
 }

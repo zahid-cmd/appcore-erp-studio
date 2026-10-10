@@ -11,7 +11,7 @@
 
         <app-command-center
             pageHeaderRight
-            command1Text="Generate"
+            [command1Text]="isGenerating ? 'Generating...' : 'Generate'"
             command1Icon="fas fa-wand-magic-sparkles"
             (command1Click)="onGenerate()"
             [command1Visible]="!isViewMode"
@@ -35,13 +35,7 @@
         leftFlex="0 0 auto"
         rightFlex="1 1 auto">
 
-        <!-- =================================================
-             LEFT : TARGET TAB
-        ================================================== -->
-
-        <div
-            pageToolbarLeft
-            class="clone-toolbar-left">
+        <div pageToolbarLeft class="clone-toolbar-left">
 
             <app-control-tabs
                 [tabs]="tabs"
@@ -51,13 +45,7 @@
         </div>
 
 
-        <!-- =================================================
-             RIGHT : TARGET PAGE SELECTION
-        ================================================== -->
-
-        <div
-            pageToolbarRight
-            class="clone-toolbar-right">
+        <div pageToolbarRight class="clone-toolbar-right">
 
             <div class="clone-toolbar-group">
 
@@ -68,7 +56,7 @@
                     [items]="cloneToModules"
                     labelField="name"
                     valueField="id"
-                    [readonly]="isViewMode"
+                    [readonly]="isViewMode || isGenerating"
                     [(value)]="selectedCloneToModuleId"
                     (valueChange)="onCloneToModuleChange($event)">
                 </app-search-dropdown>
@@ -81,10 +69,7 @@
                     [items]="cloneToMenus"
                     labelField="name"
                     valueField="id"
-                    [readonly]="
-                        isViewMode ||
-                        !selectedCloneToModuleId
-                    "
+                    [readonly]="isViewMode || isGenerating || !selectedCloneToModuleId"
                     [(value)]="selectedCloneToMenuId"
                     (valueChange)="onCloneToMenuChange($event)">
                 </app-search-dropdown>
@@ -97,31 +82,44 @@
                     [items]="cloneToSubmenus"
                     labelField="name"
                     valueField="id"
-                    [readonly]="
-                        isViewMode ||
-                        !selectedCloneToMenuId
-                    "
+                    [readonly]="isViewMode || isGenerating || !selectedCloneToMenuId"
                     [(value)]="selectedCloneToSubmenuId"
                     (valueChange)="onCloneToSubmenuChange($event)">
                 </app-search-dropdown>
 
 
-                <!-- SUBMIT -->
+                <!-- SUBMIT / ANALYZE TARGET -->
 
                 <button
                     type="button"
                     class="clone-analyze-button"
-                    [disabled]="
-                        isViewMode ||
-                        !selectedCloneToSubmenuId ||
-                        isLoadingTarget
-                    "
+
+                        [disabled]="
+                            isViewMode ||
+                            isGenerating ||
+                            selectedCloneToSubmenuId <= 0 ||
+                            isLoadingTarget ||
+                            isAnalyzingTarget
+                        "
                     (click)="onSubmitTarget()">
 
-                    <i class="fas fa-check"></i>
+                    <i
+                        class="fas"
+                        [ngClass]="
+                            isAnalyzingTarget
+                                ? 'fa-spinner fa-spin'
+                                : 'fa-check'
+                        ">
+                    </i>
 
                     <span>
-                        {{ isLoadingTarget ? 'Loading...' : 'Submit' }}
+                        {{
+                            isAnalyzingTarget
+                                ? 'Analyzing...'
+                                : isLoadingTarget
+                                    ? 'Loading...'
+                                    : 'Submit'
+                        }}
                     </span>
 
                 </button>
@@ -139,24 +137,21 @@
 
     <div class="clone-page-canvas">
 
+
         <!-- =================================================
-             LEFT : TARGET FILES
+             LEFT PANEL : TARGET FILES
         ================================================== -->
 
         <div class="clone-files-panel">
 
-            <!-- =================================================
-                 FILE PANEL HEADER
-            ================================================== -->
+            <!-- PANEL HEADER -->
 
             <div class="clone-panel-header">
 
                 <div class="clone-panel-title">
 
                     <div class="clone-panel-icon">
-
                         <i class="fas fa-file-code"></i>
-
                     </div>
 
                     <div class="clone-panel-heading">
@@ -166,69 +161,204 @@
                         </div>
 
                         <div class="clone-panel-subtitle">
-                            Files that will be generated for the target page
+                            Standard 15 files for target page cloning
                         </div>
 
                     </div>
 
                 </div>
 
-                <div class="clone-file-count">
-                    0 / 15
+
+                <!-- FILE COUNTER -->
+
+                <div
+                    class="clone-file-count"
+                    [class.complete]="targetAnalysisReady && targetFiles.length === 15"
+                    [class.incomplete]="!targetAnalysisReady && targetFiles.length > 0">
+
+                    {{ targetFiles.length || 0 }} / 15
+
                 </div>
 
             </div>
 
 
-            <!-- =================================================
-                 FILE LIST / EMPTY STATE
-            ================================================== -->
+            <!-- =============================================
+                 TARGET FILE LIST
+            ============================================== -->
+
+            <div
+                class="clone-files-list appcore-scrollbar"
+                *ngIf="targetFiles.length > 0 && !isAnalyzingTarget">
+
+                <div
+                    class="clone-file-row"
+                    *ngFor="let file of targetFiles; let index = index"
+                    [class.clone-file-missing]="!file.exists || file.action === 'Missing'">
+
+                    <!-- FILE NUMBER -->
+
+                    <div class="clone-file-number">
+                        {{ (index + 1).toString().padStart(2, '0') }}
+                    </div>
+
+
+                    <!-- FILE ICON -->
+
+                    <div class="clone-file-icon">
+
+                        <i
+                            *ngIf="
+                                file.fileType === 'TypeScript' ||
+                                file.fileType === 'TS' ||
+                                file.fileType === 'Model' ||
+                                file.fileType === 'Service' ||
+                                file.fileType === 'List TS' ||
+                                file.fileType === 'Form TS'
+                            "
+                            class="fas fa-file-code">
+                        </i>
+
+                        <i
+                            *ngIf="
+                                file.fileType === 'HTML' ||
+                                file.fileType === 'List HTML' ||
+                                file.fileType === 'Form HTML'
+                            "
+                            class="fab fa-html5">
+                        </i>
+
+                        <i
+                            *ngIf="
+                                file.fileType === 'C#' ||
+                                file.fileType === 'Entity' ||
+                                file.fileType === 'Configuration' ||
+                                file.fileType === 'DTO' ||
+                                file.fileType === 'Default DTO' ||
+                                file.fileType === 'Create DTO' ||
+                                file.fileType === 'Update DTO' ||
+                                file.fileType === 'Repository Interface' ||
+                                file.fileType === 'Repository' ||
+                                file.fileType === 'Controller'
+                            "
+                            class="fas fa-file-code">
+                        </i>
+
+                        <i
+                            *ngIf="
+                                file.fileType !== 'TypeScript' &&
+                                file.fileType !== 'TS' &&
+                                file.fileType !== 'Model' &&
+                                file.fileType !== 'Service' &&
+                                file.fileType !== 'List TS' &&
+                                file.fileType !== 'Form TS' &&
+                                file.fileType !== 'HTML' &&
+                                file.fileType !== 'List HTML' &&
+                                file.fileType !== 'Form HTML' &&
+                                file.fileType !== 'C#' &&
+                                file.fileType !== 'Entity' &&
+                                file.fileType !== 'Configuration' &&
+                                file.fileType !== 'DTO' &&
+                                file.fileType !== 'Default DTO' &&
+                                file.fileType !== 'Create DTO' &&
+                                file.fileType !== 'Update DTO' &&
+                                file.fileType !== 'Repository Interface' &&
+                                file.fileType !== 'Repository' &&
+                                file.fileType !== 'Controller'
+                            "
+                            class="fas fa-file">
+                        </i>
+
+                    </div>
+
+
+                    <!-- FILE DETAILS -->
+
+                    <div class="clone-file-details">
+
+                        <div class="clone-file-name">
+                            {{ file.fileName || 'Unnamed file' }}
+                        </div>
+
+                        <div
+                            class="clone-file-path"
+                            [title]="file.path || file.location || 'Path unavailable'">
+
+                            {{ file.path || file.location || 'Path unavailable' }}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FILE STATUS -->
+
+                    <div
+                        class="clone-file-status"
+                        [class.ready]="file.exists && file.action !== 'Missing'"
+                        [class.missing]="!file.exists || file.action === 'Missing'">
+
+                        <i
+                            class="fas"
+                            [class.fa-circle-check]="file.exists && file.action !== 'Missing'"
+                            [class.fa-circle-exclamation]="!file.exists || file.action === 'Missing'">
+                        </i>
+
+                        {{
+                            !file.exists || file.action === 'Missing'
+                                ? 'Missing'
+                                : 'Ready'
+                        }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 FILE EMPTY / LOADING STATE
+            ============================================== -->
 
             <div
                 class="clone-files-empty"
-                *ngIf="!targetPageLoaded">
+                *ngIf="targetFiles.length === 0 || isAnalyzingTarget">
 
                 <div class="clone-empty-icon">
 
-                    <i class="fas fa-folder"></i>
+                    <i
+                        class="fas"
+                        [class.fa-spinner]="isAnalyzingTarget"
+                        [class.fa-folder]="!isAnalyzingTarget"
+                        [class.fa-spin]="isAnalyzingTarget">
+                    </i>
 
                 </div>
 
                 <div class="clone-empty-title">
-                    Target files not generated
+
+                    {{
+                        isAnalyzingTarget
+                            ? 'Analyzing target files'
+                            : targetAnalysis
+                                ? 'No target file information'
+                                : 'Target files not analyzed'
+                    }}
+
                 </div>
 
                 <div class="clone-empty-text">
-                    Select Module, Menu and Submenu and Submit
+
+                    {{
+                        isAnalyzingTarget
+                            ? 'Checking the standard 15-file structure...'
+                            : targetAnalysis
+                                ? 'Check the analysis response and target file configuration.'
+                                : 'Select Module, Menu and Submenu, then click Submit.'
+                    }}
+
                 </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 TARGET FILES
-            ================================================== -->
-
-            <div
-                class="clone-files-list"
-                *ngIf="targetPageLoaded">
-
-                <!-- Target files will be rendered here -->
-
-            </div>
-
-
-            <!-- =================================================
-                 FILE FOOTER
-            ================================================== -->
-
-            <div class="clone-files-footer">
-
-                <i class="fas fa-circle-info"></i>
-
-                <span>
-                    Standard 15 files will be prepared for the target structure.
-                </span>
 
             </div>
 
@@ -242,32 +372,26 @@
         <div class="clone-workspace-divider">
 
             <div class="clone-workspace-divider-handle">
-
                 <i class="fas fa-grip-lines-vertical"></i>
-
             </div>
 
         </div>
 
 
         <!-- =================================================
-             RIGHT : TARGET MODEL CONFIGURATION
+             RIGHT PANEL : TARGET MODEL CONFIGURATION
         ================================================== -->
 
         <div class="clone-model-panel">
 
-            <!-- =================================================
-                 MODEL PANEL HEADER
-            ================================================== -->
+            <!-- PANEL HEADER -->
 
             <div class="clone-panel-header">
 
                 <div class="clone-panel-title">
 
                     <div class="clone-panel-icon model-icon">
-
                         <i class="fas fa-database"></i>
-
                     </div>
 
                     <div class="clone-panel-heading">
@@ -277,7 +401,7 @@
                         </div>
 
                         <div class="clone-panel-subtitle">
-                            Configure model fields for the cloned page
+                            Map source fields to target fields and define transformation rules
                         </div>
 
                     </div>
@@ -285,45 +409,34 @@
                 </div>
 
 
-                <!-- =================================================
-                     MODEL HEADER RIGHT
-                ================================================== -->
+                <!-- MODEL COUNTER AND ADD FIELD -->
 
                 <div class="clone-model-header-right">
 
-                    <!-- TARGET MODEL NAME -->
-
                     <div
-                        class="clone-model-name"
+                        class="clone-model-count"
                         *ngIf="targetPageLoaded">
 
-                        <span>
-                            Target Model
+                        <span class="summary-value">
+                            {{ targetModelFields.length }}
                         </span>
 
-                        <strong>
-                            {{ pageCloning.cloneToName || 'Target' }}
-                        </strong>
+                        <span class="summary-label">
+                            Model Fields
+                        </span>
 
                     </div>
 
 
-                    <!-- ADD FIELD -->
-
                     <button
                         type="button"
                         class="clone-add-field-button"
-                        [disabled]="
-                            isViewMode ||
-                            !targetPageLoaded
-                        "
+                        [disabled]="isViewMode || isGenerating || !targetPageLoaded"
                         (click)="onAddField()">
 
                         <i class="fas fa-plus"></i>
 
-                        <span>
-                            Add Field
-                        </span>
+                        <span>Add Field</span>
 
                     </button>
 
@@ -332,9 +445,223 @@
             </div>
 
 
-            <!-- =================================================
-                 TARGET MODEL EMPTY STATE
-            ================================================== -->
+            <!-- =============================================
+                 MODEL CONTENT
+            ============================================== -->
+
+            <div
+                class="clone-model-content"
+                *ngIf="targetPageLoaded">
+
+                <div class="clone-model-table-wrapper appcore-scrollbar">
+
+                    <table class="clone-model-table clone-transformation-table">
+
+                        <thead>
+
+                            <tr>
+                                <th class="field-number-column">#</th>
+                                <th class="field-source-column">Source Field</th>
+                                <th class="field-name">Target Field</th>
+                                <th class="field-operation-column">Operation</th>
+                                <th class="field-type">Type</th>
+                                <th class="field-category-cell">Category</th>
+                                <th class="field-required-cell">Required</th>
+                                <th class="field-action-column">Action</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            <tr
+                                *ngFor="let field of targetModelFields; let index = index">
+
+                                <!-- FIELD NUMBER -->
+
+                                <td class="field-number-column">
+                                    {{ index + 1 }}
+                                </td>
+
+
+                                <!-- SOURCE FIELD -->
+
+                                <td class="field-source-column">
+
+                                    <input
+                                        type="text"
+                                        class="clone-model-input"
+                                        [(ngModel)]="field.sourceField"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        [readonly]="
+                                            isViewMode ||
+                                            isGenerating ||
+                                            field.operation === 'Add' ||
+                                            field.operation === 'Exclude'
+                                        "
+                                        [placeholder]="
+                                            field.operation === 'Add'
+                                                ? 'Not applicable'
+                                                : 'Source field'
+                                        ">
+
+                                </td>
+
+
+                                <!-- TARGET FIELD -->
+
+                                <td class="field-name">
+
+                                    <input
+                                        type="text"
+                                        class="clone-model-input"
+                                        [(ngModel)]="field.name"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        [readonly]="
+                                            isViewMode ||
+                                            isGenerating ||
+                                            field.operation === 'Exclude'
+                                        "
+                                        placeholder="Target field">
+
+                                </td>
+
+
+                                <!-- TRANSFORMATION OPERATION -->
+
+                                <td class="field-operation-column">
+
+                                    <app-dropdown
+                                        [items]="modelOperationOptions"
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select operation"
+                                        [value]="field.operation"
+                                        [disabled]="isViewMode || isGenerating"
+                                        (valueChange)="onModelOperationChange(field, $event)">
+                                    </app-dropdown>
+
+                                </td>
+
+
+                                <!-- TYPE -->
+
+                                <td class="field-type">
+
+                                    <app-dropdown
+                                        [items]="modelTypeOptions"
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select type"
+                                        [value]="field.type"
+                                        [disabled]="
+                                            isViewMode ||
+                                            isGenerating ||
+                                            field.operation === 'Exclude'
+                                        "
+                                        (valueChange)="field.type = $event; onAddModelType($event)">
+                                    </app-dropdown>
+
+                                </td>
+
+
+                                <!-- CATEGORY -->
+
+                                <td class="field-category-cell">
+
+                                    <app-dropdown
+                                        [items]="modelCategoryOptions"
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select category"
+                                        [value]="field.category"
+                                        [disabled]="
+                                            isViewMode ||
+                                            isGenerating ||
+                                            field.operation === 'Exclude'
+                                        "
+                                        (valueChange)="field.category = $event">
+                                    </app-dropdown>
+
+                                </td>
+
+
+                                <!-- REQUIRED -->
+
+                                <td class="field-required-cell">
+
+                                    <app-dropdown
+                                        [items]="modelRequiredOptions"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="field.required"
+                                        [disabled]="
+                                            isViewMode ||
+                                            isGenerating ||
+                                            field.operation === 'Exclude'
+                                        "
+                                        (valueChange)="field.required = $event">
+                                    </app-dropdown>
+
+                                </td>
+
+
+                                <!-- REMOVE FIELD -->
+
+                                <td class="field-action-column">
+
+                                    <button
+                                        type="button"
+                                        class="clone-remove-field-button"
+                                        [disabled]="isViewMode || isGenerating"
+                                        [title]="
+                                            field.operation === 'Exclude'
+                                                ? 'Remove mapping'
+                                                : 'Remove field'
+                                        "
+                                        [attr.aria-label]="
+                                            field.operation === 'Exclude'
+                                                ? 'Remove mapping'
+                                                : 'Remove field'
+                                        "
+                                        (click)="onRemoveField(index)">
+
+                                        <i class="fas fa-trash-can"></i>
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+
+                            <!-- EMPTY MODEL ROW -->
+
+                            <tr *ngIf="targetModelFields.length === 0">
+
+                                <td colspan="8" class="clone-model-empty-row">
+
+                                    <i class="fas fa-circle-info"></i>
+
+                                    No model fields available. Click Add Field to create one.
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 MODEL EMPTY STATE
+            ============================================== -->
 
             <div
                 class="clone-model-empty"
@@ -355,77 +682,7 @@
                 </div>
 
                 <div class="clone-model-empty-text">
-                    Submit the target page to load.
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 TARGET MODEL CONTENT
-            ================================================== -->
-
-            <div
-                class="clone-model-content"
-                *ngIf="targetPageLoaded">
-
-                <div class="clone-model-summary">
-
-                    <div class="clone-model-summary-item">
-
-                        <span class="summary-value">
-                            0
-                        </span>
-
-                        <span class="summary-label">
-                            Model Fields
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="clone-model-table-wrapper">
-
-                    <table class="clone-model-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th class="field-number-column">
-                                    #
-                                </th>
-
-                                <th>
-                                    Field Name
-                                </th>
-
-                                <th>
-                                    Type
-                                </th>
-
-                                <th>
-                                    Category
-                                </th>
-
-                                <th>
-                                    Required
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            <!-- Target model fields will be rendered here -->
-
-                        </tbody>
-
-                    </table>
-
+                    Submit the target page to load its model configuration.
                 </div>
 
             </div>

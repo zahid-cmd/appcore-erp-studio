@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.ProductSettings.ProductMaster.DTOs;
 
 
 //===============================================================
@@ -13,98 +13,81 @@ namespace AppCore.Application.Settings.ProductSettings;
 
 
 //===============================================================
-// IProductMasterRepository
+// Product Master Repository Interface
 //===============================================================
 
 public interface IProductMasterRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster>>
-        GetAllAsync();
-
+    Task<List<ProductMasterDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<ProductMasterDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster entity
-    );
-
+    Task<long> CreateAsync(
+        CreateProductMasterDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster entity
-    );
-
+    Task UpdateAsync(
+        UpdateProductMasterDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Product Master Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync(
+        long productSubCategoryId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<ProductMasterDefaultsDto> GetDefaultsAsync(
+        long productSubCategoryId);
 }

@@ -4,47 +4,50 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.GeneralLedgers.DTOs;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Api.Controllers.Settings.AccountSettings;
+namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 
 //===============================================================
-// GeneralLedgersController
+// General Ledgers Controller
 //===============================================================
 
 [ApiController]
 
-[Route("api/settings/account-settings/general-ledgers")]
+[Route("api/settings/account-settings/general-ledger")]
 
-public class GeneralLedgersController
-    : ControllerBase
+public class GeneralLedgersController : ControllerBase
 {
     //===========================================================
-    // Repository
+    // Fields
     //===========================================================
 
     private readonly IGeneralLedgersRepository _repository;
+
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public GeneralLedgersController
-    (
-        IGeneralLedgersRepository repository
-    )
+    public GeneralLedgersController(
+        IGeneralLedgersRepository repository,
+        IActivityHistoryRepository activityHistoryRepository)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
     }
 
 
@@ -54,16 +57,40 @@ public class GeneralLedgersController
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<GeneralLedgersDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
+        List<GeneralLedgersDto> generalLedgers =
+            await _repository.GetAllAsync();
+
+        return Ok(generalLedgers);
+    }
 
 
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    [HttpGet("next-code/{accountSubGroupId:long}")]
+
+    public async Task<ActionResult<string>> GetNextCode(
+        long accountSubGroupId)
+    {
         return Ok(
-            entities
-        );
+            await _repository.GetNextCodeAsync(
+                accountSubGroupId));
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<GeneralLedgersDefaultsDto>> GetDefaults()
+    {
+        return Ok(
+            await _repository.GetDefaultsAsync());
     }
 
 
@@ -73,30 +100,18 @@ public class GeneralLedgersController
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<GeneralLedgersDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        GeneralLedgersDto? generalLedger =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
+        if (generalLedger == null)
         {
             return NotFound();
         }
 
-
-        return Ok(
-            entity
-        );
+        return Ok(generalLedger);
     }
 
 
@@ -106,42 +121,17 @@ public class GeneralLedgersController
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateGeneralLedgersDto dto
-    )
+    public async Task<ActionResult<long>> Create(
+        CreateGeneralLedgersDto dto)
     {
-        var entity =
-            new GeneralLedgers
-            {
-                Name =
-                    dto.Name,
+        long userId = 1;
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+        long id =
+            await _repository.CreateAsync(
+                dto,
+                userId);
 
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+        return Ok(id);
     }
 
 
@@ -149,66 +139,22 @@ public class GeneralLedgersController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut]
 
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateGeneralLedgersDto dto
-    )
+    public async Task<IActionResult> Update(
+        UpdateGeneralLedgersDto dto)
     {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(
+                dto.GeneralLedgerId))
         {
             return NotFound();
         }
 
+        long userId = 1;
 
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
+        await _repository.UpdateAsync(
+            dto,
+            userId);
 
         return NoContent();
     }
@@ -220,32 +166,48 @@ public class GeneralLedgersController
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public async Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        //===========================================================
+        // Verify General Ledger Exists
+        //===========================================================
 
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(id))
         {
             return NotFound();
         }
 
 
-        await _repository
-            .DeleteAsync(
-                id
-            );
+        //===========================================================
+        // Current User
+        //===========================================================
 
+        long userId = 1;
+
+
+        //===========================================================
+        // Delete
+        //===========================================================
+
+        try
+        {
+            await _repository.DeleteAsync(
+                id,
+                userId);
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+
+
+        //===========================================================
+        // Delete Successful
+        //===========================================================
 
         return NoContent();
     }
@@ -255,18 +217,21 @@ public class GeneralLedgersController
     // Restore
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        long userId = 1;
 
+        bool restored =
+            await _repository.RestoreAsync(
+                userId);
+
+        if (!restored)
+        {
+            return NotFound(
+                "There are no deleted general ledgers available to restore.");
+        }
 
         return NoContent();
     }
@@ -278,39 +243,11 @@ public class GeneralLedgersController
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Account Settings",
+                "General Ledger"));
     }
 }

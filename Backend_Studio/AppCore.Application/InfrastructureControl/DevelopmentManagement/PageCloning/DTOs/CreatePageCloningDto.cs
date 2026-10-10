@@ -1,9 +1,9 @@
+
 //===============================================================
 // Namespaces
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
-
 
 //===============================================================
 // Create Page Cloning DTO
@@ -12,7 +12,7 @@ namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCl
 public class CreatePageCloningDto
 {
     //===========================================================
-    // Clone From
+    // Source Submenu
     //===========================================================
 
     public long CloneFromId { get; set; }
@@ -21,9 +21,8 @@ public class CreatePageCloningDto
 
     public string CloneFromName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Clone To
+    // Target Submenu
     //===========================================================
 
     public long CloneToId { get; set; }
@@ -32,44 +31,22 @@ public class CreatePageCloningDto
 
     public string CloneToName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Clone Type
+    // Cloning Configuration
     //===========================================================
 
     public string CloningType { get; set; } = "Page";
 
-
-    //===========================================================
-    // Files
-    //===========================================================
-
-    public int NumberOfFiles { get; set; }
-
-
-    //===========================================================
-    // Operation
-    //===========================================================
+    public int NumberOfFiles { get; set; } = 15;
 
     public string Operation { get; set; } = "Clone";
 
-
-    //===========================================================
-    // Configuration
-    //===========================================================
-
     public string? Remarks { get; set; }
-
-
-    //===========================================================
-    // Active Status
-    //===========================================================
 
     public bool IsActive { get; set; } = true;
 
-
     //===========================================================
-    // Audit
+    // Audit Information
     //===========================================================
 
     public long CreatedBy { get; set; }

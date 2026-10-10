@@ -6,11 +6,11 @@
 
     <app-page-header
 
-        title="General Ledgers"
+        title="General Ledger"
 
-        subtitle="Manage generalledgerses"
+        subtitle="Manage general ledgers"
 
-        icon="fas fa-list">
+        icon="fas fa-book">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search generalledgerses..."
+                placeholder="Search general ledgers..."
 
                 (valueChange)="onSearch($event)">
 
@@ -73,32 +73,68 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [(selectedTab)]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
 
 
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
+        <app-search-dropdown
 
             pageToolbarRight
 
-            placeholder="All Status"
+            placeholder="All Account Classes"
 
-            [items]="statusItems"
+            [items]="accountClassFilterItems"
 
-            labelField="text"
+            labelField="label"
 
             valueField="value"
 
-            [(value)]="selectedStatus"
+            [value]="selectedAccountClassId"
 
-            (valueChange)="onStatusFilterChange($event)">
+            (valueChange)="onAccountClassFilterChange($event)">
 
-        </app-dropdown>
+        </app-search-dropdown>
+
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Account Groups"
+
+            [items]="accountGroupFilterItems"
+
+            labelField="label"
+
+            valueField="value"
+
+            [value]="selectedAccountGroupId"
+
+            (valueChange)="onAccountGroupFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Account Sub Groups"
+
+            [items]="accountSubGroupFilterItems"
+
+            labelField="label"
+
+            valueField="value"
+
+            [value]="selectedAccountSubGroupId"
+
+            (valueChange)="onAccountSubGroupFilterChange($event)">
+
+        </app-search-dropdown>
 
     </app-page-toolbar>
 
@@ -123,7 +159,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedGeneralLedgerses"
+                [rows]="pagedGeneralLedgers"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -153,7 +189,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredGeneralLedgerses.length"
+            [totalRecords]="filteredGeneralLedgers.length"
 
             [currentPage]="currentPage"
 

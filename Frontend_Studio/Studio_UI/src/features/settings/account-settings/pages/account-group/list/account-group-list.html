@@ -70,21 +70,6 @@
 
         </app-search-dropdown>
 
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-search-dropdown
-            pageToolbarRight
-            placeholder="All Status"
-            [items]="statusFilterItems"
-            labelField="label"
-            valueField="value"
-            [value]="selectedStatus"
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-search-dropdown>
-
     </app-page-toolbar>
 
     <!-- =====================================================

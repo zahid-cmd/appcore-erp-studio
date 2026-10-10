@@ -2,11 +2,11 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.ProductSettings;
+namespace AppCore.Application.Settings.ProductSettings.ProductMaster.DTOs;
 
 
 //===============================================================
-// UpdateProductMasterDto
+// Update Product Master DTO
 //===============================================================
 
 public class UpdateProductMasterDto
@@ -15,7 +15,7 @@ public class UpdateProductMasterDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long ProductMasterId
     {
         get;
         set;
@@ -23,23 +23,10 @@ public class UpdateProductMasterDto
 
 
     //===========================================================
-    // Name
+    // Product Category
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long ProductCategoryId
     {
         get;
         set;
@@ -47,38 +34,116 @@ public class UpdateProductMasterDto
 
 
     //===========================================================
-    // Sample Field
+    // Product Sub Category
     //===========================================================
 
-    public string SampleField
+    public long ProductSubCategoryId
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    public string SubCategoryCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Basic Information
+    //===========================================================
+
+    public string ProductCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string ProductName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Inventory Ledger
+    //===========================================================
+
+    public string InventoryLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string InventoryLedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // WIP Ledger
+    //===========================================================
+
+    public string WipLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string WipLedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // COGS Ledger
+    //===========================================================
+
+    public string CogsLedgerCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CogsLedgerName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add Product Master specific configuration fields here
+
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Status
     //===========================================================
 
-    public bool Status
+    public bool IsActive
     {
         get;
         set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    } = true;
 }

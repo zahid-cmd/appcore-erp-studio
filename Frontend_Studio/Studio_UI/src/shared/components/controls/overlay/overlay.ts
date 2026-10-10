@@ -134,11 +134,18 @@ implements OnChanges
         if
         (
             changes['visible']
-            &&
-            this.visible
+            ||
+            changes['width']
+            ||
+            changes['minWidth']
+            ||
+            changes['matchOriginWidth']
         )
         {
-            this.calculateWidth();
+            if(this.visible)
+            {
+                this.calculateWidth();
+            }
         }
     }
 
@@ -150,29 +157,30 @@ implements OnChanges
         void
     {
         //=======================================================
-        // Fixed Width
+        // Explicit Width
         //=======================================================
 
         if
         (
+            this.width !== null &&
             !this.matchOriginWidth
         )
         {
             this.overlayWidth =
-                this.width ?? '';
+                this.width;
 
             return;
         }
 
         //=======================================================
-        // No Origin
+        // Origin
         //=======================================================
 
-        if
-        (
-            !this.origin
-        )
+        if(!this.origin)
         {
+            this.overlayWidth =
+                this.width ?? '';
+
             return;
         }
 
@@ -187,34 +195,53 @@ implements OnChanges
                 .width;
 
         //=======================================================
+        // Match Origin Width
+        //=======================================================
+
+        if(this.matchOriginWidth)
+        {
+            this.overlayWidth =
+                originWidth;
+
+            return;
+        }
+
+        //=======================================================
+        // Explicit Width Fallback
+        //=======================================================
+
+        this.overlayWidth =
+            this.width ?? originWidth;
+
+        //=======================================================
         // Minimum Width
         //=======================================================
 
-        if
-        (
-            this.minWidth !== null
-        )
+        if(this.minWidth !== null)
         {
             const minimumWidth =
                 typeof this.minWidth === 'number'
                     ? this.minWidth
                     : parseFloat(this.minWidth);
 
-            this.overlayWidth =
-                Math.max(
-                    originWidth,
-                    minimumWidth
-                );
+            const currentWidth =
+                typeof this.overlayWidth === 'number'
+                    ? this.overlayWidth
+                    : parseFloat(String(this.overlayWidth));
 
-            return;
+            if
+            (
+                Number.isFinite(minimumWidth) &&
+                Number.isFinite(currentWidth)
+            )
+            {
+                this.overlayWidth =
+                    Math.max(
+                        currentWidth,
+                        minimumWidth
+                    );
+            }
         }
-
-        //=======================================================
-        // Match Origin Width
-        //=======================================================
-
-        this.overlayWidth =
-            originWidth;
     }
 
     //===========================================================
@@ -225,26 +252,27 @@ implements OnChanges
     {
         return [
             {
-                originX: 'start',
-                originY: 'bottom',
+                originX:'start',
+                originY:'bottom',
 
-                overlayX: 'start',
-                overlayY: 'top',
+                overlayX:'start',
+                overlayY:'top',
 
-                offsetY: this.offsetY
+                offsetY:this.offsetY
             },
 
             {
-                originX: 'start',
-                originY: 'top',
+                originX:'start',
+                originY:'top',
 
-                overlayX: 'start',
-                overlayY: 'bottom',
+                overlayX:'start',
+                overlayY:'bottom',
 
-                offsetY: -this.offsetY
+                offsetY:-this.offsetY
             }
         ];
     }
+
     //===========================================================
     // Attach
     //===========================================================
@@ -272,10 +300,7 @@ implements OnChanges
     close():
         void
     {
-        if
-        (
-            !this.visible
-        )
+        if(!this.visible)
         {
             return;
         }
@@ -294,16 +319,11 @@ implements OnChanges
     // Window Resize
     //===========================================================
 
-    @HostListener(
-        'window:resize'
-    )
+    @HostListener('window:resize')
     onWindowResize():
         void
     {
-        if
-        (
-            this.visible
-        )
+        if(this.visible)
         {
             this.calculateWidth();
         }
@@ -316,10 +336,7 @@ implements OnChanges
     onBackdropClick():
         void
     {
-        if
-        (
-            this.closeOnOutsideClick
-        )
+        if(this.closeOnOutsideClick)
         {
             this.close();
         }
@@ -329,9 +346,7 @@ implements OnChanges
     // Escape
     //===========================================================
 
-    @HostListener(
-        'document:keydown.escape'
-    )
+    @HostListener('document:keydown.escape')
     onEscape():
         void
     {

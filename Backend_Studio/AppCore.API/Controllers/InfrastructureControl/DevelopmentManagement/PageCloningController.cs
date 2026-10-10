@@ -1,14 +1,18 @@
-//===============================================================
-// Namespaces
-//===============================================================
+
+ //===============================================================
+ // Namespaces
+ //===============================================================
 
 using AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
-
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
-
 using AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
 
 using Microsoft.AspNetCore.Mvc;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 
 //===============================================================
@@ -19,8 +23,7 @@ namespace AppCore.API.Controllers.InfrastructureControl.DevelopmentManagement;
 
 [ApiController]
 [Route("api/infrastructure-control/development-management/page-cloning")]
-public class PageCloningController :
-    ControllerBase
+public class PageCloningController : ControllerBase
 {
     //===========================================================
     // Fields
@@ -53,11 +56,7 @@ public class PageCloningController :
             await _repository.GetAllAsync();
 
         var result =
-            records.Select
-            (
-                x =>
-                    MapToDto(x)
-            );
+            records.Select(MapToDto);
 
         return Ok(result);
     }
@@ -74,23 +73,14 @@ public class PageCloningController :
     )
     {
         var record =
-            await _repository.GetByIdAsync
-            (
-                id
-            );
+            await _repository.GetByIdAsync(id);
 
-        if
-        (
-            record == null
-        )
+        if (record == null)
         {
             return NotFound();
         }
 
-        return Ok
-        (
-            MapToDto(record)
-        );
+        return Ok(MapToDto(record));
     }
 
 
@@ -105,11 +95,7 @@ public class PageCloningController :
             await _repository.GetHistoryAsync();
 
         var result =
-            records.Select
-            (
-                x =>
-                    MapToDto(x)
-            );
+            records.Select(MapToDto);
 
         return Ok(result);
     }
@@ -125,21 +111,18 @@ public class PageCloningController :
         long id
     )
     {
+        if (id <= 0)
+        {
+            return BadRequest("A valid page cloning record ID is required.");
+        }
+
         var records =
             await _repository.GetHistoryAsync();
 
         var result =
             records
-                .Where
-                (
-                    x =>
-                        x.Id == id
-                )
-                .Select
-                (
-                    x =>
-                        MapToDto(x)
-                );
+                .Where(x => x.Id == id)
+                .Select(MapToDto);
 
         return Ok(result);
     }
@@ -155,39 +138,50 @@ public class PageCloningController :
         long submenuId
     )
     {
-        if
-        (
-            submenuId <= 0
-        )
+        if (submenuId <= 0)
         {
-            return BadRequest
-            (
-                "Source page is required."
-            );
+            return BadRequest("Source page is required.");
         }
 
         try
         {
             var result =
-                await _repository.AnalyzeSourceAsync
-                (
-                    submenuId
-                );
+                await _repository.AnalyzeSourceAsync(submenuId);
 
-            return Ok
-            (
-                result
-            );
+            return Ok(result);
         }
-        catch
-        (
-            InvalidOperationException exception
-        )
+        catch (InvalidOperationException exception)
         {
-            return BadRequest
-            (
-                exception.Message
-            );
+            return BadRequest(exception.Message);
+        }
+    }
+
+
+    //===========================================================
+    // Analyze Target
+    //===========================================================
+
+    [HttpGet("analyze-target/{submenuId:long}")]
+    public async Task<ActionResult<PageCloningSourceAnalysisDto>> AnalyzeTarget
+    (
+        long submenuId
+    )
+    {
+        if (submenuId <= 0)
+        {
+            return BadRequest("Target page is required.");
+        }
+
+        try
+        {
+            var result =
+                await _repository.AnalyzeTargetAsync(submenuId);
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return BadRequest(exception.Message);
         }
     }
 
@@ -199,84 +193,86 @@ public class PageCloningController :
     [HttpPost]
     public async Task<ActionResult<long>> Create
     (
-        CreatePageCloningDto dto
+        [FromBody] CreatePageCloningDto dto
     )
     {
-        var pageCloning =
-            new PageCloning
-            {
-                CloneFromId =
-                    dto.CloneFromId,
+        //=======================================================
+        // Validate Request
+        //=======================================================
 
-                CloneFromCode =
-                    dto.CloneFromCode,
+        if (dto == null)
+        {
+            return BadRequest(
+                "Page cloning configuration is required.");
+        }
 
-                CloneFromName =
-                    dto.CloneFromName,
+        if (dto.CloneFromId <= 0)
+        {
+            return BadRequest(
+                "A valid source page is required.");
+        }
 
-                CloneToId =
-                    dto.CloneToId,
+        if (dto.CloneToId <= 0)
+        {
+            return BadRequest(
+                "A valid target page is required.");
+        }
 
-                CloneToCode =
-                    dto.CloneToCode,
+        if (dto.CloneFromId == dto.CloneToId)
+        {
+            return BadRequest(
+                "Source and target pages must be different.");
+        }
 
-                CloneToName =
-                    dto.CloneToName,
+        //=======================================================
+        // Prepare Entity
+        //=======================================================
 
-                CloningType =
-                    dto.CloningType,
+        var pageCloning = new PageCloning
+        {
+            CloneFromId = dto.CloneFromId,
+            CloneFromCode = dto.CloneFromCode,
+            CloneFromName = dto.CloneFromName,
 
-                NumberOfFiles =
-                    dto.NumberOfFiles,
+            CloneToId = dto.CloneToId,
+            CloneToCode = dto.CloneToCode,
+            CloneToName = dto.CloneToName,
 
-                Operation =
-                    dto.Operation,
+            CloningType = dto.CloningType,
+            NumberOfFiles = dto.NumberOfFiles,
+            Operation = dto.Operation,
 
-                Status =
-                    "Pending",
+            Status = "Pending",
+            Remarks = dto.Remarks,
 
-                Remarks =
-                    dto.Remarks,
+            LastClonedBy = null,
+            LastClonedDate = null,
+            LastCloningResult = string.Empty,
 
-                LastClonedBy =
-                    null,
+            IsActive = dto.IsActive,
 
-                LastClonedDate =
-                    null,
+            CreatedBy = dto.CreatedBy,
+            CreatedDate = DateTime.UtcNow,
 
-                LastCloningResult =
-                    string.Empty,
+            ModifiedBy = null,
+            ModifiedDate = null,
 
-                IsActive =
-                    dto.IsActive,
+            DeletedBy = null,
+            DeletedDate = null,
 
-                CreatedBy =
-                    dto.CreatedBy,
+            IsDeleted = false
+        };
 
-                CreatedDate =
-                    DateTime.UtcNow,
-
-                ModifiedBy =
-                    null,
-
-                ModifiedDate =
-                    null,
-
-                DeletedBy =
-                    null,
-
-                DeletedDate =
-                    null,
-
-                IsDeleted =
-                    false
-            };
+        //=======================================================
+        // Save Record
+        //=======================================================
 
         var id =
-            await _repository.CreateAsync
-            (
-                pageCloning
-            );
+            await _repository.CreateAsync(pageCloning);
+
+        //=======================================================
+        // Return Created Record
+        //=======================================================
 
         return Ok(id);
     }
@@ -290,116 +286,108 @@ public class PageCloningController :
     public async Task<IActionResult> Update
     (
         long id,
-
-        UpdatePageCloningDto dto
+        [FromBody] UpdatePageCloningDto dto
     )
     {
-        var pageCloning =
-            await _repository.GetByIdAsync
-            (
-                id
-            );
+        //=======================================================
+        // Validate Request
+        //=======================================================
 
-        if
-        (
-            pageCloning == null
-        )
+        if (dto == null)
+        {
+            return BadRequest(
+                "Page cloning configuration is required.");
+        }
+
+        if (dto.CloneFromId <= 0 || dto.CloneToId <= 0)
+        {
+            return BadRequest(
+                "Valid source and target pages are required.");
+        }
+
+        if (dto.CloneFromId == dto.CloneToId)
+        {
+            return BadRequest(
+                "Source and target pages must be different.");
+        }
+
+        //=======================================================
+        // Load Existing Record
+        //=======================================================
+
+        var pageCloning =
+            await _repository.GetByIdAsync(id);
+
+        if (pageCloning == null)
         {
             return NotFound();
         }
-
 
         //=======================================================
         // Clone From
         //=======================================================
 
-        pageCloning.CloneFromId =
-            dto.CloneFromId;
-
-        pageCloning.CloneFromCode =
-            dto.CloneFromCode;
-
-        pageCloning.CloneFromName =
-            dto.CloneFromName;
-
+        pageCloning.CloneFromId = dto.CloneFromId;
+        pageCloning.CloneFromCode = dto.CloneFromCode;
+        pageCloning.CloneFromName = dto.CloneFromName;
 
         //=======================================================
         // Clone To
         //=======================================================
 
-        pageCloning.CloneToId =
-            dto.CloneToId;
-
-        pageCloning.CloneToCode =
-            dto.CloneToCode;
-
-        pageCloning.CloneToName =
-            dto.CloneToName;
-
+        pageCloning.CloneToId = dto.CloneToId;
+        pageCloning.CloneToCode = dto.CloneToCode;
+        pageCloning.CloneToName = dto.CloneToName;
 
         //=======================================================
         // Clone Type
         //=======================================================
 
-        pageCloning.CloningType =
-            dto.CloningType;
-
+        pageCloning.CloningType = dto.CloningType;
 
         //=======================================================
         // Files
         //=======================================================
 
-        pageCloning.NumberOfFiles =
-            dto.NumberOfFiles;
-
+        pageCloning.NumberOfFiles = dto.NumberOfFiles;
 
         //=======================================================
         // Operation
         //=======================================================
 
-        pageCloning.Operation =
-            dto.Operation;
-
+        pageCloning.Operation = dto.Operation;
 
         //=======================================================
         // Status
         //=======================================================
-
-        pageCloning.Status =
-            dto.Status;
-
+        // Status is controlled by the cloning workflow.
+        // Do not allow an ordinary edit request to mark a
+        // cloning operation as completed.
 
         //=======================================================
         // Configuration
         //=======================================================
 
-        pageCloning.Remarks =
-            dto.Remarks;
-
+        pageCloning.Remarks = dto.Remarks;
 
         //=======================================================
         // Active Status
         //=======================================================
 
-        pageCloning.IsActive =
-            dto.IsActive;
-
+        pageCloning.IsActive = dto.IsActive;
 
         //=======================================================
         // Audit
         //=======================================================
 
-        pageCloning.ModifiedBy =
-            dto.ModifiedBy;
+        pageCloning.ModifiedBy = dto.ModifiedBy;
+        pageCloning.ModifiedDate = DateTime.UtcNow;
 
-        pageCloning.ModifiedDate =
-            DateTime.UtcNow;
+        //=======================================================
+        // Save Changes
+        //=======================================================
 
-
-        await _repository.UpdateAsync
-        (
-            pageCloning
-        );
+        await _repository.UpdateAsync(pageCloning);
 
         return NoContent();
     }
@@ -412,29 +400,203 @@ public class PageCloningController :
     [HttpPost("{id:long}/clone")]
     public async Task<IActionResult> Clone
     (
-        long id
+        long id,
+        [FromBody] PageCloningDto? configuration
     )
     {
-        var pageCloning =
-            await _repository.GetByIdAsync
-            (
-                id
-            );
+        //=======================================================
+        // Validate Cloning Record ID
+        //=======================================================
 
-        if
-        (
-            pageCloning == null
-        )
+        if (id <= 0)
         {
-            return NotFound();
+            return BadRequest(
+                "A valid page cloning record ID is required.");
         }
 
-        await _repository.CloneAsync
-        (
-            id
-        );
+        //=======================================================
+        // Load Saved Cloning Record
+        //=======================================================
 
-        return NoContent();
+        var pageCloning =
+            await _repository.GetByIdAsync(id);
+
+        if (pageCloning == null)
+        {
+            return NotFound(
+                "Page cloning configuration was not found.");
+        }
+
+        //=======================================================
+        // Validate Transformation Configuration
+        //=======================================================
+
+        if (configuration != null)
+        {
+            if (
+                configuration.CloneFromId > 0 &&
+                configuration.CloneFromId != pageCloning.CloneFromId
+            )
+            {
+                return BadRequest(
+                    "The submitted source does not match the saved configuration.");
+            }
+
+            if (
+                configuration.CloneToId > 0 &&
+                configuration.CloneToId != pageCloning.CloneToId
+            )
+            {
+                return BadRequest(
+                    "The submitted target does not match the saved configuration.");
+            }
+
+            //===================================================
+            // Validate Model Field Collection
+            //===================================================
+
+            if (configuration.ModelFields == null)
+            {
+                return BadRequest(
+                    "Model field configuration must be supplied as a collection. " +
+                    "Use an empty collection when no field operations are selected.");
+            }
+
+            var allowedOperations =
+                new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase)
+                {
+                    "Keep",
+                    "Modify",
+                    "Add",
+                    "Exclude"
+                };
+
+            var configuredFieldKeys =
+                new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var field in configuration.ModelFields)
+            {
+                //===============================================
+                // Validate Field Entry
+                //===============================================
+
+                if (field == null)
+                {
+                    return BadRequest(
+                        "Model field configuration contains a null entry.");
+                }
+
+                if (string.IsNullOrWhiteSpace(field.Name))
+                {
+                    return BadRequest(
+                        "Every configured model field must have a name.");
+                }
+
+                //===============================================
+                // Validate Operation
+                //===============================================
+
+                var operation =
+                    field.Operation?.Trim() ?? string.Empty;
+
+                if (!allowedOperations.Contains(operation))
+                {
+                    return BadRequest(
+                        $"Unsupported model field operation: '{field.Operation}'.");
+                }
+
+                //===============================================
+                // Validate Added Field Type
+                //===============================================
+
+                if (
+                    string.Equals(
+                        operation,
+                        "Add",
+                        StringComparison.OrdinalIgnoreCase) &&
+                    string.IsNullOrWhiteSpace(field.Type)
+                )
+                {
+                    return BadRequest(
+                        $"A type is required for added field '{field.Name}'.");
+                }
+
+                //===============================================
+                // Validate Source Field Configuration
+                //===============================================
+
+                if (
+                    !string.Equals(
+                        operation,
+                        "Add",
+                        StringComparison.OrdinalIgnoreCase)
+                )
+                {
+                    var sourceField =
+                        string.IsNullOrWhiteSpace(field.SourceField)
+                            ? field.Name.Trim()
+                            : field.SourceField.Trim();
+
+                    var fieldKey =
+                        $"{field.InputModel?.Trim()}|{sourceField}";
+
+                    if (!configuredFieldKeys.Add(fieldKey))
+                    {
+                        return BadRequest(
+                            $"Duplicate configuration found for source field '{sourceField}'.");
+                    }
+                }
+            }
+        }
+
+        //=======================================================
+        // Execute Clone
+        //=======================================================
+
+        try
+        {
+            await _repository.CloneAsync(
+                id,
+                configuration);
+
+            //===================================================
+            // Read Updated Status
+            //===================================================
+
+            var updatedRecord =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(new
+            {
+                Id = id,
+                Status = updatedRecord?.Status ?? "Unknown",
+                Message = updatedRecord?.LastCloningResult
+                    ?? "Cloning operation finished."
+            });
+        }
+        catch (InvalidOperationException exception)
+        {
+            return BadRequest(new
+            {
+                Id = id,
+                Status = "Failed",
+                Message = exception.Message
+            });
+        }
+        catch (System.IO.IOException exception)
+        {
+            return StatusCode(
+                500,
+                new
+                {
+                    Id = id,
+                    Status = "Failed",
+                    Message = "A file operation failed during cloning.",
+                    Detail = exception.Message
+                });
+        }
     }
 
 
@@ -448,26 +610,37 @@ public class PageCloningController :
         long id
     )
     {
-        var pageCloning =
-            await _repository.GetByIdAsync
-            (
-                id
-            );
+        //=======================================================
+        // Validate Record
+        //=======================================================
 
-        if
-        (
-            pageCloning == null
-        )
+        var pageCloning =
+            await _repository.GetByIdAsync(id);
+
+        if (pageCloning == null)
         {
             return NotFound();
         }
 
-        await _repository.GeneratePackageAsync
-        (
-            id
-        );
+        //=======================================================
+        // Generate Package
+        //=======================================================
 
-        return NoContent();
+        try
+        {
+            await _repository.GeneratePackageAsync(id);
+
+            return NoContent();
+        }
+        catch (NotSupportedException exception)
+        {
+            return StatusCode(
+                501,
+                new
+                {
+                    Message = exception.Message
+                });
+        }
     }
 
 
@@ -481,26 +654,37 @@ public class PageCloningController :
         long id
     )
     {
-        var pageCloning =
-            await _repository.GetByIdAsync
-            (
-                id
-            );
+        //=======================================================
+        // Validate Record
+        //=======================================================
 
-        if
-        (
-            pageCloning == null
-        )
+        var pageCloning =
+            await _repository.GetByIdAsync(id);
+
+        if (pageCloning == null)
         {
             return NotFound();
         }
 
-        await _repository.RestorePackageAsync
-        (
-            id
-        );
+        //=======================================================
+        // Restore Package
+        //=======================================================
 
-        return NoContent();
+        try
+        {
+            await _repository.RestorePackageAsync(id);
+
+            return NoContent();
+        }
+        catch (NotSupportedException exception)
+        {
+            return StatusCode(
+                501,
+                new
+                {
+                    Message = exception.Message
+                });
+        }
     }
 
 
@@ -515,30 +699,21 @@ public class PageCloningController :
     )
     {
         var pageCloning =
-            await _repository.GetByIdAsync
-            (
-                id
-            );
+            await _repository.GetByIdAsync(id);
 
-        if
-        (
-            pageCloning == null
-        )
+        if (pageCloning == null)
         {
             return NotFound();
         }
 
-        await _repository.DeleteAsync
-        (
-            id
-        );
+        await _repository.DeleteAsync(id);
 
         return NoContent();
     }
 
 
     //===========================================================
-    // Restore
+    // Restore Deleted Records
     //===========================================================
 
     [HttpPut("restore")]
@@ -561,74 +736,39 @@ public class PageCloningController :
     {
         return new PageCloningDto
         {
-            Id =
-                pageCloning.Id,
+            Id = pageCloning.Id,
 
-            CloneFromId =
-                pageCloning.CloneFromId,
+            CloneFromId = pageCloning.CloneFromId,
+            CloneFromCode = pageCloning.CloneFromCode,
+            CloneFromName = pageCloning.CloneFromName,
 
-            CloneFromCode =
-                pageCloning.CloneFromCode,
+            CloneToId = pageCloning.CloneToId,
+            CloneToCode = pageCloning.CloneToCode,
+            CloneToName = pageCloning.CloneToName,
 
-            CloneFromName =
-                pageCloning.CloneFromName,
+            CloningType = pageCloning.CloningType,
+            NumberOfFiles = pageCloning.NumberOfFiles,
+            Operation = pageCloning.Operation,
 
-            CloneToId =
-                pageCloning.CloneToId,
+            Status = pageCloning.Status,
+            Remarks = pageCloning.Remarks,
 
-            CloneToCode =
-                pageCloning.CloneToCode,
+            LastClonedBy = pageCloning.LastClonedBy,
+            LastClonedDate = pageCloning.LastClonedDate,
+            LastCloningResult = pageCloning.LastCloningResult,
 
-            CloneToName =
-                pageCloning.CloneToName,
+            IsActive = pageCloning.IsActive,
 
-            CloningType =
-                pageCloning.CloningType,
+            CreatedBy = pageCloning.CreatedBy,
+            CreatedDate = pageCloning.CreatedDate,
 
-            NumberOfFiles =
-                pageCloning.NumberOfFiles,
+            ModifiedBy = pageCloning.ModifiedBy,
+            ModifiedDate = pageCloning.ModifiedDate,
 
-            Operation =
-                pageCloning.Operation,
+            DeletedBy = pageCloning.DeletedBy,
+            DeletedDate = pageCloning.DeletedDate,
 
-            Status =
-                pageCloning.Status,
-
-            Remarks =
-                pageCloning.Remarks,
-
-            LastClonedBy =
-                pageCloning.LastClonedBy,
-
-            LastClonedDate =
-                pageCloning.LastClonedDate,
-
-            LastCloningResult =
-                pageCloning.LastCloningResult,
-
-            IsActive =
-                pageCloning.IsActive,
-
-            CreatedBy =
-                pageCloning.CreatedBy,
-
-            CreatedDate =
-                pageCloning.CreatedDate,
-
-            ModifiedBy =
-                pageCloning.ModifiedBy,
-
-            ModifiedDate =
-                pageCloning.ModifiedDate,
-
-            DeletedBy =
-                pageCloning.DeletedBy,
-
-            DeletedDate =
-                pageCloning.DeletedDate,
-
-            IsDeleted =
-                pageCloning.IsDeleted
+            IsDeleted = pageCloning.IsDeleted
         };
     }
 }

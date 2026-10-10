@@ -2,24 +2,22 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.GeneralLedgers.DTOs;
 
 
 //===============================================================
-// GeneralLedgersDefaultsDto
+// General Ledgers Defaults DTO
 //===============================================================
 
 public class GeneralLedgersDefaultsDto
 {
     //===========================================================
-    // Code
+    // General Ledger Code
     //===========================================================
 
     public string Code
     {
         get;
         set;
-    }
-    =
-        string.Empty;
+    } = string.Empty;
 }

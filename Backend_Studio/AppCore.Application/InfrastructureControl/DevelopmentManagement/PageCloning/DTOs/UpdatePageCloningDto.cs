@@ -1,9 +1,9 @@
+
 //===============================================================
 // Namespaces
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
-
 
 //===============================================================
 // Update Page Cloning DTO
@@ -12,7 +12,7 @@ namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCl
 public class UpdatePageCloningDto
 {
     //===========================================================
-    // Clone From
+    // Source Submenu
     //===========================================================
 
     public long CloneFromId { get; set; }
@@ -21,9 +21,8 @@ public class UpdatePageCloningDto
 
     public string CloneFromName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Clone To
+    // Target Submenu
     //===========================================================
 
     public long CloneToId { get; set; }
@@ -32,51 +31,24 @@ public class UpdatePageCloningDto
 
     public string CloneToName { get; set; } = string.Empty;
 
-
     //===========================================================
-    // Clone Type
+    // Cloning Configuration
     //===========================================================
 
     public string CloningType { get; set; } = "Page";
 
-
-    //===========================================================
-    // Files
-    //===========================================================
-
-    public int NumberOfFiles { get; set; }
-
-
-    //===========================================================
-    // Operation
-    //===========================================================
+    public int NumberOfFiles { get; set; } = 15;
 
     public string Operation { get; set; } = "Clone";
 
-
-    //===========================================================
-    // Status
-    //===========================================================
-
     public string Status { get; set; } = "Pending";
-
-
-    //===========================================================
-    // Configuration
-    //===========================================================
 
     public string? Remarks { get; set; }
 
-
-    //===========================================================
-    // Active Status
-    //===========================================================
-
     public bool IsActive { get; set; }
 
-
     //===========================================================
-    // Audit
+    // Audit Information
     //===========================================================
 
     public long ModifiedBy { get; set; }

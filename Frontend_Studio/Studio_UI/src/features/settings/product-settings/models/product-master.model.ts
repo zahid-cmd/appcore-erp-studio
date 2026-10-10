@@ -4,29 +4,73 @@
 
 export interface ProductMaster
 {
-    id:
+    ProductMasterId:
         number;
 
-    code:
+    ProductCategoryId:
+        number;
+
+    ProductCategoryName:
         string;
 
-    name:
+    ProductSubCategoryId:
+        number;
+
+    ProductSubCategoryName:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    SubCategoryCode:
         string;
 
-    status:
+    ProductCode:
         string;
 
-    remarks:
+    ProductName:
         string;
+
+    //===========================================================
+    // Auto Ledger Codes
+    //===========================================================
+
+    InventoryLedgerCode:
+        string;
+
+    WipLedgerCode:
+        string;
+
+    CogsLedgerCode:
+        string;
+
+    //===========================================================
+    // Auto Ledger Names
+    //===========================================================
+
+    InventoryLedgerName:
+        string;
+
+    WipLedgerName:
+        string;
+
+    CogsLedgerName:
+        string;
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    // TODO: Add Product Master specific configuration fields here
+    // (e.g. UnitId, Barcode, SalePrice, PurchasePrice, ReorderLevel)
+
+    Remarks:
+        string;
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    IsActive:
+        boolean;
 }
-
-
 
 /* ============================================================
    Create Product Master
@@ -34,23 +78,45 @@ export interface ProductMaster
 
 export interface CreateProductMaster
 {
-    name:
+    ProductCategoryId:
+        number;
+
+    ProductSubCategoryId:
+        number;
+
+    SubCategoryCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    ProductCode:
         string;
 
-    status:
+    ProductName:
         string;
 
-    remarks:
+    InventoryLedgerCode:
         string;
+
+    WipLedgerCode:
+        string;
+
+    CogsLedgerCode:
+        string;
+
+    InventoryLedgerName:
+        string;
+
+    WipLedgerName:
+        string;
+
+    CogsLedgerName:
+        string;
+
+    Remarks:
+        string;
+
+    IsActive:
+        boolean;
 }
-
-
 
 /* ============================================================
    Update Product Master
@@ -58,26 +124,48 @@ export interface CreateProductMaster
 
 export interface UpdateProductMaster
 {
-    id:
+    ProductMasterId:
         number;
 
-    name:
+    ProductCategoryId:
+        number;
+
+    ProductSubCategoryId:
+        number;
+
+    SubCategoryCode:
         string;
 
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
+    ProductCode:
         string;
 
-    status:
+    ProductName:
         string;
 
-    remarks:
+    InventoryLedgerCode:
         string;
+
+    WipLedgerCode:
+        string;
+
+    CogsLedgerCode:
+        string;
+
+    InventoryLedgerName:
+        string;
+
+    WipLedgerName:
+        string;
+
+    CogsLedgerName:
+        string;
+
+    Remarks:
+        string;
+
+    IsActive:
+        boolean;
 }
-
-
 
 /* ============================================================
    Product Master Defaults
@@ -85,6 +173,31 @@ export interface UpdateProductMaster
 
 export interface ProductMasterDefaults
 {
-    code:
+    //===========================================================
+    // Product Master Code
+    //===========================================================
+
+    Code:
+        string;
+
+    //===========================================================
+    // Inventory Ledger Code
+    //===========================================================
+
+    InventoryLedgerCode:
+        string;
+
+    //===========================================================
+    // WIP Ledger Code
+    //===========================================================
+
+    WipLedgerCode:
+        string;
+
+    //===========================================================
+    // COGS Ledger Code
+    //===========================================================
+
+    CogsLedgerCode:
         string;
 }
