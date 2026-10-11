@@ -3,14 +3,18 @@
 //===============================================================
 
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
-using AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
+
+
+//===============================================================
+// Namespace
+//===============================================================
+
+namespace AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
 
 
 //===============================================================
 // Page Cloning Repository Interface
 //===============================================================
-
-namespace AppCore.Application.Contracts.Persistence.InfrastructureControl.DevelopmentManagement;
 
 public interface IPageCloningRepository
 {
@@ -18,110 +22,98 @@ public interface IPageCloningRepository
     // Get All
     //===========================================================
 
-    Task<IEnumerable<PageCloning>> GetAllAsync();
+    Task<List<PageCloningDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<PageCloning?> GetByIdAsync
-    (
-        long id
-    );
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    Task<IEnumerable<PageCloning>> GetHistoryAsync();
-
-
-    //===========================================================
-    // Analyze Source
-    //===========================================================
-
-    Task<PageCloningSourceAnalysisDto> AnalyzeSourceAsync
-    (
-        long submenuId
-    );
-
-
-    //===========================================================
-    // Analyze Target
-    //===========================================================
-
-    Task<PageCloningSourceAnalysisDto> AnalyzeTargetAsync
-    (
-        long submenuId
-    );
+    Task<PageCloningDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long> CreateAsync
-    (
-        PageCloning pageCloning
-    );
+    Task<long> CreateAsync(
+        CreatePageCloningDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task UpdateAsync
-    (
-        PageCloning pageCloning
-    );
-
-
-    //===========================================================
-    // Clone With Transformation Configuration
-    //===========================================================
-
-    Task CloneAsync
-    (
-        long id,
-        PageCloningDto? configuration = null
-    );
-
-
-    //===========================================================
-    // Generate Package
-    //===========================================================
-
-    Task GeneratePackageAsync
-    (
-        long id
-    );
-
-
-    //===========================================================
-    // Restore Package
-    //===========================================================
-
-    Task RestorePackageAsync
-    (
-        long id
-    );
+    Task UpdateAsync(
+        UpdatePageCloningDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task DeleteAsync
-    (
-        long id
-    );
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
-    // Restore
+    // Restore Deleted Record
     //===========================================================
 
-    Task RestoreAsync();
+    Task<bool> RestoreAsync(
+        long userId);
+
+
+    //===========================================================
+    // Exists
+    //===========================================================
+
+    Task<bool> ExistsAsync(
+        long id);
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<PageCloningDefaultsDto> GetDefaultsAsync();
+
+
+    //===========================================================
+    // Analyze Source Page (reads files, writes nothing)
+    //===========================================================
+
+    EntityAnalysisDto Analyze(
+        string name);
+
+
+    //===========================================================
+    // Preview Clone (writes nothing)
+    //===========================================================
+
+    Task<PageCloningPreviewDto> PreviewAsync(
+        long id);
+
+
+    //===========================================================
+    // Apply Clone (writes the files)
+    //===========================================================
+
+    Task<PageCloningResultDto> ApplyAsync(
+        long id,
+        bool overwriteEdited,
+        long userId);
+
+
+    //===========================================================
+    // Restore Code To Baseline
+    //===========================================================
+
+    Task<PageCloningResultDto> RestoreToBaselineAsync(
+        long id,
+        long userId);
 }

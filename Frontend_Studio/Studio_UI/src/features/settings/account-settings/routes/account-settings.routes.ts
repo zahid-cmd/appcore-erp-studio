@@ -290,6 +290,32 @@ Routes =
 
                 // AUTO-END : SUB-003-002-008
 
+            // AUTO-BEGIN : SUB-003-002-005
+
+                //===========================================================
+                // Cash Accounts
+                //===========================================================
+
+                {
+                    path:'cash-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'Cash Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './cash-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.CashAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-005
+
         ]
 
     }

@@ -1,9 +1,9 @@
-
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
+
 
 //===============================================================
 // Update Page Cloning DTO
@@ -12,44 +12,102 @@ namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCl
 public class UpdatePageCloningDto
 {
     //===========================================================
-    // Source Submenu
+    // Primary Key
     //===========================================================
 
-    public long CloneFromId { get; set; }
+    public long PageCloningId
+    {
+        get;
+        set;
+    }
 
-    public string CloneFromCode { get; set; } = string.Empty;
-
-    public string CloneFromName { get; set; } = string.Empty;
-
-    //===========================================================
-    // Target Submenu
-    //===========================================================
-
-    public long CloneToId { get; set; }
-
-    public string CloneToCode { get; set; } = string.Empty;
-
-    public string CloneToName { get; set; } = string.Empty;
 
     //===========================================================
-    // Cloning Configuration
+    // Clone From (Source Submenu)
     //===========================================================
 
-    public string CloningType { get; set; } = "Page";
+    public long CloneFromId
+    {
+        get;
+        set;
+    }
 
-    public int NumberOfFiles { get; set; } = 15;
 
-    public string Operation { get; set; } = "Clone";
+    public string CloneFromCode
+    {
+        get;
+        set;
+    } = string.Empty;
 
-    public string Status { get; set; } = "Pending";
 
-    public string? Remarks { get; set; }
+    public string CloneFromName
+    {
+        get;
+        set;
+    } = string.Empty;
 
-    public bool IsActive { get; set; }
 
     //===========================================================
-    // Audit Information
+    // Clone To (Target Submenu)
     //===========================================================
 
-    public long ModifiedBy { get; set; }
+    public long CloneToId
+    {
+        get;
+        set;
+    }
+
+
+    public string CloneToCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CloneToName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Blueprint
+    //===========================================================
+
+    public string EntityName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string BlueprintJson
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 }

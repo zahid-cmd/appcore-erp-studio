@@ -1,27 +1,34 @@
-
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
 
+
 //===============================================================
-// Page Cloning Default DTO
+// Page Cloning Defaults DTO
 //===============================================================
 
-public class PageCloningDefaultDto
+public class PageCloningDefaultsDto
 {
     //===========================================================
-    // Cloning Configuration
+    // Number Of Files
     //===========================================================
 
-    public string CloningType { get; set; } = "Page";
+    public int NumberOfFiles
+    {
+        get;
+        set;
+    } = 15;
 
-    public int NumberOfFiles { get; set; } = 15;
 
-    public string Operation { get; set; } = "Clone";
+    //===========================================================
+    // Run Status
+    //===========================================================
 
-    public string Status { get; set; } = "Pending";
-
-    public bool IsActive { get; set; } = true;
+    public string RunStatus
+    {
+        get;
+        set;
+    } = "Draft";
 }

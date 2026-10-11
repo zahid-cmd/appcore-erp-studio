@@ -1,9 +1,9 @@
-
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCloning.DTOs;
+
 
 //===============================================================
 // Create Page Cloning DTO
@@ -12,42 +12,91 @@ namespace AppCore.Application.InfrastructureControl.DevelopmentManagement.PageCl
 public class CreatePageCloningDto
 {
     //===========================================================
-    // Source Submenu
+    // Clone From (Source Submenu)
     //===========================================================
 
-    public long CloneFromId { get; set; }
+    public long CloneFromId
+    {
+        get;
+        set;
+    }
 
-    public string CloneFromCode { get; set; } = string.Empty;
 
-    public string CloneFromName { get; set; } = string.Empty;
+    public string CloneFromCode
+    {
+        get;
+        set;
+    } = string.Empty;
 
-    //===========================================================
-    // Target Submenu
-    //===========================================================
 
-    public long CloneToId { get; set; }
+    public string CloneFromName
+    {
+        get;
+        set;
+    } = string.Empty;
 
-    public string CloneToCode { get; set; } = string.Empty;
-
-    public string CloneToName { get; set; } = string.Empty;
-
-    //===========================================================
-    // Cloning Configuration
-    //===========================================================
-
-    public string CloningType { get; set; } = "Page";
-
-    public int NumberOfFiles { get; set; } = 15;
-
-    public string Operation { get; set; } = "Clone";
-
-    public string? Remarks { get; set; }
-
-    public bool IsActive { get; set; } = true;
 
     //===========================================================
-    // Audit Information
+    // Clone To (Target Submenu)
     //===========================================================
 
-    public long CreatedBy { get; set; }
+    public long CloneToId
+    {
+        get;
+        set;
+    }
+
+
+    public string CloneToCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CloneToName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Blueprint
+    //===========================================================
+
+    public string EntityName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string BlueprintJson
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 }

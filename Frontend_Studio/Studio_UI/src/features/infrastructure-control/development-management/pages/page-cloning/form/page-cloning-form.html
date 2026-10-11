@@ -1,0 +1,386 @@
+<div class="app-form-page">
+
+    <!-- ===================== PAGE HEADER ===================== -->
+
+    <app-page-header
+        icon="fas fa-clone"
+        [title]="pageTitle"
+        subtitle="Copy a finished page into an empty page.">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <!-- ===================== TOOLBAR ===================== -->
+
+    <app-page-toolbar>
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+    </app-page-toolbar>
+
+
+    <!-- ===================== CANVAS ===================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid canvasBody [columns]="2">
+
+
+            <!-- ===== STEP BAR ===== -->
+
+            <div style="grid-column: 1 / -1; display:flex; gap:8px; flex-wrap:wrap; font-size:13px; margin-bottom:4px;">
+
+                <span [style.font-weight]="!entity.CloneFromId || !entity.CloneToId ? '700' : '400'"
+                      [style.opacity]="entity.CloneFromId && entity.CloneToId ? '.6' : '1'">
+                    1. Choose pages
+                </span>
+                <span>›</span>
+
+                <span [style.font-weight]="entity.CloneFromId && !blueprint.EntityName ? '700' : '400'"
+                      [style.opacity]="sourceAnalysis ? '.6' : '1'">
+                    2. Review source
+                </span>
+                <span>›</span>
+
+                <span [style.font-weight]="entity.CloneToId && isAddMode ? '700' : '400'">
+                    3. Name it and Save
+                </span>
+                <span>›</span>
+
+                <span [style.font-weight]="!isAddMode && !preview ? '700' : '400'"
+                      [style.opacity]="isAddMode ? '.4' : '1'">
+                    4. Preview
+                </span>
+                <span>›</span>
+
+                <span [style.font-weight]="canApply ? '700' : '400'"
+                      [style.opacity]="canApply ? '1' : '.4'">
+                    5. Apply
+                </span>
+
+            </div>
+
+
+            <!-- ===== 1. CHOOSE PAGES ===== -->
+
+            <app-form-section title="1. Choose Pages" icon="fas fa-clone">
+
+                <app-search-dropdown
+                    label="Clone From (finished page to copy)"
+                    [items]="submenuItems"
+                    [(value)]="entity.CloneFromId"
+                    (valueChange)="onSourceChange()"
+                    [disabled]="isEditMode || isViewMode"
+                    [required]="true">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    label="Clone To (empty page to fill)"
+                    [items]="submenuItems"
+                    [(value)]="entity.CloneToId"
+                    (valueChange)="onTargetChange()"
+                    [disabled]="isEditMode || isViewMode"
+                    [required]="true">
+                </app-search-dropdown>
+
+                <app-textbox
+                    label="Run Status"
+                    [(value)]="entity.RunStatus"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Files Written"
+                    [(value)]="entity.NumberOfFiles"
+                    [readonly]="true">
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- ===== 2. SOURCE ANALYSIS ===== -->
+
+            @if (analyzing || sourceAnalysis)
+            {
+                <app-form-section title="2. What the Source Page Contains" icon="fas fa-magnifying-glass">
+
+                    <div style="grid-column: 1 / -1; font-size:13px; line-height:1.6;">
+
+                        @if (analyzing)
+                        {
+                            <div>Reading the source files...</div>
+                        }
+
+                        @if (sourceAnalysis)
+                        {
+                            @for (e of sourceAnalysis.Errors; track $index)
+                            {
+                                <div style="color:#b91c1c;">• {{ e }}</div>
+                            }
+
+                            <div>
+                                <strong>{{ sourceAnalysis.Entity }}</strong>
+                                &nbsp;·&nbsp; table {{ sourceAnalysis.Table }}
+                                &nbsp;·&nbsp; {{ sourceAnalysis.Files.length - missingFileCount }}
+                                of {{ sourceAnalysis.Files.length }} files found
+                            </div>
+
+                            @if (sourceAnalysis.CodeFormat)
+                            {
+                                <div>Code format: <strong>{{ sourceAnalysis.CodeFormat }}</strong></div>
+                            }
+
+                            @if (sourceAnalysis.Parents.length)
+                            {
+                                <div>
+                                    Linked to:
+                                    @for (p of sourceAnalysis.Parents; track $index)
+                                    {
+                                        <span>{{ p.ParentEntity }}&nbsp;</span>
+                                    }
+                                </div>
+                            }
+
+                            @if (sourceAnalysis.ChildEntities.length)
+                            {
+                                <div>Also creates rows in: {{ sourceAnalysis.ChildEntities.join(', ') }}</div>
+                            }
+
+                            <details style="margin-top:6px;">
+                                <summary style="cursor:pointer;">
+                                    Fields ({{ sourceAnalysis.Fields.length }})
+                                </summary>
+
+                                <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+                                    <tr style="text-align:left;">
+                                        <th>Name</th><th>Type</th><th>Max</th><th>Required</th><th>Unique</th>
+                                    </tr>
+                                    @for (f of sourceAnalysis.Fields; track f.Name)
+                                    {
+                                        <tr>
+                                            <td>{{ f.Name }}</td>
+                                            <td>{{ f.CsType }}</td>
+                                            <td>{{ f.MaxLength }}</td>
+                                            <td>{{ f.Required ? 'Yes' : '' }}</td>
+                                            <td>{{ f.Unique ? 'Yes' : '' }}</td>
+                                        </tr>
+                                    }
+                                </table>
+                            </details>
+
+                            @for (h of sourceAnalysis.Hints; track $index)
+                            {
+                                <div style="opacity:.8;">ℹ {{ h }}</div>
+                            }
+                        }
+
+                    </div>
+
+                </app-form-section>
+            }
+
+
+            <!-- ===== 3. NAME IT ===== -->
+
+            <app-form-section title="3. Name It" icon="fas fa-id-card">
+
+                <app-textbox
+                    label="Entity Name (used in code)"
+                    placeholder="e.g. ProductMaster"
+                    [(value)]="blueprint.EntityName"
+                    (valueChange)="onEntityNameChange()"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Display Name (shown on screen)"
+                    placeholder="e.g. Product Master"
+                    [(value)]="blueprint.DisplayName"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode">
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- ===== CODE NUMBER (OPTIONAL) ===== -->
+
+            <app-form-section title="Code Number (optional)" icon="fas fa-hashtag">
+
+                <app-textbox
+                    label="Prefix"
+                    placeholder="e.g. PRD (leave empty to skip)"
+                    [(value)]="blueprint.Code.Prefix"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode">
+                </app-textbox>
+
+                <app-textbox
+                    label="Number Length"
+                    [(value)]="blueprint.Code.SequencePad"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode">
+                </app-textbox>
+
+                <app-textbox
+                    label="Example"
+                    [(value)]="codePreview"
+                    [readonly]="true">
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- ===== NOTES ===== -->
+
+            <app-form-section title="Notes" icon="fas fa-note-sticky">
+
+                <app-dropdown
+                    label="Status"
+                    [items]="statusItems"
+                    [(value)]="entity.IsActive"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                </app-dropdown>
+
+                <app-textarea
+                    label="Remarks"
+                    placeholder="Enter remarks"
+                    [rows]="3"
+                    [(value)]="entity.Remarks"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode">
+                </app-textarea>
+
+            </app-form-section>
+
+
+            <!-- ===== 4 & 5. PREVIEW AND APPLY ===== -->
+
+            @if (isAddMode)
+            {
+                <div style="grid-column: 1 / -1; font-size:13px; opacity:.8;">
+                    After you Save, open this record with Edit. Preview and Apply appear here.
+                </div>
+            }
+
+            @if (!isAddMode)
+            {
+                <app-form-section title="4. Preview and Apply" icon="fas fa-gears">
+
+                    <div style="grid-column: 1 / -1;">
+
+                        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+
+                            <button type="button" (click)="onPreview()"
+                                    [disabled]="engineBusy"
+                                    style="padding:6px 14px; cursor:pointer;">
+                                Preview (writes nothing)
+                            </button>
+
+                            <button type="button" (click)="onApply()"
+                                    [disabled]="!canApply"
+                                    [title]="canApply ? '' : 'Run Preview and review the files first'"
+                                    style="padding:6px 14px; cursor:pointer;">
+                                Apply (writes files)
+                            </button>
+
+                            <button type="button" (click)="onRestoreBaseline()"
+                                    [disabled]="engineBusy"
+                                    style="padding:6px 14px; cursor:pointer;">
+                                Restore
+                            </button>
+
+                            @if (engineBusy)
+                            {
+                                <span style="align-self:center;">Working...</span>
+                            }
+
+                        </div>
+
+                        @for (message of engineMessages; track $index)
+                        {
+                            <div style="padding:4px 0;">• {{ message }}</div>
+                        }
+
+                        @if (preview)
+                        {
+                            <div style="display:flex; gap:12px; margin-top:8px; min-height:260px;">
+
+                                <div style="width:280px; border:1px solid #ccc; overflow:auto; max-height:420px;">
+
+                                    @for (file of preview.Files; track file.LogicalKey)
+                                    {
+                                        <div (click)="selectFile(file)"
+                                             [style.background]="selectedFile === file ? '#dbe4ff' : 'transparent'"
+                                             style="padding:6px 8px; cursor:pointer; border-bottom:1px solid #eee; font-size:12px;">
+
+                                            <div><strong>{{ file.LogicalKey }}</strong></div>
+                                            <div style="word-break:break-all; opacity:.7;">{{ file.Path }}</div>
+
+                                            @if (file.EditedSinceBaseline)
+                                            {
+                                                <div style="color:#b45309;">Edited by hand</div>
+                                            }
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                                <div style="flex:1; display:flex; gap:8px; min-width:0;">
+
+                                    <div style="flex:1; min-width:0;">
+                                        <div><strong>Before</strong></div>
+                                        <pre style="border:1px solid #ccc; padding:8px; overflow:auto; max-height:400px; font-size:12px;">{{ selectedFile?.Before }}</pre>
+                                    </div>
+
+                                    <div style="flex:1; min-width:0;">
+                                        <div><strong>After</strong></div>
+                                        <pre style="border:1px solid #ccc; padding:8px; overflow:auto; max-height:400px; font-size:12px;">{{ selectedFile?.After }}</pre>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+
+                        @if (entity.BuildOutput)
+                        {
+                            <div style="margin-top:10px;"><strong>Last build output</strong></div>
+                            <pre style="border:1px solid #ccc; padding:8px; overflow:auto; max-height:240px; font-size:12px;">{{ entity.BuildOutput }}</pre>
+                        }
+
+                    </div>
+
+                </app-form-section>
+            }
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

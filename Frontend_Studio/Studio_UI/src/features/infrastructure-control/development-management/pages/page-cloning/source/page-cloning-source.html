@@ -1,0 +1,273 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-clone"
+        title="Page Cloning"
+        subtitle="Step 1: choose the finished page you want to copy.">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Continue"
+            command1Icon="fas fa-arrow-right"
+            (command1Click)="onContinue()"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+
+        <div pageToolbarRight class="toolbar-filters">
+
+            <app-search-dropdown
+                placeholder="Module"
+                [items]="moduleItems"
+                labelField="label"
+                valueField="value"
+                [value]="state.cloneFromModuleId || null"
+                (valueChange)="state.cloneFromModuleId = $event; onModuleChange()">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="Menu"
+                [items]="menuItems"
+                labelField="label"
+                valueField="value"
+                [value]="state.cloneFromMenuId || null"
+                (valueChange)="state.cloneFromMenuId = $event; onMenuChange()">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="Submenu"
+                [items]="submenuItems"
+                labelField="label"
+                valueField="value"
+                [value]="state.cloneFromId || null"
+                (valueChange)="state.cloneFromId = $event; onSubmenuChange()">
+            </app-search-dropdown>
+
+            <button type="button" class="analyse-btn" (click)="onAnalyse()" [disabled]="analyzing">
+                <i class="fas fa-magnifying-glass"></i>
+                {{ analyzing ? 'Analysing...' : 'Analyse' }}
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas [config]="canvasConfig">
+
+        <div canvasBody class="source-body">
+
+            <!-- ============ FIXED HEADER (does not scroll) ============ -->
+            <div class="canvas-head">
+
+                <div class="head-row">
+
+                    <!-- LEFT : steps 1 to 3 -->
+                    <div class="stepper">
+                        <div class="step active">
+                            <span class="dot">1</span>
+                            <span class="label">Clone From</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step">
+                            <span class="dot">2</span>
+                            <span class="label">Clone To</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step">
+                            <span class="dot">3</span>
+                            <span class="label">Preview</span>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT : counters -->
+                    @if (analysis)
+                    {
+                        <div class="chips">
+
+                            <div class="chip">
+                                <span class="chip-label">Source page</span>
+                                <span class="chip-value">{{ state.cloneFromName }}</span>
+                            </div>
+
+                            <div class="chip">
+                                <span class="chip-label">Files found</span>
+                                <span class="chip-value"
+                                      [class.ok]="foundCount === analysis.Files.length"
+                                      [class.bad]="foundCount !== analysis.Files.length">
+                                    {{ foundCount }} / {{ analysis.Files.length }}
+                                </span>
+                            </div>
+
+                            <div class="chip">
+                                <span class="chip-label">Backend</span>
+                                <span class="chip-value">{{ backendFiles.length }}</span>
+                            </div>
+
+                            <div class="chip">
+                                <span class="chip-label">Frontend</span>
+                                <span class="chip-value">{{ frontendFiles.length }}</span>
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+                @if (analysis)
+                {
+                    @for (e of analysis.Errors; track $index)
+                    {
+                        <div class="files-error">• {{ e }}</div>
+                    }
+                }
+
+            </div>
+
+            <!-- ============ SCROLLING AREA ============ -->
+            <div class="canvas-scroll appcore-scrollbar">
+
+                @if (!analysis && !analyzing)
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <div class="empty-title">No page analysed yet</div>
+                        <div class="empty-text">
+                            Choose a module, a menu and a submenu in the toolbar, then click Analyse.
+                            The 15 files of that page will be listed here.
+                        </div>
+                    </div>
+                }
+
+                @if (analyzing)
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <div class="empty-title">Reading the page files...</div>
+                    </div>
+                }
+
+                @if (analysis)
+                {
+                    <div class="two-sections">
+
+                        <!-- BACKEND -->
+                        <div class="file-section">
+
+                            <div class="section-header backend">
+                                <span><i class="fas fa-server"></i> Backend</span>
+                                <span class="badge">{{ backendFiles.length }} files</span>
+                            </div>
+
+                            <table class="files-table">
+                                <thead>
+                                    <tr>
+                                        <th class="c-no">#</th>
+                                        <th class="c-file">File</th>
+                                        <th>Location</th>
+                                        <th class="c-status">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (file of backendFiles; track file.Key; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="c-no">{{ i + 1 }}</td>
+                                            <td><strong>{{ labelOf(file) }}</strong></td>
+                                            <td class="path">{{ file.Path }}</td>
+                                            <td>
+                                                <span class="pill"
+                                                      [class.pill-ok]="file.Exists"
+                                                      [class.pill-bad]="!file.Exists">
+                                                    {{ file.Exists ? 'Found' : 'Missing' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                        <!-- FRONTEND -->
+                        <div class="file-section">
+
+                            <div class="section-header frontend">
+                                <span><i class="fas fa-display"></i> Frontend</span>
+                                <span class="badge">{{ frontendFiles.length }} files</span>
+                            </div>
+
+                            <table class="files-table">
+                                <thead>
+                                    <tr>
+                                        <th class="c-no">#</th>
+                                        <th class="c-file">File</th>
+                                        <th>Location</th>
+                                        <th class="c-status">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (file of frontendFiles; track file.Key; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="c-no">{{ i + 1 }}</td>
+                                            <td><strong>{{ labelOf(file) }}</strong></td>
+                                            <td class="path">{{ file.Path }}</td>
+                                            <td>
+                                                <span class="pill"
+                                                      [class.pill-ok]="file.Exists"
+                                                      [class.pill-bad]="!file.Exists">
+                                                    {{ file.Exists ? 'Found' : 'Missing' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- ============ CANVAS FOOTER : page facts ============ -->
+        <div canvasFooter class="canvas-footer">
+
+            @if (analysis && analysis.Hints.length)
+            {
+                @for (h of analysis.Hints; track $index)
+                {
+                    <span class="hint-chip">
+                        <i class="fas fa-circle-info"></i> {{ h }}
+                    </span>
+                }
+            }
+            @else
+            {
+                <span class="hint-empty">Page details appear here after you click Analyse.</span>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>

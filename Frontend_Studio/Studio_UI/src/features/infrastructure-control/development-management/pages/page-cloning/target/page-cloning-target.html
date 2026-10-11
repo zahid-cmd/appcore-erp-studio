@@ -1,0 +1,301 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-clone"
+        title="Page Cloning"
+        subtitle="Step 2: choose the empty page that will receive the code.">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Continue"
+            command1Icon="fas fa-arrow-right"
+            (command1Click)="onContinue()"
+            command2Text="Back"
+            command2Icon="fas fa-arrow-left"
+            (command2Click)="onBack()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-list"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+
+        <div pageToolbarRight class="toolbar-filters">
+
+            <app-search-dropdown
+                placeholder="Module"
+                [items]="moduleItems"
+                labelField="label"
+                valueField="value"
+                [value]="state.cloneToModuleId || null"
+                (valueChange)="state.cloneToModuleId = $event; onModuleChange()">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="Menu"
+                [items]="menuItems"
+                labelField="label"
+                valueField="value"
+                [value]="state.cloneToMenuId || null"
+                (valueChange)="state.cloneToMenuId = $event; onMenuChange()">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="Submenu"
+                [items]="submenuItems"
+                labelField="label"
+                valueField="value"
+                [value]="state.cloneToId || null"
+                (valueChange)="state.cloneToId = $event; onSubmenuChange()">
+            </app-search-dropdown>
+
+            <button type="button" class="analyse-btn" (click)="onAnalyse()" [disabled]="analyzing">
+                <i class="fas fa-magnifying-glass"></i>
+                {{ analyzing ? 'Analysing...' : 'Analyse' }}
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas [config]="canvasConfig">
+
+        <div canvasBody class="source-body">
+
+            <!-- ============ FIXED HEADER (does not scroll) ============ -->
+            <div class="canvas-head">
+
+                <div class="head-row">
+
+                    <!-- LEFT : steps -->
+                    <div class="stepper">
+                        <div class="step done">
+                            <span class="dot"><i class="fas fa-check"></i></span>
+                            <span class="label">Clone From</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step active">
+                            <span class="dot">2</span>
+                            <span class="label">Clone To</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step">
+                            <span class="dot">3</span>
+                            <span class="label">Preview</span>
+                        </div>
+                    </div>
+
+                    <!-- CENTER : names used in code -->
+                    <div class="names-card">
+
+                        @if (state.cloneToId)
+                        {
+                            <label class="name-field">
+                                <span class="name-label">Entity name (used in code)</span>
+                                <input type="text"
+                                       placeholder="e.g. CashAccounts"
+                                       [value]="state.entityName"
+                                       (input)="onEntityInput($event)" />
+                            </label>
+
+                            <label class="name-field">
+                                <span class="name-label">Display name (shown on screen)</span>
+                                <input type="text"
+                                       placeholder="e.g. Cash Accounts"
+                                       [value]="state.displayName"
+                                       (input)="onDisplayInput($event)" />
+                            </label>
+                        }
+                        @else
+                        {
+                            <span class="names-empty">Choose the target page to set its names</span>
+                        }
+
+                    </div>
+
+                    <!-- RIGHT : counters -->
+                    <div class="chips">
+
+                        <div class="chip">
+                            <span class="chip-label">Copy from</span>
+                            <span class="chip-value">{{ state.cloneFromName }}</span>
+                        </div>
+
+                        @if (analysis)
+                        {
+                            <div class="chip">
+                                <span class="chip-label">Files found</span>
+                                <span class="chip-value"
+                                      [class.ok]="foundCount === analysis.Files.length"
+                                      [class.bad]="foundCount !== analysis.Files.length">
+                                    {{ foundCount }} / {{ analysis.Files.length }}
+                                </span>
+                            </div>
+
+                            <div class="chip">
+                                <span class="chip-label">Backend</span>
+                                <span class="chip-value">{{ backendFiles.length }}</span>
+                            </div>
+
+                            <div class="chip">
+                                <span class="chip-label">Frontend</span>
+                                <span class="chip-value">{{ frontendFiles.length }}</span>
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+                @if (analysis)
+                {
+                    @for (e of analysis.Errors; track $index)
+                    {
+                        <div class="files-error">• {{ e }}</div>
+                    }
+                }
+
+            </div>
+
+            <!-- ============ SCROLLING AREA ============ -->
+            <div class="canvas-scroll appcore-scrollbar">
+
+                @if (!analysis && !analyzing)
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-bullseye"></i>
+                        <div class="empty-title">No target page analysed yet</div>
+                        <div class="empty-text">
+                            Choose the empty page in the toolbar, then click Analyse.
+                            Its 15 baseline files will be listed here.
+                        </div>
+                    </div>
+                }
+
+                @if (analyzing)
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <div class="empty-title">Reading the page files...</div>
+                    </div>
+                }
+
+                @if (analysis)
+                {
+                    <div class="two-sections">
+
+                        <!-- BACKEND -->
+                        <div class="file-section">
+
+                            <div class="section-header backend">
+                                <span><i class="fas fa-server"></i> Backend</span>
+                                <span class="badge">{{ backendFiles.length }} files</span>
+                            </div>
+
+                            <table class="files-table">
+                                <thead>
+                                    <tr>
+                                        <th class="c-no">#</th>
+                                        <th class="c-file">File</th>
+                                        <th>Location</th>
+                                        <th class="c-status">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (file of backendFiles; track file.Key; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="c-no">{{ i + 1 }}</td>
+                                            <td><strong>{{ labelOf(file) }}</strong></td>
+                                            <td class="path">{{ file.Path }}</td>
+                                            <td>
+                                                <span class="pill"
+                                                      [class.pill-ok]="file.Exists"
+                                                      [class.pill-bad]="!file.Exists">
+                                                    {{ file.Exists ? 'Found' : 'Missing' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                        <!-- FRONTEND -->
+                        <div class="file-section">
+
+                            <div class="section-header frontend">
+                                <span><i class="fas fa-display"></i> Frontend</span>
+                                <span class="badge">{{ frontendFiles.length }} files</span>
+                            </div>
+
+                            <table class="files-table">
+                                <thead>
+                                    <tr>
+                                        <th class="c-no">#</th>
+                                        <th class="c-file">File</th>
+                                        <th>Location</th>
+                                        <th class="c-status">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (file of frontendFiles; track file.Key; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="c-no">{{ i + 1 }}</td>
+                                            <td><strong>{{ labelOf(file) }}</strong></td>
+                                            <td class="path">{{ file.Path }}</td>
+                                            <td>
+                                                <span class="pill"
+                                                      [class.pill-ok]="file.Exists"
+                                                      [class.pill-bad]="!file.Exists">
+                                                    {{ file.Exists ? 'Found' : 'Missing' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- ============ CANVAS FOOTER : page facts ============ -->
+        <div canvasFooter class="canvas-footer">
+
+            @if (analysis && analysis.Hints.length)
+            {
+                @for (h of analysis.Hints; track $index)
+                {
+                    <span class="hint-chip">
+                        <i class="fas fa-circle-info"></i> {{ h }}
+                    </span>
+                }
+            }
+            @else
+            {
+                <span class="hint-empty">Target page details appear here after you click Analyse.</span>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>

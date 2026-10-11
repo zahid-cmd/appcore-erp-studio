@@ -1,5 +1,5 @@
 //===============================================================
-// Namespaces
+// Namespace
 //===============================================================
 
 namespace AppCore.Domain.Entities.InfrastructureControl.DevelopmentManagement;
@@ -15,104 +15,188 @@ public class PageCloning
     // Primary Key
     //===========================================================
 
-    public long Id { get; set; }
+    public long PageCloningId
+    {
+        get;
+        set;
+    }
 
 
     //===========================================================
-    // Clone From
+    // Clone From (Source Submenu)
     //===========================================================
 
-    public long CloneFromId { get; set; }
-
-    public string CloneFromCode { get; set; } = string.Empty;
-
-    public string CloneFromName { get; set; } = string.Empty;
-
-
-    //===========================================================
-    // Clone To
-    //===========================================================
-
-    public long CloneToId { get; set; }
-
-    public string CloneToCode { get; set; } = string.Empty;
-
-    public string CloneToName { get; set; } = string.Empty;
+    public long CloneFromId
+    {
+        get;
+        set;
+    }
 
 
-    //===========================================================
-    // Clone Type
-    //===========================================================
+    public string CloneFromCode
+    {
+        get;
+        set;
+    } = string.Empty;
 
-    public string CloningType { get; set; } = "Page";
+
+    public string CloneFromName
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
-    // Files
+    // Clone To (Target Submenu)
     //===========================================================
 
-    public int NumberOfFiles { get; set; }
+    public long CloneToId
+    {
+        get;
+        set;
+    }
+
+
+    public string CloneToCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CloneToName
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
-    // Operation
+    // Blueprint
     //===========================================================
 
-    public string Operation { get; set; } = "Clone";
+    public string EntityName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string BlueprintJson
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
-    // Status
+    // Clone Run
     //===========================================================
 
-    public string Status { get; set; } = "Pending";
+    public int NumberOfFiles
+    {
+        get;
+        set;
+    } = 15;
+
+
+    public string RunStatus
+    {
+        get;
+        set;
+    } = "Draft";
+
+
+    public DateTime? LastRunDate
+    {
+        get;
+        set;
+    }
+
+
+    public string BuildOutput
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
     // Configuration
     //===========================================================
 
-    public string? Remarks { get; set; }
+    public string Remarks
+    {
+        get;
+        set;
+    } = string.Empty;
 
 
     //===========================================================
-    // Last Cloning
+    // Status
     //===========================================================
 
-    public long? LastClonedBy { get; set; }
-
-    public DateTime? LastClonedDate { get; set; }
-
-    public string LastCloningResult { get; set; } = string.Empty;
-
-
-    //===========================================================
-    // Active Status
-    //===========================================================
-
-    public bool IsActive { get; set; }
-
-
-    //===========================================================
-    // Audit
-    //===========================================================
-
-    public long CreatedBy { get; set; }
-
-    public DateTime CreatedDate { get; set; }
-
-    public long? ModifiedBy { get; set; }
-
-    public DateTime? ModifiedDate { get; set; }
+    public bool IsActive
+    {
+        get;
+        set;
+    } = true;
 
 
     //===========================================================
     // Soft Delete
     //===========================================================
 
-    public long? DeletedBy { get; set; }
+    public bool IsDeleted
+    {
+        get;
+        set;
+    } = false;
 
-    public DateTime? DeletedDate { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    public long CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

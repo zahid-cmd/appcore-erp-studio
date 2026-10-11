@@ -627,6 +627,16 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : CashAccounts
+
+        services.AddScoped
+        <
+            ICashAccountsRepository,
+            CashAccountsRepository
+        >();
+
+        // AUTO-END : CashAccounts
+
         // AUTO-BEGIN : ProductMaster
 
         services.AddScoped

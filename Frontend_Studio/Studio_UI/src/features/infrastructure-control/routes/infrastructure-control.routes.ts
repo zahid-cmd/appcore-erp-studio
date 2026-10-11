@@ -4,7 +4,6 @@ import
 }
 from '@angular/router';
 
-
 export const infrastructureControlRoutes:
     Routes =
 [
@@ -43,7 +42,7 @@ export const infrastructureControlRoutes:
 
         loadChildren:() =>
             import(
-                '../development management/routes/development-management.routes'
+                '../development-management/routes/development-management.routes'
             )
             .then(
                 m =>

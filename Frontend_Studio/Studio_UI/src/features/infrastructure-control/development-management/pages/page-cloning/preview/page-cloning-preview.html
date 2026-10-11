@@ -1,0 +1,149 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-clone"
+        title="Page Cloning"
+        subtitle="Step 3: review the 15 files, then apply.">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Visible]="false"
+            command2Text="Back"
+            command2Icon="fas fa-arrow-left"
+            (command2Click)="onBack()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-list"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+    </app-page-toolbar>
+
+    <app-page-canvas>
+
+        <app-form-grid canvasBody [columns]="2">
+
+            <!-- Step bar -->
+            <div style="grid-column: 1 / -1; display:flex; gap:10px; font-size:13px;">
+                <span style="opacity:.5;">1. Clone From</span><span>›</span>
+                <span style="opacity:.5;">2. Clone To</span><span>›</span>
+                <span [style.font-weight]="step === 3 ? '700' : '400'">3. Preview</span>
+            </div>
+
+            <!-- Summary -->
+            <app-form-section title="Summary" icon="fas fa-list-check">
+
+                <app-textbox
+                    label="Clone From"
+                    [(value)]="state.cloneFromName"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Clone To"
+                    [(value)]="state.cloneToName"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Entity Name"
+                    [(value)]="state.entityName"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Display Name"
+                    [(value)]="state.displayName"
+                    [readonly]="true">
+                </app-textbox>
+
+            </app-form-section>
+
+            <!-- Actions -->
+            <app-form-section title="Actions" icon="fas fa-gears">
+
+                <div style="grid-column: 1 / -1; font-size:13px; line-height:1.6;">
+                    <div>1. <strong>Preview</strong> shows what each file will contain. Nothing is written.</div>
+                    <div>2. <strong>Apply</strong> writes the 15 files. It is enabled after a preview.</div>
+                </div>
+
+                <div style="grid-column: 1 / -1; display:flex; gap:8px; flex-wrap:wrap;">
+
+                    <button type="button" (click)="onGeneratePreview()"
+                            style="padding:6px 14px; cursor:pointer;">
+                        Preview (writes nothing)
+                    </button>
+
+                    <button type="button" (click)="onApply()"
+                            [disabled]="!previewReady"
+                            style="padding:6px 14px; cursor:pointer;">
+                        Apply (writes files)
+                    </button>
+
+                </div>
+
+            </app-form-section>
+
+            <!-- Files -->
+            <div style="grid-column: 1 / -1; display:flex; gap:12px; min-height:300px;">
+
+                <div style="width:420px; border:1px solid #ccc; overflow:auto; max-height:460px; font-size:13px;">
+
+                    <div style="padding:6px 8px; font-weight:700; background:#f3f4f6;">Backend (9)</div>
+
+                    @for (file of backendFiles; track file.fileName)
+                    {
+                        <div (click)="selectFile(file)"
+                             [style.background]="selectedFile === file ? '#dbe4ff' : 'transparent'"
+                             style="padding:6px 8px; cursor:pointer; border-bottom:1px solid #eee;">
+                            <div><strong>{{ file.label }}</strong></div>
+                            <div style="opacity:.8;">{{ file.fileName }}</div>
+                            <div style="opacity:.6; font-size:12px;">{{ file.status }}</div>
+                        </div>
+                    }
+
+                    <div style="padding:6px 8px; font-weight:700; background:#f3f4f6;">Frontend (6)</div>
+
+                    @for (file of frontendFiles; track file.fileName)
+                    {
+                        <div (click)="selectFile(file)"
+                             [style.background]="selectedFile === file ? '#dbe4ff' : 'transparent'"
+                             style="padding:6px 8px; cursor:pointer; border-bottom:1px solid #eee;">
+                            <div><strong>{{ file.label }}</strong></div>
+                            <div style="opacity:.8;">{{ file.fileName }}</div>
+                            <div style="opacity:.6; font-size:12px;">{{ file.status }}</div>
+                        </div>
+                    }
+
+                </div>
+
+                <div style="flex:1; display:flex; gap:8px; min-width:0;">
+
+                    <div style="flex:1; min-width:0;">
+                        <div><strong>Before (current file)</strong></div>
+                        <pre style="border:1px solid #ccc; padding:8px; min-height:260px; font-size:12px; overflow:auto;">{{ selectedFile ? 'Shown after Preview.' : 'Select a file.' }}</pre>
+                    </div>
+
+                    <div style="flex:1; min-width:0;">
+                        <div><strong>After (generated)</strong></div>
+                        <pre style="border:1px solid #ccc; padding:8px; min-height:260px; font-size:12px; overflow:auto;">{{ selectedFile ? 'Shown after Preview.' : 'Select a file.' }}</pre>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>
