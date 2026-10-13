@@ -3,18 +3,26 @@
     <app-page-header
         icon="fas fa-clone"
         title="Page Cloning"
-        subtitle="Step 1: choose the finished page you want to copy.">
+        subtitle="Choose the finished page you want to copy.">
 
+        <!-- CENTER : step counter -->
+        <app-steps-counter
+            pageHeaderCenter
+            [current]="1"
+            [total]="4">
+        </app-steps-counter>
+
+        <!-- RIGHT : command center -->
         <app-command-center
             pageHeaderRight
-            command1Text="Continue"
-            command1Icon="fas fa-arrow-right"
-            (command1Click)="onContinue()"
-            command2Text="Clear"
-            command2Icon="fas fa-broom"
-            (command2Click)="onClear()"
+            command1Text="Reset"
+            command1Icon="fas fa-rotate-left"
+            (command1Click)="onReset()"
+            command2Text="Back"
+            command2Icon="fas fa-arrow-left"
+            (command2Click)="onBack()"
             [command3Visible]="false"
-            rightCommandIcon="fas fa-arrow-left"
+            rightCommandIcon="fas fa-list"
             (rightCommandClick)="onBackToList()">
         </app-command-center>
 
@@ -75,7 +83,7 @@
 
                 <div class="head-row">
 
-                    <!-- LEFT : steps 1 to 3 -->
+                    <!-- LEFT : steps -->
                     <div class="stepper">
                         <div class="step active">
                             <span class="dot">1</span>
@@ -89,6 +97,11 @@
                         <span class="line"></span>
                         <div class="step">
                             <span class="dot">3</span>
+                            <span class="label">Clone Action</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step">
+                            <span class="dot">4</span>
                             <span class="label">Preview</span>
                         </div>
                     </div>
@@ -247,22 +260,28 @@
 
         </div>
 
-        <!-- ============ CANVAS FOOTER : page facts ============ -->
+        <!-- ============ CANVAS FOOTER : facts left, Next right ============ -->
         <div canvasFooter class="canvas-footer">
 
-            @if (analysis && analysis.Hints.length)
-            {
-                @for (h of analysis.Hints; track $index)
+            <div class="footer-hints">
+                @if (analysis && analysis.Hints.length)
                 {
-                    <span class="hint-chip">
-                        <i class="fas fa-circle-info"></i> {{ h }}
-                    </span>
+                    @for (h of analysis.Hints; track $index)
+                    {
+                        <span class="hint-chip">
+                            <i class="fas fa-circle-info"></i> {{ h }}
+                        </span>
+                    }
                 }
-            }
-            @else
-            {
-                <span class="hint-empty">Page details appear here after you click Analyse.</span>
-            }
+                @else
+                {
+                    <span class="hint-empty">Page details appear here after you click Analyse.</span>
+                }
+            </div>
+
+            <button type="button" class="next-btn" (click)="onNext()" [disabled]="analyzing">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
 
         </div>
 

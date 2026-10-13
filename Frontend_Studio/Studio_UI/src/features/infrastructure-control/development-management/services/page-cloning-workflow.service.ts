@@ -6,15 +6,62 @@ import { ModuleService } from '../../navigation-management/services/module.servi
 import { NavigationMenuService } from '../../navigation-management/services/menu.service';
 import { NavigationSubmenuService } from '../../navigation-management/services/submenu.service';
 
-//===============================================================
-// Types
-//===============================================================
 export interface SubmenuOption
 {
     label: string;
     value: number;
     code: string;
     name: string;
+}
+
+export type FieldAction = 'Keep' | 'Modify' | 'Add' | 'Exclude';
+export type ParentMode = 'Keep' | 'Change' | 'Exclude';
+
+// How the field is shown on the generated form
+export type ControlType =
+    'Textbox' | 'Textarea' | 'Number' | 'Date' |
+    'YesNo' | 'Status' | 'Checkbox' | 'Dropdown' | 'SearchDropdown';
+
+export interface CloneFieldRow
+{
+    sourceName: string;
+    action: FieldAction;
+    name: string;
+    type: string;
+    maxLength: number | null;
+    required: boolean;
+    unique: boolean;
+    control: ControlType;
+    defaultValue: string;
+
+    // original source values (used by Keep and Reset)
+    srcType: string;
+    srcMaxLength: number | null;
+    srcRequired: boolean;
+    srcUnique: boolean;
+    srcControl: ControlType;
+    srcDefault: string;
+}
+
+export interface CodeSegmentSetup
+{
+    name: string;
+    pad: number;
+}
+
+export interface CloneSetup
+{
+    parentMode: ParentMode;
+    parentEntity: string;
+    parentFk: string;
+    cascade: string[];
+
+    codeEnabled: boolean;
+    codePrefix: string;
+    codeSegments: CodeSegmentSetup[];
+    codeSequencePad: number;
+
+    softDelete: boolean;
 }
 
 export interface CloneWorkflowState
@@ -33,11 +80,13 @@ export interface CloneWorkflowState
 
     entityName: string;
     displayName: string;
+
+    fields: CloneFieldRow[];
+    fieldsForSourceId: number;
+    setup: CloneSetup;
+    setupForSourceId: number;
 }
 
-//===============================================================
-// The 15 files every page is made of
-//===============================================================
 export const CLONE_FILE_KINDS: { group: string; label: string; pattern: string }[] =
 [
     { group: 'Backend',  label: 'Entity',               pattern: '{E}.cs' },
@@ -57,9 +106,6 @@ export const CLONE_FILE_KINDS: { group: string; label: string; pattern: string }
     { group: 'Frontend', label: 'List (html)',          pattern: '{K}-list.html' }
 ];
 
-//===============================================================
-// Service
-//===============================================================
 @Injectable({ providedIn: 'root' })
 export class PageCloningWorkflowService
 {
@@ -67,10 +113,16 @@ export class PageCloningWorkflowService
     private readonly menuService = inject(NavigationMenuService);
     private readonly submenuService = inject(NavigationSubmenuService);
 
-    //===========================================================
-    // Choices made on the three pages
-    //===========================================================
     state: CloneWorkflowState = this.emptyState();
+
+    emptySetup(): CloneSetup
+    {
+        return {
+            parentMode: 'Exclude', parentEntity: '', parentFk: '', cascade: [],
+            codeEnabled: false, codePrefix: '', codeSegments: [], codeSequencePad: 4,
+            softDelete: true
+        };
+    }
 
     emptyState(): CloneWorkflowState
     {
@@ -79,7 +131,9 @@ export class PageCloningWorkflowService
             cloneFromId: 0, cloneFromCode: '', cloneFromName: '',
             cloneToModuleId: 0, cloneToMenuId: 0,
             cloneToId: 0, cloneToCode: '', cloneToName: '',
-            entityName: '', displayName: ''
+            entityName: '', displayName: '',
+            fields: [], fieldsForSourceId: 0,
+            setup: this.emptySetup(), setupForSourceId: 0
         };
     }
 
@@ -88,9 +142,6 @@ export class PageCloningWorkflowService
         this.state = this.emptyState();
     }
 
-    //===========================================================
-    // Every submenu in the system (module -> menu -> submenu), loaded once
-    //===========================================================
     private cache$?: Observable<SubmenuOption[]>;
 
     loadSubmenus(): Observable<SubmenuOption[]>

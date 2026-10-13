@@ -9,6 +9,7 @@ import { CommandCenterComponent } from '../../../../../../shared/components/util
 import { ControlTabsComponent, ControlTab } from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 import { PageCanvasComponent, PageCanvasConfig } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 import { SearchDropdownComponent } from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+import { StepsCounterComponent } from '../../../../../../shared/components/controls/steps-counter/steps-counter';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 
@@ -48,7 +49,7 @@ const FILE_LABELS: Record<string, string> =
         CommonModule,
         PageHeaderComponent, PageToolbarComponent, CommandCenterComponent,
         ControlTabsComponent, PageCanvasComponent, SearchDropdownComponent,
-        ToastComponent
+        StepsCounterComponent, ToastComponent
     ],
     templateUrl:'./page-cloning-source.html',
     styleUrls:['./page-cloning-source.css']
@@ -65,15 +66,14 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly zone = inject(NgZone);
 
-    readonly step: number = 1;
     selectedTab = 'source';
 
+    // The tab shows only the name (the step lives in the page header center)
     tabs: ControlTab[] =
     [
-        { id:'source', label:'Clone From (Step 1 of 3)' }
+        { id:'source', label:'Clone From' }
     ];
 
-    // Turns the canvas footer on (hints are shown there)
     readonly canvasConfig = {
         showFooter: true,
         reserveFooterSpace: true,
@@ -95,7 +95,8 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
     get state(): CloneWorkflowState { return this.workflow.state; }
 
     //===========================================================
-    // Refresh the screen (works with and without zone.js)
+    // CHANGE DETECTION LOCK
+    // Never call cdr directly. Every async callback must end with refresh().
     //===========================================================
     private refresh(): void
     {
@@ -103,9 +104,27 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
 
         this.zone.run(() =>
         {
-            this.cdr.markForCheck();
-            this.cdr.detectChanges();
+            try
+            {
+                this.cdr.markForCheck();
+                this.cdr.detectChanges();
+            }
+            catch (error)
+            {
+                console.error('[Clone From] render error', error);
+            }
         });
+
+        setTimeout(() =>
+        {
+            if (this.destroyed) { return; }
+
+            this.zone.run(() =>
+            {
+                try { this.cdr.detectChanges(); }
+                catch (error) { console.error('[Clone From] render error', error); }
+            });
+        }, 0);
     }
 
     //===========================================================
@@ -194,7 +213,6 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
         this.state.cloneFromCode = s?.code ?? '';
         this.state.cloneFromName = s?.name ?? '';
 
-        // A different page invalidates any running or finished analysis
         this.cancelAnalysis();
         this.analysis = null;
 
@@ -277,7 +295,6 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
             return;
         }
 
-        // A new click always starts a fresh request
         this.analyze();
     }
 
@@ -300,7 +317,6 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
             this.state.cloneFromName = s?.name ?? '';
         }
 
-        // Drop any request that is still pending
         this.analyzeSub?.unsubscribe();
 
         this.analyzing = true;
@@ -350,11 +366,6 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
         return FILE_LABELS[file.Key] ?? file.Key;
     }
 
-    groupOf(file: AnalysisFile): string
-    {
-        return file.Key.startsWith('backend') ? 'Backend' : 'Frontend';
-    }
-
     get foundCount(): number
     {
         return this.analysis?.Files.filter(f => f.Exists).length ?? 0;
@@ -371,9 +382,9 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Navigation
+    // Canvas footer : Next
     //===========================================================
-    onContinue(): void
+    onNext(): void
     {
         if (!this.state.cloneFromId)
         {
@@ -398,7 +409,10 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
             ['/infrastructure-control', 'development-management', 'page-cloning', 'target']);
     }
 
-    onClear(): void
+    //===========================================================
+    // Command center : Reset, Back, List
+    //===========================================================
+    onReset(): void
     {
         this.cancelAnalysis();
         this.workflow.reset();
@@ -406,6 +420,12 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
         this.menuItems = [ { label:'Select menu', value:null } ];
         this.submenuItems = [ { label:'Select submenu', value:null } ];
         this.refresh();
+    }
+
+    // First step: Back and List both return to the list
+    onBack(): void
+    {
+        this.onBackToList();
     }
 
     onBackToList(): void

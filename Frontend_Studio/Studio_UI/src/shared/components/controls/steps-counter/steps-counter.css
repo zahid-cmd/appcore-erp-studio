@@ -1,0 +1,46 @@
+.steps-counter
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 18px;
+    border: 1px solid #e1e8f7;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffffff 0%, #f3f6ff 100%);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, .08);
+}
+
+.steps-text
+{
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e3a8a;
+    white-space: nowrap;
+}
+
+.steps-dots
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot
+{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d9e1f2;
+    transition: background .2s ease, box-shadow .2s ease;
+}
+
+.dot.done
+{
+    background: #93b4f5;
+}
+
+.dot.current
+{
+    background: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .2);
+}

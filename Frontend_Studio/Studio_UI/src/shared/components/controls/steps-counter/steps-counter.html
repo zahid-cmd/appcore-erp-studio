@@ -1,0 +1,19 @@
+<div class="steps-counter">
+
+    <span class="steps-text">
+        {{ label }} {{ current }} of {{ total }}
+    </span>
+
+    @if (showDots)
+    {
+        <span class="steps-dots">
+            @for (n of dots; track n)
+            {
+                <span class="dot"
+                      [class.done]="n < current"
+                      [class.current]="n === current"></span>
+            }
+        </span>
+    }
+
+</div>

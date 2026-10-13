@@ -101,7 +101,6 @@
     overflow: hidden;
 }
 
-/* thin accent bar on the left edge */
 .stepper::before {
     content: '';
     position: absolute;
@@ -205,7 +204,6 @@
     font-size: 13px;
 }
 
-/* Small screens: let the counters wrap under the steps */
 @media (max-width: 1100px) {
     .head-row {
         flex-wrap: wrap;
@@ -382,17 +380,26 @@
 
 
 /* =====================================================
-   CANVAS FOOTER : page facts
+   CANVAS FOOTER : facts left, Next right
 ===================================================== */
 
 .canvas-footer {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 12px;
     width: 100%;
     padding: 8px 12px;
     box-sizing: border-box;
+}
+
+.footer-hints {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .hint-chip {
@@ -415,4 +422,30 @@
 .hint-empty {
     font-size: 12px;
     color: #94a3b8;
+}
+
+.next-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 22px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, .28);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.next-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, .36);
+}
+
+.next-btn:disabled {
+    opacity: .6;
+    cursor: default;
 }

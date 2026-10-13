@@ -83,9 +83,25 @@ Routes =
         )
 },
 
+//===========================================================
+// Step 3 : Clone Action
+//===========================================================
+
+{
+    path:'action',
+
+    loadComponent:() =>
+        import(
+            '../pages/page-cloning/action/page-cloning-action'
+        )
+        .then(
+            m =>
+                m.PageCloningActionComponent
+        )
+},
 
 //===========================================================
-// Step 3 : Clone Preview
+// Step 4 : Clone Preview
 //===========================================================
 
 {

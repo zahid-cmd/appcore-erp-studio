@@ -1,0 +1,517 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-clone"
+        title="Page Cloning"
+        subtitle="Decide the fields, parent and code number of the new page.">
+
+        <!-- CENTER : step counter -->
+        <app-steps-counter
+            pageHeaderCenter
+            [current]="3"
+            [total]="4">
+        </app-steps-counter>
+
+        <!-- RIGHT : command center -->
+        <app-command-center
+            pageHeaderRight
+            command1Text="Reset"
+            command1Icon="fas fa-rotate-left"
+            (command1Click)="onReset()"
+            command2Text="Back"
+            command2Icon="fas fa-arrow-left"
+            (command2Click)="onBack()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-list"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+
+        <div pageToolbarRight class="toolbar-filters">
+
+            <button type="button" class="analyse-btn" (click)="onAddField()" [disabled]="loading">
+                <i class="fas fa-plus"></i> Add Field
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas [config]="canvasConfig">
+
+        <div canvasBody class="source-body">
+
+            <!-- ============ FIXED HEADER ============ -->
+            <div class="canvas-head">
+
+                <div class="head-row">
+
+                    <div class="stepper">
+                        <div class="step done">
+                            <span class="dot"><i class="fas fa-check"></i></span>
+                            <span class="label">Clone From</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step done">
+                            <span class="dot"><i class="fas fa-check"></i></span>
+                            <span class="label">Clone To</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step active">
+                            <span class="dot">3</span>
+                            <span class="label">Clone Action</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step">
+                            <span class="dot">4</span>
+                            <span class="label">Preview</span>
+                        </div>
+                    </div>
+
+                    <div class="counters">
+                        <span class="count keep">Keep <b>{{ keepCount }}</b></span>
+                        <span class="count modify">Modify <b>{{ modifyCount }}</b></span>
+                        <span class="count add">Add <b>{{ addCount }}</b></span>
+                        <span class="count exclude">Exclude <b>{{ excludeCount }}</b></span>
+                    </div>
+
+                    <div class="chips">
+
+                        <div class="chip">
+                            <span class="chip-label">Copy from</span>
+                            <span class="chip-value">{{ state.cloneFromName }}</span>
+                        </div>
+
+                        <div class="chip">
+                            <span class="chip-label">Copy to</span>
+                            <span class="chip-value">{{ state.cloneToName }}</span>
+                        </div>
+
+                        <div class="chip">
+                            <span class="chip-label">Entity name</span>
+                            <span class="chip-value">{{ state.entityName }}</span>
+                        </div>
+
+                        <div class="chip">
+                            <span class="chip-label">Display name</span>
+                            <span class="chip-value">{{ state.displayName }}</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ============ SCROLLING AREA ============ -->
+            <div class="canvas-scroll appcore-scrollbar">
+
+                @if (loading)
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <div class="empty-title">Reading the source page...</div>
+                    </div>
+                }
+
+                @if (!loading && rows.length === 0)
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-table-list"></i>
+                        <div class="empty-title">No fields yet</div>
+                        <div class="empty-text">
+                            The source page has no fields. Use Add Field in the toolbar.
+                        </div>
+                    </div>
+                }
+
+                @if (rows.length)
+                {
+                    <!-- ===== FIELDS ===== -->
+                    <div class="file-section">
+
+                        <div class="section-header backend">
+                            <span><i class="fas fa-table-list"></i> Fields of {{ state.entityName }}</span>
+                            <span class="badge">{{ rows.length }} rows</span>
+                        </div>
+
+                        <table class="files-table fields-table">
+
+                            <thead>
+                                <tr>
+                                    @for (col of columns; track col.field)
+                                    {
+                                        <th [style.width]="col.width === 'auto' ? null : col.width"
+                                            [style.text-align]="col.align">
+                                            {{ col.header }}
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (row of rows; track $index; let i = $index)
+                                {
+                                    <tr [class.row-exclude]="row.action === 'Exclude'"
+                                        [class.row-add]="row.action === 'Add'"
+                                        [class.row-modify]="row.action === 'Modify'">
+
+                                        @for (col of columns; track col.field)
+                                        {
+                                            <td [style.text-align]="col.align">
+
+                                                @switch (col.type)
+                                                {
+                                                    @case ('serial')
+                                                    {
+                                                        <span class="serial">{{ i + 1 }}</span>
+                                                    }
+
+                                                    @case ('source')
+                                                    {
+                                                        <span class="path">
+                                                            {{ row.sourceName || '— new —' }}
+
+                                                            @if (isParent(row))
+                                                            {
+                                                                <span class="tag-parent">parent</span>
+                                                            }
+
+                                                            @if (isSystem(row))
+                                                            {
+                                                                <span class="tag-system">system</span>
+                                                            }
+                                                        </span>
+                                                    }
+
+                                                    @case ('action')
+                                                    {
+                                                        <select class="cell act-{{ row.action }}"
+                                                                [value]="row.action"
+                                                                (change)="onAction(row, $any($event.target).value)">
+                                                            @for (a of actionsFor(row); track a)
+                                                            {
+                                                                <option [value]="a" [selected]="a === row.action">{{ a }}</option>
+                                                            }
+                                                        </select>
+                                                    }
+
+                                                    @case ('text')
+                                                    {
+                                                        <input class="cell" type="text"
+                                                               placeholder="FieldName"
+                                                               [value]="row.name"
+                                                               [disabled]="!isEditable(row)"
+                                                               (input)="onName(row, $event)" />
+                                                    }
+
+                                                    @case ('datatype')
+                                                    {
+                                                        <select class="cell"
+                                                                [disabled]="!isEditable(row) || isTypeLocked(row)"
+                                                                (change)="onType(row, $event)">
+                                                            @for (t of typesFor(row); track t)
+                                                            {
+                                                                <option [value]="t" [selected]="t === row.type">{{ t }}</option>
+                                                            }
+                                                        </select>
+                                                    }
+
+                                                    @case ('number')
+                                                    {
+                                                        <input class="cell" type="number" min="1"
+                                                               [value]="row.maxLength ?? ''"
+                                                               [disabled]="!isEditable(row)"
+                                                               (input)="onMax(row, $event)" />
+                                                    }
+
+                                                    @case ('control')
+                                                    {
+                                                        <select class="cell"
+                                                                [disabled]="!isEditable(row)"
+                                                                (change)="onControl(row, $event)">
+                                                            @for (c of controlItems; track c.value)
+                                                            {
+                                                                <option [value]="c.value" [selected]="c.value === row.control">{{ c.label }}</option>
+                                                            }
+                                                        </select>
+                                                    }
+
+                                                    @case ('default')
+                                                    {
+                                                        @if (defaultOptions(row).length)
+                                                        {
+                                                            <select class="cell"
+                                                                    [disabled]="!isEditable(row)"
+                                                                    (change)="onDefault(row, $event)">
+                                                                @for (d of defaultOptions(row); track d)
+                                                                {
+                                                                    <option [value]="d" [selected]="d === row.defaultValue">{{ d }}</option>
+                                                                }
+                                                            </select>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <input class="cell" type="text"
+                                                                   placeholder="none"
+                                                                   [value]="row.defaultValue"
+                                                                   [disabled]="!isEditable(row) || isLookup(row)"
+                                                                   (input)="onDefault(row, $event)" />
+                                                        }
+                                                    }
+
+                                                    @case ('check')
+                                                    {
+                                                        @if (col.field === 'required')
+                                                        {
+                                                            <input type="checkbox"
+                                                                   [checked]="row.required"
+                                                                   [disabled]="!isEditable(row)"
+                                                                   (change)="onRequired(row, $event)" />
+                                                        }
+                                                        @else
+                                                        {
+                                                            <input type="checkbox"
+                                                                   [checked]="row.unique"
+                                                                   [disabled]="!isEditable(row)"
+                                                                   (change)="onUnique(row, $event)" />
+                                                        }
+                                                    }
+
+                                                    @case ('remove')
+                                                    {
+                                                        @if (!row.sourceName)
+                                                        {
+                                                            <i class="fas fa-trash-can del-icon"
+                                                               title="Remove this field"
+                                                               (click)="onRemoveRow(i)"></i>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <i class="fas fa-trash-can del-icon disabled"
+                                                               title="Source fields cannot be removed. Set the action to Exclude instead."></i>
+                                                        }
+                                                    }
+                                                }
+
+                                            </td>
+                                        }
+
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <!-- ===== SETUP : parent, code number, options ===== -->
+                    <div class="setup-grid">
+
+                        <!-- PARENT LINK -->
+                        <div class="file-section">
+
+                            <div class="section-header frontend">
+                                <span><i class="fas fa-sitemap"></i> Parent link</span>
+                                <span class="badge">
+                                    {{ hasSourceParent ? 'Source parent: ' + sourceParentName : 'Source has no parent' }}
+                                </span>
+                            </div>
+
+                            <div class="setup-body">
+
+                                <label class="setup-field">
+                                    <span class="setup-label">Parent</span>
+                                    <app-dropdown
+                                        [items]="parentModeItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="setup.parentMode"
+                                        (valueChange)="onParentMode($event)">
+                                    </app-dropdown>
+                                </label>
+
+                                @if (setup.parentMode === 'Change')
+                                {
+                                    <label class="setup-field">
+                                        <span class="setup-label">Parent entity</span>
+                                        <app-search-dropdown
+                                            placeholder="Select parent entity"
+                                            [items]="parentEntityItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="setup.parentEntity || null"
+                                            (valueChange)="onParentEntity($event)">
+                                        </app-search-dropdown>
+                                    </label>
+                                }
+
+                                @if (setup.parentMode !== 'Exclude')
+                                {
+                                    <label class="setup-field">
+                                        <span class="setup-label">Foreign key</span>
+                                        <input class="cell" type="text"
+                                               placeholder="e.g. BranchId"
+                                               [value]="setup.parentFk"
+                                               [disabled]="setup.parentMode === 'Keep'"
+                                               (input)="onParentFk($event)" />
+                                    </label>
+
+                                    <div class="setup-field">
+                                        <span class="setup-label">Cascade chain</span>
+
+                                        <div class="cascade">
+                                            @if (cascadeLoading)
+                                            {
+                                                <span class="muted"><i class="fas fa-spinner fa-spin"></i> Reading parent...</span>
+                                            }
+                                            @else if (setup.parentEntity)
+                                            {
+                                                @for (c of setup.cascade; track c)
+                                                {
+                                                    <span class="chain">{{ c }}</span>
+                                                    <i class="fas fa-angle-right muted"></i>
+                                                }
+                                                <span class="chain last">{{ setup.parentEntity }}</span>
+                                                <i class="fas fa-angle-right muted"></i>
+                                                <span class="chain self">{{ state.entityName }}</span>
+                                            }
+                                            @else
+                                            {
+                                                <span class="muted">Choose a parent entity</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                @else
+                                {
+                                    <div class="muted note">The new page has no parent. The foreign key field is excluded.</div>
+                                }
+
+                            </div>
+
+                        </div>
+
+                        <!-- CODE NUMBER -->
+                        <div class="file-section">
+
+                            <div class="section-header frontend">
+                                <span><i class="fas fa-hashtag"></i> Code number</span>
+                                <span class="badge">
+                                    {{ analysis?.CodeFormat ? 'Source: ' + analysis?.CodeFormat : 'Source has no code format' }}
+                                </span>
+                            </div>
+
+                            <div class="setup-body">
+
+                                <label class="setup-check">
+                                    <input type="checkbox"
+                                           [checked]="setup.codeEnabled"
+                                           (change)="onCodeEnabled($event)" />
+                                    <span>Generate a code number for each record</span>
+                                </label>
+
+                                @if (setup.codeEnabled)
+                                {
+                                    @if (parentFormat)
+                                    {
+                                        <div class="setup-field">
+                                            <span class="setup-label">Parent code</span>
+                                            <div class="example inherited">
+                                                {{ parentCodeExample }}
+                                                <span class="muted">from {{ setup.parentEntity }}</span>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <label class="setup-field">
+                                        <span class="setup-label">Prefix</span>
+                                        <input class="cell" type="text" maxlength="5"
+                                               placeholder="e.g. CSH"
+                                               [value]="setup.codePrefix"
+                                               (input)="onPrefix($event)" />
+                                    </label>
+
+                                    @for (seg of setup.codeSegments; track seg.name)
+                                    {
+                                        <div class="setup-field">
+                                            <span class="setup-label">{{ seg.name }} (inherited)</span>
+                                            <input class="cell" type="text" disabled
+                                                   [value]="seg.pad + ' digits'" />
+                                        </div>
+                                    }
+
+                                    <label class="setup-field">
+                                        <span class="setup-label">Digits for running number</span>
+                                        <input class="cell" type="number" min="1" max="9"
+                                               [value]="setup.codeSequencePad"
+                                               (input)="onSequencePad($event)" />
+                                    </label>
+
+                                    <div class="setup-field">
+                                        <span class="setup-label">Example</span>
+                                        <div class="example">{{ codeExample || '—' }}</div>
+                                        <div class="muted note">Method: {{ codeMethodName }}</div>
+                                    </div>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ===== OPTIONS ===== -->
+                    <div class="options-row">
+                        <label class="setup-check">
+                            <input type="checkbox"
+                                   [checked]="setup.softDelete"
+                                   (change)="onSoftDelete($event)" />
+                            <span>Soft delete and restore (records are hidden, not removed)</span>
+                        </label>
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- ============ CANVAS FOOTER : facts left, Next right ============ -->
+        <div canvasFooter class="canvas-footer">
+
+            <div class="footer-hints">
+                @if (analysis && analysis.Hints.length)
+                {
+                    @for (h of analysis.Hints; track $index)
+                    {
+                        <span class="hint-chip">
+                            <i class="fas fa-circle-info"></i> {{ h }}
+                        </span>
+                    }
+                }
+                @else
+                {
+                    <span class="hint-empty">Source page facts appear here.</span>
+                }
+            </div>
+
+            <button type="button" class="next-btn" (click)="onNext()" [disabled]="loading">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
+
+        </div>
+
+    </app-page-canvas>
+
+</div>
+
+<app-toast></app-toast>

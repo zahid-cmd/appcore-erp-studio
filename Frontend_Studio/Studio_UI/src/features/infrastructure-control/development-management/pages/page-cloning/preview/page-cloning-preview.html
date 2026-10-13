@@ -3,15 +3,27 @@
     <app-page-header
         icon="fas fa-clone"
         title="Page Cloning"
-        subtitle="Step 3: review the 15 files, then apply.">
+        subtitle="Review the plan and the 15 files, then save.">
 
+        <!-- CENTER : step counter -->
+        <app-steps-counter
+            pageHeaderCenter
+            [current]="4"
+            [total]="4">
+        </app-steps-counter>
+
+        <!-- RIGHT : command center -->
         <app-command-center
             pageHeaderRight
-            [command1Visible]="false"
-            command2Text="Back"
-            command2Icon="fas fa-arrow-left"
-            (command2Click)="onBack()"
-            [command3Visible]="false"
+            [command1Text]="isEdit ? 'Update' : 'Save'"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            command2Text="Restore"
+            command2Icon="fas fa-clock-rotate-left"
+            (command2Click)="onRestore()"
+            command3Text="Back"
+            command3Icon="fas fa-arrow-left"
+            (command3Click)="onBack()"
             rightCommandIcon="fas fa-list"
             (rightCommandClick)="onBackToList()">
         </app-command-center>
@@ -19,128 +31,241 @@
     </app-page-header>
 
     <app-page-toolbar>
+
         <app-control-tabs
             pageToolbarLeft
             [tabs]="tabs"
             [(selectedTab)]="selectedTab">
         </app-control-tabs>
+
     </app-page-toolbar>
 
-    <app-page-canvas>
+    <app-page-canvas [config]="canvasConfig">
 
-        <app-form-grid canvasBody [columns]="2">
+        <div canvasBody class="source-body">
 
-            <!-- Step bar -->
-            <div style="grid-column: 1 / -1; display:flex; gap:10px; font-size:13px;">
-                <span style="opacity:.5;">1. Clone From</span><span>›</span>
-                <span style="opacity:.5;">2. Clone To</span><span>›</span>
-                <span [style.font-weight]="step === 3 ? '700' : '400'">3. Preview</span>
-            </div>
+            <!-- ============ FIXED HEADER ============ -->
+            <div class="canvas-head">
 
-            <!-- Summary -->
-            <app-form-section title="Summary" icon="fas fa-list-check">
+                <div class="head-row">
 
-                <app-textbox
-                    label="Clone From"
-                    [(value)]="state.cloneFromName"
-                    [readonly]="true">
-                </app-textbox>
-
-                <app-textbox
-                    label="Clone To"
-                    [(value)]="state.cloneToName"
-                    [readonly]="true">
-                </app-textbox>
-
-                <app-textbox
-                    label="Entity Name"
-                    [(value)]="state.entityName"
-                    [readonly]="true">
-                </app-textbox>
-
-                <app-textbox
-                    label="Display Name"
-                    [(value)]="state.displayName"
-                    [readonly]="true">
-                </app-textbox>
-
-            </app-form-section>
-
-            <!-- Actions -->
-            <app-form-section title="Actions" icon="fas fa-gears">
-
-                <div style="grid-column: 1 / -1; font-size:13px; line-height:1.6;">
-                    <div>1. <strong>Preview</strong> shows what each file will contain. Nothing is written.</div>
-                    <div>2. <strong>Apply</strong> writes the 15 files. It is enabled after a preview.</div>
-                </div>
-
-                <div style="grid-column: 1 / -1; display:flex; gap:8px; flex-wrap:wrap;">
-
-                    <button type="button" (click)="onGeneratePreview()"
-                            style="padding:6px 14px; cursor:pointer;">
-                        Preview (writes nothing)
-                    </button>
-
-                    <button type="button" (click)="onApply()"
-                            [disabled]="!previewReady"
-                            style="padding:6px 14px; cursor:pointer;">
-                        Apply (writes files)
-                    </button>
-
-                </div>
-
-            </app-form-section>
-
-            <!-- Files -->
-            <div style="grid-column: 1 / -1; display:flex; gap:12px; min-height:300px;">
-
-                <div style="width:420px; border:1px solid #ccc; overflow:auto; max-height:460px; font-size:13px;">
-
-                    <div style="padding:6px 8px; font-weight:700; background:#f3f4f6;">Backend (9)</div>
-
-                    @for (file of backendFiles; track file.fileName)
-                    {
-                        <div (click)="selectFile(file)"
-                             [style.background]="selectedFile === file ? '#dbe4ff' : 'transparent'"
-                             style="padding:6px 8px; cursor:pointer; border-bottom:1px solid #eee;">
-                            <div><strong>{{ file.label }}</strong></div>
-                            <div style="opacity:.8;">{{ file.fileName }}</div>
-                            <div style="opacity:.6; font-size:12px;">{{ file.status }}</div>
+                    <div class="stepper">
+                        <div class="step done">
+                            <span class="dot"><i class="fas fa-check"></i></span>
+                            <span class="label">Clone From</span>
                         </div>
-                    }
-
-                    <div style="padding:6px 8px; font-weight:700; background:#f3f4f6;">Frontend (6)</div>
-
-                    @for (file of frontendFiles; track file.fileName)
-                    {
-                        <div (click)="selectFile(file)"
-                             [style.background]="selectedFile === file ? '#dbe4ff' : 'transparent'"
-                             style="padding:6px 8px; cursor:pointer; border-bottom:1px solid #eee;">
-                            <div><strong>{{ file.label }}</strong></div>
-                            <div style="opacity:.8;">{{ file.fileName }}</div>
-                            <div style="opacity:.6; font-size:12px;">{{ file.status }}</div>
+                        <span class="line"></span>
+                        <div class="step done">
+                            <span class="dot"><i class="fas fa-check"></i></span>
+                            <span class="label">Clone To</span>
                         </div>
-                    }
-
-                </div>
-
-                <div style="flex:1; display:flex; gap:8px; min-width:0;">
-
-                    <div style="flex:1; min-width:0;">
-                        <div><strong>Before (current file)</strong></div>
-                        <pre style="border:1px solid #ccc; padding:8px; min-height:260px; font-size:12px; overflow:auto;">{{ selectedFile ? 'Shown after Preview.' : 'Select a file.' }}</pre>
+                        <span class="line"></span>
+                        <div class="step done">
+                            <span class="dot"><i class="fas fa-check"></i></span>
+                            <span class="label">Clone Action</span>
+                        </div>
+                        <span class="line"></span>
+                        <div class="step active">
+                            <span class="dot">4</span>
+                            <span class="label">Preview</span>
+                        </div>
                     </div>
 
-                    <div style="flex:1; min-width:0;">
-                        <div><strong>After (generated)</strong></div>
-                        <pre style="border:1px solid #ccc; padding:8px; min-height:260px; font-size:12px; overflow:auto;">{{ selectedFile ? 'Shown after Preview.' : 'Select a file.' }}</pre>
+                    <div class="counters">
+                        <span class="count keep">Keep <b>{{ keepCount }}</b></span>
+                        <span class="count modify">Modify <b>{{ modifyCount }}</b></span>
+                        <span class="count add">Add <b>{{ addCount }}</b></span>
+                        <span class="count exclude">Exclude <b>{{ excludeCount }}</b></span>
+                    </div>
+
+                    <div class="chips">
+
+                        <div class="chip">
+                            <span class="chip-label">Copy from</span>
+                            <span class="chip-value">{{ state.cloneFromName }}</span>
+                        </div>
+
+                        <div class="chip">
+                            <span class="chip-label">Copy to</span>
+                            <span class="chip-value">{{ state.cloneToName }}</span>
+                        </div>
+
+                        <div class="chip">
+                            <span class="chip-label">Entity name</span>
+                            <span class="chip-value">{{ state.entityName }}</span>
+                        </div>
+
+                        <div class="chip">
+                            <span class="chip-label">Display name</span>
+                            <span class="chip-value">{{ state.displayName }}</span>
+                        </div>
+
                     </div>
 
                 </div>
 
             </div>
 
-        </app-form-grid>
+            <!-- ============ SCROLLING AREA ============ -->
+            <div class="canvas-scroll appcore-scrollbar">
+
+                <!-- ===== PLAN ===== -->
+                <div class="plan-grid">
+
+                    <!-- Changed fields -->
+                    <div class="file-section">
+
+                        <div class="section-header backend">
+                            <span><i class="fas fa-table-list"></i> Field changes</span>
+                            <span class="badge">{{ changedRows.length }} of {{ rows.length }}</span>
+                        </div>
+
+                        <div class="plan-body">
+                            @if (changedRows.length === 0)
+                            {
+                                <div class="muted">All fields are kept as they are in the source.</div>
+                            }
+
+                            @for (r of changedRows; track $index)
+                            {
+                                <div class="change-row">
+                                    <span class="tag act-{{ r.action }}">{{ r.action }}</span>
+                                    <span class="change-name">
+                                        @if (r.sourceName && r.sourceName !== r.name)
+                                        {
+                                            {{ r.sourceName }} → {{ r.name }}
+                                        }
+                                        @else
+                                        {
+                                            {{ r.name }}
+                                        }
+                                    </span>
+                                    @if (r.action !== 'Exclude')
+                                    {
+                                        <span class="change-meta">{{ r.type }}, {{ r.control }}</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+
+                    <!-- Parent and code -->
+                    <div class="file-section">
+
+                        <div class="section-header frontend">
+                            <span><i class="fas fa-sitemap"></i> Parent and code</span>
+                        </div>
+
+                        <div class="plan-body">
+
+                            <div class="plan-line">
+                                <span class="plan-label">Parent</span>
+                                <span class="plan-value">{{ parentText }}</span>
+                            </div>
+
+                            @if (cascadeText)
+                            {
+                                <div class="plan-line">
+                                    <span class="plan-label">Cascade</span>
+                                    <span class="plan-value">{{ cascadeText }}</span>
+                                </div>
+                            }
+
+                            <div class="plan-line">
+                                <span class="plan-label">Code number</span>
+                                <span class="plan-value mono">{{ codeExample }}</span>
+                            </div>
+
+                            <div class="plan-line">
+                                <span class="plan-label">Soft delete</span>
+                                <span class="plan-value">{{ setup.softDelete ? 'Yes' : 'No' }}</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===== FILES ===== -->
+                <div class="files-grid">
+
+                    <!-- File list (full height, no scroll) -->
+                    <div class="file-section">
+
+                        <div class="section-header backend">
+                            <span><i class="fas fa-server"></i> Backend</span>
+                            <span class="badge">{{ backendFiles.length }} files</span>
+                        </div>
+
+                        @for (file of backendFiles; track file.fileName)
+                        {
+                            <div class="file-item" [class.selected]="selectedFile === file"
+                                 (click)="selectFile(file)">
+                                <div class="file-main">
+                                    <strong>{{ file.label }}</strong>
+                                    <span class="file-name">{{ file.fileName }}</span>
+                                </div>
+                                <span class="pill pill-wait">{{ file.status }}</span>
+                            </div>
+                        }
+
+                        <div class="section-header frontend">
+                            <span><i class="fas fa-display"></i> Frontend</span>
+                            <span class="badge">{{ frontendFiles.length }} files</span>
+                        </div>
+
+                        @for (file of frontendFiles; track file.fileName)
+                        {
+                            <div class="file-item" [class.selected]="selectedFile === file"
+                                 (click)="selectFile(file)">
+                                <div class="file-main">
+                                    <strong>{{ file.label }}</strong>
+                                    <span class="file-name">{{ file.fileName }}</span>
+                                </div>
+                                <span class="pill pill-wait">{{ file.status }}</span>
+                            </div>
+                        }
+
+                    </div>
+
+                    <!-- Before / After (same height as the list, each scrolls) -->
+                    <div class="diff-cell">
+
+                        <div class="diff-wrap">
+
+                            <div class="diff-box">
+                                <div class="diff-title">Before (current file)</div>
+                                <pre class="diff-pre appcore-scrollbar">{{ selectedFile ? 'The current file appears here once the generator is connected.' : 'Select a file.' }}</pre>
+                            </div>
+
+                            <div class="diff-box">
+                                <div class="diff-title">After (generated)</div>
+                                <pre class="diff-pre appcore-scrollbar">{{ selectedFile ? 'The generated file appears here once the generator is connected.' : 'Select a file.' }}</pre>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ============ CANVAS FOOTER : plan facts ============ -->
+        <div canvasFooter class="canvas-footer">
+
+            <div class="footer-hints">
+                <span class="hint-chip">
+                    <i class="fas fa-circle-info"></i>
+                    Save writes the 15 files and records the clone. Restore returns them to the baseline.
+                </span>
+            </div>
+
+        </div>
 
     </app-page-canvas>
 
