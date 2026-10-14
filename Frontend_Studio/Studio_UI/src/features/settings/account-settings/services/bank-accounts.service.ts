@@ -1,3 +1,5 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -17,7 +19,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -29,17 +32,15 @@ from '../../../../environments/environment';
 
 import
 {
-    BankAccounts,
-
-    CreateBankAccounts,
-
-    UpdateBankAccounts
+    BankAccount,
+    CreateBankAccount,
+    UpdateBankAccount
 }
 from '../models/bank-accounts.model';
 
 
 //===============================================================
-// Bank Accounts Service
+// BankAccount Service
 //===============================================================
 
 @Injectable(
@@ -50,14 +51,12 @@ from '../models/bank-accounts.model';
 
 export class BankAccountsService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,19 +67,100 @@ export class BankAccountsService
         `${environment.apiUrl}/settings/account-settings/bank-accounts`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
     getAll():
-        Observable<BankAccounts[]>
+        Observable<BankAccount[]>
     {
-        return this.http.get<BankAccounts[]>(
-            this.apiUrl
-        );
+        return this.http
+
+            .get<any[]>(
+                this.apiUrl
+            )
+
+            .pipe(
+
+                map(
+
+                    response =>
+
+                        response.map(
+
+                            bankAccount =>
+
+                            ({
+                                ...bankAccount,
+
+                                BankAccountId:
+                                    Number(bankAccount.BankAccountId ?? bankAccount.bankAccountId ?? bankAccount.id ?? bankAccount.Id),
+
+                                AccountSubGroupsId:
+                                    Number(bankAccount.AccountSubGroupsId ?? bankAccount.accountSubGroupsId ?? 0),
+
+                                BankAccountCode:
+                                    bankAccount.BankAccountCode ?? bankAccount.bankAccountCode ?? '',
+
+                                BankAccountName:
+                                    bankAccount.BankAccountName ?? bankAccount.bankAccountName ?? '',
+
+                                Remarks:
+                                    bankAccount.Remarks ?? bankAccount.remarks ?? '',
+
+                                IsActive:
+                                    Boolean(bankAccount.IsActive ?? bankAccount.isActive ?? true)
+                            })
+
+                        )
+
+                )
+
+            );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode
+    (
+        accountSubGroupsId:
+            number
+    ):
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code`,
+            {
+                params:
+                {
+                    accountSubGroupsId:
+                        accountSubGroupsId
+                },
+
+                responseType:
+                    'text'
+            }
+        );
+    }
 
 
     //===========================================================
@@ -92,13 +172,12 @@ export class BankAccountsService
         id:
             number
     ):
-        Observable<BankAccounts>
+        Observable<BankAccount>
     {
-        return this.http.get<BankAccounts>(
+        return this.http.get<BankAccount>(
             `${this.apiUrl}/${id}`
         );
     }
-
 
 
     //===========================================================
@@ -108,17 +187,15 @@ export class BankAccountsService
     create
     (
         model:
-            CreateBankAccounts
+            CreateBankAccount
     ):
         Observable<number>
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
 
     //===========================================================
@@ -128,17 +205,15 @@ export class BankAccountsService
     update
     (
         model:
-            UpdateBankAccounts
+            UpdateBankAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
+            this.apiUrl,
             model
         );
     }
-
 
 
     //===========================================================
@@ -158,21 +233,18 @@ export class BankAccountsService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
     restore():
-        Observable<void>
+        Observable<boolean>
     {
-        return this.http.put<void>(
+        return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,7 +258,6 @@ export class BankAccountsService
             `${this.apiUrl}/history`
         );
     }
-
 
 
     //===========================================================
@@ -204,5 +275,4 @@ export class BankAccountsService
             `${this.apiUrl}/${id}/history`
         );
     }
-
 }

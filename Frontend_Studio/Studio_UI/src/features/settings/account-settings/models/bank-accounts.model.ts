@@ -1,90 +1,60 @@
-/* ============================================================
-   Bank Accounts
-============================================================ */
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+//===============================================================
+// Bank Accounts
+//===============================================================
 
-export interface BankAccounts
+export interface BankAccount
 {
-    id:
-        number;
+    BankAccountId: number;
 
-    code:
-        string;
+    AccountSubGroupsId: number;
 
-    name:
-        string;
+    BankAccountCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    BankAccountName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    IsActive: boolean;
 
-    remarks:
-        string;
 }
 
 
+//===============================================================
+// Create Bank Accounts
+//===============================================================
 
-/* ============================================================
-   Create Bank Accounts
-============================================================ */
-
-export interface CreateBankAccounts
+export interface CreateBankAccount
 {
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    BankAccountCode: string;
 
-    sampleField:
-        string;
+    BankAccountName: string;
 
-    status:
-        string;
+    Remarks: string;
 
-    remarks:
-        string;
+    IsActive: boolean;
+
 }
 
 
+//===============================================================
+// Update Bank Accounts
+//===============================================================
 
-/* ============================================================
-   Update Bank Accounts
-============================================================ */
-
-export interface UpdateBankAccounts
+export interface UpdateBankAccount
 {
-    id:
-        number;
+    BankAccountId: number;
 
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    BankAccountCode: string;
 
-    sampleField:
-        string;
+    BankAccountName: string;
 
-    status:
-        string;
+    Remarks: string;
 
-    remarks:
-        string;
-}
+    IsActive: boolean;
 
-
-
-/* ============================================================
-   Bank Accounts Defaults
-============================================================ */
-
-export interface BankAccountsDefaults
-{
-    code:
-        string;
 }

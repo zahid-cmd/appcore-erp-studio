@@ -152,6 +152,11 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
     get rows(): CloneFieldRow[] { return this.state.fields ?? []; }
     get setup(): CloneSetup { return this.state.setup; }
 
+    // View mode is read-only. Edit mode can change everything on this page.
+    get locked(): boolean { return this.workflow.state.mode === 'view'; }
+
+    get pageTitle(): string { return this.workflow.pageTitle; }
+
     //===========================================================
     // CHANGE DETECTION LOCK
     // ---------------------------------------------------------
@@ -352,19 +357,30 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
 
                     try
                     {
-                        if (this.state.fieldsForSourceId !== this.state.cloneFromId
-                            || this.state.fields.length === 0)
+                        if (this.state.blueprint)
                         {
+                            // A saved clone was opened from the list:
+                            // build the source rows first, then lay the saved decisions on top
                             this.buildFromSource();
-                        }
-
-                        if (this.state.setupForSourceId !== this.state.cloneFromId)
-                        {
                             this.buildSetup();
+                            this.applyBlueprint();
                         }
-                        else if (this.setup.parentEntity)
+                        else
                         {
-                            this.loadCascade();
+                            if (this.state.fieldsForSourceId !== this.state.cloneFromId
+                                || this.state.fields.length === 0)
+                            {
+                                this.buildFromSource();
+                            }
+
+                            if (this.state.setupForSourceId !== this.state.cloneFromId)
+                            {
+                                this.buildSetup();
+                            }
+                            else if (this.setup.parentEntity)
+                            {
+                                this.loadCascade();
+                            }
                         }
                     }
                     catch (error)
@@ -390,6 +406,83 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
                     this.refresh();
                 }
             });
+    }
+
+    //===========================================================
+    // Lay the saved clone plan (BlueprintJson) over the source rows.
+    // Used only when a record is opened from the list (View / Edit).
+    //===========================================================
+    private applyBlueprint(): void
+    {
+        const bp: any = this.state.blueprint;
+        if (!bp) { return; }
+
+        // The backend may send camelCase or PascalCase
+        const pick = (o: any, key: string): any =>
+            o?.[key] ?? o?.[key.charAt(0).toUpperCase() + key.slice(1)];
+
+        const rows = [...this.state.fields];
+        const added: CloneFieldRow[] = [];
+
+        for (const f of (pick(bp, 'fields') ?? []) as any[])
+        {
+            const sourceName = String(pick(f, 'sourceName') ?? '');
+            const row = sourceName ? rows.find(r => r.sourceName === sourceName) : undefined;
+
+            const saved = {
+                action: (pick(f, 'action') ?? 'Keep') as FieldAction,
+                name: String(pick(f, 'name') ?? ''),
+                type: String(pick(f, 'type') ?? 'string'),
+                maxLength: (pick(f, 'maxLength') ?? null) as number | null,
+                required: !!pick(f, 'required'),
+                unique: !!pick(f, 'unique'),
+                control: (pick(f, 'control') ?? 'Textbox') as ControlType,
+                defaultValue: String(pick(f, 'defaultValue') ?? '')
+            };
+
+            if (row)
+            {
+                Object.assign(row, saved);
+            }
+            else if (!sourceName)
+            {
+                // A field the user added by hand
+                added.push({
+                    sourceName: '',
+                    ...saved,
+                    srcType: '', srcMaxLength: null, srcRequired: false, srcUnique: false,
+                    srcControl: 'Textbox', srcDefault: ''
+                });
+            }
+        }
+
+        this.state.fields = [...rows, ...added];
+
+        const parent = pick(bp, 'parent') ?? {};
+        const code = pick(bp, 'code') ?? {};
+        const s = this.state.setup;
+
+        s.parentMode = (pick(parent, 'mode') ?? 'Exclude') as ParentMode;
+        s.parentEntity = String(pick(parent, 'entity') ?? '');
+        s.parentFk = String(pick(parent, 'foreignKey') ?? '');
+        s.cascade = [...((pick(parent, 'cascade') ?? []) as string[])];
+
+        s.codeEnabled = !!pick(bp, 'writeCodeGeneratorMethod');
+        s.codePrefix = String(pick(code, 'prefix') ?? s.codePrefix);
+        s.codeSequencePad = Number(pick(code, 'sequencePad')) || s.codeSequencePad;
+        s.softDelete = !!pick(bp, 'softDelete');
+
+        s.codeSegments = ((pick(code, 'segments') ?? []) as any[]).map(x =>
+            ({ name: String(pick(x, 'name') ?? ''), pad: Number(pick(x, 'pad')) || 3 }));
+
+        this.state.fieldsForSourceId = this.state.cloneFromId;
+        this.state.setupForSourceId = this.state.cloneFromId;
+
+        // Applied once. Going Back and Next again must keep the user's edits.
+        this.state.blueprint = null;
+
+        // Re-read the parent so the code example and cascade show correctly
+        this.loadCascade();
     }
 
     //===========================================================
@@ -954,6 +1047,8 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
     //===========================================================
     onAddField(): void
     {
+        if (this.locked) { return; }
+
         this.state.fields = [
             ...this.state.fields,
             {
@@ -976,6 +1071,8 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
 
     onRemoveRow(index: number): void
     {
+        if (this.locked) { return; }
+
         const row = this.state.fields[index];
 
         if (!row || row.sourceName) { return; }
@@ -1002,6 +1099,12 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
     //===========================================================
     onReset(): void
     {
+        if (this.locked)
+        {
+            this.toast.info('Reset', 'This page is read-only. Use Edit on the last page to change it.');
+            return;
+        }
+
         if (!this.analysis)
         {
             this.toast.info('Reset', 'The source page is not loaded yet.');

@@ -12,7 +12,11 @@ export interface SubmenuOption
     value: number;
     code: string;
     name: string;
+    moduleId?: number;
+    menuId?: number;
 }
+
+export type CloneMode = 'add' | 'view' | 'edit';
 
 export type FieldAction = 'Keep' | 'Modify' | 'Add' | 'Exclude';
 export type ParentMode = 'Keep' | 'Change' | 'Exclude';
@@ -66,6 +70,14 @@ export interface CloneSetup
 
 export interface CloneWorkflowState
 {
+    // add = new clone, view = read only, edit = update a saved clone
+    mode: CloneMode;
+    pageCloningId: number;
+
+    // The saved blueprint of an opened record. The Clone Action page
+    // applies it once, after it has read the source page, then clears it.
+    blueprint: any | null;
+
     cloneFromModuleId: number;
     cloneFromMenuId: number;
     cloneFromId: number;
@@ -127,6 +139,7 @@ export class PageCloningWorkflowService
     emptyState(): CloneWorkflowState
     {
         return {
+            mode: 'add', pageCloningId: 0, blueprint: null,
             cloneFromModuleId: 0, cloneFromMenuId: 0,
             cloneFromId: 0, cloneFromCode: '', cloneFromName: '',
             cloneToModuleId: 0, cloneToMenuId: 0,
@@ -142,6 +155,84 @@ export class PageCloningWorkflowService
         this.state = this.emptyState();
     }
 
+    // Shown in the page header of the four pages
+    get pageTitle(): string
+    {
+        switch (this.state.mode)
+        {
+            case 'view': return 'Page Cloning - View';
+            case 'edit': return 'Page Cloning - Edit';
+            default:     return 'Page Cloning';
+        }
+    }
+
+    //===========================================================
+    // Open a saved clone (from the list) in View or Edit mode.
+    // Fills the whole wizard state from the saved record.
+    // Returns false when the record has no usable blueprint.
+    //===========================================================
+    openRecord(record: any, mode: 'view' | 'edit'): Observable<boolean>
+    {
+        const pick = (o: any, key: string): any =>
+            o?.[key] ?? o?.[key.charAt(0).toUpperCase() + key.slice(1)];
+
+        let bp: any = null;
+
+        try
+        {
+            bp = JSON.parse(String(pick(record, 'blueprintJson') ?? ''));
+        }
+        catch
+        {
+            bp = null;
+        }
+
+        if (!bp || typeof bp !== 'object')
+        {
+            return of(false);
+        }
+
+        return this.loadSubmenus().pipe(
+            map(list =>
+            {
+                const fromId = Number(pick(record, 'cloneFromId')) || 0;
+                const toId = Number(pick(record, 'cloneToId')) || 0;
+
+                const from = list.find(o => o.value === fromId);
+                const to = list.find(o => o.value === toId);
+
+                this.state =
+                {
+                    ...this.emptyState(),
+
+                    mode,
+                    pageCloningId: Number(pick(record, 'pageCloningId')) || 0,
+                    blueprint: bp,
+
+                    cloneFromModuleId: from?.moduleId ?? 0,
+                    cloneFromMenuId: from?.menuId ?? 0,
+                    cloneFromId: fromId,
+                    cloneFromCode: String(pick(record, 'cloneFromCode') ?? ''),
+                    cloneFromName: String(pick(record, 'cloneFromName') ?? ''),
+
+                    cloneToModuleId: to?.moduleId ?? 0,
+                    cloneToMenuId: to?.menuId ?? 0,
+                    cloneToId: toId,
+                    cloneToCode: String(pick(record, 'cloneToCode') ?? ''),
+                    cloneToName: String(pick(record, 'cloneToName') ?? ''),
+
+                    entityName: String(pick(bp, 'entityName') ?? pick(record, 'entityName') ?? ''),
+                    displayName: String(pick(bp, 'displayName') ?? '')
+                };
+
+                return true;
+            })
+        );
+    }
+
+    //===========================================================
+    // All submenus, each with its menu and module
+    //===========================================================
     private cache$?: Observable<SubmenuOption[]>;
 
     loadSubmenus(): Observable<SubmenuOption[]>
@@ -152,30 +243,42 @@ export class PageCloningWorkflowService
                 switchMap((modules: any[]) =>
                     modules?.length
                         ? forkJoin(modules.map(m =>
-                            this.menuService.getByModule(Number(m.id))
-                                .pipe(catchError(() => of([] as any[])))))
+                            this.menuService.getByModule(Number(m.id)).pipe(
+                                map((menus: any[]) => (menus ?? []).map(menu =>
+                                    ({ moduleId: Number(m.id), menu }))),
+                                catchError(() => of([] as any[])))))
                         : of([] as any[][])),
                 map(groups => (groups as any[][]).flat()),
                 switchMap((menus: any[]) =>
                     menus.length
-                        ? forkJoin(menus.map(m =>
-                            this.submenuService.getByMenu(Number(m.id))
-                                .pipe(catchError(() => of([] as any[])))))
+                        ? forkJoin(menus.map(x =>
+                            this.submenuService.getByMenu(Number(x.menu.id)).pipe(
+                                map((subs: any[]) => (subs ?? []).map(s =>
+                                    ({ s, moduleId: x.moduleId, menuId: Number(x.menu.id) }))),
+                                catchError(() => of([] as any[])))))
                         : of([] as any[][])),
                 map(groups =>
                 {
                     const seen = new Set<number>();
                     const result: SubmenuOption[] = [];
 
-                    for (const s of (groups as any[][]).flat())
+                    for (const x of (groups as any[][]).flat())
                     {
-                        const id = Number(s.id);
+                        const id = Number(x.s.id);
                         if (!id || seen.has(id)) { continue; }
                         seen.add(id);
 
-                        const code = s.code ?? '';
-                        const name = s.name ?? '';
-                        result.push({ label: `${code} - ${name}`, value: id, code, name });
+                        const code = x.s.code ?? '';
+                        const name = x.s.name ?? '';
+
+                        result.push({
+                            label: `${code} - ${name}`,
+                            value: id,
+                            code,
+                            name,
+                            moduleId: x.moduleId,
+                            menuId: x.menuId
+                        });
                     }
 
                     return result.sort((a, b) => a.label.localeCompare(b.label));

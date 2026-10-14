@@ -951,4 +951,68 @@ public static class CodeGenerator
             ledgerSequenceNo);
     }
 
+
+    // AUTO-BEGIN : GenerateCashAccountsCode
+    public static string GenerateCashAccountsCode(
+        int accountClassSequenceNo,
+        int accountGroupSequenceNo,
+        int accountSubGroupsSequenceNo,
+        int sequenceNo)
+    {
+        if (accountClassSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountClass sequence number.");
+        }
+
+        if (accountGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountGroup sequence number.");
+        }
+
+        if (accountSubGroupsSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountSubGroups sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"CSH-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupsSequenceNo:D3}-{sequenceNo:D5}";
+    }
+    // AUTO-END : GenerateCashAccountsCode
+
+
+    // AUTO-BEGIN : GenerateBankAccountsCode
+    public static string GenerateBankAccountsCode(
+        int accountClassSequenceNo,
+        int accountGroupSequenceNo,
+        int accountSubGroupSequenceNo,
+        int sequenceNo)
+    {
+        if (accountClassSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountClass sequence number.");
+        }
+
+        if (accountGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountGroup sequence number.");
+        }
+
+        if (accountSubGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountSubGroup sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"BNK-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
+    }
+    // AUTO-END : GenerateBankAccountsCode
+
 }

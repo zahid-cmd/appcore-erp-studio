@@ -817,12 +817,19 @@ implements OnInit
                         ||
                         item.IsActive ===
                         this.selectedStatus;
-                    const inventoryAutoGroupMatch =
-                        this.selectedTab !== 'inventory-auto'
-                        ||
+                    //===================================================
+                    // Tab split
+                    //   inventory-auto tab : only the auto groups
+                    //   all tab            : only the manual groups
+                    //===================================================
+                    const isInventoryAuto =
                         this.isInventoryAutoGroup(
                             item.GroupCode
                         );
+                    const inventoryAutoGroupMatch =
+                        this.selectedTab === 'inventory-auto'
+                            ? isInventoryAuto
+                            : !isInventoryAuto;
                     const classCode =
                         item.ClassCode
                         ??
@@ -940,7 +947,7 @@ implements OnInit
                 groupCode
                 ??
                 ''
-            ).trim();
+            ).trim().toUpperCase();
         return /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
             code
         );

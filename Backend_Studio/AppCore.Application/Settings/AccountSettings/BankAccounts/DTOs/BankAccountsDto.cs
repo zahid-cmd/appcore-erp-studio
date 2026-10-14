@@ -1,97 +1,112 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.BankAccounts.DTOs;
 
 
 //===============================================================
-// BankAccountsDto
+// BankAccount DTO
 //===============================================================
 
-public class BankAccountsDto
+public class BankAccountDto
 {
     //===========================================================
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long BankAccountId
     {
         get;
         set;
     }
 
 
-    //===========================================================
-    // Code
-    //===========================================================
+    //===============================================================
+    // Account Sub Groups Id
+    //===============================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long AccountSubGroupsId { get; set; }
 
+    //===============================================================
+    // Bank Account Code
+    //===============================================================
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string BankAccountCode { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    //===============================================================
+    // Bank Account Name
+    //===============================================================
 
+    public string BankAccountName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
+    //===============================================================
     // Remarks
+    //===============================================================
+
+    public string Remarks { get; set; } = string.Empty;
+
+    //===============================================================
+    // Is Active
+    //===============================================================
+
+    public bool IsActive { get; set; }
+
+    //===========================================================
+    // Soft Delete
     //===========================================================
 
-    public string Remarks
+    public bool IsDeleted
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    public long CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

@@ -1,3 +1,5 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -10,6 +12,12 @@ import
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -31,9 +39,15 @@ from '@angular/router';
 
 import
 {
-    BankAccounts
+    BankAccount
 }
 from '../../../models/bank-accounts.model';
+
+import
+{
+    AccountSubGroup
+}
+from '../../../models/account-sub-group.model';
 
 
 //===============================================================
@@ -71,12 +85,6 @@ import
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
@@ -129,7 +137,7 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,6 +146,24 @@ import
 }
 from '../../../services/bank-accounts.service';
 
+import
+{
+    AccountSubGroupService
+}
+from '../../../services/account-sub-group.service';
+
+
+//===============================================================
+// List Item
+//===============================================================
+
+interface BankAccountListItem
+extends BankAccount
+{
+    AccountSubGroupName:
+        string;
+}
+
 
 //===============================================================
 // Component
@@ -145,7 +171,7 @@ from '../../../services/bank-accounts.service';
 
 @Component(
 {
-    selector:'bankAccounts-list',
+    selector:'bank-accounts-list',
 
     standalone:true,
 
@@ -160,8 +186,6 @@ from '../../../services/bank-accounts.service';
         ControlTabsComponent,
 
         SearchBoxComponent,
-
-        DropdownComponent,
 
         CommandCenterComponent,
 
@@ -185,7 +209,7 @@ from '../../../services/bank-accounts.service';
 
 
 //===============================================================
-// Bank Accounts List Component
+// BankAccounts List
 //===============================================================
 
 export class BankAccountsList
@@ -196,8 +220,12 @@ implements OnInit
     // Dependency Injection
     //===========================================================
 
-    private readonly bankaccountsservice =
+    private readonly bankAccountsService =
         inject(BankAccountsService);
+
+
+    private readonly accountSubGroupService =
+        inject(AccountSubGroupService);
 
 
     private readonly confirmDialog =
@@ -220,7 +248,6 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
     // Page Tabs
     //===========================================================
@@ -231,7 +258,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All BankAccountses'
+            label:'All BankAccounts'
         }
     ];
 
@@ -241,58 +268,32 @@ implements OnInit
         'all';
 
 
-
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
-    bankaccountses:
-        BankAccounts[] =
+    bankAccounts:
+        BankAccountListItem[] =
     [];
 
 
-    filteredBankAccountses:
-        BankAccounts[] =
+    filteredBankAccounts:
+        BankAccountListItem[] =
     [];
 
 
-    pagedBankAccountses:
-        BankAccounts[] =
+    pagedBankAccounts:
+        BankAccountListItem[] =
     [];
 
+
+    //===========================================================
+    // AccountSubGroup Lookup
+    //===========================================================
+
+    private accountSubGroupMap:
+        Map<number, string> =
+        new Map<number, string>();
 
 
     //===========================================================
@@ -314,7 +315,6 @@ implements OnInit
         false;
 
 
-
     //===========================================================
     // Pagination
     //===========================================================
@@ -329,7 +329,6 @@ implements OnInit
         10;
 
 
-
     //===========================================================
     // History
     //===========================================================
@@ -341,13 +340,12 @@ implements OnInit
 
     historyTitle:
         string =
-        'Bank Accounts History';
+        'BankAccount History';
 
 
     historyItems:
         any[] =
     [];
-
 
 
     //===========================================================
@@ -379,7 +377,6 @@ implements OnInit
     };
 
 
-
     //===========================================================
     // Table Columns
     //===========================================================
@@ -394,37 +391,57 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'80px',
 
             align:'center'
         },
 
         {
-            header:'Code',
+            header:'Account Sub Group',
 
-            field:'code',
+            field:'AccountSubGroupName',
 
-            width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
+            width:'280px',
 
             align:'left'
         },
 
         {
-            header:'Status',
+            header:'Bank Account Code',
 
-            field:'status',
+            field:'BankAccountCode',
+
+            width:'280px',
+
+            align:'center'
+        },
+
+        {
+            header:'Bank Account Name',
+
+            field:'BankAccountName',
+
+            align:'left'
+        },
+
+        {
+            header:'Remarks',
+
+            field:'Remarks',
+
+            width:'350px',
+
+            align:'left'
+        },
+
+        {
+            header:'Is Active',
+
+            field:'IsActive',
+
+            width:'200px',
 
             type:'status',
-
-            width:'120px',
 
             align:'center'
         },
@@ -436,16 +453,15 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }
     ];
 
 
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -455,9 +471,86 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Normalize BankAccount
+    //===========================================================
+
+    private normalizeBankAccount
+    (
+        item:
+            any
+    ):
+        BankAccountListItem
+    {
+        const accountSubGroupsId:
+            number =
+            Number
+            (
+                item?.AccountSubGroupsId
+                ??
+                item?.accountSubGroupsId
+                ??
+                0
+            );
+
+
+        return {
+            BankAccountId:
+                Number(item?.BankAccountId ?? item?.bankAccountId ?? 0),
+
+            AccountSubGroupsId:
+                Number(item?.AccountSubGroupsId ?? item?.accountSubGroupsId ?? 0),
+
+            AccountSubGroupName:
+                this.getAccountSubGroupName(Number(item?.AccountSubGroupsId ?? item?.accountSubGroupsId ?? 0)),
+
+            BankAccountCode:
+                item?.BankAccountCode ?? item?.bankAccountCode ?? '',
+
+            BankAccountName:
+                item?.BankAccountName ?? item?.bankAccountName ?? '',
+
+            Remarks:
+                item?.Remarks ?? item?.remarks ?? '',
+
+            IsActive:
+                Boolean(item?.IsActive ?? item?.isActive ?? true)
+        };
+    }
+
 
     //===========================================================
-    // Load BankAccountses
+    // Normalize BankAccounts
+    //===========================================================
+
+    private normalizeBankAccounts
+    (
+        response:
+            any
+    ):
+        BankAccountListItem[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+
+        return response.map
+        (
+            item =>
+                this.normalizeBankAccount(
+                    item
+                )
+        );
+    }
+
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -471,20 +564,149 @@ implements OnInit
             false;
 
 
-        this.bankaccountsservice
+        //=======================================================
+        // Load Companies
+        //=======================================================
+
+        this.accountSubGroupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    companies:
+                        AccountSubGroup[]
+                ):
+                    void =>
+                {
+                    this.buildAccountSubGroupMap(
+                        companies
+                    );
+
+
+                    this.loadBankAccounts();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Load Companies Error:',
+                        error
+                    );
+
+
+                    this.accountSubGroupMap =
+                        new Map<number, string>();
+
+
+                    //===================================================
+                    // Still Load BankAccounts
+                    //===================================================
+
+                    this.loadBankAccounts();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Build AccountSubGroup Map
+    //===========================================================
+
+    private buildAccountSubGroupMap
+    (
+        companies:
+            AccountSubGroup[]
+    ):
+        void
+    {
+        this.accountSubGroupMap =
+            new Map<number, string>();
+
+
+        companies.forEach
+        (
+            accountSubGroup =>
+            {
+                const accountSubGroupsId:
+                    number =
+                    Number(
+                        accountSubGroup.AccountSubGroupId
+                    );
+
+
+                const accountSubGroupName:
+                    string =
+                    accountSubGroup.SubGroupName
+                    ??
+                    '';
+
+
+                //=======================================================
+                // Display AccountSubGroup Name Only
+                //=======================================================
+
+                const displayName:
+                    string =
+                    accountSubGroupName
+                    ||
+                    String(accountSubGroupsId);
+
+
+                this.accountSubGroupMap.set
+                (
+                    accountSubGroupsId,
+
+                    displayName
+                );
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Load BankAccounts
+    //===========================================================
+
+    private loadBankAccounts():
+        void
+    {
+        this.bankAccountsService
             .getAll()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        BankAccounts[]
-                ): void =>
+                        BankAccount[]
+                ):
+                    void =>
                 {
-                    this.bankaccountses =
-                    [
-                        ...response
-                    ];
+                    console.log
+                    (
+                        'BankAccount API Response:',
+                        response
+                    );
+
+
+                    this.bankAccounts =
+                        this.normalizeBankAccounts(
+                            response
+                        );
+
+
+                    console.log
+                    (
+                        'Normalized BankAccounts:',
+                        this.bankAccounts
+                    );
 
 
                     this.applyFilters();
@@ -506,26 +728,26 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load BankAccountses Error',
-
+                        'Load BankAccounts Error:',
                         error
                     );
 
 
-                    this.bankaccountses =
-                    [];
+                    this.bankAccounts =
+                        [];
 
 
-                    this.filteredBankAccountses =
-                    [];
+                    this.filteredBankAccounts =
+                        [];
 
 
-                    this.pagedBankAccountses =
-                    [];
+                    this.pagedBankAccounts =
+                        [];
 
 
                     this.loading =
@@ -540,7 +762,7 @@ implements OnInit
                     (
                         'Load Failed',
 
-                        'Unable to load bankaccountses.'
+                        'Unable to load bankAccounts.'
                     );
 
 
@@ -550,25 +772,23 @@ implements OnInit
     }
 
 
-
     //===========================================================
-    // Status Filter Changed
+    // Get AccountSubGroup Name
     //===========================================================
 
-    onStatusFilterChange
+    getAccountSubGroupName
     (
-        value:
-            string | null
+        accountSubGroupsId:
+            number
     ):
-        void
+        string
     {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
+        return this.accountSubGroupMap.get(
+            Number(accountSubGroupsId)
+        )
+        ??
+        '';
     }
-
 
 
     //===========================================================
@@ -578,54 +798,47 @@ implements OnInit
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
 
-        this.filteredBankAccountses =
-            this.bankaccountses
-                .filter
+        this.filteredBankAccounts =
+            this.bankAccounts.filter
+            (
                 (
-                    (
-                        x:
-                            BankAccounts
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                    item:
+                        BankAccountListItem
+                ):
+                    boolean =>
+                {
+                    const values:
+                        unknown[] =
+                    [
+                        item.AccountSubGroupName,
+                        item.BankAccountCode,
+                        item.BankAccountName,
+                        item.Remarks
+                    ];
 
+                    const searchMatch =
+                        !keyword
+                        ||
+                        values.some(
+                            value =>
+                                String(value ?? '')
+                                    .toLowerCase()
+                                    .includes(keyword)
+                        )
+                        ||
+                        (item.IsActive ? 'active' : 'inactive')
+                            .includes(keyword);
 
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
+                    return searchMatch;
+                }
+            );
 
 
         this.currentPage =
@@ -634,7 +847,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -649,12 +861,13 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
+            value
+            ??
+            '';
 
 
         this.applyFilters();
     }
-
 
 
     //===========================================================
@@ -674,34 +887,34 @@ implements OnInit
     ):
         void
     {
-        this.filteredBankAccountses =
+        this.filteredBankAccounts =
         [
-            ...this.filteredBankAccountses
+            ...this.filteredBankAccounts
         ];
 
 
-        this.filteredBankAccountses.sort
+        this.filteredBankAccounts.sort
         (
             (
                 a:
-                    BankAccounts,
+                    BankAccountListItem,
 
                 b:
-                    BankAccounts
+                    BankAccountListItem
             ):
                 number =>
             {
                 const valueA:
                     any =
                     a[
-                        event.field as keyof BankAccounts
+                        event.field as keyof BankAccountListItem
                     ];
 
 
                 const valueB:
                     any =
                     b[
-                        event.field as keyof BankAccounts
+                        event.field as keyof BankAccountListItem
                     ];
 
 
@@ -788,7 +1001,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Refresh
     //===========================================================
@@ -800,13 +1012,12 @@ implements OnInit
             '';
 
 
-        this.selectedStatus =
-            null;
+        this.currentPage =
+            1;
 
 
         this.loadItems();
     }
-
 
 
     //===========================================================
@@ -825,18 +1036,16 @@ implements OnInit
             this.pageSize;
 
 
-        this.pagedBankAccountses =
+        this.pagedBankAccounts =
         [
-            ...this.filteredBankAccountses
-                .slice
-                (
-                    start,
+            ...this.filteredBankAccounts.slice
+            (
+                start,
 
-                    start + this.pageSize
-                )
+                start + this.pageSize
+            )
         ];
     }
-
 
 
     //===========================================================
@@ -856,7 +1065,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -882,7 +1090,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Add
     //===========================================================
@@ -904,7 +1111,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View
     //===========================================================
@@ -912,7 +1118,7 @@ implements OnInit
     view
     (
         item:
-            BankAccounts
+            BankAccountListItem
     ):
         void
     {
@@ -921,7 +1127,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.BankAccountId
             ],
 
             {
@@ -930,7 +1136,6 @@ implements OnInit
             }
         );
     }
-
 
 
     //===========================================================
@@ -940,7 +1145,7 @@ implements OnInit
     edit
     (
         item:
-            BankAccounts
+            BankAccountListItem
     ):
         void
     {
@@ -949,7 +1154,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.BankAccountId
             ],
 
             {
@@ -960,7 +1165,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
@@ -968,22 +1172,22 @@ implements OnInit
     delete
     (
         item:
-            BankAccounts
+            BankAccountListItem
     ):
         void
     {
         this.confirmDialog.open
         (
-            'Delete Bank Accounts',
+            'Delete BankAccount',
 
-            `Are you sure you want to delete "${item.name}" ?`,
+            `Are you sure you want to delete "${item.BankAccountName}" ?`,
 
             (): void =>
             {
-                this.bankaccountsservice
+                this.bankAccountsService
                     .delete
                     (
-                        item.id
+                        item.BankAccountId
                     )
                     .subscribe
                     ({
@@ -994,7 +1198,7 @@ implements OnInit
                             (
                                 'Delete Successful',
 
-                                `${item.name} deleted successfully.`
+                                `${item.BankAccountName} deleted successfully.`
                             );
 
 
@@ -1006,28 +1210,86 @@ implements OnInit
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Bank Accounts Error',
-
+                                'Delete BankAccount Error:',
                                 error
                             );
 
+
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'BankAccount cannot be deleted because it is already configured.';
+
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+
+                                    message
+                                );
+
+
+                                return;
+                            }
+
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
                             this.toast.error
                             (
                                 'Delete Failed',
 
-                                'Failed to delete bankAccounts.'
+                                'Failed to delete bankAccount.'
                             );
                         }
                     });
             }
         );
     }
-
 
 
     //===========================================================
@@ -1039,9 +1301,9 @@ implements OnInit
     {
         this.confirmDialog.open
         (
-            'Restore Bank Accounts',
+            'Restore BankAccount',
 
-            'Are you sure you want to restore the most recently deleted bankAccounts?',
+            'Are you sure you want to restore the most recently deleted bankAccount?',
 
             (): void =>
             {
@@ -1057,7 +1319,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Restore Item
     //===========================================================
@@ -1065,7 +1326,7 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.bankaccountsservice
+        this.bankAccountsService
             .restore()
             .subscribe
             ({
@@ -1076,7 +1337,7 @@ implements OnInit
                     (
                         'Restore Successful',
 
-                        'The most recently deleted bankAccounts has been restored.'
+                        'The most recently deleted bankAccount has been restored.'
                     );
 
 
@@ -1088,26 +1349,45 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Restore Bank Accounts Error',
+                        'Restore BankAccount Error',
 
                         error
                     );
+
+
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted bankAccount record to restore.'
+                        );
+
+
+                        return;
+                    }
 
 
                     this.toast.error
                     (
                         'Restore Failed',
 
-                        'Failed to restore bankAccounts.'
+                        'Failed to restore bankAccount.'
                     );
                 }
             });
     }
-
 
 
     //===========================================================
@@ -1117,7 +1397,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.bankaccountsservice
+        this.bankAccountsService
             .getHistory()
             .subscribe
             ({
@@ -1125,7 +1405,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,15 +1414,21 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
 
                                 description:
-                                    history.activityDescription,
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
 
                                 user:
                                     history.performedByName
+                                    ??
+                                    history.PerformedByName
                                     ??
                                     'System',
 
@@ -1150,18 +1437,22 @@ implements OnInit
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
 
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
 
 
                     this.historyTitle =
-                        'Bank Accounts Management History';
+                        'BankAccount Management History';
 
 
                     this.historyOpened =
@@ -1176,12 +1467,12 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
 
@@ -1190,12 +1481,11 @@ implements OnInit
                     (
                         'History',
 
-                        'Failed to load bankAccounts history.'
+                        'Failed to load bankAccount history.'
                     );
                 }
             });
     }
-
 
 
     //===========================================================

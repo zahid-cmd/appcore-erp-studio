@@ -1,3 +1,5 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -97,16 +99,16 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 //===============================================================
 // Utilities
@@ -143,9 +145,11 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
-    BankAccounts,
-    CreateBankAccounts,
-    UpdateBankAccounts
+    BankAccount,
+
+    CreateBankAccount,
+
+    UpdateBankAccount
 }
 from '../../../models/bank-accounts.model';
 
@@ -155,6 +159,18 @@ import
 }
 from '../../../services/bank-accounts.service';
 
+import
+{
+    AccountSubGroup
+}
+from '../../../models/account-sub-group.model';
+
+import
+{
+    AccountSubGroupService
+}
+from '../../../services/account-sub-group.service';
+
 
 //===============================================================
 // Component
@@ -162,7 +178,7 @@ from '../../../services/bank-accounts.service';
 
 @Component(
 {
-    selector:'bankAccounts-form',
+    selector:'bank-accounts-form',
 
     standalone:true,
 
@@ -198,9 +214,9 @@ from '../../../services/bank-accounts.service';
 
         TextboxComponent,
 
-        TextareaComponent,
-
         SearchDropdownComponent,
+
+        TextareaComponent,
 
         DropdownComponent,
 
@@ -241,8 +257,12 @@ implements OnInit
         inject(Router);
 
 
-    private readonly bankaccountsservice =
+    private readonly bankAccountsService =
         inject(BankAccountsService);
+
+
+    private readonly accountSubGroupService =
+        inject(AccountSubGroupService);
 
 
     private readonly confirmDialog =
@@ -279,12 +299,12 @@ implements OnInit
 
     pageTitle:
         string =
-        'Bank Accounts';
+        'BankAccount';
 
 
     entityName:
         string =
-        'Bank Accounts';
+        'BankAccount';
 
 
 
@@ -352,13 +372,13 @@ implements OnInit
 
 
     //===========================================================
-    // Sample Search Dropdown Items
+    // AccountSubGroup Items
     //===========================================================
 
-    items:
+    accountSubGroupItems:
         any[]
     =
-        [];
+    [];
 
 
 
@@ -369,19 +389,19 @@ implements OnInit
     statusItems:
         any[]
     =
-        [
-            {
-                text:'Active',
+    [
+        {
+            label:'Active',
 
-                value:'Active'
-            },
+            value:true
+        },
 
-            {
-                text:'Inactive',
+        {
+            label:'Inactive',
 
-                value:'Inactive'
-            }
-        ];
+            value:false
+        }
+    ];
 
 
 
@@ -390,22 +410,20 @@ implements OnInit
     //===========================================================
 
     entity:
-        BankAccounts
+        BankAccount
     =
     {
-        id:0,
+        BankAccountId:0,
 
-        code:'',
+        AccountSubGroupsId:0,
 
-        name:'',
+        BankAccountCode:'',
 
-        sampleSearchDropdownId:0,
+        BankAccountName:'',
 
-        sampleField:'',
+        Remarks:'',
 
-        status:'Active',
-
-        remarks:''
+        IsActive:true
     };
 
 
@@ -424,6 +442,11 @@ implements OnInit
         false;
 
 
+    isLoadingCompanies:
+        boolean =
+        false;
+
+
 
     //===========================================================
     // Initialize
@@ -432,7 +455,91 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadCompanies();
+
         this.initializeMode();
+    }
+
+
+
+    //===========================================================
+    // Load Companies
+    //===========================================================
+
+    private loadCompanies():
+        void
+    {
+        this.isLoadingCompanies =
+            true;
+
+
+        this.accountSubGroupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    companies:
+                        AccountSubGroup[]
+                ): void =>
+                {
+                    this.accountSubGroupItems =
+                        companies.map
+                        (
+                            accountSubGroup =>
+                            ({
+                                label:
+                                    accountSubGroup.SubGroupCode
+                                    +
+                                    ' - '
+                                    +
+                                    accountSubGroup.SubGroupName,
+
+                                value:
+                                    accountSubGroup.AccountSubGroupId
+                            })
+                        );
+
+
+                    this.isLoadingCompanies =
+                        false;
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Load AccountSubGroup Error',
+
+                        error
+                    );
+
+
+                    this.accountSubGroupItems =
+                        [];
+
+
+                    this.isLoadingCompanies =
+                        false;
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to load companies.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
     }
 
 
@@ -444,12 +551,6 @@ implements OnInit
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
 
@@ -494,6 +595,14 @@ implements OnInit
 
 
         //=======================================================
+        // Resolve Entity Id
+        //=======================================================
+
+        const id =
+            this.resolveEntityId();
+
+
+        //=======================================================
         // Existing Entity
         //=======================================================
 
@@ -523,6 +632,48 @@ implements OnInit
 
 
     //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+        this.route;
+
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+
+        return 0;
+    }
+
+
+
+    //===========================================================
     // Initialize Entity
     //===========================================================
 
@@ -531,22 +682,143 @@ implements OnInit
     {
         this.entity =
         {
-            id:0,
+        BankAccountId:0,
 
-            code:'',
+        AccountSubGroupsId:0,
 
-            name:'',
+        BankAccountCode:'',
 
-            sampleSearchDropdownId:0,
+        BankAccountName:'',
 
-            sampleField:'',
+        Remarks:'',
 
-            status:'Active',
-
-            remarks:''
-        };
+        IsActive:true
+    };
 
 
+        this.setInitialFormState();
+    }
+
+
+
+    //===========================================================
+    // Generate BankAccount Code
+    //===========================================================
+
+    private generateBankAccountCode():
+        void
+    {
+        //=======================================================
+        // Existing Record
+        //=======================================================
+
+        if
+        (
+            this.entityId > 0
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // AccountSubGroup Required
+        //
+        // BankAccount Code is accountSubGroup dependent.
+        //=======================================================
+
+        if
+        (
+            !this.entity.AccountSubGroupsId
+            ||
+            this.entity.AccountSubGroupsId <= 0
+        )
+        {
+            this.entity.BankAccountCode =
+                '';
+
+
+            this.checkForChanges();
+
+
+            this.cdr.detectChanges();
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Backend Generation
+        //
+        // AccountSubGroupsId is required because BankAccount Code is
+        // generated independently for each AccountSubGroup.
+        //=======================================================
+
+        this.bankAccountsService
+            .getNextCode(
+                this.entity.AccountSubGroupsId
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    code:
+                        string
+                ): void =>
+                {
+                    this.entity.BankAccountCode =
+                        code;
+
+
+                    this.checkForChanges();
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Generate BankAccount Code Error',
+
+                        error
+                    );
+
+
+                    this.entity.BankAccountCode =
+                        '';
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to generate BankAccount Code.'
+                    );
+
+
+                    this.checkForChanges();
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+    private setInitialFormState():
+        void
+    {
         this.originalEntity =
             JSON.stringify(
                 this.entity
@@ -555,6 +827,9 @@ implements OnInit
 
         this.hasChanges =
             false;
+
+
+        this.cdr.detectChanges();
     }
 
 
@@ -566,16 +841,52 @@ implements OnInit
     private loadEntity():
         void
     {
-        this.bankaccountsservice
+        this.bankAccountsService
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any
+                ): void =>
                 {
+                    console.log(
+                        'BankAccount API Response:',
+
+                        response
+                    );
+
+
                     this.entity =
-                        response;
+                    {
+                        BankAccountId:
+                            Number(response?.BankAccountId ?? response?.bankAccountId ?? 0),
+
+                        AccountSubGroupsId:
+                            Number(response?.AccountSubGroupsId ?? response?.accountSubGroupsId ?? 0),
+
+                        BankAccountCode:
+                            response?.BankAccountCode ?? response?.bankAccountCode ?? '',
+
+                        BankAccountName:
+                            response?.BankAccountName ?? response?.bankAccountName ?? '',
+
+                        Remarks:
+                            response?.Remarks ?? response?.remarks ?? '',
+
+                        IsActive:
+                            Boolean(response?.IsActive ?? response?.isActive ?? true)
+                    };
+
+
+                    console.log(
+                        'BankAccount Form Entity:',
+
+                        this.entity
+                    );
 
 
                     this.originalEntity =
@@ -592,10 +903,15 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
-                        'Load Bank Accounts Error',
+                        'Load BankAccount Error',
+
                         error
                     );
 
@@ -603,7 +919,7 @@ implements OnInit
                     this.toast.error(
                         'Error',
 
-                        'Failed to load Bank Accounts.'
+                        'Failed to load BankAccount.'
                     );
 
 
@@ -615,13 +931,56 @@ implements OnInit
 
 
     //===========================================================
-    // Sample Search Dropdown Changed
+    // AccountSubGroup Changed
     //===========================================================
 
-    onSampleSearchDropdownChange():
+    onAccountSubGroupChange
+    (
+        accountSubGroupsId:
+            number
+    ):
         void
     {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        this.entity.AccountSubGroupsId =
+            Number(
+                accountSubGroupsId
+            );
+
+
+        //=======================================================
+        // AccountSubGroup Change Invalidates Current BankAccount Code
+        //=======================================================
+
+        this.entity.BankAccountCode =
+            '';
+
+
         this.checkForChanges();
+
+
+        this.cdr.detectChanges();
+
+
+        //=======================================================
+        // Backend BankAccount Code Generation
+        //=======================================================
+
+        if
+        (
+            this.entity.AccountSubGroupsId > 0
+        )
+        {
+            this.generateBankAccountCode();
+        }
     }
 
 
@@ -686,21 +1045,54 @@ implements OnInit
 
         if
         (
-            !this.entity.name?.trim()
+            !this.entity.AccountSubGroupsId
+            ||
+            this.entity.AccountSubGroupsId <= 0
         )
         {
             this.toast.error(
                 'Validation',
 
-                'Name is required.'
+                'Account Sub Groups Id is required.'
             );
 
             return;
         }
 
 
+        if
+        (
+            !this.entity.BankAccountCode?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Bank Account Code is required.'
+            );
+
+            return;
+        }
+
+
+        if
+        (
+            !this.entity.BankAccountName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Bank Account Name is required.'
+            );
+
+            return;
+        }
+
+
+
         //=======================================================
-        // Create
+        // Add
         //=======================================================
 
         if
@@ -708,77 +1100,7 @@ implements OnInit
             this.mode === 'add'
         )
         {
-            const model:
-                CreateBankAccounts =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.bankaccountsservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Bank Accounts created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Bank Accounts Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.saveCreate();
 
             return;
         }
@@ -788,36 +1110,47 @@ implements OnInit
         // Update
         //=======================================================
 
+        this.saveUpdate();
+    }
+
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
         const model:
-            UpdateBankAccounts =
+            CreateBankAccount =
         {
-            id:
-                this.entity.id,
 
-            name:
-                this.entity.name,
+            AccountSubGroupsId:
+                this.entity.AccountSubGroupsId,
 
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
+            BankAccountCode:
+                this.entity.BankAccountCode?.trim() ?? '',
 
-            sampleField:
-                this.entity.sampleField,
+            BankAccountName:
+                this.entity.BankAccountName?.trim() ?? '',
 
-            status:
-                this.entity.status,
+            Remarks:
+                this.entity.Remarks?.trim() ?? '',
 
-            remarks:
-                this.entity.remarks
+            IsActive:
+                this.entity.IsActive
         };
 
 
-        this.bankaccountsservice
-            .update(
+        this.bankAccountsService
+            .create(
                 model
             )
-            .subscribe(
-            {
-                next:() =>
+            .subscribe
+            ({
+                next:
+                (): void =>
                 {
                     this.originalEntity =
                         JSON.stringify(
@@ -832,7 +1165,7 @@ implements OnInit
                     this.toast.success(
                         'Success',
 
-                        'Bank Accounts updated successfully.'
+                        'BankAccount created successfully.'
                     );
 
 
@@ -840,18 +1173,113 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
-                        'Update Bank Accounts Error',
+                        'Create BankAccount Error',
+
                         error
                     );
 
 
                     const message =
-                        error?.error
+                        (error as any)?.error
                         ??
-                        'Failed to update {{ENTITY_NAME}.';
+                        'Failed to create BankAccount.';
+
+
+                    this.toast.error(
+                        'Validation',
+
+                        message
+                    );
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    private saveUpdate():
+        void
+    {
+        const model:
+            UpdateBankAccount =
+        {
+            BankAccountId:
+                this.entity.BankAccountId,
+
+            AccountSubGroupsId:
+                this.entity.AccountSubGroupsId,
+
+            BankAccountCode:
+                this.entity.BankAccountCode?.trim() ?? '',
+
+            BankAccountName:
+                this.entity.BankAccountName?.trim() ?? '',
+
+            Remarks:
+                this.entity.Remarks?.trim() ?? '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+
+
+        this.bankAccountsService
+            .update(
+                model
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.originalEntity =
+                        JSON.stringify(
+                            this.entity
+                        );
+
+
+                    this.hasChanges =
+                        false;
+
+
+                    this.toast.success(
+                        'Success',
+
+                        'BankAccount updated successfully.'
+                    );
+
+
+                    this.onBackToList();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Update BankAccount Error',
+
+                        error
+                    );
+
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'Failed to update BankAccount.';
 
 
                     this.toast.error(
@@ -884,9 +1312,6 @@ implements OnInit
             this.loadEntity();
 
 
-            this.checkForChanges();
-
-
             return;
         }
 
@@ -915,16 +1340,18 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                '..',
+            void this.router.navigate
+            (
+                [
+                    '/settings',
 
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
+                    'account-settings',
+
+                    'bank-accounts',
+
+                    'list'
+                ]
+            );
 
 
             return;
@@ -940,16 +1367,18 @@ implements OnInit
 
             () =>
             {
-                void this.router.navigate(
-                [
-                    '..',
+                void this.router.navigate
+                (
+                    [
+                        '/settings',
 
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                        'account-settings',
+
+                        'bank-accounts',
+
+                        'list'
+                    ]
+                );
             },
 
 

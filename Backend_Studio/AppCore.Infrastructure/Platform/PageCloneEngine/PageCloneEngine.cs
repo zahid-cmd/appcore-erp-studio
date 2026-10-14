@@ -32,34 +32,60 @@ public class PageCloneEngine
     };
 
     //===========================================================
-    // Plan (shared by Preview and Apply)
+    // Plan from a saved row (existing callers keep working)
     //===========================================================
 
     public EnginePlan Plan(PageCloningEntity row)
     {
-        var plan = new EnginePlan();
-
         PageCloneBlueprint bp;
+
         try { bp = PageCloneBlueprint.Parse(row.BlueprintJson); }
-        catch (Exception ex) { plan.Errors.Add("Blueprint error: " + ex.Message); return plan; }
+        catch (Exception ex)
+        {
+            var failed = new EnginePlan();
+            failed.Errors.Add("Blueprint error: " + ex.Message);
+            return failed;
+        }
+
+        return Plan(bp, row.CloneFromName, row.CloneToName);
+    }
+
+    //===========================================================
+    // Plan from the wizard (no saved row needed). Writes nothing.
+    // Shared by Preview and Apply.
+    //===========================================================
+
+    public EnginePlan Plan(PageCloneBlueprint bp, string cloneFromName, string cloneToName)
+    {
+        var plan = new EnginePlan();
 
         SolutionIndex index;
         try { index = new SolutionIndex(); }
         catch (Exception ex) { plan.Errors.Add(ex.Message); return plan; }
 
-        string? src = ResolveEntity(index, row.CloneFromName, plan, "source");
+        string? src = ResolveEntity(index, cloneFromName, plan, "source");
         string? tgt = ResolveEntity(index, bp.EntityName, plan, "target");
 
         if (src == null || tgt == null) return plan;
 
-        // Locate the 15 files on both sides
+        var baselines = BaselineLocator.Load(index.Root);
+        var baselineByKey = new Dictionary<string, string>();
+
+        // Locate the 15 files on both sides, and the target baselines
         var pairs = new List<(string Key, string SrcPath, string TgtPath)>();
 
         foreach (var spec in Specs)
         {
             string? s = FindOne(index, spec, src, plan, "source");
-            string? t = FindOne(index, spec, tgt, plan, "target (baseline missing)");
-            if (s != null && t != null) pairs.Add((spec.Key, s, t));
+            string? t = FindOne(index, spec, tgt, plan, "target");
+
+            if (s == null || t == null) continue;
+
+            string? b = FindBaseline(baselines, t, spec.Key, plan);
+            if (b == null) continue;
+
+            baselineByKey[spec.Key] = b;
+            pairs.Add((spec.Key, s, t));
         }
 
         if (plan.Errors.Count > 0) return plan;
@@ -67,10 +93,28 @@ public class PageCloneEngine
         var map = BuildNameMap(src, tgt, string.IsNullOrWhiteSpace(bp.DisplayName)
                         ? Names.Spaced(tgt) : bp.DisplayName, pairs, plan);
 
+        // Parent renames (Company -> AccountSubGroup, companyId -> accountSubGroupId ...)
+        var parentInfo = RepositoryBlockGenerator.ResolveParent(index, bp.Parent, plan.Warnings);
+
+        var cfgPair = pairs.FirstOrDefault(p => p.Key == "backend.configuration");
+        if (cfgPair.SrcPath != null)
+            RepositoryBlockGenerator.AddParentMap(map, File.ReadAllText(cfgPair.SrcPath), parentInfo);
+
         foreach (var (key, sp, tp) in pairs)
         {
             string before = File.ReadAllText(tp);
-            string after = AddMarker(Apply(File.ReadAllText(sp), map), tp, row);
+            string baselineText = File.ReadAllText(baselineByKey[key]);
+
+            string renamed = Apply(File.ReadAllText(sp), map);
+
+            // Field-level generation driven by the blueprint
+            renamed = FieldBlockGenerator.Transform(key, renamed, bp, Names.Singular(tgt), plan.Warnings);
+            renamed = RepositoryBlockGenerator.Transform(
+                key, renamed, bp, tgt, Names.Singular(tgt), parentInfo, plan.Warnings);
+            renamed = FrontendBlockGenerator.Transform(
+                key, renamed, bp, Names.Singular(tgt), plan.Warnings);
+
+            string after = AddMarker(renamed, tp, cloneFromName, cloneToName);
 
             plan.Files.Add(new FileChange
             {
@@ -78,10 +122,10 @@ public class PageCloneEngine
                 Path = Relative(index.Root, tp),
                 Before = before,
                 After = after,
-                // Heuristic: a baseline holds the engine's sample text or our own marker.
-                // Anything else was changed by hand. Replace when the baseline format is known.
-                Edited = !string.IsNullOrWhiteSpace(before)
-                         && !before.Contains("Sample", StringComparison.Ordinal)
+
+                // Edited by hand = differs from the sync baseline AND is not
+                // the output of an earlier clone (which carries our marker).
+                Edited = Normalize(before) != Normalize(baselineText)
                          && !before.Contains(Marker, StringComparison.Ordinal)
             });
         }
@@ -115,13 +159,34 @@ public class PageCloneEngine
     }
 
     //===========================================================
-    // Apply
+    // Apply (saved row)
     //===========================================================
 
-    public async Task<EngineResult> ApplyAsync(PageCloningEntity row, bool overwriteEdited)
+    public Task<EngineResult> ApplyAsync(PageCloningEntity row, bool overwriteEdited)
+    {
+        PageCloneBlueprint bp;
+
+        try { bp = PageCloneBlueprint.Parse(row.BlueprintJson); }
+        catch (Exception ex)
+        {
+            var failed = new EngineResult();
+            failed.Messages.Add("Blueprint error: " + ex.Message);
+            return Task.FromResult(failed);
+        }
+
+        return ApplyAsync(bp, row.CloneFromName, row.CloneToName, overwriteEdited, verify: true);
+    }
+
+    //===========================================================
+    // Apply (blueprint). verify = run the backend and frontend builds.
+    //===========================================================
+
+    public async Task<EngineResult> ApplyAsync(
+        PageCloneBlueprint bp, string cloneFromName, string cloneToName,
+        bool overwriteEdited, bool verify)
     {
         var result = new EngineResult();
-        var plan = Plan(row);
+        var plan = Plan(bp, cloneFromName, cloneToName);
 
         if (plan.Errors.Count > 0)
         {
@@ -151,7 +216,13 @@ public class PageCloneEngine
         result.Written = true;
         result.Messages.AddRange(plan.Warnings);
 
-        // Verify
+        if (!verify)
+        {
+            result.Success = true;
+            result.Messages.Add("Files written. Build was not run.");
+            return result;
+        }
+
         var sb = new StringBuilder();
         int backend = await RunAsync("dotnet",
             $"build \"{Path.Combine(root, "Backend_Studio", "AppCore.API")}\" --nologo -v q " +
@@ -164,6 +235,123 @@ public class PageCloneEngine
         result.Success = backend == 0 && frontend == 0;
         result.Messages.Add(result.Success ? "Both builds passed." : "A build failed. See build output.");
 
+        return result;
+    }
+
+    //===========================================================
+    // Restore the target page to its sync baseline.
+    //
+    // Copies each baseline file back over the target file and removes
+    // the CodeGenerator method this clone injected. If any baseline
+    // is missing, nothing is changed.
+    //===========================================================
+
+    public async Task<EngineResult> RestoreAsync(PageCloningEntity row)
+    {
+        var result = new EngineResult();
+        var plan = new EnginePlan();
+
+        PageCloneBlueprint bp;
+
+        try { bp = PageCloneBlueprint.Parse(row.BlueprintJson); }
+        catch (Exception ex)
+        {
+            result.Messages.Add("Blueprint error: " + ex.Message);
+            return result;
+        }
+
+        SolutionIndex index;
+        try { index = new SolutionIndex(); }
+        catch (Exception ex) { result.Messages.Add(ex.Message); return result; }
+
+        string? tgt = ResolveEntity(index, bp.EntityName, plan, "target");
+
+        if (tgt == null)
+        {
+            result.Messages.AddRange(plan.Errors);
+            return result;
+        }
+
+        var baselines = BaselineLocator.Load(index.Root);
+        var items = new List<(string Key, string Target, string Baseline)>();
+
+        foreach (var spec in Specs)
+        {
+            string? t = FindOne(index, spec, tgt, plan, "target");
+            if (t == null) continue;
+
+            string? b = FindBaseline(baselines, t, spec.Key, plan);
+            if (b != null) items.Add((spec.Key, t, b));
+        }
+
+        // All or nothing: a missing file or baseline stops everything
+        if (plan.Errors.Count > 0)
+        {
+            result.Messages.AddRange(plan.Errors);
+            result.Messages.Add("Nothing was restored.");
+            return result;
+        }
+
+        var utf8 = new UTF8Encoding(false);
+
+        //-------------------------------------------------------
+        // 1. The 15 files: copy the baseline back
+        //-------------------------------------------------------
+
+        foreach (var (_, target, baseline) in items)
+        {
+            string baselineText = File.ReadAllText(baseline);
+            string current = File.ReadAllText(target);
+
+            if (Normalize(current) == Normalize(baselineText)) continue;
+
+            await File.WriteAllTextAsync(target, baselineText, utf8);
+            result.Messages.Add("Restored: " + Relative(index.Root, target));
+        }
+
+        //-------------------------------------------------------
+        // 2. CodeGenerator.cs: remove the method this clone injected.
+        //    Only the AUTO-BEGIN / AUTO-END block of this method is cut.
+        //-------------------------------------------------------
+
+        string methodName = bp.Code?.MethodName ?? string.Empty;
+        bool codeWasExpected = bp.WriteCodeGeneratorMethod
+                               && !string.IsNullOrWhiteSpace(bp.Code?.Prefix);
+
+        if (!string.IsNullOrWhiteSpace(methodName))
+        {
+            var cg = index.Find("CodeGenerator.cs", "AppCore.Infrastructure");
+
+            if (cg.Count == 1)
+            {
+                string text = File.ReadAllText(cg[0]);
+                string cleaned = CodeGeneratorInjector.Remove(text, methodName, out bool removed);
+
+                if (removed)
+                {
+                    await File.WriteAllTextAsync(cg[0], cleaned, utf8);
+                    result.Messages.Add("Removed " + methodName + " from CodeGenerator.cs");
+                }
+                else if (codeWasExpected)
+                {
+                    result.Messages.Add(
+                        "CodeGenerator.cs: no injected block found for " + methodName +
+                        ". Check it by hand.");
+                }
+            }
+            else if (codeWasExpected)
+            {
+                result.Messages.Add(
+                    "CodeGenerator.cs was not found exactly once. " + methodName +
+                    " was not removed. Check it by hand.");
+            }
+        }
+
+        if (result.Messages.Count == 0)
+            result.Messages.Add("Everything is already at the baseline.");
+
+        result.Written = true;
+        result.Success = true;
         return result;
     }
 
@@ -201,29 +389,87 @@ public class PageCloneEngine
                                    string entity, EnginePlan plan, string role) =>
         FindOne(spec, index, entity, plan, role);
 
-    private static Dictionary<string, string> BuildNameMap(
+    private static string? FindBaseline(
+        BaselineLocator baselines, string targetPath, string key, EnginePlan plan)
+    {
+        string file = Path.GetFileName(targetPath);
+        var hits = baselines.Find(file + ".appcore-sync-baseline");
+
+        if (hits.Count == 1) return hits[0];
+
+        plan.Errors.Add(hits.Count == 0
+            ? $"{key}: no sync baseline found for {file}. Restore needs the baseline created by the code sync engine."
+            : $"{key}: sync baseline for {file} found {hits.Count} times. It must be unique.");
+
+        return null;
+    }
+
+    private static string Normalize(string text) =>
+        text.Replace("\r\n", "\n").Trim();
+
+    //===========================================================
+    // Name map
+    //===========================================================
+
+    private static NameMap BuildNameMap(
         string src, string tgt, string tgtDisplay,
         List<(string Key, string SrcPath, string TgtPath)> pairs, EnginePlan plan)
     {
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        var map = new NameMap();
 
+        // Code names: later calls may overwrite earlier ones
         void Add(string s, string t)
         {
             if (!string.IsNullOrEmpty(s) && s != t) map[s] = t;
         }
 
-        // Ids use the singular form (GeneralLedgers -> GeneralLedgerId)
-        string tSing = Names.Singular(tgt);
-        Add(src + "Id", tSing + "Id");
-        Add(Names.Singular(src) + "Id", tSing + "Id");
-        Add(Names.Camel(src) + "Id", Names.Camel(tSing) + "Id");
-        Add(Names.Camel(Names.Singular(src)) + "Id", Names.Camel(tSing) + "Id");
+        // Spaced / display forms: never overwrite a code-name mapping.
+        // For a single-word name such as Wings, Spaced("Wings") == "Wings",
+        // so an overwrite would turn the class name into "Cash Accounts".
+        void AddIfAbsent(string s, string t)
+        {
+            if (!string.IsNullOrEmpty(s) && s != t && !map.ContainsKey(s)) map[s] = t;
+        }
 
+        // Kebab forms: when the text equals a code name that is already mapped
+        // (Wing / wing), keep both and let Apply choose by context.
+        void AddKebab(string s, string t)
+        {
+            if (string.IsNullOrEmpty(s) || s == t) return;
+
+            if (map.TryGetValue(s, out var existing))
+            {
+                if (existing != t) map.Kebab[s] = t;
+            }
+            else
+            {
+                map[s] = t;
+            }
+        }
+
+        string sSing = Names.Singular(src);
+        string tSing = Names.Singular(tgt);
+
+        // Ids use the singular form (GeneralLedgers -> GeneralLedgerId)
+        Add(src + "Id", tSing + "Id");
+        Add(sSing + "Id", tSing + "Id");
+        Add(Names.Camel(src) + "Id", Names.Camel(tSing) + "Id");
+        Add(Names.Camel(sSing) + "Id", Names.Camel(tSing) + "Id");
+
+        // Plural forms (Wings -> BankAccounts)
         Add(src, tgt);
         Add(Names.Camel(src), Names.Camel(tgt));
-        Add(Names.Kebab(src), Names.Kebab(tgt));
-        Add(Names.Spaced(src), tgtDisplay);
-        Add(Names.Spaced(src).ToLowerInvariant(), tgtDisplay.ToLowerInvariant());
+        AddKebab(Names.Kebab(src), Names.Kebab(tgt));
+        AddIfAbsent(Names.Spaced(src), tgtDisplay);
+        AddIfAbsent(Names.Spaced(src).ToLowerInvariant(), tgtDisplay.ToLowerInvariant());
+
+        // Singular stem (WingDto, WingCode, WingName -> BankAccountDto, BankAccountCode ...)
+        // Longer keys are applied first, so the plural forms above win where they match.
+        Add(sSing, tSing);
+        Add(Names.Camel(sSing), Names.Camel(tSing));
+        AddKebab(Names.Kebab(sSing), Names.Kebab(tSing));
+        AddIfAbsent(Names.Spaced(sSing), Names.Spaced(tSing));
+        AddIfAbsent(Names.Spaced(sSing).ToLowerInvariant(), Names.Spaced(tSing).ToLowerInvariant());
 
         // Module / namespace pairs, learned by comparing source and target locations
         foreach (var (_, sp, tp) in pairs)
@@ -238,8 +484,8 @@ public class PageCloneEngine
                 if (a[i].Contains(src) || b[i].Contains(tgt) ||
                     a[i].Contains(Names.Kebab(src)) || b[i].Contains(Names.Kebab(tgt))) continue;
 
-                Add(a[i], b[i]);                                   // ProductSettings / product-settings
-                Add(Names.Spaced(a[i]), Names.Spaced(b[i]));       // "Product Settings"
+                Add(a[i], b[i]);                                        // ProductSettings / product-settings
+                AddIfAbsent(Names.Spaced(a[i]), Names.Spaced(b[i]));    // "Product Settings"
             }
         }
 
@@ -255,15 +501,20 @@ public class PageCloneEngine
             var tn = ns(entityPair.TgtPath).Split('.');
 
             if (sn.Length == tn.Length)
+            {
                 for (int i = 0; i < sn.Length; i++)
-                    if (sn[i] != tn[i])
-                    {
-                        Add(sn[i], tn[i]);
-                        Add(Names.Spaced(sn[i]), Names.Spaced(tn[i]));
-                        Add(Names.Kebab(sn[i]), Names.Kebab(tn[i]));
-                    }
+                {
+                    if (sn[i] == tn[i]) continue;
+
+                    Add(sn[i], tn[i]);
+                    AddIfAbsent(Names.Spaced(sn[i]), Names.Spaced(tn[i]));
+                    AddKebab(Names.Kebab(sn[i]), Names.Kebab(tn[i]));
+                }
+            }
             else
+            {
                 plan.Warnings.Add("Source and target namespaces have different depth. Check namespaces in the diff.");
+            }
         }
 
         return map;
@@ -273,15 +524,41 @@ public class PageCloneEngine
     {
         if (map.Count == 0) return text;
 
-        string pattern = string.Join("|",
-            map.Keys.OrderByDescending(k => k.Length).Select(Regex.Escape));
+        var kebab = (map as NameMap)?.Kebab;
 
-        return Regex.Replace(text, pattern, m => map[m.Value]);
+        var keys = map.Keys.AsEnumerable();
+        if (kebab != null) keys = keys.Concat(kebab.Keys);
+
+        string pattern = string.Join("|",
+            keys.Distinct().OrderByDescending(k => k.Length).Select(Regex.Escape));
+
+        return Regex.Replace(text, pattern, m =>
+        {
+            // Same text as a camelCase name: inside a path or URL it is the
+            // kebab-case name, everywhere else it is the camelCase name.
+            if (kebab != null && kebab.TryGetValue(m.Value, out var k) && IsKebabContext(text, m))
+                return k;
+
+            if (map.TryGetValue(m.Value, out var v)) return v;
+
+            return kebab != null && kebab.TryGetValue(m.Value, out var k2) ? k2 : m.Value;
+        });
     }
 
-    private static string AddMarker(string text, string path, PageCloningEntity row)
+    // /wings/  ./wings.service  wings-list  app-wings
+    private static bool IsKebabContext(string text, Match m)
     {
-        string line = $"{Marker} : {row.CloneFromName} -> {row.CloneToName}";
+        char prev = m.Index > 0 ? text[m.Index - 1] : ' ';
+
+        int e = m.Index + m.Length;
+        char next = e < text.Length ? text[e] : ' ';
+
+        return prev == '/' || prev == '-' || next == '-';
+    }
+
+    private static string AddMarker(string text, string path, string cloneFromName, string cloneToName)
+    {
+        string line = $"{Marker} : {cloneFromName} -> {cloneToName}";
 
         return path.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
             ? $"<!-- {line} -->\n{text}"
@@ -325,4 +602,17 @@ public class PageCloneEngine
 
         return p.ExitCode;
     }
+}
+
+//===============================================================
+// Name map that also remembers kebab-case names that look exactly
+// like a camelCase name (wing / wing). Those are chosen by context
+// in PageCloneEngine.Apply.
+//===============================================================
+
+internal sealed class NameMap : Dictionary<string, string>
+{
+    public NameMap() : base(StringComparer.Ordinal) { }
+
+    public Dictionary<string, string> Kebab { get; } = new(StringComparer.Ordinal);
 }

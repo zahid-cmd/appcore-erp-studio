@@ -1,101 +1,257 @@
+// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.CashAccounts.DTOs;
 
-using AppCore.Domain.Common;
+using CashAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts;
+
+using AccountSubGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.AccountSettings;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Infrastructure.Configurations.Settings.AccountSettings;
+namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// CashAccountsRepository
+// CashAccounts Repository
 //===============================================================
 
-public class CashAccountsRepository
-    : ICashAccountsRepository
+public class CashAccountsRepository : ICashAccountsRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public CashAccountsRepository
-    (
-        AppDbContext context
-    )
+    public CashAccountsRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // CashAccounts Query
+    //===========================================================
+
+    private IQueryable<CashAccountDto> CashAccountsQuery()
+    {
+        return _context
+            .Set<CashAccountsEntity>()
+
+            .AsNoTracking()
+
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+
+            .Select
+            (
+                x =>
+                    new CashAccountDto
+                    {
+                        CashAccountId =
+                            x.CashAccountId,
+
+                        AccountSubGroupsId =
+                            x.AccountSubGroupsId,
+
+                        CashAccountCode =
+                            x.CashAccountCode,
+
+                        CashAccountName =
+                            x.CashAccountName,
+
+                        Remarks =
+                            x.Remarks,
+
+                        IsActive =
+                            x.IsActive,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>>
+    public async Task<List<CashAccountDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>()
-            .AsNoTracking()
-            .Where(
+        return await CashAccountsQuery()
+
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
+                    x.CashAccountCode
             )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
+
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts?>
+    public async Task<CashAccountDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await CashAccountsQuery()
+
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.CashAccountId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync(
+            long accountSubGroupsId)
+    {
+        var parent =
+            await _context.Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.AccountSubGroupId == accountSubGroupsId && !x.IsDeleted);
+
+        if (parent == null)
+            throw new KeyNotFoundException("Account Sub Group not found.");
+
+        string[] parentParts =
+            (parent.SubGroupCode?.Trim() ?? string.Empty)
+                .Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parentParts.Length != 4)
+            throw new InvalidOperationException("Invalid account sub group code.");
+
+        int[] seg = new int[3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (!int.TryParse(parentParts[i + 1].Trim(), out seg[i]) || seg[i] < 1)
+                throw new InvalidOperationException("Invalid account sub group sequence number.");
+        }
+
+        List<string> existingCodes =
+            await _context.Set<CashAccountsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.AccountSubGroupsId == accountSubGroupsId)
+                .Select(x => x.CashAccountCode)
+                .ToListAsync();
+
+        int highest = 0;
+
+        foreach (string code in existingCodes)
+        {
+            if (string.IsNullOrWhiteSpace(code)) continue;
+
+            string[] parts = code.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 5) continue;
+
+            if (!string.Equals(parts[0].Trim(), "CSH", StringComparison.OrdinalIgnoreCase)) continue;
+
+            bool same = true;
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (!int.TryParse(parts[i + 1].Trim(), out int v) || v != seg[i]) { same = false; break; }
+            }
+
+            if (!same) continue;
+
+            if (int.TryParse(parts[4].Trim(), out int sequenceNo) && sequenceNo > highest)
+                highest = sequenceNo;
+        }
+
+        return CodeGenerator.GenerateCashAccountsCode(seg[0], seg[1], seg[2], highest + 1);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<CashAccountsDefaultsDto>
+        GetDefaultsAsync
+        (
+            long accountSubGroupsId
+        )
+    {
+        return new CashAccountsDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync(
+                    accountSubGroupsId)
+        };
+    }
 
 
     //===========================================================
@@ -104,41 +260,107 @@ public class CashAccountsRepository
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts entity
-    )
+        (
+            CreateCashAccountDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve AccountSubGroup
+        //===========================================================
+
+        AccountSubGroupEntity? accountSubGroup =
+
+            await _context
+                .Set<AccountSubGroupEntity>()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.AccountSubGroupId ==
+                        dto.AccountSubGroupsId
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
-        entity.IsActive =
-            true;
+        if
+        (
+            accountSubGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "AccountSubGroup not found."
+            );
+        }
 
 
-        entity.IsDeleted =
-            false;
+        //===========================================================
+        // Resolve CashAccount Code
+        //===========================================================
+
+        string cashAccountCode =
+            dto.CashAccountCode?.Trim()
+            ??
+            string.Empty;
 
 
-        entity.CreatedBy =
-            userId;
+        if
+        (
+            string.IsNullOrWhiteSpace(cashAccountCode)
+        )
+        {
+            cashAccountCode =
+                await GetNextCodeAsync(
+                    dto.AccountSubGroupsId);
+        }
 
 
-        entity.CreatedDate =
-            DateTime.UtcNow;
+        //===========================================================
+        // Create Entity
+        //===========================================================
+
+        CashAccountsEntity entity =
+            new CashAccountsEntity
+            {
+                AccountSubGroupsId =
+                    dto.AccountSubGroupsId,
+
+                CashAccountCode =
+                    cashAccountCode,
+
+                CashAccountName =
+                    dto.CashAccountName?.Trim()
+                    ??
+                    string.Empty,
+
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
+
+                IsActive =
+                    dto.IsActive,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>()
-            .AddAsync(
+        _context
+            .Set<CashAccountsEntity>()
+            .Add(
                 entity
             );
 
@@ -146,26 +368,31 @@ public class CashAccountsRepository
         await _context.SaveChangesAsync();
 
 
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "CashAccounts",
+                    "CashAccount",
 
                 EntityId =
-                    entity.Id,
+                    entity.CashAccountId,
 
                 ActivityType =
                     "Create",
 
                 ActivityTitle =
-                    "CashAccounts Created",
+                    "CashAccount Created",
 
                 ActivityDescription =
-                    $"CashAccounts '{entity.Name}' was created.",
+                    $"CashAccount '{entity.CashAccountName}' created.",
 
                 PerformedBy =
                     userId,
@@ -182,9 +409,8 @@ public class CashAccountsRepository
         await _context.SaveChangesAsync();
 
 
-        return entity.Id;
+        return entity.CashAccountId;
     }
-
 
 
     //===========================================================
@@ -193,88 +419,138 @@ public class CashAccountsRepository
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts entity
-    )
+        (
+            UpdateCashAccountDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve CashAccount
+        //===========================================================
 
+        CashAccountsEntity? entity =
 
-        var existing =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<CashAccountsEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+
+                        x.CashAccountId ==
+                        dto.CashAccountId
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "CashAccounts record was not found."
+            throw new KeyNotFoundException(
+                "CashAccount not found."
             );
         }
 
 
-        existing.Code =
-            entity.Code;
+        //===========================================================
+        // Resolve AccountSubGroup
+        //===========================================================
+
+        AccountSubGroupEntity? accountSubGroup =
+
+            await _context
+                .Set<AccountSubGroupEntity>()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.AccountSubGroupId ==
+                        dto.AccountSubGroupsId
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
-        existing.Name =
-            entity.Name;
+        if
+        (
+            accountSubGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "AccountSubGroup not found."
+            );
+        }
 
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+        entity.AccountSubGroupsId =
+            dto.AccountSubGroupsId;
+
+        entity.CashAccountCode =
+            dto.CashAccountCode?.Trim()
+            ??
+            string.Empty;
+
+        entity.CashAccountName =
+            dto.CashAccountName?.Trim()
+            ??
+            string.Empty;
+
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
+
+        entity.IsActive =
+            dto.IsActive;
 
 
-        existing.SampleField =
-            entity.SampleField;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
+        entity.ModifiedBy =
             userId;
 
 
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "CashAccounts",
+                    "CashAccount",
 
                 EntityId =
-                    existing.Id,
+                    entity.CashAccountId,
 
                 ActivityType =
                     "Update",
 
                 ActivityTitle =
-                    "CashAccounts Updated",
+                    "CashAccount Updated",
 
                 ActivityDescription =
-                    $"CashAccounts '{existing.Name}' was updated.",
+                    $"CashAccount '{entity.CashAccountName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -290,7 +566,6 @@ public class CashAccountsRepository
 
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
@@ -299,70 +574,90 @@ public class CashAccountsRepository
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve CashAccount
+        //===========================================================
 
+        CashAccountsEntity? entity =
 
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<CashAccountsEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+
+                        x.CashAccountId ==
+                        id
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "CashAccount not found."
+            );
         }
 
+
+        //===========================================================
+        // Soft Delete CashAccount
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
 
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
 
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "CashAccounts",
+                    "CashAccount",
 
                 EntityId =
-                    entity.Id,
+                    entity.CashAccountId,
 
                 ActivityType =
                     "Delete",
 
                 ActivityTitle =
-                    "CashAccounts Deleted",
+                    "CashAccount Deleted",
 
                 ActivityDescription =
-                    $"CashAccounts '{entity.Name}' was deleted.",
+                    $"CashAccount '{entity.CashAccountName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -378,40 +673,45 @@ public class CashAccountsRepository
 
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
+        CashAccountsEntity? entity =
 
-
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<CashAccountsEntity>()
+
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
+                )
+
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+
+                .FirstOrDefaultAsync();
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
 
 
@@ -419,8 +719,12 @@ public class CashAccountsRepository
             false;
 
 
-        entity.IsActive =
-            true;
+        entity.DeletedBy =
+            null;
+
+
+        entity.DeletedDate =
+            null;
 
 
         entity.ModifiedBy =
@@ -431,26 +735,34 @@ public class CashAccountsRepository
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "CashAccounts",
+                    "CashAccount",
 
                 EntityId =
-                    entity.Id,
+                    entity.CashAccountId,
 
                 ActivityType =
                     "Restore",
 
                 ActivityTitle =
-                    "CashAccounts Restored",
+                    "CashAccount Restored",
 
                 ActivityDescription =
-                    $"CashAccounts '{entity.Name}' was restored.",
+                    $"CashAccount '{entity.CashAccountName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -465,150 +777,35 @@ public class CashAccountsRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
+        return await _context
+            .Set<CashAccountsEntity>()
 
-            .AsNoTracking()
-
-            .Where(
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
 
-                    &&
-
-                    x.EntityName ==
-                    "CashAccounts"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "CashAccounts"
-
-                    &&
-
-                    x.EntityId ==
+                    x.CashAccountId ==
                     id
-            )
 
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
+                    &&
 
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
 }

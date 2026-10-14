@@ -1,3 +1,4 @@
+// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -10,6 +11,12 @@ import
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -31,9 +38,15 @@ from '@angular/router';
 
 import
 {
-    CashAccounts
+    CashAccount
 }
 from '../../../models/cash-accounts.model';
+
+import
+{
+    AccountSubGroup
+}
+from '../../../models/account-sub-group.model';
 
 
 //===============================================================
@@ -71,12 +84,6 @@ import
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
@@ -129,7 +136,7 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,6 +145,24 @@ import
 }
 from '../../../services/cash-accounts.service';
 
+import
+{
+    AccountSubGroupService
+}
+from '../../../services/account-sub-group.service';
+
+
+//===============================================================
+// List Item
+//===============================================================
+
+interface CashAccountListItem
+extends CashAccount
+{
+    AccountSubGroupName:
+        string;
+}
+
 
 //===============================================================
 // Component
@@ -145,7 +170,7 @@ from '../../../services/cash-accounts.service';
 
 @Component(
 {
-    selector:'cashAccounts-list',
+    selector:'cash-accounts-list',
 
     standalone:true,
 
@@ -160,8 +185,6 @@ from '../../../services/cash-accounts.service';
         ControlTabsComponent,
 
         SearchBoxComponent,
-
-        DropdownComponent,
 
         CommandCenterComponent,
 
@@ -185,7 +208,7 @@ from '../../../services/cash-accounts.service';
 
 
 //===============================================================
-// Cash Accounts List Component
+// CashAccounts List
 //===============================================================
 
 export class CashAccountsList
@@ -196,8 +219,12 @@ implements OnInit
     // Dependency Injection
     //===========================================================
 
-    private readonly cashaccountsservice =
+    private readonly cashAccountsService =
         inject(CashAccountsService);
+
+
+    private readonly accountSubGroupService =
+        inject(AccountSubGroupService);
 
 
     private readonly confirmDialog =
@@ -220,7 +247,6 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
     // Page Tabs
     //===========================================================
@@ -231,7 +257,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All CashAccountses'
+            label:'All CashAccounts'
         }
     ];
 
@@ -241,58 +267,32 @@ implements OnInit
         'all';
 
 
-
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
-    cashaccountses:
-        CashAccounts[] =
+    cashAccounts:
+        CashAccountListItem[] =
     [];
 
 
-    filteredCashAccountses:
-        CashAccounts[] =
+    filteredCashAccounts:
+        CashAccountListItem[] =
     [];
 
 
-    pagedCashAccountses:
-        CashAccounts[] =
+    pagedCashAccounts:
+        CashAccountListItem[] =
     [];
 
+
+    //===========================================================
+    // AccountSubGroup Lookup
+    //===========================================================
+
+    private accountSubGroupMap:
+        Map<number, string> =
+        new Map<number, string>();
 
 
     //===========================================================
@@ -314,7 +314,6 @@ implements OnInit
         false;
 
 
-
     //===========================================================
     // Pagination
     //===========================================================
@@ -329,7 +328,6 @@ implements OnInit
         10;
 
 
-
     //===========================================================
     // History
     //===========================================================
@@ -341,13 +339,12 @@ implements OnInit
 
     historyTitle:
         string =
-        'Cash Accounts History';
+        'CashAccount History';
 
 
     historyItems:
         any[] =
     [];
-
 
 
     //===========================================================
@@ -379,7 +376,6 @@ implements OnInit
     };
 
 
-
     //===========================================================
     // Table Columns
     //===========================================================
@@ -394,37 +390,57 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'80px',
 
             align:'center'
         },
 
         {
-            header:'Code',
+            header:'Account Sub Group',
 
-            field:'code',
+            field:'AccountSubGroupName',
 
-            width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
+            width:'280px',
 
             align:'left'
         },
 
         {
-            header:'Status',
+            header:'Cash Account Code',
 
-            field:'status',
+            field:'CashAccountCode',
+
+            width:'280px',
+
+            align:'center'
+        },
+
+        {
+            header:'Cash Account Name',
+
+            field:'CashAccountName',
+
+            align:'left'
+        },
+
+        {
+            header:'Remarks',
+
+            field:'Remarks',
+
+            width:'350px',
+
+            align:'left'
+        },
+
+        {
+            header:'Is Active',
+
+            field:'IsActive',
+
+            width:'200px',
 
             type:'status',
-
-            width:'120px',
 
             align:'center'
         },
@@ -436,16 +452,15 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }
     ];
 
 
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -455,9 +470,86 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Normalize CashAccount
+    //===========================================================
+
+    private normalizeCashAccount
+    (
+        item:
+            any
+    ):
+        CashAccountListItem
+    {
+        const accountSubGroupsId:
+            number =
+            Number
+            (
+                item?.AccountSubGroupsId
+                ??
+                item?.accountSubGroupsId
+                ??
+                0
+            );
+
+
+        return {
+            CashAccountId:
+                Number(item?.CashAccountId ?? item?.cashAccountId ?? 0),
+
+            AccountSubGroupsId:
+                Number(item?.AccountSubGroupsId ?? item?.accountSubGroupsId ?? 0),
+
+            AccountSubGroupName:
+                this.getAccountSubGroupName(Number(item?.AccountSubGroupsId ?? item?.accountSubGroupsId ?? 0)),
+
+            CashAccountCode:
+                item?.CashAccountCode ?? item?.cashAccountCode ?? '',
+
+            CashAccountName:
+                item?.CashAccountName ?? item?.cashAccountName ?? '',
+
+            Remarks:
+                item?.Remarks ?? item?.remarks ?? '',
+
+            IsActive:
+                Boolean(item?.IsActive ?? item?.isActive ?? true)
+        };
+    }
+
 
     //===========================================================
-    // Load CashAccountses
+    // Normalize CashAccounts
+    //===========================================================
+
+    private normalizeCashAccounts
+    (
+        response:
+            any
+    ):
+        CashAccountListItem[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+
+        return response.map
+        (
+            item =>
+                this.normalizeCashAccount(
+                    item
+                )
+        );
+    }
+
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -471,20 +563,149 @@ implements OnInit
             false;
 
 
-        this.cashaccountsservice
+        //=======================================================
+        // Load Companies
+        //=======================================================
+
+        this.accountSubGroupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    companies:
+                        AccountSubGroup[]
+                ):
+                    void =>
+                {
+                    this.buildAccountSubGroupMap(
+                        companies
+                    );
+
+
+                    this.loadCashAccounts();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Load Companies Error:',
+                        error
+                    );
+
+
+                    this.accountSubGroupMap =
+                        new Map<number, string>();
+
+
+                    //===================================================
+                    // Still Load CashAccounts
+                    //===================================================
+
+                    this.loadCashAccounts();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Build AccountSubGroup Map
+    //===========================================================
+
+    private buildAccountSubGroupMap
+    (
+        companies:
+            AccountSubGroup[]
+    ):
+        void
+    {
+        this.accountSubGroupMap =
+            new Map<number, string>();
+
+
+        companies.forEach
+        (
+            accountSubGroup =>
+            {
+                const accountSubGroupsId:
+                    number =
+                    Number(
+                        accountSubGroup.AccountSubGroupId
+                    );
+
+
+                const accountSubGroupName:
+                    string =
+                    accountSubGroup.SubGroupName
+                    ??
+                    '';
+
+
+                //=======================================================
+                // Display AccountSubGroup Name Only
+                //=======================================================
+
+                const displayName:
+                    string =
+                    accountSubGroupName
+                    ||
+                    String(accountSubGroupsId);
+
+
+                this.accountSubGroupMap.set
+                (
+                    accountSubGroupsId,
+
+                    displayName
+                );
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Load CashAccounts
+    //===========================================================
+
+    private loadCashAccounts():
+        void
+    {
+        this.cashAccountsService
             .getAll()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        CashAccounts[]
-                ): void =>
+                        CashAccount[]
+                ):
+                    void =>
                 {
-                    this.cashaccountses =
-                    [
-                        ...response
-                    ];
+                    console.log
+                    (
+                        'CashAccount API Response:',
+                        response
+                    );
+
+
+                    this.cashAccounts =
+                        this.normalizeCashAccounts(
+                            response
+                        );
+
+
+                    console.log
+                    (
+                        'Normalized CashAccounts:',
+                        this.cashAccounts
+                    );
 
 
                     this.applyFilters();
@@ -506,26 +727,26 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load CashAccountses Error',
-
+                        'Load CashAccounts Error:',
                         error
                     );
 
 
-                    this.cashaccountses =
-                    [];
+                    this.cashAccounts =
+                        [];
 
 
-                    this.filteredCashAccountses =
-                    [];
+                    this.filteredCashAccounts =
+                        [];
 
 
-                    this.pagedCashAccountses =
-                    [];
+                    this.pagedCashAccounts =
+                        [];
 
 
                     this.loading =
@@ -540,7 +761,7 @@ implements OnInit
                     (
                         'Load Failed',
 
-                        'Unable to load cashaccountses.'
+                        'Unable to load cashAccounts.'
                     );
 
 
@@ -550,25 +771,23 @@ implements OnInit
     }
 
 
-
     //===========================================================
-    // Status Filter Changed
+    // Get AccountSubGroup Name
     //===========================================================
 
-    onStatusFilterChange
+    getAccountSubGroupName
     (
-        value:
-            string | null
+        accountSubGroupsId:
+            number
     ):
-        void
+        string
     {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
+        return this.accountSubGroupMap.get(
+            Number(accountSubGroupsId)
+        )
+        ??
+        '';
     }
-
 
 
     //===========================================================
@@ -578,54 +797,47 @@ implements OnInit
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
 
-        this.filteredCashAccountses =
-            this.cashaccountses
-                .filter
+        this.filteredCashAccounts =
+            this.cashAccounts.filter
+            (
                 (
-                    (
-                        x:
-                            CashAccounts
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                    item:
+                        CashAccountListItem
+                ):
+                    boolean =>
+                {
+                    const values:
+                        unknown[] =
+                    [
+                        item.AccountSubGroupName,
+                        item.CashAccountCode,
+                        item.CashAccountName,
+                        item.Remarks
+                    ];
 
+                    const searchMatch =
+                        !keyword
+                        ||
+                        values.some(
+                            value =>
+                                String(value ?? '')
+                                    .toLowerCase()
+                                    .includes(keyword)
+                        )
+                        ||
+                        (item.IsActive ? 'active' : 'inactive')
+                            .includes(keyword);
 
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
+                    return searchMatch;
+                }
+            );
 
 
         this.currentPage =
@@ -634,7 +846,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -649,12 +860,13 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
+            value
+            ??
+            '';
 
 
         this.applyFilters();
     }
-
 
 
     //===========================================================
@@ -674,34 +886,34 @@ implements OnInit
     ):
         void
     {
-        this.filteredCashAccountses =
+        this.filteredCashAccounts =
         [
-            ...this.filteredCashAccountses
+            ...this.filteredCashAccounts
         ];
 
 
-        this.filteredCashAccountses.sort
+        this.filteredCashAccounts.sort
         (
             (
                 a:
-                    CashAccounts,
+                    CashAccountListItem,
 
                 b:
-                    CashAccounts
+                    CashAccountListItem
             ):
                 number =>
             {
                 const valueA:
                     any =
                     a[
-                        event.field as keyof CashAccounts
+                        event.field as keyof CashAccountListItem
                     ];
 
 
                 const valueB:
                     any =
                     b[
-                        event.field as keyof CashAccounts
+                        event.field as keyof CashAccountListItem
                     ];
 
 
@@ -788,7 +1000,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Refresh
     //===========================================================
@@ -800,13 +1011,12 @@ implements OnInit
             '';
 
 
-        this.selectedStatus =
-            null;
+        this.currentPage =
+            1;
 
 
         this.loadItems();
     }
-
 
 
     //===========================================================
@@ -825,18 +1035,16 @@ implements OnInit
             this.pageSize;
 
 
-        this.pagedCashAccountses =
+        this.pagedCashAccounts =
         [
-            ...this.filteredCashAccountses
-                .slice
-                (
-                    start,
+            ...this.filteredCashAccounts.slice
+            (
+                start,
 
-                    start + this.pageSize
-                )
+                start + this.pageSize
+            )
         ];
     }
-
 
 
     //===========================================================
@@ -856,7 +1064,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -882,7 +1089,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Add
     //===========================================================
@@ -904,7 +1110,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View
     //===========================================================
@@ -912,7 +1117,7 @@ implements OnInit
     view
     (
         item:
-            CashAccounts
+            CashAccountListItem
     ):
         void
     {
@@ -921,7 +1126,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.CashAccountId
             ],
 
             {
@@ -930,7 +1135,6 @@ implements OnInit
             }
         );
     }
-
 
 
     //===========================================================
@@ -940,7 +1144,7 @@ implements OnInit
     edit
     (
         item:
-            CashAccounts
+            CashAccountListItem
     ):
         void
     {
@@ -949,7 +1153,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.CashAccountId
             ],
 
             {
@@ -960,7 +1164,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
@@ -968,22 +1171,22 @@ implements OnInit
     delete
     (
         item:
-            CashAccounts
+            CashAccountListItem
     ):
         void
     {
         this.confirmDialog.open
         (
-            'Delete Cash Accounts',
+            'Delete CashAccount',
 
-            `Are you sure you want to delete "${item.name}" ?`,
+            `Are you sure you want to delete "${item.CashAccountName}" ?`,
 
             (): void =>
             {
-                this.cashaccountsservice
+                this.cashAccountsService
                     .delete
                     (
-                        item.id
+                        item.CashAccountId
                     )
                     .subscribe
                     ({
@@ -994,7 +1197,7 @@ implements OnInit
                             (
                                 'Delete Successful',
 
-                                `${item.name} deleted successfully.`
+                                `${item.CashAccountName} deleted successfully.`
                             );
 
 
@@ -1006,28 +1209,86 @@ implements OnInit
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Cash Accounts Error',
-
+                                'Delete CashAccount Error:',
                                 error
                             );
 
+
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'CashAccount cannot be deleted because it is already configured.';
+
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+
+                                    message
+                                );
+
+
+                                return;
+                            }
+
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
                             this.toast.error
                             (
                                 'Delete Failed',
 
-                                'Failed to delete cashAccounts.'
+                                'Failed to delete cashAccount.'
                             );
                         }
                     });
             }
         );
     }
-
 
 
     //===========================================================
@@ -1039,9 +1300,9 @@ implements OnInit
     {
         this.confirmDialog.open
         (
-            'Restore Cash Accounts',
+            'Restore CashAccount',
 
-            'Are you sure you want to restore the most recently deleted cashAccounts?',
+            'Are you sure you want to restore the most recently deleted cashAccount?',
 
             (): void =>
             {
@@ -1057,7 +1318,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Restore Item
     //===========================================================
@@ -1065,7 +1325,7 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.cashaccountsservice
+        this.cashAccountsService
             .restore()
             .subscribe
             ({
@@ -1076,7 +1336,7 @@ implements OnInit
                     (
                         'Restore Successful',
 
-                        'The most recently deleted cashAccounts has been restored.'
+                        'The most recently deleted cashAccount has been restored.'
                     );
 
 
@@ -1088,26 +1348,45 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Restore Cash Accounts Error',
+                        'Restore CashAccount Error',
 
                         error
                     );
+
+
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted cashAccount record to restore.'
+                        );
+
+
+                        return;
+                    }
 
 
                     this.toast.error
                     (
                         'Restore Failed',
 
-                        'Failed to restore cashAccounts.'
+                        'Failed to restore cashAccount.'
                     );
                 }
             });
     }
-
 
 
     //===========================================================
@@ -1117,7 +1396,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.cashaccountsservice
+        this.cashAccountsService
             .getHistory()
             .subscribe
             ({
@@ -1125,7 +1404,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,15 +1413,21 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
 
                                 description:
-                                    history.activityDescription,
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
 
                                 user:
                                     history.performedByName
+                                    ??
+                                    history.PerformedByName
                                     ??
                                     'System',
 
@@ -1150,18 +1436,22 @@ implements OnInit
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
 
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
 
 
                     this.historyTitle =
-                        'Cash Accounts Management History';
+                        'CashAccount Management History';
 
 
                     this.historyOpened =
@@ -1176,12 +1466,12 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
 
@@ -1190,12 +1480,11 @@ implements OnInit
                     (
                         'History',
 
-                        'Failed to load cashAccounts history.'
+                        'Failed to load cashAccount history.'
                     );
                 }
             });
     }
-
 
 
     //===========================================================

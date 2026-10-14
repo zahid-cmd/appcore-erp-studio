@@ -10,10 +10,30 @@ namespace AppCore.Infrastructure.Platform.PageCloneEngine;
 
 public class PageCloneBlueprint
 {
+    //-----------------------------------------------------------
+    // Existing members (unchanged)
+    //-----------------------------------------------------------
     public string EntityName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public CodeSpec Code { get; set; } = new();
     public bool WriteCodeGeneratorMethod { get; set; } = true;
+
+    //-----------------------------------------------------------
+    // Clone Action plan (from the wizard)
+    //-----------------------------------------------------------
+
+    // Source and target page names (used when the plan runs without a saved row)
+    public string CloneFromName { get; set; } = string.Empty;
+    public string CloneToName { get; set; } = string.Empty;
+
+    // One row per field of the source, plus the fields added by hand
+    public List<CloneField> Fields { get; set; } = new();
+
+    // Parent link and cascade chain
+    public CloneParent Parent { get; set; } = new();
+
+    // Soft delete and restore
+    public bool SoftDelete { get; set; } = true;
 
     public static PageCloneBlueprint Parse(string json) =>
         JsonSerializer.Deserialize<PageCloneBlueprint>(
@@ -24,7 +44,83 @@ public class PageCloneBlueprint
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             })
         ?? throw new InvalidOperationException("Blueprint is empty.");
+
+    public string ToJson() =>
+        JsonSerializer.Serialize(
+            this,
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            });
 }
+
+//===============================================================
+// Field plan
+//===============================================================
+
+public class CloneField
+{
+    // Name in the source page. Empty for a field added by hand.
+    public string SourceName { get; set; } = string.Empty;
+
+    // Keep | Modify | Add | Exclude
+    public string Action { get; set; } = "Keep";
+
+    // Name in the target page
+    public string Name { get; set; } = string.Empty;
+
+    // C# type: string, bool, int, long, decimal, double, DateTime and nullable forms
+    public string Type { get; set; } = "string";
+
+    public int? MaxLength { get; set; }
+    public bool Required { get; set; }
+    public bool Unique { get; set; }
+
+    // Textbox | Textarea | Number | Date | YesNo | Status | Checkbox | Dropdown | SearchDropdown
+    public string Control { get; set; } = "Textbox";
+
+    // Yes / No, Active / Inactive, Checked / Unchecked, or free text
+    public string DefaultValue { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public bool IsExcluded => Action.Equals("Exclude", StringComparison.OrdinalIgnoreCase);
+
+    [JsonIgnore]
+    public bool IsAdded => string.IsNullOrWhiteSpace(SourceName);
+
+    [JsonIgnore]
+    public bool IsRenamed =>
+        !IsAdded && !SourceName.Equals(Name, StringComparison.Ordinal);
+}
+
+//===============================================================
+// Parent link
+//===============================================================
+
+public class CloneParent
+{
+    // Keep | Change | Exclude
+    public string Mode { get; set; } = "Exclude";
+
+    // Parent entity, for example AccountSubGroups
+    public string Entity { get; set; } = string.Empty;
+
+    // Foreign key field, for example AccountSubGroupsId
+    public string ForeignKey { get; set; } = string.Empty;
+
+    // The parent's own parents, top first, for example Class, Group
+    public List<string> Cascade { get; set; } = new();
+
+    [JsonIgnore]
+    public bool HasParent =>
+        !Mode.Equals("Exclude", StringComparison.OrdinalIgnoreCase)
+        && !string.IsNullOrWhiteSpace(Entity);
+}
+
+//===============================================================
+// Code number
+//===============================================================
 
 public class CodeSpec
 {

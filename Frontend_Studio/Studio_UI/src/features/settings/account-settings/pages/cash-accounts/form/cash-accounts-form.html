@@ -1,16 +1,18 @@
+<!-- PAGE-CLONED : Wings -> Cash Accounts -->
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-layer-group"
 
         [title]="pageTitle"
 
-        subtitle="Manage cashaccountses">
+        subtitle="Manage cashAccounts">
 
         <app-command-center
 
@@ -45,7 +47,7 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : PAGE TOOLBAR
     ====================================================== -->
 
     <app-page-toolbar>
@@ -65,7 +67,7 @@
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
     <app-page-canvas>
@@ -76,28 +78,60 @@
 
             [columns]="4">
 
-
             <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
+                 SECTION 01
+                 ACCOUNT SUB GROUP
             ============================================== -->
 
             <app-form-section
 
-                title="General Information"
+                title="Account Sub Group"
 
-                icon="fas fa-circle-info">
+                icon="fas fa-sitemap">
 
 
-                <!-- Code -->
+                <!-- Account Sub Groups Id -->
+
+                <app-search-dropdown
+
+                    label="Account Sub Group"
+
+                    [items]="accountSubGroupItems"
+
+                    [(value)]="entity.AccountSubGroupsId"
+
+                    (valueChange)="onAccountSubGroupChange($event)"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02
+                 CASH ACCOUNTS INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Cash Accounts Information"
+
+                icon="fas fa-layer-group">
+
+
+                <!-- Cash Account Code -->
 
                 <app-textbox
 
-                    label="Code"
+                    label="Cash Account Code"
 
                     placeholder="Auto generated"
 
-                    [(value)]="entity.code"
+                    [(value)]="entity.CashAccountCode"
 
                     [readonly]="true"
 
@@ -106,16 +140,15 @@
                 </app-textbox>
 
 
-
-                <!-- Name -->
+                <!-- Cash Account Name -->
 
                 <app-textbox
 
-                    label="Name"
+                    label="Cash Account Name"
 
-                    placeholder="Enter name"
+                    placeholder="Enter cash account name"
 
-                    [(value)]="entity.name"
+                    [(value)]="entity.CashAccountName"
 
                     (valueChange)="onValueChange()"
 
@@ -125,91 +158,30 @@
 
                 </app-textbox>
 
-
             </app-form-section>
 
 
-
             <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
+                 SECTION 03
+                 STATUS
             ============================================== -->
 
             <app-form-section
 
-                title="Sample Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Sample Search Dropdown -->
-
-                <app-search-dropdown
-
-                    label="Sample Search Dropdown"
-
-                    [items]="items"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.sampleSearchDropdownId"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sample Field -->
-
-                <app-textbox
-
-                    label="Sample Field"
-
-                    placeholder="Enter sample value"
-
-                    [(value)]="entity.sampleField"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status Information"
+                title="Status"
 
                 icon="fas fa-toggle-on">
 
 
-                <!-- Status -->
+                <!-- Is Active -->
 
                 <app-dropdown
 
-                    label="Status"
+                    label="Is Active"
 
                     [items]="statusItems"
 
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.status"
+                    [(value)]="entity.IsActive"
 
                     (valueChange)="onValueChange()"
 
@@ -219,21 +191,19 @@
 
                 </app-dropdown>
 
-
             </app-form-section>
 
 
-
             <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
+                 SECTION 04
+                 DESCRIPTION
             ============================================== -->
 
             <app-form-section
 
-                title="Additional Information"
+                title="Description"
 
-                icon="fas fa-clipboard">
+                icon="fas fa-align-left">
 
 
                 <!-- Remarks -->
@@ -244,7 +214,9 @@
 
                     placeholder="Enter remarks"
 
-                    [(value)]="entity.remarks"
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
 
                     (valueChange)="onValueChange()"
 
@@ -252,9 +224,7 @@
 
                 </app-textarea>
 
-
             </app-form-section>
-
 
         </app-form-grid>
 
@@ -265,7 +235,7 @@
 
 
 <!-- =====================================================
-     UTILITIES
+     SECTION 04 : UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

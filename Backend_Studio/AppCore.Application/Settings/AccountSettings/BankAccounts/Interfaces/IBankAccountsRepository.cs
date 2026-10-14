@@ -1,8 +1,10 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.BankAccounts.DTOs;
 
 
 //===============================================================
@@ -13,98 +15,81 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// IBankAccountsRepository
+// BankAccount Repository Interface
 //===============================================================
 
 public interface IBankAccountsRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>>
-        GetAllAsync();
-
+    Task<List<BankAccountDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<BankAccountDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts entity
-    );
-
+    Task<long> CreateAsync(
+        CreateBankAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts entity
-    );
-
+    Task UpdateAsync(
+        UpdateBankAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync(
+        long accountSubGroupsId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<BankAccountsDefaultsDto> GetDefaultsAsync(
+        long accountSubGroupsId);
 }

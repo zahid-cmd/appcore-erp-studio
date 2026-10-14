@@ -1,8 +1,9 @@
+// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.CashAccounts.DTOs;
 
 
 //===============================================================
@@ -13,98 +14,81 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// ICashAccountsRepository
+// CashAccount Repository Interface
 //===============================================================
 
 public interface ICashAccountsRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>>
-        GetAllAsync();
-
+    Task<List<CashAccountDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<CashAccountDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts entity
-    );
-
+    Task<long> CreateAsync(
+        CreateCashAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts entity
-    );
-
+    Task UpdateAsync(
+        UpdateCashAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync(
+        long accountSubGroupsId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<CashAccountsDefaultsDto> GetDefaultsAsync(
+        long accountSubGroupsId);
 }

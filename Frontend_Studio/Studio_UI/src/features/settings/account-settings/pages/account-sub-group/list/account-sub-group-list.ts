@@ -845,12 +845,19 @@ implements OnInit
                         ||
                         item.AccountGroupId ===
                         this.selectedAccountGroupId;
-                    const inventoryAutoSubGroupMatch =
-                        this.selectedTab !== 'inventory-auto'
-                        ||
+                    //===================================================
+                    // Tab split
+                    //   inventory-auto tab : only the auto sub groups
+                    //   all tab            : only the manual sub groups
+                    //===================================================
+                    const isInventoryAuto =
                         this.isInventoryAutoSubGroup(
                             item.GroupCode
                         );
+                    const inventoryAutoSubGroupMatch =
+                        this.selectedTab === 'inventory-auto'
+                            ? isInventoryAuto
+                            : !isInventoryAuto;
                     const statusMatch =
                         this.selectedStatus === null
                         ||
@@ -983,7 +990,7 @@ implements OnInit
                 groupCode
                 ??
                 ''
-            ).trim();
+            ).trim().toUpperCase();
         return /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
             code
         );

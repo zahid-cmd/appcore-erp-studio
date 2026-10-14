@@ -449,3 +449,15 @@
     opacity: .6;
     cursor: default;
 }
+
+.locked input,
+.locked select,
+.locked textarea,
+.locked app-dropdown,
+.locked app-search-dropdown,
+.locked .analyse-btn,
+.locked .del-icon
+{
+    pointer-events: none;
+    opacity: 0.65;
+}

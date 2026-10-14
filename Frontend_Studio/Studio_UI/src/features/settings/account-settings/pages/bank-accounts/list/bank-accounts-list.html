@@ -1,3 +1,5 @@
+<!-- PAGE-CLONED : Cash Accounts -> Bank Accounts -->
+<!-- PAGE-CLONED : Wings -> Bank Accounts -->
 <div class="app-list-page">
 
     <!-- =====================================================
@@ -6,11 +8,11 @@
 
     <app-page-header
 
-        title="Bank Accounts"
+        title="BankAccount"
 
-        subtitle="Manage bankaccountses"
+        subtitle="Manage bankAccounts"
 
-        icon="fas fa-list">
+        icon="fas fa-layer-group">
 
         <div pageHeaderCenter>
 
@@ -18,7 +20,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search bankaccountses..."
+                placeholder="Search bankAccounts..."
 
                 (valueChange)="onSearch($event)">
 
@@ -77,29 +79,6 @@
 
         </app-control-tabs>
 
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
-
-            pageToolbarRight
-
-            placeholder="All Status"
-
-            [items]="statusItems"
-
-            labelField="text"
-
-            valueField="value"
-
-            [(value)]="selectedStatus"
-
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-dropdown>
-
     </app-page-toolbar>
 
 
@@ -123,7 +102,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedBankAccountses"
+                [rows]="pagedBankAccounts"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -153,7 +132,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredBankAccountses.length"
+            [totalRecords]="filteredBankAccounts.length"
 
             [currentPage]="currentPage"
 

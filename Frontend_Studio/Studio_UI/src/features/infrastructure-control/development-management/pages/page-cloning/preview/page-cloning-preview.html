@@ -2,7 +2,7 @@
 
     <app-page-header
         icon="fas fa-clone"
-        title="Page Cloning"
+        [title]="pageTitle"
         subtitle="Review the plan and the 15 files, then save.">
 
         <!-- CENTER : step counter -->
@@ -15,8 +15,8 @@
         <!-- RIGHT : command center -->
         <app-command-center
             pageHeaderRight
-            [command1Text]="isEdit ? 'Update' : 'Save'"
-            command1Icon="fas fa-floppy-disk"
+            [command1Text]="readOnly ? 'Edit' : (isEdit ? 'Update' : 'Save')"
+            [command1Icon]="readOnly ? 'fas fa-pen' : 'fas fa-floppy-disk'"
             (command1Click)="onSave()"
             command2Text="Restore"
             command2Icon="fas fa-clock-rotate-left"
@@ -188,6 +188,29 @@
 
                 </div>
 
+                <!-- ===== WARNINGS (from the generator) ===== -->
+                @if (warnings.length > 0)
+                {
+                    <div class="file-section">
+
+                        <div class="section-header backend">
+                            <span><i class="fas fa-triangle-exclamation"></i> Generator notes</span>
+                            <span class="badge">{{ warnings.length }}</span>
+                        </div>
+
+                        <div class="plan-body">
+                            @for (w of warnings; track $index)
+                            {
+                                <div class="change-row">
+                                    <span class="tag act-Modify">Note</span>
+                                    <span class="change-name">{{ w }}</span>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                }
+
                 <!-- ===== FILES ===== -->
                 <div class="files-grid">
 
@@ -207,7 +230,7 @@
                                     <strong>{{ file.label }}</strong>
                                     <span class="file-name">{{ file.fileName }}</span>
                                 </div>
-                                <span class="pill pill-wait">{{ file.status }}</span>
+                                <span class="pill pill-{{ file.tone }}">{{ file.status }}</span>
                             </div>
                         }
 
@@ -224,7 +247,7 @@
                                     <strong>{{ file.label }}</strong>
                                     <span class="file-name">{{ file.fileName }}</span>
                                 </div>
-                                <span class="pill pill-wait">{{ file.status }}</span>
+                                <span class="pill pill-{{ file.tone }}">{{ file.status }}</span>
                             </div>
                         }
 
@@ -237,12 +260,12 @@
 
                             <div class="diff-box">
                                 <div class="diff-title">Before (current file)</div>
-                                <pre class="diff-pre appcore-scrollbar">{{ selectedFile ? 'The current file appears here once the generator is connected.' : 'Select a file.' }}</pre>
+                                <pre class="diff-pre appcore-scrollbar">{{ previewing ? 'Building the preview...' : (selectedFile ? (selectedFile.before || '(the file is empty)') : 'Select a file.') }}</pre>
                             </div>
 
                             <div class="diff-box">
                                 <div class="diff-title">After (generated)</div>
-                                <pre class="diff-pre appcore-scrollbar">{{ selectedFile ? 'The generated file appears here once the generator is connected.' : 'Select a file.' }}</pre>
+                                <pre class="diff-pre appcore-scrollbar">{{ previewing ? 'Building the preview...' : (selectedFile ? (selectedFile.after || '(nothing generated)') : 'Select a file.') }}</pre>
                             </div>
 
                         </div>
@@ -272,3 +295,5 @@
 </div>
 
 <app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>

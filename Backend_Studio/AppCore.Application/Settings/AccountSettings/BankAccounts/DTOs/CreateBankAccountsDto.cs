@@ -1,73 +1,45 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.BankAccounts.DTOs;
 
 
 //===============================================================
-// CreateBankAccountsDto
+// Create BankAccount DTO
 //===============================================================
 
-public class CreateBankAccountsDto
+public class CreateBankAccountDto
 {
-    //===========================================================
-    // Name
-    //===========================================================
+    //===============================================================
+    // Account Sub Groups Id
+    //===============================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long AccountSubGroupsId { get; set; }
 
+    //===============================================================
+    // Bank Account Code
+    //===============================================================
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public string BankAccountCode { get; set; } = string.Empty;
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    //===============================================================
+    // Bank Account Name
+    //===============================================================
 
+    public string BankAccountName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
+    //===============================================================
     // Remarks
-    //===========================================================
+    //===============================================================
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
+
+    //===============================================================
+    // Is Active
+    //===============================================================
+
+    public bool IsActive { get; set; }
 }

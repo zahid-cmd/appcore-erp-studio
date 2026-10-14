@@ -1,3 +1,4 @@
+// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -97,16 +98,16 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 //===============================================================
 // Utilities
@@ -143,9 +144,11 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
-    CashAccounts,
-    CreateCashAccounts,
-    UpdateCashAccounts
+    CashAccount,
+
+    CreateCashAccount,
+
+    UpdateCashAccount
 }
 from '../../../models/cash-accounts.model';
 
@@ -155,6 +158,18 @@ import
 }
 from '../../../services/cash-accounts.service';
 
+import
+{
+    AccountSubGroup
+}
+from '../../../models/account-sub-group.model';
+
+import
+{
+    AccountSubGroupService
+}
+from '../../../services/account-sub-group.service';
+
 
 //===============================================================
 // Component
@@ -162,7 +177,7 @@ from '../../../services/cash-accounts.service';
 
 @Component(
 {
-    selector:'cashAccounts-form',
+    selector:'cash-accounts-form',
 
     standalone:true,
 
@@ -198,9 +213,9 @@ from '../../../services/cash-accounts.service';
 
         TextboxComponent,
 
-        TextareaComponent,
-
         SearchDropdownComponent,
+
+        TextareaComponent,
 
         DropdownComponent,
 
@@ -241,8 +256,12 @@ implements OnInit
         inject(Router);
 
 
-    private readonly cashaccountsservice =
+    private readonly cashAccountsService =
         inject(CashAccountsService);
+
+
+    private readonly accountSubGroupService =
+        inject(AccountSubGroupService);
 
 
     private readonly confirmDialog =
@@ -279,12 +298,12 @@ implements OnInit
 
     pageTitle:
         string =
-        'Cash Accounts';
+        'CashAccount';
 
 
     entityName:
         string =
-        'Cash Accounts';
+        'CashAccount';
 
 
 
@@ -352,13 +371,13 @@ implements OnInit
 
 
     //===========================================================
-    // Sample Search Dropdown Items
+    // AccountSubGroup Items
     //===========================================================
 
-    items:
+    accountSubGroupItems:
         any[]
     =
-        [];
+    [];
 
 
 
@@ -369,19 +388,19 @@ implements OnInit
     statusItems:
         any[]
     =
-        [
-            {
-                text:'Active',
+    [
+        {
+            label:'Active',
 
-                value:'Active'
-            },
+            value:true
+        },
 
-            {
-                text:'Inactive',
+        {
+            label:'Inactive',
 
-                value:'Inactive'
-            }
-        ];
+            value:false
+        }
+    ];
 
 
 
@@ -390,22 +409,20 @@ implements OnInit
     //===========================================================
 
     entity:
-        CashAccounts
+        CashAccount
     =
     {
-        id:0,
+        CashAccountId:0,
 
-        code:'',
+        AccountSubGroupsId:0,
 
-        name:'',
+        CashAccountCode:'',
 
-        sampleSearchDropdownId:0,
+        CashAccountName:'',
 
-        sampleField:'',
+        Remarks:'',
 
-        status:'Active',
-
-        remarks:''
+        IsActive:true
     };
 
 
@@ -424,6 +441,11 @@ implements OnInit
         false;
 
 
+    isLoadingCompanies:
+        boolean =
+        false;
+
+
 
     //===========================================================
     // Initialize
@@ -432,7 +454,91 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadCompanies();
+
         this.initializeMode();
+    }
+
+
+
+    //===========================================================
+    // Load Companies
+    //===========================================================
+
+    private loadCompanies():
+        void
+    {
+        this.isLoadingCompanies =
+            true;
+
+
+        this.accountSubGroupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    companies:
+                        AccountSubGroup[]
+                ): void =>
+                {
+                    this.accountSubGroupItems =
+                        companies.map
+                        (
+                            accountSubGroup =>
+                            ({
+                                label:
+                                    accountSubGroup.SubGroupCode
+                                    +
+                                    ' - '
+                                    +
+                                    accountSubGroup.SubGroupName,
+
+                                value:
+                                    accountSubGroup.AccountSubGroupId
+                            })
+                        );
+
+
+                    this.isLoadingCompanies =
+                        false;
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Load AccountSubGroup Error',
+
+                        error
+                    );
+
+
+                    this.accountSubGroupItems =
+                        [];
+
+
+                    this.isLoadingCompanies =
+                        false;
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to load companies.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
     }
 
 
@@ -444,12 +550,6 @@ implements OnInit
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
 
@@ -494,6 +594,14 @@ implements OnInit
 
 
         //=======================================================
+        // Resolve Entity Id
+        //=======================================================
+
+        const id =
+            this.resolveEntityId();
+
+
+        //=======================================================
         // Existing Entity
         //=======================================================
 
@@ -523,6 +631,48 @@ implements OnInit
 
 
     //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+        this.route;
+
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+
+        return 0;
+    }
+
+
+
+    //===========================================================
     // Initialize Entity
     //===========================================================
 
@@ -531,22 +681,143 @@ implements OnInit
     {
         this.entity =
         {
-            id:0,
+        CashAccountId:0,
 
-            code:'',
+        AccountSubGroupsId:0,
 
-            name:'',
+        CashAccountCode:'',
 
-            sampleSearchDropdownId:0,
+        CashAccountName:'',
 
-            sampleField:'',
+        Remarks:'',
 
-            status:'Active',
-
-            remarks:''
-        };
+        IsActive:true
+    };
 
 
+        this.setInitialFormState();
+    }
+
+
+
+    //===========================================================
+    // Generate CashAccount Code
+    //===========================================================
+
+    private generateCashAccountCode():
+        void
+    {
+        //=======================================================
+        // Existing Record
+        //=======================================================
+
+        if
+        (
+            this.entityId > 0
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // AccountSubGroup Required
+        //
+        // CashAccount Code is accountSubGroup dependent.
+        //=======================================================
+
+        if
+        (
+            !this.entity.AccountSubGroupsId
+            ||
+            this.entity.AccountSubGroupsId <= 0
+        )
+        {
+            this.entity.CashAccountCode =
+                '';
+
+
+            this.checkForChanges();
+
+
+            this.cdr.detectChanges();
+
+
+            return;
+        }
+
+
+        //=======================================================
+        // Backend Generation
+        //
+        // AccountSubGroupsId is required because CashAccount Code is
+        // generated independently for each AccountSubGroup.
+        //=======================================================
+
+        this.cashAccountsService
+            .getNextCode(
+                this.entity.AccountSubGroupsId
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    code:
+                        string
+                ): void =>
+                {
+                    this.entity.CashAccountCode =
+                        code;
+
+
+                    this.checkForChanges();
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Generate CashAccount Code Error',
+
+                        error
+                    );
+
+
+                    this.entity.CashAccountCode =
+                        '';
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to generate CashAccount Code.'
+                    );
+
+
+                    this.checkForChanges();
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+    private setInitialFormState():
+        void
+    {
         this.originalEntity =
             JSON.stringify(
                 this.entity
@@ -555,6 +826,9 @@ implements OnInit
 
         this.hasChanges =
             false;
+
+
+        this.cdr.detectChanges();
     }
 
 
@@ -566,16 +840,52 @@ implements OnInit
     private loadEntity():
         void
     {
-        this.cashaccountsservice
+        this.cashAccountsService
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any
+                ): void =>
                 {
+                    console.log(
+                        'CashAccount API Response:',
+
+                        response
+                    );
+
+
                     this.entity =
-                        response;
+                    {
+                        CashAccountId:
+                            Number(response?.CashAccountId ?? response?.cashAccountId ?? 0),
+
+                        AccountSubGroupsId:
+                            Number(response?.AccountSubGroupsId ?? response?.accountSubGroupsId ?? 0),
+
+                        CashAccountCode:
+                            response?.CashAccountCode ?? response?.cashAccountCode ?? '',
+
+                        CashAccountName:
+                            response?.CashAccountName ?? response?.cashAccountName ?? '',
+
+                        Remarks:
+                            response?.Remarks ?? response?.remarks ?? '',
+
+                        IsActive:
+                            Boolean(response?.IsActive ?? response?.isActive ?? true)
+                    };
+
+
+                    console.log(
+                        'CashAccount Form Entity:',
+
+                        this.entity
+                    );
 
 
                     this.originalEntity =
@@ -592,10 +902,15 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
-                        'Load Cash Accounts Error',
+                        'Load CashAccount Error',
+
                         error
                     );
 
@@ -603,7 +918,7 @@ implements OnInit
                     this.toast.error(
                         'Error',
 
-                        'Failed to load Cash Accounts.'
+                        'Failed to load CashAccount.'
                     );
 
 
@@ -615,13 +930,56 @@ implements OnInit
 
 
     //===========================================================
-    // Sample Search Dropdown Changed
+    // AccountSubGroup Changed
     //===========================================================
 
-    onSampleSearchDropdownChange():
+    onAccountSubGroupChange
+    (
+        accountSubGroupsId:
+            number
+    ):
         void
     {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        this.entity.AccountSubGroupsId =
+            Number(
+                accountSubGroupsId
+            );
+
+
+        //=======================================================
+        // AccountSubGroup Change Invalidates Current CashAccount Code
+        //=======================================================
+
+        this.entity.CashAccountCode =
+            '';
+
+
         this.checkForChanges();
+
+
+        this.cdr.detectChanges();
+
+
+        //=======================================================
+        // Backend CashAccount Code Generation
+        //=======================================================
+
+        if
+        (
+            this.entity.AccountSubGroupsId > 0
+        )
+        {
+            this.generateCashAccountCode();
+        }
     }
 
 
@@ -686,21 +1044,54 @@ implements OnInit
 
         if
         (
-            !this.entity.name?.trim()
+            !this.entity.AccountSubGroupsId
+            ||
+            this.entity.AccountSubGroupsId <= 0
         )
         {
             this.toast.error(
                 'Validation',
 
-                'Name is required.'
+                'Account Sub Groups Id is required.'
             );
 
             return;
         }
 
 
+        if
+        (
+            !this.entity.CashAccountCode?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Cash Account Code is required.'
+            );
+
+            return;
+        }
+
+
+        if
+        (
+            !this.entity.CashAccountName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Cash Account Name is required.'
+            );
+
+            return;
+        }
+
+
+
         //=======================================================
-        // Create
+        // Add
         //=======================================================
 
         if
@@ -708,77 +1099,7 @@ implements OnInit
             this.mode === 'add'
         )
         {
-            const model:
-                CreateCashAccounts =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.cashaccountsservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Cash Accounts created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Cash Accounts Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.saveCreate();
 
             return;
         }
@@ -788,36 +1109,47 @@ implements OnInit
         // Update
         //=======================================================
 
+        this.saveUpdate();
+    }
+
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
         const model:
-            UpdateCashAccounts =
+            CreateCashAccount =
         {
-            id:
-                this.entity.id,
 
-            name:
-                this.entity.name,
+            AccountSubGroupsId:
+                this.entity.AccountSubGroupsId,
 
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
+            CashAccountCode:
+                this.entity.CashAccountCode?.trim() ?? '',
 
-            sampleField:
-                this.entity.sampleField,
+            CashAccountName:
+                this.entity.CashAccountName?.trim() ?? '',
 
-            status:
-                this.entity.status,
+            Remarks:
+                this.entity.Remarks?.trim() ?? '',
 
-            remarks:
-                this.entity.remarks
+            IsActive:
+                this.entity.IsActive
         };
 
 
-        this.cashaccountsservice
-            .update(
+        this.cashAccountsService
+            .create(
                 model
             )
-            .subscribe(
-            {
-                next:() =>
+            .subscribe
+            ({
+                next:
+                (): void =>
                 {
                     this.originalEntity =
                         JSON.stringify(
@@ -832,7 +1164,7 @@ implements OnInit
                     this.toast.success(
                         'Success',
 
-                        'Cash Accounts updated successfully.'
+                        'CashAccount created successfully.'
                     );
 
 
@@ -840,18 +1172,113 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
-                        'Update Cash Accounts Error',
+                        'Create CashAccount Error',
+
                         error
                     );
 
 
                     const message =
-                        error?.error
+                        (error as any)?.error
                         ??
-                        'Failed to update {{ENTITY_NAME}.';
+                        'Failed to create CashAccount.';
+
+
+                    this.toast.error(
+                        'Validation',
+
+                        message
+                    );
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    private saveUpdate():
+        void
+    {
+        const model:
+            UpdateCashAccount =
+        {
+            CashAccountId:
+                this.entity.CashAccountId,
+
+            AccountSubGroupsId:
+                this.entity.AccountSubGroupsId,
+
+            CashAccountCode:
+                this.entity.CashAccountCode?.trim() ?? '',
+
+            CashAccountName:
+                this.entity.CashAccountName?.trim() ?? '',
+
+            Remarks:
+                this.entity.Remarks?.trim() ?? '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+
+
+        this.cashAccountsService
+            .update(
+                model
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.originalEntity =
+                        JSON.stringify(
+                            this.entity
+                        );
+
+
+                    this.hasChanges =
+                        false;
+
+
+                    this.toast.success(
+                        'Success',
+
+                        'CashAccount updated successfully.'
+                    );
+
+
+                    this.onBackToList();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Update CashAccount Error',
+
+                        error
+                    );
+
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'Failed to update CashAccount.';
 
 
                     this.toast.error(
@@ -884,9 +1311,6 @@ implements OnInit
             this.loadEntity();
 
 
-            this.checkForChanges();
-
-
             return;
         }
 
@@ -915,16 +1339,18 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                '..',
+            void this.router.navigate
+            (
+                [
+                    '/settings',
 
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
+                    'account-settings',
+
+                    'cash-accounts',
+
+                    'list'
+                ]
+            );
 
 
             return;
@@ -940,16 +1366,18 @@ implements OnInit
 
             () =>
             {
-                void this.router.navigate(
-                [
-                    '..',
+                void this.router.navigate
+                (
+                    [
+                        '/settings',
 
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                        'account-settings',
+
+                        'cash-accounts',
+
+                        'list'
+                    ]
+                );
             },
 
 

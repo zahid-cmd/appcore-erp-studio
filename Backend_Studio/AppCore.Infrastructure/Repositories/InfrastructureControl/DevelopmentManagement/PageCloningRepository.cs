@@ -643,6 +643,96 @@ public class PageCloningRepository : IPageCloningRepository
 
 
     //===========================================================
+    // Preview From The Wizard Plan
+    // No saved record is needed and nothing is written.
+    //===========================================================
+
+    public Task<PageCloningPreviewDto>
+        PreviewPlanAsync
+        (
+            ClonePlanDto plan
+        )
+    {
+        if
+        (
+            plan == null
+        )
+        {
+            throw new InvalidOperationException(
+                "The clone plan is required.");
+        }
+
+        if
+        (
+            string.IsNullOrWhiteSpace(plan.CloneFromName)
+        )
+        {
+            throw new InvalidOperationException(
+                "Clone From page is required.");
+        }
+
+        if
+        (
+            string.IsNullOrWhiteSpace(plan.EntityName)
+        )
+        {
+            throw new InvalidOperationException(
+                "Entity Name is required.");
+        }
+
+        if
+        (
+            plan.CloneFromId > 0
+            &&
+            plan.CloneFromId == plan.CloneToId
+        )
+        {
+            throw new InvalidOperationException(
+                "Clone From and Clone To cannot be the same page.");
+        }
+
+        PageCloneBlueprint blueprint =
+            ClonePlanMapper.ToBlueprint(plan);
+
+        EnginePlan result =
+            new PageCloneEngine().Plan(
+                blueprint,
+                plan.CloneFromName,
+                plan.CloneToName);
+
+        if
+        (
+            result.Errors.Count > 0
+        )
+        {
+            throw new InvalidOperationException(
+                string.Join(" | ", result.Errors));
+        }
+
+        return Task.FromResult
+        (
+            new PageCloningPreviewDto
+            {
+                PageCloningId = 0,
+                Warnings = result.Warnings,
+                Files = result.Files.Select
+                (
+                    f =>
+                        new PageCloningFileChangeDto
+                        {
+                            LogicalKey = f.Key,
+                            Path = f.Path,
+                            Before = f.Before,
+                            After = f.After,
+                            EditedSinceBaseline = f.Edited
+                        }
+                ).ToList()
+            }
+        );
+    }
+
+
+    //===========================================================
     // Preview Clone
     //===========================================================
 
@@ -750,9 +840,106 @@ public class PageCloningRepository : IPageCloningRepository
         };
     }
 
+    //===========================================================
+    // Save Plan (write files, then create or update the record)
+    //===========================================================
+
+    public async Task<PageCloningResultDto>
+        SavePlanAsync
+        (
+            ClonePlanDto plan,
+            bool overwriteEdited,
+            long userId
+        )
+    {
+        if (plan.CloneFromId <= 0 || plan.CloneToId <= 0)
+            throw new InvalidOperationException("Clone From and Clone To pages are required.");
+
+        if (plan.CloneFromId == plan.CloneToId)
+            throw new InvalidOperationException("Clone From and Clone To cannot be the same page.");
+
+        PageCloneBlueprint bp = ClonePlanMapper.ToBlueprint(plan);
+
+        EngineResult result =
+            await new PageCloneEngine().ApplyAsync(
+                bp,
+                plan.CloneFromName,
+                plan.CloneToName,
+                overwriteEdited,
+                verify: false);
+
+        if (!result.Written)
+        {
+            return new PageCloningResultDto
+            {
+                Success = false,
+                Messages = result.Messages,
+                BuildOutput = result.BuildOutput,
+                RunStatus = "Draft"
+            };
+        }
+
+        PageCloningEntity? entity =
+            await _context
+                .Set<PageCloningEntity>()
+                .FirstOrDefaultAsync(
+                    x => x.CloneToId == plan.CloneToId && !x.IsDeleted);
+
+        bool isNew = entity == null;
+
+        if (entity == null)
+        {
+            entity = new PageCloningEntity
+            {
+                IsDeleted = false,
+                CreatedBy = userId,
+                CreatedDate = DateTime.UtcNow,
+                Remarks = string.Empty
+            };
+
+            _context.Set<PageCloningEntity>().Add(entity);
+        }
+        else
+        {
+            entity.ModifiedBy = userId;
+            entity.ModifiedDate = DateTime.UtcNow;
+        }
+
+        entity.CloneFromId = plan.CloneFromId;
+        entity.CloneFromCode = plan.CloneFromCode?.Trim() ?? string.Empty;
+        entity.CloneFromName = plan.CloneFromName?.Trim() ?? string.Empty;
+        entity.CloneToId = plan.CloneToId;
+        entity.CloneToCode = plan.CloneToCode?.Trim() ?? string.Empty;
+        entity.CloneToName = plan.CloneToName?.Trim() ?? string.Empty;
+        entity.EntityName = bp.EntityName;
+        entity.BlueprintJson = bp.ToJson();
+        entity.NumberOfFiles = 15;
+        entity.RunStatus = "Applied";
+        entity.LastRunDate = DateTime.UtcNow;
+        entity.BuildOutput = string.Empty;
+        entity.IsActive = true;
+
+        await _context.SaveChangesAsync();
+
+        await AddHistoryAsync(
+            entity,
+            isNew ? "Create" : "Update",
+            isNew ? "Page Clone Saved" : "Page Clone Updated",
+            $"'{entity.CloneFromName}' cloned to '{entity.CloneToName}' and files written.",
+            userId);
+
+        return new PageCloningResultDto
+        {
+            Success = true,
+            Messages = result.Messages,
+            BuildOutput = string.Empty,
+            RunStatus = entity.RunStatus,
+            PageCloningId = entity.PageCloningId
+        };
+    }
 
     //===========================================================
-    // Restore Code To Baseline (needs the code sync engine)
+    // Restore Code To Baseline
     //===========================================================
 
     public async Task<PageCloningResultDto>
@@ -764,14 +951,34 @@ public class PageCloningRepository : IPageCloningRepository
     {
         PageCloningEntity entity = await GetTrackedAsync(id);
 
+        EngineResult result =
+            await new PageCloneEngine().RestoreAsync(entity);
+
+        if (result.Written)
+        {
+            entity.RunStatus = "Restored";
+            entity.LastRunDate = DateTime.UtcNow;
+            entity.BuildOutput = string.Empty;
+            entity.ModifiedBy = userId;
+            entity.ModifiedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            await AddHistoryAsync(
+                entity,
+                "Restore",
+                "Page Clone Restored To Baseline",
+                $"'{entity.CloneToName}' was restored to its sync baseline.",
+                userId);
+        }
+
         return new PageCloningResultDto
         {
-            Success = false,
+            Success = result.Success,
+            Messages = result.Messages,
+            BuildOutput = result.BuildOutput,
             RunStatus = entity.RunStatus,
-            Messages =
-            {
-                "Restore needs the code sync engine's regenerate method. Not connected yet. No files were changed."
-            }
+            PageCloningId = entity.PageCloningId
         };
     }
 

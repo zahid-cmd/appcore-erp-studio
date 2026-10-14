@@ -983,12 +983,19 @@ implements OnInit
                         ||
                         item.AccountSubGroupId ===
                         this.selectedAccountSubGroupId;
-                    const inventoryAutoLedgerMatch =
-                        this.selectedTab !== 'inventory-auto'
-                        ||
+                    //===================================================
+                    // Tab split
+                    //   inventory-auto tab : only the auto ledgers
+                    //   all tab            : only the manual ledgers
+                    //===================================================
+                    const isInventoryAuto =
                         this.isInventoryAutoGroup(
                             item.GroupCode
                         );
+                    const inventoryAutoLedgerMatch =
+                        this.selectedTab === 'inventory-auto'
+                            ? isInventoryAuto
+                            : !isInventoryAuto;
                     const statusMatch =
                         this.selectedStatus === null
                         ||
@@ -1734,6 +1741,7 @@ implements OnInit
                 }
             });
     }
+    
     //===========================================================
     // Close History
     //===========================================================

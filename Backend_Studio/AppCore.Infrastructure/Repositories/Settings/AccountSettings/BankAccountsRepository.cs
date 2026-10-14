@@ -1,16 +1,25 @@
+// PAGE-CLONED : Cash Accounts -> Bank Accounts
+// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.BankAccounts.DTOs;
 
-using AppCore.Domain.Common;
+using BankAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
+
+using AccountSubGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.AccountSettings;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
@@ -21,81 +30,229 @@ namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// BankAccountsRepository
+// BankAccounts Repository
 //===============================================================
 
-public class BankAccountsRepository
-    : IBankAccountsRepository
+public class BankAccountsRepository : IBankAccountsRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public BankAccountsRepository
-    (
-        AppDbContext context
-    )
+    public BankAccountsRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // BankAccounts Query
+    //===========================================================
+
+    private IQueryable<BankAccountDto> BankAccountsQuery()
+    {
+        return _context
+            .Set<BankAccountsEntity>()
+
+            .AsNoTracking()
+
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+
+            .Select
+            (
+                x =>
+                    new BankAccountDto
+                    {
+                        BankAccountId =
+                            x.BankAccountId,
+
+                        AccountSubGroupsId =
+                            x.AccountSubGroupsId,
+
+                        BankAccountCode =
+                            x.BankAccountCode,
+
+                        BankAccountName =
+                            x.BankAccountName,
+
+                        Remarks =
+                            x.Remarks,
+
+                        IsActive =
+                            x.IsActive,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>>
+    public async Task<List<BankAccountDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>()
-            .AsNoTracking()
-            .Where(
+        return await BankAccountsQuery()
+
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
+                    x.BankAccountCode
             )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
+
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts?>
+    public async Task<BankAccountDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await BankAccountsQuery()
+
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.BankAccountId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync(
+            long accountSubGroupsId)
+    {
+        var parent =
+            await _context.Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.AccountSubGroupId == accountSubGroupsId && !x.IsDeleted);
+
+        if (parent == null)
+            throw new KeyNotFoundException("Account Sub Group not found.");
+
+        string[] parentParts =
+            (parent.SubGroupCode?.Trim() ?? string.Empty)
+                .Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parentParts.Length != 4)
+            throw new InvalidOperationException("Invalid account sub group code.");
+
+        int[] seg = new int[3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (!int.TryParse(parentParts[i + 1].Trim(), out seg[i]) || seg[i] < 1)
+                throw new InvalidOperationException("Invalid account sub group sequence number.");
+        }
+
+        List<string> existingCodes =
+            await _context.Set<BankAccountsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.AccountSubGroupsId == accountSubGroupsId)
+                .Select(x => x.BankAccountCode)
+                .ToListAsync();
+
+        int highest = 0;
+
+        foreach (string code in existingCodes)
+        {
+            if (string.IsNullOrWhiteSpace(code)) continue;
+
+            string[] parts = code.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 5) continue;
+
+            if (!string.Equals(parts[0].Trim(), "BNK", StringComparison.OrdinalIgnoreCase)) continue;
+
+            bool same = true;
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (!int.TryParse(parts[i + 1].Trim(), out int v) || v != seg[i]) { same = false; break; }
+            }
+
+            if (!same) continue;
+
+            if (int.TryParse(parts[4].Trim(), out int sequenceNo) && sequenceNo > highest)
+                highest = sequenceNo;
+        }
+
+        return CodeGenerator.GenerateBankAccountsCode(seg[0], seg[1], seg[2], highest + 1);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<BankAccountsDefaultsDto>
+        GetDefaultsAsync
+        (
+            long accountSubGroupsId
+        )
+    {
+        return new BankAccountsDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync(
+                    accountSubGroupsId)
+        };
+    }
 
 
     //===========================================================
@@ -104,41 +261,107 @@ public class BankAccountsRepository
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts entity
-    )
+        (
+            CreateBankAccountDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve AccountSubGroup
+        //===========================================================
+
+        AccountSubGroupEntity? accountSubGroup =
+
+            await _context
+                .Set<AccountSubGroupEntity>()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.AccountSubGroupId ==
+                        dto.AccountSubGroupsId
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
-        entity.IsActive =
-            true;
+        if
+        (
+            accountSubGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "AccountSubGroup not found."
+            );
+        }
 
 
-        entity.IsDeleted =
-            false;
+        //===========================================================
+        // Resolve BankAccount Code
+        //===========================================================
+
+        string bankAccountCode =
+            dto.BankAccountCode?.Trim()
+            ??
+            string.Empty;
 
 
-        entity.CreatedBy =
-            userId;
+        if
+        (
+            string.IsNullOrWhiteSpace(bankAccountCode)
+        )
+        {
+            bankAccountCode =
+                await GetNextCodeAsync(
+                    dto.AccountSubGroupsId);
+        }
 
 
-        entity.CreatedDate =
-            DateTime.UtcNow;
+        //===========================================================
+        // Create Entity
+        //===========================================================
+
+        BankAccountsEntity entity =
+            new BankAccountsEntity
+            {
+                AccountSubGroupsId =
+                    dto.AccountSubGroupsId,
+
+                BankAccountCode =
+                    bankAccountCode,
+
+                BankAccountName =
+                    dto.BankAccountName?.Trim()
+                    ??
+                    string.Empty,
+
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
+
+                IsActive =
+                    dto.IsActive,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>()
-            .AddAsync(
+        _context
+            .Set<BankAccountsEntity>()
+            .Add(
                 entity
             );
 
@@ -146,26 +369,31 @@ public class BankAccountsRepository
         await _context.SaveChangesAsync();
 
 
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "BankAccounts",
+                    "BankAccount",
 
                 EntityId =
-                    entity.Id,
+                    entity.BankAccountId,
 
                 ActivityType =
                     "Create",
 
                 ActivityTitle =
-                    "BankAccounts Created",
+                    "BankAccount Created",
 
                 ActivityDescription =
-                    $"BankAccounts '{entity.Name}' was created.",
+                    $"BankAccount '{entity.BankAccountName}' created.",
 
                 PerformedBy =
                     userId,
@@ -182,9 +410,8 @@ public class BankAccountsRepository
         await _context.SaveChangesAsync();
 
 
-        return entity.Id;
+        return entity.BankAccountId;
     }
-
 
 
     //===========================================================
@@ -193,88 +420,138 @@ public class BankAccountsRepository
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts entity
-    )
+        (
+            UpdateBankAccountDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve BankAccount
+        //===========================================================
 
+        BankAccountsEntity? entity =
 
-        var existing =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<BankAccountsEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+
+                        x.BankAccountId ==
+                        dto.BankAccountId
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "BankAccounts record was not found."
+            throw new KeyNotFoundException(
+                "BankAccount not found."
             );
         }
 
 
-        existing.Code =
-            entity.Code;
+        //===========================================================
+        // Resolve AccountSubGroup
+        //===========================================================
+
+        AccountSubGroupEntity? accountSubGroup =
+
+            await _context
+                .Set<AccountSubGroupEntity>()
+
+                .FirstOrDefaultAsync
+                (
+                    x =>
+
+                        x.AccountSubGroupId ==
+                        dto.AccountSubGroupsId
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
-        existing.Name =
-            entity.Name;
+        if
+        (
+            accountSubGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "AccountSubGroup not found."
+            );
+        }
 
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+        entity.AccountSubGroupsId =
+            dto.AccountSubGroupsId;
+
+        entity.BankAccountCode =
+            dto.BankAccountCode?.Trim()
+            ??
+            string.Empty;
+
+        entity.BankAccountName =
+            dto.BankAccountName?.Trim()
+            ??
+            string.Empty;
+
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
+
+        entity.IsActive =
+            dto.IsActive;
 
 
-        existing.SampleField =
-            entity.SampleField;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
+        entity.ModifiedBy =
             userId;
 
 
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "BankAccounts",
+                    "BankAccount",
 
                 EntityId =
-                    existing.Id,
+                    entity.BankAccountId,
 
                 ActivityType =
                     "Update",
 
                 ActivityTitle =
-                    "BankAccounts Updated",
+                    "BankAccount Updated",
 
                 ActivityDescription =
-                    $"BankAccounts '{existing.Name}' was updated.",
+                    $"BankAccount '{entity.BankAccountName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -290,7 +567,6 @@ public class BankAccountsRepository
 
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
@@ -299,70 +575,90 @@ public class BankAccountsRepository
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve BankAccount
+        //===========================================================
 
+        BankAccountsEntity? entity =
 
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<BankAccountsEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+
+                        x.BankAccountId ==
+                        id
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "BankAccount not found."
+            );
         }
 
+
+        //===========================================================
+        // Soft Delete BankAccount
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
 
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
 
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "BankAccounts",
+                    "BankAccount",
 
                 EntityId =
-                    entity.Id,
+                    entity.BankAccountId,
 
                 ActivityType =
                     "Delete",
 
                 ActivityTitle =
-                    "BankAccounts Deleted",
+                    "BankAccount Deleted",
 
                 ActivityDescription =
-                    $"BankAccounts '{entity.Name}' was deleted.",
+                    $"BankAccount '{entity.BankAccountName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -378,40 +674,45 @@ public class BankAccountsRepository
 
         await _context.SaveChangesAsync();
     }
-
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
+        BankAccountsEntity? entity =
 
-
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<BankAccountsEntity>()
+
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
+                )
+
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+
+                .FirstOrDefaultAsync();
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
 
 
@@ -419,8 +720,12 @@ public class BankAccountsRepository
             false;
 
 
-        entity.IsActive =
-            true;
+        entity.DeletedBy =
+            null;
+
+
+        entity.DeletedDate =
+            null;
 
 
         entity.ModifiedBy =
@@ -431,26 +736,34 @@ public class BankAccountsRepository
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "BankAccounts",
+                    "BankAccount",
 
                 EntityId =
-                    entity.Id,
+                    entity.BankAccountId,
 
                 ActivityType =
                     "Restore",
 
                 ActivityTitle =
-                    "BankAccounts Restored",
+                    "BankAccount Restored",
 
                 ActivityDescription =
-                    $"BankAccounts '{entity.Name}' was restored.",
+                    $"BankAccount '{entity.BankAccountName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -465,150 +778,35 @@ public class BankAccountsRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
+        return await _context
+            .Set<BankAccountsEntity>()
 
-            .AsNoTracking()
-
-            .Where(
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
 
-                    &&
-
-                    x.EntityName ==
-                    "BankAccounts"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "BankAccounts"
-
-                    &&
-
-                    x.EntityId ==
+                    x.BankAccountId ==
                     id
-            )
 
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
+                    &&
 
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
 }

@@ -1,90 +1,60 @@
-/* ============================================================
-   Cash Accounts
-============================================================ */
+// PAGE-CLONED : Wings -> Cash Accounts
+//===============================================================
+// Cash Accounts
+//===============================================================
 
-export interface CashAccounts
+export interface CashAccount
 {
-    id:
-        number;
+    CashAccountId: number;
 
-    code:
-        string;
+    AccountSubGroupsId: number;
 
-    name:
-        string;
+    CashAccountCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    CashAccountName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    IsActive: boolean;
 
-    remarks:
-        string;
 }
 
 
+//===============================================================
+// Create Cash Accounts
+//===============================================================
 
-/* ============================================================
-   Create Cash Accounts
-============================================================ */
-
-export interface CreateCashAccounts
+export interface CreateCashAccount
 {
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    CashAccountCode: string;
 
-    sampleField:
-        string;
+    CashAccountName: string;
 
-    status:
-        string;
+    Remarks: string;
 
-    remarks:
-        string;
+    IsActive: boolean;
+
 }
 
 
+//===============================================================
+// Update Cash Accounts
+//===============================================================
 
-/* ============================================================
-   Update Cash Accounts
-============================================================ */
-
-export interface UpdateCashAccounts
+export interface UpdateCashAccount
 {
-    id:
-        number;
+    CashAccountId: number;
 
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    CashAccountCode: string;
 
-    sampleField:
-        string;
+    CashAccountName: string;
 
-    status:
-        string;
+    Remarks: string;
 
-    remarks:
-        string;
-}
+    IsActive: boolean;
 
-
-
-/* ============================================================
-   Cash Accounts Defaults
-============================================================ */
-
-export interface CashAccountsDefaults
-{
-    code:
-        string;
 }

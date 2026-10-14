@@ -177,7 +177,12 @@ using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 
 // AUTO-END : SystemConfigurations
+// AUTO-BEGIN : CashAccounts
 
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Infrastructure.Repositories.Settings.AccountSettings;
+
+// AUTO-END : CashAccounts
 // AUTO-BEGIN : AccountSubGroup
 
 using AppCore.Application.Settings.AccountSettings;
@@ -627,6 +632,16 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : BankAccounts
+
+        services.AddScoped
+        <
+            IBankAccountsRepository,
+            BankAccountsRepository
+        >();
+
+        // AUTO-END : BankAccounts
+
         // AUTO-BEGIN : CashAccounts
 
         services.AddScoped
@@ -636,6 +651,7 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : CashAccounts
+
 
         // AUTO-BEGIN : ProductMaster
 

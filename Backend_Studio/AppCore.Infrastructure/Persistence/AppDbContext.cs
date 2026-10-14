@@ -632,6 +632,7 @@ public class AppDbContext
 
     // AUTO-END : ProductMaster
 
+
     // AUTO-BEGIN : CashAccounts
 
     public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>
@@ -642,6 +643,17 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : CashAccounts
+
+    // AUTO-BEGIN : BankAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>
+    BankAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BankAccounts
 
     // AUTO-END : AUTO REGISTER DBSETS
 

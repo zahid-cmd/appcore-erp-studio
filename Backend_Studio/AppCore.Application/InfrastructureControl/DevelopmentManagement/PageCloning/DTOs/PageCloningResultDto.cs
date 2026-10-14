@@ -6,4 +6,5 @@ public class PageCloningResultDto
     public List<string> Messages { get; set; } = new();
     public string BuildOutput { get; set; } = string.Empty;
     public string RunStatus { get; set; } = string.Empty;
+    public long PageCloningId { get; set; }
 }

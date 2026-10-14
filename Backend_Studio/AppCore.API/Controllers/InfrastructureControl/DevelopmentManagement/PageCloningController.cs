@@ -98,6 +98,42 @@ public class PageCloningController : ControllerBase
 
 
     //===========================================================
+    // Preview From The Wizard Plan (writes nothing)
+    //===========================================================
+
+    [HttpPost("preview-plan")]
+
+    public async Task<ActionResult<PageCloningPreviewDto>> PreviewPlan(
+        [FromBody] ClonePlanDto plan)
+    {
+        try
+        {
+            return Ok(
+                await _repository.PreviewPlanAsync(plan));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+
+    //===========================================================
+    // Get History
+    //===========================================================
+
+    [HttpGet("history")]
+
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
+    {
+        return Ok(
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Development Management",
+                "Page Cloning"));
+    }
+
+
+    //===========================================================
     // Get By Id
     //===========================================================
 
@@ -287,7 +323,29 @@ public class PageCloningController : ControllerBase
         }
     }
 
+    //===========================================================
+    // Save Plan
+    //===========================================================
 
+    [HttpPost("save-plan")]
+
+    public async Task<ActionResult<PageCloningResultDto>> SavePlan(
+        [FromBody] ClonePlanDto plan,
+        [FromQuery] bool overwriteEdited = false)
+    {
+        long userId = 1;
+
+        try
+        {
+            return Ok(
+                await _repository.SavePlanAsync(plan, overwriteEdited, userId));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+    
     //===========================================================
     // Restore Code To Baseline
     //===========================================================
@@ -314,20 +372,5 @@ public class PageCloningController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
-    }
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    [HttpGet("history")]
-
-    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
-    {
-        return Ok(
-            await _activityHistoryRepository.GetListHistoryAsync(
-                "Development Management",
-                "Page Cloning"));
     }
 }

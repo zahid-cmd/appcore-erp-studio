@@ -39,7 +39,11 @@ import
     PageCloning
 }
 from '../../../model/page-cloning.model';
-
+import
+{
+    PageCloningWorkflowService
+}
+from '../../../services/page-cloning-workflow.service';
 //===============================================================
 // Shared Components
 //===============================================================
@@ -168,6 +172,7 @@ from '../../../services/page-cloning.service';
     templateUrl:'./page-cloning-list.html',
     styleUrl:'./page-cloning-list.css'
 })
+
 //===============================================================
 // Page Cloning List
 //===============================================================
@@ -190,6 +195,9 @@ implements OnInit
         inject(ActivatedRoute);
     private readonly cdr =
         inject(ChangeDetectorRef);
+    private readonly workflow =
+        inject(PageCloningWorkflowService);
+
     //===========================================================
     // Page Tabs
     //===========================================================
@@ -204,6 +212,7 @@ implements OnInit
     selectedTab:
         string =
         'all';
+
     //===========================================================
     // Data
     //===========================================================
@@ -216,6 +225,7 @@ implements OnInit
     pagedPageClonings:
         PageCloning[] =
     [];
+
     //===========================================================
     // Run Status Filter
     //===========================================================
@@ -250,6 +260,7 @@ implements OnInit
     selectedStatus:
         string | null =
         null;
+
     //===========================================================
     // Search & Loading
     //===========================================================
@@ -262,6 +273,7 @@ implements OnInit
     loadFailed:
         boolean =
         false;
+
     //===========================================================
     // Pagination
     //===========================================================
@@ -271,6 +283,7 @@ implements OnInit
     pageSize:
         number =
         10;
+
     //===========================================================
     // History
     //===========================================================
@@ -283,6 +296,7 @@ implements OnInit
     historyItems:
         any[] =
     [];
+
     //===========================================================
     // Page Canvas Configuration
     //===========================================================
@@ -300,6 +314,7 @@ implements OnInit
         headerHeight:36,
         footerHeight:56
     };
+
     //===========================================================
     // Table Columns
     //===========================================================
@@ -357,6 +372,7 @@ implements OnInit
             align:'center'
         }
     ];
+
     //===========================================================
     // Initialize
     //===========================================================
@@ -365,6 +381,7 @@ implements OnInit
     {
         this.loadItems();
     }
+
     //===========================================================
     // Normalize API Response
     //===========================================================
@@ -488,6 +505,7 @@ implements OnInit
                 )
         };
     }
+
     //===========================================================
     // Normalize API Response List
     //===========================================================
@@ -513,6 +531,7 @@ implements OnInit
                 )
         );
     }
+
     //===========================================================
     // Load Items
     //===========================================================
@@ -576,6 +595,7 @@ implements OnInit
                 }
             });
     }
+
     //===========================================================
     // Status Filter Change
     //===========================================================
@@ -590,6 +610,7 @@ implements OnInit
             value;
         this.applyFilters();
     }
+
     //===========================================================
     // Apply Filters
     //===========================================================
@@ -639,6 +660,7 @@ implements OnInit
             1;
         this.updatePagination();
     }
+
     //===========================================================
     // Search
     //===========================================================
@@ -759,6 +781,7 @@ implements OnInit
             1;
         this.updatePagination();
     }
+
     //===========================================================
     // Refresh
     //===========================================================
@@ -773,6 +796,7 @@ implements OnInit
             1;
         this.loadItems();
     }
+
     //===========================================================
     // Update Pagination
     //===========================================================
@@ -795,6 +819,7 @@ implements OnInit
             )
         ];
     }
+
     //===========================================================
     // Page Change
     //===========================================================
@@ -809,6 +834,7 @@ implements OnInit
             page;
         this.updatePagination();
     }
+
     //===========================================================
     // Page Size Change
     //===========================================================
@@ -825,23 +851,21 @@ implements OnInit
             1;
         this.updatePagination();
     }
+
     //===========================================================
     // Add
     //===========================================================
     add():
         void
     {
-        void this.router.navigate
-        (
-            [
-                'source'
-            ],
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.workflow.reset();
+
+        void this.router.navigate(
+            [ 'source' ],
+            { relativeTo: this.route.parent }
         );
     }
+
     //===========================================================
     // View
     //===========================================================
@@ -852,18 +876,9 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
-        (
-            [
-                'view',
-                item.PageCloningId
-            ],
-            {
-                relativeTo:
-                    this.route.parent
-            }
-        );
+        this.openRecord(item, 'view');
     }
+
     //===========================================================
     // Edit
     //===========================================================
@@ -874,18 +889,69 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
-        (
-            [
-                'edit',
-                item.PageCloningId
-            ],
-            {
-                relativeTo:
-                    this.route.parent
-            }
-        );
+        this.openRecord(item, 'edit');
     }
+
+    //===========================================================
+    // Open a saved clone in the four wizard pages
+    //===========================================================
+    private openRecord
+    (
+        item:
+            PageCloning,
+        mode:
+            'view' | 'edit'
+    ):
+        void
+    {
+        this.workflow
+            .openRecord(item, mode)
+            .subscribe
+            ({
+                next:
+                (
+                    ok:
+                        boolean
+                ):
+                    void =>
+                {
+                    if (!ok)
+                    {
+                        this.toast.error
+                        (
+                            'Open Failed',
+                            'This record has no saved plan, so it cannot be opened.'
+                        );
+                        return;
+                    }
+
+                    void this.router.navigate(
+                        [ 'source' ],
+                        { relativeTo: this.route.parent }
+                    );
+                },
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Open Page Cloning Error:',
+                        error
+                    );
+
+                    this.toast.error
+                    (
+                        'Open Failed',
+                        'Unable to open the page cloning record.'
+                    );
+                }
+            });
+    }
+
     //===========================================================
     // Delete
     //===========================================================
@@ -961,6 +1027,7 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // Restore
     //===========================================================
@@ -981,6 +1048,7 @@ implements OnInit
             'primary'
         );
     }
+
     //===========================================================
     // Restore Item
     //===========================================================
@@ -1036,6 +1104,7 @@ implements OnInit
                 }
             });
     }
+
     //===========================================================
     // Open History
     //===========================================================
@@ -1112,6 +1181,7 @@ implements OnInit
                 }
             });
     }
+    
     //===========================================================
     // Close History
     //===========================================================

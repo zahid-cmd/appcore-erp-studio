@@ -1,3 +1,4 @@
+// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -17,7 +18,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -29,17 +31,15 @@ from '../../../../environments/environment';
 
 import
 {
-    CashAccounts,
-
-    CreateCashAccounts,
-
-    UpdateCashAccounts
+    CashAccount,
+    CreateCashAccount,
+    UpdateCashAccount
 }
 from '../models/cash-accounts.model';
 
 
 //===============================================================
-// Cash Accounts Service
+// CashAccount Service
 //===============================================================
 
 @Injectable(
@@ -50,14 +50,12 @@ from '../models/cash-accounts.model';
 
 export class CashAccountsService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,19 +66,100 @@ export class CashAccountsService
         `${environment.apiUrl}/settings/account-settings/cash-accounts`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
     getAll():
-        Observable<CashAccounts[]>
+        Observable<CashAccount[]>
     {
-        return this.http.get<CashAccounts[]>(
-            this.apiUrl
-        );
+        return this.http
+
+            .get<any[]>(
+                this.apiUrl
+            )
+
+            .pipe(
+
+                map(
+
+                    response =>
+
+                        response.map(
+
+                            cashAccount =>
+
+                            ({
+                                ...cashAccount,
+
+                                CashAccountId:
+                                    Number(cashAccount.CashAccountId ?? cashAccount.cashAccountId ?? cashAccount.id ?? cashAccount.Id),
+
+                                AccountSubGroupsId:
+                                    Number(cashAccount.AccountSubGroupsId ?? cashAccount.accountSubGroupsId ?? 0),
+
+                                CashAccountCode:
+                                    cashAccount.CashAccountCode ?? cashAccount.cashAccountCode ?? '',
+
+                                CashAccountName:
+                                    cashAccount.CashAccountName ?? cashAccount.cashAccountName ?? '',
+
+                                Remarks:
+                                    cashAccount.Remarks ?? cashAccount.remarks ?? '',
+
+                                IsActive:
+                                    Boolean(cashAccount.IsActive ?? cashAccount.isActive ?? true)
+                            })
+
+                        )
+
+                )
+
+            );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode
+    (
+        accountSubGroupsId:
+            number
+    ):
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code`,
+            {
+                params:
+                {
+                    accountSubGroupsId:
+                        accountSubGroupsId
+                },
+
+                responseType:
+                    'text'
+            }
+        );
+    }
 
 
     //===========================================================
@@ -92,13 +171,12 @@ export class CashAccountsService
         id:
             number
     ):
-        Observable<CashAccounts>
+        Observable<CashAccount>
     {
-        return this.http.get<CashAccounts>(
+        return this.http.get<CashAccount>(
             `${this.apiUrl}/${id}`
         );
     }
-
 
 
     //===========================================================
@@ -108,17 +186,15 @@ export class CashAccountsService
     create
     (
         model:
-            CreateCashAccounts
+            CreateCashAccount
     ):
         Observable<number>
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
 
     //===========================================================
@@ -128,17 +204,15 @@ export class CashAccountsService
     update
     (
         model:
-            UpdateCashAccounts
+            UpdateCashAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
+            this.apiUrl,
             model
         );
     }
-
 
 
     //===========================================================
@@ -158,21 +232,18 @@ export class CashAccountsService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
     restore():
-        Observable<void>
+        Observable<boolean>
     {
-        return this.http.put<void>(
+        return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,7 +257,6 @@ export class CashAccountsService
             `${this.apiUrl}/history`
         );
     }
-
 
 
     //===========================================================
@@ -204,5 +274,4 @@ export class CashAccountsService
             `${this.apiUrl}/${id}/history`
         );
     }
-
 }

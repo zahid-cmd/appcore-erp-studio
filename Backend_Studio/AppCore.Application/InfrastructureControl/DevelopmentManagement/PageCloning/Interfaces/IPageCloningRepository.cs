@@ -92,7 +92,26 @@ public interface IPageCloningRepository
 
 
     //===========================================================
-    // Preview Clone (writes nothing)
+    // Preview From The Wizard Plan (no saved record, writes nothing)
+    //===========================================================
+
+    Task<PageCloningPreviewDto> PreviewPlanAsync(
+        ClonePlanDto plan);
+
+
+    //===========================================================
+    // Save From The Wizard Plan (writes the files, then creates
+    // or updates the Page Cloning record)
+    //===========================================================
+
+    Task<PageCloningResultDto> SavePlanAsync(
+        ClonePlanDto plan,
+        bool overwriteEdited,
+        long userId);
+
+
+    //===========================================================
+    // Preview Clone (saved record, writes nothing)
     //===========================================================
 
     Task<PageCloningPreviewDto> PreviewAsync(

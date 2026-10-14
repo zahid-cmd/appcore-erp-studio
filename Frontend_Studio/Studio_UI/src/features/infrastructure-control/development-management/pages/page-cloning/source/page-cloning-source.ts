@@ -94,6 +94,11 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
 
     get state(): CloneWorkflowState { return this.workflow.state; }
 
+    // View and Edit open a saved clone: the page is read-only
+    get locked(): boolean { return this.workflow.state.mode !== 'add'; }
+
+    get pageTitle(): string { return this.workflow.pageTitle; }
+
     //===========================================================
     // CHANGE DETECTION LOCK
     // Never call cdr directly. Every async callback must end with refresh().
@@ -144,7 +149,7 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
 
                 this.refresh();
 
-                // Restore earlier choices when coming Back
+                // Restore earlier choices when coming Back (or when a saved clone is opened)
                 if (this.state.cloneFromModuleId)
                 {
                     this.loadMenus(() =>
@@ -414,6 +419,12 @@ export class PageCloningSourceComponent implements OnInit, OnDestroy
     //===========================================================
     onReset(): void
     {
+        if (this.locked)
+        {
+            this.toast.info('Reset', 'This clone was opened from the list, so this page cannot be reset.');
+            return;
+        }
+
         this.cancelAnalysis();
         this.workflow.reset();
         this.analysis = null;

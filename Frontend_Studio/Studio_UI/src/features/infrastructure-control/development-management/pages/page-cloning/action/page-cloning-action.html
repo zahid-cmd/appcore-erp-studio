@@ -1,8 +1,8 @@
-<div class="app-form-page">
+<div class="app-form-page" [class.locked]="locked">
 
     <app-page-header
         icon="fas fa-clone"
-        title="Page Cloning"
+        [title]="pageTitle"
         subtitle="Decide the fields, parent and code number of the new page.">
 
         <!-- CENTER : step counter -->

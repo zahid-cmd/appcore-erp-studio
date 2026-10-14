@@ -1,316 +1,256 @@
+// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.CashAccounts.DTOs;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Api.Controllers.Settings.AccountSettings;
+namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 
 //===============================================================
-// CashAccountsController
+// CashAccount Controller
 //===============================================================
 
 [ApiController]
 
 [Route("api/settings/account-settings/cash-accounts")]
 
-public class CashAccountsController
-    : ControllerBase
+public class CashAccountsController : ControllerBase
 {
-    //===========================================================
-    // Repository
-    //===========================================================
+    //===============================================================
+    // Fields
+    //===============================================================
 
     private readonly ICashAccountsRepository _repository;
 
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
 
-    //===========================================================
+
+    //===============================================================
     // Constructor
-    //===========================================================
+    //===============================================================
 
-    public CashAccountsController
-    (
-        ICashAccountsRepository repository
-    )
+    public CashAccountsController(
+        ICashAccountsRepository repository,
+        IActivityHistoryRepository activityHistoryRepository)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
     }
 
 
-    //===========================================================
+    //===============================================================
     // Get All
-    //===========================================================
+    //===============================================================
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<CashAccountDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
+        List<CashAccountDto> cashAccounts =
+            await _repository.GetAllAsync();
 
-
-        return Ok(
-            entities
-        );
+        return Ok(cashAccounts);
     }
 
 
-    //===========================================================
+    //===============================================================
+    // Get Next Code
+    //===============================================================
+
+    [HttpGet("next-code")]
+
+    public async Task<ActionResult<string>> GetNextCode(
+        [FromQuery] long accountSubGroupsId)
+    {
+        return Ok(
+            await _repository.GetNextCodeAsync(
+                accountSubGroupsId));
+    }
+
+
+    //===============================================================
+    // Get Defaults
+    //===============================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<CashAccountsDefaultsDto>> GetDefaults(
+        [FromQuery] long accountSubGroupsId)
+    {
+        return Ok(
+            await _repository.GetDefaultsAsync(
+                accountSubGroupsId));
+    }
+
+
+    //===============================================================
     // Get By Id
-    //===========================================================
+    //===============================================================
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<CashAccountDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        CashAccountDto? cashAccount =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
+        if (cashAccount == null)
         {
             return NotFound();
         }
 
-
-        return Ok(
-            entity
-        );
+        return Ok(cashAccount);
     }
 
 
-    //===========================================================
+    //===============================================================
     // Create
-    //===========================================================
+    //===============================================================
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateCashAccountsDto dto
-    )
+    public async Task<ActionResult<long>> Create(
+        CreateCashAccountDto dto)
     {
-        var entity =
-            new CashAccounts
-            {
-                Name =
-                    dto.Name,
+        long userId = 1;
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+        long id =
+            await _repository.CreateAsync(
+                dto,
+                userId);
 
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+        return Ok(id);
     }
 
 
-    //===========================================================
+    //===============================================================
     // Update
-    //===========================================================
+    //===============================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut]
 
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateCashAccountsDto dto
-    )
+    public async Task<IActionResult> Update(
+        UpdateCashAccountDto dto)
     {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(
+                dto.CashAccountId))
         {
             return NotFound();
         }
 
+        long userId = 1;
 
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
+        await _repository.UpdateAsync(
+            dto,
+            userId);
 
         return NoContent();
     }
 
 
-    //===========================================================
+    //===============================================================
     // Delete
-    //===========================================================
+    //===============================================================
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public async Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        //===========================================================
+        // Verify CashAccount Exists
+        //===========================================================
 
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(id))
         {
             return NotFound();
         }
 
 
-        await _repository
-            .DeleteAsync(
-                id
-            );
+        //===========================================================
+        // Current User
+        //===========================================================
 
+        long userId = 1;
+
+
+        //===========================================================
+        // Delete
+        //===========================================================
+
+        try
+        {
+            await _repository.DeleteAsync(
+                id,
+                userId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return Conflict(ex.Message);
+        }
+
+
+        //===========================================================
+        // Delete Successful
+        //===========================================================
 
         return NoContent();
     }
 
 
-    //===========================================================
+    //===============================================================
     // Restore
-    //===========================================================
+    //===============================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        long userId = 1;
 
+        bool restored =
+            await _repository.RestoreAsync(
+                userId);
+
+        if (!restored)
+        {
+            return NotFound(
+                "There are no deleted cashAccounts available to restore.");
+        }
 
         return NoContent();
     }
 
 
-    //===========================================================
+    //===============================================================
     // Get History
-    //===========================================================
+    //===============================================================
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Account Settings",
+                "CashAccount"));
     }
 }
