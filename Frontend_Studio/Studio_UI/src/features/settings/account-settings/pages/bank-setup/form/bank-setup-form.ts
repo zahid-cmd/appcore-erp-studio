@@ -1,3 +1,4 @@
+// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Imports
 //===============================================================
@@ -97,12 +98,6 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
@@ -144,7 +139,9 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 import
 {
     BankSetup,
+
     CreateBankSetup,
+
     UpdateBankSetup
 }
 from '../../../models/bank-setup.model';
@@ -155,14 +152,13 @@ import
 }
 from '../../../services/bank-setup.service';
 
-
 //===============================================================
 // Component
 //===============================================================
 
 @Component(
 {
-    selector:'bankSetup-form',
+    selector:'bank-setup-form',
 
     standalone:true,
 
@@ -199,8 +195,6 @@ from '../../../services/bank-setup.service';
         TextboxComponent,
 
         TextareaComponent,
-
-        SearchDropdownComponent,
 
         DropdownComponent,
 
@@ -241,7 +235,7 @@ implements OnInit
         inject(Router);
 
 
-    private readonly banksetupservice =
+    private readonly bankSetupService =
         inject(BankSetupService);
 
 
@@ -279,12 +273,12 @@ implements OnInit
 
     pageTitle:
         string =
-        'Bank Setup';
+        'BankSetup';
 
 
     entityName:
         string =
-        'Bank Setup';
+        'BankSetup';
 
 
 
@@ -351,37 +345,26 @@ implements OnInit
 
 
 
-    //===========================================================
-    // Sample Search Dropdown Items
-    //===========================================================
-
-    items:
-        any[]
-    =
-        [];
-
-
-
-    //===========================================================
+//===========================================================
     // Status Items
     //===========================================================
 
     statusItems:
         any[]
     =
-        [
-            {
-                text:'Active',
+    [
+        {
+            label:'Active',
 
-                value:'Active'
-            },
+            value:true
+        },
 
-            {
-                text:'Inactive',
+        {
+            label:'Inactive',
 
-                value:'Inactive'
-            }
-        ];
+            value:false
+        }
+    ];
 
 
 
@@ -393,19 +376,17 @@ implements OnInit
         BankSetup
     =
     {
-        id:0,
+        BankSetupId:0,
 
-        code:'',
+        BankCode:'',
 
-        name:'',
+        BankName:'',
 
-        sampleSearchDropdownId:0,
+        Remarks:'',
 
-        sampleField:'',
+        Status:true,
 
-        status:'Active',
-
-        remarks:''
+        ShortName:''
     };
 
 
@@ -424,8 +405,7 @@ implements OnInit
         false;
 
 
-
-    //===========================================================
+//===========================================================
     // Initialize
     //===========================================================
 
@@ -437,19 +417,13 @@ implements OnInit
 
 
 
-    //===========================================================
+//===========================================================
     // Initialize Mode
     //===========================================================
 
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
 
@@ -494,6 +468,14 @@ implements OnInit
 
 
         //=======================================================
+        // Resolve Entity Id
+        //=======================================================
+
+        const id =
+            this.resolveEntityId();
+
+
+        //=======================================================
         // Existing Entity
         //=======================================================
 
@@ -523,6 +505,48 @@ implements OnInit
 
 
     //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+        this.route;
+
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+
+        return 0;
+    }
+
+
+
+    //===========================================================
     // Initialize Entity
     //===========================================================
 
@@ -531,22 +555,123 @@ implements OnInit
     {
         this.entity =
         {
-            id:0,
+        BankSetupId:0,
 
-            code:'',
+        BankCode:'',
 
-            name:'',
+        BankName:'',
 
-            sampleSearchDropdownId:0,
+        Remarks:'',
 
-            sampleField:'',
+        Status:true,
 
-            status:'Active',
-
-            remarks:''
-        };
+        ShortName:''
+    };
 
 
+        this.setInitialFormState();
+
+
+        this.generateBankSetupCode();
+    }
+
+
+
+    //===========================================================
+    // Generate BankSetup Code
+    //===========================================================
+
+    private generateBankSetupCode():
+        void
+    {
+        //=======================================================
+        // Existing Record
+        //=======================================================
+
+        if
+        (
+            this.entityId > 0
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Company Required
+        //
+        // BankSetup Code is company dependent.
+        //=======================================================
+
+//=======================================================
+        // Backend Generation
+        //
+        // CompanyId is required because BankSetup Code is
+        // generated independently for each Company.
+        //=======================================================
+
+        this.bankSetupService
+            .getNextCode()
+            .subscribe
+            ({
+                next:
+                (
+                    code:
+                        string
+                ): void =>
+                {
+                    this.entity.BankCode =
+                        code;
+
+
+                    this.checkForChanges();
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Generate BankSetup Code Error',
+
+                        error
+                    );
+
+
+                    this.entity.BankCode =
+                        '';
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to generate BankSetup Code.'
+                    );
+
+
+                    this.checkForChanges();
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+    private setInitialFormState():
+        void
+    {
         this.originalEntity =
             JSON.stringify(
                 this.entity
@@ -555,6 +680,9 @@ implements OnInit
 
         this.hasChanges =
             false;
+
+
+        this.cdr.detectChanges();
     }
 
 
@@ -566,16 +694,52 @@ implements OnInit
     private loadEntity():
         void
     {
-        this.banksetupservice
+        this.bankSetupService
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any
+                ): void =>
                 {
+                    console.log(
+                        'BankSetup API Response:',
+
+                        response
+                    );
+
+
                     this.entity =
-                        response;
+                    {
+                        BankSetupId:
+                            Number(response?.BankSetupId ?? response?.bankSetupId ?? 0),
+
+                        BankCode:
+                            response?.BankCode ?? response?.bankCode ?? '',
+
+                        BankName:
+                            response?.BankName ?? response?.bankName ?? '',
+
+                        Remarks:
+                            response?.Remarks ?? response?.remarks ?? '',
+
+                        Status:
+                            Boolean(response?.Status ?? response?.status ?? true),
+
+                        ShortName:
+                            response?.ShortName ?? response?.shortName ?? ''
+                    };
+
+
+                    console.log(
+                        'BankSetup Form Entity:',
+
+                        this.entity
+                    );
 
 
                     this.originalEntity =
@@ -592,10 +756,15 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
-                        'Load Bank Setup Error',
+                        'Load BankSetup Error',
+
                         error
                     );
 
@@ -603,7 +772,7 @@ implements OnInit
                     this.toast.error(
                         'Error',
 
-                        'Failed to load Bank Setup.'
+                        'Failed to load BankSetup.'
                     );
 
 
@@ -614,19 +783,7 @@ implements OnInit
 
 
 
-    //===========================================================
-    // Sample Search Dropdown Changed
-    //===========================================================
-
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
-
-
-    //===========================================================
+//===========================================================
     // Track Changes
     //===========================================================
 
@@ -686,21 +843,37 @@ implements OnInit
 
         if
         (
-            !this.entity.name?.trim()
+            !this.entity.BankCode?.trim()
         )
         {
             this.toast.error(
                 'Validation',
 
-                'Name is required.'
+                'Bank Code is required.'
             );
 
             return;
         }
 
 
+        if
+        (
+            !this.entity.BankName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Bank Name is required.'
+            );
+
+            return;
+        }
+
+
+
         //=======================================================
-        // Create
+        // Add
         //=======================================================
 
         if
@@ -708,77 +881,7 @@ implements OnInit
             this.mode === 'add'
         )
         {
-            const model:
-                CreateBankSetup =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.banksetupservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Bank Setup created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Bank Setup Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.saveCreate();
 
             return;
         }
@@ -788,36 +891,47 @@ implements OnInit
         // Update
         //=======================================================
 
+        this.saveUpdate();
+    }
+
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
         const model:
-            UpdateBankSetup =
+            CreateBankSetup =
         {
-            id:
-                this.entity.id,
 
-            name:
-                this.entity.name,
+            BankCode:
+                this.entity.BankCode?.trim() ?? '',
 
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
+            BankName:
+                this.entity.BankName?.trim() ?? '',
 
-            sampleField:
-                this.entity.sampleField,
+            Remarks:
+                this.entity.Remarks?.trim() ?? '',
 
-            status:
-                this.entity.status,
+            Status:
+                this.entity.Status,
 
-            remarks:
-                this.entity.remarks
+            ShortName:
+                this.entity.ShortName?.trim() ?? ''
         };
 
 
-        this.banksetupservice
-            .update(
+        this.bankSetupService
+            .create(
                 model
             )
-            .subscribe(
-            {
-                next:() =>
+            .subscribe
+            ({
+                next:
+                (): void =>
                 {
                     this.originalEntity =
                         JSON.stringify(
@@ -832,7 +946,7 @@ implements OnInit
                     this.toast.success(
                         'Success',
 
-                        'Bank Setup updated successfully.'
+                        'BankSetup created successfully.'
                     );
 
 
@@ -840,18 +954,113 @@ implements OnInit
                 },
 
 
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
                 {
                     console.error(
-                        'Update Bank Setup Error',
+                        'Create BankSetup Error',
+
                         error
                     );
 
 
                     const message =
-                        error?.error
+                        (error as any)?.error
                         ??
-                        'Failed to update {{ENTITY_NAME}.';
+                        'Failed to create BankSetup.';
+
+
+                    this.toast.error(
+                        'Validation',
+
+                        message
+                    );
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    private saveUpdate():
+        void
+    {
+        const model:
+            UpdateBankSetup =
+        {
+            BankSetupId:
+                this.entity.BankSetupId,
+
+            BankCode:
+                this.entity.BankCode?.trim() ?? '',
+
+            BankName:
+                this.entity.BankName?.trim() ?? '',
+
+            Remarks:
+                this.entity.Remarks?.trim() ?? '',
+
+            Status:
+                this.entity.Status,
+
+            ShortName:
+                this.entity.ShortName?.trim() ?? ''
+        };
+
+
+        this.bankSetupService
+            .update(
+                model
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.originalEntity =
+                        JSON.stringify(
+                            this.entity
+                        );
+
+
+                    this.hasChanges =
+                        false;
+
+
+                    this.toast.success(
+                        'Success',
+
+                        'BankSetup updated successfully.'
+                    );
+
+
+                    this.onBackToList();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Update BankSetup Error',
+
+                        error
+                    );
+
+
+                    const message =
+                        (error as any)?.error
+                        ??
+                        'Failed to update BankSetup.';
 
 
                     this.toast.error(
@@ -884,9 +1093,6 @@ implements OnInit
             this.loadEntity();
 
 
-            this.checkForChanges();
-
-
             return;
         }
 
@@ -915,16 +1121,18 @@ implements OnInit
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-            [
-                '..',
+            void this.router.navigate
+            (
+                [
+                    '/settings',
 
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
+                    'account-settings',
+
+                    'bank-setup',
+
+                    'list'
+                ]
+            );
 
 
             return;
@@ -940,16 +1148,18 @@ implements OnInit
 
             () =>
             {
-                void this.router.navigate(
-                [
-                    '..',
+                void this.router.navigate
+                (
+                    [
+                        '/settings',
 
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                        'account-settings',
+
+                        'bank-setup',
+
+                        'list'
+                    ]
+                );
             },
 
 

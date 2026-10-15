@@ -633,6 +633,10 @@ public class AppDbContext
     // AUTO-END : ProductMaster
 
 
+
+
+
+
     // AUTO-BEGIN : CashAccounts
 
     public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts>
@@ -643,6 +647,20 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : CashAccounts
+
+
+    // AUTO-BEGIN : BankSetup
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.BankSetup>
+    BankSetups
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BankSetup
+
+
 
     // AUTO-BEGIN : BankAccounts
 

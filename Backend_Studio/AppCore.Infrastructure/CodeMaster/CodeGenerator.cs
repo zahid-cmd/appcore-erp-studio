@@ -979,9 +979,23 @@ public static class CodeGenerator
             throw new ArgumentException("Invalid sequence number.");
         }
 
-        return $"CSH-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupsSequenceNo:D3}-{sequenceNo:D5}";
+        return $"CAS-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupsSequenceNo:D3}-{sequenceNo:D5}";
     }
     // AUTO-END : GenerateCashAccountsCode
+
+
+    // AUTO-BEGIN : GenerateBankSetupCode
+    public static string GenerateBankSetupCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"BAN-{sequenceNo:D3}";
+    }
+    // AUTO-END : GenerateBankSetupCode
 
 
     // AUTO-BEGIN : GenerateBankAccountsCode

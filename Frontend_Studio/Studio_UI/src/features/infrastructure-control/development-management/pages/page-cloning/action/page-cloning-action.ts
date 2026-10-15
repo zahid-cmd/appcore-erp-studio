@@ -22,7 +22,8 @@ import
     CloneSetup,
     FieldAction,
     ParentMode,
-    ControlType
+    ControlType,
+    FormSection
 }
 from '../../../services/page-cloning-workflow.service';
 import { PageCloningService } from '../../../services/page-cloning.service';
@@ -35,7 +36,7 @@ export interface ActionColumn
 {
     header: string;
     field: string;
-    type: 'serial' | 'source' | 'action' | 'text' | 'datatype' | 'number' | 'check' | 'control' | 'default' | 'remove';
+    type: 'serial' | 'source' | 'action' | 'text' | 'datatype' | 'number' | 'check' | 'control' | 'section' | 'default' | 'remove';
     width: string;
     align: 'left' | 'center' | 'right';
 }
@@ -88,12 +89,13 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
     readonly columns: ActionColumn[] =
     [
         { header:'#',            field:'serial',     type:'serial',   width:'44px',  align:'center' },
-        { header:'Source field', field:'sourceName', type:'source',   width:'210px', align:'left'   },
+        { header:'Source field', field:'sourceName', type:'source',   width:'190px', align:'left'   },
         { header:'Action',       field:'action',     type:'action',   width:'120px', align:'left'   },
         { header:'Target name',  field:'name',       type:'text',     width:'auto',  align:'left'   },
         { header:'Type',         field:'type',       type:'datatype', width:'120px', align:'left'   },
-        { header:'Max',          field:'maxLength',  type:'number',   width:'120px',  align:'left'   },
-        { header:'Control',      field:'control',    type:'control',  width:'200px', align:'left'   },
+        { header:'Max',          field:'maxLength',  type:'number',   width:'90px',  align:'left'   },
+        { header:'Control',      field:'control',    type:'control',  width:'190px', align:'left'   },
+        { header:'Section',      field:'section',    type:'section',  width:'130px', align:'left'   },
         { header:'Default',      field:'default',    type:'default',  width:'130px', align:'left'   },
         { header:'Required',     field:'required',   type:'check',    width:'80px',  align:'center' },
         { header:'Unique',       field:'unique',     type:'check',    width:'70px',  align:'center' },
@@ -103,6 +105,10 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
     readonly sourceActions: FieldAction[] = ['Keep', 'Modify', 'Exclude'];
     readonly addedActions: FieldAction[] = ['Add', 'Exclude'];
     readonly parentModes: ParentMode[] = ['Keep', 'Change', 'Exclude'];
+
+    // The form has four columns. Parent is reserved for the parent link field,
+    // so the user chooses between the other three.
+    readonly sectionItems: FormSection[] = ['Information', 'Status', 'Description'];
 
     readonly controlItems: { value: ControlType; label: string }[] =
     [
@@ -224,7 +230,7 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
         if (this.watchdog) { clearTimeout(this.watchdog); this.watchdog = undefined; }
     }
 
-    // Repairs a state object created before fields / setup / control existed
+    // Repairs a state object created before fields / setup / control / section existed
     private ensureState(): void
     {
         const s = this.state;
@@ -246,6 +252,9 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
             r.defaultValue = r.defaultValue ?? this.guessDefault(r.sourceName || r.name, r.control);
             r.srcControl = r.srcControl ?? r.control;
             r.srcDefault = r.srcDefault ?? r.defaultValue;
+
+            r.sectionManual = r.sectionManual ?? false;
+            r.section = r.section ?? this.guessSection(r.control, !!r.sourceName && this.isParentName(r.sourceName));
         }
     }
 
@@ -429,6 +438,18 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
             const sourceName = String(pick(f, 'sourceName') ?? '');
             const row = sourceName ? rows.find(r => r.sourceName === sourceName) : undefined;
 
+            const savedControl = (pick(f, 'control') ?? 'Textbox') as ControlType;
+            const savedSection = String(pick(f, 'section') ?? '');
+            const isParentRow = !!row && this.isParent(row);
+
+            // Parent link rows always sit in the Parent column. An older saved clone
+            // has no section yet, so it gets the automatic one.
+            const section: FormSection = isParentRow
+                ? 'Parent'
+                : (this.sectionItems.includes(savedSection as FormSection)
+                    ? (savedSection as FormSection)
+                    : this.guessSection(savedControl, false));
+
             const saved = {
                 action: (pick(f, 'action') ?? 'Keep') as FieldAction,
                 name: String(pick(f, 'name') ?? ''),
@@ -436,8 +457,10 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
                 maxLength: (pick(f, 'maxLength') ?? null) as number | null,
                 required: !!pick(f, 'required'),
                 unique: !!pick(f, 'unique'),
-                control: (pick(f, 'control') ?? 'Textbox') as ControlType,
-                defaultValue: String(pick(f, 'defaultValue') ?? '')
+                control: savedControl,
+                defaultValue: String(pick(f, 'defaultValue') ?? ''),
+                section,
+                sectionManual: !!pick(f, 'sectionManual')
             };
 
             if (row)
@@ -539,6 +562,28 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
         return 'Textbox';
     }
 
+    // The automatic form column of a field:
+    // parent link -> Parent, Yes/No / Status / Checkbox -> Status,
+    // Textarea -> Description, everything else -> Information
+    private guessSection(control: ControlType, parent: boolean): FormSection
+    {
+        if (parent) { return 'Parent'; }
+
+        switch (control)
+        {
+            case 'YesNo':
+            case 'Status':
+            case 'Checkbox':
+                return 'Status';
+
+            case 'Textarea':
+                return 'Description';
+
+            default:
+                return 'Information';
+        }
+    }
+
     private guessDefault(name: string, control: ControlType): string
     {
         if (control === 'Status') { return 'Active'; }
@@ -629,7 +674,8 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
         {
             const type = f.CsType ?? 'string';
             const max = f.MaxLength ?? null;
-            const control = this.guessControl(f.Name, type, max, this.isParentName(f.Name));
+            const parent = this.isParentName(f.Name);
+            const control = this.guessControl(f.Name, type, max, parent);
             const def = this.guessDefault(f.Name, control);
 
             const target = this.autoName(f.Name);
@@ -645,6 +691,8 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
                 unique: !!f.Unique,
                 control,
                 defaultValue: def,
+                section: this.guessSection(control, parent),
+                sectionManual: false,
                 srcType: type,
                 srcMaxLength: max,
                 srcRequired: !!f.Required,
@@ -807,6 +855,7 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
             row.type = row.srcType || 'long';
             row.control = 'SearchDropdown';
             row.defaultValue = '';
+            row.section = 'Parent';
         }
     }
 
@@ -821,6 +870,10 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
         row.unique = row.srcUnique;
         row.control = row.srcControl;
         row.defaultValue = row.srcDefault;
+
+        // back to the automatic form column
+        row.sectionManual = false;
+        row.section = this.guessSection(row.srcControl, this.isParent(row));
     }
 
     //===========================================================
@@ -973,6 +1026,13 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
             : [row.type, ...this.baseTypes];
     }
 
+    // The form columns a row can be placed in. The parent link field
+    // always stays in the Parent column.
+    sectionsFor(row: CloneFieldRow): FormSection[]
+    {
+        return this.isParent(row) ? ['Parent'] : this.sectionItems;
+    }
+
     isEditable(row: CloneFieldRow): boolean
     {
         return row.action === 'Modify' || row.action === 'Add';
@@ -1024,6 +1084,20 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
     {
         row.control = (event.target as HTMLSelectElement).value as ControlType;
         this.applyControlRules(row);
+
+        // The column follows the control until the user picks one by hand
+        if (!row.sectionManual && !this.isParent(row))
+        {
+            row.section = this.guessSection(row.control, false);
+        }
+
+        this.refresh();
+    }
+
+    onSection(row: CloneFieldRow, event: Event): void
+    {
+        row.section = (event.target as HTMLSelectElement).value as FormSection;
+        row.sectionManual = true;
         this.refresh();
     }
 
@@ -1061,6 +1135,8 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
                 unique: false,
                 control: 'Textbox',
                 defaultValue: '',
+                section: 'Information',
+                sectionManual: false,
                 srcType: '', srcMaxLength: null, srcRequired: false, srcUnique: false,
                 srcControl: 'Textbox', srcDefault: ''
             }

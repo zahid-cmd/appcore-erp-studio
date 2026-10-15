@@ -26,6 +26,10 @@ export type ControlType =
     'Textbox' | 'Textarea' | 'Number' | 'Date' |
     'YesNo' | 'Status' | 'Checkbox' | 'Dropdown' | 'SearchDropdown';
 
+// Which of the four form columns the field is shown in.
+// Parent is reserved for the parent link field.
+export type FormSection = 'Parent' | 'Information' | 'Status' | 'Description';
+
 export interface CloneFieldRow
 {
     sourceName: string;
@@ -37,6 +41,13 @@ export interface CloneFieldRow
     unique: boolean;
     control: ControlType;
     defaultValue: string;
+
+    // the form column of the field
+    section: FormSection;
+
+    // true once the user picked the column by hand
+    // (until then it follows the control: Yes/No -> Status, Textarea -> Description)
+    sectionManual: boolean;
 
     // original source values (used by Keep and Reset)
     srcType: string;

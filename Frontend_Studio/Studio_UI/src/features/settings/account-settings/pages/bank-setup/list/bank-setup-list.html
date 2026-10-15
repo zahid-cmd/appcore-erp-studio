@@ -1,3 +1,4 @@
+<!-- PAGE-CLONED : Wings -> Bank Setup -->
 <div class="app-list-page">
 
     <!-- =====================================================
@@ -6,11 +7,11 @@
 
     <app-page-header
 
-        title="Bank Setup"
+        title="BankSetup"
 
-        subtitle="Manage banksetups"
+        subtitle="Manage bankSetup"
 
-        icon="fas fa-list">
+        icon="fas fa-layer-group">
 
         <div pageHeaderCenter>
 
@@ -18,7 +19,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search banksetups..."
+                placeholder="Search bankSetup..."
 
                 (valueChange)="onSearch($event)">
 
@@ -77,29 +78,6 @@
 
         </app-control-tabs>
 
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
-
-            pageToolbarRight
-
-            placeholder="All Status"
-
-            [items]="statusItems"
-
-            labelField="text"
-
-            valueField="value"
-
-            [(value)]="selectedStatus"
-
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-dropdown>
-
     </app-page-toolbar>
 
 
@@ -123,7 +101,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedBankSetups"
+                [rows]="pagedBankSetup"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -153,7 +131,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredBankSetups.length"
+            [totalRecords]="filteredBankSetup.length"
 
             [currentPage]="currentPage"
 

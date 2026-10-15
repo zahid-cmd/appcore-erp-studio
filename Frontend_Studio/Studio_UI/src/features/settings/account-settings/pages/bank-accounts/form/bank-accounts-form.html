@@ -101,9 +101,7 @@
 
                     [(value)]="entity.AccountSubGroupsId"
 
-                    (valueChange)="onAccountSubGroupChange($event)"
-
-                    [disabled]="isViewMode"
+                    [disabled]="true"
 
                     [required]="true">
 
@@ -159,6 +157,42 @@
 
                 </app-textbox>
 
+
+                <!-- Display Name -->
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    placeholder="Enter display name"
+
+                    [(value)]="entity.DisplayName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textbox>
+
+
+                <!-- Bank -->
+
+                <app-search-dropdown
+
+                    label="Bank"
+
+                    [items]="bankItems"
+
+                    [(value)]="entity.Bank"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
             </app-form-section>
 
 
@@ -174,15 +208,53 @@
                 icon="fas fa-toggle-on">
 
 
-                <!-- Is Active -->
+                <!-- Status -->
 
                 <app-dropdown
 
-                    label="Is Active"
+                    label="Status"
 
-                    [items]="statusItems"
+                    [items]="yesNoItems"
 
-                    [(value)]="entity.IsActive"
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Collection Account -->
+
+                <app-dropdown
+
+                    label="Collection Account"
+
+                    [items]="yesNoItems"
+
+                    [(value)]="entity.CollectionAccount"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Payment Account -->
+
+                <app-dropdown
+
+                    label="Payment Account"
+
+                    [items]="yesNoItems"
+
+                    [(value)]="entity.PaymentAccount"
 
                     (valueChange)="onValueChange()"
 
@@ -222,6 +294,27 @@
                     (valueChange)="onValueChange()"
 
                     [disabled]="isViewMode">
+
+                </app-textarea>
+
+
+                <!-- Branch -->
+
+                <app-textarea
+
+                    label="Branch"
+
+                    placeholder="Enter branch"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Branch"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
 
                 </app-textarea>
 

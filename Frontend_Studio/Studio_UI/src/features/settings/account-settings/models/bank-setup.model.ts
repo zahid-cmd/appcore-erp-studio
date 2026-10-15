@@ -1,90 +1,60 @@
-/* ============================================================
-   Bank Setup
-============================================================ */
+// PAGE-CLONED : Wings -> Bank Setup
+//===============================================================
+// Bank
+//===============================================================
 
 export interface BankSetup
 {
-    id:
-        number;
+    BankSetupId: number;
 
-    code:
-        string;
+    BankCode: string;
 
-    name:
-        string;
+    BankName: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    Remarks: string;
 
-    sampleField:
-        string;
+    Status: boolean;
 
-    status:
-        string;
+    ShortName: string;
 
-    remarks:
-        string;
 }
 
 
-
-/* ============================================================
-   Create Bank Setup
-============================================================ */
+//===============================================================
+// Create Bank
+//===============================================================
 
 export interface CreateBankSetup
 {
-    name:
-        string;
+    BankCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    BankName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    Status: boolean;
 
-    remarks:
-        string;
+    ShortName: string;
+
 }
 
 
-
-/* ============================================================
-   Update Bank Setup
-============================================================ */
+//===============================================================
+// Update Bank
+//===============================================================
 
 export interface UpdateBankSetup
 {
-    id:
-        number;
+    BankSetupId: number;
 
-    name:
-        string;
+    BankCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    BankName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    Status: boolean;
 
-    remarks:
-        string;
-}
+    ShortName: string;
 
-
-
-/* ============================================================
-   Bank Setup Defaults
-============================================================ */
-
-export interface BankSetupDefaults
-{
-    code:
-        string;
 }

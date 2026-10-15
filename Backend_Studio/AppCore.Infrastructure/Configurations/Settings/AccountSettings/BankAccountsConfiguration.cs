@@ -89,12 +89,51 @@ public class BankAccountsConfiguration
                .HasMaxLength(1000);
 
         //===========================================================
-        // Is Active
+        // Status
         //===========================================================
 
-        builder.Property(x => x.IsActive)
+        builder.Property(x => x.Status)
                .IsRequired()
-               .HasDefaultValue(true);
+               .HasDefaultValue(false);
+
+        //===========================================================
+        // Branch
+        //===========================================================
+
+        builder.Property(x => x.Branch)
+               .IsRequired()
+               .HasMaxLength(1000);
+
+        //===========================================================
+        // Display Name
+        //===========================================================
+
+        builder.Property(x => x.DisplayName)
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Collection Account
+        //===========================================================
+
+        builder.Property(x => x.CollectionAccount)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        //===========================================================
+        // Payment Account
+        //===========================================================
+
+        builder.Property(x => x.PaymentAccount)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        //===========================================================
+        // Bank
+        //===========================================================
+
+        builder.Property(x => x.Bank)
+               .IsRequired()
+               .HasMaxLength(200);
 
         //===========================================================
         // Soft Delete

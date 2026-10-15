@@ -91,8 +91,23 @@ public class BankAccountsRepository : IBankAccountsRepository
                         Remarks =
                             x.Remarks,
 
-                        IsActive =
-                            x.IsActive,
+                        Status =
+                            x.Status,
+
+                        Branch =
+                            x.Branch,
+
+                        DisplayName =
+                            x.DisplayName,
+
+                        CollectionAccount =
+                            x.CollectionAccount,
+
+                        PaymentAccount =
+                            x.PaymentAccount,
+
+                        Bank =
+                            x.Bank,
 
                         IsDeleted =
                             x.IsDeleted,
@@ -345,8 +360,29 @@ public class BankAccountsRepository : IBankAccountsRepository
                     ??
                     string.Empty,
 
-                IsActive =
-                    dto.IsActive,
+                Status =
+                    dto.Status,
+
+                Branch =
+                    dto.Branch?.Trim()
+                    ??
+                    string.Empty,
+
+                DisplayName =
+                    dto.DisplayName?.Trim()
+                    ??
+                    string.Empty,
+
+                CollectionAccount =
+                    dto.CollectionAccount,
+
+                PaymentAccount =
+                    dto.PaymentAccount,
+
+                Bank =
+                    dto.Bank?.Trim()
+                    ??
+                    string.Empty,
 
                 IsDeleted =
                     false,
@@ -512,8 +548,29 @@ public class BankAccountsRepository : IBankAccountsRepository
             ??
             string.Empty;
 
-        entity.IsActive =
-            dto.IsActive;
+        entity.Status =
+            dto.Status;
+
+        entity.Branch =
+            dto.Branch?.Trim()
+            ??
+            string.Empty;
+
+        entity.DisplayName =
+            dto.DisplayName?.Trim()
+            ??
+            string.Empty;
+
+        entity.CollectionAccount =
+            dto.CollectionAccount;
+
+        entity.PaymentAccount =
+            dto.PaymentAccount;
+
+        entity.Bank =
+            dto.Bank?.Trim()
+            ??
+            string.Empty;
 
 
         entity.ModifiedBy =

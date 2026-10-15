@@ -124,8 +124,23 @@ export class BankAccountsService
                                 Remarks:
                                     bankAccount.Remarks ?? bankAccount.remarks ?? '',
 
-                                IsActive:
-                                    Boolean(bankAccount.IsActive ?? bankAccount.isActive ?? true)
+                                Status:
+                                    Boolean(bankAccount.Status ?? bankAccount.status ?? false),
+
+                                Branch:
+                                    bankAccount.Branch ?? bankAccount.branch ?? '',
+
+                                DisplayName:
+                                    bankAccount.DisplayName ?? bankAccount.displayName ?? '',
+
+                                CollectionAccount:
+                                    Boolean(bankAccount.CollectionAccount ?? bankAccount.collectionAccount ?? false),
+
+                                PaymentAccount:
+                                    Boolean(bankAccount.PaymentAccount ?? bankAccount.paymentAccount ?? false),
+
+                                Bank:
+                                    bankAccount.Bank ?? bankAccount.bank ?? ''
                             })
 
                         )

@@ -246,6 +246,19 @@
                                                         </select>
                                                     }
 
+                                                    @case ('section')
+                                                    {
+                                                        <select class="cell"
+                                                                title="The column of the form where this field is shown"
+                                                                [disabled]="row.action === 'Exclude' || isParent(row)"
+                                                                (change)="onSection(row, $event)">
+                                                            @for (s of sectionsFor(row); track s)
+                                                            {
+                                                                <option [value]="s" [selected]="s === row.section">{{ s }}</option>
+                                                            }
+                                                        </select>
+                                                    }
+
                                                     @case ('default')
                                                     {
                                                         @if (defaultOptions(row).length)

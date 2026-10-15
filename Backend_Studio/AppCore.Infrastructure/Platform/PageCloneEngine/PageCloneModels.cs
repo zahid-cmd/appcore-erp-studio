@@ -83,6 +83,11 @@ public class CloneField
     // Yes / No, Active / Inactive, Checked / Unchecked, or free text
     public string DefaultValue { get; set; } = string.Empty;
 
+    // The column of the generated form where the field is shown:
+    // Parent | Information | Status | Description.
+    // Empty means "not chosen": the generator then decides from the field type.
+    public string Section { get; set; } = string.Empty;
+
     [JsonIgnore]
     public bool IsExcluded => Action.Equals("Exclude", StringComparison.OrdinalIgnoreCase);
 

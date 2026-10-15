@@ -161,6 +161,12 @@ extends CashAccount
 {
     AccountSubGroupName:
         string;
+
+    CollectionAccountText:
+        string;
+
+    PaymentAccountText:
+        string;
 }
 
 
@@ -257,7 +263,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All CashAccounts'
+            label:'All Cash Accounts'
         }
     ];
 
@@ -400,7 +406,7 @@ implements OnInit
 
             field:'AccountSubGroupName',
 
-            width:'280px',
+            width:'200px',
 
             align:'left'
         },
@@ -410,7 +416,7 @@ implements OnInit
 
             field:'CashAccountCode',
 
-            width:'280px',
+            width:'220px',
 
             align:'center'
         },
@@ -420,25 +426,57 @@ implements OnInit
 
             field:'CashAccountName',
 
-            align:'left'
-        },
-
-        {
-            header:'Remarks',
-
-            field:'Remarks',
-
-            width:'350px',
+            width:'220px',
 
             align:'left'
         },
 
         {
-            header:'Is Active',
+            header:'Branch',
 
-            field:'IsActive',
+            field:'Branch',
 
             width:'200px',
+
+            align:'left'
+        },
+
+        {
+            header:'Display Name',
+
+            field:'DisplayName',
+
+            width:'260px',
+
+            align:'left'
+        },
+
+        {
+            header:'Collection',
+
+            field:'CollectionAccountText',
+
+            width:'120px',
+
+            align:'center'
+        },
+
+        {
+            header:'Payment',
+
+            field:'PaymentAccountText',
+
+            width:'120px',
+
+            align:'center'
+        },
+
+        {
+            header:'Status',
+
+            field:'Status',
+
+            width:'130px',
 
             type:'status',
 
@@ -452,7 +490,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'150px',
+            width:'120px',
 
             align:'center'
         }
@@ -467,6 +505,23 @@ implements OnInit
         void
     {
         this.loadItems();
+    }
+
+
+    //===========================================================
+    // Yes / No Text
+    //===========================================================
+
+    private toYesNo
+    (
+        value:
+            boolean
+    ):
+        string
+    {
+        return value
+            ? 'Yes'
+            : 'No';
     }
 
 
@@ -493,15 +548,25 @@ implements OnInit
             );
 
 
+        const collectionAccount:
+            boolean =
+            Boolean(item?.CollectionAccount ?? item?.collectionAccount ?? false);
+
+
+        const paymentAccount:
+            boolean =
+            Boolean(item?.PaymentAccount ?? item?.paymentAccount ?? false);
+
+
         return {
             CashAccountId:
                 Number(item?.CashAccountId ?? item?.cashAccountId ?? 0),
 
             AccountSubGroupsId:
-                Number(item?.AccountSubGroupsId ?? item?.accountSubGroupsId ?? 0),
+                accountSubGroupsId,
 
             AccountSubGroupName:
-                this.getAccountSubGroupName(Number(item?.AccountSubGroupsId ?? item?.accountSubGroupsId ?? 0)),
+                this.getAccountSubGroupName(accountSubGroupsId),
 
             CashAccountCode:
                 item?.CashAccountCode ?? item?.cashAccountCode ?? '',
@@ -512,8 +577,26 @@ implements OnInit
             Remarks:
                 item?.Remarks ?? item?.remarks ?? '',
 
-            IsActive:
-                Boolean(item?.IsActive ?? item?.isActive ?? true)
+            Status:
+                Boolean(item?.Status ?? item?.status ?? true),
+
+            Branch:
+                item?.Branch ?? item?.branch ?? '',
+
+            DisplayName:
+                item?.DisplayName ?? item?.displayName ?? '',
+
+            CollectionAccount:
+                collectionAccount,
+
+            PaymentAccount:
+                paymentAccount,
+
+            CollectionAccountText:
+                this.toYesNo(collectionAccount),
+
+            PaymentAccountText:
+                this.toYesNo(paymentAccount)
         };
     }
 
@@ -564,7 +647,7 @@ implements OnInit
 
 
         //=======================================================
-        // Load Companies
+        // Load Account Sub Groups
         //=======================================================
 
         this.accountSubGroupService
@@ -573,13 +656,13 @@ implements OnInit
             ({
                 next:
                 (
-                    companies:
+                    subGroups:
                         AccountSubGroup[]
                 ):
                     void =>
                 {
                     this.buildAccountSubGroupMap(
-                        companies
+                        subGroups
                     );
 
 
@@ -596,7 +679,7 @@ implements OnInit
                 {
                     console.error
                     (
-                        'Load Companies Error:',
+                        'Load Account Sub Groups Error:',
                         error
                     );
 
@@ -621,7 +704,7 @@ implements OnInit
 
     private buildAccountSubGroupMap
     (
-        companies:
+        subGroups:
             AccountSubGroup[]
     ):
         void
@@ -630,7 +713,7 @@ implements OnInit
             new Map<number, string>();
 
 
-        companies.forEach
+        subGroups.forEach
         (
             accountSubGroup =>
             {
@@ -641,20 +724,9 @@ implements OnInit
                     );
 
 
-                const accountSubGroupName:
-                    string =
-                    accountSubGroup.SubGroupName
-                    ??
-                    '';
-
-
-                //=======================================================
-                // Display AccountSubGroup Name Only
-                //=======================================================
-
                 const displayName:
                     string =
-                    accountSubGroupName
+                    accountSubGroup.SubGroupName
                     ||
                     String(accountSubGroupsId);
 
@@ -688,24 +760,10 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.log
-                    (
-                        'CashAccount API Response:',
-                        response
-                    );
-
-
                     this.cashAccounts =
                         this.normalizeCashAccounts(
                             response
                         );
-
-
-                    console.log
-                    (
-                        'Normalized CashAccounts:',
-                        this.cashAccounts
-                    );
 
 
                     this.applyFilters();
@@ -813,29 +871,35 @@ implements OnInit
                 ):
                     boolean =>
                 {
+                    if
+                    (
+                        !keyword
+                    )
+                    {
+                        return true;
+                    }
+
+
                     const values:
                         unknown[] =
                     [
                         item.AccountSubGroupName,
                         item.CashAccountCode,
                         item.CashAccountName,
-                        item.Remarks
+                        item.Branch,
+                        item.DisplayName,
+                        item.CollectionAccountText,
+                        item.PaymentAccountText,
+                        item.Status ? 'active' : 'inactive'
                     ];
 
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
-                            value =>
-                                String(value ?? '')
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        )
-                        ||
-                        (item.IsActive ? 'active' : 'inactive')
-                            .includes(keyword);
 
-                    return searchMatch;
+                    return values.some(
+                        value =>
+                            String(value ?? '')
+                                .toLowerCase()
+                                .includes(keyword)
+                    );
                 }
             );
 

@@ -162,6 +162,12 @@ extends BankAccount
 {
     AccountSubGroupName:
         string;
+
+    CollectionAccountText:
+        string;
+
+    PaymentAccountText:
+        string;
 }
 
 
@@ -258,7 +264,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All BankAccounts'
+            label:'All Bank Accounts'
         }
     ];
 
@@ -435,15 +441,57 @@ implements OnInit
         },
 
         {
-            header:'Is Active',
+            header:'Status',
 
-            field:'IsActive',
+            field:'Status',
 
             width:'200px',
 
-            type:'status',
+            align:'center'
+        },
+
+        {
+            header:'Branch',
+
+            field:'Branch',
+
+            align:'left'
+        },
+
+        {
+            header:'Display Name',
+
+            field:'DisplayName',
+
+            align:'left'
+        },
+
+        {
+            header:'Collection Account',
+
+            field:'CollectionAccountText',
+
+            width:'200px',
 
             align:'center'
+        },
+
+        {
+            header:'Payment Account',
+
+            field:'PaymentAccountText',
+
+            width:'200px',
+
+            align:'center'
+        },
+
+        {
+            header:'Bank',
+
+            field:'Bank',
+
+            align:'left'
         },
 
         {
@@ -472,6 +520,23 @@ implements OnInit
 
 
     //===========================================================
+    // Yes / No Text
+    //===========================================================
+
+    private toYesNo
+    (
+        value:
+            boolean
+    ):
+        string
+    {
+        return value
+            ? 'Yes'
+            : 'No';
+    }
+
+
+    //===========================================================
     // Normalize BankAccount
     //===========================================================
 
@@ -494,6 +559,16 @@ implements OnInit
             );
 
 
+        const collectionAccount:
+            boolean =
+            Boolean(item?.CollectionAccount ?? item?.collectionAccount ?? false);
+
+
+        const paymentAccount:
+            boolean =
+            Boolean(item?.PaymentAccount ?? item?.paymentAccount ?? false);
+
+
         return {
             BankAccountId:
                 Number(item?.BankAccountId ?? item?.bankAccountId ?? 0),
@@ -513,8 +588,29 @@ implements OnInit
             Remarks:
                 item?.Remarks ?? item?.remarks ?? '',
 
-            IsActive:
-                Boolean(item?.IsActive ?? item?.isActive ?? true)
+            Status:
+                Boolean(item?.Status ?? item?.status ?? false),
+
+            Branch:
+                item?.Branch ?? item?.branch ?? '',
+
+            DisplayName:
+                item?.DisplayName ?? item?.displayName ?? '',
+
+            CollectionAccount:
+                Boolean(item?.CollectionAccount ?? item?.collectionAccount ?? false),
+
+            PaymentAccount:
+                Boolean(item?.PaymentAccount ?? item?.paymentAccount ?? false),
+
+            Bank:
+                item?.Bank ?? item?.bank ?? '',
+
+            CollectionAccountText:
+                Boolean(item?.CollectionAccount ?? item?.collectionAccount ?? false) ? 'Yes' : 'No',
+
+            PaymentAccountText:
+                Boolean(item?.PaymentAccount ?? item?.paymentAccount ?? false) ? 'Yes' : 'No'
         };
     }
 
@@ -565,7 +661,7 @@ implements OnInit
 
 
         //=======================================================
-        // Load Companies
+        // Load Account Sub Groups
         //=======================================================
 
         this.accountSubGroupService
@@ -574,13 +670,13 @@ implements OnInit
             ({
                 next:
                 (
-                    companies:
+                    subGroups:
                         AccountSubGroup[]
                 ):
                     void =>
                 {
                     this.buildAccountSubGroupMap(
-                        companies
+                        subGroups
                     );
 
 
@@ -597,7 +693,7 @@ implements OnInit
                 {
                     console.error
                     (
-                        'Load Companies Error:',
+                        'Load Account Sub Groups Error:',
                         error
                     );
 
@@ -622,7 +718,7 @@ implements OnInit
 
     private buildAccountSubGroupMap
     (
-        companies:
+        subGroups:
             AccountSubGroup[]
     ):
         void
@@ -631,7 +727,7 @@ implements OnInit
             new Map<number, string>();
 
 
-        companies.forEach
+        subGroups.forEach
         (
             accountSubGroup =>
             {
@@ -642,20 +738,9 @@ implements OnInit
                     );
 
 
-                const accountSubGroupName:
-                    string =
-                    accountSubGroup.SubGroupName
-                    ??
-                    '';
-
-
-                //=======================================================
-                // Display AccountSubGroup Name Only
-                //=======================================================
-
                 const displayName:
                     string =
-                    accountSubGroupName
+                    accountSubGroup.SubGroupName
                     ||
                     String(accountSubGroupsId);
 
@@ -689,24 +774,10 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.log
-                    (
-                        'BankAccount API Response:',
-                        response
-                    );
-
-
                     this.bankAccounts =
                         this.normalizeBankAccounts(
                             response
                         );
-
-
-                    console.log
-                    (
-                        'Normalized BankAccounts:',
-                        this.bankAccounts
-                    );
 
 
                     this.applyFilters();
@@ -814,29 +885,35 @@ implements OnInit
                 ):
                     boolean =>
                 {
+                    if
+                    (
+                        !keyword
+                    )
+                    {
+                        return true;
+                    }
+
+
                     const values:
                         unknown[] =
                     [
                         item.AccountSubGroupName,
                         item.BankAccountCode,
                         item.BankAccountName,
-                        item.Remarks
+                        item.Branch,
+                        item.DisplayName,
+                        item.CollectionAccountText,
+                        item.PaymentAccountText,
+                        item.Status ? 'active' : 'inactive'
                     ];
 
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
-                            value =>
-                                String(value ?? '')
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        )
-                        ||
-                        (item.IsActive ? 'active' : 'inactive')
-                            .includes(keyword);
 
-                    return searchMatch;
+                    return values.some(
+                        value =>
+                            String(value ?? '')
+                                .toLowerCase()
+                                .includes(keyword)
+                    );
                 }
             );
 

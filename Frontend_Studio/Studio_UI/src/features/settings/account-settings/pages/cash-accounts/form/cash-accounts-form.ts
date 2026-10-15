@@ -102,12 +102,12 @@ import
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
-
 import
 {
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
 
 //===============================================================
 // Utilities
@@ -169,6 +169,23 @@ import
     AccountSubGroupService
 }
 from '../../../services/account-sub-group.service';
+
+import
+{
+    BranchesService
+}
+from '../../../../general-settings/services/branches.service';
+
+
+//===============================================================
+// Constants
+//===============================================================
+
+// Cash Accounts are reserved to this Account Sub Group only.
+// SUB-003-002-001 - Cash In Hand
+const RESERVED_SUB_GROUP_CODE:
+    string =
+    'SUB-003-002-001';
 
 
 //===============================================================
@@ -254,6 +271,10 @@ implements OnInit
 
     private readonly router =
         inject(Router);
+
+
+    private readonly branchesService =
+        inject(BranchesService);
 
 
     private readonly cashAccountsService =
@@ -371,13 +392,17 @@ implements OnInit
 
 
     //===========================================================
-    // AccountSubGroup Items
+    // AccountSubGroup Items (Reserved Only)
     //===========================================================
 
     accountSubGroupItems:
-        any[]
-    =
+        any[] =
     [];
+
+
+    private reservedSubGroupId:
+        number =
+        0;
 
 
 
@@ -386,21 +411,42 @@ implements OnInit
     //===========================================================
 
     statusItems:
-        any[]
-    =
+        any[] =
     [
-        {
-            label:'Active',
+        { label:'Active', value:true },
 
-            value:true
-        },
-
-        {
-            label:'Inactive',
-
-            value:false
-        }
+        { label:'Inactive', value:false }
     ];
+
+
+
+    //===========================================================
+    // Yes / No Items
+    //===========================================================
+
+    yesNoItems:
+        any[] =
+    [
+        { label:'Yes', value:true },
+
+        { label:'No', value:false }
+    ];
+
+
+
+    //===========================================================
+    // Branch Items
+    //===========================================================
+
+    branchItems:
+        any[] =
+    [];
+
+
+    // BranchName -> Branch Short Name
+    private branchShortNames:
+        Map<string, string> =
+        new Map<string, string>();
 
 
 
@@ -409,21 +455,8 @@ implements OnInit
     //===========================================================
 
     entity:
-        CashAccount
-    =
-    {
-        CashAccountId:0,
-
-        AccountSubGroupsId:0,
-
-        CashAccountCode:'',
-
-        CashAccountName:'',
-
-        Remarks:'',
-
-        IsActive:true
-    };
+        CashAccount =
+        this.createEmptyEntity();
 
 
 
@@ -441,7 +474,7 @@ implements OnInit
         false;
 
 
-    isLoadingCompanies:
+    isLoadingSubGroups:
         boolean =
         false;
 
@@ -454,7 +487,9 @@ implements OnInit
     ngOnInit():
         void
     {
-        this.loadCompanies();
+        this.loadBranchItems();
+
+        this.loadAccountSubGroups();
 
         this.initializeMode();
     }
@@ -462,13 +497,146 @@ implements OnInit
 
 
     //===========================================================
-    // Load Companies
+    // Empty Entity
     //===========================================================
 
-    private loadCompanies():
+    private createEmptyEntity():
+        CashAccount
+    {
+        return {
+            CashAccountId:0,
+
+            AccountSubGroupsId:0,
+
+            CashAccountCode:'',
+
+            CashAccountName:'',
+
+            Remarks:'',
+
+            Status:true,
+
+            Branch:'',
+
+            DisplayName:'',
+
+            CollectionAccount:false,
+
+            PaymentAccount:false
+        };
+    }
+
+
+
+    //===========================================================
+    // Load Branch Items
+    //===========================================================
+
+    private loadBranchItems():
         void
     {
-        this.isLoadingCompanies =
+        this.branchesService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any[]
+                ):
+                    void =>
+                {
+                    const activeBranches =
+                        response
+                            .filter(
+                                item =>
+                                    item.IsActive
+                            );
+
+
+                    this.branchShortNames =
+                        new Map<string, string>(
+                            activeBranches.map(
+                                item =>
+                                [
+                                    item.BranchName,
+
+                                    (
+                                        item.BranchShortName
+                                        ??
+                                        item.branchShortName
+                                        ??
+                                        item.ShortName
+                                        ??
+                                        item.shortName
+                                        ??
+                                        ''
+                                    ).toString().trim()
+                                ]
+                            )
+                        );
+
+
+                    this.branchItems =
+                        activeBranches.map(
+                            item =>
+                            ({
+                                label:
+                                    `${item.BranchCode} - ${item.BranchName}`,
+
+                                value:
+                                    item.BranchName
+                            })
+                        );
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Branch Items Error:',
+
+                        error
+                    );
+
+
+                    this.branchItems =
+                        [];
+
+
+                    this.branchShortNames.clear();
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to load branches.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Load Account Sub Groups (Reserved : Cash In Hand)
+    //===========================================================
+
+    private loadAccountSubGroups():
+        void
+    {
+        this.isLoadingSubGroups =
             true;
 
 
@@ -478,30 +646,75 @@ implements OnInit
             ({
                 next:
                 (
-                    companies:
+                    subGroups:
                         AccountSubGroup[]
                 ): void =>
                 {
-                    this.accountSubGroupItems =
-                        companies.map
-                        (
-                            accountSubGroup =>
-                            ({
-                                label:
-                                    accountSubGroup.SubGroupCode
-                                    +
-                                    ' - '
-                                    +
-                                    accountSubGroup.SubGroupName,
-
-                                value:
-                                    accountSubGroup.AccountSubGroupId
-                            })
+                    const reserved =
+                        subGroups.find(
+                            subGroup =>
+                                (subGroup.SubGroupCode ?? '')
+                                    .trim()
+                                    .toUpperCase()
+                                ===
+                                RESERVED_SUB_GROUP_CODE
                         );
 
 
-                    this.isLoadingCompanies =
+                    if
+                    (
+                        !reserved
+                    )
+                    {
+                        this.reservedSubGroupId =
+                            0;
+
+
+                        this.accountSubGroupItems =
+                            [];
+
+
+                        this.isLoadingSubGroups =
+                            false;
+
+
+                        this.toast.error(
+                            'Error',
+
+                            `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} (Cash In Hand) was not found.`
+                        );
+
+
+                        this.cdr.detectChanges();
+
+
+                        return;
+                    }
+
+
+                    this.reservedSubGroupId =
+                        Number(
+                            reserved.AccountSubGroupId
+                        );
+
+
+                    this.accountSubGroupItems =
+                    [
+                        {
+                            label:
+                                `${reserved.SubGroupCode} - ${reserved.SubGroupName}`,
+
+                            value:
+                                this.reservedSubGroupId
+                        }
+                    ];
+
+
+                    this.isLoadingSubGroups =
                         false;
+
+
+                    this.applyReservedSubGroup();
 
 
                     this.cdr.detectChanges();
@@ -525,20 +738,55 @@ implements OnInit
                         [];
 
 
-                    this.isLoadingCompanies =
+                    this.reservedSubGroupId =
+                        0;
+
+
+                    this.isLoadingSubGroups =
                         false;
 
 
                     this.toast.error(
                         'Error',
 
-                        'Failed to load companies.'
+                        'Failed to load account sub groups.'
                     );
 
 
                     this.cdr.detectChanges();
                 }
             });
+    }
+
+
+
+    //===========================================================
+    // Apply Reserved Sub Group (Add Mode Only)
+    //===========================================================
+
+    private applyReservedSubGroup():
+        void
+    {
+        if
+        (
+            !this.isAddMode
+            ||
+            this.reservedSubGroupId <= 0
+        )
+        {
+            return;
+        }
+
+
+        this.entity.AccountSubGroupsId =
+            this.reservedSubGroupId;
+
+
+        // Auto-assigned values are part of the initial state,
+        // so they should not count as user changes.
+        this.generateCashAccountCode(
+            true
+        );
     }
 
 
@@ -554,10 +802,6 @@ implements OnInit
             this.router.url.toLowerCase();
 
 
-        //=======================================================
-        // View Mode
-        //=======================================================
-
         if
         (
             url.includes('/view/')
@@ -566,11 +810,6 @@ implements OnInit
             this.mode =
                 'view';
         }
-
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
 
         else if
         (
@@ -581,11 +820,6 @@ implements OnInit
                 'edit';
         }
 
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
         else
         {
             this.mode =
@@ -593,17 +827,9 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Resolve Entity Id
-        //=======================================================
-
         const id =
             this.resolveEntityId();
 
-
-        //=======================================================
-        // Existing Entity
-        //=======================================================
 
         if
         (
@@ -620,10 +846,6 @@ implements OnInit
             return;
         }
 
-
-        //=======================================================
-        // New Entity
-        //=======================================================
 
         this.initializeEntity();
     }
@@ -680,22 +902,13 @@ implements OnInit
         void
     {
         this.entity =
-        {
-        CashAccountId:0,
-
-        AccountSubGroupsId:0,
-
-        CashAccountCode:'',
-
-        CashAccountName:'',
-
-        Remarks:'',
-
-        IsActive:true
-    };
+            this.createEmptyEntity();
 
 
         this.setInitialFormState();
+
+
+        this.applyReservedSubGroup();
     }
 
 
@@ -704,13 +917,14 @@ implements OnInit
     // Generate CashAccount Code
     //===========================================================
 
-    private generateCashAccountCode():
+    private generateCashAccountCode
+    (
+        resetBaseline:
+            boolean =
+            false
+    ):
         void
     {
-        //=======================================================
-        // Existing Record
-        //=======================================================
-
         if
         (
             this.entityId > 0
@@ -719,12 +933,6 @@ implements OnInit
             return;
         }
 
-
-        //=======================================================
-        // AccountSubGroup Required
-        //
-        // CashAccount Code is accountSubGroup dependent.
-        //=======================================================
 
         if
         (
@@ -747,13 +955,6 @@ implements OnInit
         }
 
 
-        //=======================================================
-        // Backend Generation
-        //
-        // AccountSubGroupsId is required because CashAccount Code is
-        // generated independently for each AccountSubGroup.
-        //=======================================================
-
         this.cashAccountsService
             .getNextCode(
                 this.entity.AccountSubGroupsId
@@ -768,6 +969,17 @@ implements OnInit
                 {
                     this.entity.CashAccountCode =
                         code;
+
+
+                    if
+                    (
+                        resetBaseline
+                    )
+                    {
+                        this.setInitialFormState();
+
+                        return;
+                    }
 
 
                     this.checkForChanges();
@@ -852,13 +1064,6 @@ implements OnInit
                         any
                 ): void =>
                 {
-                    console.log(
-                        'CashAccount API Response:',
-
-                        response
-                    );
-
-
                     this.entity =
                     {
                         CashAccountId:
@@ -876,29 +1081,24 @@ implements OnInit
                         Remarks:
                             response?.Remarks ?? response?.remarks ?? '',
 
-                        IsActive:
-                            Boolean(response?.IsActive ?? response?.isActive ?? true)
+                        Status:
+                            Boolean(response?.Status ?? response?.status ?? true),
+
+                        Branch:
+                            response?.Branch ?? response?.branch ?? '',
+
+                        DisplayName:
+                            response?.DisplayName ?? response?.displayName ?? '',
+
+                        CollectionAccount:
+                            Boolean(response?.CollectionAccount ?? response?.collectionAccount ?? false),
+
+                        PaymentAccount:
+                            Boolean(response?.PaymentAccount ?? response?.paymentAccount ?? false)
                     };
 
 
-                    console.log(
-                        'CashAccount Form Entity:',
-
-                        this.entity
-                    );
-
-
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.cdr.detectChanges();
+                    this.setInitialFormState();
                 },
 
 
@@ -930,14 +1130,55 @@ implements OnInit
 
 
     //===========================================================
-    // AccountSubGroup Changed
+    // Display Name
+    //
+    // Format : <Cash Account Name> - <Branch Short Name>
     //===========================================================
 
-    onAccountSubGroupChange
-    (
-        accountSubGroupsId:
-            number
-    ):
+    private buildDisplayName():
+        string
+    {
+        const cashAccountName =
+            (this.entity.CashAccountName ?? '').trim();
+
+
+        const branchShortName =
+            this.branchShortNames.get(
+                this.entity.Branch ?? ''
+            )
+            ??
+            '';
+
+
+        if
+        (
+            cashAccountName
+            &&
+            branchShortName
+        )
+        {
+            return `${cashAccountName} - ${branchShortName}`;
+        }
+
+
+        return cashAccountName;
+    }
+
+
+    private updateDisplayName():
+        void
+    {
+        this.entity.DisplayName =
+            this.buildDisplayName();
+    }
+
+
+
+    //===========================================================
+    // Branch Changed
+    //===========================================================
+
+    onBranchChange():
         void
     {
         if
@@ -949,37 +1190,34 @@ implements OnInit
         }
 
 
-        this.entity.AccountSubGroupsId =
-            Number(
-                accountSubGroupsId
-            );
+        this.updateDisplayName();
 
 
-        //=======================================================
-        // AccountSubGroup Change Invalidates Current CashAccount Code
-        //=======================================================
-
-        this.entity.CashAccountCode =
-            '';
+        this.onValueChange();
+    }
 
 
-        this.checkForChanges();
 
+    //===========================================================
+    // Cash Account Name Changed
+    //===========================================================
 
-        this.cdr.detectChanges();
-
-
-        //=======================================================
-        // Backend CashAccount Code Generation
-        //=======================================================
-
+    onCashAccountNameChange():
+        void
+    {
         if
         (
-            this.entity.AccountSubGroupsId > 0
+            this.isViewMode
         )
         {
-            this.generateCashAccountCode();
+            return;
         }
+
+
+        this.updateDisplayName();
+
+
+        this.onValueChange();
     }
 
 
@@ -1025,10 +1263,6 @@ implements OnInit
     onSave():
         void
     {
-        //=======================================================
-        // View Mode
-        //=======================================================
-
         if
         (
             this.isViewMode
@@ -1044,15 +1278,40 @@ implements OnInit
 
         if
         (
-            !this.entity.AccountSubGroupsId
-            ||
-            this.entity.AccountSubGroupsId <= 0
+            this.reservedSubGroupId <= 0
         )
         {
             this.toast.error(
                 'Validation',
 
-                'Account Sub Groups Id is required.'
+                `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} (Cash In Hand) is not available.`
+            );
+
+            return;
+        }
+
+
+        if
+        (
+            this.isAddMode
+            &&
+            this.entity.AccountSubGroupsId !== this.reservedSubGroupId
+        )
+        {
+            this.entity.AccountSubGroupsId =
+                this.reservedSubGroupId;
+        }
+
+
+        if
+        (
+            !this.entity.Branch?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Branch is required.'
             );
 
             return;
@@ -1089,10 +1348,9 @@ implements OnInit
         }
 
 
+        // Always save the derived display name
+        this.updateDisplayName();
 
-        //=======================================================
-        // Add
-        //=======================================================
 
         if
         (
@@ -1104,10 +1362,6 @@ implements OnInit
             return;
         }
 
-
-        //=======================================================
-        // Update
-        //=======================================================
 
         this.saveUpdate();
     }
@@ -1124,7 +1378,6 @@ implements OnInit
         const model:
             CreateCashAccount =
         {
-
             AccountSubGroupsId:
                 this.entity.AccountSubGroupsId,
 
@@ -1137,8 +1390,20 @@ implements OnInit
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
 
-            IsActive:
-                this.entity.IsActive
+            Status:
+                this.entity.Status,
+
+            Branch:
+                this.entity.Branch?.trim() ?? '',
+
+            DisplayName:
+                this.entity.DisplayName?.trim() ?? '',
+
+            CollectionAccount:
+                this.entity.CollectionAccount,
+
+            PaymentAccount:
+                this.entity.PaymentAccount
         };
 
 
@@ -1151,14 +1416,7 @@ implements OnInit
                 next:
                 (): void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
+                    this.setInitialFormState();
 
 
                     this.toast.success(
@@ -1227,8 +1485,20 @@ implements OnInit
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
 
-            IsActive:
-                this.entity.IsActive
+            Status:
+                this.entity.Status,
+
+            Branch:
+                this.entity.Branch?.trim() ?? '',
+
+            DisplayName:
+                this.entity.DisplayName?.trim() ?? '',
+
+            CollectionAccount:
+                this.entity.CollectionAccount,
+
+            PaymentAccount:
+                this.entity.PaymentAccount
         };
 
 
@@ -1241,14 +1511,7 @@ implements OnInit
                 next:
                 (): void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
+                    this.setInitialFormState();
 
 
                     this.toast.success(
@@ -1299,10 +1562,6 @@ implements OnInit
     onClear():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
         if
         (
             this.mode === 'edit'
@@ -1310,19 +1569,12 @@ implements OnInit
         {
             this.loadEntity();
 
-
             return;
         }
 
 
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
+        // Re-applies the reserved sub group and a fresh code
         this.initializeEntity();
-
-
-        this.cdr.detectChanges();
     }
 
 
@@ -1334,24 +1586,26 @@ implements OnInit
     onBackToList():
         void
     {
+        const listRoute =
+        [
+            '/settings',
+
+            'account-settings',
+
+            'cash-accounts',
+
+            'list'
+        ];
+
+
         if
         (
             !this.hasChanges
         )
         {
-            void this.router.navigate
-            (
-                [
-                    '/settings',
-
-                    'account-settings',
-
-                    'cash-accounts',
-
-                    'list'
-                ]
+            void this.router.navigate(
+                listRoute
             );
-
 
             return;
         }
@@ -1363,23 +1617,12 @@ implements OnInit
 
             'Any unsaved changes will be lost. Do you want to leave this page?',
 
-
             () =>
             {
-                void this.router.navigate
-                (
-                    [
-                        '/settings',
-
-                        'account-settings',
-
-                        'cash-accounts',
-
-                        'list'
-                    ]
+                void this.router.navigate(
+                    listRoute
                 );
             },
-
 
             'Leave',
 
@@ -1406,7 +1649,7 @@ implements OnInit
 
 
     //===========================================================
-    // View Mode
+    // Mode Helpers
     //===========================================================
 
     get isViewMode():
@@ -1416,22 +1659,12 @@ implements OnInit
     }
 
 
-
-    //===========================================================
-    // Edit Mode
-    //===========================================================
-
     get isEditMode():
         boolean
     {
         return this.mode === 'edit';
     }
 
-
-
-    //===========================================================
-    // Add Mode
-    //===========================================================
 
     get isAddMode():
         boolean
@@ -1474,9 +1707,6 @@ implements OnInit
 
 
         this.initializeEntity();
-
-
-        this.cdr.detectChanges();
     }
 
 

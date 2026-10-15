@@ -1,3 +1,4 @@
+// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Imports
 //===============================================================
@@ -10,6 +11,12 @@ import
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -34,7 +41,6 @@ import
     BankSetup
 }
 from '../../../models/bank-setup.model';
-
 
 //===============================================================
 // Shared Components
@@ -71,12 +77,6 @@ import
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
@@ -129,7 +129,7 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,6 +138,15 @@ import
 }
 from '../../../services/bank-setup.service';
 
+//===============================================================
+// List Item
+//===============================================================
+
+interface BankSetupListItem
+extends BankSetup
+{
+}
+
 
 //===============================================================
 // Component
@@ -145,7 +154,7 @@ from '../../../services/bank-setup.service';
 
 @Component(
 {
-    selector:'bankSetup-list',
+    selector:'bank-setup-list',
 
     standalone:true,
 
@@ -160,8 +169,6 @@ from '../../../services/bank-setup.service';
         ControlTabsComponent,
 
         SearchBoxComponent,
-
-        DropdownComponent,
 
         CommandCenterComponent,
 
@@ -185,7 +192,7 @@ from '../../../services/bank-setup.service';
 
 
 //===============================================================
-// Bank Setup List Component
+// BankSetup List
 //===============================================================
 
 export class BankSetupList
@@ -196,7 +203,7 @@ implements OnInit
     // Dependency Injection
     //===========================================================
 
-    private readonly banksetupservice =
+    private readonly bankSetupService =
         inject(BankSetupService);
 
 
@@ -220,7 +227,6 @@ implements OnInit
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
     // Page Tabs
     //===========================================================
@@ -231,7 +237,7 @@ implements OnInit
         {
             id:'all',
 
-            label:'All BankSetups'
+            label:'All BankSetup'
         }
     ];
 
@@ -241,61 +247,26 @@ implements OnInit
         'all';
 
 
-
     //===========================================================
-    // Status Filter
-    //===========================================================
-
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
-    banksetups:
-        BankSetup[] =
+    bankSetup:
+        BankSetupListItem[] =
     [];
 
 
-    filteredBankSetups:
-        BankSetup[] =
+    filteredBankSetup:
+        BankSetupListItem[] =
     [];
 
 
-    pagedBankSetups:
-        BankSetup[] =
+    pagedBankSetup:
+        BankSetupListItem[] =
     [];
 
 
-
-    //===========================================================
+//===========================================================
     // Search & Loading
     //===========================================================
 
@@ -314,7 +285,6 @@ implements OnInit
         false;
 
 
-
     //===========================================================
     // Pagination
     //===========================================================
@@ -329,7 +299,6 @@ implements OnInit
         10;
 
 
-
     //===========================================================
     // History
     //===========================================================
@@ -341,13 +310,12 @@ implements OnInit
 
     historyTitle:
         string =
-        'Bank Setup History';
+        'BankSetup History';
 
 
     historyItems:
         any[] =
     [];
-
 
 
     //===========================================================
@@ -379,7 +347,6 @@ implements OnInit
     };
 
 
-
     //===========================================================
     // Table Columns
     //===========================================================
@@ -394,37 +361,45 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'80px',
 
             align:'center'
         },
 
         {
-            header:'Code',
+            header:'Bank Code',
 
-            field:'code',
+            field:'BankCode',
 
-            width:'180px',
+            width:'280px',
 
             align:'center'
         },
 
         {
-            header:'Name',
+            header:'Bank Name',
 
-            field:'name',
+            field:'BankName',
 
             align:'left'
         },
 
+
+        {
+            header:'Short Name',
+
+            field:'ShortName',
+
+            align:'left'
+        },
         {
             header:'Status',
 
-            field:'status',
+            field:'Status',
+
+            width:'200px',
 
             type:'status',
-
-            width:'120px',
 
             align:'center'
         },
@@ -436,16 +411,15 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'150px',
 
             align:'center'
         }
     ];
 
 
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -455,9 +429,71 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Normalize BankSetup
+    //===========================================================
+
+    private normalizeBankSetup
+    (
+        item:
+            any
+    ):
+        BankSetupListItem
+    {
+        return {
+            BankSetupId:
+                Number(item?.BankSetupId ?? item?.bankSetupId ?? 0),
+
+            BankCode:
+                item?.BankCode ?? item?.bankCode ?? '',
+
+            BankName:
+                item?.BankName ?? item?.bankName ?? '',
+
+            Remarks:
+                item?.Remarks ?? item?.remarks ?? '',
+
+            Status:
+                Boolean(item?.Status ?? item?.status ?? true),
+
+            ShortName:
+                item?.ShortName ?? item?.shortName ?? ''
+        };
+    }
+
 
     //===========================================================
-    // Load BankSetups
+    // Normalize BankSetup
+    //===========================================================
+
+    private normalizeBankSetupList
+    (
+        response:
+            any
+    ):
+        BankSetupListItem[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+
+        return response.map
+        (
+            item =>
+                this.normalizeBankSetup(
+                    item
+                )
+        );
+    }
+
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -471,7 +507,19 @@ implements OnInit
             false;
 
 
-        this.banksetupservice
+
+        this.loadBankSetup();
+    }
+
+
+//===========================================================
+    // Load BankSetup
+    //===========================================================
+
+    private loadBankSetup():
+        void
+    {
+        this.bankSetupService
             .getAll()
             .subscribe
             ({
@@ -479,12 +527,27 @@ implements OnInit
                 (
                     response:
                         BankSetup[]
-                ): void =>
+                ):
+                    void =>
                 {
-                    this.banksetups =
-                    [
-                        ...response
-                    ];
+                    console.log
+                    (
+                        'BankSetup API Response:',
+                        response
+                    );
+
+
+                    this.bankSetup =
+                        this.normalizeBankSetupList(
+                            response
+                        );
+
+
+                    console.log
+                    (
+                        'Normalized BankSetup:',
+                        this.bankSetup
+                    );
 
 
                     this.applyFilters();
@@ -506,26 +569,26 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load BankSetups Error',
-
+                        'Load BankSetup Error:',
                         error
                     );
 
 
-                    this.banksetups =
-                    [];
+                    this.bankSetup =
+                        [];
 
 
-                    this.filteredBankSetups =
-                    [];
+                    this.filteredBankSetup =
+                        [];
 
 
-                    this.pagedBankSetups =
-                    [];
+                    this.pagedBankSetup =
+                        [];
 
 
                     this.loading =
@@ -540,7 +603,7 @@ implements OnInit
                     (
                         'Load Failed',
 
-                        'Unable to load banksetups.'
+                        'Unable to load bankSetup.'
                     );
 
 
@@ -550,82 +613,54 @@ implements OnInit
     }
 
 
-
-    //===========================================================
-    // Status Filter Changed
-    //===========================================================
-
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
-
-    //===========================================================
+//===========================================================
     // Apply Filters
     //===========================================================
 
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
 
-        this.filteredBankSetups =
-            this.banksetups
-                .filter
+        this.filteredBankSetup =
+            this.bankSetup.filter
+            (
                 (
-                    (
-                        x:
-                            BankSetup
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+                    item:
+                        BankSetupListItem
+                ):
+                    boolean =>
+                {
+                    const values:
+                        unknown[] =
+                    [
+                        item.BankCode,
+                        item.BankName,
+                        item.Remarks,
+                        item.ShortName
+                    ];
 
+                    const searchMatch =
+                        !keyword
+                        ||
+                        values.some(
+                            value =>
+                                String(value ?? '')
+                                    .toLowerCase()
+                                    .includes(keyword)
+                        )
+                        ||
+                        (item.Status ? 'active' : 'inactive')
+                            .includes(keyword);
 
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
+                    return searchMatch;
+                }
+            );
 
 
         this.currentPage =
@@ -634,7 +669,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -649,12 +683,13 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
+            value
+            ??
+            '';
 
 
         this.applyFilters();
     }
-
 
 
     //===========================================================
@@ -674,34 +709,34 @@ implements OnInit
     ):
         void
     {
-        this.filteredBankSetups =
+        this.filteredBankSetup =
         [
-            ...this.filteredBankSetups
+            ...this.filteredBankSetup
         ];
 
 
-        this.filteredBankSetups.sort
+        this.filteredBankSetup.sort
         (
             (
                 a:
-                    BankSetup,
+                    BankSetupListItem,
 
                 b:
-                    BankSetup
+                    BankSetupListItem
             ):
                 number =>
             {
                 const valueA:
                     any =
                     a[
-                        event.field as keyof BankSetup
+                        event.field as keyof BankSetupListItem
                     ];
 
 
                 const valueB:
                     any =
                     b[
-                        event.field as keyof BankSetup
+                        event.field as keyof BankSetupListItem
                     ];
 
 
@@ -788,7 +823,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Refresh
     //===========================================================
@@ -800,13 +834,12 @@ implements OnInit
             '';
 
 
-        this.selectedStatus =
-            null;
+        this.currentPage =
+            1;
 
 
         this.loadItems();
     }
-
 
 
     //===========================================================
@@ -825,18 +858,16 @@ implements OnInit
             this.pageSize;
 
 
-        this.pagedBankSetups =
+        this.pagedBankSetup =
         [
-            ...this.filteredBankSetups
-                .slice
-                (
-                    start,
+            ...this.filteredBankSetup.slice
+            (
+                start,
 
-                    start + this.pageSize
-                )
+                start + this.pageSize
+            )
         ];
     }
-
 
 
     //===========================================================
@@ -856,7 +887,6 @@ implements OnInit
 
         this.updatePagination();
     }
-
 
 
     //===========================================================
@@ -882,7 +912,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Add
     //===========================================================
@@ -904,7 +933,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // View
     //===========================================================
@@ -912,7 +940,7 @@ implements OnInit
     view
     (
         item:
-            BankSetup
+            BankSetupListItem
     ):
         void
     {
@@ -921,7 +949,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.BankSetupId
             ],
 
             {
@@ -930,7 +958,6 @@ implements OnInit
             }
         );
     }
-
 
 
     //===========================================================
@@ -940,7 +967,7 @@ implements OnInit
     edit
     (
         item:
-            BankSetup
+            BankSetupListItem
     ):
         void
     {
@@ -949,7 +976,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.BankSetupId
             ],
 
             {
@@ -960,7 +987,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Delete
     //===========================================================
@@ -968,22 +994,22 @@ implements OnInit
     delete
     (
         item:
-            BankSetup
+            BankSetupListItem
     ):
         void
     {
         this.confirmDialog.open
         (
-            'Delete Bank Setup',
+            'Delete BankSetup',
 
-            `Are you sure you want to delete "${item.name}" ?`,
+            `Are you sure you want to delete "${item.BankName}" ?`,
 
             (): void =>
             {
-                this.banksetupservice
+                this.bankSetupService
                     .delete
                     (
-                        item.id
+                        item.BankSetupId
                     )
                     .subscribe
                     ({
@@ -994,7 +1020,7 @@ implements OnInit
                             (
                                 'Delete Successful',
 
-                                `${item.name} deleted successfully.`
+                                `${item.BankName} deleted successfully.`
                             );
 
 
@@ -1006,15 +1032,74 @@ implements OnInit
                         (
                             error:
                                 unknown
-                        ): void =>
+                        ):
+                            void =>
                         {
                             console.error
                             (
-                                'Delete Bank Setup Error',
-
+                                'Delete BankSetup Error:',
                                 error
                             );
 
+
+                            //===================================================
+                            // Deletion Blocked
+                            //===================================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'BankSetup cannot be deleted because it is already configured.';
+
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+
+                                    message
+                                );
+
+
+                                return;
+                            }
+
+
+                            //===================================================
+                            // Delete Failed
+                            //===================================================
 
                             this.toast.error
                             (
@@ -1029,7 +1114,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
@@ -1039,7 +1123,7 @@ implements OnInit
     {
         this.confirmDialog.open
         (
-            'Restore Bank Setup',
+            'Restore BankSetup',
 
             'Are you sure you want to restore the most recently deleted bankSetup?',
 
@@ -1057,7 +1141,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Restore Item
     //===========================================================
@@ -1065,7 +1148,7 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.banksetupservice
+        this.bankSetupService
             .restore()
             .subscribe
             ({
@@ -1088,14 +1171,34 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Restore Bank Setup Error',
+                        'Restore BankSetup Error',
 
                         error
                     );
+
+
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.toast.info
+                        (
+                            'No Data to Restore',
+
+                            'There is no deleted bankSetup record to restore.'
+                        );
+
+
+                        return;
+                    }
 
 
                     this.toast.error
@@ -1109,7 +1212,6 @@ implements OnInit
     }
 
 
-
     //===========================================================
     // Open History
     //===========================================================
@@ -1117,7 +1219,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.banksetupservice
+        this.bankSetupService
             .getHistory()
             .subscribe
             ({
@@ -1125,7 +1227,8 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
                         response.map
@@ -1133,15 +1236,21 @@ implements OnInit
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
 
                                 description:
-                                    history.activityDescription,
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
 
                                 user:
                                     history.performedByName
+                                    ??
+                                    history.PerformedByName
                                     ??
                                     'System',
 
@@ -1150,18 +1259,22 @@ implements OnInit
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
 
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
 
 
                     this.historyTitle =
-                        'Bank Setup Management History';
+                        'BankSetup Management History';
 
 
                     this.historyOpened =
@@ -1176,12 +1289,12 @@ implements OnInit
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
 
@@ -1195,7 +1308,6 @@ implements OnInit
                 }
             });
     }
-
 
 
     //===========================================================

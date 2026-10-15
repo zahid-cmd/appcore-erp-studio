@@ -123,8 +123,20 @@ export class CashAccountsService
                                 Remarks:
                                     cashAccount.Remarks ?? cashAccount.remarks ?? '',
 
-                                IsActive:
-                                    Boolean(cashAccount.IsActive ?? cashAccount.isActive ?? true)
+                                Status:
+                                    Boolean(cashAccount.Status ?? cashAccount.status ?? true),
+
+                                Branch:
+                                    cashAccount.Branch ?? cashAccount.branch ?? '',
+
+                                DisplayName:
+                                    cashAccount.DisplayName ?? cashAccount.displayName ?? '',
+
+                                CollectionAccount:
+                                    Boolean(cashAccount.CollectionAccount ?? cashAccount.collectionAccount ?? false),
+
+                                PaymentAccount:
+                                    Boolean(cashAccount.PaymentAccount ?? cashAccount.paymentAccount ?? false)
                             })
 
                         )

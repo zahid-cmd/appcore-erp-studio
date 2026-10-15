@@ -15,7 +15,17 @@ export interface BankAccount
 
     Remarks: string;
 
-    IsActive: boolean;
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    Bank: string;
 
 }
 
@@ -34,7 +44,17 @@ export interface CreateBankAccount
 
     Remarks: string;
 
-    IsActive: boolean;
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    Bank: string;
 
 }
 
@@ -55,6 +75,16 @@ export interface UpdateBankAccount
 
     Remarks: string;
 
-    IsActive: boolean;
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    Bank: string;
 
 }

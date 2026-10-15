@@ -642,6 +642,19 @@ public static class DependencyInjection
 
         // AUTO-END : BankAccounts
 
+
+
+        // AUTO-BEGIN : BankSetup
+
+        services.AddScoped
+        <
+            IBankSetupRepository,
+            BankSetupRepository
+        >();
+
+        // AUTO-END : BankSetup
+
+
         // AUTO-BEGIN : CashAccounts
 
         services.AddScoped
@@ -651,6 +664,10 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : CashAccounts
+
+
+
+
 
 
         // AUTO-BEGIN : ProductMaster

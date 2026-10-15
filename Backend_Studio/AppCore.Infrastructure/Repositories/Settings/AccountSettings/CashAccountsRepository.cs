@@ -90,8 +90,20 @@ public class CashAccountsRepository : ICashAccountsRepository
                         Remarks =
                             x.Remarks,
 
-                        IsActive =
-                            x.IsActive,
+                        Status =
+                            x.Status,
+
+                        Branch =
+                            x.Branch,
+
+                        DisplayName =
+                            x.DisplayName,
+
+                        CollectionAccount =
+                            x.CollectionAccount,
+
+                        PaymentAccount =
+                            x.PaymentAccount,
 
                         IsDeleted =
                             x.IsDeleted,
@@ -216,7 +228,7 @@ public class CashAccountsRepository : ICashAccountsRepository
 
             if (parts.Length != 5) continue;
 
-            if (!string.Equals(parts[0].Trim(), "CSH", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(parts[0].Trim(), "CAS", StringComparison.OrdinalIgnoreCase)) continue;
 
             bool same = true;
 
@@ -344,8 +356,24 @@ public class CashAccountsRepository : ICashAccountsRepository
                     ??
                     string.Empty,
 
-                IsActive =
-                    dto.IsActive,
+                Status =
+                    dto.Status,
+
+                Branch =
+                    dto.Branch?.Trim()
+                    ??
+                    string.Empty,
+
+                DisplayName =
+                    dto.DisplayName?.Trim()
+                    ??
+                    string.Empty,
+
+                CollectionAccount =
+                    dto.CollectionAccount,
+
+                PaymentAccount =
+                    dto.PaymentAccount,
 
                 IsDeleted =
                     false,
@@ -511,8 +539,24 @@ public class CashAccountsRepository : ICashAccountsRepository
             ??
             string.Empty;
 
-        entity.IsActive =
-            dto.IsActive;
+        entity.Status =
+            dto.Status;
+
+        entity.Branch =
+            dto.Branch?.Trim()
+            ??
+            string.Empty;
+
+        entity.DisplayName =
+            dto.DisplayName?.Trim()
+            ??
+            string.Empty;
+
+        entity.CollectionAccount =
+            dto.CollectionAccount;
+
+        entity.PaymentAccount =
+            dto.PaymentAccount;
 
 
         entity.ModifiedBy =

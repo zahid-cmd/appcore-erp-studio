@@ -1,3 +1,4 @@
+// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Imports
 //===============================================================
@@ -17,7 +18,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -30,16 +32,14 @@ from '../../../../environments/environment';
 import
 {
     BankSetup,
-
     CreateBankSetup,
-
     UpdateBankSetup
 }
 from '../models/bank-setup.model';
 
 
 //===============================================================
-// Bank Setup Service
+// BankSetup Service
 //===============================================================
 
 @Injectable(
@@ -50,14 +50,12 @@ from '../models/bank-setup.model';
 
 export class BankSetupService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +66,21 @@ export class BankSetupService
         `${environment.apiUrl}/settings/account-settings/bank-setup`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,11 +89,67 @@ export class BankSetupService
     getAll():
         Observable<BankSetup[]>
     {
-        return this.http.get<BankSetup[]>(
-            this.apiUrl
-        );
+        return this.http
+
+            .get<any[]>(
+                this.apiUrl
+            )
+
+            .pipe(
+
+                map(
+
+                    response =>
+
+                        response.map(
+
+                            bankSetup =>
+
+                            ({
+                                ...bankSetup,
+
+                                BankSetupId:
+                                    Number(bankSetup.BankSetupId ?? bankSetup.bankSetupId ?? bankSetup.id ?? bankSetup.Id),
+
+                                BankCode:
+                                    bankSetup.BankCode ?? bankSetup.bankCode ?? '',
+
+                                BankName:
+                                    bankSetup.BankName ?? bankSetup.bankName ?? '',
+
+                                Remarks:
+                                    bankSetup.Remarks ?? bankSetup.remarks ?? '',
+
+                                Status:
+                                    Boolean(bankSetup.Status ?? bankSetup.status ?? true),
+
+                                ShortName:
+                                    bankSetup.ShortName ?? bankSetup.shortName ?? ''
+                            })
+
+                        )
+
+                )
+
+            );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode():
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code`,
+            {
+                responseType:
+                    'text'
+            }
+        );
+    }
 
 
     //===========================================================
@@ -100,7 +169,6 @@ export class BankSetupService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
@@ -114,11 +182,9 @@ export class BankSetupService
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
 
     //===========================================================
@@ -133,12 +199,10 @@ export class BankSetupService
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
+            this.apiUrl,
             model
         );
     }
-
 
 
     //===========================================================
@@ -158,21 +222,18 @@ export class BankSetupService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
     restore():
-        Observable<void>
+        Observable<boolean>
     {
-        return this.http.put<void>(
+        return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,7 +247,6 @@ export class BankSetupService
             `${this.apiUrl}/history`
         );
     }
-
 
 
     //===========================================================
@@ -204,5 +264,4 @@ export class BankSetupService
             `${this.apiUrl}/${id}/history`
         );
     }
-
 }

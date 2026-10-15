@@ -18,6 +18,37 @@ namespace AppCore.Infrastructure.Platform.PageCloneEngine;
 // from the source form (renamed by the engine's parent map).
 // The parent is always referred to by its SINGULAR name
 // (AccountSubGroup), the same name the engine's parent map uses.
+// FormHtml keeps the SOURCE form's own parent dropdown element
+// (SourceParentControl), so a customised source form (reserved
+// parent, no change handler) never gets a handler it does not have.
+//
+// The list keeps the display members its item interface declares
+// ({Field}Text, for example CollectionAccountText: 'Yes' / 'No'):
+// they are written into normalize and used by the columns.
+//
+// When the clone has NO parent (parent mode Exclude):
+//   - StripSourceParent removes the copied source parent from the
+//     form ts (import, service, loader, handler, items, loading
+//     flag), drops the "parent required" guard of the code
+//     generator, calls the code generator when a new record
+//     starts, and getNextCode() is called without a parent id.
+//   - StripListParent removes the copied source parent from the
+//     list ts (import, service, lookup map, loader) and reduces
+//     loadItems() to the page's own loader.
+//   - NoParentCode drops the parent id from getNextCode and
+//     getDefaults in the Angular service, the controller, the
+//     repository interface and the repository.
+//   - NoParentRepository removes the parent lookups of Create and
+//     Update ("Resolve Company") and the repository's using alias
+//     of the source parent (using CompanyEntity = ...).
+//
+// FixNormalizeCollision keeps normalizeWing / normalizeWings apart
+// when the target name has the same singular and plural form.
+//
+// FixCodeName points every {Page}Code and {Page}Name member access
+// (BankSetupCode, BankSetupName) at the clone's real code and name
+// fields (BankCode, BankName). It runs on the list / form ts and on
+// the backend controller and repository.
 //
 // The parent MODEL's own properties (Id / Name / Code) are then
 // remapped by FixParentMembers, because they differ from the
@@ -25,10 +56,50 @@ namespace AppCore.Infrastructure.Platform.PageCloneEngine;
 //
 // Route segments (Back / Add / Edit / View navigation) are then
 // fixed by FixRouteSegments, so they are kebab-case (cash-accounts).
+//
+// Plain fields set to Dropdown / Search dropdown in the wizard are
+// generated as real dropdowns (see IsListControl), each bound to a
+// {field}Items list that is added to the form ts. When the field
+// has an entry in Lookups (e.g. Branch), the list is also loaded
+// from that service (see WireLookup).
+//
+// A bool set to "Status dropdown" (or named IsActive) is a status
+// field (see IsStatusField): Active / Inactive items, default Active,
+// even when the wizard renamed it (IsActive -> Status).
+//
+// The form has four columns: Parent, Information, Status, Description.
+// A field goes to the column chosen in the wizard (CloneField.Section,
+// see SectionOf). The parent link field is always in Parent. When no
+// section was chosen, the old rule applies (bool -> Status,
+// textarea -> Description, the rest -> Information).
 //===============================================================
 
 public static class FrontendBlockGenerator
 {
+    //===========================================================
+    // Lookup sources
+    //
+    // A plain dropdown field whose name is listed here is filled
+    // from an existing service instead of an empty list.
+    //
+    //   Service : the Angular service class
+    //   File    : the service file name (without .ts)
+    //   Module  : the settings module folder that owns the service
+    //   Code    : property shown first in the label
+    //   Name    : property shown in the label AND saved as the value
+    //
+    // To support another field, add one line.
+    //===========================================================
+
+    private sealed record LookupSource(
+        string Service, string File, string Module, string Code, string Name);
+
+    private static readonly Dictionary<string, LookupSource> Lookups =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Branch"] = new("BranchesService", "branches.service", "general-settings", "BranchCode", "BranchName")
+        };
+
     //===========================================================
     // Engine hook
     //===========================================================
@@ -42,9 +113,12 @@ public static class FrontendBlockGenerator
         return key switch
         {
             "frontend.model"     => Model(bp, singular),
-            "frontend.service"   => Service(text, bp, id, warnings),
-            "frontend.list.ts"   => FixRouteSegments(FixParentMembers(ListTs(text, bp, singular, id, warnings), bp), bp),
-            "frontend.form.ts"   => FixRouteSegments(FixParentMembers(FormTs(text, bp, singular, id, warnings), bp), bp),
+            "frontend.service"   => NoParentCode(Service(text, bp, id, warnings), bp),
+            "backend.controller" => FixCodeName(NoParentCode(text, bp), bp, singular),
+            "backend.interface"  => NoParentCode(text, bp),
+            "backend.repository" => FixCodeName(NoParentRepository(NoParentCode(text, bp), bp, singular), bp, singular),
+            "frontend.list.ts"   => FixCodeName(FixRouteSegments(FixParentMembers(ListTs(text, bp, singular, id, warnings), bp), bp), bp, singular),
+            "frontend.form.ts"   => FixCodeName(FixRouteSegments(FixParentMembers(FormTs(text, bp, singular, id, warnings), bp), bp), bp, singular),
             "frontend.form.html" => FormHtml(text, bp, warnings),
             _ => text
         };
@@ -89,13 +163,28 @@ public static class FrontendBlockGenerator
     private static bool IsCode(CloneField f) =>
         f.Name.EndsWith("Code", StringComparison.Ordinal);
 
+    // Status-style bool: the IsActive flag, or any bool set to
+    // "Status dropdown" (the wizard may rename IsActive -> Status).
+    private static bool IsStatusField(CloneField f) =>
+        f.Name == "IsActive"
+        || (f.Control ?? "").Trim().ToLowerInvariant().Contains("status");
+
+    // A non-parent field the user set to Dropdown / Search dropdown.
+    // Yes / No and Status dropdowns are handled by the bool rules.
+    private static bool IsListControl(CloneField f)
+    {
+        string c = (f.Control ?? "").Trim().ToLowerInvariant();
+        return c.Contains("dropdown") && !c.Contains("yes") && !c.Contains("status");
+    }
+
     private static string DefaultLiteral(CloneField f)
     {
         if (IsBool(f))
         {
             string d = (f.DefaultValue ?? "").Trim().ToLowerInvariant();
-            if (d is "true" or "false") return d;
-            return f.Name == "IsActive" ? "true" : "false";
+            if (d is "true" or "active") return "true";
+            if (d is "false" or "inactive") return "false";
+            return IsStatusField(f) ? "true" : "false";
         }
 
         return IsNumber(f) ? "0" : "''";
@@ -184,6 +273,47 @@ public static class FrontendBlockGenerator
 
                 return m.Groups[1].Value + "." + mapped;
             });
+    }
+
+    //===========================================================
+    // Code and name field names
+    //
+    // The engine's rename turns the source properties (WingCode,
+    // WingName) into {Page}Code / {Page}Name (BankSetupCode,
+    // BankSetupName). The real fields of the clone may be named
+    // differently (BankCode, BankName). Every member access to
+    // {Page}Code / {Page}Name is pointed at the real field:
+    //     this.entity.BankSetupCode   -> this.entity.BankCode
+    //     response?.bankSetupCode     -> response?.bankCode
+    //     item.BankSetupName          -> item.BankName
+    //     entity.BankSetupName        -> entity.BankName   (C#)
+    //===========================================================
+
+    private static string FixCodeName(string text, PageCloneBlueprint bp, string s)
+    {
+        var code = Fields(bp).FirstOrDefault(IsCode);
+
+        if (code != null)
+            text = PointMember(text, s + "Code", code.Name);
+
+        // The same for the name field: WingName -> BankSetupName -> BankName
+        var name = Fields(bp).FirstOrDefault(f =>
+            f.Name.EndsWith("Name", StringComparison.Ordinal) && !IsParentFk(bp, f));
+
+        if (name != null)
+            text = PointMember(text, s + "Name", name.Name);
+
+        return text;
+    }
+
+    private static string PointMember(string text, string have, string real)
+    {
+        if (real == have) return text;
+
+        text = Regex.Replace(text, @"(?<=\.)" + Regex.Escape(have) + @"\b", real);
+        text = Regex.Replace(text, @"(?<=\.)" + Regex.Escape(Camel(have)) + @"\b", Camel(real));
+
+        return text;
     }
 
     //===========================================================
@@ -327,7 +457,23 @@ public static class FrontendBlockGenerator
         var all = Fields(bp);
         string parent = ParentName(bp);
 
+        // The source parent (for example Company) no longer exists on this page
+        if (bp.Parent == null || !bp.Parent.HasParent)
+            text = StripListParent(text, s, warnings);
+
+        // Wings / Wing -> BankSetup / BankSetup: two methods with the same name
+        text = FixNormalizeCollision(text, s);
+
         // --- normalize: return { ... };
+        // {Field}Text members the list item interface declares (CollectionAccountText: string)
+        var extras = all
+            .Where(f => IsBool(f) && !IsStatusField(f)
+                        && Regex.IsMatch(text, @"\b" + Regex.Escape(f.Name) + @"Text\s*:\s*string"))
+            .Select(f => (
+                Name: f.Name + "Text",
+                Text: $"Boolean(item?.{f.Name} ?? item?.{Camel(f.Name)} ?? false) ? 'Yes' : 'No'"))
+            .ToList();
+
         var norm = new Regex(@"return\s*\{");
         int idx = text.IndexOf("normalize" + s, StringComparison.Ordinal);
 
@@ -370,6 +516,13 @@ public static class FrontendBlockGenerator
                         }
                     }
 
+                    foreach (var (xn, xt) in extras)
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine($"            {xn}:");
+                        sb.AppendLine($"                {xt},");
+                    }
+
                     string r = sb.ToString().TrimEnd();
                     if (r.EndsWith(",")) r = r[..^1];
                     return r + "\r\n        ";
@@ -398,13 +551,16 @@ public static class FrontendBlockGenerator
                 field = parent + "Name";
                 width = "280px";
             }
-            else if (f.Name == "IsActive")
+            else if (IsBool(f) && IsStatusField(f))
             {
                 align = "center"; width = "200px"; type = "status";
             }
             else if (IsCode(f)) { align = "center"; width = "280px"; }
             else if (f.Name == "Remarks") { width = "350px"; }
             else if (IsBool(f) || IsNumber(f)) { align = "center"; width = "200px"; }
+
+            if (IsBool(f) && !IsStatusField(f) && extras.Any(x => x.Name == f.Name + "Text"))
+                field = f.Name + "Text";
 
             cols.AppendLine();
             cols.AppendLine("        {");
@@ -453,11 +609,12 @@ public static class FrontendBlockGenerator
             {
                 if (IsParentFk(bp, f) && parent.Length > 0)
                     parts.Add($"item.{parent}Name");
-                else if (f.Name != "IsActive")
+                else if (!(IsBool(f) && IsStatusField(f)))
                     parts.Add($"item.{f.Name}");
             }
 
-            bool hasStatus = all.Any(f => f.Name == "IsActive");
+            var statusField = all.FirstOrDefault(f => IsBool(f) && IsStatusField(f));
+            bool hasStatus = statusField != null;
 
             var b = new StringBuilder();
             b.AppendLine();
@@ -479,7 +636,7 @@ public static class FrontendBlockGenerator
             if (hasStatus)
             {
                 b.AppendLine("                        ||");
-                b.AppendLine("                        (item.IsActive ? 'active' : 'inactive')");
+                b.AppendLine($"                        (item.{statusField!.Name} ? 'active' : 'inactive')");
                 b.AppendLine("                            .includes(keyword);");
             }
             else b.AppendLine("                    ;");
@@ -557,6 +714,10 @@ public static class FrontendBlockGenerator
             return r[..^1] + "\r\n        ";
         }
 
+        // The source parent (for example Company) no longer exists on this page
+        if (bp.Parent == null || !bp.Parent.HasParent)
+            text = StripSourceParent(text, s, warnings);
+
         // entity: X = { ... }
         text = ReplaceLiterals(text, new Regex(@"\bentity\s*:\s*\w+\s*=\s*\{"), _ => Defaults());
 
@@ -609,7 +770,7 @@ public static class FrontendBlockGenerator
         else warnings.Add("frontend.form.ts: validation block not found; rename-copied only.");
 
         // Yes/No items for non-status booleans
-        if (all.Any(f => IsBool(f) && f.Name != "IsActive") && !text.Contains("yesNoItems", StringComparison.Ordinal))
+        if (all.Any(f => IsBool(f) && !IsStatusField(f)) && !text.Contains("yesNoItems", StringComparison.Ordinal))
         {
             var em = Regex.Match(text, @"[ \t]*//=+[ \t]*\r?\n[ \t]*// Entity[ \t]*\r?\n[ \t]*//=+");
             string items =
@@ -622,6 +783,42 @@ public static class FrontendBlockGenerator
             else warnings.Add("frontend.form.ts: could not add yesNoItems; add it by hand.");
         }
 
+        // Status items (Active / Inactive) when the form does not have them
+        if (all.Any(f => IsBool(f) && IsStatusField(f)) && !text.Contains("statusItems", StringComparison.Ordinal))
+        {
+            var em = Regex.Match(text, @"[ \t]*//=+[ \t]*\r?\n[ \t]*// Entity[ \t]*\r?\n[ \t]*//=+");
+            string items =
+                "    //===========================================================\r\n" +
+                "    // Status Items\r\n" +
+                "    //===========================================================\r\n\r\n" +
+                "    statusItems:\r\n        any[] =\r\n    [\r\n        { label:'Active', value:true },\r\n\r\n        { label:'Inactive', value:false }\r\n    ];\r\n\r\n\r\n";
+
+            if (em.Success) text = text.Insert(em.Index, items);
+            else warnings.Add("frontend.form.ts: could not add statusItems; add it by hand.");
+        }
+
+        // Item lists for plain Dropdown / Search dropdown fields
+        foreach (var f in all.Where(x => !IsParentFk(bp, x) && !IsBool(x) && !IsCode(x) && IsListControl(x)))
+        {
+            string listName = Camel(f.Name) + "Items";
+            if (text.Contains(listName + ":", StringComparison.Ordinal)) continue;
+
+            var em = Regex.Match(text, @"[ \t]*//=+[ \t]*\r?\n[ \t]*// Entity[ \t]*\r?\n[ \t]*//=+");
+            string block =
+                "    //===========================================================\r\n" +
+                $"    // {Label(f.Name)} Items\r\n" +
+                "    //===========================================================\r\n\r\n" +
+                $"    {listName}:\r\n        any[] =\r\n    [];\r\n\r\n\r\n";
+
+            if (em.Success) text = text.Insert(em.Index, block);
+            else warnings.Add($"frontend.form.ts: could not add {listName}; add it by hand.");
+
+            if (Lookups.TryGetValue(f.Name, out var src))
+                text = WireLookup(text, f, src, listName, warnings);
+            else
+                warnings.Add($"frontend.form.ts: {Label(f.Name)} is a dropdown with an empty item list ({listName}). Fill it from its data source.");
+        }
+
         // Missing control imports
         EnsureControl(ref text, "TextboxComponent", "textbox/textbox", all.Count > 0, warnings);
         EnsureControl(ref text, "TextareaComponent", "textarea/textarea",
@@ -631,7 +828,559 @@ public static class FrontendBlockGenerator
         EnsureControl(ref text, "SearchDropdownComponent", "search-dropdown/search-dropdown",
             all.Any(f => ControlKind(bp, f) == "search"), warnings);
 
-        warnings.Add("frontend.form.ts: parent loading and change handlers are copied from the source form. Multi-level parent cascades (class > group) need a manual check.");
+        if (bp.Parent != null && bp.Parent.HasParent)
+            warnings.Add("frontend.form.ts: parent loading and change handlers are copied from the source form. Multi-level parent cascades (class > group) need a manual check.");
+
+        return text;
+    }
+
+    //===========================================================
+    // Remove the copied source parent from the FORM ts
+    //
+    // When the clone has no parent, the form ts still holds the
+    // SOURCE form's parent (for example Company):
+    //   - the model + service imports
+    //   - the injected service
+    //   - the loadXxx() method (plural too: loadCompanies) and
+    //     its call in ngOnInit
+    //   - the onXxxChange() handler
+    //   - the xxxItems list and the isLoadingXxx flag (plural too)
+    //   - the "parent required" guard of the code generator, and
+    //     the parent id passed to getNextCode
+    //
+    // The code generator used to run when the parent changed. With
+    // no parent that never happens, so it is called when a new
+    // record is started (initializeEntity).
+    //
+    // The parent is found as a single-name import from a
+    // */models/*.model file that is not this page's own model.
+    //===========================================================
+
+    private static string StripSourceParent(string text, string s, List<string> warnings)
+    {
+        foreach (Match m in Regex.Matches(text,
+            @"import\s*\{\s*(\w+)\s*\}\s*from\s*'[^']*/models/[\w\-\.]+\.model'\s*;?").Cast<Match>().ToList())
+        {
+            string y = m.Groups[1].Value;
+
+            if (y == s
+                || y.StartsWith("Create", StringComparison.Ordinal)
+                || y.StartsWith("Update", StringComparison.Ordinal))
+                continue;
+
+            string yc = char.ToLowerInvariant(y[0]) + y[1..];
+
+            // plural forms: Company -> Companies, Branch -> Branches, Class -> Classes
+            string plural =
+                y.EndsWith("y", StringComparison.Ordinal) && y.Length > 1 && !"aeiou".Contains(char.ToLowerInvariant(y[^2]))
+                    ? y[..^1] + "ies"
+                    : y.EndsWith("s", StringComparison.Ordinal) || y.EndsWith("x", StringComparison.Ordinal)
+                      || y.EndsWith("ch", StringComparison.Ordinal) || y.EndsWith("sh", StringComparison.Ordinal)
+                        ? y + "es"
+                        : y + "s";
+
+            string forms = Regex.Escape(y) + "|" + Regex.Escape(plural);
+
+            // model + service imports
+            text = Regex.Replace(text, @"import\s*\{\s*" + y + @"\s*\}\s*from\s*'[^']*';?[ \t]*\r?\n(\s*\r?\n)?", "");
+            text = Regex.Replace(text, @"import\s*\{\s*" + y + @"Service\s*\}\s*from\s*'[^']*';?[ \t]*\r?\n(\s*\r?\n)?", "");
+
+            // private readonly yService = inject(YService);
+            text = Regex.Replace(text, @"[ \t]*private\s+readonly\s+\w+\s*=\s*inject\(\s*" + y + @"Service\s*\)\s*;[ \t]*\r?\n(\s*\r?\n)?", "");
+
+            // handler, loader, call, items list, loading flag
+            text = RemoveMember(text, @"\bon" + y + @"Change\b");
+            text = RemoveMember(text, @"\bload(" + forms + @")\b");
+            text = Regex.Replace(text, @"[ \t]*this\.load(" + forms + @")\(\s*\)\s*;[ \t]*\r?\n(\s*\r?\n)?", "");
+            text = RemoveMember(text, @"\b" + yc + @"Items\b");
+            text = RemoveMember(text, @"\bisLoading(" + forms + @")\b");
+
+            // code number: no parent id any more
+            text = Regex.Replace(text, @"getNextCode\(\s*this\.entity\." + y + @"Id\s*\)", "getNextCode()");
+
+            var guard = Regex.Match(text,
+                @"if\s*\(\s*!this\.entity\." + y + @"Id\s*\|\|\s*this\.entity\." + y + @"Id\s*<=\s*0\s*\)\s*\{");
+
+            if (guard.Success)
+            {
+                int gi = guard.Index + guard.Length - 1, gd = 0, ge = -1;
+
+                for (int k = gi; k < text.Length; k++)
+                {
+                    if (text[k] == '{') gd++;
+                    else if (text[k] == '}' && --gd == 0) { ge = k; break; }
+                }
+
+                if (ge > 0)
+                {
+                    int gs = guard.Index;
+                    while (gs > 0 && (text[gs - 1] == ' ' || text[gs - 1] == '\t')) gs--;
+                    int gx = ge + 1;
+                    while (gx < text.Length && (text[gx] == '\r' || text[gx] == '\n' || text[gx] == ' ' || text[gx] == '\t')) gx++;
+                    text = text[..gs] + text[gx..];
+                }
+            }
+
+            // generate the code when a new record is started (it used to run on parent change)
+            var gen = Regex.Match(text, @"private\s+(generate\w*Code)\s*\(");
+            var init = Regex.Match(text, @"private\s+initializeEntity\s*\(");
+
+            if (gen.Success && init.Success)
+            {
+                string call = "this." + gen.Groups[1].Value + "();";
+                var setState = Regex.Match(text[init.Index..], @"this\.setInitialFormState\(\);");
+
+                if (setState.Success && !text.Contains(call, StringComparison.Ordinal))
+                {
+                    int at = init.Index + setState.Index + setState.Length;
+                    text = text.Insert(at, "\r\n\r\n\r\n        " + call);
+                }
+            }
+
+            warnings.Add($"frontend.form.ts: removed the copied {y} parent (import, service, loader, handler) because this page has no parent.");
+
+            // leftovers: any use of the removed service / loader means the removal missed something
+            if (Regex.IsMatch(text, @"\b" + yc + @"Service\b") || Regex.IsMatch(text, @"\bload(" + forms + @")\b"))
+                warnings.Add($"frontend.form.ts: a reference to the removed {y} parent is still in the form. Remove it by hand.");
+        }
+
+        return text;
+    }
+
+    //===========================================================
+    // Name collision: normalizeWing / normalizeWings
+    //
+    // The source list has two normalizers, normalizeWing(item) and
+    // normalizeWings(response). When the target name has the same
+    // singular and plural form (BankSetup), both become
+    // normalizeBankSetup, which is a duplicate method (TS2393).
+    //
+    // The second one (the array normalizer) is renamed to
+    // normalize{S}List and the call that passes the API response
+    // to it is pointed at the new name.
+    //===========================================================
+
+    private static string FixNormalizeCollision(string text, string s)
+    {
+        string n = "normalize" + s;
+
+        var defs = Regex.Matches(text, @"(?m)^[ \t]*(private\s+)?" + Regex.Escape(n) + @"\b")
+            .Cast<Match>().ToList();
+
+        if (defs.Count < 2) return text;
+
+        var second = defs[1];
+        int nameAt = second.Index + second.Value.LastIndexOf(n, StringComparison.Ordinal);
+
+        text = text[..nameAt] + n + "List" + text[(nameAt + n.Length)..];
+
+        text = Regex.Replace(text,
+            @"this\." + Regex.Escape(n) + @"\(\s*response\b",
+            m => m.Value.Replace(n, n + "List"));
+
+        return text;
+    }
+
+    //===========================================================
+    // Remove the copied source parent from the LIST ts
+    //
+    // The source list holds its parent (for example Company):
+    //   - the model + service imports and the injected service
+    //   - the  xxxMap  lookup, buildXxxMap() and getXxxName()
+    //   - the  XxxName  member of the list item interface
+    //   - loadItems(), which first loads the parents and only then
+    //     calls the page's own loader (loadWings)
+    //
+    // loadItems() is reduced to a direct call of the page's own
+    // loader. The normalize / columns / filter blocks are rebuilt
+    // from the blueprint by ListTs, so they no longer use the parent.
+    //===========================================================
+
+    private static string StripListParent(string text, string s, List<string> warnings)
+    {
+        foreach (Match m in Regex.Matches(text,
+            @"import\s*\{\s*(\w+)\s*\}\s*from\s*'[^']*/models/[\w\-\.]+\.model'\s*;?").Cast<Match>().ToList())
+        {
+            string y = m.Groups[1].Value;
+
+            if (y == s
+                || y.StartsWith("Create", StringComparison.Ordinal)
+                || y.StartsWith("Update", StringComparison.Ordinal))
+                continue;
+
+            string yc = char.ToLowerInvariant(y[0]) + y[1..];
+
+            // imports + injected service
+            text = Regex.Replace(text, @"import\s*\{\s*" + y + @"\s*\}\s*from\s*'[^']*';?[ \t]*\r?\n(\s*\r?\n)?", "");
+            text = Regex.Replace(text, @"import\s*\{\s*" + y + @"Service\s*\}\s*from\s*'[^']*';?[ \t]*\r?\n(\s*\r?\n)?", "");
+            text = Regex.Replace(text, @"[ \t]*private\s+readonly\s+\w+\s*=\s*inject\(\s*" + y + @"Service\s*\)\s*;[ \t]*\r?\n(\s*\r?\n)?", "");
+
+            // loadItems(): parents first, then the page's own loader  ->  the own loader only
+            var call = Regex.Match(text, @"this\." + yc + @"Service\s*\.getAll\(\s*\)\s*\.subscribe\s*\(\s*\{");
+
+            if (call.Success)
+            {
+                int open = call.Index + call.Length - 1, depth = 0, close = -1;
+
+                for (int k = open; k < text.Length; k++)
+                {
+                    if (text[k] == '{') depth++;
+                    else if (text[k] == '}' && --depth == 0) { close = k; break; }
+                }
+
+                if (close > 0)
+                {
+                    int e = close + 1;
+                    while (e < text.Length && char.IsWhiteSpace(text[e])) e++;
+                    if (e < text.Length && text[e] == ')') e++;
+                    while (e < text.Length && char.IsWhiteSpace(text[e]) && text[e] != '\n') e++;
+                    if (e < text.Length && text[e] == ';') e++;
+
+                    var own = Regex.Match(text[open..close], @"this\.(load\w+)\(\s*\)");
+
+                    if (own.Success)
+                    {
+                        int st = call.Index;
+                        while (st > 0 && (text[st - 1] == ' ' || text[st - 1] == '\t')) st--;
+
+                        var banner = Regex.Match(text[..st],
+                            @"[ \t]*//=+[ \t]*\r?\n[ \t]*//[^\r\n]*\r?\n[ \t]*//=+[ \t]*\r?\n\s*$");
+
+                        if (banner.Success) st = banner.Index;
+
+                        text = text[..st] + "\r\n        this." + own.Groups[1].Value + "();" + text[e..];
+                    }
+                    else warnings.Add($"frontend.list.ts: could not reduce loadItems() because the page's own loader call was not found; the {y} loader is still in the list.");
+                }
+            }
+
+            // lookup map + helpers
+            text = RemoveMember(text, @"\b" + yc + @"Map\b");
+            text = RemoveMember(text, @"\bbuild" + y + @"Map\b");
+            text = RemoveMember(text, @"\bget" + y + @"Name\b");
+
+            // list item interface member:  CompanyName: string;
+            text = Regex.Replace(text, @"[ \t]*" + y + @"Name\s*:\s*string\s*;[ \t]*\r?\n(\s*\r?\n)?", "");
+
+            // unused local in normalize:  const companyId: number = Number(...);
+            text = Regex.Replace(text,
+                @"[ \t]*const\s+" + yc + @"Id\s*:\s*number\s*=\s*Number\s*\([\s\S]*?\)\s*;[ \t]*\r?\n(\s*\r?\n)?", "");
+
+            warnings.Add($"frontend.list.ts: removed the copied {y} parent (import, service, lookup map, loader) because this page has no parent.");
+
+            if (Regex.IsMatch(text, @"\b" + yc + @"Service\b") || Regex.IsMatch(text, @"\b" + yc + @"Map\b"))
+                warnings.Add($"frontend.list.ts: a reference to the removed {y} parent is still in the list. Remove it by hand.");
+        }
+
+        return text;
+    }
+
+    //===========================================================
+    // Code number without a parent
+    //
+    // The source builds the next code per parent
+    // (getNextCode(companyId)) and the defaults per parent
+    // (GetDefaults(companyId)). With no parent both are global, so
+    // the parent id is dropped in the Angular service, the
+    // controller, the repository interface and the repository
+    // (the repository's GetNextCodeAsync is already rebuilt as
+    // GetNextCodeAsync()).
+    //===========================================================
+
+    private static string NoParentCode(string text, PageCloneBlueprint bp)
+    {
+        if (bp.Parent != null && bp.Parent.HasParent) return text;
+
+        // Angular service: getNextCode(companyId: number)  +  params / path segment
+        var svc = Regex.Match(text, @"getNextCode\s*\(\s*\w+\s*:\s*number\s*\)");
+
+        if (svc.Success)
+        {
+            text = text[..svc.Index] + "getNextCode()" + text[(svc.Index + svc.Length)..];
+
+            int from = svc.Index;
+            var prm = Regex.Match(text[from..], @"params\s*:\s*\{[^{}]*\}\s*,\s*");
+            int end = text.IndexOf("\r\n    }", from, StringComparison.Ordinal);
+
+            if (prm.Success && (end < 0 || from + prm.Index < end))
+                text = text[..(from + prm.Index)] + text[(from + prm.Index + prm.Length)..];
+
+            text = Regex.Replace(text, @"/next-code/\$\{\w+\}", "/next-code");
+        }
+
+        // Controller route + action, controller call, repository interface + repository
+        text = Regex.Replace(text, @"next-code/\{\w+(:\w+)?\}", "next-code");
+        text = Regex.Replace(text, @"GetNextCode\(\s*(\[FromQuery\]\s*)?(long|int)\s+\w+\s*\)", "GetNextCode()");
+        text = Regex.Replace(text, @"GetNextCodeAsync\s*\(\s*(long\s+|int\s+)?[\w\.]+\s*\)", "GetNextCodeAsync()");
+        text = Regex.Replace(text, @"GetDefaults\(\s*(\[FromQuery\]\s*)?(long|int)\s+\w+\s*\)", "GetDefaults()");
+        text = Regex.Replace(text, @"GetDefaultsAsync\s*\(\s*(long\s+|int\s+)?[\w\.]+\s*\)", "GetDefaultsAsync()");
+
+        return text;
+    }
+
+    //===========================================================
+    // Repository without a parent
+    //
+    // The source repository looks up its parent in Create and Update:
+    //
+    //     // Resolve Company
+    //     CompanyEntity? company = await ...;
+    //     if (company == null) { throw ... }
+    //
+    // and has a using alias for the parent entity:
+    //
+    //     using CompanyEntity = AppCore.Domain.Entities....Company;
+    //
+    // That namespace does not exist for the new page, so the build
+    // fails (CS0234). With no parent:
+    //   1. every lookup of an entity alias that is not the page's own
+    //      ({s}Entity) is removed, with its banner comment and its
+    //      "== null" check
+    //   2. a using alias that nothing uses any more is removed
+    //===========================================================
+
+    private static string NoParentRepository(string text, PageCloneBlueprint bp, string s)
+    {
+        if (bp.Parent != null && bp.Parent.HasParent) return text;
+
+        // 1. the copied parent lookups
+        var decl = new Regex(@"(?m)^[ \t]*(?<alias>\w+Entity)\?\s+(?<var>\w+)\s*=");
+
+        while (true)
+        {
+            Match? m = decl.Matches(text).Cast<Match>()
+                .FirstOrDefault(x => x.Groups["alias"].Value != s + "Entity");
+
+            if (m == null) break;
+
+            int start = m.Index;
+
+            // the banner comment above it ("Resolve Company")
+            var banner = Regex.Match(text[..start],
+                @"[ \t]*//=+[ \t]*\r?\n[ \t]*//[^\r\n]*\r?\n[ \t]*//=+[ \t]*\r?\n\s*$");
+
+            if (banner.Success) start = banner.Index;
+
+            // the statement, up to its closing ;
+            int i = m.Index + m.Length, paren = 0;
+            bool ended = false;
+
+            for (; i < text.Length; i++)
+            {
+                char c = text[i];
+
+                if (c == '(') paren++;
+                else if (c == ')') paren--;
+                else if (c == ';' && paren == 0) { i++; ended = true; break; }
+            }
+
+            if (!ended) break;
+
+            // the "if (company == null) { ... }" check that follows
+            var chk = Regex.Match(text[i..],
+                @"^\s*if\s*\(\s*" + Regex.Escape(m.Groups["var"].Value) + @"\s*==\s*null\s*\)\s*\{");
+
+            if (chk.Success)
+            {
+                int open = i + chk.Length - 1, depth = 0;
+
+                for (int k = open; k < text.Length; k++)
+                {
+                    if (text[k] == '{') depth++;
+                    else if (text[k] == '}' && --depth == 0) { i = k + 1; break; }
+                }
+            }
+
+            while (i < text.Length && char.IsWhiteSpace(text[i])) i++;
+            while (i > 0 && (text[i - 1] == ' ' || text[i - 1] == '\t')) i--;
+
+            text = text[..start] + "\r\n" + text[i..];
+        }
+
+        // 2. a using alias that nothing uses any more
+        foreach (Match m in Regex.Matches(text,
+            @"(?m)^[ \t]*using\s+(\w+)\s*=\s*[\w\.\s]+?;[ \t]*\r?\n(\s*\r?\n)?").Cast<Match>().ToList())
+        {
+            string alias = m.Groups[1].Value;
+
+            if (Regex.Matches(text, @"\b" + Regex.Escape(alias) + @"\b").Count == 1)
+                text = text.Replace(m.Value, "");
+        }
+
+        return text;
+    }
+
+    // Removes "name ... ;" or "name(...) ... { ... }" starting at the member, with its banner comment.
+    private static string RemoveMember(string text, string namePattern)
+    {
+        var m = Regex.Match(text, @"(?m)^[ \t]*(private\s+|public\s+|readonly\s+)*" + namePattern);
+
+        if (!m.Success) return text;
+
+        int start = m.Index;
+
+        // include a preceding banner comment block
+        var banner = Regex.Match(text[..start],
+            @"[ \t]*//=+[ \t]*\r?\n[ \t]*//[^\r\n]*\r?\n[ \t]*//=+[ \t]*\r?\n\s*$");
+
+        if (banner.Success) start = banner.Index;
+
+        int i = m.Index + m.Length;
+        int depth = 0;
+        bool opened = false;
+
+        for (; i < text.Length; i++)
+        {
+            char c = text[i];
+
+            if (c == '{') { depth++; opened = true; }
+            else if (c == '}') { depth--; if (opened && depth == 0) { i++; break; } }
+            else if (c == ';' && depth == 0 && !opened) { i++; break; }
+        }
+
+        // eat trailing whitespace / newlines
+        while (i < text.Length && (text[i] == '\r' || text[i] == '\n' || text[i] == ' ' || text[i] == '\t')) i++;
+
+        return text[..start] + text[i..];
+    }
+
+    //===========================================================
+    // Wire a lookup dropdown to its service
+    //
+    // Adds to the form ts:
+    //   1. the service import (path built from the form's own
+    //      services/ import, one folder up, into the owning module)
+    //   2. the injected service
+    //   3. a loadXxxItems() method, placed after ngOnInit, and a
+    //      call to it at the top of ngOnInit
+    //
+    // The list holds the active records: label "Code - Name",
+    // value = Name (saved as text).
+    //===========================================================
+
+    private static string WireLookup(
+        string text, CloneField f, LookupSource src, string listName, List<string> warnings)
+    {
+        string svc = Camel(src.Service);
+        string loader = "load" + f.Name + "Items";
+        string title = Label(f.Name);
+
+        if (text.Contains(loader + "(", StringComparison.Ordinal)) return text;
+
+        // 1. import
+        var imp = Regex.Match(text, @"from\s*'((?:\.\./)+)services/");
+
+        if (!imp.Success)
+        {
+            warnings.Add($"frontend.form.ts: could not find the services import path to add {src.Service}. {title} list is empty; wire it by hand.");
+            return text;
+        }
+
+        if (!text.Contains(src.Service, StringComparison.Ordinal))
+        {
+            string importPath = imp.Groups[1].Value + "../" + src.Module + "/services/" + src.File;
+
+            string import =
+                "import\r\n{\r\n    " + src.Service + "\r\n}\r\nfrom '" + importPath + "';\r\n\r\n";
+
+            var anchor = Regex.Match(text, @"//=+[ \t]*\r?\n[ \t]*// Utilities");
+            text = text.Insert(anchor.Success ? anchor.Index : 0, import);
+        }
+
+        // 2. injection
+        if (!text.Contains("private readonly " + svc, StringComparison.Ordinal))
+        {
+            var inj = Regex.Match(text, @"private\s+readonly\s+\w+\s*=\s*inject\(\s*\w+\s*\);");
+
+            if (!inj.Success)
+            {
+                warnings.Add($"frontend.form.ts: could not find an injected service to add {svc}. {title} list is empty; wire it by hand.");
+                return text;
+            }
+
+            string decl = "\r\n    private readonly " + svc + " =\r\n        inject(" + src.Service + ");";
+            text = text.Insert(inj.Index + inj.Length, decl);
+        }
+
+        // 3. loader method after ngOnInit + call inside ngOnInit
+        var init = Regex.Match(text, @"ngOnInit\s*\(\s*\)\s*:\s*void\s*\{");
+
+        if (!init.Success)
+        {
+            warnings.Add($"frontend.form.ts: ngOnInit not found; {title} list is empty. Call {loader}() by hand.");
+            return text;
+        }
+
+        int open = init.Index + init.Length - 1;
+        int depth = 0, close = -1;
+
+        for (int i = open; i < text.Length; i++)
+        {
+            if (text[i] == '{') depth++;
+            else if (text[i] == '}' && --depth == 0) { close = i; break; }
+        }
+
+        if (close < 0)
+        {
+            warnings.Add($"frontend.form.ts: ngOnInit body not closed; {title} list is empty. Call {loader}() by hand.");
+            return text;
+        }
+
+        bool hasCdr = text.Contains("this.cdr.detectChanges", StringComparison.Ordinal);
+
+        var m = new StringBuilder();
+        m.AppendLine("    //===========================================================");
+        m.AppendLine($"    // Load {title} Items");
+        m.AppendLine("    //===========================================================");
+        m.AppendLine();
+        m.AppendLine($"    private {loader}():");
+        m.AppendLine("        void");
+        m.AppendLine("    {");
+        m.AppendLine($"        this.{svc}");
+        m.AppendLine("            .getAll()");
+        m.AppendLine("            .subscribe");
+        m.AppendLine("            ({");
+        m.AppendLine("                next:");
+        m.AppendLine("                (");
+        m.AppendLine("                    response:");
+        m.AppendLine("                        any[]");
+        m.AppendLine("                ):");
+        m.AppendLine("                    void =>");
+        m.AppendLine("                {");
+        m.AppendLine($"                    this.{listName} =");
+        m.AppendLine("                        response");
+        m.AppendLine("                            .filter(");
+        m.AppendLine("                                item =>");
+        m.AppendLine("                                    item.IsActive");
+        m.AppendLine("                            )");
+        m.AppendLine("                            .map(");
+        m.AppendLine("                                item =>");
+        m.AppendLine("                                ({");
+        m.AppendLine("                                    label:");
+        m.AppendLine("                                        `${item." + src.Code + "} - ${item." + src.Name + "}`,");
+        m.AppendLine("                                    value:");
+        m.AppendLine("                                        item." + src.Name);
+        m.AppendLine("                                })");
+        m.AppendLine("                            );");
+        if (hasCdr) m.AppendLine("                    this.cdr.detectChanges();");
+        m.AppendLine("                },");
+        m.AppendLine("                error:");
+        m.AppendLine("                (");
+        m.AppendLine("                    error:");
+        m.AppendLine("                        unknown");
+        m.AppendLine("                ):");
+        m.AppendLine("                    void =>");
+        m.AppendLine("                {");
+        m.AppendLine($"                    console.error('Load {title} Items Error:', error);");
+        m.AppendLine($"                    this.{listName} =");
+        m.AppendLine("                        [];");
+        m.AppendLine("                }");
+        m.AppendLine("            });");
+        m.AppendLine("    }");
+
+        // method first (later index), then the call (earlier index)
+        text = text.Insert(close + 1, "\r\n\r\n" + m.ToString().TrimEnd());
+        text = text.Insert(open + 1, $"\r\n        this.{loader}();\r\n");
 
         return text;
     }
@@ -676,11 +1425,73 @@ public static class FrontendBlockGenerator
         if (IsCode(f)) return "code";
         if (IsParentFk(bp, f)) return c.Contains("search") ? "search" : "dropdown";
         if (IsBool(f)) return "dropdown";
+        if (IsListControl(f)) return c.Contains("search") ? "search" : "dropdown";
         if (c.Contains("area") || f.MaxLength is >= 500) return "textarea";
         return "textbox";
     }
 
-    private static string Control(PageCloneBlueprint bp, CloneField f)
+    //===========================================================
+    // The form column of a field: Parent, Information, Status or
+    // Description.
+    //
+    //   1. the parent link field is always in Parent
+    //   2. otherwise the column chosen in the wizard (CloneField.Section)
+    //   3. no valid choice (an older saved clone): the old rule,
+    //      bool -> Status, textarea -> Description, the rest -> Information
+    //===========================================================
+
+    private static string SectionOf(PageCloneBlueprint bp, CloneField f)
+    {
+        if (IsParentFk(bp, f)) return "Parent";
+
+        string chosen = (f.Section ?? "").Trim();
+
+        if (chosen.Equals("Information", StringComparison.OrdinalIgnoreCase)) return "Information";
+        if (chosen.Equals("Status", StringComparison.OrdinalIgnoreCase)) return "Status";
+        if (chosen.Equals("Description", StringComparison.OrdinalIgnoreCase)) return "Description";
+
+        if (IsBool(f)) return "Status";
+        if (ControlKind(bp, f) == "textarea") return "Description";
+
+        return "Information";
+    }
+
+    //===========================================================
+    // The source form's own parent control
+    //
+    // A customised source form (for example a reserved parent, no
+    // change handler) has a parent dropdown that differs from the
+    // generic one. The element that is bound to entity.{ForeignKey}
+    // is taken from the source form grid as it is, so its handler and
+    // its attributes always match the form ts that was copied with it.
+    // Returns null when the source form has no such element.
+    //===========================================================
+
+    private static string? SourceParentControl(string grid, string fk)
+    {
+        if (string.IsNullOrWhiteSpace(fk)) return null;
+
+        var bind = Regex.Match(grid, @"\[\(value\)\]\s*=\s*""entity\." + Regex.Escape(fk) + @"""");
+
+        if (!bind.Success) return null;
+
+        int start = grid.LastIndexOf("<app-", bind.Index, StringComparison.Ordinal);
+
+        if (start < 0) return null;
+
+        var tag = Regex.Match(grid[start..], @"^<(app-[\w\-]+)");
+
+        if (!tag.Success) return null;
+
+        string endTag = "</" + tag.Groups[1].Value + ">";
+        int end = grid.IndexOf(endTag, bind.Index, StringComparison.Ordinal);
+
+        if (end < 0) return null;
+
+        return grid[start..(end + endTag.Length)];
+    }
+
+    private static string Control(PageCloneBlueprint bp, CloneField f, string? sourceParent = null)
     {
         string kind = ControlKind(bp, f);
         string label = Label(f.Name);
@@ -690,6 +1501,13 @@ public static class FrontendBlockGenerator
 
         sb.AppendLine($"{ind}<!-- {label} -->");
         sb.AppendLine();
+
+        // the parent field keeps the source form's own control
+        if (IsParentFk(bp, f) && sourceParent != null)
+        {
+            sb.AppendLine(ind + sourceParent);
+            return sb.ToString();
+        }
 
         switch (kind)
         {
@@ -711,9 +1529,14 @@ public static class FrontendBlockGenerator
                     change = $"(valueChange)=\"on{p}Change($event)\"";
                     label = Label(p);
                 }
+                else if (IsListControl(f) && !IsBool(f))
+                {
+                    items = Camel(f.Name) + "Items";
+                    change = "(valueChange)=\"onValueChange()\"";
+                }
                 else
                 {
-                    items = f.Name == "IsActive" ? "statusItems" : "yesNoItems";
+                    items = IsStatusField(f) ? "statusItems" : "yesNoItems";
                     change = "(valueChange)=\"onValueChange()\"";
                 }
 
@@ -746,10 +1569,18 @@ public static class FrontendBlockGenerator
 
         var all = Fields(bp);
 
-        var parentFields = all.Where(f => IsParentFk(bp, f)).ToList();
-        var statusFields = all.Where(f => !IsParentFk(bp, f) && IsBool(f)).ToList();
-        var descFields   = all.Where(f => !IsParentFk(bp, f) && !IsBool(f) && ControlKind(bp, f) == "textarea").ToList();
-        var infoFields   = all.Except(parentFields).Except(statusFields).Except(descFields).ToList();
+        // the source form's own parent dropdown (kept as it is)
+        string? sourceParent = null;
+
+        if (bp.Parent != null && bp.Parent.HasParent)
+            sourceParent = SourceParentControl(
+                text[(open.Index + open.Length)..close], bp.Parent.ForeignKey);
+
+        // Each field goes to the column chosen in the wizard (field order is kept)
+        var parentFields = all.Where(f => SectionOf(bp, f) == "Parent").ToList();
+        var infoFields   = all.Where(f => SectionOf(bp, f) == "Information").ToList();
+        var statusFields = all.Where(f => SectionOf(bp, f) == "Status").ToList();
+        var descFields   = all.Where(f => SectionOf(bp, f) == "Description").ToList();
 
         var sb = new StringBuilder();
         int n = 0;
@@ -772,7 +1603,7 @@ public static class FrontendBlockGenerator
             foreach (var f in fields)
             {
                 sb.AppendLine();
-                sb.AppendLine(Control(bp, f));
+                sb.AppendLine(Control(bp, f, sourceParent));
             }
 
             sb.AppendLine("            </app-form-section>");
