@@ -6,10 +6,17 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -24,6 +31,17 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -34,7 +52,6 @@ import
     CardSetup
 }
 from '../../../models/card-setup.model';
-
 
 //===============================================================
 // Shared Components
@@ -68,15 +85,15 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    SearchBoxComponent
+    SearchDropdownComponent
 }
-from '../../../../../../shared/components/utilities/search-box/search-box';
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
-    DropdownComponent
+    SearchBoxComponent
 }
-from '../../../../../../shared/components/controls/dropdown/dropdown';
+from '../../../../../../shared/components/utilities/search-box/search-box';
 
 import
 {
@@ -117,6 +134,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -127,9 +156,8 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,43 +166,31 @@ import
 }
 from '../../../services/card-setup.service';
 
-
 //===============================================================
 // Component
 //===============================================================
 
 @Component(
 {
-    selector:'cardSetup-list',
+    selector:'card-setup-list',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
+        SearchDropdownComponent,
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
         ToastComponent
     ],
 
@@ -183,43 +199,73 @@ from '../../../services/card-setup.service';
     styleUrl:'./card-setup-list.css'
 })
 
-
 //===============================================================
-// Card Setup List Component
+// Card Setup List
 //===============================================================
 
 export class CardSetupList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
 
-    private readonly cardsetupservice =
+    private readonly cardSetupService =
         inject(CardSetupService);
-
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
 
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private readonly CONFIRM_CLOSE_DELAY_MS:
+        number =
+        150;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
     //===========================================================
     // Page Tabs
@@ -230,70 +276,45 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All CardSetups'
+            label:'All Card Setup'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
 
+    //===========================================================
+    // Data
+    //===========================================================
 
+    cardSetup:
+        CardSetup[] =
+        [];
+
+    filteredCardSetup:
+        CardSetup[] =
+        [];
+
+    pagedCardSetup:
+        CardSetup[] =
+        [];
 
     //===========================================================
     // Status Filter
     //===========================================================
 
-    statusItems:
+    statusFilterItems:
         any[] =
     [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
+        { label:'All Status', value:null },
+        { label:'Active', value:true },
+        { label:'Inactive', value:false }
     ];
 
-
     selectedStatus:
-        string | null =
+        boolean | null =
         null;
-
-
-
-    //===========================================================
-    // Data Source
-    //===========================================================
-
-    cardsetups:
-        CardSetup[] =
-    [];
-
-
-    filteredCardSetups:
-        CardSetup[] =
-    [];
-
-
-    pagedCardSetups:
-        CardSetup[] =
-    [];
-
-
 
     //===========================================================
     // Search & Loading
@@ -303,17 +324,13 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
 
-
     loadFailed:
         boolean =
         false;
-
-
 
     //===========================================================
     // Pagination
@@ -323,12 +340,9 @@ implements OnInit
         number =
         1;
 
-
     pageSize:
         number =
         10;
-
-
 
     //===========================================================
     // History
@@ -338,17 +352,13 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
         'Card Setup History';
 
-
     historyItems:
         any[] =
-    [];
-
-
+        [];
 
     //===========================================================
     // Page Canvas Configuration
@@ -358,27 +368,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
-
 
     //===========================================================
     // Table Columns
@@ -389,63 +388,53 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
             width:'60px',
-
             align:'center'
         },
-
         {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
+            header:'Card Code',
+            field:'CardCode',
+            width:'160px',
             align:'center'
         },
-
         {
-            header:'Name',
-
-            field:'name',
-
+            header:'Card Name',
+            field:'CardName',
+            width:'240px',
             align:'left'
         },
-
+        {
+            header:'Short Name',
+            field:'ShortName',
+            width:'160px',
+            align:'left'
+        },
+        {
+            header:'Issuing Bank',
+            field:'IssuingBank',
+            width:'260px',
+            align:'left'
+        },
         {
             header:'Status',
-
-            field:'status',
-
+            field:'Status',
             type:'status',
-
             width:'120px',
-
             align:'center'
         },
-
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'180px',
-
+            width:'110px',
             align:'center'
         }
     ];
 
-
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -454,10 +443,61 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
 
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Load CardSetups
+    // Normalize Card Setup
+    //===========================================================
+
+    private normalizeCardSetup
+    (
+        item:
+            any
+    ):
+        CardSetup
+    {
+        return {
+            CardSetupId:
+                Number(item?.CardSetupId ?? item?.cardSetupId ?? 0),
+
+            CardCode:
+                item?.CardCode ?? item?.cardCode ?? '',
+
+            CardName:
+                item?.CardName ?? item?.cardName ?? '',
+
+            Remarks:
+                item?.Remarks ?? item?.remarks ?? '',
+
+            Status:
+                Boolean(item?.Status ?? item?.status ?? true),
+
+            ShortName:
+                item?.ShortName ?? item?.shortName ?? '',
+
+            IssuingBank:
+                item?.IssuingBank ?? item?.issuingBank ?? ''
+        };
+    }
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -466,110 +506,99 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-        this.cardsetupservice
+        this.cardSetupService
             .getAll()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        CardSetup[]
-                ): void =>
+                        any
+                ):
+                    void =>
                 {
-                    this.cardsetups =
-                    [
-                        ...response
-                    ];
+                    const list:
+                        any[] =
+                        Array.isArray(response)
+                            ? response
+                            : [];
 
+                    this.cardSetup =
+                        list.map
+                        (
+                            item =>
+                                this.normalizeCardSetup(
+                                    item
+                                )
+                        );
 
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         false;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'Load CardSetups Error',
-
+                    console.error(
+                        'Load Card Setup Error:',
                         error
                     );
 
+                    this.cardSetup =
+                        [];
 
-                    this.cardsetups =
-                    [];
+                    this.filteredCardSetup =
+                        [];
 
-
-                    this.filteredCardSetups =
-                    [];
-
-
-                    this.pagedCardSetups =
-                    [];
-
+                    this.pagedCardSetup =
+                        [];
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         true;
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'Load Failed',
-
-                        'Unable to load cardsetups.'
+                        'Unable to load card setup.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
 
-
-
     //===========================================================
-    // Status Filter Changed
+    // Status Filter Change
     //===========================================================
 
     onStatusFilterChange
     (
         value:
-            string | null
+            boolean | null
     ):
         void
     {
         this.selectedStatus =
             value;
 
-
         this.applyFilters();
     }
-
-
 
     //===========================================================
     // Apply Filters
@@ -578,64 +607,66 @@ implements OnInit
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
-
-        this.filteredCardSetups =
-            this.cardsetups
-                .filter
+        this.filteredCardSetup =
+            this.cardSetup.filter
+            (
                 (
+                    item:
+                        CardSetup
+                ):
+                    boolean =>
+                {
+                    const statusMatches =
+                        this.selectedStatus === null
+                        ||
+                        item.Status ===
+                        this.selectedStatus;
+
+                    if
                     (
-                        x:
-                            CardSetup
-                    ):
-                        boolean =>
+                        !keyword
+                    )
                     {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
-
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
+                        return statusMatches;
                     }
-                );
 
+                    const values:
+                        unknown[] =
+                    [
+                        item.CardCode,
+                        item.CardName,
+                        item.ShortName,
+                        item.IssuingBank,
+                        item.Remarks,
+                        item.Status ? 'active' : 'inactive'
+                    ];
+
+                    const keywordMatches =
+                        values.some
+                        (
+                            value =>
+                                String(value ?? '')
+                                    .toLowerCase()
+                                    .includes(keyword)
+                        );
+
+                    return keywordMatches
+                        &&
+                        statusMatches;
+                }
+            );
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Search
@@ -649,13 +680,12 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
+            value
+            ??
+            '';
 
         this.applyFilters();
     }
-
-
 
     //===========================================================
     // Sort
@@ -667,25 +697,22 @@ implements OnInit
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
     ):
         void
     {
-        this.filteredCardSetups =
+        this.filteredCardSetup =
         [
-            ...this.filteredCardSetups
+            ...this.filteredCardSetup
         ];
 
-
-        this.filteredCardSetups.sort
+        this.filteredCardSetup.sort
         (
             (
                 a:
                     CardSetup,
-
                 b:
                     CardSetup
             ):
@@ -697,13 +724,11 @@ implements OnInit
                         event.field as keyof CardSetup
                     ];
 
-
                 const valueB:
                     any =
                     b[
                         event.field as keyof CardSetup
                     ];
-
 
                 if
                 (
@@ -715,7 +740,6 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
@@ -723,7 +747,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
 
                 if
                 (
@@ -733,7 +756,6 @@ implements OnInit
                     return 1;
                 }
 
-
                 if
                 (
                     typeof valueA === 'string'
@@ -742,12 +764,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
                 }
-
 
                 if
                 (
@@ -755,12 +774,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
+                        ? -1
+                        : 1;
                 }
-
 
                 if
                 (
@@ -768,26 +784,19 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
+                        ? 1
+                        : -1;
                 }
-
 
                 return 0;
             }
         );
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -796,18 +805,25 @@ implements OnInit
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
-
 
         this.selectedStatus =
             null;
 
+        this.currentPage =
+            1;
 
         this.loadItems();
     }
-
-
 
     //===========================================================
     // Update Pagination
@@ -824,20 +840,15 @@ implements OnInit
             *
             this.pageSize;
 
-
-        this.pagedCardSetups =
+        this.pagedCardSetup =
         [
-            ...this.filteredCardSetups
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
+            ...this.filteredCardSetup.slice
+            (
+                start,
+                start + this.pageSize
+            )
         ];
     }
-
-
 
     //===========================================================
     // Page Change
@@ -853,11 +864,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Page Size Change
@@ -873,15 +881,11 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Add
@@ -890,20 +894,25 @@ implements OnInit
     add():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'add'
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // View
@@ -916,22 +925,26 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'view',
-
-                item.id
+                item.CardSetupId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // Edit
@@ -944,22 +957,26 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'edit',
-
-                item.id
+                item.CardSetupId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // Delete
@@ -972,63 +989,147 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Delete Card Setup',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
-            (): void =>
+            `Are you sure you want to delete "${item.CardName}"?`,
+            ():
+                void =>
             {
-                this.cardsetupservice
-                    .delete
-                    (
-                        item.id
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.name} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ): void =>
-                        {
-                            console.error
-                            (
-                                'Delete Card Setup Error',
-
-                                error
-                            );
-
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete cardSetup.'
-                            );
-                        }
-                    });
+                // Let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout
+                (
+                    () =>
+                        this.deleteItem(
+                            item
+                        ),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             }
         );
     }
 
+    //===========================================================
+    // Delete Item
+    //===========================================================
 
+    private deleteItem
+    (
+        item:
+            CardSetup
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Card Setup',
+            `Please wait while "${item.CardName}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.cardSetupService.delete(
+                item.CardSetupId
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Card setup deleted.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Delete Successful',
+                            `${item.CardName} deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Card Setup Error:',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        //=======================================
+                        // Deletion Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'Card Setup cannot be deleted because it is already in use.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Not Found (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'This card setup no longer exists. The list has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Delete Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete card setup.'
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Restore
@@ -1037,26 +1138,33 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Restore Card Setup',
-
-            'Are you sure you want to restore the most recently deleted cardSetup?',
-
-            (): void =>
+            'Are you sure you want to restore the most recently deleted card setup?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout
+                (
+                    () =>
+                        this.restoreItem(),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Restore Item
@@ -1065,50 +1173,301 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.cardsetupservice
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+        this.startProgress(
+            'Restoring Card Setup',
+            'Please wait while the most recently deleted card setup is being restored...'
+        );
 
-                        'The most recently deleted cardSetup has been restored.'
-                    );
+        this.withMinimumDuration(
+            this.cardSetupService.restore()
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Card setup restored.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Restore Successful',
+                            'The most recently deleted card setup has been restored.'
+                        );
 
+                        this.loadItems();
+                    }
+                );
+            },
 
-                    this.loadItems();
-                },
-
-
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
-                    (
-                        'Restore Card Setup Error',
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Card Setup Error',
+                    error
+                );
 
-                        error
-                    );
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There is no deleted card setup record to restore.'
+                            );
 
+                            return;
+                        }
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The card setup cannot be restored.'
+                                )
+                            );
 
-                        'Failed to restore cardSetup.'
-                    );
-                }
-            });
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore card setup.'
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
 
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            HttpErrorResponse,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            typeof error.error === 'string'
+            &&
+            error.error.trim()
+        )
+        {
+            return error.error;
+        }
+
+        if
+        (
+            error.error?.message
+        )
+        {
+            return error.error.message;
+        }
+
+        if
+        (
+            error.error?.title
+        )
+        {
+            return error.error.title;
+        }
+
+        return fallback;
+    }
 
     //===========================================================
     // Open History
@@ -1117,7 +1476,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.cardsetupservice
+        this.cardSetupService
             .getHistory()
             .subscribe
             ({
@@ -1125,78 +1484,74 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
                                 description:
-                                    history.activityDescription,
-
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
                                 user:
                                     history.performedByName
                                     ??
+                                    history.PerformedByName
+                                    ??
                                     'System',
 
-
                                 dateTime:
-                                    new Date
-                                    (
+                                    new Date(
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
-
 
                     this.historyTitle =
                         'Card Setup Management History';
 
-
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'History Load Failed',
-
+                    console.error(
+                        'History Load Failed:',
                         error
                     );
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'History',
-
-                        'Failed to load cardSetup history.'
+                        'Failed to load card setup history.'
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Close History
@@ -1208,5 +1563,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

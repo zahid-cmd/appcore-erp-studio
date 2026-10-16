@@ -19,6 +19,16 @@ using CompanyEntity =
 using WarehousesEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Warehouses;
 
+//---------------------------------------------------------------
+// Ledgers linked to a Branch (by Branch Name)
+//---------------------------------------------------------------
+
+using CashAccountEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts;
+
+using BankAccountEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
+
 using AppCore.Infrastructure.Persistence;
 
 using AppCore.Domain.Common;
@@ -1323,63 +1333,321 @@ public class BranchesRepository : IBranchesRepository
 
 
         //===========================================================
-        // Soft Delete Branch
+        // Dependency Check
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted record still depends on this Branch.
+        //
+        //   Warehouses     : user-created only. The branch-generated
+        //                    default warehouse is removed together
+        //                    with the branch below.
+        //   Cash Accounts  : linked by Branch Name (text).
+        //   Bank Accounts  : linked by Branch Name (text).
         //===========================================================
 
-        entity.IsDeleted =
-            true;
+        int warehouseCount =
+            await _context
+                .Set<WarehousesEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.BranchId ==
+                        id
+
+                        &&
+
+                        !x.IsBranchGenerated
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
-        entity.DeletedBy =
-            userId;
+        string branchName =
+            (entity.BranchName ?? string.Empty)
+                .Trim()
+                .ToLower();
 
 
-        entity.DeletedDate =
-            DateTime.UtcNow;
+        int cashAccountCount =
+            await _context
+                .Set<CashAccountEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.Branch.Trim().ToLower() ==
+                        branchName
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
-        await _context.SaveChangesAsync();
+        int bankAccountCount =
+            await _context
+                .Set<BankAccountEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.Branch.Trim().ToLower() ==
+                        branchName
+
+                        &&
+
+                        !x.IsDeleted
+                );
 
 
         //===========================================================
-        // Activity History
+        // Build Blocked Message
         //===========================================================
 
-        _context.ActivityHistories.Add(
+        List<string> dependents =
+            new List<string>();
 
-            new ActivityHistory
+
+        if
+        (
+            warehouseCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{warehouseCount} warehouse(s)"
+            );
+        }
+
+
+        if
+        (
+            cashAccountCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{cashAccountCount} cash account(s)"
+            );
+        }
+
+
+        if
+        (
+            bankAccountCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{bankAccountCount} bank account(s)"
+            );
+        }
+
+
+        if
+        (
+            dependents.Count >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Branch '{entity.BranchName}' cannot be deleted because " +
+                $"{string.Join(", ", dependents)} are linked to it. " +
+                "Delete those records first."
+            );
+        }
+
+
+        //===========================================================
+        // Begin Transaction
+        //===========================================================
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+
+        try
+        {
+            DateTime deletedDate =
+                DateTime.UtcNow;
+
+
+            //=======================================================
+            // Soft Delete Branch
+            //=======================================================
+
+            entity.IsDeleted =
+                true;
+
+
+            entity.DeletedBy =
+                userId;
+
+
+            entity.DeletedDate =
+                deletedDate;
+
+
+            //=======================================================
+            // Soft Delete Branch-Generated Warehouse(s)
+            //=======================================================
+
+            List<WarehousesEntity> generatedWarehouses =
+                await _context
+                    .Set<WarehousesEntity>()
+
+                    .Where
+                    (
+                        x =>
+
+                            x.BranchId ==
+                            id
+
+                            &&
+
+                            x.IsBranchGenerated
+
+                            &&
+
+                            !x.IsDeleted
+                    )
+
+                    .ToListAsync();
+
+
+            foreach
+            (
+                WarehousesEntity warehouse
+                in generatedWarehouses
+            )
             {
-                Module =
-                    "General Settings",
+                warehouse.IsDeleted =
+                    true;
 
-                EntityName =
-                    "Branch",
 
-                EntityId =
-                    entity.BranchId,
+                warehouse.DeletedBy =
+                    userId;
 
-                ActivityType =
-                    "Delete",
 
-                ActivityTitle =
-                    "Branch Deleted",
-
-                ActivityDescription =
-                    $"Branch '{entity.BranchName}' deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                warehouse.DeletedDate =
+                    deletedDate;
             }
-        );
 
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+
+
+            //=======================================================
+            // Activity History - Branch
+            //=======================================================
+
+            _context.ActivityHistories.Add(
+
+                new ActivityHistory
+                {
+                    Module =
+                        "General Settings",
+
+                    EntityName =
+                        "Branch",
+
+                    EntityId =
+                        entity.BranchId,
+
+                    ActivityType =
+                        "Delete",
+
+                    ActivityTitle =
+                        "Branch Deleted",
+
+                    ActivityDescription =
+                        $"Branch '{entity.BranchName}' deleted.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        deletedDate
+                }
+            );
+
+
+            //=======================================================
+            // Activity History - Warehouse(s)
+            //=======================================================
+
+            foreach
+            (
+                WarehousesEntity warehouse
+                in generatedWarehouses
+            )
+            {
+                _context.ActivityHistories.Add(
+
+                    new ActivityHistory
+                    {
+                        Module =
+                            "General Settings",
+
+                        EntityName =
+                            "Warehouse",
+
+                        EntityId =
+                            warehouse.WarehouseId,
+
+                        ActivityType =
+                            "Delete",
+
+                        ActivityTitle =
+                            "Branch Generated Warehouse Deleted",
+
+                        ActivityDescription =
+                            $"Warehouse '{warehouse.DisplayName}' deleted automatically with Branch '{entity.BranchName}'.",
+
+                        PerformedBy =
+                            userId,
+
+                        PerformedByName =
+                            "System",
+
+                        PerformedDate =
+                            deletedDate
+                    }
+                );
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            //=======================================================
+            // Commit Transaction
+            //=======================================================
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 
@@ -1423,71 +1691,210 @@ public class BranchesRepository : IBranchesRepository
         }
 
 
-        entity.IsDeleted =
-            false;
-
-
-        entity.DeletedBy =
-            null;
-
-
-        entity.DeletedDate =
-            null;
-
-
-        entity.ModifiedBy =
-            userId;
-
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        await _context.SaveChangesAsync();
-
-
         //===========================================================
-        // Activity History
+        // Begin Transaction
         //===========================================================
 
-        _context.ActivityHistories.Add(
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
-            new ActivityHistory
+
+        try
+        {
+            DateTime restoredDate =
+                DateTime.UtcNow;
+
+
+            //=======================================================
+            // Restore Branch-Generated Warehouse(s)
+            //
+            // Only the warehouses that were deleted together with
+            // this branch (same DeletedDate) are restored.
+            //=======================================================
+
+            List<WarehousesEntity> generatedWarehouses =
+                await _context
+                    .Set<WarehousesEntity>()
+
+                    .Where
+                    (
+                        x =>
+
+                            x.BranchId ==
+                            entity.BranchId
+
+                            &&
+
+                            x.IsBranchGenerated
+
+                            &&
+
+                            x.IsDeleted
+
+                            &&
+
+                            x.DeletedDate ==
+                            entity.DeletedDate
+                    )
+
+                    .ToListAsync();
+
+
+            foreach
+            (
+                WarehousesEntity warehouse
+                in generatedWarehouses
+            )
             {
-                Module =
-                    "General Settings",
+                warehouse.IsDeleted =
+                    false;
 
-                EntityName =
-                    "Branch",
 
-                EntityId =
-                    entity.BranchId,
+                warehouse.DeletedBy =
+                    null;
 
-                ActivityType =
-                    "Restore",
 
-                ActivityTitle =
-                    "Branch Restored",
+                warehouse.DeletedDate =
+                    null;
 
-                ActivityDescription =
-                    $"Branch '{entity.BranchName}' restored.",
 
-                PerformedBy =
-                    userId,
+                warehouse.ModifiedBy =
+                    userId;
 
-                PerformedByName =
-                    "System",
 
-                PerformedDate =
-                    DateTime.UtcNow
+                warehouse.ModifiedDate =
+                    restoredDate;
             }
-        );
 
 
-        await _context.SaveChangesAsync();
+            //=======================================================
+            // Restore Branch
+            //=======================================================
+
+            entity.IsDeleted =
+                false;
 
 
-        return true;
+            entity.DeletedBy =
+                null;
+
+
+            entity.DeletedDate =
+                null;
+
+
+            entity.ModifiedBy =
+                userId;
+
+
+            entity.ModifiedDate =
+                restoredDate;
+
+
+            await _context.SaveChangesAsync();
+
+
+            //=======================================================
+            // Activity History - Branch
+            //=======================================================
+
+            _context.ActivityHistories.Add(
+
+                new ActivityHistory
+                {
+                    Module =
+                        "General Settings",
+
+                    EntityName =
+                        "Branch",
+
+                    EntityId =
+                        entity.BranchId,
+
+                    ActivityType =
+                        "Restore",
+
+                    ActivityTitle =
+                        "Branch Restored",
+
+                    ActivityDescription =
+                        $"Branch '{entity.BranchName}' restored.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        restoredDate
+                }
+            );
+
+
+            //=======================================================
+            // Activity History - Warehouse(s)
+            //=======================================================
+
+            foreach
+            (
+                WarehousesEntity warehouse
+                in generatedWarehouses
+            )
+            {
+                _context.ActivityHistories.Add(
+
+                    new ActivityHistory
+                    {
+                        Module =
+                            "General Settings",
+
+                        EntityName =
+                            "Warehouse",
+
+                        EntityId =
+                            warehouse.WarehouseId,
+
+                        ActivityType =
+                            "Restore",
+
+                        ActivityTitle =
+                            "Branch Generated Warehouse Restored",
+
+                        ActivityDescription =
+                            $"Warehouse '{warehouse.DisplayName}' restored automatically with Branch '{entity.BranchName}'.",
+
+                        PerformedBy =
+                            userId,
+
+                        PerformedByName =
+                            "System",
+
+                        PerformedDate =
+                            restoredDate
+                    }
+                );
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            //=======================================================
+            // Commit Transaction
+            //=======================================================
+
+            await transaction.CommitAsync();
+
+
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 

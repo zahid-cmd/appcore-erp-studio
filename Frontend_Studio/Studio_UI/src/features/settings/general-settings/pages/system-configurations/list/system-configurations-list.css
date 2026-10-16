@@ -1,1 +1,740 @@
 @import '../../../../../../shared/styles/app-list-page.css';
+
+@import '../../../../../../shared/styles/scrollbar.css';
+
+/* =====================================================
+   SYSTEM CONFIGURATIONS
+   Free-height page: no page canvas, no pagination.
+   Panels share the height of the tallest one.
+
+   --sc-offset : space taken above / below the panel area
+                 (top bar, breadcrumb, header, toolbar,
+                 footer). Raise it if the bottom is
+                 cut off, lower it if a gap is left.
+===================================================== */
+
+:host
+{
+    display: block;
+
+    --sc-offset: 350px;
+
+    --sc-navy-1: #0f2a44;
+    --sc-navy-2: #1e3a8a;
+    --sc-blue: #2563eb;
+    --sc-brand: #26338a;
+
+    --sc-surface: #ffffff;
+    --sc-soft: #f8fafc;
+    --sc-soft-blue: #edf4ff;
+
+    --sc-border: #e5e7eb;
+    --sc-border-soft: #e7edf4;
+    --sc-border-hover: #dbe2ea;
+
+    --sc-text: #0f172a;
+    --sc-text-2: #334155;
+    --sc-muted: #64748b;
+    --sc-faint: #94a3b8;
+
+    --sc-on: #16a34a;
+    --sc-on-soft: #dcfce7;
+    --sc-off: #94a3b8;
+    --sc-danger: #dc2626;
+
+    --sc-gradient: linear-gradient(135deg, #0f2a44 0%, #1e3a8a 45%, #2563eb 100%);
+
+    /* Light blue → white header */
+    --sc-header-gradient: linear-gradient(180deg, #eef4ff 0%, #f7faff 55%, #ffffff 100%);
+}
+
+.sc-page
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* =====================================================
+   TOOLBAR : TABS + COUNTERS
+===================================================== */
+
+.sc-toolbar-left
+{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.sc-counters
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 16px;
+    border-left: 1px solid var(--sc-border);
+}
+
+.sc-counter
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px 0 4px;
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-border);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.sc-counter-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 11px;
+}
+
+.sc-counter-total
+{
+    background: var(--sc-gradient);
+    color: #ffffff;
+}
+
+.sc-counter-on
+{
+    background: var(--sc-on-soft);
+    color: var(--sc-on);
+}
+
+.sc-counter-off
+{
+    background: #f1f5f9;
+    color: var(--sc-muted);
+}
+
+.sc-counter-modules
+{
+    background: var(--sc-soft-blue);
+    color: var(--sc-navy-2);
+}
+
+.sc-counter-value
+{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sc-text);
+}
+
+.sc-counter-label
+{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sc-muted);
+}
+
+/* =====================================================
+   SCROLL AREA (vertical scroll for the panels)
+   The scrollbar look comes from .appcore-scrollbar
+   (shared/styles/scrollbar.css).
+===================================================== */
+
+.sc-scroll
+{
+    height: calc(100vh - var(--sc-offset));
+    min-height: 320px;
+    padding: 2px 6px 16px 2px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* =====================================================
+   GRID — every row as tall as the tallest panel
+===================================================== */
+
+.sc-grid
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 16px;
+    align-items: stretch;
+}
+
+/* =====================================================
+   PANEL
+===================================================== */
+
+.sc-panel
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sc-panel:hover
+{
+    border-color: var(--sc-border-hover);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+/* =====================================================
+   PANEL HEADER (light blue → white)
+===================================================== */
+
+.sc-panel-header
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    height: 52px;
+    padding: 0 14px;
+    background: var(--sc-header-gradient);
+    border-bottom: 1px solid #e3ebf7;
+    color: var(--sc-text);
+}
+
+.sc-panel-title
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.sc-panel-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: #ffffff;
+    border: 1px solid #dbe6f7;
+    color: var(--sc-navy-2);
+    font-size: 13px;
+}
+
+.sc-panel-name
+{
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: var(--sc-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sc-panel-meta
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sc-panel-count
+{
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #dbe6f7;
+    color: var(--sc-navy-2);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.sc-panel-add
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #dbe6f7;
+    border-radius: 50%;
+    background: #ffffff;
+    color: var(--sc-navy-2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.sc-panel-add:hover:not(:disabled)
+{
+    background: var(--sc-navy-2);
+    border-color: var(--sc-navy-2);
+    color: #ffffff;
+}
+
+.sc-panel-add:active:not(:disabled)
+{
+    transform: scale(0.94);
+}
+
+.sc-panel-add:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =====================================================
+   INACTIVE MODULE TAG
+===================================================== */
+
+.sc-panel-inactive
+{
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: var(--sc-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* =====================================================
+   PANEL PROGRESS (share of enabled settings)
+===================================================== */
+
+.sc-panel-progress
+{
+    height: 3px;
+    background: #eef2f7;
+}
+
+.sc-panel-progress-bar
+{
+    display: block;
+    height: 100%;
+    background: var(--sc-on);
+    transition: width 0.3s ease;
+}
+
+/* =====================================================
+   PANEL BODY
+===================================================== */
+
+.sc-panel-body
+{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--sc-soft);
+}
+
+/* =====================================================
+   EMPTY MODULE (quiet, neutral)
+===================================================== */
+
+.sc-panel-empty
+{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px 16px;
+    border: 1px dashed var(--sc-border-hover);
+    border-radius: 12px;
+    background: var(--sc-surface);
+    text-align: center;
+}
+
+.sc-empty-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 4px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: var(--sc-faint);
+    font-size: 16px;
+}
+
+.sc-empty-title
+{
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sc-text-2);
+}
+
+.sc-empty-subtitle
+{
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sc-faint);
+}
+
+.sc-empty-action
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    margin-top: 8px;
+    padding: 0 14px;
+    border: 1px solid var(--sc-border-hover);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--sc-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.sc-empty-action:hover:not(:disabled)
+{
+    border-color: var(--sc-navy-2);
+    background: var(--sc-soft-blue);
+    color: var(--sc-navy-2);
+}
+
+.sc-empty-action:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =====================================================
+   SETTING CARD
+===================================================== */
+
+.sc-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-border-soft);
+    border-left: 3px solid var(--sc-on);
+    border-radius: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.sc-card:hover
+{
+    border-color: var(--sc-border-hover);
+    border-left-color: var(--sc-on);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+}
+
+.sc-card-off
+{
+    border-left-color: var(--sc-off);
+}
+
+.sc-card-off:hover
+{
+    border-left-color: var(--sc-off);
+}
+
+.sc-card-off .sc-card-name,
+.sc-card-off .sc-card-remarks
+{
+    color: var(--sc-muted);
+}
+
+.sc-card-top
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.sc-code
+{
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--sc-soft-blue);
+    color: var(--sc-navy-2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.sc-card-actions
+{
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.sc-card:hover .sc-card-actions,
+.sc-card:focus-within .sc-card-actions
+{
+    opacity: 1;
+}
+
+.sc-icon-btn
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--sc-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sc-icon-btn:hover
+{
+    background: var(--sc-soft-blue);
+    color: var(--sc-navy-2);
+}
+
+.sc-icon-danger:hover
+{
+    background: #fee2e2;
+    color: var(--sc-danger);
+}
+
+.sc-card-name
+{
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--sc-text-2);
+}
+
+.sc-card-remarks
+{
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--sc-faint);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.sc-card-footer
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+/* =====================================================
+   STATE LABEL
+===================================================== */
+
+.sc-state
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sc-muted);
+}
+
+.sc-state-dot
+{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sc-off);
+}
+
+.sc-state-on
+{
+    color: var(--sc-on);
+}
+
+.sc-state-on .sc-state-dot
+{
+    background: var(--sc-on);
+    box-shadow: 0 0 0 3px var(--sc-on-soft);
+}
+
+/* =====================================================
+   SWITCH
+===================================================== */
+
+.sc-switch
+{
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sc-switch:focus-visible
+{
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.sc-switch-on
+{
+    background: var(--sc-on);
+}
+
+.sc-switch-knob
+{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+    transition: transform 0.2s ease;
+}
+
+.sc-switch-on .sc-switch-knob
+{
+    transform: translateX(18px);
+}
+
+.sc-switch:disabled
+{
+    cursor: not-allowed;
+}
+
+.sc-switch-busy
+{
+    opacity: 0.6;
+}
+
+.sc-switch-busy .sc-switch-knob
+{
+    animation: sc-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes sc-pulse
+{
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+}
+
+/* =====================================================
+   PAGE STATES (error / no match)
+===================================================== */
+
+.sc-page-state
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-border);
+    border-radius: 14px;
+}
+
+/* =====================================================
+   SKELETON (loading)
+===================================================== */
+
+.sc-panel-skeleton .sc-panel-header
+{
+    background: #f4f7fb;
+}
+
+.sc-skeleton
+{
+    display: block;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 50%, #eef2f7 100%);
+    background-size: 200% 100%;
+    animation: sc-shimmer 1.2s ease-in-out infinite;
+}
+
+.sc-skeleton-title
+{
+    width: 45%;
+    height: 14px;
+}
+
+.sc-skeleton-card
+{
+    height: 74px;
+}
+
+@keyframes sc-shimmer
+{
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1400px)
+{
+    /* Narrower screens : icon + number only */
+    .sc-counter-label
+    {
+        display: none;
+    }
+
+    .sc-counter
+    {
+        padding-right: 10px;
+    }
+}
+
+@media (max-width: 640px)
+{
+    .sc-counters
+    {
+        display: none;
+    }
+
+    .sc-grid
+    {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+    }
+
+    .sc-card-actions
+    {
+        opacity: 1;
+    }
+}

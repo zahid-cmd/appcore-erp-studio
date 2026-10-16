@@ -1,16 +1,28 @@
+// PAGE-CLONED : Bank Setup -> Card Setup
+// PAGE-CLONED : Wings -> Card Setup
 //===============================================================
 // Namespaces
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.CardSetup.DTOs;
 
-using AppCore.Domain.Common;
+using CardSetupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.CardSetup;
+
+using CardChargesEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.CardCharges;
+
+using BankSetupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.BankSetup;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.AccountSettings;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
@@ -21,81 +33,195 @@ namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// CardSetupRepository
+// CardSetup Repository
 //===============================================================
 
-public class CardSetupRepository
-    : ICardSetupRepository
+public class CardSetupRepository : ICardSetupRepository
 {
-
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public CardSetupRepository
-    (
-        AppDbContext context
-    )
+    public CardSetupRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // CardSetup Query
+    //===========================================================
+
+    private IQueryable<CardSetupDto> CardSetupQuery()
+    {
+        return _context
+            .Set<CardSetupEntity>()
+
+            .AsNoTracking()
+
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+
+            .Select
+            (
+                x =>
+                    new CardSetupDto
+                    {
+                        CardSetupId =
+                            x.CardSetupId,
+
+                        CardCode =
+                            x.CardCode,
+
+                        CardName =
+                            x.CardName,
+
+                        Remarks =
+                            x.Remarks,
+
+                        Status =
+                            x.Status,
+
+                        ShortName =
+                            x.ShortName,
+
+                        IssuingBank =
+                            x.IssuingBank,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+
+                        //===================================================
+                        // Soft Delete
+                        //===================================================
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+
+                        //===================================================
+                        // Audit
+                        //===================================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>>
+    public async Task<List<CardSetupDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>()
-            .AsNoTracking()
-            .Where(
+        return await CardSetupQuery()
+
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
+                    x.CardCode
             )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
+
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup?>
+    public async Task<CardSetupDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await CardSetupQuery()
+
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.CardSetupId ==
+                    id
             );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync()
+    {
+        List<string> existingCodes =
+            await _context.Set<CardSetupEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .Select(x => x.CardCode)
+                .ToListAsync();
+
+        int highest = 0;
+
+        foreach (string code in existingCodes)
+        {
+            if (string.IsNullOrWhiteSpace(code)) continue;
+
+            string[] parts = code.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 2) continue;
+
+            if (!string.Equals(parts[0].Trim(), "CRD", StringComparison.OrdinalIgnoreCase)) continue;
+
+            if (int.TryParse(parts[1].Trim(), out int sequenceNo) && sequenceNo > highest)
+                highest = sequenceNo;
+        }
+
+        return CodeGenerator.GenerateCardSetupCode(highest + 1);
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<CardSetupDefaultsDto>
+        GetDefaultsAsync()
+    {
+        return new CardSetupDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync()
+        };
+    }
 
 
     //===========================================================
@@ -104,41 +230,80 @@ public class CardSetupRepository
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup entity
-    )
+        (
+            CreateCardSetupDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+
+        //===========================================================
+        // Resolve CardSetup Code
+        //===========================================================
+
+        string cardSetupCode =
+            dto.CardCode?.Trim()
+            ??
+            string.Empty;
 
 
-        entity.IsActive =
-            true;
+        if
+        (
+            string.IsNullOrWhiteSpace(cardSetupCode)
+        )
+        {
+            cardSetupCode =
+                await GetNextCodeAsync();
+        }
 
 
-        entity.IsDeleted =
-            false;
+        //===========================================================
+        // Create Entity
+        //===========================================================
+
+        CardSetupEntity entity =
+            new CardSetupEntity
+            {
+                CardCode =
+                    cardSetupCode,
+
+                CardName =
+                    dto.CardName?.Trim()
+                    ??
+                    string.Empty,
+
+                Remarks =
+                    dto.Remarks?.Trim()
+                    ??
+                    string.Empty,
+
+                Status =
+                    dto.Status,
+
+                ShortName =
+                    dto.ShortName?.Trim()
+                    ??
+                    string.Empty,
+
+                IssuingBank =
+                    dto.IssuingBank?.Trim()
+                    ??
+                    string.Empty,
+
+                IsDeleted =
+                    false,
+
+                CreatedBy =
+                    userId,
+
+                CreatedDate =
+                    DateTime.UtcNow
+            };
 
 
-        entity.CreatedBy =
-            userId;
-
-
-        entity.CreatedDate =
-            DateTime.UtcNow;
-
-
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>()
-            .AddAsync(
+        _context
+            .Set<CardSetupEntity>()
+            .Add(
                 entity
             );
 
@@ -146,17 +311,22 @@ public class CardSetupRepository
         await _context.SaveChangesAsync();
 
 
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
                     "CardSetup",
 
                 EntityId =
-                    entity.Id,
+                    entity.CardSetupId,
 
                 ActivityType =
                     "Create",
@@ -165,7 +335,7 @@ public class CardSetupRepository
                     "CardSetup Created",
 
                 ActivityDescription =
-                    $"CardSetup '{entity.Name}' was created.",
+                    $"CardSetup '{entity.CardName}' created.",
 
                 PerformedBy =
                     userId,
@@ -182,9 +352,8 @@ public class CardSetupRepository
         await _context.SaveChangesAsync();
 
 
-        return entity.Id;
+        return entity.CardSetupId;
     }
-
 
 
     //===========================================================
@@ -193,79 +362,103 @@ public class CardSetupRepository
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup entity
-    )
+        (
+            UpdateCardSetupDto dto,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve CardSetup
+        //===========================================================
 
+        CardSetupEntity? entity =
 
-        var existing =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>()
-                .FirstOrDefaultAsync(
+                .Set<CardSetupEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+
+                        x.CardSetupId ==
+                        dto.CardSetupId
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            existing is null
+            entity ==
+            null
         )
         {
-            throw new InvalidOperationException(
-                "CardSetup record was not found."
+            throw new KeyNotFoundException(
+                "CardSetup not found."
             );
         }
 
 
-        existing.Code =
-            entity.Code;
+
+        entity.CardCode =
+            dto.CardCode?.Trim()
+            ??
+            string.Empty;
+
+        entity.CardName =
+            dto.CardName?.Trim()
+            ??
+            string.Empty;
+
+        entity.Remarks =
+            dto.Remarks?.Trim()
+            ??
+            string.Empty;
+
+        entity.Status =
+            dto.Status;
+
+        entity.ShortName =
+            dto.ShortName?.Trim()
+            ??
+            string.Empty;
+
+        entity.IssuingBank =
+            dto.IssuingBank?.Trim()
+            ??
+            string.Empty;
 
 
-        existing.Name =
-            entity.Name;
-
-
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
-
-
-        existing.SampleField =
-            entity.SampleField;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
+        entity.ModifiedBy =
             userId;
 
 
-        existing.ModifiedDate =
+        entity.ModifiedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
                     "CardSetup",
 
                 EntityId =
-                    existing.Id,
+                    entity.CardSetupId,
 
                 ActivityType =
                     "Update",
@@ -274,7 +467,7 @@ public class CardSetupRepository
                     "CardSetup Updated",
 
                 ActivityDescription =
-                    $"CardSetup '{existing.Name}' was updated.",
+                    $"CardSetup '{entity.CardName}' updated.",
 
                 PerformedBy =
                     userId,
@@ -292,68 +485,128 @@ public class CardSetupRepository
     }
 
 
-
     //===========================================================
     // Delete
+    //
+    // Blocked (409) while the card is used in Card Charges.
     //===========================================================
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+
+            long userId
+        )
     {
-        const long userId =
-            1;
+        //===========================================================
+        // Resolve CardSetup
+        //===========================================================
 
+        CardSetupEntity? entity =
 
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>()
-                .FirstOrDefaultAsync(
+                .Set<CardSetupEntity>()
+
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+
+                        x.CardSetupId ==
+                        id
+
                         &&
+
                         !x.IsDeleted
                 );
 
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "CardSetup not found."
+            );
         }
 
+
+        //===========================================================
+        // Dependency Check : Card Charges
+        //
+        // A card cannot be deleted while it is used in active POS
+        // card charges (returned as HTTP 409).
+        //===========================================================
+
+        int cardChargeCount =
+
+            await _context
+                .Set<CardChargesEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.CardSetupId ==
+                        entity.CardSetupId
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            cardChargeCount >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Card '{entity.CardName}' cannot be deleted because it is used in {cardChargeCount} POS card charge(s). Remove it from those card charges first."
+            );
+        }
+
+
+        //===========================================================
+        // Soft Delete CardSetup
+        //===========================================================
 
         entity.IsDeleted =
             true;
 
 
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
+        entity.DeletedBy =
             userId;
 
 
-        entity.ModifiedDate =
+        entity.DeletedDate =
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
                     "CardSetup",
 
                 EntityId =
-                    entity.Id,
+                    entity.CardSetupId,
 
                 ActivityType =
                     "Delete",
@@ -362,7 +615,7 @@ public class CardSetupRepository
                     "CardSetup Deleted",
 
                 ActivityDescription =
-                    $"CardSetup '{entity.Name}' was deleted.",
+                    $"CardSetup '{entity.CardName}' deleted.",
 
                 PerformedBy =
                     userId,
@@ -380,38 +633,156 @@ public class CardSetupRepository
     }
 
 
-
     //===========================================================
     // Restore
+    //
+    // Blocked (409) when:
+    //   • the issuing bank was deleted, or
+    //   • an active card now has the same name or code.
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
+        CardSetupEntity? entity =
 
-
-        var entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>()
-                .FirstOrDefaultAsync(
+                .Set<CardSetupEntity>()
+
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
+                )
+
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+
+                .FirstOrDefaultAsync();
+
+
+        if
+        (
+            entity ==
+            null
+        )
+        {
+            return false;
+        }
+
+
+        //===========================================================
+        // Parent : Issuing Bank must still be active
+        //===========================================================
+
+        string issuingBank =
+            entity.IssuingBank?.Trim()
+            ??
+            string.Empty;
+
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(issuingBank)
+        )
+        {
+            string bankKey =
+                issuingBank.ToUpper();
+
+
+            bool bankExists =
+
+                await _context
+                    .Set<BankSetupEntity>()
+
+                    .AsNoTracking()
+
+                    .AnyAsync
+                    (
+                        x =>
+
+                            !x.IsDeleted
+
+                            &&
+
+                            x.BankName.Trim().ToUpper() ==
+                            bankKey
+                    );
+
+
+            if
+            (
+                !bankExists
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Card '{entity.CardName}' cannot be restored because its issuing bank '{issuingBank}' has been deleted."
+                );
+            }
+        }
+
+
+        //===========================================================
+        // Duplicates : Card Name / Card Code
+        //===========================================================
+
+        string nameKey =
+            entity.CardName?.Trim().ToUpper()
+            ??
+            string.Empty;
+
+        string codeKey =
+            entity.CardCode?.Trim().ToUpper()
+            ??
+            string.Empty;
+
+
+        bool duplicateExists =
+
+            await _context
+                .Set<CardSetupEntity>()
+
+                .AsNoTracking()
+
+                .AnyAsync
+                (
+                    x =>
+
+                        !x.IsDeleted
+
+                        &&
+
+                        x.CardSetupId !=
+                        entity.CardSetupId
+
+                        &&
+
+                        (
+                            x.CardName.Trim().ToUpper() ==
+                            nameKey
+
+                            ||
+
+                            x.CardCode.Trim().ToUpper() ==
+                            codeKey
+                        )
                 );
 
 
         if
         (
-            entity is null
+            duplicateExists
         )
         {
-            return;
+            throw new InvalidOperationException(
+                $"Card '{entity.CardName}' ({entity.CardCode}) cannot be restored because an active card with the same name or code already exists."
+            );
         }
 
 
@@ -419,8 +790,12 @@ public class CardSetupRepository
             false;
 
 
-        entity.IsActive =
-            true;
+        entity.DeletedBy =
+            null;
+
+
+        entity.DeletedDate =
+            null;
 
 
         entity.ModifiedBy =
@@ -431,17 +806,25 @@ public class CardSetupRepository
             DateTime.UtcNow;
 
 
+        await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Activity History
+        //===========================================================
+
         _context.ActivityHistories.Add(
+
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
                     "CardSetup",
 
                 EntityId =
-                    entity.Id,
+                    entity.CardSetupId,
 
                 ActivityType =
                     "Restore",
@@ -450,7 +833,7 @@ public class CardSetupRepository
                     "CardSetup Restored",
 
                 ActivityDescription =
-                    $"CardSetup '{entity.Name}' was restored.",
+                    $"CardSetup '{entity.CardName}' restored.",
 
                 PerformedBy =
                     userId,
@@ -465,150 +848,35 @@ public class CardSetupRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        return true;
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
+        return await _context
+            .Set<CardSetupEntity>()
 
-            .AsNoTracking()
-
-            .Where(
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
 
-                    &&
-
-                    x.EntityName ==
-                    "CardSetup"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "CardSetup"
-
-                    &&
-
-                    x.EntityId ==
+                    x.CardSetupId ==
                     id
-            )
 
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
+                    &&
 
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
 }

@@ -1,5 +1,3 @@
-<!-- PAGE-CLONED : Cash Accounts -> Bank Accounts -->
-<!-- PAGE-CLONED : Wings -> Bank Accounts -->
 <div class="app-list-page">
 
     <!-- =====================================================
@@ -8,11 +6,11 @@
 
     <app-page-header
 
-        title="Bank Account"
+        title="Bank Accounts"
 
-        subtitle="Manage cash Accounts"
+        subtitle="Manage bank accounts"
 
-        icon="fas fa-layer-group">
+        icon="fas fa-building-columns">
 
         <div pageHeaderCenter>
 
@@ -20,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search bankAccounts..."
+                placeholder="Search bank accounts..."
 
                 (valueChange)="onSearch($event)">
 
@@ -79,6 +77,65 @@
 
         </app-control-tabs>
 
+
+        <!-- =================================================
+             FILTERS (Branch + Status)
+        ================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            style="display:flex; align-items:center; gap:12px;">
+
+
+            <!-- Branch Filter -->
+
+            <div style="width:300px;">
+
+                <app-search-dropdown
+
+                    placeholder="All Branches"
+
+                    [items]="branchFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedBranch"
+
+                    (valueChange)="onBranchFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            <!-- Status Filter -->
+
+            <div style="width:220px;">
+
+                <app-search-dropdown
+
+                    placeholder="All Status"
+
+                    [items]="statusFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedStatus"
+
+                    (valueChange)="onStatusFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+        </div>
+
     </app-page-toolbar>
 
 
@@ -121,7 +178,6 @@
             </app-list-table>
 
         </div>
-
 
 
         <!-- =================================================
@@ -173,5 +229,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

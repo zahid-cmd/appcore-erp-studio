@@ -4,47 +4,50 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.MFSAccounts.DTOs;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Api.Controllers.Settings.AccountSettings;
+namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 
 //===============================================================
-// MfsAccountsController
+// MFS Accounts Controller
 //===============================================================
 
 [ApiController]
 
 [Route("api/settings/account-settings/mfs-accounts")]
 
-public class MfsAccountsController
-    : ControllerBase
+public class MFSAccountsController : ControllerBase
 {
     //===========================================================
-    // Repository
+    // Fields
     //===========================================================
 
-    private readonly IMfsAccountsRepository _repository;
+    private readonly IMFSAccountsRepository _repository;
+
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public MfsAccountsController
-    (
-        IMfsAccountsRepository repository
-    )
+    public MFSAccountsController(
+        IMFSAccountsRepository repository,
+        IActivityHistoryRepository activityHistoryRepository)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
     }
 
 
@@ -54,16 +57,64 @@ public class MfsAccountsController
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<MFSAccountDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
+        List<MFSAccountDto> mfsAccounts =
+            await _repository.GetAllAsync();
+
+        return Ok(mfsAccounts);
+    }
 
 
-        return Ok(
-            entities
-        );
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    [HttpGet("next-code")]
+
+    public async Task<ActionResult<string>> GetNextCode(
+        [FromQuery] long accountSubGroupsId)
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    accountSubGroupsId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<MFSAccountsDefaultsDto>> GetDefaults(
+        [FromQuery] long accountSubGroupsId)
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetDefaultsAsync(
+                    accountSubGroupsId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -73,30 +124,18 @@ public class MfsAccountsController
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<MFSAccountDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        MFSAccountDto? mfsAccount =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
+        if (mfsAccount == null)
         {
-            return NotFound();
+            return NotFound("MFS Account not found.");
         }
 
-
-        return Ok(
-            entity
-        );
+        return Ok(mfsAccount);
     }
 
 
@@ -106,42 +145,28 @@ public class MfsAccountsController
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateMfsAccountsDto dto
-    )
+    public async Task<ActionResult<long>> Create(
+        CreateMFSAccountDto dto)
     {
-        var entity =
-            new MfsAccounts
-            {
-                Name =
-                    dto.Name,
+        long userId = 1;
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+            return Ok(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -149,66 +174,33 @@ public class MfsAccountsController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut]
 
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateMfsAccountsDto dto
-    )
+    public async Task<IActionResult> Update(
+        UpdateMFSAccountDto dto)
     {
-        if
-        (
-            id != dto.Id
-        )
+        if (!await _repository.ExistsAsync(
+                dto.MFSAccountId))
         {
-            return BadRequest();
+            return NotFound("MFS Account not found.");
         }
 
+        long userId = 1;
 
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        try
         {
-            return NotFound();
+            await _repository.UpdateAsync(
+                dto,
+                userId);
         }
-
-
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
 
         return NoContent();
     }
@@ -220,32 +212,34 @@ public class MfsAccountsController
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public async Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        if (!await _repository.ExistsAsync(id))
         {
-            return NotFound();
+            return NotFound("MFS Account not found.");
         }
 
+        long userId = 1;
 
-        await _repository
-            .DeleteAsync(
-                id
-            );
+        try
+        {
+            await _repository.DeleteAsync(
+                id,
+                userId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Deletion Blocked (future: vouchers / transactions)
+            //=======================================================
 
+            return Conflict(ex.Message);
+        }
 
         return NoContent();
     }
@@ -255,18 +249,32 @@ public class MfsAccountsController
     // Restore
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        long userId = 1;
 
+        try
+        {
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
+
+            if (!restored)
+            {
+                return NotFound(
+                    "There are no deleted MFS accounts available to restore.");
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Restore Blocked (same provider + number active)
+            //=======================================================
+
+            return Conflict(ex.Message);
+        }
 
         return NoContent();
     }
@@ -278,39 +286,11 @@ public class MfsAccountsController
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Account Settings",
+                "MFSAccount"));
     }
 }

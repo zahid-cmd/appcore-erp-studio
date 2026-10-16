@@ -6,7 +6,13 @@ namespace AppCore.Domain.Entities.Settings.GeneralSettings;
 
 
 //===============================================================
-// FinancialYears
+// Financial Years
+//
+// FinancialYearCode : system generated (FY-0001), never reused
+// FinancialYearName : system generated from the dates
+//                     FY 2026-2027 / FY 2026
+// YearStatus        : Open | Closed | Locked
+// IsCurrent         : only one active year can be current
 //===============================================================
 
 public class FinancialYears
@@ -15,149 +21,80 @@ public class FinancialYears
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long FinancialYearId { get; set; }
 
 
     //===========================================================
-    // Code
+    // Financial Year Code (auto generated)
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string FinancialYearCode { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Name
+    // Financial Year Name (auto generated)
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string FinancialYearName { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Period
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public DateOnly StartDate { get; set; }
+
+    public DateOnly EndDate { get; set; }
 
 
     //===========================================================
-    // Sample Field
+    // Current Year
     //===========================================================
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool IsCurrent { get; set; }
 
 
     //===========================================================
-    // Status
+    // Year Status (Open / Closed / Locked)
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public string YearStatus { get; set; } = "Open";
 
 
     //===========================================================
     // Remarks
     //===========================================================
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Active
+    // Status
     //===========================================================
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public bool Status { get; set; }
 
 
     //===========================================================
-    // Deleted
+    // Soft Delete
     //===========================================================
 
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
+    public bool IsDeleted { get; set; } = false;
 
+    public long? DeletedBy { get; set; }
 
-    //===========================================================
-    // Created By
-    //===========================================================
-
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Created Date
+    // Audit Information
     //===========================================================
 
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Modified By
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

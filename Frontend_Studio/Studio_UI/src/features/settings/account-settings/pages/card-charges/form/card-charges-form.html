@@ -1,16 +1,17 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-credit-card"
 
         [title]="pageTitle"
 
-        subtitle="Manage cardchargeses">
+        subtitle="Manage card charges per POS account">
 
         <app-command-center
 
@@ -45,7 +46,7 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : PAGE TOOLBAR (ENTRY BAR)
     ====================================================== -->
 
     <app-page-toolbar>
@@ -60,203 +61,295 @@
 
         </app-control-tabs>
 
+
+        <div
+
+            pageToolbarRight
+
+            class="cc-entry-bar">
+
+
+            <!-- POS Account (master) -->
+
+            <div class="cc-entry-pos">
+
+                <app-search-dropdown
+
+                    placeholder="Select POS Account"
+
+                    [items]="posAccountItems"
+
+                    [(value)]="entity.POSAccountId"
+
+                    (valueChange)="onPosAccountChange()"
+
+                    [disabled]="isPosLocked"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            @if (!isViewMode)
+            {
+                <!-- Card -->
+
+                <div class="cc-entry-card">
+
+                    <app-search-dropdown
+
+                        placeholder="Select Card"
+
+                        [items]="cardItems"
+
+                        [(value)]="entryCardSetupId"
+
+                        [disabled]="isSaving || !entity.POSAccountId"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+                </div>
+
+
+                <!-- Charge % -->
+
+                <div class="cc-entry-charge">
+
+                    <app-textbox
+
+                        placeholder="Charge %"
+
+                        [value]="entryChargeText"
+
+                        (valueChange)="onChargeTextChange($event)"
+
+                        [disabled]="isSaving || !entity.POSAccountId"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                </div>
+
+
+                <!-- Add / Update -->
+
+                <button
+
+                    type="button"
+
+                    class="cc-btn cc-btn-primary"
+
+                    [disabled]="isSaving || !entity.POSAccountId"
+
+                    (click)="onAddLine()">
+
+                    <i [class]="isEditingLine ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                    <span>{{ isEditingLine ? 'Update' : 'Add' }}</span>
+
+                </button>
+
+
+                <!-- Cancel line edit -->
+
+                @if (isEditingLine)
+                {
+                    <button
+
+                        type="button"
+
+                        class="cc-btn cc-btn-light"
+
+                        title="Cancel editing"
+
+                        [disabled]="isSaving"
+
+                        (click)="cancelLineEdit()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+                }
+            }
+
+        </div>
+
     </app-page-toolbar>
 
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         SECTION 03 : PAGE CANVAS (CARD LINES)
     ====================================================== -->
 
     <app-page-canvas>
 
-        <app-form-grid
+        <div
 
             canvasBody
 
-            [columns]="4">
+            class="cc-canvas">
 
 
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
+            <!-- =================================================
+                 SUMMARY
+            ================================================== -->
 
-            <app-form-section
+            <div class="cc-summary">
 
-                title="General Information"
+                <div class="cc-summary-item">
 
-                icon="fas fa-circle-info">
+                    <span class="cc-summary-label">POS Account</span>
 
+                    <span class="cc-summary-value">
 
-                <!-- Code -->
+                        {{ selectedPosAccountName || '—' }}
 
-                <app-textbox
+                    </span>
 
-                    label="Code"
+                </div>
 
-                    placeholder="Auto generated"
 
-                    [(value)]="entity.code"
+                <div class="cc-summary-item">
 
-                    [readonly]="true"
+                    <span class="cc-summary-label">Cards</span>
 
-                    [required]="true">
+                    <span class="cc-summary-value">
 
-                </app-textbox>
+                        {{ lines.length }}
 
+                    </span>
 
+                </div>
 
-                <!-- Name -->
 
-                <app-textbox
+                @if (!isViewMode && lines.length > 0)
+                {
+                    <div class="cc-summary-hint">
 
-                    label="Name"
+                        <i class="fas fa-circle-info"></i>
 
-                    placeholder="Enter name"
+                        Double-click a row to edit it.
 
-                    [(value)]="entity.name"
+                    </div>
+                }
 
-                    (valueChange)="onValueChange()"
+            </div>
 
-                    [disabled]="isViewMode"
 
-                    [required]="true">
+            <!-- =================================================
+                 LINES TABLE
+            ================================================== -->
 
-                </app-textbox>
+            <div class="cc-table-wrap">
 
+                <table class="cc-table">
 
-            </app-form-section>
+                    <thead>
 
+                        <tr>
 
+                            <th class="cc-col-serial">#</th>
 
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
+                            <th class="cc-col-code">Card Code</th>
 
-            <app-form-section
+                            <th>Card Name</th>
 
-                title="Sample Information"
+                            <th class="cc-col-charge">Charge %</th>
 
-                icon="fas fa-layer-group">
+                            @if (!isViewMode)
+                            {
+                                <th class="cc-col-action">Action</th>
+                            }
 
+                        </tr>
 
-                <!-- Sample Search Dropdown -->
+                    </thead>
 
-                <app-search-dropdown
 
-                    label="Sample Search Dropdown"
+                    @if (lines.length > 0)
+                    {
+                        <tbody>
 
-                    [items]="items"
+                            @for (line of lines; track line.CardSetupId; let i = $index)
+                            {
+                                <tr
 
-                    labelField="text"
+                                    [class.cc-row-editing]="i === editingIndex"
 
-                    valueField="value"
+                                    [class.cc-row-clickable]="!isViewMode && !isSaving"
 
-                    [(value)]="entity.sampleSearchDropdownId"
+                                    (dblclick)="onRowDoubleClick(i)">
 
-                    (valueChange)="onValueChange()"
+                                    <td class="cc-col-serial">{{ i + 1 }}</td>
 
-                    [disabled]="isViewMode">
+                                    <td class="cc-col-code">{{ line.CardCode }}</td>
 
-                </app-search-dropdown>
+                                    <td>{{ line.CardName }}</td>
 
+                                    <td class="cc-col-charge">{{ formatCharge(line.ChargePercent) }}</td>
 
+                                    @if (!isViewMode)
+                                    {
+                                        <td class="cc-col-action">
 
-                <!-- Sample Field -->
+                                            <button
 
-                <app-textbox
+                                                type="button"
 
-                    label="Sample Field"
+                                                class="cc-icon-btn cc-icon-danger"
 
-                    placeholder="Enter sample value"
+                                                title="Remove"
 
-                    [(value)]="entity.sampleField"
+                                                [disabled]="isSaving"
 
-                    (valueChange)="onValueChange()"
+                                                (click)="removeLine(i, $event)">
 
-                    [disabled]="isViewMode">
+                                                <i class="fas fa-trash"></i>
 
-                </app-textbox>
+                                            </button>
 
+                                        </td>
+                                    }
 
-            </app-form-section>
+                                </tr>
+                            }
 
+                        </tbody>
+                    }
 
+                </table>
 
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
 
-            <app-form-section
+                <!-- =============================================
+                     EMPTY STATE (shared component)
+                ============================================== -->
 
-                title="Status Information"
+                @if (lines.length === 0)
+                {
+                    <div class="cc-table-state">
 
-                icon="fas fa-toggle-on">
+                        <app-empty-state
 
+                            [icon]="emptyIcon"
 
-                <!-- Status -->
+                            [title]="emptyTitle"
 
-                <app-dropdown
+                            [subtitle]="emptySubtitle">
 
-                    label="Status"
+                        </app-empty-state>
 
-                    [items]="statusItems"
+                    </div>
+                }
 
-                    labelField="text"
+            </div>
 
-                    valueField="value"
-
-                    [(value)]="entity.status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Additional Information"
-
-                icon="fas fa-clipboard">
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [(value)]="entity.remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
@@ -265,9 +358,11 @@
 
 
 <!-- =====================================================
-     UTILITIES
+     SECTION 04 : UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

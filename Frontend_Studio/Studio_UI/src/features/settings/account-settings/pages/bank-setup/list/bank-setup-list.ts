@@ -1,4 +1,3 @@
-// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Imports
 //===============================================================
@@ -7,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
@@ -31,6 +31,17 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -71,6 +82,12 @@ import
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
@@ -117,6 +134,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -127,7 +156,6 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-
 //===============================================================
 // Services
 //===============================================================
@@ -137,16 +165,6 @@ import
     BankSetupService
 }
 from '../../../services/bank-setup.service';
-
-//===============================================================
-// List Item
-//===============================================================
-
-interface BankSetupListItem
-extends BankSetup
-{
-}
-
 
 //===============================================================
 // Component
@@ -161,27 +179,18 @@ extends BankSetup
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
+        SearchDropdownComponent,
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
         ToastComponent
     ],
 
@@ -190,15 +199,13 @@ extends BankSetup
     styleUrl:'./bank-setup-list.css'
 })
 
-
 //===============================================================
-// BankSetup List
+// Bank Setup List
 //===============================================================
 
 export class BankSetupList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
@@ -206,26 +213,59 @@ implements OnInit
     private readonly bankSetupService =
         inject(BankSetupService);
 
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
+
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private readonly CONFIRM_CLOSE_DELAY_MS:
+        number =
+        150;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
     //===========================================================
     // Page Tabs
@@ -236,37 +276,47 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All BankSetup'
+            label:'All Bank Setup'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
-
 
     //===========================================================
     // Data
     //===========================================================
 
     bankSetup:
-        BankSetupListItem[] =
-    [];
-
+        BankSetup[] =
+        [];
 
     filteredBankSetup:
-        BankSetupListItem[] =
-    [];
-
+        BankSetup[] =
+        [];
 
     pagedBankSetup:
-        BankSetupListItem[] =
-    [];
+        BankSetup[] =
+        [];
 
+    //===========================================================
+    // Status Filter
+    //===========================================================
 
-//===========================================================
+    statusFilterItems:
+        any[] =
+    [
+        { label:'All Status', value:null },
+        { label:'Active', value:true },
+        { label:'Inactive', value:false }
+    ];
+
+    selectedStatus:
+        boolean | null =
+        null;
+
+    //===========================================================
     // Search & Loading
     //===========================================================
 
@@ -274,16 +324,13 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
 
-
     loadFailed:
         boolean =
         false;
-
 
     //===========================================================
     // Pagination
@@ -293,11 +340,9 @@ implements OnInit
         number =
         1;
 
-
     pageSize:
         number =
         10;
-
 
     //===========================================================
     // History
@@ -307,16 +352,13 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
-        'BankSetup History';
-
+        'Bank Setup History';
 
     historyItems:
         any[] =
-    [];
-
+        [];
 
     //===========================================================
     // Page Canvas Configuration
@@ -326,26 +368,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
 
     //===========================================================
     // Table Columns
@@ -356,67 +388,43 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'80px',
-
+            width:'60px',
             align:'center'
         },
-
         {
             header:'Bank Code',
-
             field:'BankCode',
-
-            width:'280px',
-
+            width:'180px',
             align:'center'
         },
-
         {
             header:'Bank Name',
-
             field:'BankName',
-
             align:'left'
         },
-
-
         {
             header:'Short Name',
-
             field:'ShortName',
-
+            width:'200px',
             align:'left'
         },
         {
             header:'Status',
-
             field:'Status',
-
-            width:'200px',
-
             type:'status',
-
+            width:'180px',
             align:'center'
         },
-
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
             width:'150px',
-
             align:'center'
         }
     ];
-
 
     //===========================================================
     // Initialize
@@ -428,9 +436,26 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Normalize BankSetup
+    // Normalize Bank Setup
     //===========================================================
 
     private normalizeBankSetup
@@ -438,7 +463,7 @@ implements OnInit
         item:
             any
     ):
-        BankSetupListItem
+        BankSetup
     {
         return {
             BankSetupId:
@@ -461,37 +486,6 @@ implements OnInit
         };
     }
 
-
-    //===========================================================
-    // Normalize BankSetup
-    //===========================================================
-
-    private normalizeBankSetupList
-    (
-        response:
-            any
-    ):
-        BankSetupListItem[]
-    {
-        if
-        (
-            !Array.isArray(response)
-        )
-        {
-            return [];
-        }
-
-
-        return response.map
-        (
-            item =>
-                this.normalizeBankSetup(
-                    item
-                )
-        );
-    }
-
-
     //===========================================================
     // Load Items
     //===========================================================
@@ -502,23 +496,9 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-
-        this.loadBankSetup();
-    }
-
-
-//===========================================================
-    // Load BankSetup
-    //===========================================================
-
-    private loadBankSetup():
-        void
-    {
         this.bankSetupService
             .getAll()
             .subscribe
@@ -526,44 +506,35 @@ implements OnInit
                 next:
                 (
                     response:
-                        BankSetup[]
+                        any
                 ):
                     void =>
                 {
-                    console.log
-                    (
-                        'BankSetup API Response:',
-                        response
-                    );
-
+                    const list:
+                        any[] =
+                        Array.isArray(response)
+                            ? response
+                            : [];
 
                     this.bankSetup =
-                        this.normalizeBankSetupList(
-                            response
+                        list.map
+                        (
+                            item =>
+                                this.normalizeBankSetup(
+                                    item
+                                )
                         );
 
-
-                    console.log
-                    (
-                        'Normalized BankSetup:',
-                        this.bankSetup
-                    );
-
-
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         false;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
@@ -572,48 +543,54 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.error
-                    (
-                        'Load BankSetup Error:',
+                    console.error(
+                        'Load Bank Setup Error:',
                         error
                     );
-
 
                     this.bankSetup =
                         [];
 
-
                     this.filteredBankSetup =
                         [];
-
 
                     this.pagedBankSetup =
                         [];
 
-
                     this.loading =
                         false;
-
 
                     this.loadFailed =
                         true;
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'Load Failed',
-
-                        'Unable to load bankSetup.'
+                        'Unable to load bank setup.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
 
+    //===========================================================
+    // Status Filter Change
+    //===========================================================
 
-//===========================================================
+    onStatusFilterChange
+    (
+        value:
+            boolean | null
+    ):
+        void
+    {
+        this.selectedStatus =
+            value;
+
+        this.applyFilters();
+    }
+
+    //===========================================================
     // Apply Filters
     //===========================================================
 
@@ -626,50 +603,59 @@ implements OnInit
                 .trim()
                 .toLowerCase();
 
-
         this.filteredBankSetup =
             this.bankSetup.filter
             (
                 (
                     item:
-                        BankSetupListItem
+                        BankSetup
                 ):
                     boolean =>
                 {
+                    const statusMatches =
+                        this.selectedStatus === null
+                        ||
+                        item.Status ===
+                        this.selectedStatus;
+
+                    if
+                    (
+                        !keyword
+                    )
+                    {
+                        return statusMatches;
+                    }
+
                     const values:
                         unknown[] =
                     [
                         item.BankCode,
                         item.BankName,
+                        item.ShortName,
                         item.Remarks,
-                        item.ShortName
+                        item.Status ? 'active' : 'inactive'
                     ];
 
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
+                    const keywordMatches =
+                        values.some
+                        (
                             value =>
                                 String(value ?? '')
                                     .toLowerCase()
                                     .includes(keyword)
-                        )
-                        ||
-                        (item.Status ? 'active' : 'inactive')
-                            .includes(keyword);
+                        );
 
-                    return searchMatch;
+                    return keywordMatches
+                        &&
+                        statusMatches;
                 }
             );
-
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
 
     //===========================================================
     // Search
@@ -687,10 +673,8 @@ implements OnInit
             ??
             '';
 
-
         this.applyFilters();
     }
-
 
     //===========================================================
     // Sort
@@ -702,7 +686,6 @@ implements OnInit
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
@@ -714,31 +697,27 @@ implements OnInit
             ...this.filteredBankSetup
         ];
 
-
         this.filteredBankSetup.sort
         (
             (
                 a:
-                    BankSetupListItem,
-
+                    BankSetup,
                 b:
-                    BankSetupListItem
+                    BankSetup
             ):
                 number =>
             {
                 const valueA:
                     any =
                     a[
-                        event.field as keyof BankSetupListItem
+                        event.field as keyof BankSetup
                     ];
-
 
                 const valueB:
                     any =
                     b[
-                        event.field as keyof BankSetupListItem
+                        event.field as keyof BankSetup
                     ];
-
 
                 if
                 (
@@ -750,7 +729,6 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
@@ -758,7 +736,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
 
                 if
                 (
@@ -768,7 +745,6 @@ implements OnInit
                     return 1;
                 }
 
-
                 if
                 (
                     typeof valueA === 'string'
@@ -777,12 +753,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
                 }
-
 
                 if
                 (
@@ -790,12 +763,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
+                        ? -1
+                        : 1;
                 }
-
 
                 if
                 (
@@ -803,25 +773,19 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
+                        ? 1
+                        : -1;
                 }
-
 
                 return 0;
             }
         );
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
 
     //===========================================================
     // Refresh
@@ -830,17 +794,25 @@ implements OnInit
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
 
+        this.selectedStatus =
+            null;
 
         this.currentPage =
             1;
 
-
         this.loadItems();
     }
-
 
     //===========================================================
     // Update Pagination
@@ -857,18 +829,15 @@ implements OnInit
             *
             this.pageSize;
 
-
         this.pagedBankSetup =
         [
             ...this.filteredBankSetup.slice
             (
                 start,
-
                 start + this.pageSize
             )
         ];
     }
-
 
     //===========================================================
     // Page Change
@@ -884,10 +853,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
 
     //===========================================================
     // Page Size Change
@@ -903,14 +870,11 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
 
     //===========================================================
     // Add
@@ -919,19 +883,25 @@ implements OnInit
     add():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'add'
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
 
     //===========================================================
     // View
@@ -940,25 +910,30 @@ implements OnInit
     view
     (
         item:
-            BankSetupListItem
+            BankSetup
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'view',
-
                 item.BankSetupId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
 
     //===========================================================
     // Edit
@@ -967,25 +942,30 @@ implements OnInit
     edit
     (
         item:
-            BankSetupListItem
+            BankSetup
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'edit',
-
                 item.BankSetupId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
 
     //===========================================================
     // Delete
@@ -994,125 +974,151 @@ implements OnInit
     delete
     (
         item:
-            BankSetupListItem
+            BankSetup
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
-            'Delete BankSetup',
-
-            `Are you sure you want to delete "${item.BankName}" ?`,
-
-            (): void =>
+            'Delete Bank Setup',
+            `Are you sure you want to delete "${item.BankName}"?`,
+            ():
+                void =>
             {
-                this.bankSetupService
-                    .delete
-                    (
-                        item.BankSetupId
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.BankName} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ):
-                            void =>
-                        {
-                            console.error
-                            (
-                                'Delete BankSetup Error:',
-                                error
-                            );
-
-
-                            //===================================================
-                            // Deletion Blocked
-                            //===================================================
-
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 409
-                            )
-                            {
-                                let message =
-                                    'BankSetup cannot be deleted because it is already configured.';
-
-
-                                if
-                                (
-                                    typeof error.error === 'string'
-                                    &&
-                                    error.error.trim()
-                                )
-                                {
-                                    message =
-                                        error.error;
-                                }
-                                else if
-                                (
-                                    error.error?.message
-                                )
-                                {
-                                    message =
-                                        error.error.message;
-                                }
-                                else if
-                                (
-                                    error.error?.title
-                                )
-                                {
-                                    message =
-                                        error.error.title;
-                                }
-
-
-                                this.toast.info
-                                (
-                                    'Delete Blocked',
-
-                                    message
-                                );
-
-
-                                return;
-                            }
-
-
-                            //===================================================
-                            // Delete Failed
-                            //===================================================
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete bankSetup.'
-                            );
-                        }
-                    });
+                // Let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout
+                (
+                    () =>
+                        this.deleteItem(
+                            item
+                        ),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             }
         );
     }
 
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+    private deleteItem
+    (
+        item:
+            BankSetup
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Bank Setup',
+            `Please wait while "${item.BankName}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.bankSetupService.delete(
+                item.BankSetupId
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Bank setup deleted.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Delete Successful',
+                            `${item.BankName} deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Bank Setup Error:',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        //=======================================
+                        // Deletion Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'Bank Setup cannot be deleted because it is already in use.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Not Found (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'This bank setup no longer exists. The list has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Delete Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete bank setup.'
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Restore
@@ -1121,25 +1127,33 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
-            'Restore BankSetup',
-
-            'Are you sure you want to restore the most recently deleted bankSetup?',
-
-            (): void =>
+            'Restore Bank Setup',
+            'Are you sure you want to restore the most recently deleted bank setup?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout
+                (
+                    () =>
+                        this.restoreItem(),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
 
     //===========================================================
     // Restore Item
@@ -1148,69 +1162,301 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.bankSetupService
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+        this.startProgress(
+            'Restoring Bank Setup',
+            'Please wait while the most recently deleted bank setup is being restored...'
+        );
 
-                        'The most recently deleted bankSetup has been restored.'
-                    );
-
-
-                    this.loadItems();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Restore BankSetup Error',
-
-                        error
-                    );
-
-
-                    if
-                    (
-                        error instanceof HttpErrorResponse
-                        &&
-                        error.status === 404
-                    )
+        this.withMinimumDuration(
+            this.bankSetupService.restore()
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Bank setup restored.',
+                    () =>
                     {
-                        this.toast.info
-                        (
-                            'No Data to Restore',
-
-                            'There is no deleted bankSetup record to restore.'
+                        this.toast.success(
+                            'Restore Successful',
+                            'The most recently deleted bank setup has been restored.'
                         );
 
-
-                        return;
+                        this.loadItems();
                     }
+                );
+            },
 
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Bank Setup Error',
+                    error
+                );
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There is no deleted bank setup record to restore.'
+                            );
 
-                        'Failed to restore bankSetup.'
-                    );
-                }
-            });
+                            return;
+                        }
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The bank setup cannot be restored.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore bank setup.'
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            HttpErrorResponse,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            typeof error.error === 'string'
+            &&
+            error.error.trim()
+        )
+        {
+            return error.error;
+        }
+
+        if
+        (
+            error.error?.message
+        )
+        {
+            return error.error.message;
+        }
+
+        if
+        (
+            error.error?.title
+        )
+        {
+            return error.error.title;
+        }
+
+        return fallback;
+    }
 
     //===========================================================
     // Open History
@@ -1231,7 +1477,7 @@ implements OnInit
                     void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
@@ -1240,12 +1486,10 @@ implements OnInit
                                     ??
                                     history.ActivityTitle,
 
-
                                 description:
                                     history.activityDescription
                                     ??
                                     history.ActivityDescription,
-
 
                                 user:
                                     history.performedByName
@@ -1254,16 +1498,13 @@ implements OnInit
                                     ??
                                     'System',
 
-
                                 dateTime:
-                                    new Date
-                                    (
+                                    new Date(
                                         history.performedDate
                                         ??
                                         history.PerformedDate
                                     )
                                     .toLocaleString(),
-
 
                                 badge:
                                     history.activityType
@@ -1272,18 +1513,14 @@ implements OnInit
                             })
                         );
 
-
                     this.historyTitle =
-                        'BankSetup Management History';
-
+                        'Bank Setup Management History';
 
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
@@ -1292,23 +1529,18 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.error
-                    (
+                    console.error(
                         'History Load Failed:',
                         error
                     );
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'History',
-
-                        'Failed to load bankSetup history.'
+                        'Failed to load bank setup history.'
                     );
                 }
             });
     }
-
 
     //===========================================================
     // Close History
@@ -1320,5 +1552,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

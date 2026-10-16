@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
@@ -29,6 +30,23 @@ import
     Router
 }
 from '@angular/router';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError
+}
+from 'rxjs';
+
+import
+{
+    catchError,
+    delayWhen,
+    switchMap
+}
+from 'rxjs/operators';
 
 //===============================================================
 // Models
@@ -131,6 +149,18 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 //===============================================================
 // Service
 //===============================================================
@@ -148,7 +178,9 @@ from '../../../services/product-master.service';
 @Component(
 {
     selector:'product-master-list',
+
     standalone:true,
+
     imports:
     [
         CommonModule,
@@ -163,36 +195,95 @@ from '../../../services/product-master.service';
         PaginationComponent,
         HistoryDrawerComponent,
         ConfirmDialogComponent,
-        ToastComponent
+        ToastComponent,
+        ProgressDialogComponent
     ],
+
     templateUrl:'./product-master-list.html',
+
     styleUrl:'./product-master-list.css'
 })
+
 //===============================================================
 // Product Master List
 //===============================================================
 
 export class ProductMasterList
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
     //===========================================================
+
     private readonly productMasterService =
         inject(ProductMasterService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
     private readonly toast =
         inject(ToastService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
     private readonly router =
         inject(Router);
+
     private readonly route =
         inject(ActivatedRoute);
+
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
+
+    private readonly minimumActionDurationMs:
+        number =
+        3000;
+
+    private readonly progressCeiling:
+        number =
+        90;
+
+    private readonly progressEaseFactor:
+        number =
+        0.06;
+
+    private readonly progressIntervalMs:
+        number =
+        100;
+
+    private readonly progressCompleteHoldMs:
+        number =
+        600;
+
+    private readonly confirmCloseDelayMs:
+        number =
+        150;
+
+    //===========================================================
+    // Progress State
+    //===========================================================
+
+    private progressTimer:
+        ReturnType<typeof setInterval> | null =
+        null;
+
+    private progressValue:
+        number =
+        0;
+
+    isProcessing:
+        boolean =
+        false;
+
     //===========================================================
     // Page Tabs
     //===========================================================
+
     tabs:
         ControlTab[] =
     [
@@ -201,24 +292,31 @@ implements OnInit
             label:'All Product Masters'
         }
     ];
+
     selectedTab:
         string =
         'all';
+
     //===========================================================
     // Data
     //===========================================================
+
     productMasters:
         ProductMaster[] =
-    [];
+        [];
+
     filteredProductMasters:
         ProductMaster[] =
-    [];
+        [];
+
     pagedProductMasters:
         ProductMaster[] =
-    [];
+        [];
+
     //===========================================================
     // Status Filter
     //===========================================================
+
     statusFilterItems:
         any[] =
     [
@@ -235,45 +333,59 @@ implements OnInit
             value:false
         }
     ];
+
     selectedStatus:
         boolean | null =
         null;
+
     //===========================================================
     // Search & Loading
     //===========================================================
+
     searchText:
         string =
         '';
+
     loading:
         boolean =
         false;
+
     loadFailed:
         boolean =
         false;
+
     //===========================================================
     // Pagination
     //===========================================================
+
     currentPage:
         number =
         1;
+
     pageSize:
         number =
         10;
+
     //===========================================================
     // History
     //===========================================================
+
     historyOpened:
         boolean =
         false;
+
     historyTitle:
         string =
         'Product Master History';
+
     historyItems:
         any[] =
-    [];
+        [];
+
     //===========================================================
     // Page Canvas Configuration
     //===========================================================
+
     readonly canvasConfig:
         PageCanvasConfig =
     {
@@ -288,9 +400,11 @@ implements OnInit
         headerHeight:36,
         footerHeight:56
     };
+
     //===========================================================
     // Table Columns
     //===========================================================
+
     readonly columns:
         ListTableColumn[] =
     [
@@ -347,7 +461,7 @@ implements OnInit
             header:'Status',
             field:'IsActive',
             type:'status',
-
+            width:'110px',
             align:'center'
         },
         {
@@ -358,17 +472,39 @@ implements OnInit
             align:'center'
         }
     ];
+
     //===========================================================
     // Initialize
     //===========================================================
+
     ngOnInit():
         void
     {
         this.loadItems();
     }
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
     //===========================================================
     // Normalize API Response
     //===========================================================
+
     private normalizeProductMaster
     (
         item:
@@ -435,9 +571,11 @@ implements OnInit
                 item?.productName
                 ??
                 '',
-            //===========================================================
+
+            //===================================================
             // Auto Ledger Codes
-            //===========================================================
+            //===================================================
+
             InventoryLedgerCode:
                 item?.InventoryLedgerCode
                 ??
@@ -456,9 +594,11 @@ implements OnInit
                 item?.cogsLedgerCode
                 ??
                 '',
-            //===========================================================
+
+            //===================================================
             // Auto Ledger Names
-            //===========================================================
+            //===================================================
+
             InventoryLedgerName:
                 item?.InventoryLedgerName
                 ??
@@ -477,19 +617,24 @@ implements OnInit
                 item?.cogsLedgerName
                 ??
                 '',
-            //===========================================================
+
+            //===================================================
             // Configuration
-            //===========================================================
+            //===================================================
+
             // TODO: Normalize Product Master specific configuration fields here
+
             Remarks:
                 item?.Remarks
                 ??
                 item?.remarks
                 ??
                 '',
-            //===========================================================
+
+            //===================================================
             // Status
-            //===========================================================
+            //===================================================
+
             IsActive:
                 Boolean(
                     item?.IsActive
@@ -500,9 +645,11 @@ implements OnInit
                 )
         };
     }
+
     //===========================================================
     // Normalize API Response List
     //===========================================================
+
     private normalizeProductMasters
     (
         response:
@@ -517,6 +664,7 @@ implements OnInit
         {
             return [];
         }
+
         return response.map
         (
             item =>
@@ -525,16 +673,20 @@ implements OnInit
                 )
         );
     }
+
     //===========================================================
     // Load Items
     //===========================================================
+
     loadItems():
         void
     {
         this.loading =
             true;
+
         this.loadFailed =
             false;
+
         this.productMasterService
             .getAll()
             .subscribe
@@ -546,27 +698,22 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.log
-                    (
-                        'Product Master API Response:',
-                        response
-                    );
                     this.productMasters =
                         this.normalizeProductMasters(
                             response
                         );
-                    console.log
-                    (
-                        'Normalized Product Masters:',
-                        this.productMasters
-                    );
+
                     this.applyFilters();
+
                     this.loading =
                         false;
+
                     this.loadFailed =
                         false;
+
                     this.cdr.detectChanges();
                 },
+
                 error:
                 (
                     error:
@@ -574,33 +721,40 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.error
-                    (
+                    console.error(
                         'Load Product Masters Error:',
                         error
                     );
+
                     this.productMasters =
                         [];
+
                     this.filteredProductMasters =
                         [];
+
                     this.pagedProductMasters =
                         [];
+
                     this.loading =
                         false;
+
                     this.loadFailed =
                         true;
-                    this.toast.error
-                    (
+
+                    this.toast.error(
                         'Load Failed',
                         'Unable to load product masters.'
                     );
+
                     this.cdr.detectChanges();
                 }
             });
     }
+
     //===========================================================
     // Status Filter Change
     //===========================================================
+
     onStatusFilterChange
     (
         value:
@@ -610,11 +764,14 @@ implements OnInit
     {
         this.selectedStatus =
             value;
+
         this.applyFilters();
     }
+
     //===========================================================
     // Apply Filters
     //===========================================================
+
     applyFilters():
         void
     {
@@ -622,6 +779,7 @@ implements OnInit
             this.searchText
                 .trim()
                 .toLowerCase();
+
         this.filteredProductMasters =
             this.productMasters.filter
             (
@@ -631,94 +789,65 @@ implements OnInit
                 ):
                     boolean =>
                 {
-                    const productCode =
-                        item.ProductCode
-                        ??
-                        '';
-                    const productName =
-                        item.ProductName
-                        ??
-                        '';
-                    const categoryName =
-                        item.ProductCategoryName
-                        ??
-                        '';
-                    const subCategoryName =
-                        item.ProductSubCategoryName
-                        ??
-                        '';
-                    const subCategoryCode =
-                        item.SubCategoryCode
-                        ??
-                        '';
-                    const ledgerText =
-                        [
-                            item.InventoryLedgerCode,
-                            item.InventoryLedgerName,
-                            item.WipLedgerCode,
-                            item.WipLedgerName,
-                            item.CogsLedgerCode,
-                            item.CogsLedgerName
-                        ]
-                            .join(' ')
-                            .toLowerCase();
-                    const remarks =
-                        item.Remarks
-                        ??
-                        '';
-                    const status =
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive';
                     const statusMatches =
                         this.selectedStatus === null
                         ||
                         item.IsActive ===
-                            this.selectedStatus;
-                    const keywordMatches =
+                        this.selectedStatus;
+
+                    if
+                    (
                         !keyword
-                        ||
-                        productCode
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        productName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        categoryName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        subCategoryName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        subCategoryCode
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        ledgerText
-                            .includes(keyword)
-                        ||
-                        remarks
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        status
-                            .includes(keyword);
-                        return keywordMatches
-                            &&
-                            statusMatches;
+                    )
+                    {
+                        return statusMatches;
+                    }
+
+                    const searchable:
+                        string[] =
+                    [
+                        item.ProductCode ?? '',
+                        item.ProductName ?? '',
+                        item.ProductCategoryName ?? '',
+                        item.ProductSubCategoryName ?? '',
+                        item.SubCategoryCode ?? '',
+                        item.InventoryLedgerCode ?? '',
+                        item.InventoryLedgerName ?? '',
+                        item.WipLedgerCode ?? '',
+                        item.WipLedgerName ?? '',
+                        item.CogsLedgerCode ?? '',
+                        item.CogsLedgerName ?? '',
+                        item.Remarks ?? '',
+                        item.IsActive
+                            ? 'active'
+                            : 'inactive'
+                    ];
+
+                    const keywordMatches =
+                        searchable.some
+                        (
+                            value =>
+                                value
+                                    .toLowerCase()
+                                    .includes(keyword)
+                        );
+
+                    return keywordMatches
+                        &&
+                        statusMatches;
                 }
             );
+
         this.currentPage =
             1;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Search
     //===========================================================
+
     onSearch
     (
         value:
@@ -730,11 +859,14 @@ implements OnInit
             value
             ??
             '';
+
         this.applyFilters();
     }
+
     //===========================================================
     // Sort
     //===========================================================
+
     onSort
     (
         event:
@@ -751,6 +883,7 @@ implements OnInit
         [
             ...this.filteredProductMasters
         ];
+
         this.filteredProductMasters.sort
         (
             (
@@ -766,11 +899,13 @@ implements OnInit
                     a[
                         event.field as keyof ProductMaster
                     ];
+
                 const valueB:
                     any =
                     b[
                         event.field as keyof ProductMaster
                     ];
+
                 if
                 (
                     valueA == null
@@ -780,6 +915,7 @@ implements OnInit
                 {
                     return 0;
                 }
+
                 if
                 (
                     valueA == null
@@ -787,6 +923,7 @@ implements OnInit
                 {
                     return -1;
                 }
+
                 if
                 (
                     valueB == null
@@ -794,6 +931,7 @@ implements OnInit
                 {
                     return 1;
                 }
+
                 if
                 (
                     typeof valueA === 'string'
@@ -802,57 +940,71 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                            valueA.localeCompare(valueB)
-                        :
-                            valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
                 }
+
                 if
                 (
                     valueA < valueB
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                            -1
-                        :
-                            1;
+                        ? -1
+                        : 1;
                 }
+
                 if
                 (
                     valueA > valueB
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                            1
-                        :
-                            -1;
+                        ? 1
+                        : -1;
                 }
+
                 return 0;
             }
         );
+
         this.currentPage =
             1;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Refresh
     //===========================================================
+
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
+
         this.selectedStatus =
             null;
+
         this.currentPage =
             1;
+
         this.loadItems();
     }
+
     //===========================================================
     // Update Pagination
     //===========================================================
+
     updatePagination():
         void
     {
@@ -863,6 +1015,7 @@ implements OnInit
             )
             *
             this.pageSize;
+
         this.pagedProductMasters =
         [
             ...this.filteredProductMasters.slice
@@ -872,9 +1025,11 @@ implements OnInit
             )
         ];
     }
+
     //===========================================================
     // Page Change
     //===========================================================
+
     onPageChange
     (
         page:
@@ -884,11 +1039,14 @@ implements OnInit
     {
         this.currentPage =
             page;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Page Size Change
     //===========================================================
+
     onPageSizeChange
     (
         size:
@@ -898,16 +1056,28 @@ implements OnInit
     {
         this.pageSize =
             size;
+
         this.currentPage =
             1;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Add
     //===========================================================
+
     add():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
@@ -919,9 +1089,11 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // View
     //===========================================================
+
     view
     (
         item:
@@ -929,6 +1101,14 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
@@ -941,9 +1121,11 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // Edit
     //===========================================================
+
     edit
     (
         item:
@@ -951,6 +1133,14 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         void this.router.navigate
         (
             [
@@ -963,9 +1153,11 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // Delete
     //===========================================================
+
     delete
     (
         item:
@@ -973,6 +1165,14 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Delete Product Master',
@@ -980,100 +1180,167 @@ implements OnInit
             ():
                 void =>
             {
-                this.productMasterService
-                    .delete
-                    (
-                        item.ProductMasterId
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        ():
-                            void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-                                `${item.ProductName} and its auto-generated General Ledgers deleted successfully.`
-                            );
-                            this.loadItems();
-                        },
-                        error:
-                        (
-                            error:
-                                unknown
-                        ):
-                            void =>
-                        {
-                            console.error
-                            (
-                                'Delete Product Master Error:',
-                                error
-                            );
-                            //===================================================
-                            // Deletion Blocked
-                            //===================================================
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 409
-                            )
-                            {
-                                let message =
-                                    'Product Master cannot be deleted because it or its auto-generated General Ledgers are already configured.';
-                                if
-                                (
-                                    typeof error.error === 'string'
-                                    &&
-                                    error.error.trim()
-                                )
-                                {
-                                    message =
-                                        error.error;
-                                }
-                                else if
-                                (
-                                    error.error?.message
-                                )
-                                {
-                                    message =
-                                        error.error.message;
-                                }
-                                else if
-                                (
-                                    error.error?.title
-                                )
-                                {
-                                    message =
-                                        error.error.title;
-                                }
-                                this.toast.info
-                                (
-                                    'Delete Blocked',
-                                    message
-                                );
-                                return;
-                            }
-                            //===================================================
-                            // Delete Failed
-                            //===================================================
-                            this.toast.error
-                            (
-                                'Delete Failed',
-                                'Failed to delete product master and its auto-generated General Ledgers.'
-                            );
-                        }
-                    });
+                //===============================================
+                // Let the confirm dialog close first
+                //===============================================
+
+                setTimeout
+                (
+                    ():
+                        void =>
+                        this.deleteItem(
+                            item
+                        ),
+                    this.confirmCloseDelayMs
+                );
             }
         );
     }
+
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+    private deleteItem
+    (
+        item:
+            ProductMaster
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.startProgress(
+            'Deleting Product Master',
+            `Deleting "${item.ProductName}" and its auto-generated General Ledgers...`
+        );
+
+        this.withMinimumDuration(
+            this.productMasterService.delete(
+                item.ProductMasterId
+            ),
+            this.minimumActionDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Product Master deleted successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isProcessing =
+                            false;
+
+                        this.toast.success(
+                            'Delete Successful',
+                            `${item.ProductName} and its auto-generated General Ledgers deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Product Master Error:',
+                    error
+                );
+
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isProcessing =
+                            false;
+
+                        //=======================================
+                        // Deletion Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'Product Master cannot be deleted because it is already used in transactions.'
+                                )
+                            );
+
+                            this.cdr.detectChanges();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Not Found (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'This product master no longer exists. The list has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Delete Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete product master and its auto-generated General Ledgers.'
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
+    }
+
     //===========================================================
     // Restore
     //===========================================================
+
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Restore Product Master',
@@ -1081,71 +1348,401 @@ implements OnInit
             ():
                 void =>
             {
-                this.restoreItem();
+                //===============================================
+                // Let the confirm dialog close first
+                //===============================================
+
+                setTimeout
+                (
+                    ():
+                        void =>
+                        this.restoreItem(),
+                    this.confirmCloseDelayMs
+                );
             },
             'Restore',
             'Cancel',
             'primary'
         );
     }
+
     //===========================================================
     // Restore Item
     //===========================================================
+
     private restoreItem():
         void
     {
-        this.productMasterService
-            .restore()
-            .subscribe
-            ({
-                next:
+        this.isProcessing =
+            true;
+
+        this.startProgress(
+            'Restoring Product Master',
+            'Restoring the most recently deleted product master and its General Ledgers...'
+        );
+
+        this.withMinimumDuration(
+            this.productMasterService.restore(),
+            this.minimumActionDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Product Master restored successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isProcessing =
+                            false;
+
+                        this.toast.success(
+                            'Restore Successful',
+                            'The Product Master and its auto-generated General Ledgers have been restored successfully.'
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Product Master Error:',
+                    error
+                );
+
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isProcessing =
+                            false;
+
+                        //=======================================
+                        // Nothing To Restore (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There is no deleted product master record to restore.'
+                            );
+
+                            this.cdr.detectChanges();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Restore Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The product master cannot be restored.'
+                                )
+                            );
+
+                            this.cdr.detectChanges();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Restore Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore the product master and its auto-generated General Ledgers.'
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
+    }
+
+    //===========================================================
+    // Progress : Start (animated easing toward ceiling)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.progressDialog.update(
+            0,
+            message
+        );
+
+        this.progressTimer =
+            setInterval
+            (
                 ():
                     void =>
                 {
-                    this.toast.success
-                    (
-                        'Restore Successful',
-                        'The Product Master and its auto-generated General Ledgers have been restored successfully.'
-                    );
-                    this.loadItems();
-                },
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Restore Product Master Error:',
-                        error
-                    );
-                    if
-                    (
-                        error instanceof HttpErrorResponse
-                        &&
-                        error.status === 404
-                    )
-                    {
-                        this.toast.info
-                        (
-                            'No Data to Restore',
-                            'There is no deleted product master record to restore.'
+                    const step =
+                        Math.max(
+                            0.4,
+                            (
+                                this.progressCeiling -
+                                this.progressValue
+                            )
+                            *
+                            this.progressEaseFactor
                         );
-                        return;
-                    }
-                    this.toast.error
-                    (
-                        'Restore Failed',
-                        'Failed to restore the product master and its auto-generated General Ledgers.'
+
+                    this.progressValue =
+                        Math.min(
+                            this.progressCeiling,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
                     );
-                }
-            });
+                },
+                this.progressIntervalMs
+            );
     }
+
+    //===========================================================
+    // Progress : Complete
+    //===========================================================
+
+    private completeProgress
+    (
+        message:
+            string,
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            100;
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        setTimeout
+        (
+            ():
+                void =>
+            {
+                this.progressDialog.close();
+
+                callback();
+            },
+            this.progressCompleteHoldMs
+        );
+    }
+
+    //===========================================================
+    // Progress : Fail
+    //===========================================================
+
+    private failProgress
+    (
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        callback();
+    }
+
+    //===========================================================
+    // Progress : Clear Timer
+    //===========================================================
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer !== null
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                null;
+        }
+    }
+
+    //===========================================================
+    // Minimum Duration Wrapper
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source:
+            Observable<T>,
+        minimumMs:
+            number
+    ):
+        Observable<T>
+    {
+        return defer
+        (
+            ():
+                Observable<T> =>
+            {
+                const startedAt =
+                    Date.now();
+
+                const remaining =
+                    ():
+                        number =>
+                        Math.max(
+                            0,
+                            minimumMs -
+                            (
+                                Date.now() -
+                                startedAt
+                            )
+                        );
+
+                return source.pipe
+                (
+                    delayWhen
+                    (
+                        () =>
+                            timer(
+                                remaining()
+                            )
+                    ),
+
+                    catchError
+                    (
+                        error =>
+                            timer(
+                                remaining()
+                            )
+                            .pipe
+                            (
+                                switchMap
+                                (
+                                    () =>
+                                        throwError(
+                                            () => error
+                                        )
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
+        }
+
+        return fallback;
+    }
+
     //===========================================================
     // Open History
     //===========================================================
+
     openHistory():
         void
     {
@@ -1169,36 +1766,43 @@ implements OnInit
                                     history.activityTitle
                                     ??
                                     history.ActivityTitle,
+
                                 description:
                                     history.activityDescription
                                     ??
                                     history.ActivityDescription,
+
                                 user:
                                     history.performedByName
                                     ??
                                     history.PerformedByName
                                     ??
                                     'System',
+
                                 dateTime:
-                                    new Date
-                                    (
+                                    new Date(
                                         history.performedDate
                                         ??
                                         history.PerformedDate
                                     )
                                     .toLocaleString(),
+
                                 badge:
                                     history.activityType
                                     ??
                                     history.ActivityType
                             })
                         );
+
                     this.historyTitle =
                         'Product Master Management History';
+
                     this.historyOpened =
                         true;
+
                     this.cdr.detectChanges();
                 },
+
                 error:
                 (
                     error:
@@ -1206,22 +1810,23 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.error
-                    (
+                    console.error(
                         'History Load Failed:',
                         error
                     );
-                    this.toast.error
-                    (
+
+                    this.toast.error(
                         'History',
                         'Failed to load product master history.'
                     );
                 }
             });
     }
+
     //===========================================================
     // Close History
     //===========================================================
+
     closeHistory():
         void
     {

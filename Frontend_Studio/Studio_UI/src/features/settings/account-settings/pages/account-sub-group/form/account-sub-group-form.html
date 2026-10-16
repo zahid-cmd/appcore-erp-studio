@@ -152,7 +152,7 @@
 
             <!-- =============================================
                  SECTION 02
-                 GROUP INFORMATION
+                 SUB GROUP INFORMATION
             ============================================== -->
 
             <app-form-section
@@ -163,23 +163,25 @@
 
 
 
-            <!-- Account Group -->
+                <!-- Account Group -->
 
-            <app-search-dropdown
+                <app-search-dropdown
 
-                label="Account Group"
+                    label="Account Group"
 
-                [items]="accountGroupItems"
+                    [items]="accountGroupItems"
 
-                [(value)]="entity.AccountGroupId"
+                    [(value)]="entity.AccountGroupId"
 
-                (valueChange)="onAccountGroupChange()"
+                    (valueChange)="onAccountGroupChange()"
 
-                [disabled]="isEditMode || isViewMode"
+                    [disabled]="isEditMode || isViewMode"
 
-                [required]="true">
+                    [required]="true">
 
-            </app-search-dropdown>
+                </app-search-dropdown>
+
+
 
                 <!-- Sub Group Code -->
 
@@ -196,6 +198,7 @@
                     [required]="true">
 
                 </app-textbox>
+
 
 
                 <!-- Sub Group Name -->
@@ -222,13 +225,13 @@
 
             <!-- =============================================
                  SECTION 03
-                 SUB GROUP INFORMATION
+                 STATUS & CONTROL
             ============================================== -->
 
             <app-form-section
 
                 title="Status & Control"
-                
+
                 icon="fas fa-toggle-on">
 
 
@@ -279,7 +282,7 @@
 
             <!-- =============================================
                  SECTION 04
-                 STATUS & CONTROL
+                 DESCRIPTION
             ============================================== -->
 
             <app-form-section
@@ -326,3 +329,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

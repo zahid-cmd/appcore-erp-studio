@@ -2,72 +2,29 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.CardCharges.DTOs;
 
 
 //===============================================================
-// CreateCardChargesDto
+// Create Card Charges DTO
+//
+// Master = POS Account. Details = card charge lines.
+// Line CardChargeId = 0 means a new line.
 //===============================================================
 
 public class CreateCardChargesDto
 {
     //===========================================================
-    // Name
+    // Master : POS Account
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long POSAccountId { get; set; }
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Details : Card Charge Lines
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public List<SaveCardChargeLineDto> Details { get; set; } =
+        new List<SaveCardChargeLineDto>();
 }

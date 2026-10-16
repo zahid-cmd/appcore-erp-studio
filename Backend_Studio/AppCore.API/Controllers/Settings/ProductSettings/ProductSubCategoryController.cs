@@ -75,9 +75,20 @@ public class ProductSubCategoryController : ControllerBase
     public async Task<ActionResult<string>> GetNextCode(
         long productCategoryId)
     {
-        return Ok(
-            await _repository.GetNextCodeAsync(
-                productCategoryId));
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    productCategoryId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -90,9 +101,20 @@ public class ProductSubCategoryController : ControllerBase
     public async Task<ActionResult<ProductSubCategoryDefaultsDto>> GetDefaults(
         long productCategoryId)
     {
-        return Ok(
-            await _repository.GetDefaultsAsync(
-                productCategoryId));
+        try
+        {
+            return Ok(
+                await _repository.GetDefaultsAsync(
+                    productCategoryId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -128,12 +150,23 @@ public class ProductSubCategoryController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -154,9 +187,20 @@ public class ProductSubCategoryController : ControllerBase
 
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
 
         return NoContent();
     }
@@ -180,13 +224,11 @@ public class ProductSubCategoryController : ControllerBase
             return NotFound();
         }
 
-
         //===========================================================
         // Current User
         //===========================================================
 
         long userId = 1;
-
 
         //===========================================================
         // Delete
@@ -198,14 +240,23 @@ public class ProductSubCategoryController : ControllerBase
                 id,
                 userId);
         }
-        catch
-        (
-            KeyNotFoundException ex
-        )
+        catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Deletion Blocked
+            //
+            // Raised by the repository when Product Masters still
+            // exist under this Sub Category. Returned as HTTP 409
+            // with a plain-text message for the "Delete Blocked"
+            // toast.
+            //=======================================================
 
+            return Conflict(ex.Message);
+        }
 
         //===========================================================
         // Delete Successful
@@ -225,14 +276,28 @@ public class ProductSubCategoryController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
-
-        if (!restored)
+        try
         {
-            return NotFound(
-                "There are no deleted product sub categories available to restore.");
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
+
+            if (!restored)
+            {
+                return NotFound(
+                    "There are no deleted product sub categories available to restore.");
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Restore Blocked
+            //
+            // Parent Product Category is deleted, or the name is
+            // already used by another active sub category.
+            //=======================================================
+
+            return Conflict(ex.Message);
         }
 
         return NoContent();

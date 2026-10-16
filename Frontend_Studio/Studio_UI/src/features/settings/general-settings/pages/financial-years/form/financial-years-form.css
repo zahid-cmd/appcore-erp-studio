@@ -1,1 +1,89 @@
 @import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   FINANCIAL YEARS FORM
+
+   Layout comes from the shared form-page styles. The
+   date fields use the shared app-datepicker; only
+   their labels and the duration hint are styled here.
+===================================================== */
+
+:host
+{
+    display: block;
+
+    --fy-border: #e2e8f0;
+    --fy-border-focus: #26338a;
+    --fy-focus-ring: rgba(38, 51, 138, 0.12);
+    --fy-text: #1f2937;
+    --fy-muted: #64748b;
+    --fy-disabled-bg: #f8fafc;
+    --fy-danger: #dc2626;
+    --fy-accent: #26338a;
+}
+
+/* =====================================================
+   DATE FIELD
+===================================================== */
+
+.fy-date-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.fy-date-label
+{
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fy-text);
+}
+
+.fy-required
+{
+    color: var(--fy-danger);
+}
+
+/* =====================================================
+   DURATION HINT
+===================================================== */
+
+.fy-duration
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(38, 51, 138, 0.06);
+    color: var(--fy-accent);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.fy-duration-invalid
+{
+    background: rgba(220, 38, 38, 0.08);
+    color: var(--fy-danger);
+}
+
+.fy-reset-link
+{
+    margin-left: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.fy-reset-link:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}

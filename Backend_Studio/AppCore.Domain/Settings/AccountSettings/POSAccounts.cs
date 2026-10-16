@@ -6,158 +6,126 @@ namespace AppCore.Domain.Entities.Settings.AccountSettings;
 
 
 //===============================================================
-// PosAccounts
+// POS Accounts
+//
+// POSAccountName is system generated (UPPERCASE):
+// POS - <Issuing Bank Short Name> - <Terminal Number>
+//     - <Short Bank Name of Linked Bank Account>
 //===============================================================
 
-public class PosAccounts
+public class POSAccounts
 {
     //===========================================================
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long POSAccountId { get; set; }
 
 
     //===========================================================
-    // Code
+    // Account Sub Groups Id
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long AccountSubGroupsId { get; set; }
 
 
     //===========================================================
-    // Name
+    // POS Account Code
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string POSAccountCode { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // POS Account Name (auto generated)
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string POSAccountName { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Field
+    // Issuing Bank (Bank Setup → Bank Name)
     //===========================================================
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string IssuingBank { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Status
+    // Terminal Number
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public string TerminalNumber { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Linked Bank Account (Bank Accounts → Display Name)
+    //===========================================================
+
+    public string LinkedBankAccount { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Branch
+    //===========================================================
+
+    public string Branch { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Collection Account
+    //===========================================================
+
+    public bool CollectionAccount { get; set; }
+
+
+    //===========================================================
+    // Payment Account
+    //===========================================================
+
+    public bool PaymentAccount { get; set; }
+
+
+    //===========================================================
+    // Branch Exclusive
+    //===========================================================
+
+    public bool BranchExclusive { get; set; }
 
 
     //===========================================================
     // Remarks
     //===========================================================
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Active
+    // Status
     //===========================================================
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public bool Status { get; set; }
 
 
     //===========================================================
-    // Deleted
+    // Soft Delete
     //===========================================================
 
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
+    public bool IsDeleted { get; set; } = false;
 
+    public long? DeletedBy { get; set; }
 
-    //===========================================================
-    // Created By
-    //===========================================================
-
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Created Date
+    // Audit Information
     //===========================================================
 
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Modified By
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

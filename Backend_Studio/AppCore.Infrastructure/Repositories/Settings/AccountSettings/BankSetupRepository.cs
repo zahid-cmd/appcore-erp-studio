@@ -1,15 +1,27 @@
-// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Namespaces
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.BankSetup.DTOs;
 
 using BankSetupEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.BankSetup;
+
+using BankAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
+
+using CardSetupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.CardSetup;
+
+using MFSAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.MFSAccounts;
+
+using POSAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.POSAccounts;
 
 using AppCore.Infrastructure.Persistence;
 
@@ -26,11 +38,25 @@ namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// BankSetup Repository
+// Bank Setup Repository
 //===============================================================
 
 public class BankSetupRepository : IBankSetupRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    private const string ModuleName =
+        "Account Settings";
+
+    private const string EntityName =
+        "BankSetup";
+
+    private const string CodePrefix =
+        "BAN";
+
+
     //===========================================================
     // Private Fields
     //===========================================================
@@ -51,22 +77,15 @@ public class BankSetupRepository : IBankSetupRepository
 
 
     //===========================================================
-    // BankSetup Query
+    // Bank Setup Query
     //===========================================================
 
     private IQueryable<BankSetupDto> BankSetupQuery()
     {
         return _context
             .Set<BankSetupEntity>()
-
             .AsNoTracking()
-
-            .Where
-            (
-                x =>
-                    !x.IsDeleted
-            )
-
+            .Where(x => !x.IsDeleted)
             .Select
             (
                 x =>
@@ -93,10 +112,9 @@ public class BankSetupRepository : IBankSetupRepository
                         IsDeleted =
                             x.IsDeleted,
 
-
-                        //===================================================
+                        //===============================================
                         // Soft Delete
-                        //===================================================
+                        //===============================================
 
                         DeletedBy =
                             x.DeletedBy,
@@ -104,10 +122,9 @@ public class BankSetupRepository : IBankSetupRepository
                         DeletedDate =
                             x.DeletedDate,
 
-
-                        //===================================================
+                        //===============================================
                         // Audit
-                        //===================================================
+                        //===============================================
 
                         CreatedBy =
                             x.CreatedBy,
@@ -133,13 +150,7 @@ public class BankSetupRepository : IBankSetupRepository
         GetAllAsync()
     {
         return await BankSetupQuery()
-
-            .OrderBy
-            (
-                x =>
-                    x.BankCode
-            )
-
+            .OrderBy(x => x.BankCode)
             .ToListAsync();
     }
 
@@ -155,18 +166,15 @@ public class BankSetupRepository : IBankSetupRepository
         )
     {
         return await BankSetupQuery()
-
-            .FirstOrDefaultAsync
-            (
-                x =>
-                    x.BankSetupId ==
-                    id
-            );
+            .FirstOrDefaultAsync(x => x.BankSetupId == id);
     }
 
 
     //===========================================================
     // Get Next Code
+    //
+    // Deleted rows are included so a new code never collides
+    // with a soft-deleted record that may be restored later.
     //===========================================================
 
     public async Task<string>
@@ -175,7 +183,6 @@ public class BankSetupRepository : IBankSetupRepository
         List<string> existingCodes =
             await _context.Set<BankSetupEntity>()
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted)
                 .Select(x => x.BankCode)
                 .ToListAsync();
 
@@ -183,16 +190,28 @@ public class BankSetupRepository : IBankSetupRepository
 
         foreach (string code in existingCodes)
         {
-            if (string.IsNullOrWhiteSpace(code)) continue;
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                continue;
+            }
 
-            string[] parts = code.Split('-', StringSplitOptions.RemoveEmptyEntries);
+            string[] parts =
+                code.Split('-', StringSplitOptions.RemoveEmptyEntries);
 
-            if (parts.Length != 2) continue;
+            if (parts.Length != 2)
+            {
+                continue;
+            }
 
-            if (!string.Equals(parts[0].Trim(), "BAN", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(parts[0].Trim(), CodePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
 
             if (int.TryParse(parts[1].Trim(), out int sequenceNo) && sequenceNo > highest)
+            {
                 highest = sequenceNo;
+            }
         }
 
         return CodeGenerator.GenerateBankSetupCode(highest + 1);
@@ -222,60 +241,60 @@ public class BankSetupRepository : IBankSetupRepository
         CreateAsync
         (
             CreateBankSetupDto dto,
-
             long userId
         )
     {
+        string bankName =
+            Clean(dto.BankName);
 
-        //===========================================================
-        // Resolve BankSetup Code
-        //===========================================================
+        string shortName =
+            Clean(dto.ShortName);
 
-        string bankSetupCode =
-            dto.BankCode?.Trim()
-            ??
-            string.Empty;
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(bankSetupCode)
-        )
+        if (string.IsNullOrWhiteSpace(bankName))
         {
-            bankSetupCode =
-                await GetNextCodeAsync();
+            throw new InvalidOperationException(
+                "Bank Name is required.");
         }
 
+        await EnsureUniqueAsync(
+            bankName,
+            shortName,
+            excludeId: null);
 
-        //===========================================================
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        //=======================================================
+        // Resolve Code
+        //
+        // Always generated on the server, so two users saving
+        // at the same time cannot get the same code.
+        //=======================================================
+
+        string bankCode =
+            await GetNextCodeAsync();
+
+        //=======================================================
         // Create Entity
-        //===========================================================
+        //=======================================================
 
         BankSetupEntity entity =
             new BankSetupEntity
             {
                 BankCode =
-                    dto.BankCode?.Trim()
-                    ??
-                    string.Empty,
+                    bankCode,
 
                 BankName =
-                    dto.BankName?.Trim()
-                    ??
-                    string.Empty,
+                    bankName,
 
                 Remarks =
-                    dto.Remarks?.Trim()
-                    ??
-                    string.Empty,
+                    Clean(dto.Remarks),
 
                 Status =
                     dto.Status,
 
                 ShortName =
-                    dto.ShortName?.Trim()
-                    ??
-                    string.Empty,
+                    shortName,
 
                 IsDeleted =
                     false,
@@ -287,57 +306,26 @@ public class BankSetupRepository : IBankSetupRepository
                     DateTime.UtcNow
             };
 
-
         _context
             .Set<BankSetupEntity>()
-            .Add(
-                entity
-            );
-
+            .Add(entity);
 
         await _context.SaveChangesAsync();
 
-
-        //===========================================================
+        //=======================================================
         // Activity History
-        //===========================================================
+        //=======================================================
 
-        _context.ActivityHistories.Add(
-
-            new ActivityHistory
-            {
-                Module =
-                    "Account Settings",
-
-                EntityName =
-                    "BankSetup",
-
-                EntityId =
-                    entity.BankSetupId,
-
-                ActivityType =
-                    "Create",
-
-                ActivityTitle =
-                    "BankSetup Created",
-
-                ActivityDescription =
-                    $"BankSetup '{entity.BankName}' created.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
+        AddHistory(
+            entity.BankSetupId,
+            "Create",
+            "Bank Setup Created",
+            $"Bank Setup '{entity.BankName}' ({entity.BankCode}) created.",
+            userId);
 
         await _context.SaveChangesAsync();
 
+        await transaction.CommitAsync();
 
         return entity.BankSetupId;
     }
@@ -351,119 +339,102 @@ public class BankSetupRepository : IBankSetupRepository
         UpdateAsync
         (
             UpdateBankSetupDto dto,
-
             long userId
         )
     {
-        //===========================================================
-        // Resolve BankSetup
-        //===========================================================
-
         BankSetupEntity? entity =
-
             await _context
                 .Set<BankSetupEntity>()
-
                 .FirstOrDefaultAsync
                 (
                     x =>
-
-                        x.BankSetupId ==
-                        dto.BankSetupId
-
+                        x.BankSetupId == dto.BankSetupId
                         &&
-
                         !x.IsDeleted
                 );
 
-
-        if
-        (
-            entity ==
-            null
-        )
+        if (entity == null)
         {
             throw new KeyNotFoundException(
-                "BankSetup not found."
-            );
+                "Bank Setup not found.");
         }
 
+        string bankName =
+            Clean(dto.BankName);
 
+        string shortName =
+            Clean(dto.ShortName);
 
-        entity.BankCode =
-            dto.BankCode?.Trim()
-            ??
-            string.Empty;
+        if (string.IsNullOrWhiteSpace(bankName))
+        {
+            throw new InvalidOperationException(
+                "Bank Name is required.");
+        }
+
+        await EnsureUniqueAsync(
+            bankName,
+            shortName,
+            excludeId: entity.BankSetupId);
+
+        //=======================================================
+        // Rename Guard
+        //
+        // Bank Accounts and Card Setup store the Bank Name.
+        // Renaming a bank that is in use would orphan them.
+        //=======================================================
+
+        bool nameChanged =
+            !string.Equals(
+                entity.BankName?.Trim(),
+                bankName,
+                StringComparison.OrdinalIgnoreCase);
+
+        if (nameChanged)
+        {
+            List<string> usages =
+                await GetUsagesAsync(entity.BankName ?? string.Empty);
+
+            if (usages.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Bank Name of '{entity.BankName}' cannot be changed because it is used by " +
+                    $"{string.Join(", ", usages)}.");
+            }
+        }
+
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        // Bank Code is system generated and never changes on update.
 
         entity.BankName =
-            dto.BankName?.Trim()
-            ??
-            string.Empty;
+            bankName;
 
         entity.Remarks =
-            dto.Remarks?.Trim()
-            ??
-            string.Empty;
+            Clean(dto.Remarks);
 
         entity.Status =
             dto.Status;
 
         entity.ShortName =
-            dto.ShortName?.Trim()
-            ??
-            string.Empty;
-
+            shortName;
 
         entity.ModifiedBy =
             userId;
 
-
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+        AddHistory(
+            entity.BankSetupId,
+            "Update",
+            "Bank Setup Updated",
+            $"Bank Setup '{entity.BankName}' ({entity.BankCode}) updated.",
+            userId);
 
         await _context.SaveChangesAsync();
 
-
-        //===========================================================
-        // Activity History
-        //===========================================================
-
-        _context.ActivityHistories.Add(
-
-            new ActivityHistory
-            {
-                Module =
-                    "Account Settings",
-
-                EntityName =
-                    "BankSetup",
-
-                EntityId =
-                    entity.BankSetupId,
-
-                ActivityType =
-                    "Update",
-
-                ActivityTitle =
-                    "BankSetup Updated",
-
-                ActivityDescription =
-                    $"BankSetup '{entity.BankName}' updated.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 
 
@@ -475,102 +446,66 @@ public class BankSetupRepository : IBankSetupRepository
         DeleteAsync
         (
             long id,
-
             long userId
         )
     {
-        //===========================================================
-        // Resolve BankSetup
-        //===========================================================
-
         BankSetupEntity? entity =
-
             await _context
                 .Set<BankSetupEntity>()
-
                 .FirstOrDefaultAsync
                 (
                     x =>
-
-                        x.BankSetupId ==
-                        id
-
+                        x.BankSetupId == id
                         &&
-
                         !x.IsDeleted
                 );
 
-
-        if
-        (
-            entity ==
-            null
-        )
+        if (entity == null)
         {
             throw new KeyNotFoundException(
-                "BankSetup not found."
-            );
+                "Bank Setup not found.");
         }
 
+        //=======================================================
+        // Dependency Validation
+        //=======================================================
 
-        //===========================================================
-        // Soft Delete BankSetup
-        //===========================================================
+        List<string> usages =
+            await GetUsagesAsync(entity.BankName ?? string.Empty);
+
+        if (usages.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"'{entity.BankName}' cannot be deleted because it is used by " +
+                $"{string.Join(", ", usages)}. Delete or reassign those records first.");
+        }
+
+        //=======================================================
+        // Soft Delete
+        //=======================================================
+
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
 
         entity.IsDeleted =
             true;
 
-
         entity.DeletedBy =
             userId;
-
 
         entity.DeletedDate =
             DateTime.UtcNow;
 
+        AddHistory(
+            entity.BankSetupId,
+            "Delete",
+            "Bank Setup Deleted",
+            $"Bank Setup '{entity.BankName}' ({entity.BankCode}) deleted.",
+            userId);
 
         await _context.SaveChangesAsync();
 
-
-        //===========================================================
-        // Activity History
-        //===========================================================
-
-        _context.ActivityHistories.Add(
-
-            new ActivityHistory
-            {
-                Module =
-                    "Account Settings",
-
-                EntityName =
-                    "BankSetup",
-
-                EntityId =
-                    entity.BankSetupId,
-
-                ActivityType =
-                    "Delete",
-
-                ActivityTitle =
-                    "BankSetup Deleted",
-
-                ActivityDescription =
-                    $"BankSetup '{entity.BankName}' deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 
 
@@ -585,98 +520,97 @@ public class BankSetupRepository : IBankSetupRepository
         )
     {
         BankSetupEntity? entity =
-
             await _context
                 .Set<BankSetupEntity>()
-
-                .Where
-                (
-                    x =>
-                        x.IsDeleted
-                )
-
-                .OrderByDescending
-                (
-                    x =>
-                        x.DeletedDate
-                )
-
+                .Where(x => x.IsDeleted)
+                .OrderByDescending(x => x.DeletedDate)
                 .FirstOrDefaultAsync();
 
-
-        if
-        (
-            entity ==
-            null
-        )
+        if (entity == null)
         {
             return false;
         }
 
+        //=======================================================
+        // Restore Validation
+        //=======================================================
+
+        string bankName =
+            (entity.BankName ?? string.Empty).Trim().ToUpper();
+
+        string bankCode =
+            (entity.BankCode ?? string.Empty).Trim().ToUpper();
+
+        bool nameTaken =
+            await _context
+                .Set<BankSetupEntity>()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.BankSetupId != entity.BankSetupId
+                        &&
+                        x.BankName.Trim().ToUpper() == bankName
+                );
+
+        if (nameTaken)
+        {
+            throw new InvalidOperationException(
+                $"'{entity.BankName}' cannot be restored because another active bank already uses this Bank Name.");
+        }
+
+        bool codeTaken =
+            await _context
+                .Set<BankSetupEntity>()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.BankSetupId != entity.BankSetupId
+                        &&
+                        x.BankCode.Trim().ToUpper() == bankCode
+                );
+
+        if (codeTaken)
+        {
+            throw new InvalidOperationException(
+                $"'{entity.BankName}' cannot be restored because Bank Code '{entity.BankCode}' is already in use.");
+        }
+
+        //=======================================================
+        // Restore
+        //=======================================================
+
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
 
         entity.IsDeleted =
             false;
 
-
         entity.DeletedBy =
             null;
-
 
         entity.DeletedDate =
             null;
 
-
         entity.ModifiedBy =
             userId;
-
 
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+        AddHistory(
+            entity.BankSetupId,
+            "Restore",
+            "Bank Setup Restored",
+            $"Bank Setup '{entity.BankName}' ({entity.BankCode}) restored.",
+            userId);
 
         await _context.SaveChangesAsync();
 
-
-        //===========================================================
-        // Activity History
-        //===========================================================
-
-        _context.ActivityHistories.Add(
-
-            new ActivityHistory
-            {
-                Module =
-                    "Account Settings",
-
-                EntityName =
-                    "BankSetup",
-
-                EntityId =
-                    entity.BankSetupId,
-
-                ActivityType =
-                    "Restore",
-
-                ActivityTitle =
-                    "BankSetup Restored",
-
-                ActivityDescription =
-                    $"BankSetup '{entity.BankName}' restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-
+        await transaction.CommitAsync();
 
         return true;
     }
@@ -694,17 +628,278 @@ public class BankSetupRepository : IBankSetupRepository
     {
         return await _context
             .Set<BankSetupEntity>()
-
             .AnyAsync
             (
                 x =>
-
-                    x.BankSetupId ==
-                    id
-
+                    x.BankSetupId == id
                     &&
-
                     !x.IsDeleted
             );
+    }
+
+
+    //===========================================================
+    // Get Usages
+    //
+    // Returns a readable list of active records that use the
+    // bank, e.g. "2 Bank Account(s), 1 Card Setup(s)".
+    //
+    // Bank Accounts  : BankAccounts.Bank        = Bank Name
+    // Card Setup     : CardSetup.IssuingBank    = Bank Name
+    // MFS Accounts   : MFSAccounts.LinkedBankAccount
+    //                  = DisplayName of a bank account of this bank
+    // POS Accounts   : POSAccounts.IssuingBank   = Bank Name, or
+    //                  POSAccounts.LinkedBankAccount
+    //                  = DisplayName of a bank account of this bank
+    //===========================================================
+
+    private async Task<List<string>>
+        GetUsagesAsync
+        (
+            string bankName
+        )
+    {
+        List<string> usages =
+            new List<string>();
+
+        string key =
+            (bankName ?? string.Empty).Trim().ToUpper();
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return usages;
+        }
+
+        //=======================================================
+        // Bank Accounts
+        //=======================================================
+
+        List<string> bankAccountDisplayNames =
+            await _context
+                .Set<BankAccountsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.Bank.Trim().ToUpper() == key
+                )
+                .Select(x => x.DisplayName)
+                .ToListAsync();
+
+        if (bankAccountDisplayNames.Count > 0)
+        {
+            usages.Add(
+                $"{bankAccountDisplayNames.Count} Bank Account(s)");
+        }
+
+        //=======================================================
+        // Card Setup
+        //=======================================================
+
+        int cardSetupCount =
+            await _context
+                .Set<CardSetupEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.IssuingBank.Trim().ToUpper() == key
+                );
+
+        if (cardSetupCount > 0)
+        {
+            usages.Add(
+                $"{cardSetupCount} Card Setup(s)");
+        }
+
+        //=======================================================
+        // MFS Accounts (linked to this bank's bank accounts)
+        //=======================================================
+
+        List<string> linkedKeys =
+            bankAccountDisplayNames
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim().ToUpper())
+                .Distinct()
+                .ToList();
+
+        if (linkedKeys.Count > 0)
+        {
+            int mfsCount =
+                await _context
+                    .Set<MFSAccountsEntity>()
+                    .AsNoTracking()
+                    .CountAsync
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            linkedKeys.Contains(x.LinkedBankAccount.Trim().ToUpper())
+                    );
+
+            if (mfsCount > 0)
+            {
+                usages.Add(
+                    $"{mfsCount} MFS Account(s)");
+            }
+        }
+
+        //=======================================================
+        // POS Accounts
+        //   • Issuing Bank = this bank, or
+        //   • linked to one of this bank's bank accounts
+        //=======================================================
+
+        int posCount =
+            await _context
+                .Set<POSAccountsEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (
+                            x.IssuingBank.Trim().ToUpper() == key
+                            ||
+                            linkedKeys.Contains(x.LinkedBankAccount.Trim().ToUpper())
+                        )
+                );
+
+        if (posCount > 0)
+        {
+            usages.Add(
+                $"{posCount} POS Account(s)");
+        }
+
+        return usages;
+    }
+
+
+    //===========================================================
+    // Ensure Unique
+    //===========================================================
+
+    private async Task
+        EnsureUniqueAsync
+        (
+            string bankName,
+            string shortName,
+            long? excludeId
+        )
+    {
+        string nameKey =
+            bankName.Trim().ToUpper();
+
+        bool nameExists =
+            await _context
+                .Set<BankSetupEntity>()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (excludeId == null || x.BankSetupId != excludeId)
+                        &&
+                        x.BankName.Trim().ToUpper() == nameKey
+                );
+
+        if (nameExists)
+        {
+            throw new InvalidOperationException(
+                $"Bank Name '{bankName}' already exists.");
+        }
+
+        if (string.IsNullOrWhiteSpace(shortName))
+        {
+            return;
+        }
+
+        string shortKey =
+            shortName.Trim().ToUpper();
+
+        bool shortExists =
+            await _context
+                .Set<BankSetupEntity>()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (excludeId == null || x.BankSetupId != excludeId)
+                        &&
+                        x.ShortName.Trim().ToUpper() == shortKey
+                );
+
+        if (shortExists)
+        {
+            throw new InvalidOperationException(
+                $"Short Name '{shortName}' already exists.");
+        }
+    }
+
+
+    //===========================================================
+    // Add History
+    //===========================================================
+
+    private void AddHistory
+    (
+        long entityId,
+        string activityType,
+        string title,
+        string description,
+        long userId
+    )
+    {
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module =
+                    ModuleName,
+
+                EntityName =
+                    EntityName,
+
+                EntityId =
+                    entityId,
+
+                ActivityType =
+                    activityType,
+
+                ActivityTitle =
+                    title,
+
+                ActivityDescription =
+                    description,
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    DateTime.UtcNow
+            });
+    }
+
+
+    //===========================================================
+    // Clean
+    //===========================================================
+
+    private static string Clean
+    (
+        string? value
+    )
+    {
+        return value?.Trim()
+            ??
+            string.Empty;
     }
 }

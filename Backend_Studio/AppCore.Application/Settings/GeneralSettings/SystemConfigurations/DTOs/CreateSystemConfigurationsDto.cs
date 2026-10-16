@@ -2,72 +2,25 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 
 
 //===============================================================
-// CreateSystemConfigurationsDto
+// Create System Configurations DTO
+//
+// ConfigurationCode is accepted for compatibility but is always
+// generated on the server.
 //===============================================================
 
 public class CreateSystemConfigurationsDto
 {
-    //===========================================================
-    // Name
-    //===========================================================
+    public long NavigationModuleId { get; set; }
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string ConfigurationCode { get; set; } = string.Empty;
 
+    public string ConfigurationName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public bool IsEnabled { get; set; }
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 }

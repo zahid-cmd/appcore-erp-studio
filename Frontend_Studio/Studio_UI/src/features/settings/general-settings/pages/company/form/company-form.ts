@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -29,6 +30,18 @@ import
     FormsModule
 }
 from '@angular/forms';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 
 //===============================================================
@@ -136,6 +149,18 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 
 //===============================================================
 // Models & Services
@@ -215,7 +240,9 @@ from '../../../services/company.service';
 
         ToastComponent,
 
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+
+        ProgressDialogComponent
     ],
 
 
@@ -230,7 +257,7 @@ from '../../../services/company.service';
 
 
 export class CompanyForm
-implements OnInit
+implements OnInit, OnDestroy
 {
 
     //===========================================================
@@ -251,6 +278,10 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
 
     private readonly toast =
@@ -459,6 +490,50 @@ implements OnInit
         false;
 
 
+    // Prevents double submit while Save / Update is running
+    isSaving:
+        boolean =
+        false;
+
+
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+        5000;
+
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+
+    private progressTimer?:
+        number;
+
+
+    private progressValue:
+        number =
+        0;
+
+
 
     //===========================================================
     // Initialize
@@ -468,6 +543,44 @@ implements OnInit
         void
     {
         this.initializeMode();
+    }
+
+
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
+
+
+        //=======================================================
+        // Release Local Logo Preview
+        //=======================================================
+
+        if
+        (
+            this.companyLogoPreviewUrl
+            &&
+            this.companyLogoPreviewUrl.startsWith('blob:')
+        )
+        {
+            URL.revokeObjectURL(
+                this.companyLogoPreviewUrl
+            );
+        }
     }
 
 
@@ -825,13 +938,6 @@ implements OnInit
                         any
                 ): void =>
                 {
-                    console.log(
-                        'Company API Response:',
-
-                        response
-                    );
-
-
                     this.entity =
                     {
                         CompanyId:
@@ -978,20 +1084,6 @@ implements OnInit
                         this.buildLogoUrl(
                             this.entity.CompanyLogoPath
                         );
-
-
-                    console.log(
-                        'Company Form Entity:',
-
-                        this.entity
-                    );
-
-
-                    console.log(
-                        'Company Logo URL:',
-
-                        this.companyLogoPreviewUrl
-                    );
 
 
                     this.originalEntity =
@@ -1173,12 +1265,14 @@ implements OnInit
 
 
         //=======================================================
-        // View Mode
+        // View Mode / Saving
         //=======================================================
 
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -1293,13 +1387,6 @@ implements OnInit
 
 
                     this.cdr.detectChanges();
-
-
-                    console.log(
-                        'Company Logo Path:',
-
-                        this.entity.CompanyLogoPath
-                    );
                 },
 
 
@@ -1368,12 +1455,14 @@ implements OnInit
         void
     {
         //=======================================================
-        // View Mode
+        // View Mode / Saving
         //=======================================================
 
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -1481,6 +1570,224 @@ implements OnInit
 
 
     //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isSaving =
+            true;
+
+
+        this.progressValue =
+            0;
+
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+
+            message,
+
+            false
+        );
+
+
+        this.clearProgressTimer();
+
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.05
+                        );
+
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.update(
+            100,
+
+            message
+        );
+
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+
+                this.isSaving =
+                    false;
+
+
+                this.cdr.detectChanges();
+
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.close();
+
+
+        this.isSaving =
+            false;
+
+
+        this.cdr.detectChanges();
+
+
+        done();
+    }
+
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+
+
+    //===========================================================
     // Save
     //===========================================================
 
@@ -1488,12 +1795,14 @@ implements OnInit
         void
     {
         //=======================================================
-        // View Mode
+        // View Mode / Already Saving
         //=======================================================
 
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -1668,33 +1977,46 @@ implements OnInit
         };
 
 
-        this.companyservice
-            .create(
+        this.startProgress(
+            'Saving Company',
+
+            'Please wait while the company is being saved...'
+        );
+
+
+        this.withMinimumDuration(
+            this.companyservice.create(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+                    this.completeProgress(
+
+                        'Company saved.',
+
+                        () =>
+                        {
+                            this.selectedLogoFile =
+                                null;
 
 
-                    this.hasChanges =
-                        false;
+                            this.setInitialFormState();
 
 
-                    this.toast.success(
-                        'Success',
+                            this.toast.success(
+                                'Success',
 
-                        'Company created successfully.'
+                                'Company created successfully.'
+                            );
+
+
+                            this.onBackToList();
+                        }
                     );
-
-
-                    this.onBackToList();
                 },
 
 
@@ -1711,16 +2033,21 @@ implements OnInit
                     );
 
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create Company.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to create Company.';
 
 
-                    this.toast.error(
-                        'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                        message
+                                message
+                            );
+                        }
                     );
                 }
             });
@@ -1829,33 +2156,46 @@ implements OnInit
         // empty. This allows Remove Logo to be persisted.
         //=======================================================
 
-        this.companyservice
-            .update(
+        this.startProgress(
+            'Updating Company',
+
+            'Please wait while the company is being updated...'
+        );
+
+
+        this.withMinimumDuration(
+            this.companyservice.update(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+                    this.completeProgress(
+
+                        'Company updated.',
+
+                        () =>
+                        {
+                            this.selectedLogoFile =
+                                null;
 
 
-                    this.hasChanges =
-                        false;
+                            this.setInitialFormState();
 
 
-                    this.toast.success(
-                        'Success',
+                            this.toast.success(
+                                'Success',
 
-                        'Company updated successfully.'
+                                'Company updated successfully.'
+                            );
+
+
+                            this.onBackToList();
+                        }
                     );
-
-
-                    this.onBackToList();
                 },
 
 
@@ -1872,16 +2212,21 @@ implements OnInit
                     );
 
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update Company.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to update Company.';
 
 
-                    this.toast.error(
-                        'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                        message
+                                message
+                            );
+                        }
                     );
                 }
             });
@@ -1896,6 +2241,19 @@ implements OnInit
     onClear():
         void
     {
+        //=======================================================
+        // Saving In Progress
+        //=======================================================
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+
         //=======================================================
         // Edit Mode
         //=======================================================

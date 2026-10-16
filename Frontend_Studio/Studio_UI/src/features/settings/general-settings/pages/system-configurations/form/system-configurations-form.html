@@ -1,16 +1,17 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-sliders"
 
         [title]="pageTitle"
 
-        subtitle="Manage systemconfigurationses">
+        subtitle="Turn module features on or off">
 
         <app-command-center
 
@@ -45,7 +46,7 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : PAGE TOOLBAR
     ====================================================== -->
 
     <app-page-toolbar>
@@ -65,7 +66,7 @@
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
     <app-page-canvas>
@@ -77,27 +78,45 @@
             [columns]="4">
 
 
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
+            <!-- =================================================
+                 SECTION 01 : PARENT INFORMATION
+            ================================================== -->
 
             <app-form-section
 
-                title="General Information"
+                title="Parent Information"
 
-                icon="fas fa-circle-info">
+                icon="fas fa-sitemap">
 
 
-                <!-- Code -->
+                <!-- Module (locked after creation) -->
+
+                <app-search-dropdown
+
+                    label="Module"
+
+                    [items]="moduleItems"
+
+                    [(value)]="entity.NavigationModuleId"
+
+                    (valueChange)="onModuleChange()"
+
+                    [disabled]="!isAddMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Configuration Code (auto generated) -->
 
                 <app-textbox
 
-                    label="Code"
+                    label="Configuration Code"
 
-                    placeholder="Auto generated"
+                    placeholder="Select a module first"
 
-                    [(value)]="entity.code"
+                    [(value)]="entity.ConfigurationCode"
 
                     [readonly]="true"
 
@@ -105,135 +124,85 @@
 
                 </app-textbox>
 
+            </app-form-section>
 
 
-                <!-- Name -->
+
+            <!-- =================================================
+                 SECTION 02 : CONFIGURATION INFORMATION
+            ================================================== -->
+
+            <app-form-section
+
+                title="Configuration Information"
+
+                icon="fas fa-sliders">
+
+
+                <!-- Configuration Name -->
 
                 <app-textbox
 
-                    label="Name"
+                    label="Configuration Name"
 
-                    placeholder="Enter name"
+                    placeholder="e.g. Allow negative stock"
 
-                    [(value)]="entity.name"
+                    [(value)]="entity.ConfigurationName"
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
 
-
             </app-form-section>
 
 
 
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
+            <!-- =================================================
+                 SECTION 03 : CONFIGURATION
+            ================================================== -->
 
             <app-form-section
 
-                title="Sample Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Sample Search Dropdown -->
-
-                <app-search-dropdown
-
-                    label="Sample Search Dropdown"
-
-                    [items]="items"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.sampleSearchDropdownId"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sample Field -->
-
-                <app-textbox
-
-                    label="Sample Field"
-
-                    placeholder="Enter sample value"
-
-                    [(value)]="entity.sampleField"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status Information"
+                title="Configuration"
 
                 icon="fas fa-toggle-on">
 
 
-                <!-- Status -->
+                <!-- Setting Status (Enabled / Disabled) -->
 
                 <app-dropdown
 
-                    label="Status"
+                    label="Setting Status"
 
-                    [items]="statusItems"
+                    [items]="enabledItems"
 
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.status"
+                    [(value)]="entity.IsEnabled"
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
 
-
             </app-form-section>
 
 
 
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
+            <!-- =================================================
+                 SECTION 04 : STATUS & DESCRIPTION
+            ================================================== -->
 
             <app-form-section
 
-                title="Additional Information"
+                title="Status & Description"
 
-                icon="fas fa-clipboard">
+                icon="fas fa-align-left">
 
 
                 <!-- Remarks -->
@@ -242,19 +211,19 @@
 
                     label="Remarks"
 
-                    placeholder="Enter remarks"
+                    placeholder="What does this setting control?"
 
-                    [(value)]="entity.remarks"
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode || isSaving">
 
                 </app-textarea>
 
-
             </app-form-section>
-
 
         </app-form-grid>
 
@@ -265,9 +234,11 @@
 
 
 <!-- =====================================================
-     UTILITIES
+     SECTION 04 : UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

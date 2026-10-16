@@ -10,6 +10,9 @@ using AppCore.Application.Settings.AccountSettings.AccountClass.DTOs;
 using AccountClassEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.AccountClass;
 
+using AccountGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup;
+
 using AppCore.Infrastructure.Persistence;
 using AppCore.Domain.Common;
 using AppCore.Infrastructure.CodeMaster;
@@ -638,6 +641,40 @@ public class AccountClassRepository : IAccountClassRepository
         {
             throw new KeyNotFoundException(
                 "Account Class not found."
+            );
+        }
+
+        //===========================================================
+        // Dependency Check : Account Groups
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted Account Group still belongs to this class.
+        //===========================================================
+
+        int accountGroupCount =
+            await _context
+                .Set<AccountGroupEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.AccountClassId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            accountGroupCount >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Class '{entity.ClassName}' cannot be deleted because " +
+                $"{accountGroupCount} account group(s) are created under it. " +
+                "Delete those account groups first."
             );
         }
 

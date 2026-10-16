@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -29,6 +30,29 @@ import
     FormsModule
 }
 from '@angular/forms';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError
+}
+from 'rxjs';
+
+import
+{
+    catchError,
+    delayWhen,
+    switchMap
+}
+from 'rxjs/operators';
 
 //===============================================================
 // Shared Components
@@ -99,7 +123,6 @@ import
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
-
 //===============================================================
 // Utilities
 //===============================================================
@@ -127,6 +150,18 @@ import
     ConfirmDialogComponent
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
 //===============================================================
 // Models & Services
@@ -186,7 +221,8 @@ from '../../../services/product-category.service';
         //=======================================================
 
         ToastComponent,
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+        ProgressDialogComponent
     ],
 
     templateUrl:'./product-category-form.html',
@@ -202,7 +238,7 @@ from '../../../services/product-category.service';
 //===============================================================
 
 export class ProductCategoryForm
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
@@ -223,8 +259,51 @@ implements OnInit
     private readonly toast =
         inject(ToastService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
+
+    private readonly minimumSaveDurationMs:
+        number =
+        5000;
+
+    private readonly progressCeiling:
+        number =
+        90;
+
+    private readonly progressEaseFactor:
+        number =
+        0.05;
+
+    private readonly progressIntervalMs:
+        number =
+        100;
+
+    private readonly progressCompleteHoldMs:
+        number =
+        600;
+
+    //===========================================================
+    // Progress State
+    //===========================================================
+
+    private progressTimer:
+        ReturnType<typeof setInterval> | null =
+        null;
+
+    private progressValue:
+        number =
+        0;
+
+    isSaving:
+        boolean =
+        false;
 
     //===========================================================
     // Mode
@@ -342,20 +421,7 @@ implements OnInit
     entity:
         ProductCategory
         =
-        {
-            ProductCategoryId:0,
-            CategoryCode:'',
-            CategoryName:'',
-            InventoryGroupCode:'',
-            WipGroupCode:'',
-            CogsGroupCode:'',
-            InventoryGroupName:'',
-            WipGroupName:'',
-            CogsGroupName:'',
-            SubCategoryCreationAllowed:true,
-            Remarks:'',
-            IsActive:true
-        };
+        this.createEmptyEntity();
 
     //===========================================================
     // Form State
@@ -380,6 +446,47 @@ implements OnInit
     }
 
     //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Create Empty Entity
+    //===========================================================
+
+    private createEmptyEntity():
+        ProductCategory
+    {
+        return {
+            ProductCategoryId:0,
+            CategoryCode:'',
+            CategoryName:'',
+            InventoryGroupCode:'',
+            WipGroupCode:'',
+            CogsGroupCode:'',
+            InventoryGroupName:'',
+            WipGroupName:'',
+            CogsGroupName:'',
+            SubCategoryCreationAllowed:true,
+            Remarks:'',
+            IsActive:true
+        };
+    }
+
+    //===========================================================
     // Initialize Mode
     //===========================================================
 
@@ -390,7 +497,7 @@ implements OnInit
             this.router.url.toLowerCase();
 
         //=======================================================
-        // View Mode
+        // Resolve Mode
         //=======================================================
 
         if
@@ -401,11 +508,6 @@ implements OnInit
             this.mode =
                 'view';
         }
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
         else if
         (
             url.includes('/edit/')
@@ -414,11 +516,6 @@ implements OnInit
             this.mode =
                 'edit';
         }
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
         else
         {
             this.mode =
@@ -500,20 +597,9 @@ implements OnInit
         void
     {
         this.entity =
-        {
-            ProductCategoryId:0,
-            CategoryCode:'',
-            CategoryName:'',
-            InventoryGroupCode:'',
-            WipGroupCode:'',
-            CogsGroupCode:'',
-            InventoryGroupName:'',
-            WipGroupName:'',
-            CogsGroupName:'',
-            SubCategoryCreationAllowed:true,
-            Remarks:'',
-            IsActive:true
-        };
+            this.createEmptyEntity();
+
+        this.setInitialFormState();
 
         this.generateDefaults();
     }
@@ -525,10 +611,6 @@ implements OnInit
     private generateDefaults():
         void
     {
-        //=======================================================
-        // Existing Record
-        //=======================================================
-
         if
         (
             this.entityId > 0
@@ -536,7 +618,6 @@ implements OnInit
         {
             return;
         }
-
 
         this.productCategoryService
             .getDefaults()
@@ -558,7 +639,6 @@ implements OnInit
                             ''
                         ).trim();
 
-
                     this.entity.InventoryGroupCode =
                         String(
                             response?.InventoryGroupCode
@@ -567,7 +647,6 @@ implements OnInit
                             ??
                             ''
                         ).trim();
-
 
                     this.entity.WipGroupCode =
                         String(
@@ -578,7 +657,6 @@ implements OnInit
                             ''
                         ).trim();
 
-
                     this.entity.CogsGroupCode =
                         String(
                             response?.CogsGroupCode
@@ -588,6 +666,9 @@ implements OnInit
                             ''
                         ).trim();
 
+                    //===========================================
+                    // Auto-filled values are the new baseline
+                    //===========================================
 
                     this.setInitialFormState();
                 },
@@ -604,10 +685,12 @@ implements OnInit
                         error
                     );
 
-
                     this.toast.error(
                         'Error',
-                        'Failed to generate Product Category defaults.'
+                        this.extractErrorMessage(
+                            error,
+                            'Failed to generate Product Category defaults.'
+                        )
                     );
                 }
             });
@@ -783,15 +866,7 @@ implements OnInit
                             )
                     };
 
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-                    this.hasChanges =
-                        false;
-
-                    this.cdr.detectChanges();
+                    this.setInitialFormState();
                 },
 
                 error:
@@ -809,6 +884,9 @@ implements OnInit
                         'Error',
                         'Failed to load Product Category.'
                     );
+
+                    this.hasChanges =
+                        false;
 
                     this.onBackToList();
                 }
@@ -853,12 +931,14 @@ implements OnInit
         void
     {
         //=======================================================
-        // View Mode
+        // Guards
         //=======================================================
 
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -868,117 +948,75 @@ implements OnInit
         // Validation
         //=======================================================
 
-        if
+        const requiredFields:
+            {
+                value:
+                    string | undefined;
+                message:
+                    string;
+            }[] =
+        [
+            {
+                value:this.entity.CategoryCode,
+                message:'Category Code is required.'
+            },
+            {
+                value:this.entity.CategoryName,
+                message:'Category Name is required.'
+            },
+            {
+                value:this.entity.InventoryGroupCode,
+                message:'Inventory Group Code is required.'
+            },
+            {
+                value:this.entity.WipGroupCode,
+                message:'WIP Group Code is required.'
+            },
+            {
+                value:this.entity.CogsGroupCode,
+                message:'COGS Group Code is required.'
+            },
+            {
+                value:this.entity.InventoryGroupName,
+                message:'Inventory Group Name is required.'
+            },
+            {
+                value:this.entity.WipGroupName,
+                message:'WIP Group Name is required.'
+            },
+            {
+                value:this.entity.CogsGroupName,
+                message:'COGS Group Name is required.'
+            }
+        ];
+
+        for
         (
-            !this.entity.CategoryCode?.trim()
+            const field
+            of requiredFields
         )
         {
-            this.toast.error(
-                'Validation',
-                'Category Code is required.'
-            );
+            if
+            (
+                !field.value?.trim()
+            )
+            {
+                this.toast.error(
+                    'Validation',
+                    field.message
+                );
 
-            return;
-        }
-
-        if
-        (
-            !this.entity.CategoryName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'Category Name is required.'
-            );
-
-            return;
-        }
-
-        if
-        (
-            !this.entity.InventoryGroupCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'Inventory Group Code is required.'
-            );
-
-            return;
-        }
-
-        if
-        (
-            !this.entity.WipGroupCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'WIP Group Code is required.'
-            );
-
-            return;
-        }
-
-        if
-        (
-            !this.entity.CogsGroupCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'COGS Group Code is required.'
-            );
-
-            return;
-        }
-
-        if
-        (
-            !this.entity.InventoryGroupName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'Inventory Group Name is required.'
-            );
-
-            return;
-        }
-
-        if
-        (
-            !this.entity.WipGroupName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'WIP Group Name is required.'
-            );
-
-            return;
-        }
-
-        if
-        (
-            !this.entity.CogsGroupName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'COGS Group Name is required.'
-            );
-
-            return;
+                return;
+            }
         }
 
         //=======================================================
-        // Add
+        // Add / Update
         //=======================================================
 
         if
         (
-            this.mode === 'add'
+            this.isAddMode
         )
         {
             this.saveCreate();
@@ -986,23 +1024,17 @@ implements OnInit
             return;
         }
 
-        //=======================================================
-        // Update
-        //=======================================================
-
         this.saveUpdate();
     }
 
     //===========================================================
-    // Create
+    // Build Payload
     //===========================================================
 
-    private saveCreate():
-        void
+    private buildPayload():
+        CreateProductCategory
     {
-        const model:
-            CreateProductCategory =
-        {
+        return {
             CategoryCode:
                 this.entity.CategoryCode.trim(),
 
@@ -1038,56 +1070,97 @@ implements OnInit
             IsActive:
                 this.entity.IsActive
         };
+    }
 
-        this.productCategoryService
-            .create(
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
+        const model:
+            CreateProductCategory =
+            this.buildPayload();
+
+        this.isSaving =
+            true;
+
+        this.startProgress(
+            'Saving Product Category',
+            'Creating product category and its Inventory, WIP and COGS account groups...'
+        );
+
+        this.withMinimumDuration(
+            this.productCategoryService.create(
                 model
-            )
-            .subscribe
-            ({
-                next:
-                ():
-                    void =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+            ),
+            this.minimumSaveDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Product Category saved successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.originalEntity =
+                            JSON.stringify(
+                                this.entity
+                            );
+
+                        this.hasChanges =
+                            false;
+
+                        this.toast.success(
+                            'Success',
+                            'Product Category created successfully.'
                         );
 
-                    this.hasChanges =
-                        false;
+                        this.onBackToList();
+                    }
+                );
+            },
 
-                    this.toast.success(
-                        'Success',
-                        'Product Category created successfully.'
-                    );
-
-                    this.onBackToList();
-                },
-
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Create Product Category Error',
-                        error
-                    );
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Create Product Category Error',
+                    error
+                );
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create Product Category.';
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
 
-                    this.toast.error(
-                        'Validation',
-                        message
-                    );
-                }
-            });
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to create Product Category.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
     }
 
     //===========================================================
@@ -1103,91 +1176,337 @@ implements OnInit
             ProductCategoryId:
                 this.entity.ProductCategoryId,
 
-            CategoryCode:
-                this.entity.CategoryCode.trim(),
-
-            CategoryName:
-                this.entity.CategoryName.trim(),
-
-            InventoryGroupCode:
-                this.entity.InventoryGroupCode.trim(),
-
-            WipGroupCode:
-                this.entity.WipGroupCode.trim(),
-
-            CogsGroupCode:
-                this.entity.CogsGroupCode.trim(),
-
-            InventoryGroupName:
-                this.entity.InventoryGroupName.trim(),
-
-            WipGroupName:
-                this.entity.WipGroupName.trim(),
-
-            CogsGroupName:
-                this.entity.CogsGroupName.trim(),
-
-            SubCategoryCreationAllowed:
-                this.entity.SubCategoryCreationAllowed,
-
-            Remarks:
-                this.entity.Remarks?.trim()
-                ??
-                '',
-
-            IsActive:
-                this.entity.IsActive
+            ...this.buildPayload()
         };
 
-        this.productCategoryService
-            .update(
+        this.isSaving =
+            true;
+
+        this.startProgress(
+            'Updating Product Category',
+            'Updating product category and its account groups...'
+        );
+
+        this.withMinimumDuration(
+            this.productCategoryService.update(
                 model
-            )
-            .subscribe
-            ({
-                next:
+            ),
+            this.minimumSaveDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Product Category updated successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.originalEntity =
+                            JSON.stringify(
+                                this.entity
+                            );
+
+                        this.hasChanges =
+                            false;
+
+                        this.toast.success(
+                            'Success',
+                            'Product Category updated successfully.'
+                        );
+
+                        this.onBackToList();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Update Product Category Error',
+                    error
+                );
+
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to update Product Category.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
+    }
+
+    //===========================================================
+    // Progress : Start (animated easing toward ceiling)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.progressDialog.update(
+            0,
+            message
+        );
+
+        this.progressTimer =
+            setInterval
+            (
                 ():
                     void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                    const step =
+                        Math.max(
+                            0.4,
+                            (
+                                this.progressCeiling -
+                                this.progressValue
+                            )
+                            *
+                            this.progressEaseFactor
                         );
 
-                    this.hasChanges =
-                        false;
+                    this.progressValue =
+                        Math.min(
+                            this.progressCeiling,
+                            this.progressValue + step
+                        );
 
-                    this.toast.success(
-                        'Success',
-                        'Product Category updated successfully.'
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
                     );
-
-                    this.onBackToList();
                 },
+                this.progressIntervalMs
+            );
+    }
 
-                error:
+    //===========================================================
+    // Progress : Complete
+    //===========================================================
+
+    private completeProgress
+    (
+        message:
+            string,
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            100;
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        setTimeout
+        (
+            ():
+                void =>
+            {
+                this.progressDialog.close();
+
+                callback();
+            },
+            this.progressCompleteHoldMs
+        );
+    }
+
+    //===========================================================
+    // Progress : Fail
+    //===========================================================
+
+    private failProgress
+    (
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        callback();
+    }
+
+    //===========================================================
+    // Progress : Clear Timer
+    //===========================================================
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer !== null
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                null;
+        }
+    }
+
+    //===========================================================
+    // Minimum Duration Wrapper
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source:
+            Observable<T>,
+        minimumMs:
+            number
+    ):
+        Observable<T>
+    {
+        return defer
+        (
+            ():
+                Observable<T> =>
+            {
+                const startedAt =
+                    Date.now();
+
+                const remaining =
+                    ():
+                        number =>
+                        Math.max(
+                            0,
+                            minimumMs -
+                            (
+                                Date.now() -
+                                startedAt
+                            )
+                        );
+
+                return source.pipe
                 (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Update Product Category Error',
-                        error
-                    );
+                    delayWhen
+                    (
+                        () =>
+                            timer(
+                                remaining()
+                            )
+                    ),
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update Product Category.';
+                    catchError
+                    (
+                        error =>
+                            timer(
+                                remaining()
+                            )
+                            .pipe
+                            (
+                                switchMap
+                                (
+                                    () =>
+                                        throwError(
+                                            () => error
+                                        )
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
 
-                    this.toast.error(
-                        'Validation',
-                        message
-                    );
-                }
-            });
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
+        }
+
+        return fallback;
     }
 
     //===========================================================
@@ -1197,23 +1516,23 @@ implements OnInit
     onClear():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
 
         if
         (
-            this.mode === 'edit'
+            this.isEditMode
         )
         {
             this.loadEntity();
 
             return;
         }
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
 
         this.initializeEntity();
 
@@ -1229,17 +1548,27 @@ implements OnInit
     {
         if
         (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        const listRoute =
+        [
+            '/settings',
+            'product-settings',
+            'product-category',
+            'list'
+        ];
+
+        if
+        (
             !this.hasChanges
         )
         {
-            void this.router.navigate
-            (
-                [
-                    '/settings',
-                    'product-settings',
-                    'product-category',
-                    'list'
-                ]
+            void this.router.navigate(
+                listRoute
             );
 
             return;
@@ -1250,14 +1579,8 @@ implements OnInit
             'Any unsaved changes will be lost. Do you want to leave this page?',
             () =>
             {
-                void this.router.navigate
-                (
-                    [
-                        '/settings',
-                        'product-settings',
-                        'product-category',
-                        'list'
-                    ]
+                void this.router.navigate(
+                    listRoute
                 );
             },
             'Leave',
@@ -1273,13 +1596,13 @@ implements OnInit
     get saveButtonText():
         string
     {
-        return this.mode === 'edit'
+        return this.isEditMode
             ? 'Update'
             : 'Save';
     }
 
     //===========================================================
-    // View Mode
+    // Mode Helpers
     //===========================================================
 
     get isViewMode():
@@ -1288,19 +1611,11 @@ implements OnInit
         return this.mode === 'view';
     }
 
-    //===========================================================
-    // Edit Mode
-    //===========================================================
-
     get isEditMode():
         boolean
     {
         return this.mode === 'edit';
     }
-
-    //===========================================================
-    // Add Mode
-    //===========================================================
 
     get isAddMode():
         boolean
@@ -1327,9 +1642,17 @@ implements OnInit
     {
         if
         (
-            this.mode === 'edit'
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            this.isEditMode
             ||
-            this.mode === 'view'
+            this.isViewMode
         )
         {
             this.loadEntity();

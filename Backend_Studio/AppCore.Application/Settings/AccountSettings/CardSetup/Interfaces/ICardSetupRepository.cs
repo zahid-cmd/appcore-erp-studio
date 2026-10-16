@@ -1,8 +1,10 @@
+// PAGE-CLONED : Bank Setup -> Card Setup
+// PAGE-CLONED : Wings -> Card Setup
 //===============================================================
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.CardSetup.DTOs;
 
 
 //===============================================================
@@ -13,98 +15,79 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// ICardSetupRepository
+// CardSetup Repository Interface
 //===============================================================
 
 public interface ICardSetupRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>>
-        GetAllAsync();
-
+    Task<List<CardSetupDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<CardSetupDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup entity
-    );
-
+    Task<long> CreateAsync(
+        CreateCardSetupDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CardSetup entity
-    );
-
+    Task UpdateAsync(
+        UpdateCardSetupDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync();
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<CardSetupDefaultsDto> GetDefaultsAsync();
 }

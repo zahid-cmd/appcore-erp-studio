@@ -52,6 +52,8 @@
 
     align-items: center;
 
+    gap: 8px;
+
     height: 48px;
 
     padding: 0 12px;
@@ -66,11 +68,29 @@
 }
 
 /* =====================================================
-   TITLE
+   TITLE (button : Days → Months → Years)
 ===================================================== */
 
 .calendar-title
 {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    height: 32px;
+
+    padding: 0 12px;
+
+    border: none;
+
+    border-radius: 999px;
+
+    background: transparent;
+
+    font-family: inherit;
+
     font-size: 15px;
 
     font-weight: 700;
@@ -78,6 +98,40 @@
     color: #ffffff;
 
     letter-spacing: .3px;
+
+    cursor: pointer;
+
+    transition:
+        background .20s ease,
+        box-shadow .20s ease;
+}
+
+.calendar-title:hover:not(:disabled)
+{
+    background: rgba(255,255,255,.14);
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.18);
+}
+
+.calendar-title:disabled,
+.calendar-title.calendar-title-static
+{
+    cursor: default;
+}
+
+.calendar-title-caret
+{
+    font-size: 12px;
+
+    opacity: .75;
+
+    transition: transform .20s ease;
+}
+
+.calendar-title:hover:not(:disabled) .calendar-title-caret
+{
+    transform: translateY(1px);
 }
 
 /* =====================================================
@@ -91,6 +145,8 @@
     justify-content: center;
 
     align-items: center;
+
+    flex: 0 0 auto;
 
     width: 28px;
 
@@ -123,6 +179,13 @@
 .calendar-navigation-button:active:not(:disabled)
 {
     transform: scale(.94);
+}
+
+.calendar-navigation-button:disabled
+{
+    opacity: .5;
+
+    cursor: not-allowed;
 }
 
 /* =====================================================
@@ -218,6 +281,8 @@
 
     color: #334155;
 
+    font-family: inherit;
+
     font-size: 13px;
 
     font-weight: 600;
@@ -259,6 +324,11 @@
 .calendar-day.friday
 {
     color: #dc2626;
+}
+
+.calendar-day.friday.other-month
+{
+    color: #f5b5b5;
 }
 
 /* =====================================================
@@ -321,12 +391,249 @@
 }
 
 /* =====================================================
-   SELECTED FRIDAY
+   SELECTED FRIDAY / SELECTED TODAY
 ===================================================== */
 
-.calendar-day.selected.friday
+.calendar-day.selected.friday,
+.calendar-day.selected.today
 {
     color: #ffffff;
+}
+
+/* =====================================================
+   OUT OF RANGE DAY (minDate / maxDate)
+===================================================== */
+
+.calendar-day:disabled
+{
+    background: transparent;
+
+    color: #e2e8f0;
+
+    text-decoration: line-through;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+/* =====================================================
+   MONTH / YEAR GRID
+===================================================== */
+
+.calendar-grid
+{
+    display: grid;
+
+    grid-template-columns: repeat(3,1fr);
+
+    gap: 8px;
+
+    padding: 14px 12px;
+
+    background: #ffffff;
+}
+
+/* =====================================================
+   MONTH / YEAR CELL
+===================================================== */
+
+.calendar-cell
+{
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    height: 52px;
+
+    border: 1px solid #e5edf7;
+
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    color: #334155;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background .20s ease,
+        border-color .20s ease,
+        color .20s ease,
+        transform .15s ease,
+        box-shadow .20s ease;
+}
+
+.calendar-cell:hover:not(:disabled)
+{
+    background: #edf4ff;
+
+    border-color: #9fc2f7;
+
+    color: #1e3a8a;
+}
+
+.calendar-cell:active:not(:disabled)
+{
+    transform: scale(.96);
+}
+
+/* =====================================================
+   CURRENT MONTH / YEAR
+===================================================== */
+
+.calendar-cell.current
+{
+    border: 2px solid #1e3a8a;
+
+    color: #1e3a8a;
+
+    font-weight: 700;
+}
+
+/* =====================================================
+   SELECTED MONTH / YEAR
+===================================================== */
+
+.calendar-cell.selected
+{
+    border-color: transparent;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    color: #ffffff;
+
+    font-weight: 700;
+
+    box-shadow:
+        0 6px 12px rgba(37,99,235,.22);
+}
+
+.calendar-cell.selected:hover
+{
+    background:
+        linear-gradient(
+            135deg,
+            #102f4c 0%,
+            #21439f 45%,
+            #2d6ef5 100%
+        );
+
+    color: #ffffff;
+}
+
+/* =====================================================
+   OUT OF RANGE MONTH / YEAR
+===================================================== */
+
+.calendar-cell:disabled
+{
+    background: #f8fafc;
+
+    border-color: #eef2f7;
+
+    color: #cbd5e1;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.calendar-footer
+{
+    display: flex;
+
+    justify-content: center;
+
+    padding: 10px 12px 12px;
+
+    border-top: 1px solid #eef2f7;
+
+    background: #ffffff;
+}
+
+/* =====================================================
+   TODAY BUTTON
+===================================================== */
+
+.calendar-today-button
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    height: 30px;
+
+    padding: 0 16px;
+
+    border: 1px solid #d9e5f2;
+
+    border-radius: 999px;
+
+    background: #edf4ff;
+
+    color: #1e3a8a;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background .20s ease,
+        border-color .20s ease,
+        color .20s ease,
+        transform .15s ease;
+}
+
+.calendar-today-button:hover:not(:disabled)
+{
+    background:
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
+
+    border-color: transparent;
+
+    color: #ffffff;
+}
+
+.calendar-today-button:active:not(:disabled)
+{
+    transform: scale(.96);
+}
+
+.calendar-today-button:disabled
+{
+    opacity: .5;
+
+    cursor: not-allowed;
 }
 
 /* =====================================================
@@ -387,5 +694,12 @@
     .calendar-day
     {
         font-size: 12px;
+    }
+
+    .calendar-cell
+    {
+        height: 46px;
+
+        font-size: 13px;
     }
 }

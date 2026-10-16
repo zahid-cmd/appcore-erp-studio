@@ -552,27 +552,7 @@ public class AppDbContext
     // AUTO-END : AccountGroup
 
 
-    // AUTO-BEGIN : SystemConfigurations
 
-    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations>
-    SystemConfigurationss
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : SystemConfigurations
-
-    // AUTO-BEGIN : FinancialYears
-
-    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>
-    FinancialYearss
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : FinancialYears
 
 
 
@@ -662,6 +642,8 @@ public class AppDbContext
 
 
 
+
+
     // AUTO-BEGIN : BankAccounts
 
     public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>
@@ -672,6 +654,74 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : BankAccounts
+
+
+    // AUTO-BEGIN : MFSAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.MFSAccounts>
+    MFSAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MFSAccounts
+
+    // AUTO-BEGIN : CardSetup
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CardSetup>
+    CardSetups
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CardSetup
+
+
+    // AUTO-BEGIN : POSAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.POSAccounts>
+    POSAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : POSAccounts
+
+    // AUTO-BEGIN : CardCharges
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CardCharges>
+    CardChargess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CardCharges
+
+    // AUTO-BEGIN : FinancialYears
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>
+    FinancialYearss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : FinancialYears
+
+    // AUTO-BEGIN : SystemConfigurations
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations>
+    SystemConfigurationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SystemConfigurations
 
     // AUTO-END : AUTO REGISTER DBSETS
 

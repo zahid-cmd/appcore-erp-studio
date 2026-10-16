@@ -13,6 +13,9 @@ using AccountGroupEntity =
 using AccountClassEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.AccountClass;
 
+using AccountSubGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup;
+
 using AppCore.Infrastructure.Persistence;
 using AppCore.Domain.Common;
 using AppCore.Infrastructure.CodeMaster;
@@ -849,6 +852,41 @@ public class AccountGroupRepository : IAccountGroupRepository
         {
             throw new KeyNotFoundException(
                 "Account Group not found."
+            );
+        }
+
+
+        //===========================================================
+        // Dependency Check : Account Sub Groups
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted Account Sub Group still belongs to this group.
+        //===========================================================
+
+        int accountSubGroupCount =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.AccountGroupId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            accountSubGroupCount >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Group '{entity.GroupName}' cannot be deleted because " +
+                $"{accountSubGroupCount} account sub group(s) are created under it. " +
+                "Delete those account sub groups first."
             );
         }
 

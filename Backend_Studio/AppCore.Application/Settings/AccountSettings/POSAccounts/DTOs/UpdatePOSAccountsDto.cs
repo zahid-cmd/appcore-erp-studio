@@ -2,83 +2,41 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.POSAccounts.DTOs;
 
 
 //===============================================================
-// UpdatePosAccountsDto
+// Update POS Account DTO
+//
+// Account Sub Group and Code are locked after creation.
+// POSAccountName is always regenerated on the server.
 //===============================================================
 
-public class UpdatePosAccountsDto
+public class UpdatePOSAccountDto
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
+    public long POSAccountId { get; set; }
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long AccountSubGroupsId { get; set; }
 
+    public string POSAccountCode { get; set; } = string.Empty;
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string POSAccountName { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string IssuingBank { get; set; } = string.Empty;
 
+    public string TerminalNumber { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public string LinkedBankAccount { get; set; } = string.Empty;
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string Branch { get; set; } = string.Empty;
 
+    public bool CollectionAccount { get; set; }
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public bool PaymentAccount { get; set; }
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool BranchExclusive { get; set; }
 
+    public string Remarks { get; set; } = string.Empty;
 
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool Status { get; set; }
 }

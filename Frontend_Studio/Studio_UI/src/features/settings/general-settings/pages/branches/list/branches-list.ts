@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
@@ -29,6 +30,18 @@ import
     Router
 }
 from '@angular/router';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 
 //===============================================================
@@ -135,6 +148,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -220,6 +245,8 @@ extends Branches
 
         ConfirmDialogComponent,
 
+        ProgressDialogComponent,
+
         ToastComponent
     ],
 
@@ -234,7 +261,7 @@ extends Branches
 //===============================================================
 
 export class BranchesList
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
@@ -251,6 +278,9 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
@@ -394,6 +424,49 @@ implements OnInit
 
         false;
 
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+
+        false;
+
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+
+        3000;
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+
+        100;
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+
+        90;
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+
+        0;
+
 
     //===========================================================
     // Pagination
@@ -470,14 +543,14 @@ implements OnInit
         {
             header:'Company',
             field:'CompanyName',
-            width:'240px',
+            width:'200px',
             align:'left'
         },
 
         {
             header:'Wing',
             field:'WingName',
-            width:'180px',
+            width:'160px',
             align:'left'
         },
 
@@ -491,7 +564,7 @@ implements OnInit
         {
             header:'Branch Name',
             field:'BranchName',
-            width:'260px',
+            width:'240px',
             align:'left'
         },
 
@@ -542,6 +615,222 @@ implements OnInit
         void
     {
         this.loadItems();
+    }
+
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+
+    //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+
+            message,
+
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
     }
 
 
@@ -1536,6 +1825,14 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open(
             'Delete Branch',
 
@@ -1544,13 +1841,52 @@ implements OnInit
             ():
                 void =>
             {
-                this.branchesService
-                    .delete(item.BranchId)
-                    .subscribe(
-                    {
-                        next:
-                        ():
-                            void =>
+                // Next tick : let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout(
+                    () =>
+                        this.deleteItem(
+                            item
+                        )
+                );
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+    private deleteItem
+    (
+        item:
+            BranchListItem
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Branch',
+
+            `Please wait while "${item.BranchName}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.branchesService.delete(
+                item.BranchId
+            )
+        )
+            .subscribe(
+            {
+                next:
+                ():
+                    void =>
+                {
+                    this.completeProgress(
+
+                        'Branch deleted.',
+
+                        () =>
                         {
                             this.toast.success(
                                 'Delete Successful',
@@ -1559,19 +1895,28 @@ implements OnInit
                             );
 
                             this.loadItems();
-                        },
+                        }
+                    );
+                },
 
-                        error:
-                        (
-                            error:
-                                unknown
-                        ):
-                            void =>
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Delete Branch Error:',
+                        error
+                    );
+
+                    this.failProgress(
+                        () =>
                         {
-                            console.error(
-                                'Delete Branch Error:',
-                                error
-                            );
+                            //===========================================
+                            // Deletion Blocked
+                            //===========================================
 
                             if
                             (
@@ -1618,14 +1963,18 @@ implements OnInit
                                 return;
                             }
 
+                            //===========================================
+                            // Delete Failed
+                            //===========================================
+
                             this.toast.error(
                                 'Delete Failed',
                                 'Failed to delete branch.'
                             );
                         }
-                    });
-            }
-        );
+                    );
+                }
+            });
     }
 
 
@@ -1636,6 +1985,14 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open(
             'Restore Branch',
 
@@ -1644,7 +2001,11 @@ implements OnInit
             ():
                 void =>
             {
-                this.restoreItem();
+                // Next tick : same as Delete, for consistency.
+                setTimeout(
+                    () =>
+                        this.restoreItem()
+                );
             },
 
             'Restore',
@@ -1663,21 +2024,36 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.branchesService
-            .restore()
+        this.startProgress(
+            'Restoring Branch',
+
+            'Please wait while the most recently deleted branch is being restored...'
+        );
+
+        this.withMinimumDuration(
+            this.branchesService.restore()
+        )
             .subscribe(
             {
                 next:
                 ():
                     void =>
                 {
-                    this.toast.success(
-                        'Restore Successful',
+                    this.completeProgress(
 
-                        'The most recently deleted branch has been restored.'
+                        'Branch restored.',
+
+                        () =>
+                        {
+                            this.toast.success(
+                                'Restore Successful',
+
+                                'The most recently deleted branch has been restored.'
+                            );
+
+                            this.loadItems();
+                        }
                     );
-
-                    this.loadItems();
                 },
 
                 error:
@@ -1692,26 +2068,31 @@ implements OnInit
                         error
                     );
 
-                    if
-                    (
-                        error instanceof HttpErrorResponse
-                        &&
-                        error.status === 404
-                    )
-                    {
-                        this.toast.info(
-                            'No Data to Restore',
+                    this.failProgress(
+                        () =>
+                        {
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 404
+                            )
+                            {
+                                this.toast.info(
+                                    'No Data to Restore',
 
-                            'There is no deleted branch record to restore.'
-                        );
+                                    'There is no deleted branch record to restore.'
+                                );
 
-                        return;
-                    }
+                                return;
+                            }
 
-                    this.toast.error(
-                        'Restore Failed',
+                            this.toast.error(
+                                'Restore Failed',
 
-                        'Failed to restore branch.'
+                                'Failed to restore branch.'
+                            );
+                        }
                     );
                 }
             });

@@ -125,7 +125,7 @@ export class BankAccountsService
                                     bankAccount.Remarks ?? bankAccount.remarks ?? '',
 
                                 Status:
-                                    Boolean(bankAccount.Status ?? bankAccount.status ?? false),
+                                    Boolean(bankAccount.Status ?? bankAccount.status ?? true),
 
                                 Branch:
                                     bankAccount.Branch ?? bankAccount.branch ?? '',
@@ -140,7 +140,31 @@ export class BankAccountsService
                                     Boolean(bankAccount.PaymentAccount ?? bankAccount.paymentAccount ?? false),
 
                                 Bank:
-                                    bankAccount.Bank ?? bankAccount.bank ?? ''
+                                    bankAccount.Bank ?? bankAccount.bank ?? '',
+
+                                FullAccountNumber:
+                                    bankAccount.FullAccountNumber ?? bankAccount.fullAccountNumber ?? '',
+
+                                ShortAccountName:
+                                    bankAccount.ShortAccountName ?? bankAccount.shortAccountName ?? '',
+
+                                ShortAccountNumber:
+                                    bankAccount.ShortAccountNumber ?? bankAccount.shortAccountNumber ?? '',
+
+                                ShortBranchName:
+                                    bankAccount.ShortBranchName ?? bankAccount.shortBranchName ?? '',
+
+                                SwiftCode:
+                                    bankAccount.SwiftCode ?? bankAccount.swiftCode ?? '',
+
+                                RoutingNumber:
+                                    bankAccount.RoutingNumber ?? bankAccount.routingNumber ?? '',
+
+                                BranchExclusive:
+                                    Boolean(bankAccount.BranchExclusive ?? bankAccount.branchExclusive ?? false),
+
+                                BankBranchName:
+                                    bankAccount.BankBranchName ?? bankAccount.bankBranchName ?? ''
                             })
 
                         )

@@ -2,24 +2,29 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.CardCharges.DTOs;
 
 
 //===============================================================
-// CardChargesDefaultsDto
+// Card Charges Defaults DTO
+//
+// Values the Add form can use before entering data.
 //===============================================================
 
 public class CardChargesDefaultsDto
 {
     //===========================================================
-    // Code
+    // Allowed Charge Range (%)
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public decimal MinChargePercent { get; set; }
+
+    public decimal MaxChargePercent { get; set; }
+
+
+    //===========================================================
+    // Active POS Accounts without card charges yet
+    //===========================================================
+
+    public int AvailablePOSAccountCount { get; set; }
 }

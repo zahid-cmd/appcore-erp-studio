@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.CardCharges.DTOs;
 
 
 //===============================================================
@@ -13,98 +13,74 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// ICardChargesRepository
+// Card Charges Repository Interface
+//
+// Every operation is keyed by POS Account Id (the master).
 //===============================================================
 
 public interface ICardChargesRepository
 {
-
     //===========================================================
-    // Get All
+    // Get All (one row per POS Account with card charges)
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.CardCharges>>
-        GetAllAsync();
-
+    Task<List<CardChargesDto>> GetAllAsync();
 
 
     //===========================================================
-    // Get By Id
+    // Get By POS Account
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.CardCharges?>
-        GetByIdAsync
-    (
-        long id
-    );
+    Task<CardChargesDto?> GetByPosAccountAsync(
+        long posAccountId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<CardChargesDefaultsDto> GetDefaultsAsync();
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CardCharges entity
-    );
-
+    Task CreateAsync(
+        CreateCardChargesDto dto,
+        long userId);
 
 
     //===========================================================
-    // Update
+    // Update (replaces all lines of the POS Account)
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.CardCharges entity
-    );
-
+    Task UpdateAsync(
+        UpdateCardChargesDto dto,
+        long userId);
 
 
     //===========================================================
-    // Delete
+    // Delete (soft-deletes all lines of the POS Account)
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long posAccountId,
+        long userId);
 
 
     //===========================================================
-    // Restore
+    // Restore (most recently deleted POS Account)
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists (POS Account has active card charges)
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
+    Task<bool> ExistsAsync(
+        long posAccountId);
 }

@@ -2,72 +2,31 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.FinancialYears.DTOs;
 
 
 //===============================================================
-// CreateFinancialYearsDto
+// Create Financial Years DTO
+//
+// Code and Name are accepted for compatibility but are always
+// generated on the server.
 //===============================================================
 
 public class CreateFinancialYearsDto
 {
-    //===========================================================
-    // Name
-    //===========================================================
+    public string FinancialYearCode { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string FinancialYearName { get; set; } = string.Empty;
 
+    public DateOnly StartDate { get; set; }
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public DateOnly EndDate { get; set; }
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public bool IsCurrent { get; set; }
 
+    public string YearStatus { get; set; } = "Open";
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public string Remarks { get; set; } = string.Empty;
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool Status { get; set; }
 }

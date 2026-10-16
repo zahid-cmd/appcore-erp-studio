@@ -1,90 +1,66 @@
-/* ============================================================
-   Card Setup
-============================================================ */
+// PAGE-CLONED : Bank Setup -> Card Setup
+//===============================================================
+// Card Setup
+//===============================================================
 
 export interface CardSetup
 {
-    id:
-        number;
+    CardSetupId: number;
 
-    code:
-        string;
+    CardCode: string;
 
-    name:
-        string;
+    CardName: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    Remarks: string;
 
-    sampleField:
-        string;
+    Status: boolean;
 
-    status:
-        string;
+    ShortName: string;
 
-    remarks:
-        string;
+    IssuingBank: string;
+
 }
 
 
-
-/* ============================================================
-   Create Card Setup
-============================================================ */
+//===============================================================
+// Create Card Setup
+//===============================================================
 
 export interface CreateCardSetup
 {
-    name:
-        string;
+    CardCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    CardName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    Status: boolean;
 
-    remarks:
-        string;
+    ShortName: string;
+
+    IssuingBank: string;
+
 }
 
 
-
-/* ============================================================
-   Update Card Setup
-============================================================ */
+//===============================================================
+// Update Card Setup
+//===============================================================
 
 export interface UpdateCardSetup
 {
-    id:
-        number;
+    CardSetupId: number;
 
-    name:
-        string;
+    CardCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    CardName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    Status: boolean;
 
-    remarks:
-        string;
-}
+    ShortName: string;
 
+    IssuingBank: string;
 
-
-/* ============================================================
-   Card Setup Defaults
-============================================================ */
-
-export interface CardSetupDefaults
-{
-    code:
-        string;
 }

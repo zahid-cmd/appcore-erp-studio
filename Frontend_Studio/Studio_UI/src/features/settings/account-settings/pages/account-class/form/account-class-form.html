@@ -92,23 +92,23 @@
 
 
 
-            <!-- Class Type -->
+                <!-- Class Type -->
 
-            <app-dropdown
+                <app-dropdown
 
-                label="Class Type"
+                    label="Class Type"
 
-                [items]="classTypeItems"
+                    [items]="classTypeItems"
 
-                [(value)]="entity.ClassType"
+                    [(value)]="entity.ClassType"
 
-                (valueChange)="onClassTypeChange()"
+                    (valueChange)="onClassTypeChange()"
 
-                [disabled]="isEditMode || isViewMode"
+                    [disabled]="isEditMode || isViewMode"
 
-                [required]="true">
+                    [required]="true">
 
-            </app-dropdown>
+                </app-dropdown>
 
 
 
@@ -265,7 +265,7 @@
 
             <!-- =============================================
                  SECTION 04
-                 CONFIGURATION
+                 DESCRIPTION
             ============================================== -->
 
             <app-form-section
@@ -315,3 +315,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

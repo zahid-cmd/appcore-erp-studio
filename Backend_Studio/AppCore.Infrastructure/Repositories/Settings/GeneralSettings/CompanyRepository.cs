@@ -10,6 +10,9 @@ using AppCore.Application.Settings.GeneralSettings.Company.DTOs;
 using CompanyEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Company;
 
+using WingEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.Wings;
+
 using AppCore.Infrastructure.Persistence;
 
 using AppCore.Domain.Common;
@@ -744,6 +747,47 @@ public class CompanyRepository : ICompanyRepository
         {
             throw new KeyNotFoundException(
                 "Company not found."
+            );
+        }
+
+
+        //===========================================================
+        // Dependency Check : Wings
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted Wing still belongs to this Company.
+        //===========================================================
+
+        int wingCount =
+            await _context
+                .Set<WingEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.CompanyId ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        if
+        (
+            wingCount >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Company '{entity.CompanyName}' cannot be deleted because " +
+                $"{wingCount} wing(s) are created under it. " +
+                "Delete those wings first."
             );
         }
 

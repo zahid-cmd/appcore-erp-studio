@@ -175,8 +175,10 @@ public class EngineResult
 
 public static class Names
 {
+    // Words of a PascalCase name. A run of capitals stays one word:
+    //   MFSAccounts -> MFS, Accounts      BankAccounts -> Bank, Accounts
     public static List<string> Words(string pascal) =>
-        Regex.Matches(pascal, "[A-Z][a-z0-9]*|[0-9]+")
+        Regex.Matches(pascal, "[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[0-9]+")
              .Select(m => m.Value).ToList();
 
     public static string Spaced(string pascal) => string.Join(" ", Words(pascal));

@@ -1,4 +1,4 @@
-<div class="app-list-page">
+<div class="app-list-page sc-page">
 
     <!-- =====================================================
          PAGE HEADER
@@ -8,9 +8,9 @@
 
         title="System Configurations"
 
-        subtitle="Manage systemconfigurationses"
+        subtitle="Turn module features on or off"
 
-        icon="fas fa-list">
+        icon="fas fa-sliders">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search systemconfigurationses..."
+                placeholder="Search settings..."
 
                 (valueChange)="onSearch($event)">
 
@@ -67,105 +67,495 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
+        <!-- =================================================
+             TABS + COUNTERS
+        ================================================== -->
+
+        <div
 
             pageToolbarLeft
 
-            [tabs]="tabs"
+            class="sc-toolbar-left">
 
-            [(selectedTab)]="selectedTab">
+            <app-control-tabs
 
-        </app-control-tabs>
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab">
+
+            </app-control-tabs>
+
+
+            <div class="sc-counters">
+
+                <div
+
+                    class="sc-counter"
+
+                    title="Total settings">
+
+                    <span class="sc-counter-icon sc-counter-total">
+                        <i class="fas fa-sliders"></i>
+                    </span>
+
+                    <span class="sc-counter-value">{{ totalCount }}</span>
+
+                    <span class="sc-counter-label">Total</span>
+
+                </div>
+
+
+                <div
+
+                    class="sc-counter"
+
+                    title="Enabled settings">
+
+                    <span class="sc-counter-icon sc-counter-on">
+                        <i class="fas fa-toggle-on"></i>
+                    </span>
+
+                    <span class="sc-counter-value">{{ enabledCount }}</span>
+
+                    <span class="sc-counter-label">Enabled</span>
+
+                </div>
+
+
+                <div
+
+                    class="sc-counter"
+
+                    title="Disabled settings">
+
+                    <span class="sc-counter-icon sc-counter-off">
+                        <i class="fas fa-toggle-off"></i>
+                    </span>
+
+                    <span class="sc-counter-value">{{ disabledCount }}</span>
+
+                    <span class="sc-counter-label">Disabled</span>
+
+                </div>
+
+
+                <div
+
+                    class="sc-counter"
+
+                    title="Modules that have at least one setting">
+
+                    <span class="sc-counter-icon sc-counter-modules">
+                        <i class="fas fa-layer-group"></i>
+                    </span>
+
+                    <span class="sc-counter-value">{{ activeModuleCount }}</span>
+
+                    <span class="sc-counter-label">Modules</span>
+
+                </div>
+
+            </div>
+
+        </div>
 
 
         <!-- =================================================
-             STATUS FILTER
+             FILTERS : MODULE + ENABLED
         ================================================== -->
 
-        <app-dropdown
+        <div
 
             pageToolbarRight
 
-            placeholder="All Status"
+            style="display:flex;gap:12px">
 
-            [items]="statusItems"
+            <div style="width:220px">
 
-            labelField="text"
+                <app-search-dropdown
 
-            valueField="value"
+                    placeholder="All Modules"
 
-            [(value)]="selectedStatus"
+                    [items]="moduleFilterItems"
 
-            (valueChange)="onStatusFilterChange($event)">
+                    labelField="label"
 
-        </app-dropdown>
+                    valueField="value"
+
+                    [value]="selectedModule"
+
+                    (valueChange)="onModuleFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            <div style="width:200px">
+
+                <app-search-dropdown
+
+                    placeholder="All Settings"
+
+                    [items]="enabledFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedEnabled"
+
+                    (valueChange)="onEnabledFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+        </div>
 
     </app-page-toolbar>
 
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         MODULE PANELS (scroll inside the page)
     ====================================================== -->
 
-    <app-page-canvas
+    <div class="sc-scroll appcore-scrollbar">
 
-        [config]="canvasConfig">
+        @if (loading)
+        {
+            <div class="sc-grid">
 
+                @for (n of [1, 2, 3, 4]; track n)
+                {
+                    <div class="sc-panel sc-panel-skeleton">
 
-        <!-- =================================================
-             LIST TABLE
-        ================================================== -->
+                        <div class="sc-panel-header">
+                            <span class="sc-skeleton sc-skeleton-title"></span>
+                        </div>
 
-        <div canvasBody>
+                        <div class="sc-panel-body">
+                            <span class="sc-skeleton sc-skeleton-card"></span>
+                            <span class="sc-skeleton sc-skeleton-card"></span>
+                        </div>
 
-            <app-list-table
+                    </div>
+                }
 
-                [columns]="columns"
+            </div>
+        }
+        @else if (loadFailed)
+        {
+            <div class="sc-page-state">
 
-                [rows]="pagedSystemConfigurationses"
+                <app-empty-state
 
-                [serialOffset]="(currentPage - 1) * pageSize"
+                    icon="fas fa-triangle-exclamation"
 
-                [loading]="loading"
+                    title="Unable to Load Configurations"
 
-                [error]="loadFailed"
+                    subtitle="Check your connection and try again."
 
-                (view)="view($event)"
+                    actionText="Try Again"
 
-                (edit)="edit($event)"
+                    [showAction]="true"
 
-                (delete)="delete($event)"
+                    (action)="refresh()">
 
-                (sortChange)="onSort($event)">
+                </app-empty-state>
 
-            </app-list-table>
+            </div>
+        }
+        @else if (!hasModules)
+        {
+            <div class="sc-page-state">
 
-        </div>
+                <app-empty-state
 
+                    icon="fas fa-cubes"
 
+                    title="No Modules Found"
 
-        <!-- =================================================
-             PAGINATION
-        ================================================== -->
+                    subtitle="Panels appear here automatically when modules are added in Navigation Management."
 
-        <app-pagination
+                    [showAction]="false">
 
-            canvasFooter
+                </app-empty-state>
 
-            [totalRecords]="filteredSystemConfigurationses.length"
+            </div>
+        }
+        @else if (panels.length === 0)
+        {
+            <div class="sc-page-state">
 
-            [currentPage]="currentPage"
+                <app-empty-state
 
-            [pageSize]="pageSize"
+                    icon="fas fa-magnifying-glass"
 
-            (pageChange)="onPageChange($event)"
+                    title="No Matching Settings"
 
-            (pageSizeChange)="onPageSizeChange($event)">
+                    subtitle="No configuration matches the current search or filters."
 
-        </app-pagination>
+                    actionText="Clear Filters"
 
-    </app-page-canvas>
+                    [showAction]="true"
+
+                    (action)="clearFilters()">
+
+                </app-empty-state>
+
+            </div>
+        }
+        @else
+        {
+            <div class="sc-grid">
+
+                @for (panel of panels; track panel.id)
+                {
+                    <section class="sc-panel">
+
+                        <!-- PANEL HEADER -->
+
+                        <header class="sc-panel-header">
+
+                            <div class="sc-panel-title">
+
+                                <span class="sc-panel-icon">
+                                    <i [class]="panel.icon"></i>
+                                </span>
+
+                                <span class="sc-panel-name">{{ panel.name }}</span>
+
+                                @if (!panel.isActive)
+                                {
+                                    <span
+
+                                        class="sc-panel-inactive"
+
+                                        title="This module is inactive in Navigation Management">
+
+                                        Inactive
+
+                                    </span>
+                                }
+
+                            </div>
+
+                            <div class="sc-panel-meta">
+
+                                <span
+
+                                    class="sc-panel-count"
+
+                                    [title]="panel.enabled + ' of ' + panel.total + ' enabled'">
+
+                                    {{ panel.enabled }} / {{ panel.total }}
+
+                                </span>
+
+                                <button
+
+                                    type="button"
+
+                                    class="sc-panel-add"
+
+                                    title="Add setting to {{ panel.name }}"
+
+                                    [disabled]="isProcessing"
+
+                                    (click)="addToModule(panel.id)">
+
+                                    <i class="fas fa-plus"></i>
+
+                                </button>
+
+                            </div>
+
+                        </header>
+
+                        <!-- PANEL PROGRESS -->
+
+                        <div class="sc-panel-progress">
+
+                            <span
+
+                                class="sc-panel-progress-bar"
+
+                                [style.width.%]="panel.total ? (panel.enabled / panel.total) * 100 : 0">
+
+                            </span>
+
+                        </div>
+
+                        <!-- PANEL BODY -->
+
+                        <div class="sc-panel-body">
+
+                            @for (item of panel.items; track item.SystemConfigurationId)
+                            {
+                                <article
+
+                                    class="sc-card"
+
+                                    [class.sc-card-off]="!item.IsEnabled">
+
+                                    <div class="sc-card-top">
+
+                                        <span class="sc-code">{{ item.ConfigurationCode }}</span>
+
+                                        <div class="sc-card-actions">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="sc-icon-btn"
+
+                                                title="View"
+
+                                                (click)="view(item)">
+
+                                                <i class="fas fa-eye"></i>
+
+                                            </button>
+
+                                            <button
+
+                                                type="button"
+
+                                                class="sc-icon-btn"
+
+                                                title="Edit"
+
+                                                (click)="edit(item)">
+
+                                                <i class="fas fa-pen"></i>
+
+                                            </button>
+
+                                            <button
+
+                                                type="button"
+
+                                                class="sc-icon-btn sc-icon-danger"
+
+                                                title="Delete"
+
+                                                (click)="delete(item)">
+
+                                                <i class="fas fa-trash"></i>
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="sc-card-name">{{ item.ConfigurationName }}</div>
+
+                                    @if (item.Remarks)
+                                    {
+                                        <div
+
+                                            class="sc-card-remarks"
+
+                                            [title]="item.Remarks">
+
+                                            {{ item.Remarks }}
+
+                                        </div>
+                                    }
+
+                                    <div class="sc-card-footer">
+
+                                        <span
+
+                                            class="sc-state"
+
+                                            [class.sc-state-on]="item.IsEnabled">
+
+                                            <span class="sc-state-dot"></span>
+
+                                            {{ item.IsEnabled ? 'Enabled' : 'Disabled' }}
+
+                                        </span>
+
+                                        <button
+
+                                            type="button"
+
+                                            role="switch"
+
+                                            class="sc-switch"
+
+                                            [class.sc-switch-on]="item.IsEnabled"
+
+                                            [class.sc-switch-busy]="isToggling(item)"
+
+                                            [attr.aria-checked]="item.IsEnabled"
+
+                                            [attr.aria-label]="(item.IsEnabled ? 'Disable ' : 'Enable ') + item.ConfigurationName"
+
+                                            [disabled]="isProcessing || isToggling(item)"
+
+                                            (click)="toggleEnabled(item)">
+
+                                            <span class="sc-switch-knob"></span>
+
+                                        </button>
+
+                                    </div>
+
+                                </article>
+                            }
+
+                            <!-- EMPTY MODULE (quiet) -->
+
+                            @if (panel.items.length === 0)
+                            {
+                                <div class="sc-panel-empty">
+
+                                    <span class="sc-empty-icon">
+                                        <i class="fas fa-layer-group"></i>
+                                    </span>
+
+                                    <span class="sc-empty-title">No Settings Yet</span>
+
+                                    <span class="sc-empty-subtitle">
+
+                                        Nothing is configured for {{ panel.name }}.
+
+                                    </span>
+
+                                    <button
+
+                                        type="button"
+
+                                        class="sc-empty-action"
+
+                                        [disabled]="isProcessing"
+
+                                        (click)="addToModule(panel.id)">
+
+                                        <i class="fas fa-plus"></i>
+
+                                        Add Setting
+
+                                    </button>
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+                }
+
+            </div>
+        }
+
+    </div>
 
 
 
@@ -194,5 +584,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

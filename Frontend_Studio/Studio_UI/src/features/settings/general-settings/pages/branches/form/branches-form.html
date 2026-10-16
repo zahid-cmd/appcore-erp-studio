@@ -92,7 +92,7 @@
 
 
 
-                <!-- Company -->
+                <!-- Company (locked after creation) -->
 
                 <app-dropdown
 
@@ -104,7 +104,7 @@
 
                     (valueChange)="onCompanyChange($event)"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isEditMode || isViewMode"
 
                     [required]="true">
 
@@ -112,7 +112,7 @@
 
 
 
-                <!-- Wing -->
+                <!-- Wing (locked after creation) -->
 
                 <app-search-dropdown
 
@@ -130,7 +130,7 @@
 
                     (valueChange)="onWingChange($event)"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isEditMode || isViewMode"
 
                     [required]="true">
 
@@ -362,3 +362,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

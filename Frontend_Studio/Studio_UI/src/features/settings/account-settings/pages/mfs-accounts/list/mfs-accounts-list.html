@@ -8,9 +8,9 @@
 
         title="MFS Accounts"
 
-        subtitle="Manage mfsaccountses"
+        subtitle="Manage MFS accounts"
 
-        icon="fas fa-list">
+        icon="fas fa-mobile-screen-button">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search mfsaccountses..."
+                placeholder="Search MFS accounts..."
 
                 (valueChange)="onSearch($event)">
 
@@ -79,26 +79,62 @@
 
 
         <!-- =================================================
-             STATUS FILTER
+             FILTERS (Branch + Status)
         ================================================== -->
 
-        <app-dropdown
+        <div
 
             pageToolbarRight
 
-            placeholder="All Status"
+            style="display:flex; align-items:center; gap:12px;">
 
-            [items]="statusItems"
 
-            labelField="text"
+            <!-- Branch Filter -->
 
-            valueField="value"
+            <div style="width:300px;">
 
-            [(value)]="selectedStatus"
+                <app-search-dropdown
 
-            (valueChange)="onStatusFilterChange($event)">
+                    placeholder="All Branches"
 
-        </app-dropdown>
+                    [items]="branchFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedBranch"
+
+                    (valueChange)="onBranchFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            <!-- Status Filter -->
+
+            <div style="width:220px;">
+
+                <app-search-dropdown
+
+                    placeholder="All Status"
+
+                    [items]="statusFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedStatus"
+
+                    (valueChange)="onStatusFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -123,7 +159,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedMfsAccountses"
+                [rows]="pagedMFSAccounts"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -144,7 +180,6 @@
         </div>
 
 
-
         <!-- =================================================
              PAGINATION
         ================================================== -->
@@ -153,7 +188,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredMfsAccountses.length"
+            [totalRecords]="filteredMFSAccounts.length"
 
             [currentPage]="currentPage"
 
@@ -194,5 +229,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

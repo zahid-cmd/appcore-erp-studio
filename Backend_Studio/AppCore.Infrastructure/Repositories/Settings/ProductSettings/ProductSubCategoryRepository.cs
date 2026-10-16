@@ -13,6 +13,9 @@ using ProductSubCategoryEntity =
 using ProductCategoryEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory;
 
+using ProductMasterEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster;
+
 using AccountSubGroupEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup;
 
@@ -360,68 +363,32 @@ public class ProductSubCategoryRepository :
             (
                 parts.Length !=
                 4
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 !string.Equals
                 (
                     parts[0].Trim(),
                     "SCG",
                     StringComparison.OrdinalIgnoreCase
                 )
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 !int.TryParse
                 (
                     parts[1].Trim(),
                     out int existingInventoryClassSequenceNo
                 )
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 existingInventoryClassSequenceNo !=
                 inventoryClassSequenceNo
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 !int.TryParse
                 (
                     parts[2].Trim(),
                     out int existingCategorySequenceNo
                 )
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 existingCategorySequenceNo !=
                 categorySequenceNo
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 !int.TryParse
                 (
                     parts[3].Trim(),
@@ -493,14 +460,7 @@ public class ProductSubCategoryRepository :
         (
             parts.Length !=
             4
-        )
-        {
-            throw new InvalidOperationException(
-                "Invalid Product Sub Category code generated.");
-        }
-
-        if
-        (
+            ||
             !int.TryParse
             (
                 parts[1].Trim(),
@@ -560,396 +520,406 @@ public class ProductSubCategoryRepository :
     }
 
 
-//===========================================================
-// Ensure Inventory Account Sub Groups
-//===========================================================
+    //===========================================================
+    // Generated Sub Group Codes
+    //===========================================================
 
-private async Task<bool>
-    EnsureInventoryAccountSubGroupsAsync
-    (
-        ProductSubCategoryEntity entity,
-        long userId
-    )
-{
-    string[] accountClassCodes =
+    private static List<string>
+        GetGeneratedSubGroupCodes
+        (
+            ProductSubCategoryEntity entity
+        )
     {
-        "INV-001",
-        "INV-002",
-        "INV-003"
-    };
-
-    List<AccountClassEntity> accountClasses =
-        await _context
-            .Set<AccountClassEntity>()
+        return new List<string>
+            {
+                entity.InventorySubGroupCode,
+                entity.WipSubGroupCode,
+                entity.CogsSubGroupCode
+            }
             .Where
             (
                 x =>
-                    accountClassCodes.Contains(
-                        x.ClassCode)
-                    &&
-                    !x.IsDeleted
+                    !string.IsNullOrWhiteSpace(x)
             )
-            .ToListAsync();
-
-    var definitions =
-        new[]
-        {
-            new
-            {
-                ClassCode = "INV-001",
-                GroupCode = entity.InventorySubGroupCode,
-                GroupName = entity.InventorySubGroupName
-            },
-            new
-            {
-                ClassCode = "INV-002",
-                GroupCode = entity.WipSubGroupCode,
-                GroupName = entity.WipSubGroupName
-            },
-            new
-            {
-                ClassCode = "INV-003",
-                GroupCode = entity.CogsSubGroupCode,
-                GroupName = entity.CogsSubGroupName
-            }
-        };
-
-    bool changed =
-        false;
-
-    foreach
-    (
-        var definition
-        in definitions
-    )
-    {
-        AccountClassEntity? accountClass =
-            accountClasses.FirstOrDefault
-            (
-                x =>
-                    string.Equals
-                    (
-                        x.ClassCode,
-                        definition.ClassCode,
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            );
-
-        if
-        (
-            accountClass ==
-            null
-        )
-        {
-            throw new KeyNotFoundException(
-                $"Inventory Account Class '{definition.ClassCode}' not found.");
-        }
-
-        if
-        (
-            !accountClass.IsActive
-        )
-        {
-            throw new InvalidOperationException(
-                $"Inventory Account Class '{definition.ClassCode}' is inactive.");
-        }
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                definition.GroupCode)
-        )
-        {
-            throw new InvalidOperationException(
-                $"Generated Account Sub Group code is missing for {definition.ClassCode}.");
-        }
-
-        string[] codeParts =
-            definition.GroupCode.Split
-            (
-                '-',
-                StringSplitOptions.RemoveEmptyEntries
-            );
-
-        if
-        (
-            codeParts.Length !=
-            4
-        )
-        {
-            throw new InvalidOperationException(
-                $"Invalid Account Sub Group code '{definition.GroupCode}'.");
-        }
-
-        if
-        (
-            !int.TryParse
-            (
-                codeParts[2],
-                out int categorySequenceNo
-            )
-            ||
-            categorySequenceNo < 1
-        )
-        {
-            throw new InvalidOperationException(
-                $"Invalid Product Category sequence in Account Sub Group code '{definition.GroupCode}'.");
-        }
-
-        string accountGroupCode =
-            $"{definition.ClassCode}-{categorySequenceNo:D3}";
-
-        AccountGroupEntity? accountGroup =
-            await _context
-                .Set<AccountGroupEntity>()
-                .FirstOrDefaultAsync
-                (
-                    x =>
-                        x.GroupCode ==
-                        accountGroupCode
-                        &&
-                        !x.IsDeleted
-                );
-
-        if
-        (
-            accountGroup ==
-            null
-        )
-        {
-            throw new KeyNotFoundException(
-                $"Account Group '{accountGroupCode}' not found.");
-        }
-
-        if
-        (
-            accountGroup.AccountClassId !=
-            accountClass.AccountClassId
-        )
-        {
-            throw new InvalidOperationException(
-                $"Account Group '{accountGroupCode}' belongs to a different Account Class.");
-        }
-
-        if
-        (
-            !accountGroup.IsActive
-        )
-        {
-            accountGroup.IsActive =
-                true;
-
-            accountGroup.ModifiedBy =
-                userId;
-
-            accountGroup.ModifiedDate =
-                DateTime.UtcNow;
-
-            changed =
-                true;
-        }
-
-        AccountSubGroupEntity? subGroup =
-            await _context
-                .Set<AccountSubGroupEntity>()
-                .FirstOrDefaultAsync
-                (
-                    x =>
-                        x.SubGroupCode ==
-                        definition.GroupCode
-                        &&
-                        !x.IsDeleted
-                );
-
-        if
-        (
-            subGroup ==
-            null
-        )
-        {
-            subGroup =
-                new AccountSubGroupEntity
-                {
-                    AccountClassId =
-                        accountClass.AccountClassId,
-
-                    AccountGroupId =
-                        accountGroup.AccountGroupId,
-
-                    ClassCode =
-                        accountClass.ClassCode,
-
-                    Mode =
-                        accountClass.Mode,
-
-                    GroupCode =
-                        accountGroup.GroupCode,
-
-                    SubGroupCode =
-                        definition.GroupCode,
-
-                    SubGroupName =
-                        definition.GroupName?.Trim()
-                        ??
-                        string.Empty,
-
-                    AllowManualLedger =
-                        false,
-
-                    Remarks =
-                        "System generated from Product Sub Category.",
-
-                    IsActive =
-                        true,
-
-                    IsDeleted =
-                        false,
-
-                    CreatedBy =
-                        userId,
-
-                    CreatedDate =
-                        DateTime.UtcNow
-                };
-
-            _context
-                .Set<AccountSubGroupEntity>()
-                .Add(subGroup);
-
-            changed =
-                true;
-
-            continue;
-        }
-
-        if
-        (
-            subGroup.AccountClassId !=
-            accountClass.AccountClassId
-        )
-        {
-            throw new InvalidOperationException(
-                $"Account Sub Group '{definition.GroupCode}' belongs to a different Account Class.");
-        }
-
-        if
-        (
-            subGroup.AccountGroupId !=
-            accountGroup.AccountGroupId
-        )
-        {
-            throw new InvalidOperationException(
-                $"Account Sub Group '{definition.GroupCode}' belongs to a different Account Group.");
-        }
-
-        string subGroupName =
-            definition.GroupName?.Trim()
-            ??
-            string.Empty;
-
-        bool groupChanged =
-            false;
-
-        if
-        (
-            subGroup.SubGroupName !=
-            subGroupName
-        )
-        {
-            subGroup.SubGroupName =
-                subGroupName;
-
-            groupChanged =
-                true;
-        }
-
-        if
-        (
-            subGroup.ClassCode !=
-            accountClass.ClassCode
-        )
-        {
-            subGroup.ClassCode =
-                accountClass.ClassCode;
-
-            groupChanged =
-                true;
-        }
-
-        if
-        (
-            subGroup.Mode !=
-            accountClass.Mode
-        )
-        {
-            subGroup.Mode =
-                accountClass.Mode;
-
-            groupChanged =
-                true;
-        }
-
-        if
-        (
-            subGroup.GroupCode !=
-            accountGroup.GroupCode
-        )
-        {
-            subGroup.GroupCode =
-                accountGroup.GroupCode;
-
-            groupChanged =
-                true;
-        }
-
-        if
-        (
-            subGroup.IsDeleted
-        )
-        {
-            subGroup.IsDeleted =
-                false;
-
-            subGroup.DeletedBy =
-                null;
-
-            subGroup.DeletedDate =
-                null;
-
-            groupChanged =
-                true;
-        }
-
-        if
-        (
-            !subGroup.IsActive
-        )
-        {
-            subGroup.IsActive =
-                true;
-
-            groupChanged =
-                true;
-        }
-
-        if
-        (
-            groupChanged
-        )
-        {
-            subGroup.ModifiedBy =
-                userId;
-
-            subGroup.ModifiedDate =
-                DateTime.UtcNow;
-
-            changed =
-                true;
-        }
+            .Distinct(
+                StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
-    return changed;
-}
+
+    //===========================================================
+    // Ensure Inventory Account Sub Groups
+    //===========================================================
+
+    private async Task<bool>
+        EnsureInventoryAccountSubGroupsAsync
+        (
+            ProductSubCategoryEntity entity,
+            long userId
+        )
+    {
+        string[] accountClassCodes =
+        {
+            "INV-001",
+            "INV-002",
+            "INV-003"
+        };
+
+        List<AccountClassEntity> accountClasses =
+            await _context
+                .Set<AccountClassEntity>()
+                .Where
+                (
+                    x =>
+                        accountClassCodes.Contains(
+                            x.ClassCode)
+                        &&
+                        !x.IsDeleted
+                )
+                .ToListAsync();
+
+        var definitions =
+            new[]
+            {
+                new
+                {
+                    ClassCode = "INV-001",
+                    GroupCode = entity.InventorySubGroupCode,
+                    GroupName = entity.InventorySubGroupName
+                },
+                new
+                {
+                    ClassCode = "INV-002",
+                    GroupCode = entity.WipSubGroupCode,
+                    GroupName = entity.WipSubGroupName
+                },
+                new
+                {
+                    ClassCode = "INV-003",
+                    GroupCode = entity.CogsSubGroupCode,
+                    GroupName = entity.CogsSubGroupName
+                }
+            };
+
+        bool changed =
+            false;
+
+        foreach
+        (
+            var definition
+            in definitions
+        )
+        {
+            AccountClassEntity? accountClass =
+                accountClasses.FirstOrDefault
+                (
+                    x =>
+                        string.Equals
+                        (
+                            x.ClassCode,
+                            definition.ClassCode,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                );
+
+            if
+            (
+                accountClass ==
+                null
+            )
+            {
+                throw new KeyNotFoundException(
+                    $"Inventory Account Class '{definition.ClassCode}' not found.");
+            }
+
+            if
+            (
+                !accountClass.IsActive
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Inventory Account Class '{definition.ClassCode}' is inactive.");
+            }
+
+            if
+            (
+                string.IsNullOrWhiteSpace(
+                    definition.GroupCode)
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Generated Account Sub Group code is missing for {definition.ClassCode}.");
+            }
+
+            string[] codeParts =
+                definition.GroupCode.Split
+                (
+                    '-',
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+            if
+            (
+                codeParts.Length !=
+                4
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Invalid Account Sub Group code '{definition.GroupCode}'.");
+            }
+
+            if
+            (
+                !int.TryParse
+                (
+                    codeParts[2],
+                    out int categorySequenceNo
+                )
+                ||
+                categorySequenceNo < 1
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Invalid Product Category sequence in Account Sub Group code '{definition.GroupCode}'.");
+            }
+
+            string accountGroupCode =
+                $"{definition.ClassCode}-{categorySequenceNo:D3}";
+
+            AccountGroupEntity? accountGroup =
+                await _context
+                    .Set<AccountGroupEntity>()
+                    .FirstOrDefaultAsync
+                    (
+                        x =>
+                            x.GroupCode ==
+                            accountGroupCode
+                            &&
+                            !x.IsDeleted
+                    );
+
+            if
+            (
+                accountGroup ==
+                null
+            )
+            {
+                throw new KeyNotFoundException(
+                    $"Account Group '{accountGroupCode}' not found.");
+            }
+
+            if
+            (
+                accountGroup.AccountClassId !=
+                accountClass.AccountClassId
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Account Group '{accountGroupCode}' belongs to a different Account Class.");
+            }
+
+            if
+            (
+                !accountGroup.IsActive
+            )
+            {
+                accountGroup.IsActive =
+                    true;
+
+                accountGroup.ModifiedBy =
+                    userId;
+
+                accountGroup.ModifiedDate =
+                    DateTime.UtcNow;
+
+                changed =
+                    true;
+            }
+
+            AccountSubGroupEntity? subGroup =
+                await _context
+                    .Set<AccountSubGroupEntity>()
+                    .FirstOrDefaultAsync
+                    (
+                        x =>
+                            x.SubGroupCode ==
+                            definition.GroupCode
+                            &&
+                            !x.IsDeleted
+                    );
+
+            if
+            (
+                subGroup ==
+                null
+            )
+            {
+                subGroup =
+                    new AccountSubGroupEntity
+                    {
+                        AccountClassId =
+                            accountClass.AccountClassId,
+
+                        AccountGroupId =
+                            accountGroup.AccountGroupId,
+
+                        ClassCode =
+                            accountClass.ClassCode,
+
+                        Mode =
+                            accountClass.Mode,
+
+                        GroupCode =
+                            accountGroup.GroupCode,
+
+                        SubGroupCode =
+                            definition.GroupCode,
+
+                        SubGroupName =
+                            definition.GroupName?.Trim()
+                            ??
+                            string.Empty,
+
+                        AllowManualLedger =
+                            false,
+
+                        Remarks =
+                            "System generated from Product Sub Category.",
+
+                        IsActive =
+                            true,
+
+                        IsDeleted =
+                            false,
+
+                        CreatedBy =
+                            userId,
+
+                        CreatedDate =
+                            DateTime.UtcNow
+                    };
+
+                _context
+                    .Set<AccountSubGroupEntity>()
+                    .Add(subGroup);
+
+                changed =
+                    true;
+
+                continue;
+            }
+
+            if
+            (
+                subGroup.AccountClassId !=
+                accountClass.AccountClassId
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Account Sub Group '{definition.GroupCode}' belongs to a different Account Class.");
+            }
+
+            if
+            (
+                subGroup.AccountGroupId !=
+                accountGroup.AccountGroupId
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Account Sub Group '{definition.GroupCode}' belongs to a different Account Group.");
+            }
+
+            string subGroupName =
+                definition.GroupName?.Trim()
+                ??
+                string.Empty;
+
+            bool groupChanged =
+                false;
+
+            if
+            (
+                subGroup.SubGroupName !=
+                subGroupName
+            )
+            {
+                subGroup.SubGroupName =
+                    subGroupName;
+
+                groupChanged =
+                    true;
+            }
+
+            if
+            (
+                subGroup.ClassCode !=
+                accountClass.ClassCode
+            )
+            {
+                subGroup.ClassCode =
+                    accountClass.ClassCode;
+
+                groupChanged =
+                    true;
+            }
+
+            if
+            (
+                subGroup.Mode !=
+                accountClass.Mode
+            )
+            {
+                subGroup.Mode =
+                    accountClass.Mode;
+
+                groupChanged =
+                    true;
+            }
+
+            if
+            (
+                subGroup.GroupCode !=
+                accountGroup.GroupCode
+            )
+            {
+                subGroup.GroupCode =
+                    accountGroup.GroupCode;
+
+                groupChanged =
+                    true;
+            }
+
+            if
+            (
+                !subGroup.IsActive
+            )
+            {
+                subGroup.IsActive =
+                    true;
+
+                groupChanged =
+                    true;
+            }
+
+            if
+            (
+                groupChanged
+            )
+            {
+                subGroup.ModifiedBy =
+                    userId;
+
+                subGroup.ModifiedDate =
+                    DateTime.UtcNow;
+
+                changed =
+                    true;
+            }
+        }
+
+        return changed;
+    }
+
 
     //===========================================================
     // Create
@@ -1053,19 +1023,11 @@ private async Task<bool>
                 ProductCategoryId =
                     dto.ProductCategoryId,
 
-                //===================================================
-                // Basic Information
-                //===================================================
-
                 SubCategoryCode =
                     defaults.Code,
 
                 SubCategoryName =
                     subCategoryName,
-
-                //===================================================
-                // Inventory Sub Group
-                //===================================================
 
                 InventorySubGroupCode =
                     defaults.InventorySubGroupCode,
@@ -1075,10 +1037,6 @@ private async Task<bool>
                     ??
                     string.Empty,
 
-                //===================================================
-                // WIP Sub Group
-                //===================================================
-
                 WipSubGroupCode =
                     defaults.WipSubGroupCode,
 
@@ -1086,10 +1044,6 @@ private async Task<bool>
                     dto.WipSubGroupName?.Trim()
                     ??
                     string.Empty,
-
-                //===================================================
-                // COGS Sub Group
-                //===================================================
 
                 CogsSubGroupCode =
                     defaults.CogsSubGroupCode,
@@ -1099,10 +1053,6 @@ private async Task<bool>
                     ??
                     string.Empty,
 
-                //===================================================
-                // Configuration
-                //===================================================
-
                 SubCategoryCreationAllowed =
                     dto.SubCategoryCreationAllowed,
 
@@ -1111,19 +1061,11 @@ private async Task<bool>
                     ??
                     string.Empty,
 
-                //===================================================
-                // Status
-                //===================================================
-
                 IsActive =
                     dto.IsActive,
 
                 IsDeleted =
                     false,
-
-                //===================================================
-                // Audit
-                //===================================================
 
                 CreatedBy =
                     userId,
@@ -1151,9 +1093,9 @@ private async Task<bool>
                 entity,
                 userId);
 
-            //=======================================================
+            //===================================================
             // Activity History
-            //=======================================================
+            //===================================================
 
             _context.ActivityHistories.Add(
                 new ActivityHistory
@@ -1188,6 +1130,7 @@ private async Task<bool>
             );
 
             await _context.SaveChangesAsync();
+
             await transaction.CommitAsync();
 
             return entity.ProductSubCategoryId;
@@ -1195,6 +1138,7 @@ private async Task<bool>
         catch
         {
             await transaction.RollbackAsync();
+
             throw;
         }
     }
@@ -1238,29 +1182,22 @@ private async Task<bool>
         }
 
         //=======================================================
-        // Resolve Product Category
+        // Product Category Is Locked After Creation
+        //
+        // Changing the parent would regenerate the sub category
+        // code and its Inventory / WIP / COGS sub group codes,
+        // leaving the old account sub groups orphaned.
         //=======================================================
-
-        ProductCategoryEntity? category =
-            await _context
-                .Set<ProductCategoryEntity>()
-                .FirstOrDefaultAsync
-                (
-                    x =>
-                        x.ProductCategoryId ==
-                        dto.ProductCategoryId
-                        &&
-                        !x.IsDeleted
-                );
 
         if
         (
-            category ==
-            null
+            entity.ProductCategoryId !=
+            dto.ProductCategoryId
         )
         {
-            throw new KeyNotFoundException(
-                "Product Category not found.");
+            throw new InvalidOperationException(
+                "Product Category cannot be changed after the Product Sub Category is created. " +
+                "Delete it and create it again under the correct Product Category.");
         }
 
         //=======================================================
@@ -1296,7 +1233,7 @@ private async Task<bool>
                         dto.ProductSubCategoryId
                         &&
                         x.ProductCategoryId ==
-                        dto.ProductCategoryId
+                        entity.ProductCategoryId
                         &&
                         !x.IsDeleted
                         &&
@@ -1314,38 +1251,8 @@ private async Task<bool>
         }
 
         //=======================================================
-        // Resolve Codes
-        //=======================================================
-
-        if
-        (
-            entity.ProductCategoryId !=
-            dto.ProductCategoryId
-        )
-        {
-            ProductSubCategoryDefaultsDto defaults =
-                await GetDefaultsAsync(
-                    dto.ProductCategoryId);
-
-            entity.SubCategoryCode =
-                defaults.Code;
-
-            entity.InventorySubGroupCode =
-                defaults.InventorySubGroupCode;
-
-            entity.WipSubGroupCode =
-                defaults.WipSubGroupCode;
-
-            entity.CogsSubGroupCode =
-                defaults.CogsSubGroupCode;
-        }
-
-        //=======================================================
         // Update Entity
         //=======================================================
-
-        entity.ProductCategoryId =
-            dto.ProductCategoryId;
 
         entity.SubCategoryName =
             subCategoryName;
@@ -1365,10 +1272,6 @@ private async Task<bool>
             ??
             string.Empty;
 
-        //=======================================================
-        // Configuration
-        //=======================================================
-
         entity.SubCategoryCreationAllowed =
             dto.SubCategoryCreationAllowed;
 
@@ -1376,10 +1279,6 @@ private async Task<bool>
             dto.Remarks?.Trim()
             ??
             string.Empty;
-
-        //=======================================================
-        // Status
-        //=======================================================
 
         entity.IsActive =
             dto.IsActive;
@@ -1390,49 +1289,67 @@ private async Task<bool>
         entity.ModifiedDate =
             DateTime.UtcNow;
 
-        await EnsureInventoryAccountSubGroupsAsync(
-            entity,
-            userId);
-
-        await _context.SaveChangesAsync();
-
         //=======================================================
-        // Activity History
+        // Save in Transaction
         //=======================================================
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Product Settings",
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
-                EntityName =
-                    "Product Sub Category",
+        try
+        {
+            await EnsureInventoryAccountSubGroupsAsync(
+                entity,
+                userId);
 
-                EntityId =
-                    entity.ProductSubCategoryId,
+            await _context.SaveChangesAsync();
 
-                ActivityType =
-                    "Update",
+            //===================================================
+            // Activity History
+            //===================================================
 
-                ActivityTitle =
-                    "Product Sub Category Updated",
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
 
-                ActivityDescription =
-                    $"Product Sub Category '{entity.SubCategoryName}' updated.",
+                    EntityName =
+                        "Product Sub Category",
 
-                PerformedBy =
-                    userId,
+                    EntityId =
+                        entity.ProductSubCategoryId,
 
-                PerformedByName =
-                    "System",
+                    ActivityType =
+                        "Update",
 
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
+                    ActivityTitle =
+                        "Product Sub Category Updated",
 
-        await _context.SaveChangesAsync();
+                    ActivityDescription =
+                        $"Product Sub Category '{entity.SubCategoryName}' updated.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        DateTime.UtcNow
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 
@@ -1474,112 +1391,155 @@ private async Task<bool>
         }
 
         //=======================================================
-        // Soft Delete Product Sub Category
+        // Dependency Check : Product Masters
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted Product Master still belongs to this
+        // Product Sub Category.
         //=======================================================
 
-        entity.IsDeleted =
-            true;
-
-        entity.DeletedBy =
-            userId;
-
-        entity.DeletedDate =
-            DateTime.UtcNow;
-
-        //=======================================================
-        // Delete Generated Inventory Account Sub Groups
-        //=======================================================
-
-        List<string> generatedSubGroupCodes =
-            new List<string>
-            {
-                entity.InventorySubGroupCode,
-                entity.WipSubGroupCode,
-                entity.CogsSubGroupCode
-            }
-            .Where
-            (
-                x =>
-                    !string.IsNullOrWhiteSpace(x)
-            )
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        List<AccountSubGroupEntity> generatedSubGroups =
+        int productCount =
             await _context
-                .Set<AccountSubGroupEntity>()
-                .Where
+                .Set<ProductMasterEntity>()
+                .AsNoTracking()
+                .CountAsync
                 (
                     x =>
-                        !x.IsDeleted
+                        x.ProductSubCategoryId ==
+                        id
                         &&
-                        generatedSubGroupCodes.Contains(
-                            x.SubGroupCode)
-                )
-                .ToListAsync();
+                        !x.IsDeleted
+                );
 
-        foreach
+        if
         (
-            AccountSubGroupEntity group
-            in generatedSubGroups
+            productCount >
+            0
         )
         {
-            group.IsDeleted =
-                true;
-
-            group.DeletedBy =
-                userId;
-
-            group.DeletedDate =
-                DateTime.UtcNow;
-
-            group.ModifiedBy =
-                userId;
-
-            group.ModifiedDate =
-                DateTime.UtcNow;
+            throw new InvalidOperationException(
+                $"Product Sub Category '{entity.SubCategoryName}' cannot be deleted because " +
+                $"{productCount} product(s) are created under it. " +
+                "Delete those products first.");
         }
 
-        await _context.SaveChangesAsync();
-
         //=======================================================
-        // Activity History
+        // Begin Transaction
         //=======================================================
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            DateTime deletedDate =
+                DateTime.UtcNow;
+
+            //===================================================
+            // Soft Delete Product Sub Category
+            //===================================================
+
+            entity.IsDeleted =
+                true;
+
+            entity.DeletedBy =
+                userId;
+
+            entity.DeletedDate =
+                deletedDate;
+
+            //===================================================
+            // Delete Generated Inventory Account Sub Groups
+            //===================================================
+
+            List<string> generatedSubGroupCodes =
+                GetGeneratedSubGroupCodes(
+                    entity);
+
+            List<AccountSubGroupEntity> generatedSubGroups =
+                await _context
+                    .Set<AccountSubGroupEntity>()
+                    .Where
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            generatedSubGroupCodes.Contains(
+                                x.SubGroupCode)
+                    )
+                    .ToListAsync();
+
+            foreach
+            (
+                AccountSubGroupEntity group
+                in generatedSubGroups
+            )
             {
-                Module =
-                    "Product Settings",
+                group.IsDeleted =
+                    true;
 
-                EntityName =
-                    "Product Sub Category",
+                group.DeletedBy =
+                    userId;
 
-                EntityId =
-                    entity.ProductSubCategoryId,
+                group.DeletedDate =
+                    deletedDate;
 
-                ActivityType =
-                    "Delete",
+                group.ModifiedBy =
+                    userId;
 
-                ActivityTitle =
-                    "Product Sub Category Deleted",
-
-                ActivityDescription =
-                    $"Product Sub Category '{entity.SubCategoryName}' deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                group.ModifiedDate =
+                    deletedDate;
             }
-        );
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
+
+                    EntityName =
+                        "Product Sub Category",
+
+                    EntityId =
+                        entity.ProductSubCategoryId,
+
+                    ActivityType =
+                        "Delete",
+
+                    ActivityTitle =
+                        "Product Sub Category Deleted",
+
+                    ActivityDescription =
+                        $"Product Sub Category '{entity.SubCategoryName}' deleted.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        deletedDate
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 
@@ -1622,120 +1582,186 @@ private async Task<bool>
         }
 
         //=======================================================
-        // Restore Product Sub Category
+        // Parent Product Category Must Exist
         //=======================================================
 
-        entity.IsDeleted =
-            false;
-
-        entity.DeletedBy =
-            null;
-
-        entity.DeletedDate =
-            null;
-
-        entity.ModifiedBy =
-            userId;
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-        //=======================================================
-        // Restore Generated Inventory Account Sub Groups
-        //=======================================================
-
-        List<string> generatedSubGroupCodes =
-            new List<string>
-            {
-                entity.InventorySubGroupCode,
-                entity.WipSubGroupCode,
-                entity.CogsSubGroupCode
-            }
-            .Where
-            (
-                x =>
-                    !string.IsNullOrWhiteSpace(x)
-            )
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        List<AccountSubGroupEntity> generatedSubGroups =
+        bool parentExists =
             await _context
-                .Set<AccountSubGroupEntity>()
-                .Where
+                .Set<ProductCategoryEntity>()
+                .AnyAsync
                 (
                     x =>
-                        x.IsDeleted
+                        x.ProductCategoryId ==
+                        entity.ProductCategoryId
                         &&
-                        generatedSubGroupCodes.Contains(
-                            x.SubGroupCode)
-                )
-                .ToListAsync();
+                        !x.IsDeleted
+                );
 
-        foreach
+        if
         (
-            AccountSubGroupEntity group
-            in generatedSubGroups
+            !parentExists
         )
         {
-            group.IsDeleted =
-                false;
-
-            group.DeletedBy =
-                null;
-
-            group.DeletedDate =
-                null;
-
-            group.ModifiedBy =
-                userId;
-
-            group.ModifiedDate =
-                DateTime.UtcNow;
+            throw new InvalidOperationException(
+                $"Product Sub Category '{entity.SubCategoryName}' cannot be restored because its Product Category is deleted. " +
+                "Restore the Product Category first.");
         }
 
-        await _context.SaveChangesAsync();
-
         //=======================================================
-        // Activity History
+        // Name Must Still Be Unique
         //=======================================================
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+        bool nameTaken =
+            await _context
+                .Set<ProductSubCategoryEntity>()
+                .AnyAsync
+                (
+                    x =>
+                        x.ProductSubCategoryId !=
+                        entity.ProductSubCategoryId
+                        &&
+                        x.ProductCategoryId ==
+                        entity.ProductCategoryId
+                        &&
+                        !x.IsDeleted
+                        &&
+                        x.SubCategoryName.ToLower() ==
+                        entity.SubCategoryName.ToLower()
+                );
+
+        if
+        (
+            nameTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Product Sub Category '{entity.SubCategoryName}' cannot be restored because another sub category with the same name already exists under this Product Category.");
+        }
+
+        //=======================================================
+        // Begin Transaction
+        //=======================================================
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            DateTime restoredDate =
+                DateTime.UtcNow;
+
+            //===================================================
+            // Restore Product Sub Category
+            //===================================================
+
+            entity.IsDeleted =
+                false;
+
+            entity.DeletedBy =
+                null;
+
+            entity.DeletedDate =
+                null;
+
+            entity.ModifiedBy =
+                userId;
+
+            entity.ModifiedDate =
+                restoredDate;
+
+            //===================================================
+            // Restore Generated Inventory Account Sub Groups
+            //===================================================
+
+            List<string> generatedSubGroupCodes =
+                GetGeneratedSubGroupCodes(
+                    entity);
+
+            List<AccountSubGroupEntity> generatedSubGroups =
+                await _context
+                    .Set<AccountSubGroupEntity>()
+                    .Where
+                    (
+                        x =>
+                            x.IsDeleted
+                            &&
+                            generatedSubGroupCodes.Contains(
+                                x.SubGroupCode)
+                    )
+                    .ToListAsync();
+
+            foreach
+            (
+                AccountSubGroupEntity group
+                in generatedSubGroups
+            )
             {
-                Module =
-                    "Product Settings",
+                group.IsDeleted =
+                    false;
 
-                EntityName =
-                    "Product Sub Category",
+                group.DeletedBy =
+                    null;
 
-                EntityId =
-                    entity.ProductSubCategoryId,
+                group.DeletedDate =
+                    null;
 
-                ActivityType =
-                    "Restore",
+                group.ModifiedBy =
+                    userId;
 
-                ActivityTitle =
-                    "Product Sub Category Restored",
-
-                ActivityDescription =
-                    $"Product Sub Category '{entity.SubCategoryName}' restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                group.ModifiedDate =
+                    restoredDate;
             }
-        );
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        return true;
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
+
+                    EntityName =
+                        "Product Sub Category",
+
+                    EntityId =
+                        entity.ProductSubCategoryId,
+
+                    ActivityType =
+                        "Restore",
+
+                    ActivityTitle =
+                        "Product Sub Category Restored",
+
+                    ActivityDescription =
+                        $"Product Sub Category '{entity.SubCategoryName}' restored.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        restoredDate
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 

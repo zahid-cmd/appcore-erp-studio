@@ -6,7 +6,13 @@ namespace AppCore.Domain.Entities.Settings.AccountSettings;
 
 
 //===============================================================
-// CardCharges
+// Card Charges
+//
+// One row = one card of one POS Account with its charge %.
+// Master : POS Account (POSAccounts)
+// Card   : Card Setup  (CardSetup)
+//
+// A card can appear only once per POS Account (active rows).
 //===============================================================
 
 public class CardCharges
@@ -15,149 +21,50 @@ public class CardCharges
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long CardChargeId { get; set; }
 
 
     //===========================================================
-    // Code
+    // POS Account (master)
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long POSAccountId { get; set; }
 
 
     //===========================================================
-    // Name
+    // Card (Card Setup)
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long CardSetupId { get; set; }
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Charge (percentage, 0 – 100, two decimals)
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public decimal ChargePercent { get; set; }
 
 
     //===========================================================
-    // Sample Field
+    // Soft Delete
     //===========================================================
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool IsDeleted { get; set; } = false;
+
+    public long? DeletedBy { get; set; }
+
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Status
+    // Audit Information
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Remarks
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Active
-    //===========================================================
-
-    public bool IsActive
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Deleted
-    //===========================================================
-
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Created By
-    //===========================================================
-
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Created Date
-    //===========================================================
-
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified By
-    //===========================================================
-
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

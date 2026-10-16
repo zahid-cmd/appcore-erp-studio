@@ -1,90 +1,90 @@
-/* ============================================================
-   System Configurations
-============================================================ */
+//===============================================================
+// System Configuration
+//
+// A switchable setting that belongs to one Navigation Module.
+// The modules (and so the panels on the page) come from the
+// Navigation Modules table — no module, no panel.
+//
+// ConfigurationCode is system generated per module:
+//   CFG-<ModuleCode>-0001
+//
+// ModuleCode / ModuleName / ModuleIcon are read-only display
+// values joined from the Navigation Module.
+//===============================================================
 
-export interface SystemConfigurations
+export interface SystemConfiguration
 {
-    id:
-        number;
+    SystemConfigurationId: number;
 
-    code:
-        string;
+    NavigationModuleId: number;
 
-    name:
-        string;
+    ModuleCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    ModuleName: string;
 
-    sampleField:
-        string;
+    ModuleIcon: string;
 
-    status:
-        string;
+    ConfigurationCode: string;
 
-    remarks:
-        string;
+    ConfigurationName: string;
+
+    IsEnabled: boolean;
+
+    Remarks: string;
 }
 
 
+//===============================================================
+// Create System Configuration
+//===============================================================
 
-/* ============================================================
-   Create System Configurations
-============================================================ */
-
-export interface CreateSystemConfigurations
+export interface CreateSystemConfiguration
 {
-    name:
-        string;
+    NavigationModuleId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    ConfigurationCode: string;
 
-    sampleField:
-        string;
+    ConfigurationName: string;
 
-    status:
-        string;
+    IsEnabled: boolean;
 
-    remarks:
-        string;
+    Remarks: string;
 }
 
 
+//===============================================================
+// Update System Configuration
+//===============================================================
 
-/* ============================================================
-   Update System Configurations
-============================================================ */
-
-export interface UpdateSystemConfigurations
+export interface UpdateSystemConfiguration
+extends CreateSystemConfiguration
 {
-    id:
-        number;
-
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
+    SystemConfigurationId: number;
 }
 
 
+//===============================================================
+// Configuration Module (one panel on the list page)
+//
+// Built from a Navigation Module.
+//===============================================================
 
-/* ============================================================
-   System Configurations Defaults
-============================================================ */
-
-export interface SystemConfigurationsDefaults
+export interface ConfigurationModule
 {
-    code:
-        string;
+    id: number;
+
+    code: string;
+
+    name: string;
+
+    icon: string;
+
+    displayOrder: number;
+
+    isActive: boolean;
 }
+
+// Used when a Navigation Module has no icon
+export const DEFAULT_MODULE_ICON:
+    string =
+    'fas fa-layer-group';

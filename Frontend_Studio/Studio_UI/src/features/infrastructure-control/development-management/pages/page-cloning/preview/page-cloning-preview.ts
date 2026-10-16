@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, inject } from 
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, finalize, map, of, switchMap, tap, timer } from 'rxjs';
 
 import { PageHeaderComponent } from '../../../../../../shared/components/layout/page-header/page-header';
 import { PageToolbarComponent } from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
@@ -13,6 +14,8 @@ import { ToastComponent } from '../../../../../../shared/components/utilities/to
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogComponent } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 import { ConfirmDialogService } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+import { ProgressDialogComponent } from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+import { ProgressDialogService } from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
 import
 {
@@ -46,6 +49,15 @@ interface PreviewFileRow
     after: string;
 }
 
+// How long the progress dialog stays open after a successful Save / Update / Restore
+const PROGRESS_MS = 5000;
+
+// Remembers a finished Save / Update / Restore across a page reload.
+// Saving writes files into the Angular project, so "ng serve" may reload the
+// browser while the progress dialog is still open. The wizard lives in memory
+// and is empty after a reload; this note tells the page the work was done.
+const FINISHED_KEY = 'pageCloning.finished';
+
 @Component(
 {
     selector:'page-cloning-preview',
@@ -55,7 +67,7 @@ interface PreviewFileRow
         CommonModule,
         PageHeaderComponent, PageToolbarComponent, CommandCenterComponent,
         ControlTabsComponent, PageCanvasComponent, StepsCounterComponent,
-        ToastComponent, ConfirmDialogComponent
+        ToastComponent, ConfirmDialogComponent, ProgressDialogComponent
     ],
     templateUrl:'./page-cloning-preview.html',
     styleUrls:['./page-cloning-preview.css']
@@ -67,6 +79,7 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
     private readonly api = inject(PageCloningPlanService);
     private readonly toast = inject(ToastService);
     private readonly confirmDialog = inject(ConfirmDialogService);
+    private readonly progressDialog = inject(ProgressDialogService);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly zone = inject(NgZone);
 
@@ -131,6 +144,43 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
     }
 
     //===========================================================
+    // "Finished" note (survives a page reload)
+    //===========================================================
+    private markFinished(title: string, message: string): void
+    {
+        try { sessionStorage.setItem(FINISHED_KEY, JSON.stringify({ title, message })); }
+        catch { /* storage not available: nothing to remember */ }
+    }
+
+    private clearFinished(): void
+    {
+        try { sessionStorage.removeItem(FINISHED_KEY); }
+        catch { /* ignore */ }
+    }
+
+    private takeFinished(): { title: string; message: string } | null
+    {
+        try
+        {
+            const raw = sessionStorage.getItem(FINISHED_KEY);
+
+            if (!raw) { return null; }
+
+            sessionStorage.removeItem(FINISHED_KEY);
+
+            const note = JSON.parse(raw);
+
+            return note && note.title
+                ? { title: String(note.title), message: String(note.message ?? '') }
+                : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    //===========================================================
     // Load
     //===========================================================
     ngOnInit(): void
@@ -139,6 +189,20 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
         if (!this.state.cloneFromId || !this.state.cloneToId
             || !this.state.entityName || !this.rows.length)
         {
+            // The page was reloaded after a successful Save / Update / Restore
+            // (ng serve reloads the browser when the generated files are written):
+            // the work is done, so report it and go to the list.
+            const finished = this.takeFinished();
+
+            if (finished)
+            {
+                this.toast.success(finished.title, finished.message);
+
+                void this.router.navigate(
+                    ['/infrastructure-control', 'development-management', 'page-cloning', 'list']);
+                return;
+            }
+
             this.toast.info('Clone', 'Please complete the previous steps first.');
             void this.router.navigate(
                 ['/infrastructure-control', 'development-management', 'page-cloning', 'source']);
@@ -160,6 +224,7 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
     ngOnDestroy(): void
     {
         this.destroyed = true;
+        this.progressDialog.close();
     }
 
     //===========================================================
@@ -202,10 +267,13 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
 
     //===========================================================
     // The 15 files the target page will have
+    //
+    // Same rule as the backend (Names.Words): a run of capitals
+    // stays one word, so MFSAccounts -> mfs-accounts.
     //===========================================================
     private kebab(name: string): string
     {
-        return (name.match(/[A-Z][a-z0-9]*|[0-9]+/g) ?? [name])
+        return (name.match(/[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[0-9]+/g) ?? [name])
             .join('-')
             .toLowerCase();
     }
@@ -373,6 +441,61 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
     }
 
     //===========================================================
+    // Progress dialog around a backend call
+    //
+    // The dialog opens at once and the real request runs behind it.
+    //   - success:  the "finished" note is saved at once (a reload
+    //               during the wait cannot lose the result), and the
+    //               dialog stays open until PROGRESS_MS have passed
+    //   - failure / "not success" answer: no waiting, the caller
+    //               closes the dialog and reports it
+    // While waiting the bar moves up to 95%, then jumps to 100%.
+    //===========================================================
+    private withProgress<T extends { success: boolean }>(
+        title: string, message: string, call: Observable<T>,
+        doneTitle: string, doneMessage: string): Observable<T>
+    {
+        const started = Date.now();
+
+        this.progressDialog.show(title, message);
+
+        const tick = window.setInterval((): void =>
+        {
+            const pct = Math.min(95, ((Date.now() - started) / PROGRESS_MS) * 100);
+            this.progressDialog.update(pct);
+        }, 100);
+
+        return call.pipe(
+            tap((res: T): void =>
+            {
+                if (res.success) { this.markFinished(doneTitle, doneMessage); }
+            }),
+            switchMap((res: T): Observable<T> =>
+            {
+                if (!res.success) { return of(res); }
+
+                const wait = Math.max(0, PROGRESS_MS - (Date.now() - started));
+
+                return timer(wait).pipe(map((): T => res));
+            }),
+            finalize((): void => { window.clearInterval(tick); })
+        );
+    }
+
+    // Go to the list first, then clear the wizard (so this page never
+    // re-starts with an empty wizard and bounces back to Step 1)
+    private finishToList(): void
+    {
+        void this.router.navigate(
+            ['/infrastructure-control', 'development-management', 'page-cloning', 'list'])
+            .then((): void =>
+            {
+                this.clearFinished();
+                this.workflow.reset();
+            });
+    }
+
+    //===========================================================
     // Command center : Save / Update / Edit, Restore, Back, List
     //===========================================================
     onSave(): void
@@ -391,19 +514,39 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
 
         if (this.saving || this.restoring || this.previewing) { return; }
 
-        this.doSave(false);
+        const verb = this.isEdit ? 'Update' : 'Save';
+
+        this.confirmDialog.open(
+            `${verb} clone`,
+            this.isEdit
+                ? 'The 15 files will be rewritten and the clone record will be updated. Do you want to continue?'
+                : 'The 15 files will be written and the clone will be recorded. Do you want to continue?',
+            (): void => { this.doSave(false); },
+            verb,
+            'Cancel',
+            'primary');
     }
 
     private doSave(overwriteEdited: boolean): void
     {
+        const verb = this.isEdit ? 'Updating' : 'Saving';
+
         this.saving = true;
         this.refresh();
 
-        this.api.savePlan(this.buildPlan(), overwriteEdited).subscribe(
+        this.withProgress(
+            verb + ' clone',
+            'Writing the 15 files. Please wait...',
+            this.api.savePlan(this.buildPlan(), overwriteEdited),
+            this.isEdit ? 'Updated' : 'Saved',
+            'The files were written and the clone was recorded.'
+        ).subscribe(
         {
             next: (res: PlanActionResult): void =>
             {
                 this.saving = false;
+                this.progressDialog.update(100);
+                this.progressDialog.close();
 
                 if (res.success)
                 {
@@ -421,14 +564,8 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
                     this.toast.success('Saved', 'The files were written and the clone was recorded.');
                     this.refresh();
 
-                    // Done: clear the wizard and return to the list
-                    setTimeout((): void =>
-                    {
-                        this.workflow.reset();
-
-                        void this.router.navigate(
-                            ['/infrastructure-control', 'development-management', 'page-cloning', 'list']);
-                    }, 900);
+                    // Done: return to the list and clear the wizard
+                    setTimeout((): void => { this.finishToList(); }, 900);
 
                     return;
                 }
@@ -460,6 +597,7 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
                 console.error('[Clone Preview] save error', error);
 
                 this.saving = false;
+                this.progressDialog.close();
                 this.toast.error('Save', this.errorText(error, 'Save failed.'));
                 this.refresh();
             }
@@ -496,11 +634,19 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
         this.restoring = true;
         this.refresh();
 
-        this.api.restore(this.savedId).subscribe(
+        this.withProgress(
+            'Restoring clone',
+            'Putting the files back to the baseline. Please wait...',
+            this.api.restore(this.savedId),
+            'Restored',
+            'The files are back at the baseline.'
+        ).subscribe(
         {
             next: (res: PlanActionResult): void =>
             {
                 this.restoring = false;
+                this.progressDialog.update(100);
+                this.progressDialog.close();
 
                 if (res.success)
                 {
@@ -511,12 +657,15 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
                     }
 
                     this.toast.success('Restored', 'The files are back at the baseline.');
-                }
-                else
-                {
-                    this.toast.error('Restore', (res.messages ?? [])[0] ?? 'Restore failed.');
+                    this.refresh();
+
+                    // Done: return to the list and clear the wizard
+                    setTimeout((): void => { this.finishToList(); }, 900);
+
+                    return;
                 }
 
+                this.toast.error('Restore', (res.messages ?? [])[0] ?? 'Restore failed.');
                 this.refresh();
             },
 
@@ -525,6 +674,7 @@ export class PageCloningPreviewComponent implements OnInit, OnDestroy
                 console.error('[Clone Preview] restore error', error);
 
                 this.restoring = false;
+                this.progressDialog.close();
                 this.toast.error('Restore', this.errorText(error, 'Restore failed.'));
                 this.refresh();
             }

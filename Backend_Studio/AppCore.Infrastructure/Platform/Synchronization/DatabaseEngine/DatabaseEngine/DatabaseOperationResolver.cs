@@ -1702,6 +1702,51 @@ public class DatabaseOperationResolver
 
 
     //===========================================================
+    // Resolve Provider CLR Type
+    //
+    // Unwraps Nullable<T>, applies value converters
+    // (e.g. enum → string) and maps enums to their
+    // underlying integer type.
+    //===========================================================
+
+    private Type
+        ResolveProviderClrType
+    (
+        IReadOnlyProperty property
+    )
+    {
+        var clrType =
+            property.GetValueConverter()?.ProviderClrType
+            ??
+            property.ClrType;
+
+
+        clrType =
+            Nullable.GetUnderlyingType(
+                clrType
+            )
+            ??
+            clrType;
+
+
+        if
+        (
+            clrType.IsEnum
+        )
+        {
+            clrType =
+                Enum.GetUnderlyingType(
+                    clrType
+                );
+        }
+
+
+        return clrType;
+    }
+
+
+
+    //===========================================================
     // Resolve PostgreSQL Column Definition
     //===========================================================
 
@@ -1718,11 +1763,9 @@ public class DatabaseOperationResolver
 
 
         var clrType =
-            Nullable.GetUnderlyingType(
-                property.ClrType
-            )
-            ??
-            property.ClrType;
+            ResolveProviderClrType(
+                property
+            );
 
 
         //=======================================================
@@ -1737,13 +1780,11 @@ public class DatabaseOperationResolver
             &&
 
             (
-                clrType ==
-                typeof(long)
-
+                clrType == typeof(long)
                 ||
-
-                clrType ==
-                typeof(int)
+                clrType == typeof(int)
+                ||
+                clrType == typeof(short)
             )
         )
         {
@@ -1769,17 +1810,15 @@ public class DatabaseOperationResolver
         IReadOnlyProperty property
     )
     {
+        var clrType =
+            ResolveProviderClrType(
+                property
+            );
+
+
         //=======================================================
         // Identity Columns
         //=======================================================
-
-        var clrType =
-            Nullable.GetUnderlyingType(
-                property.ClrType
-            )
-            ??
-            property.ClrType;
-
 
         if
         (
@@ -1789,13 +1828,11 @@ public class DatabaseOperationResolver
             &&
 
             (
-                clrType ==
-                typeof(long)
-
+                clrType == typeof(long)
                 ||
-
-                clrType ==
-                typeof(int)
+                clrType == typeof(int)
+                ||
+                clrType == typeof(short)
             )
         )
         {
@@ -1840,6 +1877,59 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
+        // Apply Value Converter (e.g. enum → string)
+        //=======================================================
+
+        var converter =
+            property.GetValueConverter();
+
+
+        if
+        (
+            converter != null
+        )
+        {
+            defaultValue =
+                converter.ConvertToProvider(
+                    defaultValue
+                );
+
+
+            if
+            (
+                defaultValue == null
+            )
+            {
+                return null;
+            }
+        }
+
+
+        var culture =
+            System.Globalization.CultureInfo.InvariantCulture;
+
+
+        //=======================================================
+        // Enum (stored as its integer value)
+        //=======================================================
+
+        if
+        (
+            defaultValue is Enum
+        )
+        {
+            return
+                Convert.ToInt64(
+                    defaultValue,
+                    culture
+                )
+                .ToString(
+                    culture
+                );
+        }
+
+
+        //=======================================================
         // Boolean
         //=======================================================
 
@@ -1850,7 +1940,10 @@ public class DatabaseOperationResolver
         )
         {
             return
-                (bool)defaultValue
+                Convert.ToBoolean(
+                    defaultValue,
+                    culture
+                )
                     ?
                     "TRUE"
                     :
@@ -1859,24 +1952,38 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Integer
+        // Numeric (integer & decimal)
         //=======================================================
 
         if
         (
-            clrType ==
-            typeof(long)
-
+            clrType == typeof(long)
             ||
-
-            clrType ==
-            typeof(int)
+            clrType == typeof(int)
+            ||
+            clrType == typeof(short)
+            ||
+            clrType == typeof(byte)
+            ||
+            clrType == typeof(sbyte)
+            ||
+            clrType == typeof(uint)
+            ||
+            clrType == typeof(ulong)
+            ||
+            clrType == typeof(ushort)
+            ||
+            clrType == typeof(decimal)
+            ||
+            clrType == typeof(double)
+            ||
+            clrType == typeof(float)
         )
         {
             return
                 Convert.ToString(
                     defaultValue,
-                    System.Globalization.CultureInfo.InvariantCulture
+                    culture
                 );
         }
 
@@ -1896,114 +2003,64 @@ public class DatabaseOperationResolver
 
 
             return
-                $"'{value:yyyy-MM-dd HH:mm:ss.ffffff}'";
+                $"'{value.ToString("yyyy-MM-dd HH:mm:ss.ffffff", culture)}'";
         }
 
 
         //=======================================================
-        // String
+        // DateTimeOffset
         //=======================================================
 
         if
         (
             clrType ==
-            typeof(string)
+            typeof(DateTimeOffset)
         )
         {
             var value =
-                defaultValue
-                    .ToString()
-                    ?.Replace(
-                        "'",
-                        "''"
-                    );
+                (DateTimeOffset)defaultValue;
 
 
             return
-                $"'{value}'";
+                $"'{value.ToString("yyyy-MM-dd HH:mm:ss.ffffffzzz", culture)}'";
         }
 
 
         //=======================================================
-        // Unsupported Default
-        //=======================================================
-
-        return null;
-    }
-
-
-
-    //===========================================================
-    // Resolve PostgreSQL Type
-    //===========================================================
-
-    private string
-        ResolvePostgreSqlType
-    (
-        IReadOnlyProperty property
-    )
-    {
-        var clrType =
-            Nullable.GetUnderlyingType(
-                property.ClrType
-            )
-            ??
-            property.ClrType;
-
-
-        //=======================================================
-        // Int64
+        // DateOnly
         //=======================================================
 
         if
         (
             clrType ==
-            typeof(long)
+            typeof(DateOnly)
         )
         {
-            return "bigint";
+            var value =
+                (DateOnly)defaultValue;
+
+
+            return
+                $"'{value.ToString("yyyy-MM-dd", culture)}'";
         }
 
 
         //=======================================================
-        // Int32
+        // TimeOnly
         //=======================================================
 
         if
         (
             clrType ==
-            typeof(int)
+            typeof(TimeOnly)
         )
         {
-            return "integer";
-        }
+            var value =
+                (TimeOnly)defaultValue;
 
 
-        //=======================================================
-        // Boolean
-        //=======================================================
-
-        if
-        (
-            clrType ==
-            typeof(bool)
-        )
-        {
-            return "boolean";
-        }
-
-
-        //=======================================================
-        // DateTime
-        //=======================================================
-
-        if
-        (
-            clrType ==
-            typeof(DateTime)
-        )
-        {
-            return "timestamp with time zone";
+            return
+                $"'{value.ToString("HH:mm:ss.ffffff", culture)}'";
         }
 
 
@@ -2017,8 +2074,201 @@ public class DatabaseOperationResolver
             typeof(Guid)
         )
         {
-            return "uuid";
+            return
+                $"'{defaultValue}'";
         }
+
+
+        //=======================================================
+        // String / Char
+        //=======================================================
+
+        if
+        (
+            clrType == typeof(string)
+            ||
+            clrType == typeof(char)
+        )
+        {
+            var value =
+                Convert.ToString(
+                    defaultValue,
+                    culture
+                )
+                ?.Replace(
+                    "'",
+                    "''"
+                );
+
+
+            return
+                $"'{value}'";
+        }
+
+
+        //=======================================================
+        // Unsupported Default (column created without DEFAULT)
+        //=======================================================
+
+        return null;
+    }
+
+
+
+    //===========================================================
+    // Resolve PostgreSQL Type
+    //
+    // 1. Explicit column type wins :
+    //      builder.Property(x => x.MFSCharges)
+    //             .HasColumnType("numeric(5,2)")
+    //    or [Column(TypeName = "numeric(5,2)")]
+    //
+    // 2. Otherwise the CLR type is mapped below.
+    //===========================================================
+
+    private string
+        ResolvePostgreSqlType
+    (
+        IReadOnlyProperty property
+    )
+    {
+        //=======================================================
+        // Explicit Column Type
+        //=======================================================
+
+        var explicitColumnType =
+            property
+                .FindAnnotation(
+                    RelationalAnnotationNames.ColumnType
+                )
+                ?.Value
+            as string;
+
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(
+                explicitColumnType
+            )
+        )
+        {
+            return
+                explicitColumnType.Trim();
+        }
+
+
+        var clrType =
+            ResolveProviderClrType(
+                property
+            );
+
+
+        //=======================================================
+        // Integers
+        //=======================================================
+
+        if (clrType == typeof(long))   return "bigint";
+
+        if (clrType == typeof(int))    return "integer";
+
+        if (clrType == typeof(short))  return "smallint";
+
+        if (clrType == typeof(byte))   return "smallint";
+
+        if (clrType == typeof(sbyte))  return "smallint";
+
+        if (clrType == typeof(ushort)) return "integer";
+
+        if (clrType == typeof(uint))   return "bigint";
+
+        if (clrType == typeof(ulong))  return "numeric(20,0)";
+
+
+        //=======================================================
+        // Decimal
+        //
+        // Uses HasPrecision(p, s) when configured,
+        // otherwise numeric(18,2).
+        //=======================================================
+
+        if
+        (
+            clrType ==
+            typeof(decimal)
+        )
+        {
+            var precision =
+                property.GetPrecision();
+
+
+            var scale =
+                property.GetScale();
+
+
+            if
+            (
+                precision.HasValue
+            )
+            {
+                return
+                    $"numeric({precision.Value},{scale ?? 0})";
+            }
+
+
+            return "numeric(18,2)";
+        }
+
+
+        //=======================================================
+        // Floating Point
+        //=======================================================
+
+        if (clrType == typeof(double)) return "double precision";
+
+        if (clrType == typeof(float))  return "real";
+
+
+        //=======================================================
+        // Boolean
+        //=======================================================
+
+        if (clrType == typeof(bool)) return "boolean";
+
+
+        //=======================================================
+        // Date & Time
+        //=======================================================
+
+        if (clrType == typeof(DateTime))       return "timestamp with time zone";
+
+        if (clrType == typeof(DateTimeOffset)) return "timestamp with time zone";
+
+        if (clrType == typeof(DateOnly))       return "date";
+
+        if (clrType == typeof(TimeOnly))       return "time without time zone";
+
+        if (clrType == typeof(TimeSpan))       return "interval";
+
+
+        //=======================================================
+        // Guid
+        //=======================================================
+
+        if (clrType == typeof(Guid)) return "uuid";
+
+
+        //=======================================================
+        // Binary
+        //=======================================================
+
+        if (clrType == typeof(byte[])) return "bytea";
+
+
+        //=======================================================
+        // Char
+        //=======================================================
+
+        if (clrType == typeof(char)) return "character(1)";
 
 
         //=======================================================
@@ -2054,7 +2304,9 @@ public class DatabaseOperationResolver
         //=======================================================
 
         throw new InvalidOperationException(
-            $"Unsupported database property type '{property.ClrType.Name}'."
+            $"Unsupported database property type '{property.ClrType.Name}' " +
+            $"on '{property.DeclaringType.ClrType.Name}.{property.Name}'. " +
+            "Set an explicit column type with HasColumnType(...) or [Column(TypeName = \"...\")]."
         );
     }
 }

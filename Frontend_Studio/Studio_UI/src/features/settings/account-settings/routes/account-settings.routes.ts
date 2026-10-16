@@ -30,6 +30,32 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            // MANUAL : SUB-003-002-012 (not managed by Submenu Synchronization)
+
+                //===========================================================
+                // Chart of Accounts (single read-only page)
+                //===========================================================
+
+                {
+                    path:'chart-of-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'Chart of Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './chart-of-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ChartOfAccountsRoutes
+                        )
+                },
+
+                // MANUAL-END : SUB-003-002-012
+
             // AUTO-BEGIN : SUB-003-002-002
 
                 //===========================================================
@@ -82,7 +108,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-001
 
-            // AUTO-BEGIN : SUB-003-002-003
+                // AUTO-BEGIN : SUB-003-002-003
 
                 //===========================================================
                 // Account Sub Group
@@ -134,7 +160,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-006
 
-            // AUTO-BEGIN : SUB-003-002-009
+                // AUTO-BEGIN : SUB-003-002-009
 
                 //===========================================================
                 // Bank Setup
@@ -160,7 +186,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-009
 
-            // AUTO-BEGIN : SUB-003-002-011
+                // AUTO-BEGIN : SUB-003-002-011
 
                 //===========================================================
                 // Card Charges
@@ -186,7 +212,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-011
 
-            // AUTO-BEGIN : SUB-003-002-010
+                // AUTO-BEGIN : SUB-003-002-010
 
                 //===========================================================
                 // Card Setup
@@ -212,7 +238,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-010
 
-            // AUTO-BEGIN : SUB-003-002-004
+                // AUTO-BEGIN : SUB-003-002-004
 
                 //===========================================================
                 // General Ledgers
@@ -238,33 +264,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-004
 
-            // AUTO-BEGIN : SUB-003-002-007
-
-                //===========================================================
-                // MFS Accounts
-                //===========================================================
-
-                {
-                    path:'mfs-accounts',
-
-                    data:
-                    {
-                        breadcrumb:'MFS Accounts'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './mfs-accounts.routes'
-                        )
-                        .then(
-                            m =>
-                                m.MfsAccountsRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-002-007
-
-            // AUTO-BEGIN : SUB-003-002-008
+                // AUTO-BEGIN : SUB-003-002-008
 
                 //===========================================================
                 // POS Accounts
@@ -290,7 +290,7 @@ Routes =
 
                 // AUTO-END : SUB-003-002-008
 
-            // AUTO-BEGIN : SUB-003-002-005
+                // AUTO-BEGIN : SUB-003-002-005
 
                 //===========================================================
                 // Cash Accounts
@@ -315,6 +315,32 @@ Routes =
                 },
 
                 // AUTO-END : SUB-003-002-005
+
+                // AUTO-BEGIN : SUB-003-002-007
+
+                //===========================================================
+                // MFS Accounts
+                //===========================================================
+
+                {
+                    path:'mfs-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'MFS Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './mfs-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MfsAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-007
 
         ]
 

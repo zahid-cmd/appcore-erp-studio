@@ -1,222 +1,126 @@
-//=============================================================== 
-// Namespaces 
-//=============================================================== 
- 
-using Microsoft.EntityFrameworkCore; 
-using Microsoft.EntityFrameworkCore.Metadata.Builders; 
- 
-using AppCore.Domain.Entities.Settings.AccountSettings; 
- 
- 
-//=============================================================== 
-// Namespace 
-//=============================================================== 
- 
-namespace AppCore.Infrastructure.Configurations.Settings.AccountSettings; 
- 
- 
-//=============================================================== 
-// CardSetupConfiguration 
-//=============================================================== 
- 
-public class CardSetupConfiguration 
-    : IEntityTypeConfiguration<CardSetup> 
-{ 
- 
-    //=========================================================== 
-    // Configure 
-    //=========================================================== 
- 
-    public void Configure 
-    ( 
-        EntityTypeBuilder<CardSetup> builder 
-    ) 
-    { 
- 
-        //======================================================= 
-        // Table 
-        //======================================================= 
- 
-        builder.ToTable( 
-            "CardSetup" 
-        ); 
- 
- 
-        //======================================================= 
-        // Primary Key 
-        //======================================================= 
- 
-        builder.HasKey( 
-            x => x.Id 
-        ); 
- 
- 
-        builder.Property( 
-            x => x.Id 
-        ) 
-        .HasColumnName( 
-            "id" 
-        ); 
- 
- 
-        //======================================================= 
-        // Code 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Code 
-        ) 
-        .HasColumnName( 
-            "code" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(50); 
- 
- 
-        //======================================================= 
-        // Name 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Name 
-        ) 
-        .HasColumnName( 
-            "name" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(200); 
- 
- 
-        //======================================================= 
-        // Sample Search Dropdown 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.SampleSearchDropdownId 
-        ) 
-        .HasColumnName( 
-            "sampleSearchDropdownId" 
-        ) 
-        .IsRequired(false); 
- 
- 
-        //======================================================= 
-        // Sample Field 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.SampleField 
-        ) 
-        .HasColumnName( 
-            "sampleField" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(500); 
- 
- 
-        //======================================================= 
-        // Status 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Status 
-        ) 
-        .HasColumnName( 
-            "status" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Remarks 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Remarks 
-        ) 
-        .HasColumnName( 
-            "remarks" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(1000); 
- 
- 
-        //======================================================= 
-        // Active 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.IsActive 
-        ) 
-        .HasColumnName( 
-            "isActive" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Deleted 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.IsDeleted 
-        ) 
-        .HasColumnName( 
-            "isDeleted" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Created By 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.CreatedBy 
-        ) 
-        .HasColumnName( 
-            "createdBy" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Created Date 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.CreatedDate 
-        ) 
-        .HasColumnName( 
-            "createdDate" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Modified By 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.ModifiedBy 
-        ) 
-        .HasColumnName( 
-            "modifiedBy" 
-        ) 
-        .IsRequired(false); 
- 
- 
-        //======================================================= 
-        // Modified Date 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.ModifiedDate 
-        ) 
-        .HasColumnName( 
-            "modifiedDate" 
-        ) 
-        .IsRequired(false); 
-    } 
- 
+// PAGE-CLONED : Bank Setup -> Card Setup
+// PAGE-CLONED : Wings -> Card Setup
+//===============================================================
+// Namespaces
+//===============================================================
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+using AppCore.Domain.Entities.Settings.AccountSettings;
+
+
+//===============================================================
+// Namespace
+//===============================================================
+
+namespace AppCore.Infrastructure.Persistence.Configurations.Settings.AccountSettings;
+
+
+//===============================================================
+// CardSetup Configuration
+//===============================================================
+
+public class CardSetupConfiguration
+    : IEntityTypeConfiguration<CardSetup>
+{
+    //===============================================================
+    // Configure
+    //===============================================================
+
+    public void Configure(
+        EntityTypeBuilder<CardSetup> builder)
+    {
+        //===========================================================
+        // Table
+        //===========================================================
+
+        builder.ToTable("CardSetup");
+
+
+        //===========================================================
+        // Primary Key
+        //===========================================================
+
+        builder.HasKey(x => x.CardSetupId);
+
+        builder.Property(x => x.CardSetupId)
+               .ValueGeneratedOnAdd();
+
+
+        //===========================================================
+        // Card Code
+        //===========================================================
+
+        builder.Property(x => x.CardCode)
+               .IsRequired()
+               .HasMaxLength(30);
+
+        builder.HasIndex(x => x.CardCode)
+               .IsUnique();
+
+        //===========================================================
+        // Card Name
+        //===========================================================
+
+        builder.Property(x => x.CardName)
+               .IsRequired()
+               .HasMaxLength(200);
+
+        //===========================================================
+        // Remarks
+        //===========================================================
+
+        builder.Property(x => x.Remarks)
+               .HasMaxLength(1000);
+
+        //===========================================================
+        // Status
+        //===========================================================
+
+        builder.Property(x => x.Status)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        //===========================================================
+        // Short Name
+        //===========================================================
+
+        builder.Property(x => x.ShortName)
+               .HasMaxLength(200);
+
+        //===========================================================
+        // Issuing Bank
+        //===========================================================
+
+        builder.Property(x => x.IssuingBank)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Soft Delete
+        //===========================================================
+
+        builder.Property(x => x.IsDeleted)
+               .IsRequired();
+
+        builder.Property(x => x.DeletedBy);
+
+        builder.Property(x => x.DeletedDate);
+
+
+        //===========================================================
+        // Audit Information
+        //===========================================================
+
+        builder.Property(x => x.CreatedBy)
+               .IsRequired();
+
+        builder.Property(x => x.CreatedDate)
+               .IsRequired();
+
+        builder.Property(x => x.ModifiedBy);
+
+        builder.Property(x => x.ModifiedDate);
+    }
 }

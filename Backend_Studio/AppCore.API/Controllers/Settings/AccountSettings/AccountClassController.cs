@@ -203,6 +203,22 @@ public class AccountClassController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            //=======================================================
+            // Deletion Blocked
+            //
+            // Raised by the repository when Account Groups still
+            // exist under this Account Class. Returned as HTTP 409
+            // with a plain-text message, which the list page shows
+            // in its "Delete Blocked" toast.
+            //=======================================================
+
+            return Conflict(ex.Message);
+        }
 
 
         //===========================================================

@@ -1,3 +1,6 @@
+// PAGE-CLONED : Bank Accounts -> MFS Accounts
+// PAGE-CLONED : Cash Accounts -> MFS Accounts
+// PAGE-CLONED : Wings -> MFS Accounts
 //===============================================================
 // Namespace
 //===============================================================
@@ -6,10 +9,10 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// MfsAccountsDefaultsDto
+// MFSAccountsDefaultsDto
 //===============================================================
 
-public class MfsAccountsDefaultsDto
+public class MFSAccountsDefaultsDto
 {
     //===========================================================
     // Code

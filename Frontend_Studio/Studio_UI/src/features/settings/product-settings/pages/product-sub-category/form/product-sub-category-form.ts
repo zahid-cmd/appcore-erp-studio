@@ -1,113 +1,172 @@
 //===============================================================
 // Imports
 //===============================================================
+
 import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
 from '@angular/core';
+
 import
 {
     CommonModule
 }
 from '@angular/common';
+
 import
 {
     ActivatedRoute,
     Router
 }
 from '@angular/router';
+
 import
 {
     FormsModule
 }
 from '@angular/forms';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError
+}
+from 'rxjs';
+
+import
+{
+    catchError,
+    delayWhen,
+    switchMap
+}
+from 'rxjs/operators';
+
 //===============================================================
 // Shared Components
 //===============================================================
+
 import
 {
     PageHeaderComponent
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
+
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
+
 import
 {
     ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
 import
 {
     PageCanvasComponent
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
 import
 {
     FormGridComponent
 }
 from '../../../../../../shared/components/layout/form-grid/form-grid';
+
 import
 {
     FormSectionComponent
 }
 from '../../../../../../shared/components/layout/form-section/form-section';
+
 //===============================================================
 // Form Controls
 //===============================================================
+
 import
 {
     TextboxComponent
 }
 from '../../../../../../shared/components/controls/textbox/textbox';
+
 import
 {
     TextareaComponent
 }
 from '../../../../../../shared/components/controls/textarea/textarea';
+
 import
 {
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
+
 //===============================================================
 // Utilities
 //===============================================================
+
 import
 {
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
+
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
+
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
 import
 {
     ConfirmDialogComponent
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 //===============================================================
 // Models & Services
 //===============================================================
+
 import
 {
     ProductSubCategory,
@@ -115,35 +174,54 @@ import
     UpdateProductSubCategory
 }
 from '../../../models/product-sub-category.model';
-import
-{
-    ProductCategory
-}
-from '../../../models/product-category.model';
+
 import
 {
     ProductSubCategoryService
 }
 from '../../../services/product-sub-category.service';
+
 import
 {
     ProductCategoryService
 }
 from '../../../services/product-category.service';
+
+//===============================================================
+// Local Types
+//===============================================================
+
+interface ProductCategoryOption
+{
+    ProductCategoryId:
+        number;
+    CategoryCode:
+        string;
+    CategoryName:
+        string;
+    IsActive:
+        boolean;
+}
+
 //===============================================================
 // Component
 //===============================================================
+
 @Component(
 {
     selector:'product-sub-category-form',
+
     standalone:true,
+
     imports:
     [
         CommonModule,
         FormsModule,
+
         //=======================================================
         // Layout
         //=======================================================
+
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
@@ -151,74 +229,143 @@ from '../../../services/product-category.service';
         PageCanvasComponent,
         FormGridComponent,
         FormSectionComponent,
+
         //=======================================================
         // Form Controls
         //=======================================================
+
         TextboxComponent,
         TextareaComponent,
         DropdownComponent,
+
         //=======================================================
         // Utilities
         //=======================================================
+
         ToastComponent,
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+        ProgressDialogComponent
     ],
+
     templateUrl:'./product-sub-category-form.html',
+
     styleUrls:
     [
         './product-sub-category-form.css'
     ]
 })
+
 //===============================================================
 // Product Sub Category Form
 //===============================================================
+
 export class ProductSubCategoryForm
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
     //===========================================================
+
     private readonly route =
         inject(ActivatedRoute);
+
     private readonly router =
         inject(Router);
+
     private readonly productSubCategoryService =
         inject(ProductSubCategoryService);
+
     private readonly productCategoryService =
         inject(ProductCategoryService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
     private readonly toast =
         inject(ToastService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
+
+    private readonly minimumSaveDurationMs:
+        number =
+        5000;
+
+    private readonly progressCeiling:
+        number =
+        90;
+
+    private readonly progressEaseFactor:
+        number =
+        0.05;
+
+    private readonly progressIntervalMs:
+        number =
+        100;
+
+    private readonly progressCompleteHoldMs:
+        number =
+        600;
+
+    //===========================================================
+    // Progress State
+    //===========================================================
+
+    private progressTimer:
+        ReturnType<typeof setInterval> | null =
+        null;
+
+    private progressValue:
+        number =
+        0;
+
+    isSaving:
+        boolean =
+        false;
+
     //===========================================================
     // Mode
     //===========================================================
+
     mode:
         'add' | 'edit' | 'view' =
         'add';
+
     entityId:
         number =
         0;
+
     //===========================================================
     // Page Header
     //===========================================================
+
     pageTitle:
         string =
         'Product Sub Category';
+
     entityName:
         string =
         'Product Sub Category';
+
     //===========================================================
     // Selected Tab
     //===========================================================
+
     selectedTab:
         string =
         'general';
+
     //===========================================================
     // Tabs
     //===========================================================
+
     get tabs():
         ControlTab[]
     {
@@ -229,9 +376,11 @@ implements OnInit
             }
         ];
     }
+
     //===========================================================
     // Tab Title
     //===========================================================
+
     get tabTitle():
         string
     {
@@ -242,32 +391,41 @@ implements OnInit
         {
             case 'add':
                 return `Add ${this.entityName}`;
+
             case 'edit':
                 return `Update ${this.entityName}`;
+
             case 'view':
                 return `View ${this.entityName}`;
+
             default:
                 return this.entityName;
         }
     }
+
     //===========================================================
     // Product Category Items
     //===========================================================
+
+    private productCategories:
+        ProductCategoryOption[] =
+        [];
+
     productCategoryItems:
-        any[]
-        =
+        any[] =
         [
             {
                 label:'Select Product Category',
                 value:null
             }
         ];
+
     //===========================================================
     // Sub Category Creation Items
     //===========================================================
+
     subCategoryCreationItems:
-        any[]
-        =
+        any[] =
         [
             {
                 label:'Yes',
@@ -278,12 +436,13 @@ implements OnInit
                 value:false
             }
         ];
+
     //===========================================================
     // Status Items
     //===========================================================
+
     statusItems:
-        any[]
-        =
+        any[] =
         [
             {
                 label:'Active',
@@ -294,13 +453,73 @@ implements OnInit
                 value:false
             }
         ];
+
     //===========================================================
     // Entity
     //===========================================================
+
     entity:
-        ProductSubCategory
-        =
+        ProductSubCategory =
+        this.createEmptyEntity();
+
+    //===========================================================
+    // Form State
+    //===========================================================
+
+    private originalEntity:
+        string =
+        '';
+
+    hasChanges:
+        boolean =
+        false;
+
+    private lastProductCategoryId:
+        number =
+        0;
+
+    private defaultsRequestId:
+        number =
+        0;
+
+    //===========================================================
+    // Initialize
+    //===========================================================
+
+    ngOnInit():
+        void
+    {
+        this.loadProductCategories();
+
+        this.initializeMode();
+    }
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isSaving
+        )
         {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Create Empty Entity
+    //===========================================================
+
+    private createEmptyEntity():
+        ProductSubCategory
+    {
+        return {
             ProductSubCategoryId:0,
             ProductCategoryId:0,
             SubCategoryCode:'',
@@ -315,30 +534,12 @@ implements OnInit
             Remarks:'',
             IsActive:true
         };
-    //===========================================================
-    // Form State
-    //===========================================================
-    private originalEntity:
-        string =
-        '';
-    hasChanges:
-        boolean =
-        false;
-    private lastProductCategoryId:
-        number =
-        0;
-    //===========================================================
-    // Initialize
-    //===========================================================
-    ngOnInit():
-        void
-    {
-        this.loadProductCategories();
-        this.initializeMode();
     }
+
     //===========================================================
     // Load Product Categories
     //===========================================================
+
     private loadProductCategories():
         void
     {
@@ -349,37 +550,55 @@ implements OnInit
                 next:
                 (
                     response:
-                        ProductCategory[]
+                        any
                 ):
                     void =>
                 {
-                    this.productCategoryItems =
-                    [
-                        {
-                            label:'Select Product Category',
-                            value:null
-                        },
-                        ...response
-                            .filter(
-                                item =>
-                                    item.IsActive
-                            )
-                            .map
-                            (
-                                (
-                                    item:
-                                        ProductCategory
-                                ) =>
-                                ({
-                                    label:
-                                        `${item.CategoryCode} - ${item.CategoryName}`,
-                                    value:
-                                        item.ProductCategoryId
-                                })
-                            )
-                    ];
-                    this.cdr.detectChanges();
+                    const list:
+                        any[] =
+                        Array.isArray(response)
+                            ? response
+                            : [];
+
+                    this.productCategories =
+                        list.map
+                        (
+                            item =>
+                            ({
+                                ProductCategoryId:
+                                    Number(
+                                        item?.ProductCategoryId
+                                        ??
+                                        item?.productCategoryId
+                                        ??
+                                        0
+                                    ),
+                                CategoryCode:
+                                    item?.CategoryCode
+                                    ??
+                                    item?.categoryCode
+                                    ??
+                                    '',
+                                CategoryName:
+                                    item?.CategoryName
+                                    ??
+                                    item?.categoryName
+                                    ??
+                                    '',
+                                IsActive:
+                                    Boolean(
+                                        item?.IsActive
+                                        ??
+                                        item?.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        );
+
+                    this.buildProductCategoryItems();
                 },
+
                 error:
                 (
                     error:
@@ -391,27 +610,69 @@ implements OnInit
                         'Load Product Categories Error',
                         error
                     );
-                    this.productCategoryItems =
-                    [
-                        {
-                            label:'Select Product Category',
-                            value:null
-                        }
-                    ];
+
+                    this.productCategories =
+                        [];
+
+                    this.buildProductCategoryItems();
                 }
             });
     }
+
+    //===========================================================
+    // Build Product Category Items
+    //
+    // Active categories only, plus the currently selected one
+    // (so an existing record under an inactive category still
+    // shows its category in Edit / View mode).
+    //===========================================================
+
+    private buildProductCategoryItems():
+        void
+    {
+        const selectedId =
+            this.entity.ProductCategoryId;
+
+        this.productCategoryItems =
+        [
+            {
+                label:'Select Product Category',
+                value:null
+            },
+            ...this.productCategories
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        ||
+                        item.ProductCategoryId ===
+                        selectedId
+                )
+                .map
+                (
+                    item =>
+                    ({
+                        label:
+                            `${item.CategoryCode} - ${item.CategoryName}`,
+                        value:
+                            item.ProductCategoryId
+                    })
+                )
+        ];
+
+        this.cdr.detectChanges();
+    }
+
     //===========================================================
     // Initialize Mode
     //===========================================================
+
     private initializeMode():
         void
     {
         const url =
             this.router.url.toLowerCase();
-        //=======================================================
-        // View Mode
-        //=======================================================
+
         if
         (
             url.includes('/view/')
@@ -420,9 +681,6 @@ implements OnInit
             this.mode =
                 'view';
         }
-        //=======================================================
-        // Edit Mode
-        //=======================================================
         else if
         (
             url.includes('/edit/')
@@ -431,22 +689,15 @@ implements OnInit
             this.mode =
                 'edit';
         }
-        //=======================================================
-        // Add Mode
-        //=======================================================
         else
         {
             this.mode =
                 'add';
         }
-        //=======================================================
-        // Resolve Entity Id
-        //=======================================================
+
         const id =
             this.resolveEntityId();
-        //=======================================================
-        // Existing Entity
-        //=======================================================
+
         if
         (
             id > 0
@@ -454,23 +705,26 @@ implements OnInit
         {
             this.entityId =
                 id;
+
             this.loadEntity();
+
             return;
         }
-        //=======================================================
-        // New Entity
-        //=======================================================
+
         this.initializeEntity();
     }
+
     //===========================================================
     // Resolve Entity Id
     //===========================================================
+
     private resolveEntityId():
         number
     {
         let currentRoute:
             ActivatedRoute | null =
             this.route;
+
         while
         (
             currentRoute
@@ -480,6 +734,7 @@ implements OnInit
                 Number(
                     currentRoute.snapshot.paramMap.get('id')
                 );
+
             if
             (
                 id > 0
@@ -487,60 +742,84 @@ implements OnInit
             {
                 return id;
             }
+
             currentRoute =
                 currentRoute.parent;
         }
+
         return 0;
     }
+
     //===========================================================
     // Initialize Entity
     //===========================================================
+
     private initializeEntity():
         void
     {
+        this.defaultsRequestId++;
+
         this.entity =
-        {
-            ProductSubCategoryId:0,
-            ProductCategoryId:0,
-            SubCategoryCode:'',
-            SubCategoryName:'',
-            InventorySubGroupCode:'',
-            WipSubGroupCode:'',
-            CogsSubGroupCode:'',
-            InventorySubGroupName:'',
-            WipSubGroupName:'',
-            CogsSubGroupName:'',
-            SubCategoryCreationAllowed:true,
-            Remarks:'',
-            IsActive:true
-        };
+            this.createEmptyEntity();
+
+        this.lastProductCategoryId =
+            0;
+
+        this.setInitialFormState();
     }
+
+    //===========================================================
+    // Clear Generated Codes
+    //===========================================================
+
+    private clearGeneratedCodes():
+        void
+    {
+        this.entity.SubCategoryCode =
+            '';
+
+        this.entity.InventorySubGroupCode =
+            '';
+
+        this.entity.WipSubGroupCode =
+            '';
+
+        this.entity.CogsSubGroupCode =
+            '';
+    }
+
     //===========================================================
     // Generate Defaults
     //===========================================================
+
     private generateDefaults():
         void
     {
         if
         (
             this.entityId > 0
-        )
-        {
-            return;
-        }
-        if
-        (
+            ||
             !this.entity.ProductCategoryId
             ||
-            this.entity.ProductCategoryId <=
-            0
+            this.entity.ProductCategoryId <= 0
         )
         {
             return;
         }
+
+        //=======================================================
+        // Ignore stale responses if the category changes again
+        //=======================================================
+
+        const requestId =
+            ++this.defaultsRequestId;
+
+        const productCategoryId =
+            this.entity.ProductCategoryId;
+
         this.productSubCategoryService
             .getDefaults(
-                this.entity.ProductCategoryId
+                productCategoryId
             )
             .subscribe
             ({
@@ -551,6 +830,15 @@ implements OnInit
                 ):
                     void =>
                 {
+                    if
+                    (
+                        requestId !==
+                        this.defaultsRequestId
+                    )
+                    {
+                        return;
+                    }
+
                     this.entity.SubCategoryCode =
                         String(
                             response?.Code
@@ -559,6 +847,7 @@ implements OnInit
                             ??
                             ''
                         ).trim();
+
                     this.entity.InventorySubGroupCode =
                         String(
                             response?.InventorySubGroupCode
@@ -567,6 +856,7 @@ implements OnInit
                             ??
                             ''
                         ).trim();
+
                     this.entity.WipSubGroupCode =
                         String(
                             response?.WipSubGroupCode
@@ -575,6 +865,7 @@ implements OnInit
                             ??
                             ''
                         ).trim();
+
                     this.entity.CogsSubGroupCode =
                         String(
                             response?.CogsSubGroupCode
@@ -583,8 +874,12 @@ implements OnInit
                             ??
                             ''
                         ).trim();
-                    this.setInitialFormState();
+
+                    this.checkForChanges();
+
+                    this.cdr.detectChanges();
                 },
+
                 error:
                 (
                     error:
@@ -592,20 +887,89 @@ implements OnInit
                 ):
                     void =>
                 {
+                    if
+                    (
+                        requestId !==
+                        this.defaultsRequestId
+                    )
+                    {
+                        return;
+                    }
+
                     console.error(
                         'Generate Product Sub Category Defaults Error',
                         error
                     );
+
                     this.toast.error(
                         'Error',
-                        'Failed to generate Product Sub Category defaults.'
+                        this.extractErrorMessage(
+                            error,
+                            'Failed to generate Product Sub Category defaults.'
+                        )
                     );
                 }
             });
     }
+
+    //===========================================================
+    // Product Category Change
+    //===========================================================
+
+    onProductCategoryChange():
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.isEditMode
+        )
+        {
+            return;
+        }
+
+        const productCategoryId =
+            Number(
+                this.entity.ProductCategoryId
+                ??
+                0
+            );
+
+        this.entity.ProductCategoryId =
+            productCategoryId;
+
+        if
+        (
+            productCategoryId !==
+            this.lastProductCategoryId
+        )
+        {
+            this.lastProductCategoryId =
+                productCategoryId;
+
+            this.defaultsRequestId++;
+
+            this.clearGeneratedCodes();
+
+            if
+            (
+                productCategoryId > 0
+            )
+            {
+                this.generateDefaults();
+            }
+        }
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
     //===========================================================
     // Sub Category Name Change
     //===========================================================
+
     onSubCategoryNameChange():
         void
     {
@@ -616,28 +980,47 @@ implements OnInit
         {
             return;
         }
+
         const subCategoryName =
             this.entity.SubCategoryName?.trim()
             ??
             '';
-        this.entity.InventorySubGroupName =
-            subCategoryName
-                ? `INV - ${subCategoryName}`
-                : '';
-        this.entity.WipSubGroupName =
-            subCategoryName
-                ? `WIP - ${subCategoryName}`
-                : '';
-        this.entity.CogsSubGroupName =
-            subCategoryName
-                ? `COGS - ${subCategoryName}`
-                : '';
+
+        //=======================================================
+        // Group names are auto-built in Add mode only;
+        // they are locked in Edit mode.
+        //=======================================================
+
+        if
+        (
+            this.isAddMode
+        )
+        {
+            this.entity.InventorySubGroupName =
+                subCategoryName
+                    ? `INV - ${subCategoryName}`
+                    : '';
+
+            this.entity.WipSubGroupName =
+                subCategoryName
+                    ? `WIP - ${subCategoryName}`
+                    : '';
+
+            this.entity.CogsSubGroupName =
+                subCategoryName
+                    ? `COGS - ${subCategoryName}`
+                    : '';
+        }
+
         this.checkForChanges();
+
         this.cdr.detectChanges();
     }
+
     //===========================================================
     // Set Initial Form State
     //===========================================================
+
     private setInitialFormState():
         void
     {
@@ -645,13 +1028,17 @@ implements OnInit
             JSON.stringify(
                 this.entity
             );
+
         this.hasChanges =
             false;
+
         this.cdr.detectChanges();
     }
+
     //===========================================================
     // Load Entity
     //===========================================================
+
     private loadEntity():
         void
     {
@@ -678,6 +1065,7 @@ implements OnInit
                                 ??
                                 0
                             ),
+
                         ProductCategoryId:
                             Number(
                                 response?.ProductCategoryId
@@ -686,54 +1074,63 @@ implements OnInit
                                 ??
                                 0
                             ),
+
                         SubCategoryCode:
                             response?.SubCategoryCode
                             ??
                             response?.subCategoryCode
                             ??
                             '',
+
                         SubCategoryName:
                             response?.SubCategoryName
                             ??
                             response?.subCategoryName
                             ??
                             '',
+
                         InventorySubGroupCode:
                             response?.InventorySubGroupCode
                             ??
                             response?.inventorySubGroupCode
                             ??
                             '',
+
                         WipSubGroupCode:
                             response?.WipSubGroupCode
                             ??
                             response?.wipSubGroupCode
                             ??
                             '',
+
                         CogsSubGroupCode:
                             response?.CogsSubGroupCode
                             ??
                             response?.cogsSubGroupCode
                             ??
                             '',
+
                         InventorySubGroupName:
                             response?.InventorySubGroupName
                             ??
                             response?.inventorySubGroupName
                             ??
                             '',
+
                         WipSubGroupName:
                             response?.WipSubGroupName
                             ??
                             response?.wipSubGroupName
                             ??
                             '',
+
                         CogsSubGroupName:
                             response?.CogsSubGroupName
                             ??
                             response?.cogsSubGroupName
                             ??
                             '',
+
                         SubCategoryCreationAllowed:
                             Boolean(
                                 response?.SubCategoryCreationAllowed
@@ -742,12 +1139,14 @@ implements OnInit
                                 ??
                                 false
                             ),
+
                         Remarks:
                             response?.Remarks
                             ??
                             response?.remarks
                             ??
                             '',
+
                         IsActive:
                             Boolean(
                                 response?.IsActive
@@ -757,16 +1156,15 @@ implements OnInit
                                 true
                             )
                     };
+
                     this.lastProductCategoryId =
                         this.entity.ProductCategoryId;
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-                    this.hasChanges =
-                        false;
-                    this.cdr.detectChanges();
+
+                    this.buildProductCategoryItems();
+
+                    this.setInitialFormState();
                 },
+
                 error:
                 (
                     error:
@@ -778,17 +1176,24 @@ implements OnInit
                         'Load Product Sub Category Error',
                         error
                     );
+
                     this.toast.error(
                         'Error',
                         'Failed to load Product Sub Category.'
                     );
+
+                    this.hasChanges =
+                        false;
+
                     this.onBackToList();
                 }
             });
     }
+
     //===========================================================
     // Track Changes
     //===========================================================
+
     checkForChanges():
         void
     {
@@ -799,9 +1204,11 @@ implements OnInit
             !==
             this.originalEntity;
     }
+
     //===========================================================
     // Tab Change
     //===========================================================
+
     onTabChange
     (
         tabId:
@@ -812,223 +1219,261 @@ implements OnInit
         this.selectedTab =
             tabId;
     }
+
     //===========================================================
     // Save
     //===========================================================
+
     onSave():
         void
     {
-        //=======================================================
-        // View Mode
-        //=======================================================
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
         }
+
         //=======================================================
         // Validation
         //=======================================================
+
         if
         (
             !this.entity.ProductCategoryId
+            ||
+            this.entity.ProductCategoryId <= 0
         )
         {
             this.toast.error(
                 'Validation',
                 'Product Category is required.'
             );
+
             return;
         }
-        if
+
+        const requiredFields:
+            {
+                value:
+                    string | undefined;
+                message:
+                    string;
+            }[] =
+        [
+            {
+                value:this.entity.SubCategoryCode,
+                message:'Sub Category Code is required. Please wait for the code to generate.'
+            },
+            {
+                value:this.entity.SubCategoryName,
+                message:'Sub Category Name is required.'
+            },
+            {
+                value:this.entity.InventorySubGroupCode,
+                message:'Inventory Sub Group Code is required.'
+            },
+            {
+                value:this.entity.WipSubGroupCode,
+                message:'WIP Sub Group Code is required.'
+            },
+            {
+                value:this.entity.CogsSubGroupCode,
+                message:'COGS Sub Group Code is required.'
+            },
+            {
+                value:this.entity.InventorySubGroupName,
+                message:'Inventory Sub Group Name is required.'
+            },
+            {
+                value:this.entity.WipSubGroupName,
+                message:'WIP Sub Group Name is required.'
+            },
+            {
+                value:this.entity.CogsSubGroupName,
+                message:'COGS Sub Group Name is required.'
+            }
+        ];
+
+        for
         (
-            !this.entity.SubCategoryCode?.trim()
+            const field
+            of requiredFields
         )
         {
-            this.toast.error(
-                'Validation',
-                'Sub Category Code is required.'
-            );
-            return;
+            if
+            (
+                !field.value?.trim()
+            )
+            {
+                this.toast.error(
+                    'Validation',
+                    field.message
+                );
+
+                return;
+            }
         }
+
         if
         (
-            !this.entity.SubCategoryName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'Sub Category Name is required.'
-            );
-            return;
-        }
-        if
-        (
-            !this.entity.InventorySubGroupCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'Inventory Sub Group Code is required.'
-            );
-            return;
-        }
-        if
-        (
-            !this.entity.WipSubGroupCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'WIP Sub Group Code is required.'
-            );
-            return;
-        }
-        if
-        (
-            !this.entity.CogsSubGroupCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'COGS Sub Group Code is required.'
-            );
-            return;
-        }
-        if
-        (
-            !this.entity.InventorySubGroupName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'Inventory Sub Group Name is required.'
-            );
-            return;
-        }
-        if
-        (
-            !this.entity.WipSubGroupName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'WIP Sub Group Name is required.'
-            );
-            return;
-        }
-        if
-        (
-            !this.entity.CogsSubGroupName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-                'COGS Sub Group Name is required.'
-            );
-            return;
-        }
-        //=======================================================
-        // Add
-        //=======================================================
-        if
-        (
-            this.mode === 'add'
+            this.isAddMode
         )
         {
             this.saveCreate();
+
             return;
         }
-        //=======================================================
-        // Update
-        //=======================================================
+
         this.saveUpdate();
     }
+
+    //===========================================================
+    // Build Payload
+    //===========================================================
+
+    private buildPayload():
+        CreateProductSubCategory
+    {
+        return {
+            ProductCategoryId:
+                this.entity.ProductCategoryId,
+
+            SubCategoryCode:
+                this.entity.SubCategoryCode.trim(),
+
+            SubCategoryName:
+                this.entity.SubCategoryName.trim(),
+
+            InventorySubGroupCode:
+                this.entity.InventorySubGroupCode.trim(),
+
+            WipSubGroupCode:
+                this.entity.WipSubGroupCode.trim(),
+
+            CogsSubGroupCode:
+                this.entity.CogsSubGroupCode.trim(),
+
+            InventorySubGroupName:
+                this.entity.InventorySubGroupName.trim(),
+
+            WipSubGroupName:
+                this.entity.WipSubGroupName.trim(),
+
+            CogsSubGroupName:
+                this.entity.CogsSubGroupName.trim(),
+
+            SubCategoryCreationAllowed:
+                this.entity.SubCategoryCreationAllowed,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+    }
+
     //===========================================================
     // Create
     //===========================================================
+
     private saveCreate():
         void
     {
         const model:
             CreateProductSubCategory =
-        {
-            ProductCategoryId:
-                this.entity.ProductCategoryId,
-            SubCategoryCode:
-                this.entity.SubCategoryCode.trim(),
-            SubCategoryName:
-                this.entity.SubCategoryName.trim(),
-            InventorySubGroupCode:
-                this.entity.InventorySubGroupCode.trim(),
-            WipSubGroupCode:
-                this.entity.WipSubGroupCode.trim(),
-            CogsSubGroupCode:
-                this.entity.CogsSubGroupCode.trim(),
-            InventorySubGroupName:
-                this.entity.InventorySubGroupName.trim(),
-            WipSubGroupName:
-                this.entity.WipSubGroupName.trim(),
-            CogsSubGroupName:
-                this.entity.CogsSubGroupName.trim(),
-            SubCategoryCreationAllowed:
-                this.entity.SubCategoryCreationAllowed,
-            Remarks:
-                this.entity.Remarks?.trim()
-                ??
-                '',
-            IsActive:
-                this.entity.IsActive
-        };
-        this.productSubCategoryService
-            .create(
+            this.buildPayload();
+
+        this.isSaving =
+            true;
+
+        this.startProgress(
+            'Saving Product Sub Category',
+            'Creating product sub category and its Inventory, WIP and COGS account sub groups...'
+        );
+
+        this.withMinimumDuration(
+            this.productSubCategoryService.create(
                 model
-            )
-            .subscribe
-            ({
-                next:
-                ():
-                    void =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+            ),
+            this.minimumSaveDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Product Sub Category saved successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.originalEntity =
+                            JSON.stringify(
+                                this.entity
+                            );
+
+                        this.hasChanges =
+                            false;
+
+                        this.toast.success(
+                            'Success',
+                            'Product Sub Category created successfully.'
                         );
-                    this.hasChanges =
-                        false;
-                    this.toast.success(
-                        'Success',
-                        'Product Sub Category created successfully.'
-                    );
-                    this.onBackToList();
-                },
+
+                        this.onBackToList();
+                    }
+                );
+            },
+
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Create Product Sub Category Error',
-                        error
-                    );
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create Product Sub Category.';
-                    this.toast.error(
-                        'Validation',
-                        message
-                    );
-                }
-            });
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Create Product Sub Category Error',
+                    error
+                );
+
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to create Product Sub Category.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
     }
+
     //===========================================================
     // Update
     //===========================================================
+
     private saveUpdate():
         void
     {
@@ -1037,135 +1482,412 @@ implements OnInit
         {
             ProductSubCategoryId:
                 this.entity.ProductSubCategoryId,
-            ProductCategoryId:
-                this.entity.ProductCategoryId,
-            SubCategoryCode:
-                this.entity.SubCategoryCode.trim(),
-            SubCategoryName:
-                this.entity.SubCategoryName.trim(),
-            InventorySubGroupCode:
-                this.entity.InventorySubGroupCode.trim(),
-            WipSubGroupCode:
-                this.entity.WipSubGroupCode.trim(),
-            CogsSubGroupCode:
-                this.entity.CogsSubGroupCode.trim(),
-            InventorySubGroupName:
-                this.entity.InventorySubGroupName.trim(),
-            WipSubGroupName:
-                this.entity.WipSubGroupName.trim(),
-            CogsSubGroupName:
-                this.entity.CogsSubGroupName.trim(),
-            SubCategoryCreationAllowed:
-                this.entity.SubCategoryCreationAllowed,
-            Remarks:
-                this.entity.Remarks?.trim()
-                ??
-                '',
-            IsActive:
-                this.entity.IsActive
+
+            ...this.buildPayload()
         };
-        this.productSubCategoryService
-            .update(
+
+        this.isSaving =
+            true;
+
+        this.startProgress(
+            'Updating Product Sub Category',
+            'Updating product sub category and its account sub groups...'
+        );
+
+        this.withMinimumDuration(
+            this.productSubCategoryService.update(
                 model
-            )
-            .subscribe
-            ({
-                next:
+            ),
+            this.minimumSaveDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Product Sub Category updated successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.originalEntity =
+                            JSON.stringify(
+                                this.entity
+                            );
+
+                        this.hasChanges =
+                            false;
+
+                        this.toast.success(
+                            'Success',
+                            'Product Sub Category updated successfully.'
+                        );
+
+                        this.onBackToList();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Update Product Sub Category Error',
+                    error
+                );
+
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to update Product Sub Category.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
+    }
+
+    //===========================================================
+    // Progress : Start (animated easing toward ceiling)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.progressDialog.update(
+            0,
+            message
+        );
+
+        this.progressTimer =
+            setInterval
+            (
                 ():
                     void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                    const step =
+                        Math.max(
+                            0.4,
+                            (
+                                this.progressCeiling -
+                                this.progressValue
+                            )
+                            *
+                            this.progressEaseFactor
                         );
-                    this.hasChanges =
-                        false;
-                    this.toast.success(
-                        'Success',
-                        'Product Sub Category updated successfully.'
+
+                    this.progressValue =
+                        Math.min(
+                            this.progressCeiling,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
                     );
-                    this.onBackToList();
                 },
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Update Product Sub Category Error',
-                        error
-                    );
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update Product Sub Category.';
-                    this.toast.error(
-                        'Validation',
-                        message
-                    );
-                }
-            });
+                this.progressIntervalMs
+            );
     }
+
+    //===========================================================
+    // Progress : Complete
+    //===========================================================
+
+    private completeProgress
+    (
+        message:
+            string,
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            100;
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        setTimeout
+        (
+            ():
+                void =>
+            {
+                this.progressDialog.close();
+
+                callback();
+            },
+            this.progressCompleteHoldMs
+        );
+    }
+
+    //===========================================================
+    // Progress : Fail
+    //===========================================================
+
+    private failProgress
+    (
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        callback();
+    }
+
+    //===========================================================
+    // Progress : Clear Timer
+    //===========================================================
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer !== null
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                null;
+        }
+    }
+
+    //===========================================================
+    // Minimum Duration Wrapper
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source:
+            Observable<T>,
+        minimumMs:
+            number
+    ):
+        Observable<T>
+    {
+        return defer
+        (
+            ():
+                Observable<T> =>
+            {
+                const startedAt =
+                    Date.now();
+
+                const remaining =
+                    ():
+                        number =>
+                        Math.max(
+                            0,
+                            minimumMs -
+                            (
+                                Date.now() -
+                                startedAt
+                            )
+                        );
+
+                return source.pipe
+                (
+                    delayWhen
+                    (
+                        () =>
+                            timer(
+                                remaining()
+                            )
+                    ),
+
+                    catchError
+                    (
+                        error =>
+                            timer(
+                                remaining()
+                            )
+                            .pipe
+                            (
+                                switchMap
+                                (
+                                    () =>
+                                        throwError(
+                                            () => error
+                                        )
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
+        }
+
+        return fallback;
+    }
+
     //===========================================================
     // Clear
     //===========================================================
+
     onClear():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
         if
         (
-            this.mode === 'edit'
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            this.isEditMode
         )
         {
             this.loadEntity();
+
             return;
         }
-        //=======================================================
-        // Add Mode
-        //=======================================================
+
         this.initializeEntity();
+
         this.cdr.detectChanges();
     }
+
     //===========================================================
     // Back To List
     //===========================================================
+
     onBackToList():
         void
     {
         if
         (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        const listRoute =
+        [
+            '/settings',
+            'product-settings',
+            'product-sub-category',
+            'list'
+        ];
+
+        if
+        (
             !this.hasChanges
         )
         {
-            void this.router.navigate
-            (
-                [
-                    '/settings',
-                    'product-settings',
-                    'product-sub-category',
-                    'list'
-                ]
+            void this.router.navigate(
+                listRoute
             );
+
             return;
         }
+
         this.confirmDialog.open(
             'Cancel Changes',
             'Any unsaved changes will be lost. Do you want to leave this page?',
             () =>
             {
-                void this.router.navigate
-                (
-                    [
-                        '/settings',
-                        'product-settings',
-                        'product-sub-category',
-                        'list'
-                    ]
+                void this.router.navigate(
+                    listRoute
                 );
             },
             'Leave',
@@ -1173,70 +1895,87 @@ implements OnInit
             'primary'
         );
     }
+
     //===========================================================
     // Save Button Text
     //===========================================================
+
     get saveButtonText():
         string
     {
-        return this.mode === 'edit'
+        return this.isEditMode
             ? 'Update'
             : 'Save';
     }
+
     //===========================================================
-    // View Mode
+    // Mode Helpers
     //===========================================================
+
     get isViewMode():
         boolean
     {
         return this.mode === 'view';
     }
-    //===========================================================
-    // Edit Mode
-    //===========================================================
+
     get isEditMode():
         boolean
     {
         return this.mode === 'edit';
     }
-    //===========================================================
-    // Add Mode
-    //===========================================================
+
     get isAddMode():
         boolean
     {
         return this.mode === 'add';
     }
+
     //===========================================================
     // Close
     //===========================================================
+
     close():
         void
     {
         this.onBackToList();
     }
+
     //===========================================================
     // Refresh
     //===========================================================
+
     refresh():
         void
     {
         if
         (
-            this.mode === 'edit'
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            this.isEditMode
             ||
-            this.mode === 'view'
+            this.isViewMode
         )
         {
             this.loadEntity();
+
             return;
         }
+
         this.initializeEntity();
+
         this.cdr.detectChanges();
     }
+
     //===========================================================
     // Value Changed
     //===========================================================
+
     onValueChange():
         void
     {
@@ -1247,32 +1986,9 @@ implements OnInit
         {
             return;
         }
-        if
-        (
-            this.entity.ProductCategoryId !==
-            this.lastProductCategoryId
-        )
-        {
-            this.lastProductCategoryId =
-                this.entity.ProductCategoryId;
-            this.entity.SubCategoryCode =
-                '';
-            this.entity.InventorySubGroupCode =
-                '';
-            this.entity.WipSubGroupCode =
-                '';
-            this.entity.CogsSubGroupCode =
-                '';
-            if
-            (
-                this.entity.ProductCategoryId > 0
-            )
-            {
-                this.generateDefaults();
-                return;
-            }
-        }
+
         this.checkForChanges();
+
         this.cdr.detectChanges();
     }
 }

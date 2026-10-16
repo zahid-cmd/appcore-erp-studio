@@ -1,90 +1,85 @@
-/* ============================================================
-   Card Charges
-============================================================ */
+//===============================================================
+// Card Charges
+//
+// Master  : POS Account (POS Accounts page)
+// Detail  : one line per Card (Card Setup) with a Charge %
+//
+// A card can appear only once per POS Account.
+//===============================================================
+
+
+//===============================================================
+// Card Charge Line (one card of a POS Account)
+//===============================================================
+
+export interface CardChargeLine
+{
+    // 0 for a new line that is not saved yet
+    CardChargeId: number;
+
+    CardSetupId: number;
+
+    CardCode: string;
+
+    CardName: string;
+
+    // Percentage, 0 – 100, two decimals
+    ChargePercent: number;
+}
+
+
+//===============================================================
+// Card Charges (all lines of one POS Account)
+//
+// Used by the list page (one row per POS Account) and by the
+// form page (edit / view).
+//===============================================================
 
 export interface CardCharges
 {
-    id:
-        number;
+    POSAccountId: number;
 
-    code:
-        string;
+    POSAccountCode: string;
 
-    name:
-        string;
+    POSAccountName: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    // Status of the POS Account (used by the list Status filter)
+    Status: boolean;
 
-    sampleField:
-        string;
+    CardCount: number;
 
-    status:
-        string;
+    // "VISA, MASTERCARD, AMEX" (list display / search)
+    CardNames: string;
 
-    remarks:
-        string;
+    Details: CardChargeLine[];
 }
 
 
+//===============================================================
+// Save Line (sent to the API)
+//===============================================================
 
-/* ============================================================
-   Create Card Charges
-============================================================ */
-
-export interface CreateCardCharges
+export interface SaveCardChargeLine
 {
-    name:
-        string;
+    // 0 = new line; > 0 = existing line kept / updated
+    CardChargeId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    CardSetupId: number;
 
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
+    ChargePercent: number;
 }
 
 
+//===============================================================
+// Save Card Charges (Create & Update)
+//
+// Create : POS Account has no card charges yet
+// Update : replaces all lines of the POS Account
+//===============================================================
 
-/* ============================================================
-   Update Card Charges
-============================================================ */
-
-export interface UpdateCardCharges
+export interface SaveCardCharges
 {
-    id:
-        number;
+    POSAccountId: number;
 
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   Card Charges Defaults
-============================================================ */
-
-export interface CardChargesDefaults
-{
-    code:
-        string;
+    Details: SaveCardChargeLine[];
 }

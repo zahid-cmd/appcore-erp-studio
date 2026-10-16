@@ -13,7 +13,7 @@
 
         [title]="pageTitle"
 
-        subtitle="Manage bankAccounts">
+        subtitle="Manage bank accounts">
 
         <app-command-center
 
@@ -79,19 +79,38 @@
 
             [columns]="4">
 
-            <!-- =============================================
-                 SECTION 01
-                 ACCOUNT SUB GROUP
-            ============================================== -->
+            <!-- =====================================================
+                SECTION 01
+                PARENT INFORMATION
+            ====================================================== -->
 
             <app-form-section
 
-                title="Account Sub Group"
+                title="Parent Information"
 
                 icon="fas fa-sitemap">
 
 
-                <!-- Account Sub Groups Id -->
+                <!-- Branch -->
+
+                <app-search-dropdown
+
+                    label="Branch"
+
+                    [items]="branchItems"
+
+                    [(value)]="entity.Branch"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Account Sub Group (Reserved : SUB-003-002-002) -->
 
                 <app-search-dropdown
 
@@ -107,13 +126,70 @@
 
                 </app-search-dropdown>
 
+
+                <!-- Bank Account Name (Auto Uppercase) -->
+
+                <app-textbox
+
+                    label="Bank Account Name"
+
+                    placeholder="ENTER BANK ACCOUNT NAME"
+
+                    [(value)]="entity.BankAccountName"
+
+                    (valueChange)="onBankAccountNameChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Full Account Number -->
+
+                <app-textbox
+
+                    label="Full Account Number"
+
+                    placeholder="Enter full account number"
+
+                    [(value)]="entity.FullAccountNumber"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Bank Branch Name -->
+
+                <app-textbox
+
+                    label="Bank Branch Name"
+
+                    placeholder="Enter bank branch name"
+
+                    [(value)]="entity.BankBranchName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
             </app-form-section>
 
 
-            <!-- =============================================
-                 SECTION 02
-                 BANK ACCOUNTS INFORMATION
-            ============================================== -->
+            <!-- =====================================================
+                SECTION 02
+                BANK ACCOUNTS INFORMATION
+            ====================================================== -->
 
             <app-form-section
 
@@ -139,42 +215,6 @@
                 </app-textbox>
 
 
-                <!-- Bank Account Name -->
-
-                <app-textbox
-
-                    label="Bank Account Name"
-
-                    placeholder="Enter bank account name"
-
-                    [(value)]="entity.BankAccountName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Display Name -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    placeholder="Enter display name"
-
-                    [(value)]="entity.DisplayName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
                 <!-- Bank -->
 
                 <app-search-dropdown
@@ -185,7 +225,7 @@
 
                     [(value)]="entity.Bank"
 
-                    (valueChange)="onValueChange()"
+                    (valueChange)="onDisplayNamePartChange()"
 
                     [disabled]="isViewMode"
 
@@ -193,30 +233,136 @@
 
                 </app-search-dropdown>
 
+
+                <!-- Short Account Name (Auto Uppercase) -->
+
+                <app-textbox
+
+                    label="Short Account Name"
+
+                    placeholder="ENTER SHORT ACCOUNT NAME"
+
+                    [(value)]="entity.ShortAccountName"
+
+                    (valueChange)="onDisplayNamePartChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Short Account Number -->
+
+                <app-textbox
+
+                    label="Short Account Number"
+
+                    placeholder="Enter short account number"
+
+                    [(value)]="entity.ShortAccountNumber"
+
+                    (valueChange)="onDisplayNamePartChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Short Branch Name (Auto Uppercase) -->
+
+                <app-textbox
+
+                    label="Short Branch Name"
+
+                    placeholder="ENTER SHORT BRANCH NAME"
+
+                    [(value)]="entity.ShortBranchName"
+
+                    (valueChange)="onDisplayNamePartChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
             </app-form-section>
 
 
-            <!-- =============================================
-                 SECTION 03
-                 STATUS
-            ============================================== -->
+            <!-- =====================================================
+                SECTION 03
+                DISPLAY & CONFIGURATION
+            ====================================================== -->
 
             <app-form-section
 
-                title="Status"
+                title="Display & Configuration"
 
                 icon="fas fa-toggle-on">
 
 
-                <!-- Status -->
+                <!-- Display Name (Auto, Uppercase) -->
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.DisplayName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Swift Code -->
+
+                <app-textbox
+
+                    label="Swift Code"
+
+                    placeholder="Enter swift code"
+
+                    [(value)]="entity.SwiftCode"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textbox>
+
+
+                <!-- Routing Number -->
+
+                <app-textbox
+
+                    label="Routing Number"
+
+                    placeholder="Enter routing number"
+
+                    [(value)]="entity.RoutingNumber"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textbox>
+
+
+                <!-- Branch Exclusive -->
 
                 <app-dropdown
 
-                    label="Status"
+                    label="Branch Exclusive"
 
                     [items]="yesNoItems"
 
-                    [(value)]="entity.Status"
+                    [(value)]="entity.BranchExclusive"
 
                     (valueChange)="onValueChange()"
 
@@ -225,6 +371,20 @@
                     [required]="true">
 
                 </app-dropdown>
+
+            </app-form-section>
+
+
+            <!-- =====================================================
+                SECTION 04
+                STATUS & DESCRIPTION
+            ====================================================== -->
+
+            <app-form-section
+
+                title="Status & Description"
+
+                icon="fas fa-align-left">
 
 
                 <!-- Collection Account -->
@@ -264,19 +424,24 @@
 
                 </app-dropdown>
 
-            </app-form-section>
 
+                <!-- Status -->
 
-            <!-- =============================================
-                 SECTION 04
-                 DESCRIPTION
-            ============================================== -->
+                <app-dropdown
 
-            <app-form-section
+                    label="Status"
 
-                title="Description"
+                    [items]="statusItems"
 
-                icon="fas fa-align-left">
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
 
 
                 <!-- Remarks -->
@@ -297,27 +462,6 @@
 
                 </app-textarea>
 
-
-                <!-- Branch -->
-
-                <app-textarea
-
-                    label="Branch"
-
-                    placeholder="Enter branch"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Branch"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textarea>
-
             </app-form-section>
 
         </app-form-grid>
@@ -335,3 +479,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

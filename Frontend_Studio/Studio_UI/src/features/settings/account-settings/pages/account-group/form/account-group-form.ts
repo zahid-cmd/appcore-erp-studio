@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -29,6 +30,18 @@ import
     FormsModule
 }
 from '@angular/forms';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Shared Components
@@ -133,6 +146,18 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 //===============================================================
 // Models & Services
 //===============================================================
@@ -198,12 +223,14 @@ from '../../../services/account-class.service';
         TextareaComponent,
         DropdownComponent,
         SearchDropdownComponent,
+
         //=======================================================
         // Utilities
         //=======================================================
 
         ToastComponent,
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+        ProgressDialogComponent
     ],
 
     templateUrl:'./account-group-form.html',
@@ -219,7 +246,7 @@ from '../../../services/account-class.service';
 //===============================================================
 
 export class AccountGroupForm
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
@@ -239,6 +266,9 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
@@ -399,6 +429,42 @@ implements OnInit
         boolean =
         false;
 
+    // Prevents double submit while Save / Update is running
+    isSaving:
+        boolean =
+        false;
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+        5000;
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
     //===========================================================
     // Initialize
     //===========================================================
@@ -408,6 +474,24 @@ implements OnInit
     {
         this.loadAccountClasses();
         this.initializeMode();
+    }
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
     }
 
     //===========================================================
@@ -976,6 +1060,7 @@ implements OnInit
                 }
             });
     }
+
     //===========================================================
     // Track Changes
     //===========================================================
@@ -1007,6 +1092,195 @@ implements OnInit
     }
 
     //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isSaving =
+            true;
+
+        this.progressValue =
+            0;
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.05
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isSaving =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isSaving =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
     // Save
     //===========================================================
 
@@ -1014,12 +1288,14 @@ implements OnInit
         void
     {
         //=======================================================
-        // View Mode
+        // View Mode / Already Saving
         //=======================================================
 
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -1154,30 +1430,38 @@ implements OnInit
                 this.entity.IsActive
         };
 
-        this.accountGroupService
-            .create(
+        this.startProgress(
+            'Saving Account Group',
+            'Please wait while the account group is being saved...'
+        );
+
+        this.withMinimumDuration(
+            this.accountGroupService.create(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 ():
                     void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+                    this.completeProgress(
 
-                    this.hasChanges =
-                        false;
+                        'Account group saved.',
 
-                    this.toast.success(
-                        'Success',
-                        'Account Group created successfully.'
+                        () =>
+                        {
+                            this.setInitialFormState();
+
+                            this.toast.success(
+                                'Success',
+                                'Account Group created successfully.'
+                            );
+
+                            this.onBackToList();
+                        }
                     );
-
-                    this.onBackToList();
                 },
 
                 error:
@@ -1192,14 +1476,19 @@ implements OnInit
                         error
                     );
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create Account Group.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to create Account Group.';
 
-                    this.toast.error(
-                        'Validation',
-                        message
+                            this.toast.error(
+                                'Validation',
+                                message
+                            );
+                        }
                     );
                 }
             });
@@ -1245,30 +1534,38 @@ implements OnInit
                 this.entity.IsActive
         };
 
-        this.accountGroupService
-            .update(
+        this.startProgress(
+            'Updating Account Group',
+            'Please wait while the account group is being updated...'
+        );
+
+        this.withMinimumDuration(
+            this.accountGroupService.update(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 ():
                     void =>
                 {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
+                    this.completeProgress(
 
-                    this.hasChanges =
-                        false;
+                        'Account group updated.',
 
-                    this.toast.success(
-                        'Success',
-                        'Account Group updated successfully.'
+                        () =>
+                        {
+                            this.setInitialFormState();
+
+                            this.toast.success(
+                                'Success',
+                                'Account Group updated successfully.'
+                            );
+
+                            this.onBackToList();
+                        }
                     );
-
-                    this.onBackToList();
                 },
 
                 error:
@@ -1283,14 +1580,19 @@ implements OnInit
                         error
                     );
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update Account Group.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to update Account Group.';
 
-                    this.toast.error(
-                        'Validation',
-                        message
+                            this.toast.error(
+                                'Validation',
+                                message
+                            );
+                        }
                     );
                 }
             });
@@ -1303,6 +1605,18 @@ implements OnInit
     onClear():
         void
     {
+        //=======================================================
+        // Saving In Progress
+        //=======================================================
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
         //=======================================================
         // Edit Mode
         //=======================================================

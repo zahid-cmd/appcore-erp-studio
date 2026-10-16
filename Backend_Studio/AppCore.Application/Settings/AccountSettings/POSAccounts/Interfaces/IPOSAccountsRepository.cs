@@ -1,8 +1,12 @@
+// PAGE-CLONED : MFS Accounts -> POS Accounts
+// PAGE-CLONED : Bank Accounts -> POS Accounts
+// PAGE-CLONED : Cash Accounts -> POS Accounts
+// PAGE-CLONED : Wings -> POS Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.POSAccounts.DTOs;
 
 
 //===============================================================
@@ -13,98 +17,81 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// IPosAccountsRepository
+// POSAccount Repository Interface
 //===============================================================
 
-public interface IPosAccountsRepository
+public interface IPOSAccountsRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.PosAccounts>>
-        GetAllAsync();
-
+    Task<List<POSAccountDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.PosAccounts?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<POSAccountDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.PosAccounts entity
-    );
-
+    Task<long> CreateAsync(
+        CreatePOSAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.PosAccounts entity
-    );
-
+    Task UpdateAsync(
+        UpdatePOSAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync(
+        long accountSubGroupsId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<POSAccountsDefaultsDto> GetDefaultsAsync(
+        long accountSubGroupsId);
 }

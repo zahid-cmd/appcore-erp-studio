@@ -6,7 +6,11 @@ namespace AppCore.Domain.Entities.Settings.GeneralSettings;
 
 
 //===============================================================
-// SystemConfigurations
+// System Configurations
+//
+// A switchable setting that belongs to one Navigation Module.
+// ConfigurationCode is system generated per module and never
+// reused : CFG-<ModuleCode>-0001
 //===============================================================
 
 public class SystemConfigurations
@@ -15,149 +19,64 @@ public class SystemConfigurations
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long SystemConfigurationId { get; set; }
 
 
     //===========================================================
-    // Code
+    // Navigation Module (FK → NavigationModules.Id)
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long NavigationModuleId { get; set; }
 
 
     //===========================================================
-    // Name
+    // Configuration Code (auto generated)
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string ConfigurationCode { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Configuration Name
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string ConfigurationName { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Field
+    // Enabled / Disabled
     //===========================================================
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public bool IsEnabled { get; set; }
 
 
     //===========================================================
     // Remarks
     //===========================================================
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Active
+    // Soft Delete
     //===========================================================
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public bool IsDeleted { get; set; } = false;
 
+    public long? DeletedBy { get; set; }
 
-    //===========================================================
-    // Deleted
-    //===========================================================
-
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Created By
+    // Audit Information
     //===========================================================
 
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Created Date
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified By
-    //===========================================================
-
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

@@ -4,47 +4,58 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.POSAccounts.DTOs;
 
 
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Api.Controllers.Settings.AccountSettings;
+namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 
 //===============================================================
-// PosAccountsController
+// POS Accounts Controller
 //===============================================================
 
 [ApiController]
 
 [Route("api/settings/account-settings/pos-accounts")]
 
-public class PosAccountsController
-    : ControllerBase
+public class POSAccountsController : ControllerBase
 {
     //===========================================================
-    // Repository
+    // Fields
     //===========================================================
 
-    private readonly IPosAccountsRepository _repository;
+    private readonly IPOSAccountsRepository _repository;
+
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
+
+    private readonly ILogger<POSAccountsController> _logger;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public PosAccountsController
-    (
-        IPosAccountsRepository repository
-    )
+    public POSAccountsController(
+        IPOSAccountsRepository repository,
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<POSAccountsController> logger)
     {
         _repository =
             repository;
+
+        _activityHistoryRepository =
+            activityHistoryRepository;
+
+        _logger =
+            logger;
     }
 
 
@@ -54,16 +65,62 @@ public class PosAccountsController
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<POSAccountDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
-
-
         return Ok(
-            entities
-        );
+            await _repository.GetAllAsync());
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    [HttpGet("next-code")]
+
+    public async Task<ActionResult<string>> GetNextCode(
+        [FromQuery] long accountSubGroupsId)
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    accountSubGroupsId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<POSAccountsDefaultsDto>> GetDefaults(
+        [FromQuery] long accountSubGroupsId)
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetDefaultsAsync(
+                    accountSubGroupsId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -73,75 +130,61 @@ public class PosAccountsController
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<POSAccountDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        POSAccountDto? posAccount =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
+        if (posAccount == null)
         {
-            return NotFound();
+            return NotFound(
+                "POS Account not found.");
         }
 
-
-        return Ok(
-            entity
-        );
+        return Ok(posAccount);
     }
 
 
     //===========================================================
     // Create
+    //
+    // 400 : validation (terminal, linked bank, duplicates)
+    // 404 : reserved sub group missing
     //===========================================================
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreatePosAccountsDto dto
-    )
+    public async Task<ActionResult<long>> Create(
+        CreatePOSAccountDto dto)
     {
-        var entity =
-            new PosAccounts
-            {
-                Name =
-                    dto.Name,
+        long userId = 1;
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-                SampleField =
-                    dto.SampleField,
+            return Ok(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Create POS Account failed.");
 
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to create POS Account.");
+        }
     }
 
 
@@ -149,126 +192,120 @@ public class PosAccountsController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut]
 
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdatePosAccountsDto dto
-    )
+    public async Task<IActionResult> Update(
+        UpdatePOSAccountDto dto)
     {
-        if
-        (
-            id != dto.Id
-        )
+        long userId = 1;
+
+        try
         {
-            return BadRequest();
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+
+            return NoContent();
         }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
+        catch (KeyNotFoundException ex)
         {
-            return NotFound();
+            return NotFound(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Update POS Account failed. Id: {Id}", dto.POSAccountId);
 
-
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
-
-        return NoContent();
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to update POS Account.");
+        }
     }
 
 
     //===========================================================
     // Delete
+    //
+    // 404 : not found / already deleted
+    // 409 : in use (future: vouchers / transactions)
     //===========================================================
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public async Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        long userId = 1;
 
-
-        if
-        (
-            entity is null
-        )
+        try
         {
-            return NotFound();
+            await _repository.DeleteAsync(
+                id,
+                userId);
+
+            return NoContent();
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Delete POS Account failed. Id: {Id}", id);
 
-
-        await _repository
-            .DeleteAsync(
-                id
-            );
-
-
-        return NoContent();
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to delete POS Account.");
+        }
     }
 
 
     //===========================================================
     // Restore
+    //
+    // 404 : nothing to restore
+    // 409 : linked bank account deleted / duplicate terminal or name
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("restore")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public async Task<IActionResult> Restore()
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        long userId = 1;
 
+        try
+        {
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
 
-        return NoContent();
+            if (!restored)
+            {
+                return NotFound(
+                    "There are no deleted POS accounts available to restore.");
+            }
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Restore POS Account failed.");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to restore POS Account.");
+        }
     }
 
 
@@ -278,39 +315,11 @@ public class PosAccountsController
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Account Settings",
+                "POSAccount"));
     }
 }

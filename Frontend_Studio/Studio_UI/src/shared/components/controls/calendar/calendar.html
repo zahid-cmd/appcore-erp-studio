@@ -12,9 +12,7 @@
 
     <div class="calendar-header">
 
-        <!-- =====================================================
-             PREVIOUS MONTH
-        ====================================================== -->
+        <!-- PREVIOUS -->
 
         <button
 
@@ -22,29 +20,42 @@
 
             class="calendar-navigation-button"
 
-            [disabled]="disabled"
+            [attr.aria-label]="previousLabel"
 
-            (click)="previousMonth()">
+            [title]="previousLabel"
+
+            [disabled]="isLocked"
+
+            (click)="previous()">
 
             <i class="fas fa-chevron-left"></i>
 
         </button>
 
-        <!-- =====================================================
-             MONTH YEAR
-        ====================================================== -->
+        <!-- TITLE : click to go up (Days → Months → Years) -->
 
-        <div class="calendar-title">
+        <button
 
-            {{ monthName }}
+            type="button"
 
-            {{ currentYear }}
+            class="calendar-title"
 
-        </div>
+            [class.calendar-title-static]="!canGoUp"
 
-        <!-- =====================================================
-             NEXT MONTH
-        ====================================================== -->
+            [disabled]="isLocked || !canGoUp"
+
+            (click)="onTitleClick()">
+
+            <span>{{ headerTitle }}</span>
+
+            @if (canGoUp)
+            {
+                <i class="fas fa-caret-down calendar-title-caret"></i>
+            }
+
+        </button>
+
+        <!-- NEXT -->
 
         <button
 
@@ -52,9 +63,13 @@
 
             class="calendar-navigation-button"
 
-            [disabled]="disabled"
+            [attr.aria-label]="nextLabel"
 
-            (click)="nextMonth()">
+            [title]="nextLabel"
+
+            [disabled]="isLocked"
+
+            (click)="next()">
 
             <i class="fas fa-chevron-right"></i>
 
@@ -63,57 +78,149 @@
     </div>
 
     <!-- =====================================================
-         WEEK HEADER
+         DAY VIEW
     ====================================================== -->
 
-    <div class="calendar-week-header">
+    @if (view === 'days')
+    {
+        <div class="calendar-week-header">
 
-        <div
+            @for (day of weekDays; track day; let i = $index)
+            {
+                <div
 
-            *ngFor="let day of weekDays; let i = index"
+                    class="calendar-week-day"
 
-            class="calendar-week-day"
+                    [class.saturday]="i === 0"
 
-            [class.saturday]="i === 0"
+                    [class.friday]="i === 6">
 
-            [class.friday]="i === 6">
+                    {{ day }}
 
-            {{ day }}
+                </div>
+            }
 
         </div>
 
-    </div>
+        <div class="calendar-days">
+
+            @for (day of calendarDays; track day.date.getTime())
+            {
+                <button
+
+                    type="button"
+
+                    class="calendar-day"
+
+                    [class.other-month]="!day.isCurrentMonth"
+
+                    [class.today]="day.isToday"
+
+                    [class.selected]="day.isSelected"
+
+                    [class.friday]="day.isFriday"
+
+                    [disabled]="isLocked || day.isDisabled"
+
+                    (click)="selectDate(day)">
+
+                    {{ day.day }}
+
+                </button>
+            }
+
+        </div>
+    }
 
     <!-- =====================================================
-         DAYS
+         MONTH VIEW
     ====================================================== -->
 
-    <div class="calendar-days">
+    @if (view === 'months')
+    {
+        <div class="calendar-grid">
 
-        <button
+            @for (cell of monthCells; track cell.index)
+            {
+                <button
 
-            type="button"
+                    type="button"
 
-            *ngFor="let day of calendarDays"
+                    class="calendar-cell"
 
-            class="calendar-day"
+                    [class.current]="cell.isCurrent"
 
-            [class.other-month]="!day.isCurrentMonth"
+                    [class.selected]="cell.isSelected"
 
-            [class.today]="day.isToday"
+                    [disabled]="isLocked || cell.isDisabled"
 
-            [class.selected]="day.isSelected"
+                    (click)="selectMonth(cell)">
 
-            [class.friday]="day.isFriday"
+                    {{ cell.label }}
 
-            [disabled]="disabled"
+                </button>
+            }
 
-            (click)="selectDate(day)">
+        </div>
+    }
 
-            {{ day.day }}
+    <!-- =====================================================
+         YEAR VIEW
+    ====================================================== -->
 
-        </button>
+    @if (view === 'years')
+    {
+        <div class="calendar-grid">
 
-    </div>
+            @for (cell of yearCells; track cell.year)
+            {
+                <button
+
+                    type="button"
+
+                    class="calendar-cell"
+
+                    [class.current]="cell.isCurrent"
+
+                    [class.selected]="cell.isSelected"
+
+                    [disabled]="isLocked || cell.isDisabled"
+
+                    (click)="selectYear(cell)">
+
+                    {{ cell.year }}
+
+                </button>
+            }
+
+        </div>
+    }
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    @if (showTodayButton)
+    {
+        <div class="calendar-footer">
+
+            <button
+
+                type="button"
+
+                class="calendar-today-button"
+
+                [disabled]="isLocked || isTodayDisabled"
+
+                (click)="goToToday()">
+
+                <i class="fas fa-calendar-day"></i>
+
+                Today
+
+            </button>
+
+        </div>
+    }
 
 </div>

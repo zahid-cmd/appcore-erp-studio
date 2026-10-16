@@ -1,90 +1,71 @@
-/* ============================================================
-   Financial Years
-============================================================ */
+//===============================================================
+// Financial Year
+//
+// FinancialYearCode : system generated (FY-0001)
+// FinancialYearName : system generated from the dates
+//                     FY 2026-2027  (year crosses a calendar year)
+//                     FY 2026       (January – December)
+//
+// StartDate / EndDate are plain dates "YYYY-MM-DD" (no time).
+//===============================================================
 
-export interface FinancialYears
+export type FinancialYearStatus =
+    | 'Open'
+    | 'Closed'
+    | 'Locked';
+
+export interface FinancialYear
 {
-    id:
-        number;
+    FinancialYearId: number;
 
-    code:
-        string;
+    FinancialYearCode: string;
 
-    name:
-        string;
+    FinancialYearName: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    StartDate: string;
 
-    sampleField:
-        string;
+    EndDate: string;
 
-    status:
-        string;
+    IsCurrent: boolean;
 
-    remarks:
-        string;
+    YearStatus: FinancialYearStatus;
+
+    Remarks: string;
+
+    Status: boolean;
 }
 
 
+//===============================================================
+// Create Financial Year
+//===============================================================
 
-/* ============================================================
-   Create Financial Years
-============================================================ */
-
-export interface CreateFinancialYears
+export interface CreateFinancialYear
 {
-    name:
-        string;
+    FinancialYearCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    FinancialYearName: string;
 
-    sampleField:
-        string;
+    StartDate: string;
 
-    status:
-        string;
+    EndDate: string;
 
-    remarks:
-        string;
+    IsCurrent: boolean;
+
+    YearStatus: FinancialYearStatus;
+
+    Remarks: string;
+
+    Status: boolean;
 }
 
 
+//===============================================================
+// Update Financial Year
+//===============================================================
 
-/* ============================================================
-   Update Financial Years
-============================================================ */
-
-export interface UpdateFinancialYears
+export interface UpdateFinancialYear
+extends CreateFinancialYear
 {
-    id:
-        number;
-
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   Financial Years Defaults
-============================================================ */
-
-export interface FinancialYearsDefaults
-{
-    code:
-        string;
+    FinancialYearId: number;
 }

@@ -2,83 +2,26 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 
 
 //===============================================================
-// UpdateSystemConfigurationsDto
+// Update System Configurations DTO
+//
+// Module and Code are locked after creation.
 //===============================================================
 
 public class UpdateSystemConfigurationsDto
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
+    public long SystemConfigurationId { get; set; }
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long NavigationModuleId { get; set; }
 
+    public string ConfigurationCode { get; set; } = string.Empty;
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string ConfigurationName { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool IsEnabled { get; set; }
 
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 }

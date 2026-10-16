@@ -22,6 +22,12 @@ namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 //===============================================================
 // BankAccount Controller
+//
+// Error mapping:
+//   InvalidOperationException → 400 (Create / Update)
+//                             → 409 (Delete / Restore)
+//   KeyNotFoundException      → 404
+//   Anything else             → 500 (logged)
 //===============================================================
 
 [ApiController]
@@ -38,6 +44,8 @@ public class BankAccountsController : ControllerBase
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
 
+    private readonly ILogger<BankAccountsController> _logger;
+
 
     //===============================================================
     // Constructor
@@ -45,11 +53,14 @@ public class BankAccountsController : ControllerBase
 
     public BankAccountsController(
         IBankAccountsRepository repository,
-        IActivityHistoryRepository activityHistoryRepository)
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<BankAccountsController> logger)
     {
         _repository = repository;
 
         _activityHistoryRepository = activityHistoryRepository;
+
+        _logger = logger;
     }
 
 
@@ -61,10 +72,19 @@ public class BankAccountsController : ControllerBase
 
     public async Task<ActionResult<List<BankAccountDto>>> GetAll()
     {
-        List<BankAccountDto> bankAccounts =
-            await _repository.GetAllAsync();
+        try
+        {
+            List<BankAccountDto> bankAccounts =
+                await _repository.GetAllAsync();
 
-        return Ok(bankAccounts);
+            return Ok(bankAccounts);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load bank accounts.");
+
+            return StatusCode(500, "Unable to load bank accounts.");
+        }
     }
 
 
@@ -77,9 +97,26 @@ public class BankAccountsController : ControllerBase
     public async Task<ActionResult<string>> GetNextCode(
         [FromQuery] long accountSubGroupsId)
     {
-        return Ok(
-            await _repository.GetNextCodeAsync(
-                accountSubGroupsId));
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    accountSubGroupsId));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate bank account code for sub group {AccountSubGroupsId}.", accountSubGroupsId);
+
+            return StatusCode(500, "Unable to generate bank account code.");
+        }
     }
 
 
@@ -92,9 +129,26 @@ public class BankAccountsController : ControllerBase
     public async Task<ActionResult<BankAccountsDefaultsDto>> GetDefaults(
         [FromQuery] long accountSubGroupsId)
     {
-        return Ok(
-            await _repository.GetDefaultsAsync(
-                accountSubGroupsId));
+        try
+        {
+            return Ok(
+                await _repository.GetDefaultsAsync(
+                    accountSubGroupsId));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load bank account defaults for sub group {AccountSubGroupsId}.", accountSubGroupsId);
+
+            return StatusCode(500, "Unable to load bank account defaults.");
+        }
     }
 
 
@@ -107,15 +161,24 @@ public class BankAccountsController : ControllerBase
     public async Task<ActionResult<BankAccountDto>> GetById(
         long id)
     {
-        BankAccountDto? bankAccount =
-            await _repository.GetByIdAsync(id);
-
-        if (bankAccount == null)
+        try
         {
-            return NotFound();
-        }
+            BankAccountDto? bankAccount =
+                await _repository.GetByIdAsync(id);
 
-        return Ok(bankAccount);
+            if (bankAccount == null)
+            {
+                return NotFound("Bank Account not found.");
+            }
+
+            return Ok(bankAccount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load bank account {BankAccountId}.", id);
+
+            return StatusCode(500, "Unable to load bank account.");
+        }
     }
 
 
@@ -130,12 +193,29 @@ public class BankAccountsController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create bank account.");
+
+            return StatusCode(500, "Unable to save bank account.");
+        }
     }
 
 
@@ -148,24 +228,43 @@ public class BankAccountsController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateBankAccountDto dto)
     {
-        if (!await _repository.ExistsAsync(
-                dto.BankAccountId))
-        {
-            return NotFound();
-        }
-
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            if (!await _repository.ExistsAsync(
+                    dto.BankAccountId))
+            {
+                return NotFound("Bank Account not found.");
+            }
 
-        return NoContent();
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update bank account {BankAccountId}.", dto.BankAccountId);
+
+            return StatusCode(500, "Unable to update bank account.");
+        }
     }
 
 
     //===============================================================
     // Delete
+    //
+    // 409 while MFS / POS Accounts are linked to it.
     //===============================================================
 
     [HttpDelete("{id:long}")]
@@ -173,52 +272,42 @@ public class BankAccountsController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        //===========================================================
-        // Verify BankAccount Exists
-        //===========================================================
-
-        if (!await _repository.ExistsAsync(id))
-        {
-            return NotFound();
-        }
-
-
-        //===========================================================
-        // Current User
-        //===========================================================
-
         long userId = 1;
-
-
-        //===========================================================
-        // Delete
-        //===========================================================
 
         try
         {
+            if (!await _repository.ExistsAsync(id))
+            {
+                return NotFound("Bank Account not found.");
+            }
+
             await _repository.DeleteAsync(
                 id,
                 userId);
+
+            return NoContent();
         }
-        catch
-        (
-            InvalidOperationException ex
-        )
+        catch (InvalidOperationException ex)
         {
             return Conflict(ex.Message);
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete bank account {BankAccountId}.", id);
 
-
-        //===========================================================
-        // Delete Successful
-        //===========================================================
-
-        return NoContent();
+            return StatusCode(500, "Unable to delete bank account.");
+        }
     }
 
 
     //===============================================================
     // Restore
+    //
+    // 409 when the bank was deleted or a duplicate exists.
     //===============================================================
 
     [HttpPut("restore")]
@@ -227,17 +316,30 @@ public class BankAccountsController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
-
-        if (!restored)
+        try
         {
-            return NotFound(
-                "There are no deleted bankAccounts available to restore.");
-        }
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
 
-        return NoContent();
+            if (!restored)
+            {
+                return NotFound(
+                    "There are no deleted bank accounts available to restore.");
+            }
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to restore bank account.");
+
+            return StatusCode(500, "Unable to restore bank account.");
+        }
     }
 
 
@@ -249,9 +351,18 @@ public class BankAccountsController : ControllerBase
 
     public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        return Ok(
-            await _activityHistoryRepository.GetListHistoryAsync(
-                "Account Settings",
-                "BankAccount"));
+        try
+        {
+            return Ok(
+                await _activityHistoryRepository.GetListHistoryAsync(
+                    "Account Settings",
+                    "BankAccount"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load bank account history.");
+
+            return StatusCode(500, "Unable to load bank account history.");
+        }
     }
 }

@@ -2,20 +2,20 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.MFSAccounts.DTOs;
 
 
 //===============================================================
-// MfsAccountsDto
+// MFS Account DTO
 //===============================================================
 
-public class MfsAccountsDto
+public class MFSAccountDto
 {
     //===========================================================
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long MFSAccountId
     {
         get;
         set;
@@ -23,36 +23,10 @@ public class MfsAccountsDto
 
 
     //===========================================================
-    // Code
+    // Account Sub Group
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
+    public long AccountSubGroupsId
     {
         get;
         set;
@@ -60,23 +34,112 @@ public class MfsAccountsDto
 
 
     //===========================================================
-    // Sample Field
+    // MFS Account Code
     //===========================================================
 
-    public string SampleField
+    public string MFSAccountCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // MFS Account Name (Provider)
+    //===========================================================
+
+    public string MFSAccountName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // MFS Account Number
+    //===========================================================
+
+    public string MFSAccountNumber
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Account Type (Personal / Merchant)
+    //===========================================================
+
+    public string AccountType
+    {
+        get;
+        set;
+    } = "Personal";
+
+
+    //===========================================================
+    // MFS Charges (%)
+    //===========================================================
+
+    public decimal MFSCharges
     {
         get;
         set;
     }
-    =
-        string.Empty;
 
 
     //===========================================================
-    // Status
+    // Linked Bank Account
     //===========================================================
 
-    public bool Status
+    public string LinkedBankAccount
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Branch
+    //===========================================================
+
+    public string Branch
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Display Name
+    //===========================================================
+
+    public string DisplayName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Configuration
+    //===========================================================
+
+    public bool CollectionAccount
+    {
+        get;
+        set;
+    }
+
+
+    public bool PaymentAccount
+    {
+        get;
+        set;
+    }
+
+
+    public bool BranchExclusive
     {
         get;
         set;
@@ -91,7 +154,73 @@ public class MfsAccountsDto
     {
         get;
         set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Status
+    //===========================================================
+
+    public bool Status
+    {
+        get;
+        set;
     }
-    =
-        string.Empty;
+
+
+    //===========================================================
+    // Soft Delete
+    //===========================================================
+
+    public bool IsDeleted
+    {
+        get;
+        set;
+    }
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    public long CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

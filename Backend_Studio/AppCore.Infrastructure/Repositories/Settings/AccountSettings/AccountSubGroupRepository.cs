@@ -16,6 +16,19 @@ using AccountGroupEntity =
 using AccountClassEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.AccountClass;
 
+//---------------------------------------------------------------
+// Ledger Entities (dependents of Account Sub Group)
+//---------------------------------------------------------------
+
+using GeneralLedgerEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.GeneralLedgers;
+
+using CashAccountEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.CashAccounts;
+
+using BankAccountEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
+
 using AppCore.Infrastructure.Persistence;
 using AppCore.Domain.Common;
 using AppCore.Infrastructure.CodeMaster;
@@ -1130,6 +1143,116 @@ public class AccountSubGroupRepository : IAccountSubGroupRepository
         {
             throw new KeyNotFoundException(
                 "Account Sub Group not found."
+            );
+        }
+
+
+        //=======================================================
+        // Dependency Check : Ledgers
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted ledger still belongs to this sub group.
+        //
+        // Ledger types linked to Account Sub Group:
+        //   General Ledgers  -> AccountSubGroupId
+        //   Cash Accounts    -> AccountSubGroupsId
+        //   Bank Accounts    -> AccountSubGroupsId
+        //
+        // MFS Accounts / POS Accounts : not linked to a sub group
+        // yet. Add a count below once they get AccountSubGroupsId.
+        //=======================================================
+
+        int generalLedgerCount =
+            await _context
+                .Set<GeneralLedgerEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.AccountSubGroupId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        int cashAccountCount =
+            await _context
+                .Set<CashAccountEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.AccountSubGroupsId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        int bankAccountCount =
+            await _context
+                .Set<BankAccountEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.AccountSubGroupsId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+
+        //=======================================================
+        // Build Blocked Message
+        //=======================================================
+
+        List<string> dependents =
+            new List<string>();
+
+        if
+        (
+            generalLedgerCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{generalLedgerCount} general ledger(s)"
+            );
+        }
+
+        if
+        (
+            cashAccountCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{cashAccountCount} cash account(s)"
+            );
+        }
+
+        if
+        (
+            bankAccountCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{bankAccountCount} bank account(s)"
+            );
+        }
+
+        if
+        (
+            dependents.Count >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Sub Group '{entity.SubGroupName}' cannot be deleted because " +
+                $"{string.Join(", ", dependents)} are created under it. " +
+                "Delete those ledgers first."
             );
         }
 

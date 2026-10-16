@@ -2,83 +2,29 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.CardCharges.DTOs;
 
 
 //===============================================================
-// UpdateCardChargesDto
+// Update Card Charges DTO
+//
+// Master = POS Account. Details = card charge lines.
+// Line CardChargeId = 0 means a new line.
 //===============================================================
 
 public class UpdateCardChargesDto
 {
     //===========================================================
-    // Primary Key
+    // Master : POS Account
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long POSAccountId { get; set; }
 
 
     //===========================================================
-    // Name
+    // Details : Card Charge Lines
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public List<SaveCardChargeLineDto> Details { get; set; } =
+        new List<SaveCardChargeLineDto>();
 }

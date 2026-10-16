@@ -149,9 +149,7 @@
 
                 [rows]="pagedBranches"
 
-                [serialOffset]="
-                    (currentPage - 1) * pageSize
-                "
+                [serialOffset]="(currentPage - 1) * pageSize"
 
                 [loading]="loading"
 
@@ -220,6 +218,8 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 
 </div>

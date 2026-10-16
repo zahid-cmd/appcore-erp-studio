@@ -6,10 +6,17 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -24,6 +31,17 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -34,7 +52,6 @@ import
     CardCharges
 }
 from '../../../models/card-charges.model';
-
 
 //===============================================================
 // Shared Components
@@ -68,15 +85,15 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    SearchBoxComponent
+    SearchDropdownComponent
 }
-from '../../../../../../shared/components/utilities/search-box/search-box';
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
-    DropdownComponent
+    SearchBoxComponent
 }
-from '../../../../../../shared/components/controls/dropdown/dropdown';
+from '../../../../../../shared/components/utilities/search-box/search-box';
 
 import
 {
@@ -117,6 +134,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -127,9 +156,8 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,6 +166,52 @@ import
 }
 from '../../../services/card-charges.service';
 
+//===============================================================
+// Case-Insensitive Field Reader
+//===============================================================
+
+function readField
+(
+    item:
+        any,
+    name:
+        string
+):
+    any
+{
+    if
+    (
+        item == null
+        ||
+        typeof item !== 'object'
+    )
+    {
+        return undefined;
+    }
+
+    if
+    (
+        name in item
+    )
+    {
+        return item[name];
+    }
+
+    const target =
+        name.toLowerCase();
+
+    const key =
+        Object.keys(item).find
+        (
+            k =>
+                k.toLowerCase() ===
+                target
+        );
+
+    return key !== undefined
+        ? item[key]
+        : undefined;
+}
 
 //===============================================================
 // Component
@@ -145,36 +219,25 @@ from '../../../services/card-charges.service';
 
 @Component(
 {
-    selector:'cardCharges-list',
+    selector:'card-charges-list',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
+        SearchDropdownComponent,
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
         ToastComponent
     ],
 
@@ -183,43 +246,75 @@ from '../../../services/card-charges.service';
     styleUrl:'./card-charges-list.css'
 })
 
-
 //===============================================================
-// Card Charges List Component
+// Card Charges List
+//
+// One row per POS Account that has card charges.
 //===============================================================
 
 export class CardChargesList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
 
-    private readonly cardchargesservice =
+    private readonly cardChargesService =
         inject(CardChargesService);
-
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
 
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private readonly CONFIRM_CLOSE_DELAY_MS:
+        number =
+        150;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
     //===========================================================
     // Page Tabs
@@ -230,70 +325,45 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All CardChargeses'
+            label:'All Card Charges'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
 
-
-
     //===========================================================
-    // Status Filter
+    // Data
     //===========================================================
 
-    statusItems:
+    cardCharges:
+        CardCharges[] =
+        [];
+
+    filteredCardCharges:
+        CardCharges[] =
+        [];
+
+    pagedCardCharges:
+        CardCharges[] =
+        [];
+
+    //===========================================================
+    // Status Filter (POS Account status)
+    //===========================================================
+
+    statusFilterItems:
         any[] =
     [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
+        { label:'All Status', value:null },
+        { label:'Active', value:true },
+        { label:'Inactive', value:false }
     ];
 
-
     selectedStatus:
-        string | null =
+        boolean | null =
         null;
-
-
-
-    //===========================================================
-    // Data Source
-    //===========================================================
-
-    cardchargeses:
-        CardCharges[] =
-    [];
-
-
-    filteredCardChargeses:
-        CardCharges[] =
-    [];
-
-
-    pagedCardChargeses:
-        CardCharges[] =
-    [];
-
-
 
     //===========================================================
     // Search & Loading
@@ -303,17 +373,13 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
 
-
     loadFailed:
         boolean =
         false;
-
-
 
     //===========================================================
     // Pagination
@@ -323,12 +389,9 @@ implements OnInit
         number =
         1;
 
-
     pageSize:
         number =
         10;
-
-
 
     //===========================================================
     // History
@@ -338,17 +401,13 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
         'Card Charges History';
 
-
     historyItems:
         any[] =
-    [];
-
-
+        [];
 
     //===========================================================
     // Page Canvas Configuration
@@ -358,27 +417,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
-
 
     //===========================================================
     // Table Columns
@@ -389,63 +437,52 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
             width:'60px',
-
             align:'center'
         },
-
         {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
+            header:'POS Account Code',
+            field:'POSAccountCode',
+            width:'220px',
             align:'center'
         },
-
         {
-            header:'Name',
-
-            field:'name',
-
+            header:'POS Account Name',
+            field:'POSAccountName',
+            width:'260px',
             align:'left'
         },
-
         {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:'120px',
-
+            header:'Cards',
+            field:'CardNames',
+            align:'left'
+        },
+        {
+            header:'No. of Cards',
+            field:'CardCount',
+            width:'130px',
             align:'center'
         },
-
+        {
+            header:'Status',
+            field:'Status',
+            type:'status',
+            width:'150px',
+            align:'center'
+        },
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'180px',
-
+            width:'120px',
             align:'center'
         }
     ];
 
-
-
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -454,10 +491,26 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
 
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Load CardChargeses
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -466,12 +519,10 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-        this.cardchargesservice
+        this.cardChargesService
             .getAll()
             .subscribe
             ({
@@ -479,163 +530,155 @@ implements OnInit
                 (
                     response:
                         CardCharges[]
-                ): void =>
+                ):
+                    void =>
                 {
-                    this.cardchargeses =
-                    [
-                        ...response
-                    ];
-
+                    this.cardCharges =
+                        (response ?? [])
+                            .filter
+                            (
+                                item =>
+                                    item.POSAccountId > 0
+                            );
 
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         false;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'Load CardChargeses Error',
-
+                    console.error(
+                        'Load Card Charges Error:',
                         error
                     );
 
+                    this.cardCharges =
+                        [];
 
-                    this.cardchargeses =
-                    [];
+                    this.filteredCardCharges =
+                        [];
 
-
-                    this.filteredCardChargeses =
-                    [];
-
-
-                    this.pagedCardChargeses =
-                    [];
-
+                    this.pagedCardCharges =
+                        [];
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         true;
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'Load Failed',
-
-                        'Unable to load cardchargeses.'
+                        'Unable to load card charges.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
 
-
-
     //===========================================================
-    // Status Filter Changed
+    // Status Filter Change
     //===========================================================
 
     onStatusFilterChange
     (
         value:
-            string | null
+            boolean | null
     ):
         void
     {
         this.selectedStatus =
             value;
 
-
         this.applyFilters();
     }
 
-
-
     //===========================================================
-    // Apply Filters
+    // Apply Filters (Status + Search)
     //===========================================================
 
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
-
-        this.filteredCardChargeses =
-            this.cardchargeses
-                .filter
+        this.filteredCardCharges =
+            this.cardCharges.filter
+            (
                 (
+                    item:
+                        CardCharges
+                ):
+                    boolean =>
+                {
+                    if
                     (
-                        x:
-                            CardCharges
-                    ):
-                        boolean =>
+                        this.selectedStatus !== null
+                        &&
+                        item.Status !==
+                        this.selectedStatus
+                    )
                     {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
-
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
+                        return false;
                     }
-                );
 
+                    if
+                    (
+                        !keyword
+                    )
+                    {
+                        return true;
+                    }
+
+                    const values:
+                        unknown[] =
+                    [
+                        item.POSAccountCode,
+                        item.POSAccountName,
+                        item.CardNames,
+                        item.CardCount,
+                        item.Status ? 'active' : 'inactive',
+                        ...item.Details.map
+                        (
+                            line =>
+                                `${line.CardCode} ${line.CardName} ${line.ChargePercent}`
+                        )
+                    ];
+
+                    return values.some
+                    (
+                        value =>
+                            String(value ?? '')
+                                .toLowerCase()
+                                .includes(keyword)
+                    );
+                }
+            );
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
+
+        this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Search
@@ -649,13 +692,12 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
+            value
+            ??
+            '';
 
         this.applyFilters();
     }
-
-
 
     //===========================================================
     // Sort
@@ -667,25 +709,22 @@ implements OnInit
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
     ):
         void
     {
-        this.filteredCardChargeses =
+        this.filteredCardCharges =
         [
-            ...this.filteredCardChargeses
+            ...this.filteredCardCharges
         ];
 
-
-        this.filteredCardChargeses.sort
+        this.filteredCardCharges.sort
         (
             (
                 a:
                     CardCharges,
-
                 b:
                     CardCharges
             ):
@@ -697,13 +736,11 @@ implements OnInit
                         event.field as keyof CardCharges
                     ];
 
-
                 const valueB:
                     any =
                     b[
                         event.field as keyof CardCharges
                     ];
-
 
                 if
                 (
@@ -715,7 +752,6 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
@@ -723,7 +759,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
 
                 if
                 (
@@ -733,7 +768,6 @@ implements OnInit
                     return 1;
                 }
 
-
                 if
                 (
                     typeof valueA === 'string'
@@ -742,12 +776,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
                 }
-
 
                 if
                 (
@@ -755,12 +786,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
+                        ? -1
+                        : 1;
                 }
-
 
                 if
                 (
@@ -768,26 +796,19 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
+                        ? 1
+                        : -1;
                 }
-
 
                 return 0;
             }
         );
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -796,18 +817,25 @@ implements OnInit
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
-
 
         this.selectedStatus =
             null;
 
+        this.currentPage =
+            1;
 
         this.loadItems();
     }
-
-
 
     //===========================================================
     // Update Pagination
@@ -824,20 +852,15 @@ implements OnInit
             *
             this.pageSize;
 
-
-        this.pagedCardChargeses =
+        this.pagedCardCharges =
         [
-            ...this.filteredCardChargeses
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
+            ...this.filteredCardCharges.slice
+            (
+                start,
+                start + this.pageSize
+            )
         ];
     }
-
-
 
     //===========================================================
     // Page Change
@@ -853,11 +876,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Page Size Change
@@ -873,15 +893,44 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
+    //===========================================================
+    // Navigate
+    //
+    // Route id = POS Account Id
+    //===========================================================
 
+    private navigateTo
+    (
+        action:
+            'add' | 'view' | 'edit',
+        id?:
+            number
+    ):
+        void
+    {
+        const commands:
+            any[] =
+            id
+                ? [action, id]
+                : [action];
+
+        void this.router.navigate
+        (
+            commands,
+            {
+                relativeTo:
+                    this.route.parent
+                    ??
+                    this.route
+            }
+        );
+    }
 
     //===========================================================
     // Add
@@ -890,20 +939,18 @@ implements OnInit
     add():
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'add'
-            ],
+            this.isProcessing
+        )
+        {
+            return;
+        }
 
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'add'
         );
     }
-
-
 
     //===========================================================
     // View
@@ -916,22 +963,21 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'view',
+            this.isProcessing
+            ||
+            !item?.POSAccountId
+        )
+        {
+            return;
+        }
 
-                item.id
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'view',
+            item.POSAccountId
         );
     }
-
-
 
     //===========================================================
     // Edit
@@ -944,25 +990,26 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'edit',
+            this.isProcessing
+            ||
+            !item?.POSAccountId
+        )
+        {
+            return;
+        }
 
-                item.id
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'edit',
+            item.POSAccountId
         );
     }
 
-
-
     //===========================================================
     // Delete
+    //
+    // Soft-deletes all card lines of the POS Account.
     //===========================================================
 
     delete
@@ -972,63 +1019,159 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+            ||
+            !item?.POSAccountId
+        )
+        {
+            return;
+        }
+
+        const name =
+            item.POSAccountName
+            ||
+            item.POSAccountCode
+            ||
+            'this POS account';
+
         this.confirmDialog.open
         (
             'Delete Card Charges',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
-            (): void =>
+            `Are you sure you want to delete all card charges of "${name}"?`,
+            ():
+                void =>
             {
-                this.cardchargesservice
-                    .delete
-                    (
-                        item.id
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.name} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ): void =>
-                        {
-                            console.error
-                            (
-                                'Delete Card Charges Error',
-
-                                error
-                            );
-
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete cardCharges.'
-                            );
-                        }
-                    });
+                // Let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout
+                (
+                    () =>
+                        this.deleteItem(
+                            item.POSAccountId,
+                            name
+                        ),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             }
         );
     }
 
+    //===========================================================
+    // Delete Item
+    //===========================================================
 
+    private deleteItem
+    (
+        posAccountId:
+            number,
+        name:
+            string
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Card Charges',
+            `Please wait while the card charges of "${name}" are being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.cardChargesService.delete(
+                posAccountId
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Card charges deleted.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Delete Successful',
+                            `Card charges of ${name} deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Card Charges Error:',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        //=======================================
+                        // Deletion Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'Card charges cannot be deleted because they are already in use.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Not Found (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'These card charges no longer exist. The list has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Delete Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete card charges.'
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Restore
@@ -1037,26 +1180,33 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Restore Card Charges',
-
-            'Are you sure you want to restore the most recently deleted cardCharges?',
-
-            (): void =>
+            'Are you sure you want to restore the most recently deleted card charges?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout
+                (
+                    () =>
+                        this.restoreItem(),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Restore Item
@@ -1065,50 +1215,301 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.cardchargesservice
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+        this.startProgress(
+            'Restoring Card Charges',
+            'Please wait while the most recently deleted card charges are being restored...'
+        );
 
-                        'The most recently deleted cardCharges has been restored.'
-                    );
+        this.withMinimumDuration(
+            this.cardChargesService.restore()
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Card charges restored.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Restore Successful',
+                            'The most recently deleted card charges have been restored.'
+                        );
 
+                        this.loadItems();
+                    }
+                );
+            },
 
-                    this.loadItems();
-                },
-
-
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
-                    (
-                        'Restore Card Charges Error',
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Card Charges Error',
+                    error
+                );
 
-                        error
-                    );
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There are no deleted card charges to restore.'
+                            );
 
+                            return;
+                        }
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The card charges cannot be restored.'
+                                )
+                            );
 
-                        'Failed to restore cardCharges.'
-                    );
-                }
-            });
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore card charges.'
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
 
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            HttpErrorResponse,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            typeof error.error === 'string'
+            &&
+            error.error.trim()
+        )
+        {
+            return error.error;
+        }
+
+        if
+        (
+            error.error?.message
+        )
+        {
+            return error.error.message;
+        }
+
+        if
+        (
+            error.error?.title
+        )
+        {
+            return error.error.title;
+        }
+
+        return fallback;
+    }
 
     //===========================================================
     // Open History
@@ -1117,7 +1518,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.cardchargesservice
+        this.cardChargesService
             .getHistory()
             .subscribe
             ({
@@ -1125,78 +1526,64 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
+                                    readField(history, 'ActivityTitle'),
 
                                 description:
-                                    history.activityDescription,
-
+                                    readField(history, 'ActivityDescription'),
 
                                 user:
-                                    history.performedByName
+                                    readField(history, 'PerformedByName')
                                     ??
                                     'System',
 
-
                                 dateTime:
-                                    new Date
-                                    (
-                                        history.performedDate
+                                    new Date(
+                                        readField(history, 'PerformedDate')
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
-                                    history.activityType
+                                    readField(history, 'ActivityType')
                             })
                         );
-
 
                     this.historyTitle =
                         'Card Charges Management History';
 
-
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'History Load Failed',
-
+                    console.error(
+                        'History Load Failed:',
                         error
                     );
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'History',
-
-                        'Failed to load cardCharges history.'
+                        'Failed to load card charges history.'
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Close History
@@ -1208,5 +1595,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

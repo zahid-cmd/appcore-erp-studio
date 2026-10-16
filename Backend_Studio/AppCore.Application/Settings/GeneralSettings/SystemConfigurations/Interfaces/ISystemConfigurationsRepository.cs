@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 
 
 //===============================================================
@@ -13,98 +13,56 @@ namespace AppCore.Application.Settings.GeneralSettings;
 
 
 //===============================================================
-// ISystemConfigurationsRepository
+// System Configurations Repository Interface
 //===============================================================
 
 public interface ISystemConfigurationsRepository
 {
-
     //===========================================================
-    // Get All
-    //===========================================================
-
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations>>
-        GetAllAsync();
-
-
-
-    //===========================================================
-    // Get By Id
+    // Read
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations?>
-        GetByIdAsync
-    (
-        long id
-    );
+    Task<List<SystemConfigurationsDto>> GetAllAsync();
 
+    Task<SystemConfigurationsDto?> GetByIdAsync(
+        long id);
+
+    Task<string> GetNextCodeAsync(
+        long navigationModuleId);
+
+    Task<SystemConfigurationsDefaultsDto> GetDefaultsAsync(
+        long navigationModuleId);
 
 
     //===========================================================
-    // Create
+    // Write
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations entity
-    );
+    Task<long> CreateAsync(
+        CreateSystemConfigurationsDto dto,
+        long userId);
 
+    Task UpdateAsync(
+        UpdateSystemConfigurationsDto dto,
+        long userId);
 
+    Task SetEnabledAsync(
+        long id,
+        bool isEnabled,
+        long userId);
 
-    //===========================================================
-    // Update
-    //===========================================================
+    Task DeleteAsync(
+        long id,
+        long userId);
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations entity
-    );
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Restore
+    // Exists
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
+    Task<bool> ExistsAsync(
+        long id);
 }

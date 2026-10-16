@@ -22,6 +22,11 @@ namespace AppCore.Infrastructure.Platform.PageCloneEngine;
 // (SourceParentControl), so a customised source form (reserved
 // parent, no change handler) never gets a handler it does not have.
 //
+// FormHtml keeps the source form's own sections and its own control
+// for every field whose wizard control is still the wizard's guess
+// (see FormHtmlFromSource), so a customised lookup / status dropdown
+// is not turned into a generic textarea or Yes / No dropdown.
+//
 // The list keeps the display members its item interface declares
 // ({Field}Text, for example CollectionAccountText: 'Yes' / 'No'):
 // they are written into normalize and used by the columns.
@@ -63,15 +68,22 @@ namespace AppCore.Infrastructure.Platform.PageCloneEngine;
 // has an entry in Lookups (e.g. Branch), the list is also loaded
 // from that service (see WireLookup).
 //
-// A bool set to "Status dropdown" (or named IsActive) is a status
-// field (see IsStatusField): Active / Inactive items, default Active,
-// even when the wizard renamed it (IsActive -> Status).
+// A bool set to "Status dropdown" (or named IsActive / Status) is a
+// status field (see IsStatusField): Active / Inactive items, default
+// Active, even when the wizard renamed it (IsActive -> Status).
 //
 // The form has four columns: Parent, Information, Status, Description.
 // A field goes to the column chosen in the wizard (CloneField.Section,
 // see SectionOf). The parent link field is always in Parent. When no
 // section was chosen, the old rule applies (bool -> Status,
 // textarea -> Description, the rest -> Information).
+//
+// Code of EXCLUDED fields in a customised form (required checks,
+// assignments, helper methods) is removed by OrphanFieldPruner, which
+// runs on the rebuilt form ts; its html bindings are removed from the
+// form html. Typed Create / Update payload literals (any variable
+// name, or a  buildPayload(): CreateX { return { ... } }  method) are
+// rebuilt like  const model: CreateX = { ... }.
 //===============================================================
 
 public static class FrontendBlockGenerator
@@ -113,13 +125,13 @@ public static class FrontendBlockGenerator
         return key switch
         {
             "frontend.model"     => Model(bp, singular),
-            "frontend.service"   => NoParentCode(Service(text, bp, id, warnings), bp),
-            "backend.controller" => FixCodeName(NoParentCode(text, bp), bp, singular),
+            "frontend.service"   => NoParentCode(FixRenamedFields(Service(text, bp, id, warnings), bp), bp),
+            "backend.controller" => FixCodeName(FixRenamedFields(NoParentCode(text, bp), bp), bp, singular),
             "backend.interface"  => NoParentCode(text, bp),
-            "backend.repository" => FixCodeName(NoParentRepository(NoParentCode(text, bp), bp, singular), bp, singular),
-            "frontend.list.ts"   => FixCodeName(FixRouteSegments(FixParentMembers(ListTs(text, bp, singular, id, warnings), bp), bp), bp, singular),
-            "frontend.form.ts"   => FixCodeName(FixRouteSegments(FixParentMembers(FormTs(text, bp, singular, id, warnings), bp), bp), bp, singular),
-            "frontend.form.html" => FormHtml(text, bp, warnings),
+            "backend.repository" => FixCodeName(FixRenamedFields(NoParentRepository(NoParentCode(text, bp), bp, singular), bp), bp, singular),
+            "frontend.list.ts"   => FixCodeName(FixRouteSegments(FixParentMembers(OrphanFieldPruner.PruneList(FixRenamedFields(ListTs(text, bp, singular, id, warnings), bp), bp, warnings), bp), bp), bp, singular),
+            "frontend.form.ts"   => FixCodeName(FixRouteSegments(FixParentMembers(OrphanFieldPruner.Prune(FixRenamedFields(FormTs(text, bp, singular, id, warnings), bp), bp, warnings), bp), bp), bp, singular),
+            "frontend.form.html" => OrphanFieldPruner.StripBindings(FormHtml(text, bp, warnings)),
             _ => text
         };
     }
@@ -163,10 +175,11 @@ public static class FrontendBlockGenerator
     private static bool IsCode(CloneField f) =>
         f.Name.EndsWith("Code", StringComparison.Ordinal);
 
-    // Status-style bool: the IsActive flag, or any bool set to
+    // Status-style bool: the IsActive / Status flag, or any bool set to
     // "Status dropdown" (the wizard may rename IsActive -> Status).
     private static bool IsStatusField(CloneField f) =>
         f.Name == "IsActive"
+        || f.Name == "Status"
         || (f.Control ?? "").Trim().ToLowerInvariant().Contains("status");
 
     // A non-parent field the user set to Dropdown / Search dropdown.
@@ -274,7 +287,61 @@ public static class FrontendBlockGenerator
                 return m.Groups[1].Value + "." + mapped;
             });
     }
+    //===========================================================
+    // Renamed fields
+    //
+    // A field the wizard renamed (BankName -> CardName, SourceName ->
+    // Name) is still read by its SOURCE name in the copied list / form
+    // ts:  item.BankName,  this.entity.BankName,  response?.bankName.
+    // Every member access to the source name is pointed at the new
+    // name. Accesses on the parent variable are left alone (they are
+    // fixed by FixParentMembers), and two passes keep swapped names
+    // (A -> B, B -> A) from colliding.
+    //===========================================================
 
+    private static string FixRenamedFields(string text, PageCloneBlueprint bp)
+    {
+        var renamed = Fields(bp)
+            .Where(f => !string.IsNullOrWhiteSpace(f.SourceName)
+                        && !string.Equals(f.SourceName, f.Name, StringComparison.Ordinal)
+                        && !IsParentFk(bp, f))
+            .ToList();
+
+        if (renamed.Count == 0) return text;
+
+        string parent = ParentName(bp);
+
+        var skip = new HashSet<string>(StringComparer.Ordinal);
+        if (parent.Length > 0)
+        {
+            skip.Add(Camel(parent));
+            skip.Add(Camel(bp.Parent!.Entity));
+        }
+
+        // pass 1: source name -> placeholder, pass 2: placeholder -> new name
+        for (int i = 0; i < renamed.Count; i++)
+        {
+            var f = renamed[i];
+
+            foreach (string have in new[] { f.SourceName!, Camel(f.SourceName!) })
+            {
+                text = Regex.Replace(
+                    text,
+                    @"(?<obj>[A-Za-z_]\w*)(?<q>\??)\.(?<m>" + Regex.Escape(have) + @")\b",
+                    m => skip.Contains(m.Groups["obj"].Value)
+                        ? m.Value
+                        : m.Groups["obj"].Value + m.Groups["q"].Value + "." + "\u0001" + i + (have == f.SourceName ? "P" : "C") + "\u0001");
+            }
+        }
+
+        for (int i = 0; i < renamed.Count; i++)
+        {
+            text = text.Replace("\u0001" + i + "P\u0001", renamed[i].Name);
+            text = text.Replace("\u0001" + i + "C\u0001", Camel(renamed[i].Name));
+        }
+
+        return text;
+    }
     //===========================================================
     // Code and name field names
     //
@@ -407,6 +474,12 @@ public static class FrontendBlockGenerator
 
         if (!m.Success)
         {
+            // normalizePOSAccount(item: any): POSAccount { return { ... } }
+            var fn = Regex.Match(text,
+                @"function\s+normalize\w*\s*\(\s*(?<v>\w+)\s*:\s*any\s*\)\s*:\s*\w+\s*\{\s*return\s*\{");
+
+            if (fn.Success) return ServiceReturnLiteral(text, fn, bp, id);
+
             warnings.Add("frontend.service: normalizer not found; rename-copied only.");
             return text;
         }
@@ -444,6 +517,60 @@ public static class FrontendBlockGenerator
         }
 
         sb.Append("                            ");
+
+        return text[..(open + 1)] + sb + text[close..];
+    }
+
+    // Rebuilds  function normalizeX(item: any): X { return { ... } }
+    // from the blueprint, using readText / readNumber / readBool when the file has them.
+    private static string ServiceReturnLiteral(string text, Match fn, PageCloneBlueprint bp, string id)
+    {
+        string v = fn.Groups["v"].Value;
+        int open = fn.Index + fn.Length - 1;
+        int depth = 0, close = -1;
+
+        for (int i = open; i < text.Length; i++)
+        {
+            if (text[i] == '{') depth++;
+            else if (text[i] == '}' && --depth == 0) { close = i; break; }
+        }
+
+        if (close < 0) return text;
+
+        bool helpers =
+            text.Contains("function readText", StringComparison.Ordinal)
+            && text.Contains("function readNumber", StringComparison.Ordinal)
+            && text.Contains("function readBool", StringComparison.Ordinal);
+
+        var all = Fields(bp);
+        var sb = new StringBuilder("\r\n");
+
+        void Prop(string name, string expr, bool last)
+        {
+            sb.AppendLine($"        {name}:");
+            sb.AppendLine($"            {expr}{(last ? "" : ",")}");
+            if (!last) sb.AppendLine();
+        }
+
+        Prop(id,
+            helpers ? $"readNumber({v}, '{id}')"
+                    : $"Number({v}?.{id} ?? {v}?.{Camel(id)} ?? 0)",
+            all.Count == 0);
+
+        for (int i = 0; i < all.Count; i++)
+        {
+            var f = all[i];
+            string n = f.Name, c = Camel(n);
+
+            string expr =
+                IsNumber(f) ? (helpers ? $"readNumber({v}, '{n}')" : $"Number({v}?.{n} ?? {v}?.{c} ?? 0)")
+              : IsBool(f)   ? (helpers ? $"readBool({v}, '{n}', {DefaultLiteral(f)})" : $"Boolean({v}?.{n} ?? {v}?.{c} ?? {DefaultLiteral(f)})")
+              :               (helpers ? $"readText({v}, '{n}')" : $"{v}?.{n} ?? {v}?.{c} ?? ''");
+
+            Prop(n, expr, i == all.Count - 1);
+        }
+
+        sb.Append("    ");
 
         return text[..(open + 1)] + sb + text[close..];
     }
@@ -726,8 +853,18 @@ public static class FrontendBlockGenerator
             inner => inner.Contains("response") ? Load() : Defaults());
 
         // const model: CreateX = { ... } / UpdateX
-        text = ReplaceLiterals(text, new Regex(@"const\s+model\s*:\s*Create\w+\s*=\s*\{"), _ => ModelLiteral(false));
-        text = ReplaceLiterals(text, new Regex(@"const\s+model\s*:\s*Update\w+\s*=\s*\{"), _ => ModelLiteral(true));
+        // any variable name:  const model / const payload / let x : CreateX = { ... }
+        text = ReplaceLiterals(text, new Regex(@"(?:const|let|var)\s+\w+\s*:\s*Create\w+\s*=\s*\{"), _ => ModelLiteral(false));
+        text = ReplaceLiterals(text, new Regex(@"(?:const|let|var)\s+\w+\s*:\s*Update\w+\s*=\s*\{"), _ => ModelLiteral(true));
+
+        // typed methods:  private buildPayload(): CreateX { return { ... }; }
+        text = ReplaceLiterals(text, new Regex(@"\)\s*:\s*Create\w+\s*\{\s*return\s*\{"), _ => ModelLiteral(false));
+        text = ReplaceLiterals(text, new Regex(@"\)\s*:\s*Update\w+\s*\{\s*return\s*\{"), _ => ModelLiteral(true));
+
+        // createEmptyEntity(): X { return { ... }; }  (customised forms)
+        text = ReplaceLiterals(text,
+            new Regex(@"createEmptyEntity\s*\(\s*\)\s*:\s*\w+\s*\{\s*return\s*\{"),
+            _ => Defaults());
 
         // Validation block
         var vs = Regex.Match(text, @"//=+[ \t]*\r?\n[ \t]*// Validation[ \t]*\r?\n[ \t]*//=+");
@@ -830,6 +967,14 @@ public static class FrontendBlockGenerator
 
         if (bp.Parent != null && bp.Parent.HasParent)
             warnings.Add("frontend.form.ts: parent loading and change handlers are copied from the source form. Multi-level parent cascades (class > group) need a manual check.");
+
+        // The source wrote the id under two spellings (MFSAccountId / MFSAccountsId).
+        // After the rename both are the same key: keep the first one.
+        string idKey = Regex.Escape(id);
+
+        text = Regex.Replace(text,
+            @"(?<a>[ \t]*" + idKey + @"\s*:\s*[^,;{}]+,)[ \t]*\r?\n(?:[ \t]*\r?\n)*[ \t]*" + idKey + @"\s*:\s*[^,;{}]+,[ \t]*\r?\n?",
+            "${a}\r\n");
 
         return text;
     }
@@ -1457,17 +1602,18 @@ public static class FrontendBlockGenerator
     }
 
     //===========================================================
-    // The source form's own parent control
+    // The source form's own control for a field
     //
-    // A customised source form (for example a reserved parent, no
-    // change handler) has a parent dropdown that differs from the
-    // generic one. The element that is bound to entity.{ForeignKey}
-    // is taken from the source form grid as it is, so its handler and
-    // its attributes always match the form ts that was copied with it.
+    // A customised source form has controls that differ from the
+    // generic ones (a reserved parent with no change handler, a
+    // Branch search dropdown, an Active / Inactive status dropdown).
+    // The element that is bound to entity.{field} is taken from the
+    // source form grid as it is, so its items list, handler and
+    // attributes always match the form ts that was copied with it.
     // Returns null when the source form has no such element.
     //===========================================================
 
-    private static string? SourceParentControl(string grid, string fk)
+    private static string? SourceControl(string grid, string fk)
     {
         if (string.IsNullOrWhiteSpace(fk)) return null;
 
@@ -1489,6 +1635,72 @@ public static class FrontendBlockGenerator
         if (end < 0) return null;
 
         return grid[start..(end + endTag.Length)];
+    }
+
+    private static string? SourceParentControl(string grid, string fk) =>
+        SourceControl(grid, fk);
+
+    //===========================================================
+    // The wizard's own guess of a field's control (guessControl in
+    // the wizard component). A control that still equals the guess
+    // was not changed by the user, so the SOURCE form's own control
+    // for that field (a lookup dropdown, a status dropdown ...) is
+    // kept. A control the user changed is generated from the wizard.
+    //===========================================================
+
+    private static string GuessControl(CloneField f, bool parent)
+    {
+        string n = (string.IsNullOrWhiteSpace(f.SourceName) ? f.Name : f.SourceName).ToLowerInvariant();
+        string t = (f.Type ?? "string").Trim();
+        string b = t.TrimEnd('?').ToLowerInvariant();
+
+        if (parent) return "searchdropdown";
+        if (n == "isactive") return "status";
+        if (t.ToLowerInvariant() == "bool") return "yesno";
+        if (b == "datetime") return "date";
+        if (b is "int" or "long" or "decimal" or "double" or "float" or "short") return "number";
+        if (b == "string" && (f.MaxLength ?? 0) >= 500) return "textarea";
+
+        return "textbox";
+    }
+
+    private static bool SameControl(string? chosen, string guess)
+    {
+        string c = Regex.Replace(chosen ?? "", "[^A-Za-z]", "").ToLowerInvariant();
+
+        if (c.Length == 0) return true;
+
+        return c == guess || c.StartsWith(guess, StringComparison.Ordinal);
+    }
+
+    //===========================================================
+    // The form sections of the SOURCE form grid
+    //===========================================================
+
+    private sealed record SrcSection(string OpenTag, string Kind, int Start, int End);
+
+    private static List<SrcSection> SourceSections(string grid)
+    {
+        var list = new List<SrcSection>();
+
+        foreach (Match m in Regex.Matches(grid, @"<app-form-section\b[^>]*>"))
+        {
+            int end = grid.IndexOf("</app-form-section>", m.Index, StringComparison.Ordinal);
+            if (end < 0) continue;
+
+            string title = Regex.Match(m.Value, @"title\s*=\s*""([^""]*)""").Groups[1].Value.ToLowerInvariant();
+
+            string kind =
+                title.Contains("information") ? "Information" :
+                title.Contains("status")      ? "Status" :
+                title.Contains("description") ? "Description" :
+                list.Count == 0               ? "Parent" :
+                                                "Information";
+
+            list.Add(new SrcSection(m.Value, kind, m.Index + m.Length, end));
+        }
+
+        return list;
     }
 
     private static string Control(PageCloneBlueprint bp, CloneField f, string? sourceParent = null)
@@ -1556,6 +1768,124 @@ public static class FrontendBlockGenerator
         return sb.ToString();
     }
 
+    //===========================================================
+    // Rebuild the grid from the SOURCE form's own sections
+    //
+    //   - a field whose wizard control is still the wizard's guess
+    //     keeps the source form's control for it, in the section
+    //     where the source had it
+    //   - a field the user changed, and a new field, is generated
+    //     from the wizard, in the section of its kind
+    //   - a source section left with no field is dropped
+    //===========================================================
+
+    private static string FormHtmlFromSource(
+        string grid, List<SrcSection> secs, PageCloneBlueprint bp,
+        List<CloneField> all, string? sourceParent)
+    {
+        string ind = "                ";
+        var buckets = secs.Select(_ => new List<(long Order, string Html)>()).ToList();
+        var extra = new Dictionary<string, List<string>>();
+        long seq = 1_000_000;
+
+        int SectionAt(int pos)
+        {
+            for (int i = 0; i < secs.Count; i++)
+                if (pos >= secs[i].Start && pos < secs[i].End) return i;
+            return -1;
+        }
+
+        int SectionOfKind(string kind)
+        {
+            for (int i = 0; i < secs.Count; i++)
+                if (secs[i].Kind == kind) return i;
+            return -1;
+        }
+
+        foreach (var f in all)
+        {
+            bool parent = IsParentFk(bp, f);
+            string? el = SourceControl(grid, f.Name);
+
+            if (el != null && (parent || SameControl(f.Control, GuessControl(f, parent))))
+            {
+                int pos = grid.IndexOf(el, StringComparison.Ordinal);
+                int si = SectionAt(pos);
+
+                if (si >= 0)
+                {
+                    string label = parent && ParentName(bp).Length > 0 ? Label(ParentName(bp)) : Label(f.Name);
+
+                    buckets[si].Add((pos, $"{ind}<!-- {label} -->\r\n\r\n{ind}{el}\r\n"));
+                    continue;
+                }
+            }
+
+            string kind = SectionOf(bp, f);
+            string generated = Control(bp, f, sourceParent);
+            int target = SectionOfKind(kind);
+
+            if (target >= 0)
+            {
+                buckets[target].Add((seq++, generated));
+            }
+            else
+            {
+                if (!extra.TryGetValue(kind, out var list)) extra[kind] = list = new List<string>();
+                list.Add(generated);
+            }
+        }
+
+        var sb = new StringBuilder();
+
+        void Emit(string openTag, IEnumerable<string> items)
+        {
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.AppendLine("            " + openTag);
+            sb.AppendLine();
+
+            foreach (string item in items)
+            {
+                sb.AppendLine();
+                sb.AppendLine(item.TrimEnd('\r', '\n'));
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("            </app-form-section>");
+        }
+
+        for (int i = 0; i < secs.Count; i++)
+        {
+            if (buckets[i].Count == 0) continue;
+
+            Emit(secs[i].OpenTag, buckets[i].OrderBy(x => x.Order).Select(x => x.Html));
+        }
+
+        string parentName = ParentName(bp);
+        string display = string.IsNullOrWhiteSpace(bp.DisplayName) ? Label(bp.EntityName) : bp.DisplayName;
+
+        string Tag(string title, string icon) =>
+            $"<app-form-section\r\n\r\n                title=\"{title}\"\r\n\r\n                icon=\"{icon}\">";
+
+        foreach (var (kind, title, icon) in new[]
+        {
+            ("Parent",      parentName.Length > 0 ? Label(parentName) : "Parent", "fas fa-sitemap"),
+            ("Information", display + " Information",                           "fas fa-layer-group"),
+            ("Status",      "Status",                                           "fas fa-toggle-on"),
+            ("Description", "Description",                                      "fas fa-align-left")
+        })
+        {
+            if (extra.TryGetValue(kind, out var items))
+                Emit(Tag(title, icon), items);
+        }
+
+        sb.AppendLine();
+        sb.Append("        ");
+
+        return sb.ToString();
+    }
+
     private static string FormHtml(string text, PageCloneBlueprint bp, List<string> warnings)
     {
         var open = Regex.Match(text, @"<app-form-grid[^>]*>");
@@ -1575,6 +1905,17 @@ public static class FrontendBlockGenerator
         if (bp.Parent != null && bp.Parent.HasParent)
             sourceParent = SourceParentControl(
                 text[(open.Index + open.Length)..close], bp.Parent.ForeignKey);
+
+        // Customised source form: keep its sections and its own controls
+        var srcSections = SourceSections(text[(open.Index + open.Length)..close]);
+
+        if (srcSections.Count > 0)
+        {
+            string html = FormHtmlFromSource(
+                text[(open.Index + open.Length)..close], srcSections, bp, all, sourceParent);
+
+            return text[..(open.Index + open.Length)] + html + text[close..];
+        }
 
         // Each field goes to the column chosen in the wizard (field order is kept)
         var parentFields = all.Where(f => SectionOf(bp, f) == "Parent").ToList();

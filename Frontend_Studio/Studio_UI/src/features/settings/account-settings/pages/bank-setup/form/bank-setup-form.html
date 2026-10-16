@@ -1,4 +1,3 @@
-<!-- PAGE-CLONED : Wings -> Bank Setup -->
 <div class="app-form-page">
 
 
@@ -8,11 +7,11 @@
 
     <app-page-header
 
-        icon="fas fa-layer-group"
+        icon="fas fa-building-columns"
 
         [title]="pageTitle"
 
-        subtitle="Manage bankSetup">
+        subtitle="Manage bank setup">
 
         <app-command-center
 
@@ -78,16 +77,16 @@
 
             [columns]="4">
 
-            <!-- =============================================
-                 SECTION 01
-                 BANK INFORMATION
-            ============================================== -->
+
+            <!-- =================================================
+                 SECTION 01 : BANK INFORMATION
+            ================================================== -->
 
             <app-form-section
 
                 title="Bank Information"
 
-                icon="fas fa-layer-group">
+                icon="fas fa-building-columns">
 
 
                 <!-- Bank Code -->
@@ -119,27 +118,25 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
 
-
-
             </app-form-section>
 
 
-            <!-- =============================================
-                 SECTION 02
-                 STATUS
-            ============================================== -->
+
+            <!-- =================================================
+                 SECTION 02 : SHORT NAME
+            ================================================== -->
 
             <app-form-section
 
                 title="Short Name"
 
-                icon="fas fa-toggle-on">
+                icon="fas fa-tag">
 
 
                 <!-- Short Name -->
@@ -154,16 +151,17 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode || isSaving">
 
                 </app-textbox>
 
             </app-form-section>
 
-            <!-- =============================================
-                 SECTION 03
-                 STATUS
-            ============================================== -->
+
+
+            <!-- =================================================
+                 SECTION 03 : STATUS
+            ================================================== -->
 
             <app-form-section
 
@@ -184,7 +182,7 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
@@ -192,10 +190,11 @@
 
             </app-form-section>
 
-            <!-- =============================================
-                 SECTION 04
-                 DESCRIPTION
-            ============================================== -->
+
+
+            <!-- =================================================
+                 SECTION 04 : DESCRIPTION
+            ================================================== -->
 
             <app-form-section
 
@@ -218,7 +217,7 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode || isSaving">
 
                 </app-textarea>
 
@@ -239,3 +238,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

@@ -91,8 +91,7 @@
                 icon="fas fa-layer-group">
 
 
-
-                <!-- Product Category -->
+                <!-- Product Category (locked after creation) -->
 
                 <app-dropdown
 
@@ -102,14 +101,13 @@
 
                     [(value)]="entity.ProductCategoryId"
 
-                    (valueChange)="onValueChange()"
+                    (valueChange)="onProductCategoryChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Sub Category Code -->
@@ -129,7 +127,6 @@
                 </app-textbox>
 
 
-
                 <!-- Sub Category Name -->
 
                 <app-textbox
@@ -142,12 +139,11 @@
 
                     (valueChange)="onSubCategoryNameChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
             </app-form-section>
 
@@ -163,7 +159,6 @@
                 title="Inventory Account Sub Groups"
 
                 icon="fas fa-tags">
-
 
 
                 <!-- Inventory Sub Group Code -->
@@ -183,7 +178,6 @@
                 </app-textbox>
 
 
-
                 <!-- WIP Sub Group Code -->
 
                 <app-textbox
@@ -199,7 +193,6 @@
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- COGS Sub Group Code -->
@@ -218,7 +211,6 @@
 
                 </app-textbox>
 
-
             </app-form-section>
 
 
@@ -235,7 +227,6 @@
                 icon="fas fa-folder-tree">
 
 
-
                 <!-- Inventory Sub Group Name -->
 
                 <app-textbox
@@ -248,12 +239,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || mode === 'edit'"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- WIP Sub Group Name -->
@@ -268,12 +258,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || mode === 'edit'"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- COGS Sub Group Name -->
@@ -288,12 +277,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || mode === 'edit'"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
             </app-form-section>
 
@@ -311,7 +299,6 @@
                 icon="fas fa-toggle-on">
 
 
-
                 <!-- Sub Category Creation Allowed -->
 
                 <app-dropdown
@@ -324,12 +311,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Status -->
@@ -344,12 +330,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Remarks -->
@@ -366,13 +351,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode || isSaving">
 
                 </app-textarea>
 
-
             </app-form-section>
-
 
 
         </app-form-grid>
@@ -390,3 +373,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

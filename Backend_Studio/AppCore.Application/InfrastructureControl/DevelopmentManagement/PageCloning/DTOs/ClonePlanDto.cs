@@ -78,6 +78,9 @@ public class ClonePlanFieldDto
     public string Control { get; set; } = "Textbox";
 
     public string DefaultValue { get; set; } = string.Empty;
+
+    // Parent | Information | Status | Description
+    public string? Section { get; set; }
 }
 
 

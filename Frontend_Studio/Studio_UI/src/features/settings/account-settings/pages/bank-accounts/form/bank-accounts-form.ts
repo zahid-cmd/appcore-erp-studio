@@ -8,6 +8,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -32,6 +33,18 @@ import
 }
 from '@angular/forms';
 
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    finalize,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Shared Components
@@ -138,6 +151,18 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 
 //===============================================================
 // Models & Services
@@ -173,6 +198,18 @@ from '../../../services/account-sub-group.service';
 
 import
 {
+    BankSetup
+}
+from '../../../models/bank-setup.model';
+
+import
+{
+    BankSetupService
+}
+from '../../../services/bank-setup.service';
+
+import
+{
     BranchesService
 }
 from '../../../../general-settings/services/branches.service';
@@ -183,10 +220,9 @@ from '../../../../general-settings/services/branches.service';
 //===============================================================
 
 // Bank Accounts are reserved to this Account Sub Group only.
-// SUB-003-002-001 - Cash In Hand
 const RESERVED_SUB_GROUP_CODE:
     string =
-    'SUB-003-002-001';
+    'SUB-003-002-002';
 
 
 //===============================================================
@@ -244,7 +280,9 @@ const RESERVED_SUB_GROUP_CODE:
 
         ToastComponent,
 
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+
+        ProgressDialogComponent
     ],
 
 
@@ -259,7 +297,7 @@ const RESERVED_SUB_GROUP_CODE:
 
 
 export class BankAccountsForm
-implements OnInit
+implements OnInit, OnDestroy
 {
 
     //===========================================================
@@ -278,6 +316,10 @@ implements OnInit
         inject(BranchesService);
 
 
+    private readonly bankSetupService =
+        inject(BankSetupService);
+
+
     private readonly bankAccountsService =
         inject(BankAccountsService);
 
@@ -288,6 +330,10 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
 
     private readonly toast =
@@ -320,12 +366,12 @@ implements OnInit
 
     pageTitle:
         string =
-        'BankAccount';
+        'Bank Account';
 
 
     entityName:
         string =
-        'BankAccount';
+        'Bank Account';
 
 
 
@@ -444,12 +490,6 @@ implements OnInit
     [];
 
 
-    // BranchName -> Branch Short Name
-    private branchShortNames:
-        Map<string, string> =
-        new Map<string, string>();
-
-
 
     //===========================================================
     // Bank Items
@@ -458,6 +498,13 @@ implements OnInit
     bankItems:
         any[] =
     [];
+
+
+    // BankName -> Bank Short Name (stored in UPPERCASE)
+    private bankShortNames:
+        Map<string, string> =
+        new Map<string, string>();
+
 
 
     //===========================================================
@@ -489,6 +536,12 @@ implements OnInit
         false;
 
 
+    // Prevents double submit while Save / Update is running
+    isSaving:
+        boolean =
+        false;
+
+
 
     //===========================================================
     // Initialize
@@ -499,9 +552,27 @@ implements OnInit
     {
         this.loadBranchItems();
 
+        this.loadBankItems();
+
         this.loadAccountSubGroups();
 
         this.initializeMode();
+    }
+
+
+
+    //===========================================================
+    // Uppercase Helper
+    //===========================================================
+
+    private toUpper
+    (
+        value:
+            string | null | undefined
+    ):
+        string
+    {
+        return (value ?? '').toUpperCase();
     }
 
 
@@ -534,9 +605,26 @@ implements OnInit
 
             PaymentAccount:false,
 
-            Bank:''
+            Bank:'',
+
+            FullAccountNumber:'',
+
+            ShortAccountName:'',
+
+            ShortAccountNumber:'',
+
+            ShortBranchName:'',
+
+            SwiftCode:'',
+
+            RoutingNumber:'',
+
+            BranchExclusive:false,
+
+            BankBranchName:''
         };
     }
+
 
 
     //===========================================================
@@ -557,48 +645,22 @@ implements OnInit
                 ):
                     void =>
                 {
-                    const activeBranches =
+                    this.branchItems =
                         response
                             .filter(
                                 item =>
                                     item.IsActive
-                            );
-
-
-                    this.branchShortNames =
-                        new Map<string, string>(
-                            activeBranches.map(
-                                item =>
-                                [
-                                    item.BranchName,
-
-                                    (
-                                        item.BranchShortName
-                                        ??
-                                        item.branchShortName
-                                        ??
-                                        item.ShortName
-                                        ??
-                                        item.shortName
-                                        ??
-                                        ''
-                                    ).toString().trim()
-                                ]
                             )
-                        );
+                            .map(
+                                item =>
+                                ({
+                                    label:
+                                        `${item.BranchCode} - ${item.BranchName}`,
 
-
-                    this.branchItems =
-                        activeBranches.map(
-                            item =>
-                            ({
-                                label:
-                                    `${item.BranchCode} - ${item.BranchName}`,
-
-                                value:
-                                    item.BranchName
-                            })
-                        );
+                                    value:
+                                        item.BranchName
+                                })
+                            );
 
 
                     this.cdr.detectChanges();
@@ -623,9 +685,6 @@ implements OnInit
                         [];
 
 
-                    this.branchShortNames.clear();
-
-
                     this.toast.error(
                         'Error',
 
@@ -641,7 +700,97 @@ implements OnInit
 
 
     //===========================================================
-    // Load Account Sub Groups (Reserved : Cash In Hand)
+    // Load Bank Items (Bank Setup)
+    //===========================================================
+
+    private loadBankItems():
+        void
+    {
+        this.bankSetupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    banks:
+                        BankSetup[]
+                ):
+                    void =>
+                {
+                    const activeBanks =
+                        banks
+                            .filter(
+                                bank =>
+                                    bank.Status
+                            );
+
+
+                    this.bankShortNames =
+                        new Map<string, string>(
+                            activeBanks.map(
+                                bank =>
+                                [
+                                    bank.BankName,
+
+                                    this.toUpper(bank.ShortName).trim()
+                                ]
+                            )
+                        );
+
+
+                    this.bankItems =
+                        activeBanks.map(
+                            bank =>
+                            ({
+                                label:
+                                    `${bank.BankCode} - ${bank.BankName}`,
+
+                                value:
+                                    bank.BankName
+                            })
+                        );
+
+
+                    this.cdr.detectChanges();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Bank Items Error:',
+
+                        error
+                    );
+
+
+                    this.bankItems =
+                        [];
+
+
+                    this.bankShortNames.clear();
+
+
+                    this.toast.error(
+                        'Error',
+
+                        'Failed to load banks.'
+                    );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Load Account Sub Groups (Reserved : SUB-003-002-002)
     //===========================================================
 
     private loadAccountSubGroups():
@@ -692,7 +841,7 @@ implements OnInit
                         this.toast.error(
                             'Error',
 
-                            `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} (Cash In Hand) was not found.`
+                            `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} was not found.`
                         );
 
 
@@ -1093,7 +1242,7 @@ implements OnInit
                             response?.Remarks ?? response?.remarks ?? '',
 
                         Status:
-                            Boolean(response?.Status ?? response?.status ?? false),
+                            Boolean(response?.Status ?? response?.status ?? true),
 
                         Branch:
                             response?.Branch ?? response?.branch ?? '',
@@ -1108,7 +1257,31 @@ implements OnInit
                             Boolean(response?.PaymentAccount ?? response?.paymentAccount ?? false),
 
                         Bank:
-                            response?.Bank ?? response?.bank ?? ''
+                            response?.Bank ?? response?.bank ?? '',
+
+                        FullAccountNumber:
+                            response?.FullAccountNumber ?? response?.fullAccountNumber ?? '',
+
+                        ShortAccountName:
+                            response?.ShortAccountName ?? response?.shortAccountName ?? '',
+
+                        ShortAccountNumber:
+                            response?.ShortAccountNumber ?? response?.shortAccountNumber ?? '',
+
+                        ShortBranchName:
+                            response?.ShortBranchName ?? response?.shortBranchName ?? '',
+
+                        SwiftCode:
+                            response?.SwiftCode ?? response?.swiftCode ?? '',
+
+                        RoutingNumber:
+                            response?.RoutingNumber ?? response?.routingNumber ?? '',
+
+                        BranchExclusive:
+                            Boolean(response?.BranchExclusive ?? response?.branchExclusive ?? false),
+
+                        BankBranchName:
+                            response?.BankBranchName ?? response?.bankBranchName ?? ''
                     };
 
 
@@ -1146,36 +1319,41 @@ implements OnInit
     //===========================================================
     // Display Name
     //
-    // Format : <Bank Account Name> - <Branch Short Name>
+    // Format (UPPERCASE) :
+    // <Short Account Name> - <Short Account Number> - <Bank Short Name> - <Short Branch Name>
+    //
+    // Empty parts are skipped so there are no dangling hyphens.
     //===========================================================
 
     private buildDisplayName():
         string
     {
-        const bankAccountName =
-            (this.entity.BankAccountName ?? '').trim();
-
-
-        const branchShortName =
-            this.branchShortNames.get(
-                this.entity.Branch ?? ''
+        const bankShortName =
+            this.bankShortNames.get(
+                this.entity.Bank ?? ''
             )
             ??
             '';
 
 
-        if
-        (
-            bankAccountName
-            &&
-            branchShortName
+        return [
+            this.entity.ShortAccountName,
+
+            this.entity.ShortAccountNumber,
+
+            bankShortName,
+
+            this.entity.ShortBranchName
+        ]
+        .map(
+            part =>
+                this.toUpper(part).trim()
         )
-        {
-            return `${bankAccountName} - ${branchShortName}`;
-        }
-
-
-        return bankAccountName;
+        .filter(
+            part =>
+                part.length > 0
+        )
+        .join(' - ');
     }
 
 
@@ -1189,31 +1367,7 @@ implements OnInit
 
 
     //===========================================================
-    // Branch Changed
-    //===========================================================
-
-    onBranchChange():
-        void
-    {
-        if
-        (
-            this.isViewMode
-        )
-        {
-            return;
-        }
-
-
-        this.updateDisplayName();
-
-
-        this.onValueChange();
-    }
-
-
-
-    //===========================================================
-    // Bank Account Name Changed
+    // Bank Account Name Changed (Auto Uppercase)
     //===========================================================
 
     onBankAccountNameChange():
@@ -1226,6 +1380,50 @@ implements OnInit
         {
             return;
         }
+
+
+        this.entity.BankAccountName =
+            this.toUpper(
+                this.entity.BankAccountName
+            );
+
+
+        this.onValueChange();
+    }
+
+
+
+    //===========================================================
+    // Display Name Part Changed
+    //
+    // Bank, Short Account Name, Short Account Number,
+    // Short Branch Name
+    //
+    // Short Account Name & Short Branch Name are uppercased.
+    //===========================================================
+
+    onDisplayNamePartChange():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        this.entity.ShortAccountName =
+            this.toUpper(
+                this.entity.ShortAccountName
+            );
+
+
+        this.entity.ShortBranchName =
+            this.toUpper(
+                this.entity.ShortBranchName
+            );
 
 
         this.updateDisplayName();
@@ -1271,6 +1469,242 @@ implements OnInit
 
 
     //===========================================================
+    // Required Field Check
+    //===========================================================
+
+    private requireText
+    (
+        value:
+            string | null | undefined,
+
+        label:
+            string
+    ):
+        boolean
+    {
+        if
+        (
+            !value?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                `${label} is required.`
+            );
+
+            return false;
+        }
+
+
+        return true;
+    }
+
+
+    //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private progressTimer?:
+        number;
+
+
+    private progressValue:
+        number =
+        0;
+
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isSaving =
+            true;
+
+
+        this.progressValue =
+            0;
+
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+
+            message,
+
+            false
+        );
+
+
+        this.clearProgressTimer();
+
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.05
+                        );
+
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.update(
+            100,
+
+            message
+        );
+
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+
+                this.isSaving =
+                    false;
+
+
+                this.cdr.detectChanges();
+
+
+                done();
+            },
+
+            600
+        );
+    }
+
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.close();
+
+
+        this.isSaving =
+            false;
+
+
+        this.cdr.detectChanges();
+
+
+        done();
+    }
+
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+
+    //===========================================================
     // Save
     //===========================================================
 
@@ -1280,6 +1714,8 @@ implements OnInit
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -1287,7 +1723,7 @@ implements OnInit
 
 
         //=======================================================
-        // Validation
+        // Reserved Sub Group
         //=======================================================
 
         if
@@ -1298,7 +1734,7 @@ implements OnInit
             this.toast.error(
                 'Validation',
 
-                `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} (Cash In Hand) is not available.`
+                `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} is not available.`
             );
 
             return;
@@ -1317,52 +1753,36 @@ implements OnInit
         }
 
 
+        //=======================================================
+        // Required Fields
+        //=======================================================
+
         if
         (
-            !this.entity.Branch?.trim()
+            !this.requireText(this.entity.Branch, 'Branch')
+            ||
+            !this.requireText(this.entity.BankAccountName, 'Bank Account Name')
+            ||
+            !this.requireText(this.entity.FullAccountNumber, 'Full Account Number')
+            ||
+            !this.requireText(this.entity.BankBranchName, 'Bank Branch Name')
+            ||
+            !this.requireText(this.entity.BankAccountCode, 'Bank Account Code')
+            ||
+            !this.requireText(this.entity.Bank, 'Bank')
+            ||
+            !this.requireText(this.entity.ShortAccountName, 'Short Account Name')
+            ||
+            !this.requireText(this.entity.ShortAccountNumber, 'Short Account Number')
+            ||
+            !this.requireText(this.entity.ShortBranchName, 'Short Branch Name')
         )
         {
-            this.toast.error(
-                'Validation',
-
-                'Branch is required.'
-            );
-
             return;
         }
 
 
-        if
-        (
-            !this.entity.BankAccountCode?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-
-                'Bank Account Code is required.'
-            );
-
-            return;
-        }
-
-
-        if
-        (
-            !this.entity.BankAccountName?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-
-                'Bank Account Name is required.'
-            );
-
-            return;
-        }
-
-
-        // Always save the derived display name
+        // Always save the derived (uppercase) display name
         this.updateDisplayName();
 
 
@@ -1383,16 +1803,16 @@ implements OnInit
 
 
     //===========================================================
-    // Create
+    // Build Payload
+    //
+    // Uppercase fields are enforced here as well, so older
+    // records are corrected on their next save.
     //===========================================================
 
-    private saveCreate():
-        void
+    private buildPayload():
+        CreateBankAccount
     {
-        const model:
-            CreateBankAccount =
-        {
-
+        return {
             AccountSubGroupsId:
                 this.entity.AccountSubGroupsId,
 
@@ -1400,7 +1820,7 @@ implements OnInit
                 this.entity.BankAccountCode?.trim() ?? '',
 
             BankAccountName:
-                this.entity.BankAccountName?.trim() ?? '',
+                this.toUpper(this.entity.BankAccountName).trim(),
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
@@ -1412,7 +1832,7 @@ implements OnInit
                 this.entity.Branch?.trim() ?? '',
 
             DisplayName:
-                this.entity.DisplayName?.trim() ?? '',
+                this.toUpper(this.entity.DisplayName).trim(),
 
             CollectionAccount:
                 this.entity.CollectionAccount,
@@ -1421,30 +1841,83 @@ implements OnInit
                 this.entity.PaymentAccount,
 
             Bank:
-                this.entity.Bank?.trim() ?? ''
+                this.entity.Bank?.trim() ?? '',
+
+            FullAccountNumber:
+                this.entity.FullAccountNumber?.trim() ?? '',
+
+            ShortAccountName:
+                this.toUpper(this.entity.ShortAccountName).trim(),
+
+            ShortAccountNumber:
+                this.entity.ShortAccountNumber?.trim() ?? '',
+
+            ShortBranchName:
+                this.toUpper(this.entity.ShortBranchName).trim(),
+
+            SwiftCode:
+                this.entity.SwiftCode?.trim() ?? '',
+
+            RoutingNumber:
+                this.entity.RoutingNumber?.trim() ?? '',
+
+            BranchExclusive:
+                this.entity.BranchExclusive,
+
+            BankBranchName:
+                this.entity.BankBranchName?.trim() ?? ''
         };
+    }
 
 
-        this.bankAccountsService
-            .create(
+    //===========================================================
+    // Create
+    //===========================================================
+
+    private saveCreate():
+        void
+    {
+        const model:
+            CreateBankAccount =
+            this.buildPayload();
+
+
+        this.startProgress(
+            'Saving Bank Account',
+
+            'Please wait while the bank account is being saved...'
+        );
+
+
+        this.withMinimumDuration(
+            this.bankAccountsService.create(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.setInitialFormState();
+                    this.completeProgress(
+
+                        'Bank account saved.',
+
+                        () =>
+                        {
+                            this.setInitialFormState();
 
 
-                    this.toast.success(
-                        'Success',
+                            this.toast.success(
+                                'Success',
 
-                        'BankAccount created successfully.'
+                                'BankAccount created successfully.'
+                            );
+
+
+                            this.onBackToList();
+                        }
                     );
-
-
-                    this.onBackToList();
                 },
 
 
@@ -1461,22 +1934,25 @@ implements OnInit
                     );
 
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create BankAccount.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to create BankAccount.';
 
 
-                    this.toast.error(
-                        'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                        message
+                                message
+                            );
+                        }
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Update
@@ -1491,58 +1967,46 @@ implements OnInit
             BankAccountId:
                 this.entity.BankAccountId,
 
-            AccountSubGroupsId:
-                this.entity.AccountSubGroupsId,
-
-            BankAccountCode:
-                this.entity.BankAccountCode?.trim() ?? '',
-
-            BankAccountName:
-                this.entity.BankAccountName?.trim() ?? '',
-
-            Remarks:
-                this.entity.Remarks?.trim() ?? '',
-
-            Status:
-                this.entity.Status,
-
-            Branch:
-                this.entity.Branch?.trim() ?? '',
-
-            DisplayName:
-                this.entity.DisplayName?.trim() ?? '',
-
-            CollectionAccount:
-                this.entity.CollectionAccount,
-
-            PaymentAccount:
-                this.entity.PaymentAccount,
-
-            Bank:
-                this.entity.Bank?.trim() ?? ''
+            ...this.buildPayload()
         };
 
 
-        this.bankAccountsService
-            .update(
+        this.startProgress(
+            'Updating Bank Account',
+
+            'Please wait while the bank account is being updated...'
+        );
+
+
+        this.withMinimumDuration(
+            this.bankAccountsService.update(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.setInitialFormState();
+                    this.completeProgress(
+
+                        'Bank account updated.',
+
+                        () =>
+                        {
+                            this.setInitialFormState();
 
 
-                    this.toast.success(
-                        'Success',
+                            this.toast.success(
+                                'Success',
 
-                        'BankAccount updated successfully.'
+                                'BankAccount updated successfully.'
+                            );
+
+
+                            this.onBackToList();
+                        }
                     );
-
-
-                    this.onBackToList();
                 },
 
 
@@ -1559,21 +2023,25 @@ implements OnInit
                     );
 
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update BankAccount.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to update BankAccount.';
 
 
-                    this.toast.error(
-                        'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                        message
+                                message
+                            );
+                        }
                     );
                 }
             });
     }
-
 
 
     //===========================================================
@@ -1583,6 +2051,15 @@ implements OnInit
     onClear():
         void
     {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+
         if
         (
             this.mode === 'edit'
@@ -1731,6 +2208,61 @@ implements OnInit
     }
 
 
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private readonly MIN_PROGRESS_MS:
+        number =
+        5000;
+
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
 
     //===========================================================
     // Value Changed

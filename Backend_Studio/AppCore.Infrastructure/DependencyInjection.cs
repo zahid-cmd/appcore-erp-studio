@@ -632,6 +632,69 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : SystemConfigurations
+
+        services.AddScoped
+        <
+            ISystemConfigurationsRepository,
+            SystemConfigurationsRepository
+        >();
+
+        // AUTO-END : SystemConfigurations
+
+        // AUTO-BEGIN : FinancialYears
+
+        services.AddScoped
+        <
+            IFinancialYearsRepository,
+            FinancialYearsRepository
+        >();
+
+        // AUTO-END : FinancialYears
+
+        // AUTO-BEGIN : CardCharges
+
+        services.AddScoped
+        <
+            ICardChargesRepository,
+            CardChargesRepository
+        >();
+
+        // AUTO-END : CardCharges
+
+
+        // AUTO-BEGIN : POSAccounts
+
+        services.AddScoped
+        <
+            IPOSAccountsRepository,
+            POSAccountsRepository
+        >();
+
+        // AUTO-END : POSAccounts
+
+
+        // AUTO-BEGIN : CardSetup
+
+        services.AddScoped
+        <
+            ICardSetupRepository,
+            CardSetupRepository
+        >();
+
+        // AUTO-END : CardSetup
+
+        // AUTO-BEGIN : MFSAccounts
+
+        services.AddScoped
+        <
+            IMFSAccountsRepository,
+            MFSAccountsRepository
+        >();
+
+        // AUTO-END : MFSAccounts
+
+
         // AUTO-BEGIN : BankAccounts
 
         services.AddScoped
@@ -641,6 +704,8 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : BankAccounts
+
+
 
 
 
@@ -723,25 +788,7 @@ public static class DependencyInjection
 
 
 
-        // AUTO-BEGIN : FinancialYears
 
-        services.AddScoped
-        <
-            IFinancialYearsRepository,
-            FinancialYearsRepository
-        >();
-
-        // AUTO-END : FinancialYears
-
-        // AUTO-BEGIN : SystemConfigurations
-
-        services.AddScoped
-        <
-            ISystemConfigurationsRepository,
-            SystemConfigurationsRepository
-        >();
-
-        // AUTO-END : SystemConfigurations
 
 
         // AUTO-BEGIN : AccountGroup

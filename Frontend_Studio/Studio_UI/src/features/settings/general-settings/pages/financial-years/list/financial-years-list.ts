@@ -6,10 +6,17 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -24,6 +31,17 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -31,10 +49,10 @@ from '@angular/router';
 
 import
 {
-    FinancialYears
+    FinancialYear,
+    FinancialYearStatus
 }
 from '../../../models/financial-years.model';
-
 
 //===============================================================
 // Shared Components
@@ -68,15 +86,15 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    SearchBoxComponent
+    SearchDropdownComponent
 }
-from '../../../../../../shared/components/utilities/search-box/search-box';
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
-    DropdownComponent
+    SearchBoxComponent
 }
-from '../../../../../../shared/components/controls/dropdown/dropdown';
+from '../../../../../../shared/components/utilities/search-box/search-box';
 
 import
 {
@@ -117,6 +135,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -127,9 +157,8 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,6 +167,151 @@ import
 }
 from '../../../services/financial-years.service';
 
+//===============================================================
+// List Item
+//===============================================================
+
+interface FinancialYearListItem
+extends FinancialYear
+{
+    StartDateText:
+        string;
+
+    EndDateText:
+        string;
+
+    DurationText:
+        string;
+
+    CurrentText:
+        string;
+}
+
+//===============================================================
+// Case-Insensitive Field Reader
+//===============================================================
+
+function readField
+(
+    item:
+        any,
+    name:
+        string
+):
+    any
+{
+    if
+    (
+        item == null
+        ||
+        typeof item !== 'object'
+    )
+    {
+        return undefined;
+    }
+
+    if
+    (
+        name in item
+    )
+    {
+        return item[name];
+    }
+
+    const target =
+        name.toLowerCase();
+
+    const key =
+        Object.keys(item).find
+        (
+            k =>
+                k.toLowerCase() ===
+                target
+        );
+
+    return key !== undefined
+        ? item[key]
+        : undefined;
+}
+
+//===============================================================
+// Date Display Helpers
+//===============================================================
+
+const MONTH_NAMES:
+    string[] =
+[
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+// "2026-07-01" → "01-Jul-2026"
+function formatDate
+(
+    value:
+        string
+):
+    string
+{
+    const match =
+        /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
+
+    if
+    (
+        !match
+    )
+    {
+        return '';
+    }
+
+    return `${match[3]}-${MONTH_NAMES[Number(match[2]) - 1]}-${match[1]}`;
+}
+
+// Whole months between two dates (inclusive), e.g. 12
+function monthsBetween
+(
+    start:
+        string,
+    end:
+        string
+):
+    number
+{
+    const a =
+        /^(\d{4})-(\d{2})-(\d{2})$/.exec(start ?? '');
+
+    const b =
+        /^(\d{4})-(\d{2})-(\d{2})$/.exec(end ?? '');
+
+    if
+    (
+        !a
+        ||
+        !b
+    )
+    {
+        return 0;
+    }
+
+    const startUtc =
+        Date.UTC(Number(a[1]), Number(a[2]) - 1, Number(a[3]));
+
+    // one day after the end date
+    const endNextUtc =
+        Date.UTC(Number(b[1]), Number(b[2]) - 1, Number(b[3]) + 1);
+
+    const s =
+        new Date(startUtc);
+
+    const e =
+        new Date(endNextUtc);
+
+    return (
+        (e.getUTCFullYear() - s.getUTCFullYear()) * 12
+        +
+        (e.getUTCMonth() - s.getUTCMonth())
+    );
+}
 
 //===============================================================
 // Component
@@ -145,36 +319,25 @@ from '../../../services/financial-years.service';
 
 @Component(
 {
-    selector:'financialYears-list',
+    selector:'financial-years-list',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
+        SearchDropdownComponent,
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
         ToastComponent
     ],
 
@@ -183,43 +346,73 @@ from '../../../services/financial-years.service';
     styleUrl:'./financial-years-list.css'
 })
 
-
 //===============================================================
-// Financial Years List Component
+// Financial Years List
 //===============================================================
 
 export class FinancialYearsList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
 
-    private readonly financialyearsservice =
+    private readonly financialYearsService =
         inject(FinancialYearsService);
-
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
 
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private readonly CONFIRM_CLOSE_DELAY_MS:
+        number =
+        150;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
     //===========================================================
     // Page Tabs
@@ -230,70 +423,62 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All FinancialYearses'
+            label:'All Financial Years'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
 
+    //===========================================================
+    // Data
+    //===========================================================
 
+    financialYears:
+        FinancialYearListItem[] =
+        [];
+
+    filteredFinancialYears:
+        FinancialYearListItem[] =
+        [];
+
+    pagedFinancialYears:
+        FinancialYearListItem[] =
+        [];
+
+    //===========================================================
+    // Year Status Filter
+    //===========================================================
+
+    yearStatusFilterItems:
+        any[] =
+    [
+        { label:'All Year Status', value:null },
+        { label:'Open', value:'Open' },
+        { label:'Closed', value:'Closed' },
+        { label:'Locked', value:'Locked' }
+    ];
+
+    selectedYearStatus:
+        FinancialYearStatus | null =
+        null;
 
     //===========================================================
     // Status Filter
     //===========================================================
 
-    statusItems:
+    statusFilterItems:
         any[] =
     [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
+        { label:'All Status', value:null },
+        { label:'Active', value:true },
+        { label:'Inactive', value:false }
     ];
 
-
     selectedStatus:
-        string | null =
+        boolean | null =
         null;
-
-
-
-    //===========================================================
-    // Data Source
-    //===========================================================
-
-    financialyearses:
-        FinancialYears[] =
-    [];
-
-
-    filteredFinancialYearses:
-        FinancialYears[] =
-    [];
-
-
-    pagedFinancialYearses:
-        FinancialYears[] =
-    [];
-
-
 
     //===========================================================
     // Search & Loading
@@ -303,17 +488,13 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
 
-
     loadFailed:
         boolean =
         false;
-
-
 
     //===========================================================
     // Pagination
@@ -323,12 +504,9 @@ implements OnInit
         number =
         1;
 
-
     pageSize:
         number =
         10;
-
-
 
     //===========================================================
     // History
@@ -338,17 +516,13 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
-        'Financial Years History';
-
+        'Financial Year History';
 
     historyItems:
         any[] =
-    [];
-
-
+        [];
 
     //===========================================================
     // Page Canvas Configuration
@@ -358,27 +532,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
-
 
     //===========================================================
     // Table Columns
@@ -389,63 +552,84 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
             width:'60px',
-
             align:'center'
         },
-
         {
             header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
+            field:'FinancialYearCode',
+            width:'140px',
             align:'center'
         },
-
         {
-            header:'Name',
-
-            field:'name',
-
+            header:'Financial Year',
+            field:'FinancialYearName',
+            width:'200px',
             align:'left'
         },
-
         {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:'120px',
-
+            header:'Start Date',
+            field:'StartDateText',
+            width:'150px',
             align:'center'
         },
-
+        {
+            header:'End Date',
+            field:'EndDateText',
+            width:'150px',
+            align:'center'
+        },
+        {
+            header:'Duration',
+            field:'DurationText',
+            width:'120px',
+            align:'center'
+        },
+        {
+            header:'Current',
+            field:'CurrentText',
+            width:'110px',
+            align:'center'
+        },
+        {
+            header:'Year Status',
+            field:'YearStatus',
+            width:'130px',
+            align:'center'
+        },
+        {
+            header:'Status',
+            field:'Status',
+            type:'status',
+            width:'120px',
+            align:'center'
+        },
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'180px',
-
+            width:'120px',
             align:'center'
         }
     ];
 
+    //===========================================================
+    // Sort Fields
+    //
+    // Display columns that must sort by their underlying value.
+    //===========================================================
 
+    private readonly sortFieldMap:
+        Record<string, keyof FinancialYearListItem> =
+    {
+        StartDateText:'StartDate',
+        EndDateText:'EndDate'
+    };
 
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -454,10 +638,68 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
 
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Load FinancialYearses
+    // To List Item
+    //===========================================================
+
+    private toListItem
+    (
+        item:
+            FinancialYear
+    ):
+        FinancialYearListItem
+    {
+        const months =
+            monthsBetween(
+                item.StartDate,
+                item.EndDate
+            );
+
+        return {
+            ...item,
+
+            StartDateText:
+                formatDate(
+                    item.StartDate
+                ),
+
+            EndDateText:
+                formatDate(
+                    item.EndDate
+                ),
+
+            DurationText:
+                months > 0
+                    ? `${months} month${months === 1 ? '' : 's'}`
+                    : '',
+
+            CurrentText:
+                item.IsCurrent
+                    ? 'Current'
+                    : '—'
+        };
+    }
+
+    //===========================================================
+    // Load Items (newest year first)
     //===========================================================
 
     loadItems():
@@ -466,110 +708,116 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-        this.financialyearsservice
+        this.financialYearsService
             .getAll()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        FinancialYears[]
-                ): void =>
+                        FinancialYear[]
+                ):
+                    void =>
                 {
-                    this.financialyearses =
-                    [
-                        ...response
-                    ];
-
+                    this.financialYears =
+                        (response ?? [])
+                            .map
+                            (
+                                item =>
+                                    this.toListItem(
+                                        item
+                                    )
+                            )
+                            .sort
+                            (
+                                (a, b) =>
+                                    b.StartDate.localeCompare(a.StartDate)
+                            );
 
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         false;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'Load FinancialYearses Error',
-
+                    console.error(
+                        'Load Financial Years Error:',
                         error
                     );
 
+                    this.financialYears =
+                        [];
 
-                    this.financialyearses =
-                    [];
+                    this.filteredFinancialYears =
+                        [];
 
-
-                    this.filteredFinancialYearses =
-                    [];
-
-
-                    this.pagedFinancialYearses =
-                    [];
-
+                    this.pagedFinancialYears =
+                        [];
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         true;
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'Load Failed',
-
-                        'Unable to load financialyearses.'
+                        'Unable to load financial years.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
 
+    //===========================================================
+    // Year Status Filter Change
+    //===========================================================
 
+    onYearStatusFilterChange
+    (
+        value:
+            FinancialYearStatus | null
+    ):
+        void
+    {
+        this.selectedYearStatus =
+            value;
+
+        this.applyFilters();
+    }
 
     //===========================================================
-    // Status Filter Changed
+    // Status Filter Change
     //===========================================================
 
     onStatusFilterChange
     (
         value:
-            string | null
+            boolean | null
     ):
         void
     {
         this.selectedStatus =
             value;
 
-
         this.applyFilters();
     }
-
-
 
     //===========================================================
     // Apply Filters
@@ -578,64 +826,80 @@ implements OnInit
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
-
-        this.filteredFinancialYearses =
-            this.financialyearses
-                .filter
+        this.filteredFinancialYears =
+            this.financialYears.filter
+            (
                 (
+                    item:
+                        FinancialYearListItem
+                ):
+                    boolean =>
+                {
+                    const yearStatusMatches =
+                        this.selectedYearStatus === null
+                        ||
+                        item.YearStatus ===
+                        this.selectedYearStatus;
+
+                    const statusMatches =
+                        this.selectedStatus === null
+                        ||
+                        item.Status ===
+                        this.selectedStatus;
+
+                    if
                     (
-                        x:
-                            FinancialYears
-                    ):
-                        boolean =>
+                        !yearStatusMatches
+                        ||
+                        !statusMatches
+                    )
                     {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
-
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
+                        return false;
                     }
-                );
 
+                    if
+                    (
+                        !keyword
+                    )
+                    {
+                        return true;
+                    }
+
+                    const values:
+                        unknown[] =
+                    [
+                        item.FinancialYearCode,
+                        item.FinancialYearName,
+                        item.StartDateText,
+                        item.EndDateText,
+                        item.DurationText,
+                        item.CurrentText,
+                        item.YearStatus,
+                        item.Remarks,
+                        item.Status ? 'active' : 'inactive'
+                    ];
+
+                    return values.some
+                    (
+                        value =>
+                            String(value ?? '')
+                                .toLowerCase()
+                                .includes(keyword)
+                    );
+                }
+            );
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Search
@@ -649,13 +913,12 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
+            value
+            ??
+            '';
 
         this.applyFilters();
     }
-
-
 
     //===========================================================
     // Sort
@@ -667,43 +930,40 @@ implements OnInit
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
     ):
         void
     {
-        this.filteredFinancialYearses =
+        const field:
+            keyof FinancialYearListItem =
+            this.sortFieldMap[event.field]
+            ??
+            (event.field as keyof FinancialYearListItem);
+
+        this.filteredFinancialYears =
         [
-            ...this.filteredFinancialYearses
+            ...this.filteredFinancialYears
         ];
 
-
-        this.filteredFinancialYearses.sort
+        this.filteredFinancialYears.sort
         (
             (
                 a:
-                    FinancialYears,
-
+                    FinancialYearListItem,
                 b:
-                    FinancialYears
+                    FinancialYearListItem
             ):
                 number =>
             {
                 const valueA:
                     any =
-                    a[
-                        event.field as keyof FinancialYears
-                    ];
-
+                    a[field];
 
                 const valueB:
                     any =
-                    b[
-                        event.field as keyof FinancialYears
-                    ];
-
+                    b[field];
 
                 if
                 (
@@ -715,7 +975,6 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
@@ -723,7 +982,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
 
                 if
                 (
@@ -733,7 +991,6 @@ implements OnInit
                     return 1;
                 }
 
-
                 if
                 (
                     typeof valueA === 'string'
@@ -742,12 +999,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
                 }
-
 
                 if
                 (
@@ -755,12 +1009,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
+                        ? -1
+                        : 1;
                 }
-
 
                 if
                 (
@@ -768,26 +1019,19 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
+                        ? 1
+                        : -1;
                 }
-
 
                 return 0;
             }
         );
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -796,18 +1040,28 @@ implements OnInit
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
 
+        this.selectedYearStatus =
+            null;
 
         this.selectedStatus =
             null;
 
+        this.currentPage =
+            1;
 
         this.loadItems();
     }
-
-
 
     //===========================================================
     // Update Pagination
@@ -824,20 +1078,15 @@ implements OnInit
             *
             this.pageSize;
 
-
-        this.pagedFinancialYearses =
+        this.pagedFinancialYears =
         [
-            ...this.filteredFinancialYearses
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
+            ...this.filteredFinancialYears.slice
+            (
+                start,
+                start + this.pageSize
+            )
         ];
     }
-
-
 
     //===========================================================
     // Page Change
@@ -853,11 +1102,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Page Size Change
@@ -873,15 +1119,83 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
+    //===========================================================
+    // Resolve Row Id
+    //===========================================================
 
+    private getRowId
+    (
+        item:
+            any
+    ):
+        number
+    {
+        const id =
+            Number(
+                item?.FinancialYearId
+                ||
+                readField(item, 'FinancialYearId')
+            );
+
+        if
+        (
+            !id
+            ||
+            id <= 0
+        )
+        {
+            console.error(
+                '[Financial Years] Row has no id. Row fields:',
+                item ? Object.keys(item) : item
+            );
+
+            this.toast.error(
+                'Missing Id',
+                'This financial year has no id from the server, so it cannot be opened.'
+            );
+
+            return 0;
+        }
+
+        return id;
+    }
+
+    //===========================================================
+    // Navigate
+    //===========================================================
+
+    private navigateTo
+    (
+        action:
+            'add' | 'view' | 'edit',
+        id?:
+            number
+    ):
+        void
+    {
+        const commands:
+            any[] =
+            id
+                ? [action, id]
+                : [action];
+
+        void this.router.navigate
+        (
+            commands,
+            {
+                relativeTo:
+                    this.route.parent
+                    ??
+                    this.route
+            }
+        );
+    }
 
     //===========================================================
     // Add
@@ -890,20 +1204,18 @@ implements OnInit
     add():
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'add'
-            ],
+            this.isProcessing
+        )
+        {
+            return;
+        }
 
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'add'
         );
     }
-
-
 
     //===========================================================
     // View
@@ -912,26 +1224,34 @@ implements OnInit
     view
     (
         item:
-            FinancialYears
+            FinancialYearListItem
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+        const id =
+            this.getRowId(
+                item
+            );
+
+        if
+        (
+            id > 0
+        )
+        {
+            this.navigateTo(
                 'view',
-
-                item.id
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
-        );
+                id
+            );
+        }
     }
-
-
 
     //===========================================================
     // Edit
@@ -940,95 +1260,213 @@ implements OnInit
     edit
     (
         item:
-            FinancialYears
+            FinancialYearListItem
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+        const id =
+            this.getRowId(
+                item
+            );
+
+        if
+        (
+            id > 0
+        )
+        {
+            this.navigateTo(
                 'edit',
-
-                item.id
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
-        );
+                id
+            );
+        }
     }
-
-
 
     //===========================================================
     // Delete
+    //
+    // The server blocks (409) deleting the current year or a
+    // Closed / Locked year; the message is shown as-is.
     //===========================================================
 
     delete
     (
         item:
-            FinancialYears
+            FinancialYearListItem
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+        const id =
+            this.getRowId(
+                item
+            );
+
+        if
+        (
+            id <= 0
+        )
+        {
+            return;
+        }
+
+        const name =
+            item.FinancialYearName
+            ||
+            item.FinancialYearCode
+            ||
+            'this financial year';
+
         this.confirmDialog.open
         (
-            'Delete Financial Years',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
-            (): void =>
+            'Delete Financial Year',
+            `Are you sure you want to delete "${name}"?`,
+            ():
+                void =>
             {
-                this.financialyearsservice
-                    .delete
-                    (
-                        item.id
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.name} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ): void =>
-                        {
-                            console.error
-                            (
-                                'Delete Financial Years Error',
-
-                                error
-                            );
-
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete financialYears.'
-                            );
-                        }
-                    });
+                // Let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout
+                (
+                    () =>
+                        this.deleteItem(
+                            id,
+                            name
+                        ),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             }
         );
     }
 
+    //===========================================================
+    // Delete Item
+    //===========================================================
 
+    private deleteItem
+    (
+        id:
+            number,
+        name:
+            string
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Financial Year',
+            `Please wait while "${name}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.financialYearsService.delete(
+                id
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Financial year deleted.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Delete Successful',
+                            `${name} deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Financial Year Error:',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        //=======================================
+                        // Deletion Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'This financial year cannot be deleted.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Not Found (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'This financial year no longer exists. The list has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Delete Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete financial year.'
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Restore
@@ -1037,26 +1475,33 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
-            'Restore Financial Years',
-
-            'Are you sure you want to restore the most recently deleted financialYears?',
-
-            (): void =>
+            'Restore Financial Year',
+            'Are you sure you want to restore the most recently deleted financial year?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout
+                (
+                    () =>
+                        this.restoreItem(),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Restore Item
@@ -1065,50 +1510,301 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.financialyearsservice
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+        this.startProgress(
+            'Restoring Financial Year',
+            'Please wait while the most recently deleted financial year is being restored...'
+        );
 
-                        'The most recently deleted financialYears has been restored.'
-                    );
+        this.withMinimumDuration(
+            this.financialYearsService.restore()
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Financial year restored.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Restore Successful',
+                            'The most recently deleted financial year has been restored.'
+                        );
 
+                        this.loadItems();
+                    }
+                );
+            },
 
-                    this.loadItems();
-                },
-
-
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
-                    (
-                        'Restore Financial Years Error',
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Financial Year Error',
+                    error
+                );
 
-                        error
-                    );
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There is no deleted financial year record to restore.'
+                            );
 
+                            return;
+                        }
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The financial year cannot be restored.'
+                                )
+                            );
 
-                        'Failed to restore financialYears.'
-                    );
-                }
-            });
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore financial year.'
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
 
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            HttpErrorResponse,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            typeof error.error === 'string'
+            &&
+            error.error.trim()
+        )
+        {
+            return error.error;
+        }
+
+        if
+        (
+            error.error?.message
+        )
+        {
+            return error.error.message;
+        }
+
+        if
+        (
+            error.error?.title
+        )
+        {
+            return error.error.title;
+        }
+
+        return fallback;
+    }
 
     //===========================================================
     // Open History
@@ -1117,7 +1813,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.financialyearsservice
+        this.financialYearsService
             .getHistory()
             .subscribe
             ({
@@ -1125,78 +1821,64 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
+                                    readField(history, 'ActivityTitle'),
 
                                 description:
-                                    history.activityDescription,
-
+                                    readField(history, 'ActivityDescription'),
 
                                 user:
-                                    history.performedByName
+                                    readField(history, 'PerformedByName')
                                     ??
                                     'System',
 
-
                                 dateTime:
-                                    new Date
-                                    (
-                                        history.performedDate
+                                    new Date(
+                                        readField(history, 'PerformedDate')
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
-                                    history.activityType
+                                    readField(history, 'ActivityType')
                             })
                         );
 
-
                     this.historyTitle =
-                        'Financial Years Management History';
-
+                        'Financial Year Management History';
 
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'History Load Failed',
-
+                    console.error(
+                        'History Load Failed:',
                         error
                     );
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'History',
-
-                        'Failed to load financialYears history.'
+                        'Failed to load financial year history.'
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Close History
@@ -1208,5 +1890,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

@@ -1025,8 +1025,86 @@ public static class CodeGenerator
             throw new ArgumentException("Invalid sequence number.");
         }
 
-        return $"BNK-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
+        return $"BAN-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
     }
     // AUTO-END : GenerateBankAccountsCode
+
+
+    // AUTO-BEGIN : GenerateMFSAccountsCode
+    public static string GenerateMFSAccountsCode(
+        int accountClassSequenceNo,
+        int accountGroupSequenceNo,
+        int accountSubGroupSequenceNo,
+        int sequenceNo)
+    {
+        if (accountClassSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountClass sequence number.");
+        }
+
+        if (accountGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountGroup sequence number.");
+        }
+
+        if (accountSubGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountSubGroup sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"MFS-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
+    }
+    // AUTO-END : GenerateMFSAccountsCode
+
+
+    // AUTO-BEGIN : GenerateCardSetupCode
+    public static string GenerateCardSetupCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"CRD-{sequenceNo:D3}";
+    }
+    // AUTO-END : GenerateCardSetupCode
+
+
+    // AUTO-BEGIN : GeneratePOSAccountsCode
+    public static string GeneratePOSAccountsCode(
+        int accountClassSequenceNo,
+        int accountGroupSequenceNo,
+        int accountSubGroupSequenceNo,
+        int sequenceNo)
+    {
+        if (accountClassSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountClass sequence number.");
+        }
+
+        if (accountGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountGroup sequence number.");
+        }
+
+        if (accountSubGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountSubGroup sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"POS-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
+    }
+    // AUTO-END : GeneratePOSAccountsCode
 
 }

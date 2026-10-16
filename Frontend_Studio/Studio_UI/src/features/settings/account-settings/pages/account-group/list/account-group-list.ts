@@ -1,127 +1,177 @@
 //===============================================================
 // Imports
 //===============================================================
+
 import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
+
 import
 {
     HttpErrorResponse
 }
 from '@angular/common/http';
+
 import
 {
     CommonModule
 }
 from '@angular/common';
+
 import
 {
     ActivatedRoute,
     Router
 }
 from '@angular/router';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
+
 //===============================================================
 // Models
 //===============================================================
+
 import
 {
     AccountGroup
 }
 from '../../../models/account-group.model';
+
 import
 {
     AccountClass
 }
 from '../../../models/account-class.model';
+
 //===============================================================
 // Shared Components
 //===============================================================
+
 import
 {
     PageHeaderComponent
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
+
 import
 {
     PageToolbarComponent
 }
 from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
 import
 {
     PageCanvasComponent,
     PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
 import
 {
     ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
 import
 {
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
+
 import
 {
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
+
 import
 {
     ListTableComponent,
     ListTableColumn
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
+
 import
 {
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
+
 import
 {
     HistoryDrawerComponent
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
+
 import
 {
     ConfirmDialogService
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
 import
 {
     ConfirmDialogComponent
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 import
 {
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
+
 import
 {
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
+
 import
 {
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
 //===============================================================
 // Service
 //===============================================================
+
 import
 {
     AccountGroupService
 }
 from '../../../services/account-group.service';
+
 import
 {
     AccountClassService
@@ -131,6 +181,7 @@ from '../../../services/account-class.service';
 //===============================================================
 // Component
 //===============================================================
+
 @Component(
 {
     selector:'account-group-list',
@@ -148,6 +199,7 @@ from '../../../services/account-class.service';
         PaginationComponent,
         HistoryDrawerComponent,
         ConfirmDialogComponent,
+        ProgressDialogComponent,
         SearchDropdownComponent,
         ToastComponent
     ],
@@ -158,30 +210,42 @@ from '../../../services/account-class.service';
 //===============================================================
 // Account Group List
 //===============================================================
+
 export class AccountGroupList
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
     //===========================================================
+
     private readonly accountGroupService =
         inject(AccountGroupService);
+
     private readonly accountClassService =
         inject(AccountClassService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
     private readonly toast =
         inject(ToastService);
+
     private readonly router =
         inject(Router);
+
     private readonly route =
         inject(ActivatedRoute);
+
     private readonly cdr =
         inject(ChangeDetectorRef);
 
     //===========================================================
     // Page Tabs
     //===========================================================
+
     tabs:
         ControlTab[] =
     [
@@ -194,6 +258,7 @@ implements OnInit
             label:'Inventory Auto Groups'
         }
     ];
+
     selectedTab:
         string =
         'all';
@@ -201,12 +266,15 @@ implements OnInit
     //===========================================================
     // Data
     //===========================================================
+
     accountGroups:
         AccountGroup[] =
     [];
+
     filteredAccountGroups:
         AccountGroup[] =
     [];
+
     pagedAccountGroups:
         AccountGroup[] =
     [];
@@ -214,22 +282,63 @@ implements OnInit
     //===========================================================
     // Search & Loading
     //===========================================================
+
     searchText:
         string =
         '';
+
     loading:
         boolean =
         false;
+
     loadFailed:
         boolean =
         false;
 
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
     //===========================================================
     // Pagination
     //===========================================================
+
     currentPage:
         number =
         1;
+
     pageSize:
         number =
         10;
@@ -237,19 +346,61 @@ implements OnInit
     //===========================================================
     // History
     //===========================================================
+
     historyOpened:
         boolean =
         false;
+
     historyTitle:
         string =
         'Account Group History';
+
     historyItems:
         any[] =
     [];
 
     //===========================================================
+    // Filters
+    //===========================================================
+
+    accountClassFilterItems:
+        any[] =
+        [
+            {
+                label:'All Account Classes',
+                value:null
+            }
+        ];
+
+    selectedAccountClassId:
+        number | null =
+        null;
+
+    statusFilterItems:
+        any[] =
+        [
+            {
+                label:'All Status',
+                value:null
+            },
+            {
+                label:'Active',
+                value:true
+            },
+            {
+                label:'Inactive',
+                value:false
+            }
+        ];
+
+    selectedStatus:
+        boolean | null =
+        null;
+
+    //===========================================================
     // Page Canvas Configuration
     //===========================================================
+
     readonly canvasConfig:
         PageCanvasConfig =
     {
@@ -268,6 +419,7 @@ implements OnInit
     //===========================================================
     // Table Columns
     //===========================================================
+
     readonly columns:
         ListTableColumn[] =
     [
@@ -324,6 +476,7 @@ implements OnInit
             align:'center'
         }
     ];
+
     readonly inventoryAutoGroupColumns:
         ListTableColumn[] =
     [
@@ -395,8 +548,216 @@ implements OnInit
     }
 
     //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
     // Normalize API Response
     //===========================================================
+
     private normalizeAccountGroup
     (
         item:
@@ -417,6 +778,7 @@ implements OnInit
                     ??
                     0
                 ),
+
             AccountClassId:
                 Number(
                     item?.AccountClassId
@@ -425,6 +787,7 @@ implements OnInit
                     ??
                     0
                 ),
+
             AccountClassName:
                 [
                     item?.ClassCode
@@ -432,6 +795,7 @@ implements OnInit
                     item?.classCode
                     ??
                     '',
+
                     item?.AccountClassName
                     ??
                     item?.accountClassName
@@ -445,30 +809,35 @@ implements OnInit
                             String(value).trim()
                     )
                     .join(' - '),
+
             ClassCode:
                 item?.ClassCode
                 ??
                 item?.classCode
                 ??
                 '',
+
             Mode:
                 item?.Mode
                 ??
                 item?.mode
                 ??
                 '',
+
             GroupCode:
                 item?.GroupCode
                 ??
                 item?.groupCode
                 ??
                 '',
+
             GroupName:
                 item?.GroupName
                 ??
                 item?.groupName
                 ??
                 '',
+
             AllowManualSubGroup:
                 Boolean(
                     item?.AllowManualSubGroup
@@ -477,12 +846,14 @@ implements OnInit
                     ??
                     false
                 ),
+
             Remarks:
                 item?.Remarks
                 ??
                 item?.remarks
                 ??
                 '',
+
             IsActive:
                 Boolean(
                     item?.IsActive
@@ -497,6 +868,7 @@ implements OnInit
     //===========================================================
     // Normalize API Response List
     //===========================================================
+
     private normalizeAccountGroups
     (
         response:
@@ -511,6 +883,7 @@ implements OnInit
         {
             return [];
         }
+
         return response.map
         (
             item =>
@@ -525,201 +898,121 @@ implements OnInit
     //===========================================================
 
     private loadAccountClasses():
-
         void
-
     {
-
         this.accountClassService
-
             .getAll()
-
             .subscribe
-
             ({
-
                 next:
-
                 (
-
                     response:
-
                         AccountClass[]
-
                 ):
-
                     void =>
-
                 {
-
                     const classes =
-
                         response
-
                             .filter(
-
                                 item =>
-
                                 {
-
                                     const classCode =
-
                                         String(
-
                                             item.ClassCode
-
                                             ??
-
                                             ''
-
                                         )
-
                                             .trim()
-
                                             .toUpperCase();
 
                                     if
-
                                     (
-
                                         !item.IsActive
-
                                     )
-
                                     {
-
                                         return false;
-
                                     }
 
                                     if
-
                                     (
-
                                         this.selectedTab ===
-
                                         'inventory-auto'
-
                                     )
-
                                     {
-
                                         return classCode.startsWith(
-
                                             'INV-'
-
                                         );
-
                                     }
 
                                     return !classCode.startsWith(
-
                                         'INV-'
-
                                     );
-
                                 }
-
                             );
 
                     this.accountClassFilterItems =
-
                     [
-
                         {
-
                             label:'All Account Classes',
-
                             value:null
-
                         },
 
                         ...classes
-
                             .map
-
                             (
-
                                 (
-
                                     item:
-
                                         AccountClass
-
                                 ) =>
-
                                 ({
-
                                     label:
-
                                         `${item.ClassCode} - ${item.ClassName}`,
 
                                     value:
-
                                         item.AccountClassId
-
                                 })
-
                             )
-
                     ];
 
                     this.cdr.detectChanges();
-
                 },
 
                 error:
-
                 (
-
                     error:
-
                         unknown
-
                 ):
-
                     void =>
-
                 {
-
                     console.error(
-
                         'Load Account Classes Error:',
-
                         error
-
                     );
 
                     this.accountClassFilterItems =
-
                     [
-
                         {
-
                             label:'All Account Classes',
-
                             value:null
-
                         }
-
                     ];
-
                 }
-
             });
-
     }
 
     //===========================================================
     // Load Items
     //===========================================================
+
     loadItems():
         void
     {
         this.loading =
             true;
+
         this.loadFailed =
             false;
+
         this.accountGroupService
             .getAll()
             .subscribe
@@ -736,22 +1029,29 @@ implements OnInit
                         'Account Group API Response:',
                         response
                     );
+
                     this.accountGroups =
                         this.normalizeAccountGroups(
                             response
                         );
+
                     console.log
                     (
                         'Normalized Account Groups:',
                         this.accountGroups
                     );
+
                     this.applyFilters();
+
                     this.loading =
                         false;
+
                     this.loadFailed =
                         false;
+
                     this.cdr.detectChanges();
                 },
+
                 error:
                 (
                     error:
@@ -764,21 +1064,28 @@ implements OnInit
                         'Load Account Groups Error:',
                         error
                     );
+
                     this.accountGroups =
                         [];
+
                     this.filteredAccountGroups =
                         [];
+
                     this.pagedAccountGroups =
                         [];
+
                     this.loading =
                         false;
+
                     this.loadFailed =
                         true;
+
                     this.toast.error
                     (
                         'Load Failed',
                         'Unable to load account groups.'
                     );
+
                     this.cdr.detectChanges();
                 }
             });
@@ -787,6 +1094,7 @@ implements OnInit
     //===========================================================
     // Apply Filters
     //===========================================================
+
     applyFilters():
         void
     {
@@ -794,6 +1102,7 @@ implements OnInit
             this.searchText
                 .trim()
                 .toLowerCase();
+
         this.filteredAccountGroups =
             this.accountGroups.filter
             (
@@ -807,53 +1116,65 @@ implements OnInit
                         item.AccountClassName
                         ??
                         '';
+
                     const accountClassMatch =
                         this.selectedAccountClassId === null
                         ||
                         item.AccountClassId ===
                         this.selectedAccountClassId;
+
                     const statusMatch =
                         this.selectedStatus === null
                         ||
                         item.IsActive ===
                         this.selectedStatus;
+
                     //===================================================
                     // Tab split
                     //   inventory-auto tab : only the auto groups
                     //   all tab            : only the manual groups
                     //===================================================
+
                     const isInventoryAuto =
                         this.isInventoryAutoGroup(
                             item.GroupCode
                         );
+
                     const inventoryAutoGroupMatch =
                         this.selectedTab === 'inventory-auto'
                             ? isInventoryAuto
                             : !isInventoryAuto;
+
                     const classCode =
                         item.ClassCode
                         ??
                         '';
+
                     const mode =
                         item.Mode
                         ??
                         '';
+
                     const groupCode =
                         item.GroupCode
                         ??
                         '';
+
                     const groupName =
                         item.GroupName
                         ??
                         '';
+
                     const remarks =
                         item.Remarks
                         ??
                         '';
+
                     const status =
                         item.IsActive
                             ? 'active'
                             : 'inactive';
+
                     return (
                         inventoryAutoGroupMatch
                         &&
@@ -894,8 +1215,10 @@ implements OnInit
                     );
                 }
             );
+
         this.currentPage =
             1;
+
         this.updatePagination();
     }
 
@@ -903,40 +1226,33 @@ implements OnInit
     // Tab Change
     //===========================================================
 
-    onTabChange(
-
+    onTabChange
+    (
         value:
-
             string
-
     ):
-
         void
-
     {
-
         this.selectedTab =
-
             value;
 
         this.selectedAccountClassId =
-
             null;
 
         this.currentPage =
-
             1;
 
         this.loadAccountClasses();
 
         this.applyFilters();
-
     }
 
     //===========================================================
     // Inventory Auto Group
     //===========================================================
-    private isInventoryAutoGroup(
+
+    private isInventoryAutoGroup
+    (
         groupCode:
             string
     ):
@@ -948,6 +1264,7 @@ implements OnInit
                 ??
                 ''
             ).trim().toUpperCase();
+
         return /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
             code
         );
@@ -956,6 +1273,7 @@ implements OnInit
     //===========================================================
     // Search
     //===========================================================
+
     onSearch
     (
         value:
@@ -967,11 +1285,14 @@ implements OnInit
             value
             ??
             '';
+
         this.applyFilters();
     }
+
     //===========================================================
     // Account Class Filter Change
     //===========================================================
+
     onAccountClassFilterChange
     (
         value:
@@ -983,11 +1304,14 @@ implements OnInit
             value === null
                 ? null
                 : Number(value);
+
         this.applyFilters();
     }
+
     //===========================================================
     // Status Filter Change
     //===========================================================
+
     onStatusFilterChange
     (
         value:
@@ -999,17 +1323,21 @@ implements OnInit
             value === null
                 ? null
                 : Boolean(value);
+
         this.applyFilters();
     }
+
     //===========================================================
     // Sort
     //===========================================================
+
     onSort
     (
         event:
         {
             field:
                 string;
+
             direction:
                 'asc' | 'desc';
         }
@@ -1020,11 +1348,13 @@ implements OnInit
         [
             ...this.filteredAccountGroups
         ];
+
         this.filteredAccountGroups.sort
         (
             (
                 a:
                     AccountGroup,
+
                 b:
                     AccountGroup
             ):
@@ -1035,11 +1365,13 @@ implements OnInit
                     a[
                         event.field as keyof AccountGroup
                     ];
+
                 const valueB:
                     any =
                     b[
                         event.field as keyof AccountGroup
                     ];
+
                 if
                 (
                     valueA == null
@@ -1049,6 +1381,7 @@ implements OnInit
                 {
                     return 0;
                 }
+
                 if
                 (
                     valueA == null
@@ -1056,6 +1389,7 @@ implements OnInit
                 {
                     return -1;
                 }
+
                 if
                 (
                     valueB == null
@@ -1063,6 +1397,7 @@ implements OnInit
                 {
                     return 1;
                 }
+
                 if
                 (
                     typeof valueA === 'string'
@@ -1076,6 +1411,7 @@ implements OnInit
                         :
                             valueB.localeCompare(valueA);
                 }
+
                 if
                 (
                     valueA < valueB
@@ -1087,6 +1423,7 @@ implements OnInit
                         :
                             1;
                 }
+
                 if
                 (
                     valueA > valueB
@@ -1098,69 +1435,48 @@ implements OnInit
                         :
                             -1;
                 }
+
                 return 0;
             }
         );
+
         this.currentPage =
             1;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Refresh
     //===========================================================
+
     refresh():
         void
     {
         this.searchText =
             '';
+
         this.selectedTab =
             'all';
+
         this.selectedAccountClassId =
             null;
+
         this.selectedStatus =
             null;
+
         this.currentPage =
             1;
+
         this.loadAccountClasses();
+
         this.loadItems();
     }
 
     //===========================================================
-    // Filters
-    //===========================================================
-    accountClassFilterItems:
-        any[] =
-        [
-            {
-                label:'All Account Classes',
-                value:null
-            }
-        ];
-    selectedAccountClassId:
-        number | null =
-        null;
-    statusFilterItems:
-        any[] =
-        [
-            {
-                label:'All Status',
-                value:null
-            },
-            {
-                label:'Active',
-                value:true
-            },
-            {
-                label:'Inactive',
-                value:false
-            }
-        ];
-    selectedStatus:
-        boolean | null =
-        null;
-    //===========================================================
     // Update Pagination
     //===========================================================
+
     updatePagination():
         void
     {
@@ -1171,6 +1487,7 @@ implements OnInit
             )
             *
             this.pageSize;
+
         this.pagedAccountGroups =
         [
             ...this.filteredAccountGroups.slice
@@ -1180,9 +1497,11 @@ implements OnInit
             )
         ];
     }
+
     //===========================================================
     // Page Change
     //===========================================================
+
     onPageChange
     (
         page:
@@ -1192,11 +1511,14 @@ implements OnInit
     {
         this.currentPage =
             page;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Page Size Change
     //===========================================================
+
     onPageSizeChange
     (
         size:
@@ -1206,13 +1528,17 @@ implements OnInit
     {
         this.pageSize =
             size;
+
         this.currentPage =
             1;
+
         this.updatePagination();
     }
+
     //===========================================================
     // Add
     //===========================================================
+
     add():
         void
     {
@@ -1227,9 +1553,11 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // View
     //===========================================================
+
     view
     (
         item:
@@ -1249,9 +1577,11 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // Edit
     //===========================================================
+
     edit
     (
         item:
@@ -1271,9 +1601,11 @@ implements OnInit
             }
         );
     }
+
     //===========================================================
     // Delete
     //===========================================================
+
     delete
     (
         item:
@@ -1281,6 +1613,14 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Delete Account Group',
@@ -1288,39 +1628,82 @@ implements OnInit
             ():
                 void =>
             {
-                this.accountGroupService
-                    .delete
-                    (
-                        item.AccountGroupId
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        ():
-                            void =>
+                // Next tick : let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout(
+                    () =>
+                        this.deleteItem(
+                            item
+                        )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+    private deleteItem
+    (
+        item:
+            AccountGroup
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Account Group',
+            `Please wait while "${item.GroupName}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.accountGroupService.delete(
+                item.AccountGroupId
+            )
+        )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.completeProgress(
+
+                        'Account group deleted.',
+
+                        () =>
                         {
                             this.toast.success
                             (
                                 'Delete Successful',
                                 `${item.GroupName} deleted successfully.`
                             );
+
                             this.loadItems();
-                        },
-                        error:
-                        (
-                            error:
-                                unknown
-                        ):
-                            void =>
+                        }
+                    );
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Delete Account Group Error:',
+                        error
+                    );
+
+                    this.failProgress(
+                        () =>
                         {
-                            console.error
-                            (
-                                'Delete Account Group Error:',
-                                error
-                            );
-                            //===================================================
+                            //===========================================
                             // Deletion Blocked
-                            //===================================================
+                            //===========================================
+
                             if
                             (
                                 error instanceof HttpErrorResponse
@@ -1330,6 +1713,7 @@ implements OnInit
                             {
                                 let message =
                                     'Account Group cannot be deleted because it is already configured.';
+
                                 if
                                 (
                                     typeof error.error === 'string'
@@ -1356,32 +1740,46 @@ implements OnInit
                                     message =
                                         error.error.title;
                                 }
+
                                 this.toast.info
                                 (
                                     'Delete Blocked',
                                     message
                                 );
+
                                 return;
                             }
-                            //===================================================
+
+                            //===========================================
                             // Delete Failed
-                            //===================================================
+                            //===========================================
+
                             this.toast.error
                             (
                                 'Delete Failed',
                                 'Failed to delete account group.'
                             );
                         }
-                    });
-            }
-        );
+                    );
+                }
+            });
     }
+
     //===========================================================
     // Restore
     //===========================================================
+
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Restore Account Group',
@@ -1389,34 +1787,56 @@ implements OnInit
             ():
                 void =>
             {
-                this.restoreItem();
+                // Next tick : same as Delete, for consistency.
+                setTimeout(
+                    () =>
+                        this.restoreItem()
+                );
             },
             'Restore',
             'Cancel',
             'primary'
         );
     }
+
     //===========================================================
     // Restore Item
     //===========================================================
+
     private restoreItem():
         void
     {
-        this.accountGroupService
-            .restore()
+        this.startProgress(
+            'Restoring Account Group',
+            'Please wait while the most recently deleted account group is being restored...'
+        );
+
+        this.withMinimumDuration(
+            this.accountGroupService.restore()
+        )
             .subscribe
             ({
                 next:
                 ():
                     void =>
                 {
-                    this.toast.success
-                    (
-                        'Restore Successful',
-                        'The most recently deleted account group has been restored.'
+                    this.completeProgress(
+
+                        'Account group restored.',
+
+                        () =>
+                        {
+                            this.toast.success
+                            (
+                                'Restore Successful',
+                                'The most recently deleted account group has been restored.'
+                            );
+
+                            this.loadItems();
+                        }
                     );
-                    this.loadItems();
                 },
+
                 error:
                 (
                     error:
@@ -1429,31 +1849,41 @@ implements OnInit
                         'Restore Account Group Error:',
                         error
                     );
-                    if
-                    (
-                        error instanceof HttpErrorResponse
-                        &&
-                        error.status === 404
-                    )
-                    {
-                        this.toast.info
-                        (
-                            'No Data to Restore',
-                            'There is no deleted account group record to restore.'
-                        );
-                        return;
-                    }
-                    this.toast.error
-                    (
-                        'Restore Failed',
-                        'Failed to restore account group.'
+
+                    this.failProgress(
+                        () =>
+                        {
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 404
+                            )
+                            {
+                                this.toast.info
+                                (
+                                    'No Data to Restore',
+                                    'There is no deleted account group record to restore.'
+                                );
+
+                                return;
+                            }
+
+                            this.toast.error
+                            (
+                                'Restore Failed',
+                                'Failed to restore account group.'
+                            );
+                        }
                     );
                 }
             });
     }
+
     //===========================================================
     // Open History
     //===========================================================
+
     openHistory():
         void
     {
@@ -1477,16 +1907,19 @@ implements OnInit
                                     history.activityTitle
                                     ??
                                     history.ActivityTitle,
+
                                 description:
                                     history.activityDescription
                                     ??
                                     history.ActivityDescription,
+
                                 user:
                                     history.performedByName
                                     ??
                                     history.PerformedByName
                                     ??
                                     'System',
+
                                 dateTime:
                                     new Date
                                     (
@@ -1495,18 +1928,23 @@ implements OnInit
                                         history.PerformedDate
                                     )
                                     .toLocaleString(),
+
                                 badge:
                                     history.activityType
                                     ??
                                     history.ActivityType
                             })
                         );
+
                     this.historyTitle =
                         'Account Group Management History';
+
                     this.historyOpened =
                         true;
+
                     this.cdr.detectChanges();
                 },
+
                 error:
                 (
                     error:
@@ -1519,6 +1957,7 @@ implements OnInit
                         'History Load Failed:',
                         error
                     );
+
                     this.toast.error
                     (
                         'History',
@@ -1527,9 +1966,11 @@ implements OnInit
                 }
             });
     }
+
     //===========================================================
     // Close History
     //===========================================================
+
     closeHistory():
         void
     {

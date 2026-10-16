@@ -8,9 +8,9 @@
 
         title="Financial Years"
 
-        subtitle="Manage financialyearses"
+        subtitle="Manage financial years"
 
-        icon="fas fa-list">
+        icon="fas fa-calendar-days">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search financialyearses..."
+                placeholder="Search financial years..."
 
                 (valueChange)="onSearch($event)">
 
@@ -79,26 +79,57 @@
 
 
         <!-- =================================================
-             STATUS FILTER
+             FILTERS : YEAR STATUS + STATUS
         ================================================== -->
 
-        <app-dropdown
+        <div
 
             pageToolbarRight
 
-            placeholder="All Status"
+            style="display:flex;gap:12px">
 
-            [items]="statusItems"
+            <div style="width:220px">
 
-            labelField="text"
+                <app-search-dropdown
 
-            valueField="value"
+                    placeholder="All Year Status"
 
-            [(value)]="selectedStatus"
+                    [items]="yearStatusFilterItems"
 
-            (valueChange)="onStatusFilterChange($event)">
+                    labelField="label"
 
-        </app-dropdown>
+                    valueField="value"
+
+                    [value]="selectedYearStatus"
+
+                    (valueChange)="onYearStatusFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            <div style="width:220px">
+
+                <app-search-dropdown
+
+                    placeholder="All Status"
+
+                    [items]="statusFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedStatus"
+
+                    (valueChange)="onStatusFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -123,7 +154,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedFinancialYearses"
+                [rows]="pagedFinancialYears"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -144,7 +175,6 @@
         </div>
 
 
-
         <!-- =================================================
              PAGINATION
         ================================================== -->
@@ -153,7 +183,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredFinancialYearses.length"
+            [totalRecords]="filteredFinancialYears.length"
 
             [currentPage]="currentPage"
 
@@ -194,5 +224,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

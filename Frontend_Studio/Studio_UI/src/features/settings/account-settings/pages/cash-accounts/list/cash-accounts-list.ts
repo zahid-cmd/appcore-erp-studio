@@ -1,4 +1,3 @@
-// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Imports
 //===============================================================
@@ -7,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
@@ -31,6 +31,19 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    forkJoin,
+    of,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -41,13 +54,6 @@ import
     CashAccount
 }
 from '../../../models/cash-accounts.model';
-
-import
-{
-    AccountSubGroup
-}
-from '../../../models/account-sub-group.model';
-
 
 //===============================================================
 // Shared Components
@@ -78,6 +84,12 @@ import
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
@@ -124,6 +136,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -133,7 +157,6 @@ import
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
-
 
 //===============================================================
 // Services
@@ -151,6 +174,11 @@ import
 }
 from '../../../services/account-sub-group.service';
 
+import
+{
+    BranchesService
+}
+from '../../../../general-settings/services/branches.service';
 
 //===============================================================
 // List Item
@@ -169,6 +197,55 @@ extends CashAccount
         string;
 }
 
+//===============================================================
+// Case-Insensitive Field Reader
+//
+// ASP.NET Core camel-cases JSON names ("CashAccountCode" →
+// "cashAccountCode"). This reads a field regardless of casing.
+//===============================================================
+
+function readField
+(
+    item:
+        any,
+    name:
+        string
+):
+    any
+{
+    if
+    (
+        item == null
+        ||
+        typeof item !== 'object'
+    )
+    {
+        return undefined;
+    }
+
+    if
+    (
+        name in item
+    )
+    {
+        return item[name];
+    }
+
+    const target =
+        name.toLowerCase();
+
+    const key =
+        Object.keys(item).find
+        (
+            k =>
+                k.toLowerCase() ===
+                target
+        );
+
+    return key !== undefined
+        ? item[key]
+        : undefined;
+}
 
 //===============================================================
 // Component
@@ -183,27 +260,18 @@ extends CashAccount
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
+        SearchDropdownComponent,
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
         ToastComponent
     ],
 
@@ -212,15 +280,13 @@ extends CashAccount
     styleUrl:'./cash-accounts-list.css'
 })
 
-
 //===============================================================
-// CashAccounts List
+// Cash Accounts List
 //===============================================================
 
 export class CashAccountsList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
@@ -228,30 +294,65 @@ implements OnInit
     private readonly cashAccountsService =
         inject(CashAccountsService);
 
-
     private readonly accountSubGroupService =
         inject(AccountSubGroupService);
 
+    private readonly branchesService =
+        inject(BranchesService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
+
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private readonly CONFIRM_CLOSE_DELAY_MS:
+        number =
+        150;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
     //===========================================================
     // Page Tabs
@@ -262,16 +363,13 @@ implements OnInit
     [
         {
             id:'all',
-
             label:'All Cash Accounts'
         }
     ];
 
-
     selectedTab:
         string =
         'all';
-
 
     //===========================================================
     // Data
@@ -279,27 +377,55 @@ implements OnInit
 
     cashAccounts:
         CashAccountListItem[] =
-    [];
-
+        [];
 
     filteredCashAccounts:
         CashAccountListItem[] =
-    [];
-
+        [];
 
     pagedCashAccounts:
         CashAccountListItem[] =
-    [];
-
+        [];
 
     //===========================================================
-    // AccountSubGroup Lookup
+    // Account Sub Group Lookup (Id → "Code - Name")
     //===========================================================
 
     private accountSubGroupMap:
         Map<number, string> =
         new Map<number, string>();
 
+    //===========================================================
+    // Branch Filter
+    //
+    // Value = Branch Name (Cash Accounts store the branch by name)
+    //===========================================================
+
+    branchFilterItems:
+        any[] =
+    [
+        { label:'All Branches', value:null }
+    ];
+
+    selectedBranch:
+        string | null =
+        null;
+
+    //===========================================================
+    // Status Filter
+    //===========================================================
+
+    statusFilterItems:
+        any[] =
+    [
+        { label:'All Status', value:null },
+        { label:'Active', value:true },
+        { label:'Inactive', value:false }
+    ];
+
+    selectedStatus:
+        boolean | null =
+        null;
 
     //===========================================================
     // Search & Loading
@@ -309,16 +435,13 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
 
-
     loadFailed:
         boolean =
         false;
-
 
     //===========================================================
     // Pagination
@@ -328,11 +451,9 @@ implements OnInit
         number =
         1;
 
-
     pageSize:
         number =
         10;
-
 
     //===========================================================
     // History
@@ -342,16 +463,13 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
-        'CashAccount History';
-
+        'Cash Account History';
 
     historyItems:
         any[] =
-    [];
-
+        [];
 
     //===========================================================
     // Page Canvas Configuration
@@ -361,26 +479,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
 
     //===========================================================
     // Table Columns
@@ -391,111 +499,62 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'80px',
-
+            width:'60px',
             align:'center'
         },
-
-        {
-            header:'Account Sub Group',
-
-            field:'AccountSubGroupName',
-
-            width:'200px',
-
-            align:'left'
-        },
-
         {
             header:'Cash Account Code',
-
             field:'CashAccountCode',
-
             width:'220px',
-
             align:'center'
         },
-
         {
             header:'Cash Account Name',
-
             field:'CashAccountName',
-
             width:'220px',
-
             align:'left'
         },
-
-        {
-            header:'Branch',
-
-            field:'Branch',
-
-            width:'200px',
-
-            align:'left'
-        },
-
         {
             header:'Display Name',
-
             field:'DisplayName',
-
             width:'260px',
-
             align:'left'
         },
-
+        {
+            header:'Branch',
+            field:'Branch',
+            width:'200px',
+            align:'left'
+        },
         {
             header:'Collection',
-
             field:'CollectionAccountText',
-
             width:'120px',
-
             align:'center'
         },
-
         {
             header:'Payment',
-
             field:'PaymentAccountText',
-
             width:'120px',
-
             align:'center'
         },
-
         {
             header:'Status',
-
             field:'Status',
-
-            width:'130px',
-
             type:'status',
-
+            width:'120px',
             align:'center'
         },
-
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
             width:'120px',
-
             align:'center'
         }
     ];
-
 
     //===========================================================
     // Initialize
@@ -507,10 +566,83 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Yes / No Text
+    // Field Helpers
     //===========================================================
+
+    private text
+    (
+        item:
+            any,
+        name:
+            string
+    ):
+        string
+    {
+        return String(
+            readField(item, name)
+            ??
+            ''
+        ).trim();
+    }
+
+    private bool
+    (
+        item:
+            any,
+        name:
+            string,
+        fallback:
+            boolean
+    ):
+        boolean
+    {
+        const value =
+            readField(item, name);
+
+        return value == null
+            ? fallback
+            : Boolean(value);
+    }
+
+    private num
+    (
+        item:
+            any,
+        name:
+            string
+    ):
+        number
+    {
+        const value =
+            Number(
+                readField(item, name)
+                ??
+                0
+            );
+
+        return Number.isFinite(value)
+            ? value
+            : 0;
+    }
 
     private toYesNo
     (
@@ -524,9 +656,20 @@ implements OnInit
             : 'No';
     }
 
+    private normalizeKey
+    (
+        value:
+            string | null | undefined
+    ):
+        string
+    {
+        return (value ?? '')
+            .trim()
+            .toUpperCase();
+    }
 
     //===========================================================
-    // Normalize CashAccount
+    // Normalize Cash Account
     //===========================================================
 
     private normalizeCashAccount
@@ -536,55 +679,44 @@ implements OnInit
     ):
         CashAccountListItem
     {
-        const accountSubGroupsId:
-            number =
-            Number
-            (
-                item?.AccountSubGroupsId
-                ??
-                item?.accountSubGroupsId
-                ??
-                0
-            );
+        const accountSubGroupsId =
+            this.num(item, 'AccountSubGroupsId');
 
+        const collectionAccount =
+            this.bool(item, 'CollectionAccount', false);
 
-        const collectionAccount:
-            boolean =
-            Boolean(item?.CollectionAccount ?? item?.collectionAccount ?? false);
-
-
-        const paymentAccount:
-            boolean =
-            Boolean(item?.PaymentAccount ?? item?.paymentAccount ?? false);
-
+        const paymentAccount =
+            this.bool(item, 'PaymentAccount', false);
 
         return {
             CashAccountId:
-                Number(item?.CashAccountId ?? item?.cashAccountId ?? 0),
+                this.num(item, 'CashAccountId'),
 
             AccountSubGroupsId:
                 accountSubGroupsId,
 
             AccountSubGroupName:
-                this.getAccountSubGroupName(accountSubGroupsId),
+                this.getAccountSubGroupName(
+                    accountSubGroupsId
+                ),
 
             CashAccountCode:
-                item?.CashAccountCode ?? item?.cashAccountCode ?? '',
+                this.text(item, 'CashAccountCode'),
 
             CashAccountName:
-                item?.CashAccountName ?? item?.cashAccountName ?? '',
+                this.text(item, 'CashAccountName'),
 
             Remarks:
-                item?.Remarks ?? item?.remarks ?? '',
+                this.text(item, 'Remarks'),
 
             Status:
-                Boolean(item?.Status ?? item?.status ?? true),
+                this.bool(item, 'Status', true),
 
             Branch:
-                item?.Branch ?? item?.branch ?? '',
+                this.text(item, 'Branch'),
 
             DisplayName:
-                item?.DisplayName ?? item?.displayName ?? '',
+                this.text(item, 'DisplayName'),
 
             CollectionAccount:
                 collectionAccount,
@@ -600,237 +732,183 @@ implements OnInit
         };
     }
 
-
     //===========================================================
-    // Normalize CashAccounts
-    //===========================================================
-
-    private normalizeCashAccounts
-    (
-        response:
-            any
-    ):
-        CashAccountListItem[]
-    {
-        if
-        (
-            !Array.isArray(response)
-        )
-        {
-            return [];
-        }
-
-
-        return response.map
-        (
-            item =>
-                this.normalizeCashAccount(
-                    item
-                )
-        );
-    }
-
-
-    //===========================================================
-    // Load Items
-    //===========================================================
-
-    loadItems():
-        void
-    {
-        this.loading =
-            true;
-
-
-        this.loadFailed =
-            false;
-
-
-        //=======================================================
-        // Load Account Sub Groups
-        //=======================================================
-
-        this.accountSubGroupService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    subGroups:
-                        AccountSubGroup[]
-                ):
-                    void =>
-                {
-                    this.buildAccountSubGroupMap(
-                        subGroups
-                    );
-
-
-                    this.loadCashAccounts();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Load Account Sub Groups Error:',
-                        error
-                    );
-
-
-                    this.accountSubGroupMap =
-                        new Map<number, string>();
-
-
-                    //===================================================
-                    // Still Load CashAccounts
-                    //===================================================
-
-                    this.loadCashAccounts();
-                }
-            });
-    }
-
-
-    //===========================================================
-    // Build AccountSubGroup Map
+    // Build Account Sub Group Map
     //===========================================================
 
     private buildAccountSubGroupMap
     (
-        subGroups:
-            AccountSubGroup[]
+        response:
+            any
     ):
         void
     {
         this.accountSubGroupMap =
             new Map<number, string>();
 
-
-        subGroups.forEach
+        if
         (
-            accountSubGroup =>
+            !Array.isArray(response)
+        )
+        {
+            return;
+        }
+
+        for
+        (
+            const subGroup
+            of response
+        )
+        {
+            const id =
+                this.num(subGroup, 'AccountSubGroupId');
+
+            const code =
+                this.text(subGroup, 'SubGroupCode');
+
+            const name =
+                this.text(subGroup, 'SubGroupName');
+
+            if
+            (
+                id > 0
+            )
             {
-                const accountSubGroupsId:
-                    number =
-                    Number(
-                        accountSubGroup.AccountSubGroupId
-                    );
-
-
-                const displayName:
-                    string =
-                    accountSubGroup.SubGroupName
+                this.accountSubGroupMap.set(
+                    id,
+                    [code, name]
+                        .filter(part => !!part)
+                        .join(' - ')
                     ||
-                    String(accountSubGroupsId);
-
-
-                this.accountSubGroupMap.set
-                (
-                    accountSubGroupsId,
-
-                    displayName
+                    String(id)
                 );
             }
-        );
+        }
     }
 
-
     //===========================================================
-    // Load CashAccounts
+    // Build Branch Filter Items
+    //
+    // All Branches + active branches (Code - Name).
+    // Branches used by cash accounts but now inactive / missing
+    // are added too, so every row stays filterable.
     //===========================================================
 
-    private loadCashAccounts():
+    private buildBranchFilterItems
+    (
+        response:
+            any
+    ):
         void
     {
-        this.cashAccountsService
-            .getAll()
-            .subscribe
-            ({
-                next:
+        const list:
+            any[] =
+            Array.isArray(response)
+                ? response
+                : [];
+
+        const items:
+            any[] =
+            list
+                .filter
                 (
-                    response:
-                        CashAccount[]
-                ):
-                    void =>
-                {
-                    this.cashAccounts =
-                        this.normalizeCashAccounts(
-                            response
-                        );
-
-
-                    this.applyFilters();
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
+                    branch =>
+                        !!this.text(branch, 'BranchName')
+                        &&
+                        readField(branch, 'IsActive') !== false
+                )
+                .sort
                 (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Load CashAccounts Error:',
-                        error
-                    );
+                    (a, b) =>
+                        this.text(a, 'BranchCode').localeCompare(
+                            this.text(b, 'BranchCode')
+                        )
+                )
+                .map
+                (
+                    branch =>
+                    {
+                        const code =
+                            this.text(branch, 'BranchCode');
 
+                        const name =
+                            this.text(branch, 'BranchName');
 
-                    this.cashAccounts =
-                        [];
+                        return {
+                            label:
+                                code
+                                    ? `${code} - ${name}`
+                                    : name,
+                            value:
+                                name
+                        };
+                    }
+                );
 
+        const known =
+            new Set<string>(
+                items.map
+                (
+                    item =>
+                        this.normalizeKey(item.value)
+                )
+            );
 
-                    this.filteredCashAccounts =
-                        [];
+        for
+        (
+            const account
+            of this.cashAccounts
+        )
+        {
+            const key =
+                this.normalizeKey(
+                    account.Branch
+                );
 
+            if
+            (
+                key
+                &&
+                !known.has(key)
+            )
+            {
+                known.add(key);
 
-                    this.pagedCashAccounts =
-                        [];
+                items.push
+                ({
+                    label:
+                        account.Branch,
+                    value:
+                        account.Branch
+                });
+            }
+        }
 
+        this.branchFilterItems =
+        [
+            { label:'All Branches', value:null },
+            ...items
+        ];
 
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        true;
-
-
-                    this.toast.error
-                    (
-                        'Load Failed',
-
-                        'Unable to load cashAccounts.'
-                    );
-
-
-                    this.cdr.detectChanges();
-                }
-            });
+        // Keep the selection only if it still exists
+        if
+        (
+            this.selectedBranch
+            &&
+            !known.has(
+                this.normalizeKey(
+                    this.selectedBranch
+                )
+            )
+        )
+        {
+            this.selectedBranch =
+                null;
+        }
     }
 
-
     //===========================================================
-    // Get AccountSubGroup Name
+    // Get Account Sub Group Name
     //===========================================================
 
     getAccountSubGroupName
@@ -847,9 +925,187 @@ implements OnInit
         '';
     }
 
+    //===========================================================
+    // Load Items
+    //===========================================================
+
+    loadItems():
+        void
+    {
+        this.loading =
+            true;
+
+        this.loadFailed =
+            false;
+
+        forkJoin
+        ({
+            subGroups:
+                this.accountSubGroupService
+                    .getAll()
+                    .pipe
+                    (
+                        catchError
+                        (
+                            error =>
+                            {
+                                console.error(
+                                    'Load Account Sub Groups Error:',
+                                    error
+                                );
+
+                                return of([]);
+                            }
+                        )
+                    ),
+
+            branches:
+                this.branchesService
+                    .getAll()
+                    .pipe
+                    (
+                        catchError
+                        (
+                            error =>
+                            {
+                                console.error(
+                                    'Load Branches Error:',
+                                    error
+                                );
+
+                                return of([]);
+                            }
+                        )
+                    ),
+
+            accounts:
+                this.cashAccountsService.getAll()
+        })
+        .subscribe
+        ({
+            next:
+            (
+                result:
+                {
+                    subGroups:
+                        any;
+                    branches:
+                        any;
+                    accounts:
+                        any;
+                }
+            ):
+                void =>
+            {
+                this.buildAccountSubGroupMap(
+                    result.subGroups
+                );
+
+                const list:
+                    any[] =
+                    Array.isArray(result.accounts)
+                        ? result.accounts
+                        : [];
+
+                this.cashAccounts =
+                    list.map
+                    (
+                        item =>
+                            this.normalizeCashAccount(
+                                item
+                            )
+                    );
+
+                this.buildBranchFilterItems(
+                    result.branches
+                );
+
+                this.applyFilters();
+
+                this.loading =
+                    false;
+
+                this.loadFailed =
+                    false;
+
+                this.cdr.detectChanges();
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Load Cash Accounts Error:',
+                    error
+                );
+
+                this.cashAccounts =
+                    [];
+
+                this.filteredCashAccounts =
+                    [];
+
+                this.pagedCashAccounts =
+                    [];
+
+                this.loading =
+                    false;
+
+                this.loadFailed =
+                    true;
+
+                this.toast.error(
+                    'Load Failed',
+                    'Unable to load cash accounts.'
+                );
+
+                this.cdr.detectChanges();
+            }
+        });
+    }
 
     //===========================================================
-    // Apply Filters
+    // Branch Filter Change
+    //===========================================================
+
+    onBranchFilterChange
+    (
+        value:
+            string | null
+    ):
+        void
+    {
+        this.selectedBranch =
+            value
+            ||
+            null;
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Status Filter Change
+    //===========================================================
+
+    onStatusFilterChange
+    (
+        value:
+            boolean | null
+    ):
+        void
+    {
+        this.selectedStatus =
+            value;
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Apply Filters (Branch + Status + Search)
     //===========================================================
 
     applyFilters():
@@ -861,6 +1117,11 @@ implements OnInit
                 .trim()
                 .toLowerCase();
 
+        const branchKey:
+            string =
+            this.normalizeKey(
+                this.selectedBranch
+            );
 
         this.filteredCashAccounts =
             this.cashAccounts.filter
@@ -871,6 +1132,40 @@ implements OnInit
                 ):
                     boolean =>
                 {
+                    //===============================================
+                    // Branch
+                    //===============================================
+
+                    if
+                    (
+                        branchKey
+                        &&
+                        this.normalizeKey(item.Branch) !==
+                        branchKey
+                    )
+                    {
+                        return false;
+                    }
+
+                    //===============================================
+                    // Status
+                    //===============================================
+
+                    if
+                    (
+                        this.selectedStatus !== null
+                        &&
+                        item.Status !==
+                        this.selectedStatus
+                    )
+                    {
+                        return false;
+                    }
+
+                    //===============================================
+                    // Search
+                    //===============================================
+
                     if
                     (
                         !keyword
@@ -878,7 +1173,6 @@ implements OnInit
                     {
                         return true;
                     }
-
 
                     const values:
                         unknown[] =
@@ -890,11 +1184,12 @@ implements OnInit
                         item.DisplayName,
                         item.CollectionAccountText,
                         item.PaymentAccountText,
+                        item.Remarks,
                         item.Status ? 'active' : 'inactive'
                     ];
 
-
-                    return values.some(
+                    return values.some
+                    (
                         value =>
                             String(value ?? '')
                                 .toLowerCase()
@@ -903,14 +1198,13 @@ implements OnInit
                 }
             );
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
-    }
 
+        this.cdr.detectChanges();
+    }
 
     //===========================================================
     // Search
@@ -928,10 +1222,8 @@ implements OnInit
             ??
             '';
 
-
         this.applyFilters();
     }
-
 
     //===========================================================
     // Sort
@@ -943,7 +1235,6 @@ implements OnInit
         {
             field:
                 string;
-
             direction:
                 'asc' | 'desc';
         }
@@ -955,13 +1246,11 @@ implements OnInit
             ...this.filteredCashAccounts
         ];
 
-
         this.filteredCashAccounts.sort
         (
             (
                 a:
                     CashAccountListItem,
-
                 b:
                     CashAccountListItem
             ):
@@ -973,13 +1262,11 @@ implements OnInit
                         event.field as keyof CashAccountListItem
                     ];
 
-
                 const valueB:
                     any =
                     b[
                         event.field as keyof CashAccountListItem
                     ];
-
 
                 if
                 (
@@ -991,7 +1278,6 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
@@ -999,7 +1285,6 @@ implements OnInit
                 {
                     return -1;
                 }
-
 
                 if
                 (
@@ -1009,7 +1294,6 @@ implements OnInit
                     return 1;
                 }
 
-
                 if
                 (
                     typeof valueA === 'string'
@@ -1018,12 +1302,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
                 }
-
 
                 if
                 (
@@ -1031,12 +1312,9 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
+                        ? -1
+                        : 1;
                 }
-
 
                 if
                 (
@@ -1044,25 +1322,19 @@ implements OnInit
                 )
                 {
                     return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
+                        ? 1
+                        : -1;
                 }
-
 
                 return 0;
             }
         );
 
-
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
 
     //===========================================================
     // Refresh
@@ -1071,17 +1343,28 @@ implements OnInit
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
 
+        this.selectedBranch =
+            null;
+
+        this.selectedStatus =
+            null;
 
         this.currentPage =
             1;
 
-
         this.loadItems();
     }
-
 
     //===========================================================
     // Update Pagination
@@ -1098,18 +1381,15 @@ implements OnInit
             *
             this.pageSize;
 
-
         this.pagedCashAccounts =
         [
             ...this.filteredCashAccounts.slice
             (
                 start,
-
                 start + this.pageSize
             )
         ];
     }
-
 
     //===========================================================
     // Page Change
@@ -1125,10 +1405,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
 
     //===========================================================
     // Page Size Change
@@ -1144,14 +1422,42 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
+    //===========================================================
+    // Navigate
+    //===========================================================
+
+    private navigateTo
+    (
+        action:
+            'add' | 'view' | 'edit',
+        id?:
+            number
+    ):
+        void
+    {
+        const commands:
+            any[] =
+            id
+                ? [action, id]
+                : [action];
+
+        void this.router.navigate
+        (
+            commands,
+            {
+                relativeTo:
+                    this.route.parent
+                    ??
+                    this.route
+            }
+        );
+    }
 
     //===========================================================
     // Add
@@ -1160,19 +1466,18 @@ implements OnInit
     add():
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'add'
-            ],
+            this.isProcessing
+        )
+        {
+            return;
+        }
 
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'add'
         );
     }
-
 
     //===========================================================
     // View
@@ -1185,21 +1490,21 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'view',
+            this.isProcessing
+            ||
+            !item?.CashAccountId
+        )
+        {
+            return;
+        }
 
-                item.CashAccountId
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'view',
+            item.CashAccountId
         );
     }
-
 
     //===========================================================
     // Edit
@@ -1212,21 +1517,21 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'edit',
+            this.isProcessing
+            ||
+            !item?.CashAccountId
+        )
+        {
+            return;
+        }
 
-                item.CashAccountId
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'edit',
+            item.CashAccountId
         );
     }
-
 
     //===========================================================
     // Delete
@@ -1239,121 +1544,161 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+            ||
+            !item?.CashAccountId
+        )
+        {
+            return;
+        }
+
+        const name =
+            item.DisplayName
+            ||
+            item.CashAccountName
+            ||
+            item.CashAccountCode
+            ||
+            'this cash account';
+
         this.confirmDialog.open
         (
-            'Delete CashAccount',
-
-            `Are you sure you want to delete "${item.CashAccountName}" ?`,
-
-            (): void =>
+            'Delete Cash Account',
+            `Are you sure you want to delete "${name}"?`,
+            ():
+                void =>
             {
-                this.cashAccountsService
-                    .delete
-                    (
-                        item.CashAccountId
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.CashAccountName} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ):
-                            void =>
-                        {
-                            console.error
-                            (
-                                'Delete CashAccount Error:',
-                                error
-                            );
-
-
-                            //===================================================
-                            // Deletion Blocked
-                            //===================================================
-
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 409
-                            )
-                            {
-                                let message =
-                                    'CashAccount cannot be deleted because it is already configured.';
-
-
-                                if
-                                (
-                                    typeof error.error === 'string'
-                                    &&
-                                    error.error.trim()
-                                )
-                                {
-                                    message =
-                                        error.error;
-                                }
-                                else if
-                                (
-                                    error.error?.message
-                                )
-                                {
-                                    message =
-                                        error.error.message;
-                                }
-                                else if
-                                (
-                                    error.error?.title
-                                )
-                                {
-                                    message =
-                                        error.error.title;
-                                }
-
-
-                                this.toast.info
-                                (
-                                    'Delete Blocked',
-
-                                    message
-                                );
-
-
-                                return;
-                            }
-
-
-                            //===================================================
-                            // Delete Failed
-                            //===================================================
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete cashAccount.'
-                            );
-                        }
-                    });
+                // Let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout
+                (
+                    () =>
+                        this.deleteItem(
+                            item.CashAccountId,
+                            name
+                        ),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             }
         );
     }
 
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+    private deleteItem
+    (
+        id:
+            number,
+        name:
+            string
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Cash Account',
+            `Please wait while "${name}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.cashAccountsService.delete(
+                id
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Cash account deleted.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Delete Successful',
+                            `${name} deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Cash Account Error:',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        //=======================================
+                        // Deletion Blocked (409)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'Cash account cannot be deleted because it is already in use.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Not Found (404)
+                        //=======================================
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'This cash account no longer exists. The list has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        //=======================================
+                        // Delete Failed
+                        //=======================================
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete cash account.'
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Restore
@@ -1362,25 +1707,33 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
-            'Restore CashAccount',
-
-            'Are you sure you want to restore the most recently deleted cashAccount?',
-
-            (): void =>
+            'Restore Cash Account',
+            'Are you sure you want to restore the most recently deleted cash account?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout
+                (
+                    () =>
+                        this.restoreItem(),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
 
     //===========================================================
     // Restore Item
@@ -1389,69 +1742,301 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.cashAccountsService
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+        this.startProgress(
+            'Restoring Cash Account',
+            'Please wait while the most recently deleted cash account is being restored...'
+        );
 
-                        'The most recently deleted cashAccount has been restored.'
-                    );
-
-
-                    this.loadItems();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Restore CashAccount Error',
-
-                        error
-                    );
-
-
-                    if
-                    (
-                        error instanceof HttpErrorResponse
-                        &&
-                        error.status === 404
-                    )
+        this.withMinimumDuration(
+            this.cashAccountsService.restore()
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Cash account restored.',
+                    () =>
                     {
-                        this.toast.info
-                        (
-                            'No Data to Restore',
-
-                            'There is no deleted cashAccount record to restore.'
+                        this.toast.success(
+                            'Restore Successful',
+                            'The most recently deleted cash account has been restored.'
                         );
 
-
-                        return;
+                        this.loadItems();
                     }
+                );
+            },
 
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Cash Account Error',
+                    error
+                );
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There is no deleted cash account record to restore.'
+                            );
 
-                        'Failed to restore cashAccount.'
-                    );
-                }
-            });
+                            return;
+                        }
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The cash account cannot be restored.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore cash account.'
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            HttpErrorResponse,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            typeof error.error === 'string'
+            &&
+            error.error.trim()
+        )
+        {
+            return error.error;
+        }
+
+        if
+        (
+            error.error?.message
+        )
+        {
+            return error.error.message;
+        }
+
+        if
+        (
+            error.error?.title
+        )
+        {
+            return error.error.title;
+        }
+
+        return fallback;
+    }
 
     //===========================================================
     // Open History
@@ -1472,59 +2057,40 @@ implements OnInit
                     void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
                                 title:
-                                    history.activityTitle
-                                    ??
-                                    history.ActivityTitle,
-
+                                    readField(history, 'ActivityTitle'),
 
                                 description:
-                                    history.activityDescription
-                                    ??
-                                    history.ActivityDescription,
-
+                                    readField(history, 'ActivityDescription'),
 
                                 user:
-                                    history.performedByName
-                                    ??
-                                    history.PerformedByName
+                                    readField(history, 'PerformedByName')
                                     ??
                                     'System',
 
-
                                 dateTime:
-                                    new Date
-                                    (
-                                        history.performedDate
-                                        ??
-                                        history.PerformedDate
+                                    new Date(
+                                        readField(history, 'PerformedDate')
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
-                                    history.activityType
-                                    ??
-                                    history.ActivityType
+                                    readField(history, 'ActivityType')
                             })
                         );
 
-
                     this.historyTitle =
-                        'CashAccount Management History';
-
+                        'Cash Account Management History';
 
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
@@ -1533,23 +2099,18 @@ implements OnInit
                 ):
                     void =>
                 {
-                    console.error
-                    (
+                    console.error(
                         'History Load Failed:',
                         error
                     );
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'History',
-
-                        'Failed to load cashAccount history.'
+                        'Failed to load cash account history.'
                     );
                 }
             });
     }
-
 
     //===========================================================
     // Close History
@@ -1561,5 +2122,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

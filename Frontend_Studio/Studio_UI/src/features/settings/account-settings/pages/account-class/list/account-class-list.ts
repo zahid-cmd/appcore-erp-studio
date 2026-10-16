@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
@@ -32,6 +33,19 @@ import
     Router
 }
 from '@angular/router';
+
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 
 //===============================================================
@@ -131,6 +145,20 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -175,6 +203,7 @@ from '../../../services/account-class.service';
         PaginationComponent,
         HistoryDrawerComponent,
         ConfirmDialogComponent,
+        ProgressDialogComponent,
         ToastComponent
     ],
     templateUrl:'./account-class-list.html',
@@ -187,7 +216,7 @@ from '../../../services/account-class.service';
 //===============================================================
 
 export class AccountClassList
-implements OnInit
+implements OnInit, OnDestroy
 {
 
 
@@ -202,6 +231,10 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
 
     private readonly toast =
@@ -286,6 +319,56 @@ implements OnInit
         boolean =
 
         false;
+
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+
+        false;
+
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+
+        3000;
+
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+
+        100;
+
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+
+        90;
+
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+
+        600;
+
+
+    private progressTimer?:
+        number;
+
+
+    private progressValue:
+        number =
+
+        0;
 
 
     //===========================================================
@@ -419,6 +502,7 @@ implements OnInit
         }
     ];
 
+
     //===========================================================
     // Initialize
     //===========================================================
@@ -428,6 +512,247 @@ implements OnInit
         void
     {
         this.loadItems();
+    }
+
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+
+    //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+
+        this.progressValue =
+            0;
+
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+
+            message,
+
+            false
+        );
+
+
+        this.clearProgressTimer();
+
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.update(
+            100,
+
+            message
+        );
+
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+
+                this.isProcessing =
+                    false;
+
+
+                this.cdr.detectChanges();
+
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.close();
+
+
+        this.isProcessing =
+            false;
+
+
+        this.cdr.detectChanges();
+
+
+        done();
+    }
+
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
     }
 
 
@@ -1075,6 +1400,15 @@ implements OnInit
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+
         this.confirmDialog.open
         (
             'Delete Account Class',
@@ -1082,16 +1416,54 @@ implements OnInit
             ():
                 void =>
             {
-                this.accountClassService
-                    .delete
-                    (
-                        item.AccountClassId
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        ():
-                            void =>
+                // Next tick : let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout(
+                    () =>
+                        this.deleteItem(
+                            item
+                        )
+                );
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+
+    private deleteItem
+    (
+        item:
+            AccountClass
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Account Class',
+
+            `Please wait while "${item.ClassName}" is being deleted...`
+        );
+
+
+        this.withMinimumDuration(
+            this.accountClassService.delete(
+                item.AccountClassId
+            )
+        )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.completeProgress(
+
+                        'Account class deleted.',
+
+                        () =>
                         {
                             this.toast.success
                             (
@@ -1100,26 +1472,30 @@ implements OnInit
                             );
 
                             this.loadItems();
-                        },
+                        }
+                    );
+                },
 
-                        error:
-                        (
-                            error:
-                                unknown
-                        ):
-                            void =>
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Delete Account Class Error:',
+                        error
+                    );
+
+
+                    this.failProgress(
+                        () =>
                         {
-                            console.error
-                            (
-                                'Delete Account Class Error:',
-                                error
-                            );
-
-
-                            //===================================================
+                            //===========================================
                             // Deletion Blocked
-                            //===================================================
-
+                            //===========================================
 
                             if
                             (
@@ -1168,10 +1544,9 @@ implements OnInit
                             }
 
 
-                            //===================================================
+                            //===========================================
                             // Delete Failed
-                            //===================================================
-
+                            //===========================================
 
                             this.toast.error
                             (
@@ -1179,9 +1554,9 @@ implements OnInit
                                 'Failed to delete account class.'
                             );
                         }
-                    });
-            }
-        );
+                    );
+                }
+            });
     }
 
 
@@ -1193,6 +1568,15 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+
         this.confirmDialog.open
         (
             'Restore Account Class',
@@ -1200,7 +1584,11 @@ implements OnInit
             ():
                 void =>
             {
-                this.restoreItem();
+                // Next tick : same as Delete, for consistency.
+                setTimeout(
+                    () =>
+                        this.restoreItem()
+                );
             },
             'Restore',
             'Cancel',
@@ -1217,21 +1605,37 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.accountClassService
-            .restore()
+        this.startProgress(
+            'Restoring Account Class',
+
+            'Please wait while the most recently deleted account class is being restored...'
+        );
+
+
+        this.withMinimumDuration(
+            this.accountClassService.restore()
+        )
             .subscribe
             ({
                 next:
                 ():
                     void =>
                 {
-                    this.toast.success
-                    (
-                        'Restore Successful',
-                        'The most recently deleted account class has been restored.'
-                    );
+                    this.completeProgress(
 
-                    this.loadItems();
+                        'Account class restored.',
+
+                        () =>
+                        {
+                            this.toast.success
+                            (
+                                'Restore Successful',
+                                'The most recently deleted account class has been restored.'
+                            );
+
+                            this.loadItems();
+                        }
+                    );
                 },
 
                 error:
@@ -1247,26 +1651,32 @@ implements OnInit
                         error
                     );
 
-                    if
-                    (
-                        error instanceof HttpErrorResponse
-                        &&
-                        error.status === 404
-                    )
-                    {
-                        this.toast.info
-                        (
-                            'No Data to Restore',
-                            'There is no deleted account class record to restore.'
-                        );
 
-                        return;
-                    }
+                    this.failProgress(
+                        () =>
+                        {
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 404
+                            )
+                            {
+                                this.toast.info
+                                (
+                                    'No Data to Restore',
+                                    'There is no deleted account class record to restore.'
+                                );
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
-                        'Failed to restore account class.'
+                                return;
+                            }
+
+                            this.toast.error
+                            (
+                                'Restore Failed',
+                                'Failed to restore account class.'
+                            );
+                        }
                     );
                 }
             });

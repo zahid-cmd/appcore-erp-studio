@@ -91,7 +91,6 @@
                 icon="fas fa-layer-group">
 
 
-
                 <!-- Category Code -->
 
                 <app-textbox
@@ -109,7 +108,6 @@
                 </app-textbox>
 
 
-
                 <!-- Category Name -->
 
                 <app-textbox
@@ -122,12 +120,11 @@
 
                     (valueChange)="onCategoryNameChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
             </app-form-section>
 
@@ -143,7 +140,6 @@
                 title="Inventory Account Groups"
 
                 icon="fas fa-tags">
-
 
 
                 <!-- Inventory Group Code -->
@@ -163,7 +159,6 @@
                 </app-textbox>
 
 
-
                 <!-- WIP Group Code -->
 
                 <app-textbox
@@ -179,7 +174,6 @@
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- COGS Group Code -->
@@ -198,12 +192,11 @@
 
                 </app-textbox>
 
-
             </app-form-section>
 
 
 
-<!-- =============================================
+            <!-- =============================================
                  SECTION 03
                  ACCOUNT GROUP NAMES
             ============================================== -->
@@ -213,7 +206,6 @@
                 title="Account Group Names"
 
                 icon="fas fa-folder-tree">
-
 
 
                 <!-- Inventory Group Name -->
@@ -228,12 +220,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || mode === 'edit'"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- WIP Group Name -->
@@ -248,12 +239,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || mode === 'edit'"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- COGS Group Name -->
@@ -268,12 +258,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || mode === 'edit'"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
             </app-form-section>
 
@@ -291,7 +280,6 @@
                 icon="fas fa-toggle-on">
 
 
-
                 <!-- Sub Category Creation Allowed -->
 
                 <app-dropdown
@@ -304,12 +292,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Status -->
@@ -324,12 +311,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Remarks -->
@@ -346,13 +332,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode || isSaving">
 
                 </app-textarea>
 
-
             </app-form-section>
-
 
 
         </app-form-grid>
@@ -370,3 +354,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

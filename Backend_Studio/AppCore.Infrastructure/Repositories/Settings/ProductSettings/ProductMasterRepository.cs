@@ -424,6 +424,33 @@ public class ProductMasterRepository :
 
 
     //===========================================================
+    // Generated Ledger Codes
+    //===========================================================
+
+    private static List<string>
+        GetGeneratedLedgerCodes
+        (
+            ProductMasterEntity entity
+        )
+    {
+        return new List<string>
+            {
+                entity.InventoryLedgerCode,
+                entity.WipLedgerCode,
+                entity.CogsLedgerCode
+            }
+            .Where
+            (
+                x =>
+                    !string.IsNullOrWhiteSpace(x)
+            )
+            .Distinct(
+                StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+
+    //===========================================================
     // Get Next Product Master Code
     //===========================================================
 
@@ -438,7 +465,8 @@ public class ProductMasterRepository :
                 productSubCategoryId);
 
         //=======================================================
-        // Existing Product Codes (including deleted records)
+        // Existing Product Codes (including deleted records,
+        // so a code is never reused and a restore never clashes)
         //=======================================================
 
         string prefix =
@@ -460,10 +488,6 @@ public class ProductMasterRepository :
                         x.ProductCode
                 )
                 .ToListAsync();
-
-        //=======================================================
-        // Generate Next Product Master Code
-        //=======================================================
 
         int nextSequenceNo =
             HighestSequence(
@@ -797,19 +821,11 @@ public class ProductMasterRepository :
                 SubCategoryCode =
                     subCategory.SubCategoryCode,
 
-                //===================================================
-                // Basic Information
-                //===================================================
-
                 ProductCode =
                     defaults.Code,
 
                 ProductName =
                     productName,
-
-                //===================================================
-                // Inventory Ledger
-                //===================================================
 
                 InventoryLedgerCode =
                     defaults.InventoryLedgerCode,
@@ -817,29 +833,17 @@ public class ProductMasterRepository :
                 InventoryLedgerName =
                     inventoryLedgerName,
 
-                //===================================================
-                // WIP Ledger
-                //===================================================
-
                 WipLedgerCode =
                     defaults.WipLedgerCode,
 
                 WipLedgerName =
                     wipLedgerName,
 
-                //===================================================
-                // COGS Ledger
-                //===================================================
-
                 CogsLedgerCode =
                     defaults.CogsLedgerCode,
 
                 CogsLedgerName =
                     cogsLedgerName,
-
-                //===================================================
-                // Configuration
-                //===================================================
 
                 // TODO: Assign Product Master specific configuration fields here
 
@@ -848,19 +852,11 @@ public class ProductMasterRepository :
                     ??
                     string.Empty,
 
-                //===================================================
-                // Status
-                //===================================================
-
                 IsActive =
                     dto.IsActive,
 
                 IsDeleted =
                     false,
-
-                //===================================================
-                // Audit
-                //===================================================
 
                 CreatedBy =
                     userId,
@@ -905,9 +901,9 @@ public class ProductMasterRepository :
 
             await _context.SaveChangesAsync();
 
-            //=======================================================
+            //===================================================
             // Activity History
-            //=======================================================
+            //===================================================
 
             _context.ActivityHistories.Add(
                 new ActivityHistory
@@ -942,6 +938,7 @@ public class ProductMasterRepository :
             );
 
             await _context.SaveChangesAsync();
+
             await transaction.CommitAsync();
 
             return entity.ProductMasterId;
@@ -949,6 +946,7 @@ public class ProductMasterRepository :
         catch
         {
             await transaction.RollbackAsync();
+
             throw;
         }
     }
@@ -992,27 +990,20 @@ public class ProductMasterRepository :
         }
 
         //=======================================================
-        // Validate Parent Consistency
+        // Parent Is Locked After Creation
         //=======================================================
 
         if
         (
             entity.ProductSubCategoryId !=
             dto.ProductSubCategoryId
-        )
-        {
-            throw new InvalidOperationException(
-                "The selected Product Sub Category does not match the existing Product Master.");
-        }
-
-        if
-        (
+            ||
             entity.ProductCategoryId !=
             dto.ProductCategoryId
         )
         {
             throw new InvalidOperationException(
-                "The selected Product Category does not match the existing Product Master.");
+                "Product Category and Product Sub Category cannot be changed after the Product Master is created.");
         }
 
         //=======================================================
@@ -1048,7 +1039,7 @@ public class ProductMasterRepository :
                         dto.ProductMasterId
                         &&
                         x.ProductSubCategoryId ==
-                        dto.ProductSubCategoryId
+                        entity.ProductSubCategoryId
                         &&
                         !x.IsDeleted
                         &&
@@ -1070,12 +1061,11 @@ public class ProductMasterRepository :
         // (codes and ledger names are locked after creation)
         //=======================================================
 
+        DateTime modifiedDate =
+            DateTime.UtcNow;
+
         entity.ProductName =
             productName;
-
-        //=======================================================
-        // Configuration
-        //=======================================================
 
         // TODO: Update Product Master specific configuration fields here
 
@@ -1084,10 +1074,6 @@ public class ProductMasterRepository :
             ??
             string.Empty;
 
-        //=======================================================
-        // Status
-        //=======================================================
-
         entity.IsActive =
             dto.IsActive;
 
@@ -1095,88 +1081,102 @@ public class ProductMasterRepository :
             userId;
 
         entity.ModifiedDate =
-            DateTime.UtcNow;
+            modifiedDate;
 
         //=======================================================
-        // Sync Auto General Ledger Status
+        // Save in Transaction
         //=======================================================
 
-        List<string> ledgerCodes =
-            new List<string>
-            {
-                entity.InventoryLedgerCode,
-                entity.WipLedgerCode,
-                entity.CogsLedgerCode
-            };
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
-        List<GeneralLedgersEntity> ledgers =
-            await _context
-                .Set<GeneralLedgersEntity>()
-                .Where
-                (
-                    x =>
-                        !x.IsDeleted
-                        &&
-                        ledgerCodes.Contains(
-                            x.LedgerCode)
-                )
-                .ToListAsync();
-
-        foreach
-        (
-            GeneralLedgersEntity ledger
-            in ledgers
-        )
+        try
         {
-            ledger.IsActive =
-                entity.IsActive;
+            //===================================================
+            // Sync Auto General Ledger Status
+            //===================================================
 
-            ledger.ModifiedBy =
-                userId;
+            List<string> ledgerCodes =
+                GetGeneratedLedgerCodes(
+                    entity);
 
-            ledger.ModifiedDate =
-                DateTime.UtcNow;
-        }
+            List<GeneralLedgersEntity> ledgers =
+                await _context
+                    .Set<GeneralLedgersEntity>()
+                    .Where
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            ledgerCodes.Contains(
+                                x.LedgerCode)
+                    )
+                    .ToListAsync();
 
-        await _context.SaveChangesAsync();
-
-        //=======================================================
-        // Activity History
-        //=======================================================
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+            foreach
+            (
+                GeneralLedgersEntity ledger
+                in ledgers
+            )
             {
-                Module =
-                    "Product Settings",
+                ledger.IsActive =
+                    entity.IsActive;
 
-                EntityName =
-                    "Product Master",
+                ledger.ModifiedBy =
+                    userId;
 
-                EntityId =
-                    entity.ProductMasterId,
-
-                ActivityType =
-                    "Update",
-
-                ActivityTitle =
-                    "Product Master Updated",
-
-                ActivityDescription =
-                    $"Product Master '{entity.ProductName}' updated.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                ledger.ModifiedDate =
+                    modifiedDate;
             }
-        );
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
+
+                    EntityName =
+                        "Product Master",
+
+                    EntityId =
+                        entity.ProductMasterId,
+
+                    ActivityType =
+                        "Update",
+
+                    ActivityTitle =
+                        "Product Master Updated",
+
+                    ActivityDescription =
+                        $"Product Master '{entity.ProductName}' updated.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        modifiedDate
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 
@@ -1218,112 +1218,130 @@ public class ProductMasterRepository :
         }
 
         //=======================================================
-        // Soft Delete Product Master
+        // Dependency Check
+        //
+        // TODO: When stock / purchase / sales / voucher tables
+        // exist, count their non-deleted rows that reference this
+        // ProductMasterId or its three ledger codes, and throw
+        // InvalidOperationException here (returned as HTTP 409).
         //=======================================================
 
-        entity.IsDeleted =
-            true;
-
-        entity.DeletedBy =
-            userId;
-
-        entity.DeletedDate =
-            DateTime.UtcNow;
-
         //=======================================================
-        // Delete Generated General Ledgers
+        // Begin Transaction
         //=======================================================
 
-        List<string> generatedLedgerCodes =
-            new List<string>
-            {
-                entity.InventoryLedgerCode,
-                entity.WipLedgerCode,
-                entity.CogsLedgerCode
-            }
-            .Where
-            (
-                x =>
-                    !string.IsNullOrWhiteSpace(x)
-            )
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
-        List<GeneralLedgersEntity> generatedLedgers =
-            await _context
-                .Set<GeneralLedgersEntity>()
-                .Where
-                (
-                    x =>
-                        !x.IsDeleted
-                        &&
-                        generatedLedgerCodes.Contains(
-                            x.LedgerCode)
-                )
-                .ToListAsync();
-
-        foreach
-        (
-            GeneralLedgersEntity ledger
-            in generatedLedgers
-        )
+        try
         {
-            ledger.IsDeleted =
+            DateTime deletedDate =
+                DateTime.UtcNow;
+
+            //===================================================
+            // Soft Delete Product Master
+            //===================================================
+
+            entity.IsDeleted =
                 true;
 
-            ledger.DeletedBy =
+            entity.DeletedBy =
                 userId;
 
-            ledger.DeletedDate =
-                DateTime.UtcNow;
+            entity.DeletedDate =
+                deletedDate;
 
-            ledger.ModifiedBy =
-                userId;
+            //===================================================
+            // Delete Generated General Ledgers
+            //===================================================
 
-            ledger.ModifiedDate =
-                DateTime.UtcNow;
-        }
+            List<string> generatedLedgerCodes =
+                GetGeneratedLedgerCodes(
+                    entity);
 
-        await _context.SaveChangesAsync();
+            List<GeneralLedgersEntity> generatedLedgers =
+                await _context
+                    .Set<GeneralLedgersEntity>()
+                    .Where
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            generatedLedgerCodes.Contains(
+                                x.LedgerCode)
+                    )
+                    .ToListAsync();
 
-        //=======================================================
-        // Activity History
-        //=======================================================
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+            foreach
+            (
+                GeneralLedgersEntity ledger
+                in generatedLedgers
+            )
             {
-                Module =
-                    "Product Settings",
+                ledger.IsDeleted =
+                    true;
 
-                EntityName =
-                    "Product Master",
+                ledger.DeletedBy =
+                    userId;
 
-                EntityId =
-                    entity.ProductMasterId,
+                ledger.DeletedDate =
+                    deletedDate;
 
-                ActivityType =
-                    "Delete",
+                ledger.ModifiedBy =
+                    userId;
 
-                ActivityTitle =
-                    "Product Master Deleted",
-
-                ActivityDescription =
-                    $"Product Master '{entity.ProductName}' deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                ledger.ModifiedDate =
+                    deletedDate;
             }
-        );
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
+
+                    EntityName =
+                        "Product Master",
+
+                    EntityId =
+                        entity.ProductMasterId,
+
+                    ActivityType =
+                        "Delete",
+
+                    ActivityTitle =
+                        "Product Master Deleted",
+
+                    ActivityDescription =
+                        $"Product Master '{entity.ProductName}' deleted.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        deletedDate
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 
@@ -1366,120 +1384,189 @@ public class ProductMasterRepository :
         }
 
         //=======================================================
-        // Restore Product Master
+        // Parent Product Sub Category Must Exist
         //=======================================================
 
-        entity.IsDeleted =
-            false;
-
-        entity.DeletedBy =
-            null;
-
-        entity.DeletedDate =
-            null;
-
-        entity.ModifiedBy =
-            userId;
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-        //=======================================================
-        // Restore Generated General Ledgers
-        //=======================================================
-
-        List<string> generatedLedgerCodes =
-            new List<string>
-            {
-                entity.InventoryLedgerCode,
-                entity.WipLedgerCode,
-                entity.CogsLedgerCode
-            }
-            .Where
-            (
-                x =>
-                    !string.IsNullOrWhiteSpace(x)
-            )
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        List<GeneralLedgersEntity> generatedLedgers =
+        bool parentExists =
             await _context
-                .Set<GeneralLedgersEntity>()
-                .Where
+                .Set<ProductSubCategoryEntity>()
+                .AnyAsync
                 (
                     x =>
-                        x.IsDeleted
+                        x.ProductSubCategoryId ==
+                        entity.ProductSubCategoryId
                         &&
-                        generatedLedgerCodes.Contains(
-                            x.LedgerCode)
-                )
-                .ToListAsync();
+                        !x.IsDeleted
+                );
 
-        foreach
+        if
         (
-            GeneralLedgersEntity ledger
-            in generatedLedgers
+            !parentExists
         )
         {
-            ledger.IsDeleted =
-                false;
-
-            ledger.DeletedBy =
-                null;
-
-            ledger.DeletedDate =
-                null;
-
-            ledger.ModifiedBy =
-                userId;
-
-            ledger.ModifiedDate =
-                DateTime.UtcNow;
+            throw new InvalidOperationException(
+                $"Product Master '{entity.ProductName}' cannot be restored because its Product Sub Category is deleted. " +
+                "Restore the Product Sub Category first.");
         }
 
-        await _context.SaveChangesAsync();
-
         //=======================================================
-        // Activity History
+        // Name Must Still Be Unique
         //=======================================================
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+        bool nameTaken =
+            await _context
+                .Set<ProductMasterEntity>()
+                .AnyAsync
+                (
+                    x =>
+                        x.ProductMasterId !=
+                        entity.ProductMasterId
+                        &&
+                        x.ProductSubCategoryId ==
+                        entity.ProductSubCategoryId
+                        &&
+                        !x.IsDeleted
+                        &&
+                        x.ProductName.ToLower() ==
+                        entity.ProductName.ToLower()
+                );
+
+        if
+        (
+            nameTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Product Master '{entity.ProductName}' cannot be restored because another product with the same name already exists under this Product Sub Category.");
+        }
+
+        //=======================================================
+        // Begin Transaction
+        //=======================================================
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            DateTime restoredDate =
+                DateTime.UtcNow;
+
+            //===================================================
+            // Restore Product Master
+            //===================================================
+
+            entity.IsDeleted =
+                false;
+
+            entity.DeletedBy =
+                null;
+
+            entity.DeletedDate =
+                null;
+
+            entity.ModifiedBy =
+                userId;
+
+            entity.ModifiedDate =
+                restoredDate;
+
+            //===================================================
+            // Restore Generated General Ledgers
+            //===================================================
+
+            List<string> generatedLedgerCodes =
+                GetGeneratedLedgerCodes(
+                    entity);
+
+            List<GeneralLedgersEntity> generatedLedgers =
+                await _context
+                    .Set<GeneralLedgersEntity>()
+                    .Where
+                    (
+                        x =>
+                            x.IsDeleted
+                            &&
+                            generatedLedgerCodes.Contains(
+                                x.LedgerCode)
+                    )
+                    .ToListAsync();
+
+            foreach
+            (
+                GeneralLedgersEntity ledger
+                in generatedLedgers
+            )
             {
-                Module =
-                    "Product Settings",
+                ledger.IsDeleted =
+                    false;
 
-                EntityName =
-                    "Product Master",
+                ledger.DeletedBy =
+                    null;
 
-                EntityId =
-                    entity.ProductMasterId,
+                ledger.DeletedDate =
+                    null;
 
-                ActivityType =
-                    "Restore",
+                ledger.IsActive =
+                    entity.IsActive;
 
-                ActivityTitle =
-                    "Product Master Restored",
+                ledger.ModifiedBy =
+                    userId;
 
-                ActivityDescription =
-                    $"Product Master '{entity.ProductName}' restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                ledger.ModifiedDate =
+                    restoredDate;
             }
-        );
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        return true;
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
+
+                    EntityName =
+                        "Product Master",
+
+                    EntityId =
+                        entity.ProductMasterId,
+
+                    ActivityType =
+                        "Restore",
+
+                    ActivityTitle =
+                        "Product Master Restored",
+
+                    ActivityDescription =
+                        $"Product Master '{entity.ProductName}' restored.",
+
+                    PerformedBy =
+                        userId,
+
+                    PerformedByName =
+                        "System",
+
+                    PerformedDate =
+                        restoredDate
+                }
+            );
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
 
 

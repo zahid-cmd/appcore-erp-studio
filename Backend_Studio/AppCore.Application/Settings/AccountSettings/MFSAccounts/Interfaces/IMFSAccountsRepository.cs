@@ -1,8 +1,11 @@
+// PAGE-CLONED : Bank Accounts -> MFS Accounts
+// PAGE-CLONED : Cash Accounts -> MFS Accounts
+// PAGE-CLONED : Wings -> MFS Accounts
 //===============================================================
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings.MFSAccounts.DTOs;
 
 
 //===============================================================
@@ -13,98 +16,81 @@ namespace AppCore.Application.Settings.AccountSettings;
 
 
 //===============================================================
-// IMfsAccountsRepository
+// MFSAccount Repository Interface
 //===============================================================
 
-public interface IMfsAccountsRepository
+public interface IMFSAccountsRepository
 {
-
     //===========================================================
     // Get All
     //===========================================================
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>>
-        GetAllAsync();
-
+    Task<List<MFSAccountDto>> GetAllAsync();
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts?>
-        GetByIdAsync
-    (
-        long id
-    );
-
+    Task<MFSAccountDto?> GetByIdAsync(
+        long id);
 
 
     //===========================================================
     // Create
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts entity
-    );
-
+    Task<long> CreateAsync(
+        CreateMFSAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Update
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts entity
-    );
-
+    Task UpdateAsync(
+        UpdateMFSAccountDto dto,
+        long userId);
 
 
     //===========================================================
     // Delete
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
+    Task DeleteAsync(
+        long id,
+        long userId);
 
 
     //===========================================================
     // Restore
     //===========================================================
 
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
+    Task<bool> ExistsAsync(
+        long id);
 
 
     //===========================================================
-    // Get Entity History
+    // Get Next Code
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<string> GetNextCodeAsync(
+        long accountSubGroupsId);
 
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    Task<MFSAccountsDefaultsDto> GetDefaultsAsync(
+        long accountSubGroupsId);
 }

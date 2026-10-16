@@ -2,11 +2,14 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 
 
 //===============================================================
-// SystemConfigurationsDto
+// System Configurations DTO
+//
+// ModuleCode / ModuleName / ModuleIcon are joined from the
+// Navigation Module for display.
 //===============================================================
 
 public class SystemConfigurationsDto
@@ -15,83 +18,55 @@ public class SystemConfigurationsDto
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long SystemConfigurationId { get; set; }
 
 
     //===========================================================
-    // Code
+    // Module
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long NavigationModuleId { get; set; }
 
+    public string ModuleCode { get; set; } = string.Empty;
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string ModuleName { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string ModuleIcon { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Fields
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string ConfigurationCode { get; set; } = string.Empty;
 
+    public string ConfigurationName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public bool IsEnabled { get; set; }
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Status
+    // Soft Delete
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public bool IsDeleted { get; set; }
+
+    public long? DeletedBy { get; set; }
+
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Remarks
+    // Audit Information
     //===========================================================
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long CreatedBy { get; set; }
+
+    public DateTime CreatedDate { get; set; }
+
+    public long? ModifiedBy { get; set; }
+
+    public DateTime? ModifiedDate { get; set; }
 }

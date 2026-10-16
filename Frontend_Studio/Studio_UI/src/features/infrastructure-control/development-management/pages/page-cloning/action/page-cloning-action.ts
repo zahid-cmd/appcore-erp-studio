@@ -528,7 +528,9 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
         return n;
     }
 
-    // WingCode -> BankAccountCode when the source stem is Wing and the target stem is BankAccount
+    // WingCode -> BankAccountCode when the source stem is Wing and the target stem is BankAccount.
+    // BankCode -> CardCode when BankSetup is cloned to CardSetup (only the differing leading
+    // words are compared once the shared trailing words, "Setup", are dropped).
     private renameField(name: string): string
     {
         const from = this.stem(this.state.cloneFromName);
@@ -536,9 +538,37 @@ export class PageCloningActionComponent implements OnInit, OnDestroy
 
         if (!from || !to || from.toLowerCase() === to.toLowerCase()) { return name; }
 
-        return name.toLowerCase().startsWith(from.toLowerCase())
-            ? to + name.slice(from.length)
-            : name;
+        const pairs: Array<[string, string]> = [[from, to]];
+
+        const words = (s: string): string[] => s.match(/[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[0-9]+/g) ?? [s];
+        const a = words(from);
+        const b = words(to);
+
+        while (a.length > 1 && b.length > 1 && a[a.length - 1].toLowerCase() === b[b.length - 1].toLowerCase())
+        {
+            a.pop();
+            b.pop();
+        }
+
+        const fromHead = a.join('');
+        const toHead = b.join('');
+
+        if (fromHead && toHead && fromHead.toLowerCase() !== toHead.toLowerCase())
+        {
+            pairs.push([fromHead, toHead]);
+        }
+
+        const lower = name.toLowerCase();
+
+        for (const [f, t] of pairs)
+        {
+            if (lower.startsWith(f.toLowerCase()))
+            {
+                return t + name.slice(f.length);
+            }
+        }
+
+        return name;
     }
 
     // The automatic target name of a source field (parent keys keep their name)

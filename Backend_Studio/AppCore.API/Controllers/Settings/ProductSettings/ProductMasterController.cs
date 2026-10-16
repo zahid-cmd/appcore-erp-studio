@@ -75,9 +75,20 @@ public class ProductMasterController : ControllerBase
     public async Task<ActionResult<string>> GetNextCode(
         long productSubCategoryId)
     {
-        return Ok(
-            await _repository.GetNextCodeAsync(
-                productSubCategoryId));
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    productSubCategoryId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -90,9 +101,20 @@ public class ProductMasterController : ControllerBase
     public async Task<ActionResult<ProductMasterDefaultsDto>> GetDefaults(
         long productSubCategoryId)
     {
-        return Ok(
-            await _repository.GetDefaultsAsync(
-                productSubCategoryId));
+        try
+        {
+            return Ok(
+                await _repository.GetDefaultsAsync(
+                    productSubCategoryId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -128,12 +150,23 @@ public class ProductMasterController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -154,9 +187,20 @@ public class ProductMasterController : ControllerBase
 
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
 
         return NoContent();
     }
@@ -180,13 +224,11 @@ public class ProductMasterController : ControllerBase
             return NotFound();
         }
 
-
         //===========================================================
         // Current User
         //===========================================================
 
         long userId = 1;
-
 
         //===========================================================
         // Delete
@@ -198,14 +240,18 @@ public class ProductMasterController : ControllerBase
                 id,
                 userId);
         }
-        catch
-        (
-            KeyNotFoundException ex
-        )
+        catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Deletion Blocked (future: stock / transactions)
+            //=======================================================
 
+            return Conflict(ex.Message);
+        }
 
         //===========================================================
         // Delete Successful
@@ -225,14 +271,28 @@ public class ProductMasterController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
-
-        if (!restored)
+        try
         {
-            return NotFound(
-                "There are no deleted product masters available to restore.");
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
+
+            if (!restored)
+            {
+                return NotFound(
+                    "There are no deleted product masters available to restore.");
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Restore Blocked
+            //
+            // Parent Product Sub Category is deleted, or the name
+            // is already used by another active product.
+            //=======================================================
+
+            return Conflict(ex.Message);
         }
 
         return NoContent();

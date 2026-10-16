@@ -4,13 +4,23 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.AccountSettings;
+using AppCore.Application.Settings.AccountSettings.MFSAccounts.DTOs;
 
-using AppCore.Domain.Common;
+using MFSAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.MFSAccounts;
+
+using AccountSubGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup;
+
+using BankAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.AccountSettings;
+using AppCore.Domain.Common;
+
+using AppCore.Infrastructure.CodeMaster;
 
 
 //===============================================================
@@ -21,260 +31,853 @@ namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// MfsAccountsRepository
+// MFS Accounts Repository
 //===============================================================
 
-public class MfsAccountsRepository
-    : IMfsAccountsRepository
+public class MFSAccountsRepository : IMFSAccountsRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    // MFS Accounts are reserved to this Account Sub Group only.
+    private const string ReservedSubGroupCode =
+        "SUB-003-002-003";
+
+    private const string AccountTypePersonal =
+        "Personal";
+
+    private const string AccountTypeMerchant =
+        "Merchant";
+
+    private const decimal MaxMfsCharges =
+        100m;
+
+    private const int DisplayNameMaxLength =
+        100;
+
 
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public MfsAccountsRepository
-    (
-        AppDbContext context
-    )
+    public MFSAccountsRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
+    //===========================================================
+    // Normalized Input
+    //
+    // One shape for Create & Update, after all business rules
+    // (Personal / Merchant, display name, uppercase) are applied.
+    //===========================================================
+
+    private sealed class MfsInput
+    {
+        public string MFSAccountName { get; set; } = string.Empty;
+
+        public string MFSAccountNumber { get; set; } = string.Empty;
+
+        public string AccountType { get; set; } = AccountTypePersonal;
+
+        public decimal MFSCharges { get; set; }
+
+        public string LinkedBankAccount { get; set; } = string.Empty;
+
+        public string Branch { get; set; } = string.Empty;
+
+        public string DisplayName { get; set; } = string.Empty;
+
+        public bool CollectionAccount { get; set; }
+
+        public bool PaymentAccount { get; set; }
+
+        public bool BranchExclusive { get; set; }
+
+        public string Remarks { get; set; } = string.Empty;
+
+        public bool Status { get; set; }
+    }
+
+
+    //===========================================================
+    // MFS Accounts Query
+    //===========================================================
+
+    private IQueryable<MFSAccountDto> MFSAccountsQuery()
+    {
+        return _context
+            .Set<MFSAccountsEntity>()
+            .AsNoTracking()
+            .Where
+            (
+                x =>
+                    !x.IsDeleted
+            )
+            .Select
+            (
+                x =>
+                    new MFSAccountDto
+                    {
+                        //===============================================
+                        // Primary Key
+                        //===============================================
+
+                        MFSAccountId =
+                            x.MFSAccountId,
+
+                        //===============================================
+                        // Account Sub Group
+                        //===============================================
+
+                        AccountSubGroupsId =
+                            x.AccountSubGroupsId,
+
+                        //===============================================
+                        // Basic Information
+                        //===============================================
+
+                        MFSAccountCode =
+                            x.MFSAccountCode,
+
+                        MFSAccountName =
+                            x.MFSAccountName,
+
+                        MFSAccountNumber =
+                            x.MFSAccountNumber,
+
+                        AccountType =
+                            x.AccountType,
+
+                        MFSCharges =
+                            x.MFSCharges,
+
+                        LinkedBankAccount =
+                            x.LinkedBankAccount,
+
+                        Branch =
+                            x.Branch,
+
+                        DisplayName =
+                            x.DisplayName,
+
+                        //===============================================
+                        // Configuration
+                        //===============================================
+
+                        CollectionAccount =
+                            x.CollectionAccount,
+
+                        PaymentAccount =
+                            x.PaymentAccount,
+
+                        BranchExclusive =
+                            x.BranchExclusive,
+
+                        Remarks =
+                            x.Remarks,
+
+                        Status =
+                            x.Status,
+
+                        //===============================================
+                        // Soft Delete
+                        //===============================================
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+                        //===============================================
+                        // Audit
+                        //===============================================
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>>
+    public async Task<List<MFSAccountDto>>
         GetAllAsync()
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>()
-            .AsNoTracking()
-            .Where(
+        return await MFSAccountsQuery()
+            .OrderBy
+            (
                 x =>
-                    !x.IsDeleted
-            )
-            .OrderBy(
-                x =>
-                    x.Name
+                    x.MFSAccountCode
             )
             .ToListAsync();
     }
-
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts?>
+    public async Task<MFSAccountDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
+        return await MFSAccountsQuery()
+            .FirstOrDefaultAsync
+            (
                 x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
+                    x.MFSAccountId ==
+                    id
             );
     }
 
 
-
     //===========================================================
-    // Create
+    // Get Next Code
+    //
+    // Deleted rows are included, because the unique index on
+    // MFSAccountCode covers them too. A code is never reused.
     //===========================================================
 
-    public async Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts entity
-    )
+    public async Task<string>
+        GetNextCodeAsync
+        (
+            long accountSubGroupsId
+        )
     {
-        const long userId =
-            1;
-
-
-        entity.IsActive =
-            true;
-
-
-        entity.IsDeleted =
-            false;
-
-
-        entity.CreatedBy =
-            userId;
-
-
-        entity.CreatedDate =
-            DateTime.UtcNow;
-
-
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>()
-            .AddAsync(
-                entity
-            );
-
-
-        await _context.SaveChangesAsync();
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Settings",
-
-                EntityName =
-                    "MfsAccounts",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Create",
-
-                ActivityTitle =
-                    "MfsAccounts Created",
-
-                ActivityDescription =
-                    $"MfsAccounts '{entity.Name}' was created.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-
-
-        return entity.Id;
-    }
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    public async Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts entity
-    )
-    {
-        const long userId =
-            1;
-
-
-        var existing =
+        AccountSubGroupEntity? parent =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+                        x.AccountSubGroupId ==
+                        accountSubGroupsId
                         &&
                         !x.IsDeleted
                 );
 
+        if
+        (
+            parent ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "Account Sub Group not found.");
+        }
+
+        string[] parentParts =
+            (parent.SubGroupCode?.Trim() ?? string.Empty)
+                .Split
+                (
+                    '-',
+                    StringSplitOptions.RemoveEmptyEntries
+                );
 
         if
         (
-            existing is null
+            parentParts.Length !=
+            4
         )
         {
             throw new InvalidOperationException(
-                "MfsAccounts record was not found."
-            );
+                "Invalid account sub group code.");
         }
 
+        int[] seg =
+            new int[3];
 
-        existing.Code =
-            entity.Code;
+        for
+        (
+            int i = 0;
+            i < 3;
+            i++
+        )
+        {
+            if
+            (
+                !int.TryParse
+                (
+                    parentParts[i + 1].Trim(),
+                    out seg[i]
+                )
+                ||
+                seg[i] < 1
+            )
+            {
+                throw new InvalidOperationException(
+                    "Invalid account sub group sequence number.");
+            }
+        }
+
+        List<string> existingCodes =
+            await _context
+                .Set<MFSAccountsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.AccountSubGroupsId ==
+                        accountSubGroupsId
+                )
+                .Select
+                (
+                    x =>
+                        x.MFSAccountCode
+                )
+                .ToListAsync();
+
+        int highest =
+            0;
+
+        foreach
+        (
+            string code
+            in existingCodes
+        )
+        {
+            if
+            (
+                string.IsNullOrWhiteSpace(code)
+            )
+            {
+                continue;
+            }
+
+            string[] parts =
+                code.Split
+                (
+                    '-',
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+            if
+            (
+                parts.Length != 5
+                ||
+                !string.Equals
+                (
+                    parts[0].Trim(),
+                    "MFS",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                continue;
+            }
+
+            bool same =
+                true;
+
+            for
+            (
+                int i = 0;
+                i < 3;
+                i++
+            )
+            {
+                if
+                (
+                    !int.TryParse
+                    (
+                        parts[i + 1].Trim(),
+                        out int v
+                    )
+                    ||
+                    v != seg[i]
+                )
+                {
+                    same =
+                        false;
+
+                    break;
+                }
+            }
+
+            if
+            (
+                !same
+            )
+            {
+                continue;
+            }
+
+            if
+            (
+                int.TryParse
+                (
+                    parts[4].Trim(),
+                    out int sequenceNo
+                )
+                &&
+                sequenceNo > highest
+            )
+            {
+                highest =
+                    sequenceNo;
+            }
+        }
+
+        return CodeGenerator.GenerateMFSAccountsCode(
+            seg[0],
+            seg[1],
+            seg[2],
+            highest + 1);
+    }
 
 
-        existing.Name =
-            entity.Name;
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<MFSAccountsDefaultsDto>
+        GetDefaultsAsync
+        (
+            long accountSubGroupsId
+        )
+    {
+        return new MFSAccountsDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync(
+                    accountSubGroupsId)
+        };
+    }
 
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+    //===========================================================
+    // Resolve Reserved Sub Group (SUB-003-002-003)
+    //===========================================================
+
+    private async Task<AccountSubGroupEntity>
+        ResolveReservedSubGroupAsync()
+    {
+        AccountSubGroupEntity? subGroup =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.SubGroupCode ==
+                        ReservedSubGroupCode
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            subGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                $"Reserved Account Sub Group {ReservedSubGroupCode} was not found.");
+        }
+
+        return subGroup;
+    }
 
 
-        existing.SampleField =
-            entity.SampleField;
+    //===========================================================
+    // Normalize & Validate Input
+    //
+    // Personal : Linked Bank Account = "" , MFS Charges = 0
+    // Merchant : Linked Bank Account required (must exist in
+    //            Bank Accounts) , MFS Charges > 0 and <= 100
+    // Display Name = "<MFS ACCOUNT NAME> - <MFS ACCOUNT NUMBER>"
+    // Same provider + number may not exist twice.
+    //===========================================================
+
+    private async Task<MfsInput>
+        NormalizeInputAsync
+        (
+            string? mfsAccountName,
+            string? mfsAccountNumber,
+            string? accountType,
+            decimal mfsCharges,
+            string? linkedBankAccount,
+            string? branch,
+            bool collectionAccount,
+            bool paymentAccount,
+            bool branchExclusive,
+            string? remarks,
+            bool status,
+            long? excludeId
+        )
+    {
+        //=======================================================
+        // MFS Account Name (Provider) - UPPERCASE
+        //=======================================================
+
+        string name =
+            (mfsAccountName ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant();
+
+        if
+        (
+            string.IsNullOrWhiteSpace(name)
+        )
+        {
+            throw new InvalidOperationException(
+                "MFS Account Name is required.");
+        }
+
+        //=======================================================
+        // MFS Account Number
+        //=======================================================
+
+        string number =
+            (mfsAccountNumber ?? string.Empty)
+                .Trim();
+
+        if
+        (
+            string.IsNullOrWhiteSpace(number)
+        )
+        {
+            throw new InvalidOperationException(
+                "MFS Account Number is required.");
+        }
+
+        //=======================================================
+        // Branch
+        //=======================================================
+
+        string branchName =
+            (branch ?? string.Empty)
+                .Trim();
+
+        if
+        (
+            string.IsNullOrWhiteSpace(branchName)
+        )
+        {
+            throw new InvalidOperationException(
+                "Branch is required.");
+        }
+
+        //=======================================================
+        // Account Type
+        //=======================================================
+
+        string type =
+            (accountType ?? string.Empty).Trim();
+
+        if
+        (
+            string.IsNullOrWhiteSpace(type)
+            ||
+            string.Equals
+            (
+                type,
+                AccountTypePersonal,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            type =
+                AccountTypePersonal;
+        }
+        else if
+        (
+            string.Equals
+            (
+                type,
+                AccountTypeMerchant,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            type =
+                AccountTypeMerchant;
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "Account Type must be Personal or Merchant.");
+        }
+
+        bool isMerchant =
+            type ==
+            AccountTypeMerchant;
+
+        //=======================================================
+        // Linked Bank Account & MFS Charges
+        //=======================================================
+
+        string linkedBank =
+            string.Empty;
+
+        decimal charges =
+            0m;
+
+        if
+        (
+            isMerchant
+        )
+        {
+            linkedBank =
+                (linkedBankAccount ?? string.Empty)
+                    .Trim();
+
+            if
+            (
+                string.IsNullOrWhiteSpace(linkedBank)
+            )
+            {
+                throw new InvalidOperationException(
+                    "Linked Bank Account is required for Merchant accounts.");
+            }
+
+            bool bankExists =
+                await _context
+                    .Set<BankAccountsEntity>()
+                    .AsNoTracking()
+                    .AnyAsync
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            x.DisplayName ==
+                            linkedBank
+                    );
+
+            if
+            (
+                !bankExists
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Linked Bank Account '{linkedBank}' was not found in Bank Accounts.");
+            }
+
+            charges =
+                Math.Round(
+                    mfsCharges,
+                    2,
+                    MidpointRounding.AwayFromZero);
+
+            if
+            (
+                charges <= 0m
+                ||
+                charges > MaxMfsCharges
+            )
+            {
+                throw new InvalidOperationException(
+                    $"MFS Charges must be greater than 0 and not more than {MaxMfsCharges}% for Merchant accounts.");
+            }
+        }
+
+        //=======================================================
+        // Display Name
+        //=======================================================
+
+        string displayName =
+            $"{name} - {number}";
+
+        if
+        (
+            displayName.Length >
+            DisplayNameMaxLength
+        )
+        {
+            throw new InvalidOperationException(
+                $"Display Name cannot be longer than {DisplayNameMaxLength} characters.");
+        }
+
+        //=======================================================
+        // Duplicate : same provider + number
+        //=======================================================
+
+        bool duplicate =
+            await _context
+                .Set<MFSAccountsEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (
+                            excludeId == null
+                            ||
+                            x.MFSAccountId != excludeId
+                        )
+                        &&
+                        x.MFSAccountName.ToUpper() ==
+                        name
+                        &&
+                        x.MFSAccountNumber ==
+                        number
+                );
+
+        if
+        (
+            duplicate
+        )
+        {
+            throw new InvalidOperationException(
+                $"MFS Account '{displayName}' already exists.");
+        }
+
+        return new MfsInput
+        {
+            MFSAccountName =
+                name,
+
+            MFSAccountNumber =
+                number,
+
+            AccountType =
+                type,
+
+            MFSCharges =
+                charges,
+
+            LinkedBankAccount =
+                linkedBank,
+
+            Branch =
+                branchName,
+
+            DisplayName =
+                displayName,
+
+            CollectionAccount =
+                collectionAccount,
+
+            PaymentAccount =
+                paymentAccount,
+
+            BranchExclusive =
+                branchExclusive,
+
+            Remarks =
+                remarks?.Trim()
+                ??
+                string.Empty,
+
+            Status =
+                status
+        };
+    }
 
 
-        existing.Status =
-            entity.Status;
+    //===========================================================
+    // Apply Input To Entity
+    //===========================================================
+
+    private static void ApplyInput
+    (
+        MFSAccountsEntity entity,
+        MfsInput input
+    )
+    {
+        entity.MFSAccountName =
+            input.MFSAccountName;
+
+        entity.MFSAccountNumber =
+            input.MFSAccountNumber;
+
+        entity.AccountType =
+            input.AccountType;
+
+        entity.MFSCharges =
+            input.MFSCharges;
+
+        entity.LinkedBankAccount =
+            input.LinkedBankAccount;
+
+        entity.Branch =
+            input.Branch;
+
+        entity.DisplayName =
+            input.DisplayName;
+
+        entity.CollectionAccount =
+            input.CollectionAccount;
+
+        entity.PaymentAccount =
+            input.PaymentAccount;
+
+        entity.BranchExclusive =
+            input.BranchExclusive;
+
+        entity.Remarks =
+            input.Remarks;
+
+        entity.Status =
+            input.Status;
+    }
 
 
-        existing.Remarks =
-            entity.Remarks;
+    //===========================================================
+    // Add Activity History
+    //===========================================================
 
-
-        existing.ModifiedBy =
-            userId;
-
-
-        existing.ModifiedDate =
-            DateTime.UtcNow;
-
-
+    private void AddHistory
+    (
+        MFSAccountsEntity entity,
+        string activityType,
+        string verb,
+        long userId,
+        DateTime performedDate
+    )
+    {
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
-                    "Settings",
+                    "Account Settings",
 
                 EntityName =
-                    "MfsAccounts",
+                    "MFSAccount",
 
                 EntityId =
-                    existing.Id,
+                    entity.MFSAccountId,
 
                 ActivityType =
-                    "Update",
+                    activityType,
 
                 ActivityTitle =
-                    "MfsAccounts Updated",
+                    $"MFS Account {verb}",
 
                 ActivityDescription =
-                    $"MfsAccounts '{existing.Name}' was updated.",
+                    $"MFS Account '{entity.DisplayName}' ({entity.MFSAccountCode}) {verb.ToLowerInvariant()}.",
 
                 PerformedBy =
                     userId,
@@ -283,14 +886,196 @@ public class MfsAccountsRepository
                     "System",
 
                 PerformedDate =
-                    DateTime.UtcNow
+                    performedDate
             }
         );
-
-
-        await _context.SaveChangesAsync();
     }
 
+
+    //===========================================================
+    // Create
+    //
+    // Sub group is always the reserved SUB-003-002-003 and the
+    // code is always generated here (values sent are ignored).
+    //===========================================================
+
+    public async Task<long>
+        CreateAsync
+        (
+            CreateMFSAccountDto dto,
+            long userId
+        )
+    {
+        AccountSubGroupEntity subGroup =
+            await ResolveReservedSubGroupAsync();
+
+        MfsInput input =
+            await NormalizeInputAsync
+            (
+                dto.MFSAccountName,
+                dto.MFSAccountNumber,
+                dto.AccountType,
+                dto.MFSCharges,
+                dto.LinkedBankAccount,
+                dto.Branch,
+                dto.CollectionAccount,
+                dto.PaymentAccount,
+                dto.BranchExclusive,
+                dto.Remarks,
+                dto.Status,
+                null
+            );
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
+
+            MFSAccountsEntity entity =
+                new MFSAccountsEntity
+                {
+                    AccountSubGroupsId =
+                        subGroup.AccountSubGroupId,
+
+                    MFSAccountCode =
+                        await GetNextCodeAsync(
+                            subGroup.AccountSubGroupId),
+
+                    IsDeleted =
+                        false,
+
+                    CreatedBy =
+                        userId,
+
+                    CreatedDate =
+                        now
+                };
+
+            ApplyInput(
+                entity,
+                input);
+
+            _context
+                .Set<MFSAccountsEntity>()
+                .Add(entity);
+
+            await _context.SaveChangesAsync();
+
+            AddHistory(
+                entity,
+                "Create",
+                "Created",
+                userId,
+                now);
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return entity.MFSAccountId;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
+    }
+
+
+    //===========================================================
+    // Update
+    //
+    // Account Sub Group and Code are locked after creation.
+    //===========================================================
+
+    public async Task
+        UpdateAsync
+        (
+            UpdateMFSAccountDto dto,
+            long userId
+        )
+    {
+        MFSAccountsEntity? entity =
+            await _context
+                .Set<MFSAccountsEntity>()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.MFSAccountId ==
+                        dto.MFSAccountId
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            entity ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "MFS Account not found.");
+        }
+
+        MfsInput input =
+            await NormalizeInputAsync
+            (
+                dto.MFSAccountName,
+                dto.MFSAccountNumber,
+                dto.AccountType,
+                dto.MFSCharges,
+                dto.LinkedBankAccount,
+                dto.Branch,
+                dto.CollectionAccount,
+                dto.PaymentAccount,
+                dto.BranchExclusive,
+                dto.Remarks,
+                dto.Status,
+                entity.MFSAccountId
+            );
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
+
+            ApplyInput(
+                entity,
+                input);
+
+            entity.ModifiedBy =
+                userId;
+
+            entity.ModifiedDate =
+                now;
+
+            await _context.SaveChangesAsync();
+
+            AddHistory(
+                entity,
+                "Update",
+                "Updated",
+                userId,
+                now);
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
+    }
 
 
     //===========================================================
@@ -299,316 +1084,214 @@ public class MfsAccountsRepository
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var entity =
+        MFSAccountsEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<MFSAccountsEntity>()
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+                        x.MFSAccountId ==
+                        id
                         &&
                         !x.IsDeleted
                 );
 
-
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            throw new KeyNotFoundException(
+                "MFS Account not found.");
         }
 
+        //=======================================================
+        // Dependency Check
+        //
+        // TODO: When receipts / payments / vouchers use MFS
+        // accounts, count their non-deleted rows here and throw
+        // InvalidOperationException (returned as HTTP 409).
+        //=======================================================
 
-        entity.IsDeleted =
-            true;
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
 
-        entity.IsActive =
-            false;
+            entity.IsDeleted =
+                true;
 
+            entity.DeletedBy =
+                userId;
 
-        entity.ModifiedBy =
-            userId;
+            entity.DeletedDate =
+                now;
 
+            await _context.SaveChangesAsync();
 
-        entity.ModifiedDate =
-            DateTime.UtcNow;
+            AddHistory(
+                entity,
+                "Delete",
+                "Deleted",
+                userId,
+                now);
 
+            await _context.SaveChangesAsync();
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Settings",
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
 
-                EntityName =
-                    "MfsAccounts",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Delete",
-
-                ActivityTitle =
-                    "MfsAccounts Deleted",
-
-                ActivityDescription =
-                    $"MfsAccounts '{entity.Name}' was deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
+            throw;
+        }
     }
-
 
 
     //===========================================================
     // Restore
+    //
+    // Blocked if the same provider + number was created again
+    // after this record was deleted.
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
+        (
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var entity =
+        MFSAccountsEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.AccountSettings.MfsAccounts>()
-                .FirstOrDefaultAsync(
+                .Set<MFSAccountsEntity>()
+                .Where
+                (
                     x =>
-                        x.Id == id
-                        &&
                         x.IsDeleted
-                );
-
+                )
+                .OrderByDescending
+                (
+                    x =>
+                        x.DeletedDate
+                )
+                .FirstOrDefaultAsync();
 
         if
         (
-            entity is null
+            entity ==
+            null
         )
         {
-            return;
+            return false;
         }
 
+        string name =
+            (entity.MFSAccountName ?? string.Empty).ToUpper();
 
-        entity.IsDeleted =
-            false;
+        bool duplicate =
+            await _context
+                .Set<MFSAccountsEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.MFSAccountId !=
+                        entity.MFSAccountId
+                        &&
+                        x.MFSAccountName.ToUpper() ==
+                        name
+                        &&
+                        x.MFSAccountNumber ==
+                        entity.MFSAccountNumber
+                );
 
+        if
+        (
+            duplicate
+        )
+        {
+            throw new InvalidOperationException(
+                $"MFS Account '{entity.DisplayName}' cannot be restored because an active account with the same provider and number already exists.");
+        }
 
-        entity.IsActive =
-            true;
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
 
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
 
-        entity.ModifiedBy =
-            userId;
+            entity.IsDeleted =
+                false;
 
+            entity.DeletedBy =
+                null;
 
-        entity.ModifiedDate =
-            DateTime.UtcNow;
+            entity.DeletedDate =
+                null;
 
+            entity.ModifiedBy =
+                userId;
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Settings",
+            entity.ModifiedDate =
+                now;
 
-                EntityName =
-                    "MfsAccounts",
+            await _context.SaveChangesAsync();
 
-                EntityId =
-                    entity.Id,
+            AddHistory(
+                entity,
+                "Restore",
+                "Restored",
+                userId,
+                now);
 
-                ActivityType =
-                    "Restore",
+            await _context.SaveChangesAsync();
 
-                ActivityTitle =
-                    "MfsAccounts Restored",
+            await transaction.CommitAsync();
 
-                ActivityDescription =
-                    $"MfsAccounts '{entity.Name}' was restored.",
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
 
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
+            throw;
+        }
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
+        return await _context
+            .Set<MFSAccountsEntity>()
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "MfsAccounts"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "MfsAccounts"
-
-                    &&
-
-                    x.EntityId ==
+                    x.MFSAccountId ==
                     id
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    &&
+                    !x.IsDeleted
+            );
     }
-
 }

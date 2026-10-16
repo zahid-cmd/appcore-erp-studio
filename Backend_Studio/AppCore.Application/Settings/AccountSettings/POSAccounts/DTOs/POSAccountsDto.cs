@@ -2,96 +2,71 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.POSAccounts.DTOs;
 
 
 //===============================================================
-// PosAccountsDto
+// POS Account DTO
 //===============================================================
 
-public class PosAccountsDto
+public class POSAccountDto
 {
     //===========================================================
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long POSAccountId { get; set; }
 
 
     //===========================================================
-    // Code
+    // Fields
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long AccountSubGroupsId { get; set; }
 
+    public string POSAccountCode { get; set; } = string.Empty;
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string POSAccountName { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string IssuingBank { get; set; } = string.Empty;
 
+    public string TerminalNumber { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public string LinkedBankAccount { get; set; } = string.Empty;
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string Branch { get; set; } = string.Empty;
+
+    public bool CollectionAccount { get; set; }
+
+    public bool PaymentAccount { get; set; }
+
+    public bool BranchExclusive { get; set; }
+
+    public string Remarks { get; set; } = string.Empty;
+
+    public bool Status { get; set; }
 
 
     //===========================================================
-    // Sample Field
+    // Soft Delete
     //===========================================================
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool IsDeleted { get; set; }
+
+    public long? DeletedBy { get; set; }
+
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Status
+    // Audit Information
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Remarks
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public DateTime? ModifiedDate { get; set; }
 }

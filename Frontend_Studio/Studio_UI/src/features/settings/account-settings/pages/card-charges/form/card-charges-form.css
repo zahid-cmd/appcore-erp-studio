@@ -1,1 +1,544 @@
 @import '../../../../../../shared/styles/app-form-page.css';
+
+/* =========================================================
+   DESIGN TOKENS (scoped to this page)
+========================================================= */
+
+:host
+{
+    --cc-brand-900: #1b2463;
+    --cc-brand-800: #222d7a;
+    --cc-brand-700: #26338a;
+    --cc-brand-600: #3442b0;
+    --cc-brand-500: #4a5bd4;
+    --cc-brand-100: #e8ebff;
+    --cc-brand-50:  #f4f6ff;
+
+    --cc-ink-900: #111827;
+    --cc-ink-700: #374151;
+    --cc-ink-500: #6b7280;
+    --cc-ink-400: #9ca3af;
+
+    --cc-line:      #e7eaf3;
+    --cc-line-soft: #f1f3f9;
+    --cc-surface:   #ffffff;
+
+    --cc-danger:    #dc2626;
+    --cc-danger-bg: #fef1f1;
+
+    --cc-radius-lg: 14px;
+    --cc-radius-md: 10px;
+    --cc-radius-sm: 8px;
+
+    --cc-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(17, 24, 39, 0.06);
+    --cc-shadow-md: 0 4px 14px rgba(27, 36, 99, 0.08), 0 1px 3px rgba(17, 24, 39, 0.05);
+    --cc-shadow-brand: 0 6px 16px rgba(38, 51, 138, 0.28);
+
+    display: block;
+    height: 100%;
+}
+
+
+/* =========================================================
+   ENTRY BAR (toolbar right)
+========================================================= */
+
+.cc-entry-bar
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.cc-entry-pos
+{
+    width: 320px;
+}
+
+.cc-entry-card
+{
+    width: 240px;
+}
+
+.cc-entry-charge
+{
+    width: 130px;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.cc-btn
+{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    min-width: 38px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: var(--cc-radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        opacity 0.15s ease;
+}
+
+.cc-btn i
+{
+    font-size: 12px;
+}
+
+.cc-btn:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.cc-btn:focus-visible
+{
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 91, 212, 0.35);
+}
+
+/* Primary : gradient + glow */
+
+.cc-btn-primary
+{
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--cc-brand-600) 0%, var(--cc-brand-800) 100%);
+    box-shadow: var(--cc-shadow-brand);
+}
+
+.cc-btn-primary:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--cc-brand-500) 0%, var(--cc-brand-700) 100%);
+    box-shadow: 0 8px 22px rgba(38, 51, 138, 0.35);
+}
+
+.cc-btn-primary:active:not(:disabled)
+{
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(38, 51, 138, 0.3);
+}
+
+/* Light : cancel line edit */
+
+.cc-btn-light
+{
+    padding: 0 12px;
+    color: var(--cc-ink-700);
+    background: var(--cc-surface);
+    border-color: var(--cc-line);
+    box-shadow: var(--cc-shadow-sm);
+}
+
+.cc-btn-light:hover:not(:disabled)
+{
+    color: var(--cc-danger);
+    border-color: #f6caca;
+    background: var(--cc-danger-bg);
+}
+
+
+/* =========================================================
+   CANVAS : column that fills the canvas body height
+========================================================= */
+
+.cc-canvas
+{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    min-height: calc(100vh - 470px);
+    padding: 4px 2px;
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SUMMARY STRIP : branded card
+========================================================= */
+
+.cc-summary
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 20px 14px 24px;
+    overflow: hidden;
+    border: 1px solid var(--cc-line);
+    border-radius: var(--cc-radius-lg);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(74, 91, 212, 0.10) 0%, transparent 45%),
+        linear-gradient(135deg, #ffffff 0%, var(--cc-brand-50) 100%);
+    box-shadow: var(--cc-shadow-md);
+}
+
+/* Brand accent bar on the left */
+
+.cc-summary::before
+{
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--cc-brand-500) 0%, var(--cc-brand-800) 100%);
+}
+
+.cc-summary-item
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 28px 0 0;
+    margin-right: 28px;
+    border-right: 1px solid var(--cc-line);
+}
+
+.cc-summary-item:last-of-type
+{
+    border-right: none;
+}
+
+.cc-summary-label
+{
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cc-ink-500);
+}
+
+.cc-summary-value
+{
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cc-ink-900);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Second item = card count → show as a pill */
+
+.cc-summary-item:nth-child(2) .cc-summary-value
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--cc-brand-700);
+    background: var(--cc-brand-100);
+}
+
+.cc-summary-hint
+{
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--cc-line);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cc-ink-500);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+}
+
+.cc-summary-hint i
+{
+    color: var(--cc-brand-500);
+}
+
+
+/* =========================================================
+   LINES TABLE : elevated card, fills remaining height
+========================================================= */
+
+.cc-table-wrap
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    border: 1px solid var(--cc-line);
+    border-radius: var(--cc-radius-lg);
+    background: var(--cc-surface);
+    box-shadow: var(--cc-shadow-md);
+}
+
+/* Slim scrollbar */
+
+.cc-table-wrap::-webkit-scrollbar
+{
+    width: 8px;
+    height: 8px;
+}
+
+.cc-table-wrap::-webkit-scrollbar-thumb
+{
+    border-radius: 999px;
+    background: #d5d9e6;
+}
+
+.cc-table-wrap::-webkit-scrollbar-thumb:hover
+{
+    background: #b9bfd3;
+}
+
+.cc-table
+{
+    flex: 0 0 auto;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+/* Header */
+
+.cc-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, #fbfcff 0%, #f3f5fb 100%);
+    border-bottom: 1px solid var(--cc-line);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cc-ink-500);
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Body */
+
+.cc-table tbody td
+{
+    padding: 5px 16px;
+    border-bottom: 1px solid var(--cc-line-soft);
+    color: var(--cc-ink-700);
+    background: var(--cc-surface);
+    transition: background-color 0.15s ease;
+}
+
+.cc-table tbody tr:nth-child(even) td
+{
+    background: #fbfcfe;
+}
+
+.cc-table tbody tr:last-child td
+{
+    border-bottom: none;
+}
+
+/* Card name stands out */
+
+.cc-table tbody td:nth-child(3)
+{
+    font-weight: 600;
+    color: var(--cc-ink-900);
+}
+
+/* Card code : monospace chip look */
+
+.cc-table tbody td.cc-col-code
+{
+    font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+    font-size: 12px;
+    color: var(--cc-brand-700);
+    letter-spacing: 0.02em;
+}
+
+/* Serial : muted */
+
+.cc-table tbody td.cc-col-serial
+{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cc-ink-400);
+}
+
+/* Charge % : bold, tabular, branded */
+
+.cc-table tbody td.cc-col-charge
+{
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--cc-brand-700);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hover & double-click affordance */
+
+.cc-row-clickable
+{
+    cursor: pointer;
+    user-select: none;
+}
+
+.cc-row-clickable:hover td
+{
+    background: var(--cc-brand-50) !important;
+}
+
+/* Row being edited */
+
+.cc-row-editing td
+{
+    background: var(--cc-brand-100) !important;
+}
+
+.cc-row-editing td:first-child
+{
+    box-shadow: inset 4px 0 0 var(--cc-brand-600);
+}
+
+.cc-row-editing td.cc-col-charge
+{
+    color: var(--cc-brand-800);
+}
+
+
+/* Column widths / alignment */
+
+.cc-col-serial
+{
+    width: 64px;
+    text-align: center !important;
+}
+
+.cc-col-code
+{
+    width: 200px;
+}
+
+.cc-col-charge
+{
+    width: 150px;
+    text-align: right !important;
+}
+
+.cc-col-action
+{
+    width: 100px;
+    text-align: center !important;
+}
+
+
+/* =========================================================
+   EMPTY STATE : fills the space under the table header
+========================================================= */
+
+.cc-table-state
+{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    background:
+        radial-gradient(circle at 50% 40%, rgba(74, 91, 212, 0.06) 0%, transparent 55%);
+}
+
+
+/* =========================================================
+   ICON BUTTON (Remove)
+========================================================= */
+
+.cc-icon-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid transparent;
+    border-radius: var(--cc-radius-sm);
+    background: transparent;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.cc-icon-btn i
+{
+    font-size: 13px;
+}
+
+.cc-icon-btn:disabled
+{
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.cc-icon-btn:focus-visible
+{
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25);
+}
+
+.cc-icon-danger
+{
+    color: var(--cc-danger);
+    background: var(--cc-danger-bg);
+}
+
+.cc-icon-danger:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+    border-color: #f6caca;
+    background: #fde3e3;
+}
+
+
+/* =========================================================
+   RESPONSIVE : entry bar wraps on narrow screens
+========================================================= */
+
+@media (max-width: 1280px)
+{
+    .cc-entry-pos
+    {
+        width: 260px;
+    }
+
+    .cc-entry-card
+    {
+        width: 200px;
+    }
+
+    .cc-entry-charge
+    {
+        width: 110px;
+    }
+}

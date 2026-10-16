@@ -133,7 +133,69 @@ public class BankAccountsConfiguration
 
         builder.Property(x => x.Bank)
                .IsRequired()
-               .HasMaxLength(200);
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Full Account Number
+        //===========================================================
+
+        builder.Property(x => x.FullAccountNumber)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Short Account Name
+        //===========================================================
+
+        builder.Property(x => x.ShortAccountName)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Short Account Number
+        //===========================================================
+
+        builder.Property(x => x.ShortAccountNumber)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Short Branch Name
+        //===========================================================
+
+        builder.Property(x => x.ShortBranchName)
+               .IsRequired()
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Swift Code
+        //===========================================================
+
+        builder.Property(x => x.SwiftCode)
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Routing Number
+        //===========================================================
+
+        builder.Property(x => x.RoutingNumber)
+               .HasMaxLength(100);
+
+        //===========================================================
+        // Branch Exclusive
+        //===========================================================
+
+        builder.Property(x => x.BranchExclusive)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        //===========================================================
+        // Bank Branch Name
+        //===========================================================
+
+        builder.Property(x => x.BankBranchName)
+               .IsRequired()
+               .HasMaxLength(100);
 
         //===========================================================
         // Soft Delete

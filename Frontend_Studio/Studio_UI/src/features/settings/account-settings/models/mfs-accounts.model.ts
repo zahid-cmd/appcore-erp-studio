@@ -1,90 +1,114 @@
-/* ============================================================
-   MFS Accounts
-============================================================ */
+// PAGE-CLONED : Bank Accounts -> MFS Accounts
+//===============================================================
+// MFS Accounts
+//===============================================================
 
-export interface MfsAccounts
+export interface MFSAccount
 {
-    id:
-        number;
+    MFSAccountId: number;
 
-    code:
-        string;
+    AccountSubGroupsId: number;
 
-    name:
-        string;
+    MFSAccountCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    MFSAccountName: string;
 
-    sampleField:
-        string;
+    Remarks: string;
 
-    status:
-        string;
+    Status: boolean;
 
-    remarks:
-        string;
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    LinkedBankAccount: string;
+
+    MFSAccountNumber: string;
+
+    AccountType: string;
+
+    BranchExclusive: boolean;
+
+    MFSCharges: number;
+
 }
 
 
+//===============================================================
+// Create MFS Accounts
+//===============================================================
 
-/* ============================================================
-   Create MFS Accounts
-============================================================ */
-
-export interface CreateMfsAccounts
+export interface CreateMFSAccount
 {
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    MFSAccountCode: string;
 
-    sampleField:
-        string;
+    MFSAccountName: string;
 
-    status:
-        string;
+    Remarks: string;
 
-    remarks:
-        string;
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    LinkedBankAccount: string;
+
+    MFSAccountNumber: string;
+
+    AccountType: string;
+
+    BranchExclusive: boolean;
+
+    MFSCharges: number;
+
 }
 
 
+//===============================================================
+// Update MFS Accounts
+//===============================================================
 
-/* ============================================================
-   Update MFS Accounts
-============================================================ */
-
-export interface UpdateMfsAccounts
+export interface UpdateMFSAccount
 {
-    id:
-        number;
+    MFSAccountId: number;
 
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    MFSAccountCode: string;
 
-    sampleField:
-        string;
+    MFSAccountName: string;
 
-    status:
-        string;
+    Remarks: string;
 
-    remarks:
-        string;
-}
+    Status: boolean;
 
+    Branch: string;
 
+    DisplayName: string;
 
-/* ============================================================
-   MFS Accounts Defaults
-============================================================ */
+    CollectionAccount: boolean;
 
-export interface MfsAccountsDefaults
-{
-    code:
-        string;
+    PaymentAccount: boolean;
+
+    LinkedBankAccount: string;
+
+    MFSAccountNumber: string;
+
+    AccountType: string;
+
+    BranchExclusive: boolean;
+
+    MFSCharges: number;
+
 }

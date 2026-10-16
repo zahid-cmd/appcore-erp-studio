@@ -13,6 +13,9 @@ using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 using AppCore.Infrastructure.Persistence;
 using AppCore.Infrastructure.CodeMaster;
 
+using SystemConfigurationsEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations;
+
 //===============================================================
 // Namespace
 //===============================================================
@@ -462,9 +465,30 @@ public class NavigationModuleRepository : INavigationModuleRepository
 
         if (entity == null)
         {
-            throw new Exception(
+            throw new KeyNotFoundException(
                 "Navigation Module not found."
             );
+        }
+
+        //===========================================================
+        // Dependency Check : System Configurations
+        //
+        // A module cannot be deleted while it still has settings.
+        //===========================================================
+
+        int configurationCount =
+            await _context
+                .Set<SystemConfigurationsEntity>()
+                .AsNoTracking()
+                .CountAsync(x =>
+                    x.NavigationModuleId == entity.Id
+                    &&
+                    !x.IsDeleted);
+
+        if (configurationCount > 0)
+        {
+            throw new InvalidOperationException(
+                $"Module '{entity.Name}' cannot be deleted because it has {configurationCount} system configuration(s). Delete them in System Configurations first.");
         }
 
 

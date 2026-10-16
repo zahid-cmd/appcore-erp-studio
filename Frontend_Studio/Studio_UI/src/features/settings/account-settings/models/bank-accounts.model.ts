@@ -27,6 +27,22 @@ export interface BankAccount
 
     Bank: string;
 
+    FullAccountNumber: string;
+
+    ShortAccountName: string;
+
+    ShortAccountNumber: string;
+
+    ShortBranchName: string;
+
+    SwiftCode: string;
+
+    RoutingNumber: string;
+
+    BranchExclusive: boolean;
+
+    BankBranchName: string;
+
 }
 
 
@@ -55,6 +71,22 @@ export interface CreateBankAccount
     PaymentAccount: boolean;
 
     Bank: string;
+
+    FullAccountNumber: string;
+
+    ShortAccountName: string;
+
+    ShortAccountNumber: string;
+
+    ShortBranchName: string;
+
+    SwiftCode: string;
+
+    RoutingNumber: string;
+
+    BranchExclusive: boolean;
+
+    BankBranchName: string;
 
 }
 
@@ -86,5 +118,21 @@ export interface UpdateBankAccount
     PaymentAccount: boolean;
 
     Bank: string;
+
+    FullAccountNumber: string;
+
+    ShortAccountName: string;
+
+    ShortAccountNumber: string;
+
+    ShortBranchName: string;
+
+    SwiftCode: string;
+
+    RoutingNumber: string;
+
+    BranchExclusive: boolean;
+
+    BankBranchName: string;
 
 }

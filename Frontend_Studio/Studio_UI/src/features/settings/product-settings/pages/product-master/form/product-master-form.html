@@ -91,8 +91,7 @@
                 icon="fas fa-layer-group">
 
 
-
-                <!-- Product Category -->
+                <!-- Product Category (locked after creation) -->
 
                 <app-dropdown
 
@@ -104,15 +103,14 @@
 
                     (valueChange)="onProductCategoryChange()"
 
-                    [disabled]="isEditMode || isViewMode"
+                    [disabled]="isEditMode || isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
 
 
-
-                <!-- Product Sub Category -->
+                <!-- Product Sub Category (locked after creation) -->
 
                 <app-dropdown
 
@@ -124,12 +122,11 @@
 
                     (valueChange)="onProductSubCategoryChange()"
 
-                    [disabled]="isEditMode || isViewMode"
+                    [disabled]="isEditMode || isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Product Code -->
@@ -149,7 +146,6 @@
                 </app-textbox>
 
 
-
                 <!-- Product Name -->
 
                 <app-textbox
@@ -162,12 +158,11 @@
 
                     (valueChange)="onProductNameChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
             </app-form-section>
 
@@ -183,7 +178,6 @@
                 title="Inventory Ledger Codes"
 
                 icon="fas fa-tags">
-
 
 
                 <!-- Inventory Ledger Code -->
@@ -203,7 +197,6 @@
                 </app-textbox>
 
 
-
                 <!-- WIP Ledger Code -->
 
                 <app-textbox
@@ -219,7 +212,6 @@
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- COGS Ledger Code -->
@@ -238,7 +230,6 @@
 
                 </app-textbox>
 
-
             </app-form-section>
 
 
@@ -255,7 +246,6 @@
                 icon="fas fa-folder-tree">
 
 
-
                 <!-- Inventory Ledger Name -->
 
                 <app-textbox
@@ -268,12 +258,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || isEditMode"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- WIP Ledger Name -->
@@ -288,12 +277,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || isEditMode"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
 
                 <!-- COGS Ledger Name -->
@@ -308,12 +296,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode || isEditMode"
+                    [disabled]="isViewMode || isEditMode || isSaving"
 
                     [required]="true">
 
                 </app-textbox>
-
 
             </app-form-section>
 
@@ -331,7 +318,6 @@
                 icon="fas fa-toggle-on">
 
 
-
                 <!-- Status -->
 
                 <app-dropdown
@@ -344,12 +330,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isSaving"
 
                     [required]="true">
 
                 </app-dropdown>
-
 
 
                 <!-- Remarks -->
@@ -366,13 +351,11 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode">
+                    [disabled]="isViewMode || isSaving">
 
                 </app-textarea>
 
-
             </app-form-section>
-
 
 
         </app-form-grid>
@@ -390,3 +373,5 @@
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

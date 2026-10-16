@@ -1,3 +1,5 @@
+// PAGE-CLONED : Bank Setup -> Card Setup
+// PAGE-CLONED : Wings -> Card Setup
 //===============================================================
 // Imports
 //===============================================================
@@ -17,7 +19,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -30,16 +33,14 @@ from '../../../../environments/environment';
 import
 {
     CardSetup,
-
     CreateCardSetup,
-
     UpdateCardSetup
 }
 from '../models/card-setup.model';
 
 
 //===============================================================
-// Card Setup Service
+// CardSetup Service
 //===============================================================
 
 @Injectable(
@@ -50,14 +51,12 @@ from '../models/card-setup.model';
 
 export class CardSetupService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,6 +67,21 @@ export class CardSetupService
         `${environment.apiUrl}/settings/account-settings/card-setup`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
@@ -76,11 +90,70 @@ export class CardSetupService
     getAll():
         Observable<CardSetup[]>
     {
-        return this.http.get<CardSetup[]>(
-            this.apiUrl
-        );
+        return this.http
+
+            .get<any[]>(
+                this.apiUrl
+            )
+
+            .pipe(
+
+                map(
+
+                    response =>
+
+                        response.map(
+
+                            cardSetup =>
+
+                            ({
+                                ...cardSetup,
+
+                                CardSetupId:
+                                    Number(cardSetup.CardSetupId ?? cardSetup.cardSetupId ?? cardSetup.id ?? cardSetup.Id),
+
+                                CardCode:
+                                    cardSetup.CardCode ?? cardSetup.cardCode ?? '',
+
+                                CardName:
+                                    cardSetup.CardName ?? cardSetup.cardName ?? '',
+
+                                Remarks:
+                                    cardSetup.Remarks ?? cardSetup.remarks ?? '',
+
+                                Status:
+                                    Boolean(cardSetup.Status ?? cardSetup.status ?? true),
+
+                                ShortName:
+                                    cardSetup.ShortName ?? cardSetup.shortName ?? '',
+
+                                IssuingBank:
+                                    cardSetup.IssuingBank ?? cardSetup.issuingBank ?? ''
+                            })
+
+                        )
+
+                )
+
+            );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    getNextCode():
+        Observable<string>
+    {
+        return this.http.get(
+            `${this.apiUrl}/next-code`,
+            {
+                responseType:
+                    'text'
+            }
+        );
+    }
 
 
     //===========================================================
@@ -100,7 +173,6 @@ export class CardSetupService
     }
 
 
-
     //===========================================================
     // Create
     //===========================================================
@@ -114,11 +186,9 @@ export class CardSetupService
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
 
     //===========================================================
@@ -133,12 +203,10 @@ export class CardSetupService
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
+            this.apiUrl,
             model
         );
     }
-
 
 
     //===========================================================
@@ -158,21 +226,18 @@ export class CardSetupService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
 
     restore():
-        Observable<void>
+        Observable<boolean>
     {
-        return this.http.put<void>(
+        return this.http.put<boolean>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,7 +251,6 @@ export class CardSetupService
             `${this.apiUrl}/history`
         );
     }
-
 
 
     //===========================================================
@@ -204,5 +268,4 @@ export class CardSetupService
             `${this.apiUrl}/${id}/history`
         );
     }
-
 }

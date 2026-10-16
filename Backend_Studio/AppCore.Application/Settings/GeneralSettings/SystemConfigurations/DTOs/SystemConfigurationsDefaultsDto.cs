@@ -2,24 +2,22 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 
 
 //===============================================================
-// SystemConfigurationsDefaultsDto
+// System Configurations Defaults DTO
+//
+// Suggested values for a new setting in a module.
 //===============================================================
 
 public class SystemConfigurationsDefaultsDto
 {
-    //===========================================================
-    // Code
-    //===========================================================
+    public long NavigationModuleId { get; set; }
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string ModuleName { get; set; } = string.Empty;
+
+    public string Code { get; set; } = string.Empty;
+
+    public bool IsEnabled { get; set; } = true;
 }

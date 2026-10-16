@@ -1,1 +1,11 @@
 @import '../../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   FINANCIAL YEARS LIST
+   Layout comes from the shared list-page styles.
+===================================================== */
+
+:host
+{
+    display: block;
+}

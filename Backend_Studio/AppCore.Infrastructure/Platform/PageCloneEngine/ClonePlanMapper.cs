@@ -52,7 +52,8 @@ public static class ClonePlanMapper
                 Required = f.Required,
                 Unique = f.Unique,
                 Control = string.IsNullOrWhiteSpace(f.Control) ? "Textbox" : f.Control,
-                DefaultValue = f.DefaultValue ?? string.Empty
+                DefaultValue = f.DefaultValue ?? string.Empty,
+                Section = f.Section ?? string.Empty
             }).ToList(),
 
             Parent = new CloneParent

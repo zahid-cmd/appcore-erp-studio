@@ -1,7 +1,5 @@
 //===============================================================
-
 // Namespaces
-
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +7,10 @@ using AppCore.Application.Settings.ProductSettings;
 using AppCore.Application.Settings.ProductSettings.ProductCategory.DTOs;
 using ProductCategoryEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory;
+using ProductSubCategoryEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory;
+using ProductMasterEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster;
 using AccountGroupEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup;
 using AccountClassEntity =
@@ -18,17 +20,13 @@ using AppCore.Domain.Common;
 using AppCore.Infrastructure.CodeMaster;
 
 //===============================================================
-
 // Namespace
-
 //===============================================================
 
 namespace AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 
 //===============================================================
-
 // Product Category Repository
-
 //===============================================================
 
 public class ProductCategoryRepository :
@@ -36,17 +34,13 @@ public class ProductCategoryRepository :
 {
 
     //===========================================================
-
     // Private Fields
-
     //===========================================================
 
     private readonly AppDbContext _context;
 
     //===========================================================
-
     // Constructor
-
     //===========================================================
 
     public ProductCategoryRepository(
@@ -57,9 +51,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Product Category Query
-
     //===========================================================
 
     private IQueryable<ProductCategoryDto>
@@ -80,18 +72,14 @@ public class ProductCategoryRepository :
                     {
 
                         //===================================================
-
                         // Primary Key
-
                         //===================================================
 
                         ProductCategoryId =
                             x.ProductCategoryId,
 
                         //===================================================
-
                         // Basic Information
-
                         //===================================================
 
                         CategoryCode =
@@ -100,9 +88,7 @@ public class ProductCategoryRepository :
                             x.CategoryName,
 
                         //===================================================
-
                         // Inventory Group
-
                         //===================================================
 
                         InventoryGroupCode =
@@ -111,9 +97,7 @@ public class ProductCategoryRepository :
                             x.InventoryGroupName,
 
                         //===================================================
-
                         // WIP Group
-
                         //===================================================
 
                         WipGroupCode =
@@ -122,9 +106,7 @@ public class ProductCategoryRepository :
                             x.WipGroupName,
 
                         //===================================================
-
                         // COGS Group
-
                         //===================================================
 
                         CogsGroupCode =
@@ -133,9 +115,7 @@ public class ProductCategoryRepository :
                             x.CogsGroupName,
 
                         //===================================================
-
                         // Configuration
-
                         //===================================================
 
                         SubCategoryCreationAllowed =
@@ -144,18 +124,14 @@ public class ProductCategoryRepository :
                             x.Remarks,
 
                         //===================================================
-
                         // Status
-
                         //===================================================
 
                         IsActive =
                             x.IsActive,
 
                         //===================================================
-
                         // Soft Delete
-
                         //===================================================
 
                         IsDeleted =
@@ -166,9 +142,7 @@ public class ProductCategoryRepository :
                             x.DeletedDate,
 
                         //===================================================
-
                         // Audit
-
                         //===================================================
 
                         CreatedBy =
@@ -184,9 +158,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Get All
-
     //===========================================================
 
     public async Task<List<ProductCategoryDto>>
@@ -202,9 +174,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Get By Id
-
     //===========================================================
 
     public async Task<ProductCategoryDto?>
@@ -749,9 +719,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Create
-
     //===========================================================
 
     public async Task<long>
@@ -763,9 +731,7 @@ public class ProductCategoryRepository :
     {
 
         //=======================================================
-
         // Generate Product Category Code
-
         //=======================================================
 
         string categoryCode =
@@ -791,9 +757,7 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
         // Check Duplicate Category Name
-
         //=======================================================
 
         bool categoryExists =
@@ -817,9 +781,7 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
         // Generate Product Category Entity
-
         //=======================================================
 
         ProductCategoryEntity entity =
@@ -827,9 +789,7 @@ public class ProductCategoryRepository :
             {
 
                 //===================================================
-
                 // Basic Information
-
                 //===================================================
 
                 CategoryCode =
@@ -838,9 +798,7 @@ public class ProductCategoryRepository :
                     categoryName,
 
                 //===================================================
-
                 // Inventory Group
-
                 //===================================================
 
                 InventoryGroupCode =
@@ -853,9 +811,7 @@ public class ProductCategoryRepository :
                     string.Empty,
 
                 //===================================================
-
                 // WIP Group
-
                 //===================================================
 
                 WipGroupCode =
@@ -868,9 +824,7 @@ public class ProductCategoryRepository :
                     string.Empty,
 
                 //===================================================
-
                 // COGS Group
-
                 //===================================================
 
                 CogsGroupCode =
@@ -883,9 +837,7 @@ public class ProductCategoryRepository :
                     string.Empty,
 
                 //===================================================
-
                 // Configuration
-
                 //===================================================
 
                 SubCategoryCreationAllowed =
@@ -896,9 +848,7 @@ public class ProductCategoryRepository :
                     string.Empty,
 
                 //===================================================
-
                 // Status
-
                 //===================================================
 
                 IsActive =
@@ -907,9 +857,7 @@ public class ProductCategoryRepository :
                     false,
 
                 //===================================================
-
                 // Audit
-
                 //===================================================
 
                 CreatedBy =
@@ -919,9 +867,7 @@ public class ProductCategoryRepository :
             };
 
         //=======================================================
-
         // Save Product Category and Inventory Groups
-
         //=======================================================
 
         await using var transaction =
@@ -937,9 +883,7 @@ public class ProductCategoryRepository :
                 userId);
 
             //=======================================================
-
             // Activity History
-
             //=======================================================
 
             _context.ActivityHistories.Add(
@@ -977,9 +921,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Update
-
     //===========================================================
 
     public async Task
@@ -991,9 +933,7 @@ public class ProductCategoryRepository :
     {
 
         //=======================================================
-
         // Resolve Product Category
-
         //=======================================================
 
         ProductCategoryEntity? entity =
@@ -1018,9 +958,7 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
         // Validate Category Name
-
         //=======================================================
 
         string categoryName =
@@ -1037,9 +975,7 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
         // Check Duplicate Category Name
-
         //=======================================================
 
         bool categoryExists =
@@ -1066,9 +1002,7 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
         // Update Entity
-
         //=======================================================
 
         entity.CategoryName =
@@ -1099,9 +1033,7 @@ public class ProductCategoryRepository :
             string.Empty;
 
         //=======================================================
-
         // Configuration
-
         //=======================================================
 
         entity.SubCategoryCreationAllowed =
@@ -1112,9 +1044,7 @@ public class ProductCategoryRepository :
             string.Empty;
 
         //=======================================================
-
         // Status
-
         //=======================================================
 
         entity.IsActive =
@@ -1129,9 +1059,7 @@ public class ProductCategoryRepository :
         await _context.SaveChangesAsync();
 
         //=======================================================
-
         // Activity History
-
         //=======================================================
 
         _context.ActivityHistories.Add(
@@ -1161,9 +1089,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Delete
-
     //===========================================================
 
     public async Task
@@ -1175,9 +1101,7 @@ public class ProductCategoryRepository :
     {
 
         //=======================================================
-
         // Resolve Product Category
-
         //=======================================================
 
         ProductCategoryEntity? entity =
@@ -1202,106 +1126,198 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
-        // Soft Delete Product Category
-
+        // Dependency Check : Sub Categories & Products
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted Product Sub Category or Product Master
+        // still belongs to this Product Category.
         //=======================================================
 
-        entity.IsDeleted =
-            true;
-        entity.DeletedBy =
-            userId;
-        entity.DeletedDate =
-            DateTime.UtcNow;
-
-        //=======================================================
-
-        // Delete Generated Inventory Groups
-
-        //=======================================================
-
-        List<string> generatedGroupCodes =
-            new List<string>
-            {
-                entity.InventoryGroupCode,
-                entity.WipGroupCode,
-                entity.CogsGroupCode
-            }
-            .Where
-            (
-                x =>
-                    !string.IsNullOrWhiteSpace(x)
-            )
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        List<AccountGroupEntity> generatedGroups =
+        int subCategoryCount =
             await _context
-                .Set<AccountGroupEntity>()
+                .Set<ProductSubCategoryEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.ProductCategoryId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        int productCount =
+            await _context
+                .Set<ProductMasterEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        x.ProductCategoryId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        //=======================================================
+        // Build Blocked Message
+        //=======================================================
+
+        List<string> dependents =
+            new List<string>();
+
+        if
+        (
+            subCategoryCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{subCategoryCount} product sub categor{(subCategoryCount == 1 ? "y" : "ies")}"
+            );
+        }
+
+        if
+        (
+            productCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{productCount} product(s)"
+            );
+        }
+
+        if
+        (
+            dependents.Count >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Product Category '{entity.CategoryName}' cannot be deleted because " +
+                $"{string.Join(" and ", dependents)} are created under it. " +
+                "Delete those records first."
+            );
+        }
+
+        //=======================================================
+        // Begin Transaction
+        //=======================================================
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            DateTime deletedDate =
+                DateTime.UtcNow;
+
+            //===================================================
+            // Soft Delete Product Category
+            //===================================================
+
+            entity.IsDeleted =
+                true;
+            entity.DeletedBy =
+                userId;
+            entity.DeletedDate =
+                deletedDate;
+
+            //===================================================
+            // Delete Generated Inventory Groups
+            //===================================================
+
+            List<string> generatedGroupCodes =
+                new List<string>
+                {
+                    entity.InventoryGroupCode,
+                    entity.WipGroupCode,
+                    entity.CogsGroupCode
+                }
                 .Where
                 (
                     x =>
-                        !x.IsDeleted
-                        &&
-                        generatedGroupCodes.Contains(
-                            x.GroupCode)
+                        !string.IsNullOrWhiteSpace(x)
                 )
-                .ToListAsync();
-        foreach
-        (
-            AccountGroupEntity group
-            in generatedGroups
-        )
-        {
-            group.IsDeleted =
-                true;
-            group.DeletedBy =
-                userId;
-            group.DeletedDate =
-                DateTime.UtcNow;
-            group.ModifiedBy =
-                userId;
-            group.ModifiedDate =
-                DateTime.UtcNow;
-        }
-        await _context.SaveChangesAsync();
-
-        //=======================================================
-
-        // Activity History
-
-        //=======================================================
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+                .Distinct(
+                    StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            List<AccountGroupEntity> generatedGroups =
+                await _context
+                    .Set<AccountGroupEntity>()
+                    .Where
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            generatedGroupCodes.Contains(
+                                x.GroupCode)
+                    )
+                    .ToListAsync();
+            foreach
+            (
+                AccountGroupEntity group
+                in generatedGroups
+            )
             {
-                Module =
-                    "Product Settings",
-                EntityName =
-                    "Product Category",
-                EntityId =
-                    entity.ProductCategoryId,
-                ActivityType =
-                    "Delete",
-                ActivityTitle =
-                    "Product Category Deleted",
-                ActivityDescription =
-                    $"Product Category '{entity.CategoryName}' deleted.",
-                PerformedBy =
-                    userId,
-                PerformedByName =
-                    "System",
-                PerformedDate =
-                    DateTime.UtcNow
+                group.IsDeleted =
+                    true;
+                group.DeletedBy =
+                    userId;
+                group.DeletedDate =
+                    deletedDate;
+                group.ModifiedBy =
+                    userId;
+                group.ModifiedDate =
+                    deletedDate;
             }
-        );
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
+
+            //===================================================
+            // Activity History
+            //===================================================
+
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module =
+                        "Product Settings",
+                    EntityName =
+                        "Product Category",
+                    EntityId =
+                        entity.ProductCategoryId,
+                    ActivityType =
+                        "Delete",
+                    ActivityTitle =
+                        "Product Category Deleted",
+                    ActivityDescription =
+                        $"Product Category '{entity.CategoryName}' deleted.",
+                    PerformedBy =
+                        userId,
+                    PerformedByName =
+                        "System",
+                    PerformedDate =
+                        deletedDate
+                }
+            );
+            await _context.SaveChangesAsync();
+
+            //===================================================
+            // Commit Transaction
+            //===================================================
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     //===========================================================
-
     // Restore
-
     //===========================================================
 
     public async Task<bool>
@@ -1312,9 +1328,7 @@ public class ProductCategoryRepository :
     {
 
         //=======================================================
-
         // Resolve Latest Deleted Product Category
-
         //=======================================================
 
         ProductCategoryEntity? entity =
@@ -1341,9 +1355,7 @@ public class ProductCategoryRepository :
         }
 
         //=======================================================
-
         // Restore Product Category
-
         //=======================================================
 
         entity.IsDeleted =
@@ -1358,9 +1370,7 @@ public class ProductCategoryRepository :
             DateTime.UtcNow;
 
         //=======================================================
-
         // Restore Generated Inventory Groups
-
         //=======================================================
 
         List<string> generatedGroupCodes =
@@ -1410,9 +1420,7 @@ public class ProductCategoryRepository :
         await _context.SaveChangesAsync();
 
         //=======================================================
-
         // Activity History
-
         //=======================================================
 
         _context.ActivityHistories.Add(
@@ -1443,9 +1451,7 @@ public class ProductCategoryRepository :
     }
 
     //===========================================================
-
     // Exists
-
     //===========================================================
 
     public async Task<bool>

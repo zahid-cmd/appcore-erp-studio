@@ -2,7 +2,7 @@
 // Namespaces
 //===============================================================
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.GeneralSettings.FinancialYears.DTOs;
 
 
 //===============================================================
@@ -13,98 +13,51 @@ namespace AppCore.Application.Settings.GeneralSettings;
 
 
 //===============================================================
-// IFinancialYearsRepository
+// Financial Years Repository Interface
 //===============================================================
 
 public interface IFinancialYearsRepository
 {
-
     //===========================================================
-    // Get All
-    //===========================================================
-
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>>
-        GetAllAsync();
-
-
-
-    //===========================================================
-    // Get By Id
+    // Read
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears?>
-        GetByIdAsync
-    (
-        long id
-    );
+    Task<List<FinancialYearsDto>> GetAllAsync();
 
+    Task<FinancialYearsDto?> GetByIdAsync(
+        long id);
+
+    Task<FinancialYearsDto?> GetCurrentAsync();
+
+    Task<string> GetNextCodeAsync();
+
+    Task<FinancialYearsDefaultsDto> GetDefaultsAsync();
 
 
     //===========================================================
-    // Create
+    // Write
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears entity
-    );
+    Task<long> CreateAsync(
+        CreateFinancialYearsDto dto,
+        long userId);
 
+    Task UpdateAsync(
+        UpdateFinancialYearsDto dto,
+        long userId);
 
+    Task DeleteAsync(
+        long id,
+        long userId);
 
-    //===========================================================
-    // Update
-    //===========================================================
-
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears entity
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Delete
+    // Exists
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
+    Task<bool> ExistsAsync(
+        long id);
 }

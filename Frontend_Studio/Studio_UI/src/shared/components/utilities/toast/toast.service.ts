@@ -38,6 +38,18 @@ export interface ToastItem
 }
 
 /* =====================================================
+   DISPLAY DURATION
+
+   How long a toast stays on screen (milliseconds).
+   Change this one value to adjust every toast in the
+   app. A page can still pass its own duration, and
+   0 keeps the toast open until it is closed manually.
+===================================================== */
+
+export const TOAST_DEFAULT_DURATION_MS: number =
+    4000;
+
+/* =====================================================
    TOAST SERVICE
 ===================================================== */
 
@@ -56,6 +68,13 @@ export class ToastService
             signal([]);
 
     /* =====================================================
+       AUTO-CLOSE TIMERS (per toast)
+    ====================================================== */
+
+    private readonly timers =
+        new Map<number, ReturnType<typeof setTimeout>>();
+
+    /* =====================================================
        SHOW
     ====================================================== */
 
@@ -63,7 +82,7 @@ export class ToastService
         type: ToastType,
         title: string,
         message: string,
-        duration = 3000
+        duration: number = TOAST_DEFAULT_DURATION_MS
     ): void
     {
         const toast: ToastItem =
@@ -91,14 +110,17 @@ export class ToastService
 
         if (duration > 0)
         {
-            setTimeout(
-                () =>
-                {
-                    this.remove(
-                        toast.id
-                    );
-                },
-                duration
+            this.timers.set(
+                toast.id,
+                setTimeout(
+                    () =>
+                    {
+                        this.remove(
+                            toast.id
+                        );
+                    },
+                    duration
+                )
             );
         }
     }
@@ -110,7 +132,7 @@ export class ToastService
     success(
         title: string,
         message: string,
-        duration = 3000
+        duration: number = TOAST_DEFAULT_DURATION_MS
     ): void
     {
         this.show(
@@ -128,7 +150,7 @@ export class ToastService
     error(
         title: string,
         message: string,
-        duration = 3000
+        duration: number = TOAST_DEFAULT_DURATION_MS
     ): void
     {
         this.show(
@@ -146,7 +168,7 @@ export class ToastService
     warning(
         title: string,
         message: string,
-        duration = 3000
+        duration: number = TOAST_DEFAULT_DURATION_MS
     ): void
     {
         this.show(
@@ -164,7 +186,7 @@ export class ToastService
     info(
         title: string,
         message: string,
-        duration = 3000
+        duration: number = TOAST_DEFAULT_DURATION_MS
     ): void
     {
         this.show(
@@ -183,6 +205,16 @@ export class ToastService
         id: number
     ): void
     {
+        const timer =
+            this.timers.get(id);
+
+        if (timer !== undefined)
+        {
+            clearTimeout(timer);
+
+            this.timers.delete(id);
+        }
+
         this.toasts.update(
             items =>
                 items.filter(
@@ -198,6 +230,13 @@ export class ToastService
 
     clear(): void
     {
+        this.timers.forEach(
+            timer =>
+                clearTimeout(timer)
+        );
+
+        this.timers.clear();
+
         this.toasts.set([]);
     }
 }

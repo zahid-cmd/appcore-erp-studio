@@ -114,6 +114,9 @@ public class PageCloneEngine
             renamed = FrontendBlockGenerator.Transform(
                 key, renamed, bp, Names.Singular(tgt), plan.Warnings);
 
+            // Routed components keep the class name the target's own routes expect
+            renamed = AlignRoutedClasses(key, renamed, baselineText);
+
             string after = AddMarker(renamed, tp, cloneFromName, cloneToName);
 
             plan.Files.Add(new FileChange
@@ -404,8 +407,63 @@ public class PageCloneEngine
         return null;
     }
 
+    //===========================================================
+    // Routed component class names
+    //
+    // The target's routes file (written by code synchronization) imports
+    // the list and form classes by the name the baseline file declares,
+    // for example PosAccountsForm. The rename-copy writes the class as
+    // the SOURCE spelled it (MfsAccountsForm, MFSAccountsForm), so the
+    // route import fails (TS2551). When the baseline declares exactly
+    // one class and the generated file declares exactly one class, the
+    // generated class always takes the baseline's name, because that
+    // is the name the routes import.
+    //===========================================================
+    private static string AlignRoutedClasses(string key, string text, string baselineText)
+    {
+        if (key != "frontend.list.ts" && key != "frontend.form.ts") return text;
+
+        var want = Regex.Matches(baselineText, @"export\s+class\s+(\w+)")
+            .Select(m => m.Groups[1].Value).ToList();
+        var have = Regex.Matches(text, @"export\s+class\s+(\w+)")
+            .Select(m => m.Groups[1].Value).ToList();
+
+        if (want.Count != 1 || have.Count != 1) return text;
+
+        string w = want[0], h = have[0];
+
+        if (w == h) return text;
+
+        return Regex.Replace(text, @"\b" + Regex.Escape(h) + @"\b", w);
+    }
+
     private static string Normalize(string text) =>
         text.Replace("\r\n", "\n").Trim();
+
+    //===========================================================
+    // Acronym spellings
+    //
+    // MFSAccounts is also written MfsAccounts (class names) and
+    // mfsAccounts (camelCase). The name map needs those spellings
+    // too, otherwise they stay in the clone.
+    //===========================================================
+
+    private static (string Title, string LowerLead) AcronymForms(string name)
+    {
+        var words = Regex.Matches(name, "[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[0-9]+")
+            .Select(m => m.Value).ToList();
+
+        if (words.Count == 0) return (name, name);
+
+        string title = string.Concat(words.Select(w =>
+            w.Length > 1 && w == w.ToUpperInvariant() && w.Any(char.IsLetter)
+                ? w[0] + w[1..].ToLowerInvariant()
+                : w));
+
+        string lower = char.ToLowerInvariant(title[0]) + title[1..];
+
+        return (title, lower);
+    }
 
     //===========================================================
     // Name map
@@ -470,6 +528,20 @@ public class PageCloneEngine
         AddKebab(Names.Kebab(sSing), Names.Kebab(tSing));
         AddIfAbsent(Names.Spaced(sSing), Names.Spaced(tSing));
         AddIfAbsent(Names.Spaced(sSing).ToLowerInvariant(), Names.Spaced(tSing).ToLowerInvariant());
+
+        // Acronym spellings: MFSAccounts -> MfsAccounts / mfsAccounts
+        //                    POSAccounts -> PosAccounts / posAccounts
+        var sPl = AcronymForms(src);
+        var tPl = AcronymForms(tgt);
+        var sSg = AcronymForms(sSing);
+        var tSg = AcronymForms(tSing);
+
+        AddIfAbsent(sPl.Title, tPl.Title);
+        AddIfAbsent(sPl.LowerLead, tPl.LowerLead);
+        AddIfAbsent(sSg.Title, tSg.Title);
+        AddIfAbsent(sSg.LowerLead, tSg.LowerLead);
+        AddIfAbsent(sPl.Title + "Id", tSing + "Id");
+        AddIfAbsent(sSg.Title + "Id", tSing + "Id");
 
         // Module / namespace pairs, learned by comparing source and target locations
         foreach (var (_, sp, tp) in pairs)

@@ -13,6 +13,16 @@ using WingsEntity =
 using CompanyEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Company;
 
+//---------------------------------------------------------------
+// Dependents of Wing
+//---------------------------------------------------------------
+
+using BranchEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.Branches;
+
+using WarehouseEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.Warehouses;
+
 using AppCore.Infrastructure.Persistence;
 
 using AppCore.Domain.Common;
@@ -732,6 +742,98 @@ public class WingsRepository : IWingsRepository
         {
             throw new KeyNotFoundException(
                 "Wing not found."
+            );
+        }
+
+
+        //===========================================================
+        // Dependency Check : Branches & Warehouses
+        //
+        // A soft delete is an UPDATE, so the database foreign key
+        // never fires. Block the delete here while any
+        // non-deleted Branch or Warehouse still belongs to this Wing.
+        //===========================================================
+
+        int branchCount =
+            await _context
+                .Set<BranchEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.WingId ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        int warehouseCount =
+            await _context
+                .Set<WarehouseEntity>()
+
+                .AsNoTracking()
+
+                .CountAsync
+                (
+                    x =>
+
+                        x.WingId ==
+                        id
+
+                        &&
+
+                        !x.IsDeleted
+                );
+
+
+        //===========================================================
+        // Build Blocked Message
+        //===========================================================
+
+        List<string> dependents =
+            new List<string>();
+
+
+        if
+        (
+            branchCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{branchCount} branch(es)"
+            );
+        }
+
+
+        if
+        (
+            warehouseCount >
+            0
+        )
+        {
+            dependents.Add(
+                $"{warehouseCount} warehouse(s)"
+            );
+        }
+
+
+        if
+        (
+            dependents.Count >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Wing '{entity.WingName}' cannot be deleted because " +
+                $"{string.Join(" and ", dependents)} are created under it. " +
+                "Delete those records first."
             );
         }
 

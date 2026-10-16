@@ -1,90 +1,79 @@
-/* ============================================================
-   POS Accounts
-============================================================ */
+//===============================================================
+// POS Account
+//
+// POSAccountName is system generated (UPPERCASE):
+// POS - <Issuing Bank Short Name> - <Terminal Number>
+//     - <Short Bank Name of Linked Bank Account>
+//===============================================================
 
-export interface PosAccounts
+export interface POSAccount
 {
-    id:
-        number;
+    POSAccountId: number;
 
-    code:
-        string;
+    AccountSubGroupsId: number;
 
-    name:
-        string;
+    POSAccountCode: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    POSAccountName: string;
 
-    sampleField:
-        string;
+    IssuingBank: string;
 
-    status:
-        string;
+    TerminalNumber: string;
 
-    remarks:
-        string;
+    LinkedBankAccount: string;
+
+    Branch: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    BranchExclusive: boolean;
+
+    Remarks: string;
+
+    Status: boolean;
 }
 
 
+//===============================================================
+// Create POS Account
+//===============================================================
 
-/* ============================================================
-   Create POS Accounts
-============================================================ */
-
-export interface CreatePosAccounts
+export interface CreatePOSAccount
 {
-    name:
-        string;
+    AccountSubGroupsId: number;
 
-    sampleSearchDropdownId:
-        number | null;
+    POSAccountCode: string;
 
-    sampleField:
-        string;
+    POSAccountName: string;
 
-    status:
-        string;
+    IssuingBank: string;
 
-    remarks:
-        string;
+    TerminalNumber: string;
+
+    LinkedBankAccount: string;
+
+    Branch: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    BranchExclusive: boolean;
+
+    Remarks: string;
+
+    Status: boolean;
 }
 
 
+//===============================================================
+// Update POS Account
+//===============================================================
 
-/* ============================================================
-   Update POS Accounts
-============================================================ */
-
-export interface UpdatePosAccounts
+export interface UpdatePOSAccount
+extends CreatePOSAccount
 {
-    id:
-        number;
-
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
-}
-
-
-
-/* ============================================================
-   POS Accounts Defaults
-============================================================ */
-
-export interface PosAccountsDefaults
-{
-    code:
-        string;
+    POSAccountId: number;
 }

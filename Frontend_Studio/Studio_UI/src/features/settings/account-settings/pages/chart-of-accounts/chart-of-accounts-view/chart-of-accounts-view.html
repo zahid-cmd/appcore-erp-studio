@@ -1,0 +1,839 @@
+<div class="app-list-page coa-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Chart of Accounts"
+
+        subtitle="Account classes, groups, sub groups and ledgers"
+
+        icon="fa-solid fa-sitemap">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search classes, groups, sub groups..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Print"
+
+                command1Icon="fas fa-print"
+
+                (command1Click)="openPrint()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                [command3Visible]="false"
+
+                [rightCommandIcon]="allExpanded ? 'fas fa-angles-up' : 'fas fa-angles-down'"
+
+                (rightCommandClick)="toggleAll()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR : TAB + SCOPED COUNTERS | STATUS
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+
+            pageToolbarLeft
+
+            class="coa-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab">
+
+            </app-control-tabs>
+
+
+            <div class="coa-counters">
+
+                <div class="coa-counter" title="Account classes in scope">
+                    <span class="coa-counter-icon"><i class="fas fa-layer-group"></i></span>
+                    <span class="coa-counter-value">{{ countClasses }}</span>
+                    <span class="coa-counter-label">Classes</span>
+                </div>
+
+                <div class="coa-counter" title="Account groups in scope">
+                    <span class="coa-counter-icon"><i class="fas fa-folder-tree"></i></span>
+                    <span class="coa-counter-value">{{ countGroups }}</span>
+                    <span class="coa-counter-label">Groups</span>
+                </div>
+
+                <div class="coa-counter" title="Account sub groups in scope">
+                    <span class="coa-counter-icon"><i class="fas fa-folder-open"></i></span>
+                    <span class="coa-counter-value">{{ countSubGroups }}</span>
+                    <span class="coa-counter-label">Sub Groups</span>
+                </div>
+
+                <div class="coa-counter" title="Ledgers in scope">
+                    <span class="coa-counter-icon coa-counter-ledger"><i class="fas fa-book"></i></span>
+                    <span class="coa-counter-value">{{ countLedgers }}</span>
+                    <span class="coa-counter-label">Ledgers</span>
+                </div>
+
+                @if (scopeLabel)
+                {
+                    <button
+
+                        type="button"
+
+                        class="coa-scope"
+
+                        title="Show the whole chart"
+
+                        (click)="clearSelection()">
+
+                        <span class="coa-scope-label">Scope</span>
+
+                        <span class="coa-scope-value">{{ scopeLabel }}</span>
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+                }
+
+            </div>
+
+        </div>
+
+
+        <div
+
+            pageToolbarRight
+
+            style="width:200px">
+
+            <app-search-dropdown
+
+                placeholder="All Status"
+
+                [items]="statusFilterItems"
+
+                labelField="label"
+
+                valueField="value"
+
+                [value]="selectedStatus"
+
+                (valueChange)="onStatusFilterChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         BODY : NAVIGATOR | PREVIEW
+    ====================================================== -->
+
+    @if (loadFailed)
+    {
+        <div class="coa-state">
+
+            <app-empty-state
+
+                icon="fas fa-triangle-exclamation"
+
+                title="Unable to Load Chart of Accounts"
+
+                subtitle="Check your connection and try again."
+
+                actionText="Try Again"
+
+                [showAction]="true"
+
+                (action)="refresh()">
+
+            </app-empty-state>
+
+        </div>
+    }
+    @else
+    {
+        <div class="coa-split">
+
+            <!-- ===============================================
+                 NAVIGATOR
+            ================================================ -->
+
+            <aside class="coa-nav">
+
+                <div class="coa-pane-head">
+
+                    <span class="coa-pane-title">
+
+                        <i class="fas fa-sitemap"></i>
+
+                        Navigator
+
+                    </span>
+
+                    <button
+
+                        type="button"
+
+                        class="coa-root"
+
+                        [class.coa-root-on]="!selection"
+
+                        (click)="clearSelection()">
+
+                        All Classes
+
+                    </button>
+
+                </div>
+
+                <div class="coa-nav-body appcore-scrollbar">
+
+                    @if (loading)
+                    {
+                        @for (n of [1, 2, 3, 4, 5]; track n)
+                        {
+                            <span class="coa-skeleton"></span>
+                        }
+                    }
+                    @else if (navClasses.length === 0)
+                    {
+                        <div class="coa-nav-empty">
+
+                            {{ searchText ? 'Nothing matches the search.' : 'No account classes found.' }}
+
+                        </div>
+                    }
+                    @else
+                    {
+                        <ul class="coa-tree">
+
+                            @for (cls of navClasses; track cls.node.Id)
+                            {
+                                <li>
+
+                                    <!-- CLASS -->
+
+                                    <div
+
+                                        class="coa-node coa-node-class"
+
+                                        [class.coa-node-active]="isSelected('class', cls.node.Id)"
+
+                                        [class.coa-node-off]="!cls.node.Status"
+
+                                        (click)="select('class', cls.node.Id)">
+
+                                        <button
+
+                                            type="button"
+
+                                            class="coa-caret"
+
+                                            [class.coa-caret-open]="isExpanded(classKey(cls.node.Id))"
+
+                                            [style.visibility]="cls.groups.length ? 'visible' : 'hidden'"
+
+                                            [attr.aria-label]="isExpanded(classKey(cls.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                            (click)="toggle(classKey(cls.node.Id), $event)">
+
+                                            <i class="fas fa-chevron-right"></i>
+
+                                        </button>
+
+                                        <span class="coa-node-text">
+
+                                            <span class="coa-node-name">{{ cls.node.Name }}</span>
+
+                                            <span class="coa-node-code">{{ cls.node.Code }}</span>
+
+                                        </span>
+
+                                        <span class="coa-badge" title="Groups">{{ cls.groups.length }}</span>
+
+                                    </div>
+
+                                    @if (isExpanded(classKey(cls.node.Id)) && cls.groups.length)
+                                    {
+                                        <ul>
+
+                                            @for (grp of cls.groups; track grp.node.Id)
+                                            {
+                                                <li>
+
+                                                    <!-- GROUP -->
+
+                                                    <div
+
+                                                        class="coa-node"
+
+                                                        [class.coa-node-active]="isSelected('group', grp.node.Id)"
+
+                                                        [class.coa-node-off]="!grp.node.Status"
+
+                                                        (click)="select('group', grp.node.Id)">
+
+                                                        <button
+
+                                                            type="button"
+
+                                                            class="coa-caret"
+
+                                                            [class.coa-caret-open]="isExpanded(groupKey(grp.node.Id))"
+
+                                                            [style.visibility]="grp.subGroups.length ? 'visible' : 'hidden'"
+
+                                                            [attr.aria-label]="isExpanded(groupKey(grp.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                                            (click)="toggle(groupKey(grp.node.Id), $event)">
+
+                                                            <i class="fas fa-chevron-right"></i>
+
+                                                        </button>
+
+                                                        <span class="coa-node-text">
+
+                                                            <span class="coa-node-name">{{ grp.node.Name }}</span>
+
+                                                            <span class="coa-node-code">{{ grp.node.Code }}</span>
+
+                                                        </span>
+
+                                                        <span class="coa-badge" title="Sub Groups">{{ grp.subGroups.length }}</span>
+
+                                                    </div>
+
+                                                    @if (isExpanded(groupKey(grp.node.Id)) && grp.subGroups.length)
+                                                    {
+                                                        <ul>
+
+                                                            @for (sub of grp.subGroups; track sub.node.Id)
+                                                            {
+                                                                <li>
+
+                                                                    <!-- SUB GROUP -->
+
+                                                                    <div
+
+                                                                        class="coa-node coa-node-leaf"
+
+                                                                        [class.coa-node-active]="isSelected('subgroup', sub.node.Id)"
+
+                                                                        [class.coa-node-off]="!sub.node.Status"
+
+                                                                        (click)="select('subgroup', sub.node.Id)">
+
+                                                                        <span class="coa-leaf-dot"></span>
+
+                                                                        <span class="coa-node-text">
+
+                                                                            <span class="coa-node-name">{{ sub.node.Name }}</span>
+
+                                                                            <span class="coa-node-code">{{ sub.node.Code }}</span>
+
+                                                                        </span>
+
+                                                                        <span class="coa-badge" title="Ledgers">{{ sub.ledgers }}</span>
+
+                                                                    </div>
+
+                                                                </li>
+                                                            }
+
+                                                        </ul>
+                                                    }
+
+                                                </li>
+                                            }
+
+                                        </ul>
+                                    }
+
+                                </li>
+                            }
+
+                        </ul>
+                    }
+
+                </div>
+
+            </aside>
+
+
+
+            <!-- ===============================================
+                 PREVIEW
+            ================================================ -->
+
+            <section class="coa-preview">
+
+                <div class="coa-preview-head">
+
+                    <!-- PATH RAIL -->
+
+                    <nav class="coa-path" aria-label="Path">
+
+                        @for (step of path; track $index; let last = $last)
+                        {
+                            <button
+
+                                type="button"
+
+                                class="coa-path-step"
+
+                                [class.coa-path-current]="last"
+
+                                [disabled]="last"
+
+                                (click)="onPathClick(step)">
+
+                                {{ step.label }}
+
+                            </button>
+
+                            @if (!last)
+                            {
+                                <span class="coa-path-sep"></span>
+                            }
+                        }
+
+                    </nav>
+
+                    <div class="coa-preview-titlebar">
+
+                        <div>
+
+                            <div class="coa-preview-title">{{ previewTitle }}</div>
+
+                            <div class="coa-preview-sub">{{ previewSubtitle }}</div>
+
+                        </div>
+
+                        <label class="coa-filter">
+
+                            <i class="fas fa-filter"></i>
+
+                            <input
+
+                                type="text"
+
+                                placeholder="Filter rows..."
+
+                                [ngModel]="rowFilterText"
+
+                                (ngModelChange)="onRowFilterChange($event)">
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <div class="coa-table-wrap appcore-scrollbar">
+
+                    <table class="coa-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="coa-col-no">#</th>
+
+                                @for (col of previewColumns; track col.key)
+                                {
+                                    <th
+
+                                        [style.width]="col.width ?? null"
+
+                                        [style.text-align]="col.align">
+
+                                        {{ col.label }}
+
+                                    </th>
+                                }
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @if (loading || (ledgersLoading && previewRows.length === 0))
+                            {
+                                @for (n of [1, 2, 3, 4, 5, 6]; track n)
+                                {
+                                    <tr class="coa-row-skeleton">
+                                        <td [attr.colspan]="previewColumns.length + 1">
+                                            <span class="coa-skeleton"></span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            @else
+                            {
+                                @for (row of previewRows; track row.level + row.id; let i = $index)
+                                {
+                                    <tr
+
+                                        [class.coa-row-drill]="row.drillable"
+
+                                        [class.coa-row-off]="!row.status"
+
+                                        [attr.title]="row.drillable ? 'Open ' + row.name : null"
+
+                                        (click)="onRowClick(row)">
+
+                                        <td class="coa-col-no">{{ i + 1 }}</td>
+
+                                        @for (col of previewColumns; track col.key)
+                                        {
+                                            <td [style.text-align]="col.align">
+
+                                                @switch (col.key)
+                                                {
+                                                    @case ('code')
+                                                    {
+                                                        <span class="coa-code">{{ row.code }}</span>
+                                                    }
+
+                                                    @case ('name')
+                                                    {
+                                                        <span class="coa-name">
+
+                                                            {{ row.name }}
+
+                                                            @if (row.drillable)
+                                                            {
+                                                                <i class="fas fa-chevron-right coa-drill"></i>
+                                                            }
+
+                                                        </span>
+                                                    }
+
+                                                    @case ('type')
+                                                    {
+                                                        <span class="coa-type">{{ row.cells['type'] }}</span>
+                                                    }
+
+                                                    @case ('status')
+                                                    {
+                                                        <span
+
+                                                            class="coa-status"
+
+                                                            [class.coa-status-on]="row.status">
+
+                                                            <span class="coa-status-dot"></span>
+
+                                                            {{ row.status ? 'Active' : 'Inactive' }}
+
+                                                        </span>
+                                                    }
+
+                                                    @default
+                                                    {
+                                                        <span class="coa-num">{{ row.cells[col.key] }}</span>
+                                                    }
+                                                }
+
+                                            </td>
+                                        }
+
+                                    </tr>
+                                }
+
+                                @if (previewRows.length === 0)
+                                {
+                                    <tr>
+                                        <td
+
+                                            class="coa-empty"
+
+                                            [attr.colspan]="previewColumns.length + 1">
+
+                                            {{ previewEmptyText }}
+
+                                        </td>
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+    }
+
+</div>
+
+
+
+<!-- =====================================================
+     PRINT DIALOG
+====================================================== -->
+
+@if (printOpen)
+{
+    <div
+
+        class="coa-modal-overlay"
+
+        (click)="closePrint()">
+
+        <div
+
+            class="coa-modal"
+
+            role="dialog"
+
+            aria-modal="true"
+
+            aria-labelledby="coaPrintTitle"
+
+            (click)="$event.stopPropagation()">
+
+            <div class="coa-modal-head">
+
+                <div>
+
+                    <div
+
+                        id="coaPrintTitle"
+
+                        class="coa-modal-title">
+
+                        Print Chart of Accounts
+
+                    </div>
+
+                    <div class="coa-modal-sub">Choose what goes on paper</div>
+
+                </div>
+
+                <button
+
+                    type="button"
+
+                    class="coa-modal-close"
+
+                    aria-label="Close"
+
+                    [disabled]="printing"
+
+                    (click)="closePrint()">
+
+                    <i class="fas fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+            <div class="coa-modal-body">
+
+                <!-- SCOPE -->
+
+                <div class="coa-field">
+
+                    <span class="coa-field-label">Scope</span>
+
+                    <div class="coa-segment">
+
+                        <button
+
+                            type="button"
+
+                            [class.coa-segment-on]="printOptions.scope === 'all'"
+
+                            (click)="printOptions.scope = 'all'">
+
+                            Full Chart
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            [class.coa-segment-on]="printOptions.scope === 'selection'"
+
+                            [disabled]="!selection"
+
+                            [title]="selection ? scopeLabel : 'Select a class, group or sub group first'"
+
+                            (click)="printOptions.scope = 'selection'">
+
+                            Current Selection
+
+                        </button>
+
+                    </div>
+
+                    @if (printOptions.scope === 'selection' && scopeLabel)
+                    {
+                        <span class="coa-field-hint">{{ scopeLabel }}</span>
+                    }
+
+                </div>
+
+                <!-- LEVELS -->
+
+                <div class="coa-field">
+
+                    <span class="coa-field-label">Levels</span>
+
+                    <div class="coa-segment coa-segment-wrap">
+
+                        @for (item of printDepthItems; track item.value)
+                        {
+                            <button
+
+                                type="button"
+
+                                [class.coa-segment-on]="printOptions.depth === item.value"
+
+                                (click)="printOptions.depth = item.value">
+
+                                {{ item.label }}
+
+                            </button>
+                        }
+
+                    </div>
+
+                </div>
+
+                <!-- COLUMNS -->
+
+                <div class="coa-field">
+
+                    <span class="coa-field-label">Columns</span>
+
+                    <div class="coa-checks">
+
+                        <label class="coa-check coa-check-fixed">
+                            <input type="checkbox" checked disabled> Code &amp; Name
+                        </label>
+
+                        <label class="coa-check">
+                            <input type="checkbox" [(ngModel)]="printOptions.showType"> Type
+                        </label>
+
+                        <label class="coa-check">
+                            <input type="checkbox" [(ngModel)]="printOptions.showBranch"> Branch
+                        </label>
+
+                        <label class="coa-check">
+                            <input type="checkbox" [(ngModel)]="printOptions.showStatus"> Status
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- OPTIONS -->
+
+                <div class="coa-field">
+
+                    <span class="coa-field-label">Options</span>
+
+                    <div class="coa-checks">
+
+                        <label class="coa-check">
+                            <input type="checkbox" [(ngModel)]="printOptions.includeInactive"> Include inactive
+                        </label>
+
+                        <label class="coa-check">
+                            <input type="checkbox" [(ngModel)]="printOptions.landscape"> Landscape
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="coa-modal-foot">
+
+                <button
+
+                    type="button"
+
+                    class="coa-btn coa-btn-ghost"
+
+                    [disabled]="printing"
+
+                    (click)="printFullChart()">
+
+                    Print Full Chart
+
+                </button>
+
+                <button
+
+                    type="button"
+
+                    class="coa-btn coa-btn-primary"
+
+                    [disabled]="printing"
+
+                    (click)="runPrint()">
+
+                    <i [class]="printing ? 'fas fa-spinner fa-spin' : 'fas fa-print'"></i>
+
+                    {{ printing ? 'Preparing…' : 'Print' }}
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>

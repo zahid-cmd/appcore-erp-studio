@@ -75,9 +75,26 @@ public class AccountSubGroupController : ControllerBase
     public async Task<ActionResult<string>> GetNextCode(
         long accountGroupId)
     {
-        return Ok(
-            await _repository.GetNextCodeAsync(
-                accountGroupId));
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    accountGroupId));
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -126,12 +143,29 @@ public class AccountSubGroupController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -152,9 +186,26 @@ public class AccountSubGroupController : ControllerBase
 
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
 
         return NoContent();
     }
@@ -202,6 +253,22 @@ public class AccountSubGroupController : ControllerBase
         )
         {
             return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            //=======================================================
+            // Deletion Blocked
+            //
+            // Raised by the repository when General Ledgers,
+            // Cash Accounts or Bank Accounts still use this
+            // Account Sub Group. Returned as HTTP 409 with a
+            // plain-text message for the "Delete Blocked" toast.
+            //=======================================================
+
+            return Conflict(ex.Message);
         }
 
 

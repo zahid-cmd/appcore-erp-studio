@@ -2,96 +2,46 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.CardCharges.DTOs;
 
 
 //===============================================================
-// CardChargesDto
+// Card Charges DTO
+//
+// All card lines of one POS Account.
+// List page : one row per POS Account
+// Form page : edit / view
 //===============================================================
 
 public class CardChargesDto
 {
     //===========================================================
-    // Primary Key
+    // POS Account (master)
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long POSAccountId { get; set; }
 
+    public string POSAccountCode { get; set; } = string.Empty;
 
-    //===========================================================
-    // Code
-    //===========================================================
+    public string POSAccountName { get; set; } = string.Empty;
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // POS Account status (list Status filter)
+    public bool Status { get; set; }
 
 
     //===========================================================
-    // Name
+    // Summary
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public int CardCount { get; set; }
+
+    // "VISA, MASTERCARD, AMEX"
+    public string CardNames { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Lines
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public List<CardChargeLineDto> Details { get; set; } = new();
 }

@@ -109,6 +109,30 @@ public class BankAccountsRepository : IBankAccountsRepository
                         Bank =
                             x.Bank,
 
+                        FullAccountNumber =
+                            x.FullAccountNumber,
+
+                        ShortAccountName =
+                            x.ShortAccountName,
+
+                        ShortAccountNumber =
+                            x.ShortAccountNumber,
+
+                        ShortBranchName =
+                            x.ShortBranchName,
+
+                        SwiftCode =
+                            x.SwiftCode,
+
+                        RoutingNumber =
+                            x.RoutingNumber,
+
+                        BranchExclusive =
+                            x.BranchExclusive,
+
+                        BankBranchName =
+                            x.BankBranchName,
+
                         IsDeleted =
                             x.IsDeleted,
 
@@ -232,7 +256,7 @@ public class BankAccountsRepository : IBankAccountsRepository
 
             if (parts.Length != 5) continue;
 
-            if (!string.Equals(parts[0].Trim(), "BNK", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(parts[0].Trim(), "BAN", StringComparison.OrdinalIgnoreCase)) continue;
 
             bool same = true;
 
@@ -381,6 +405,44 @@ public class BankAccountsRepository : IBankAccountsRepository
 
                 Bank =
                     dto.Bank?.Trim()
+                    ??
+                    string.Empty,
+
+                FullAccountNumber =
+                    dto.FullAccountNumber?.Trim()
+                    ??
+                    string.Empty,
+
+                ShortAccountName =
+                    dto.ShortAccountName?.Trim()
+                    ??
+                    string.Empty,
+
+                ShortAccountNumber =
+                    dto.ShortAccountNumber?.Trim()
+                    ??
+                    string.Empty,
+
+                ShortBranchName =
+                    dto.ShortBranchName?.Trim()
+                    ??
+                    string.Empty,
+
+                SwiftCode =
+                    dto.SwiftCode?.Trim()
+                    ??
+                    string.Empty,
+
+                RoutingNumber =
+                    dto.RoutingNumber?.Trim()
+                    ??
+                    string.Empty,
+
+                BranchExclusive =
+                    dto.BranchExclusive,
+
+                BankBranchName =
+                    dto.BankBranchName?.Trim()
                     ??
                     string.Empty,
 
@@ -569,6 +631,44 @@ public class BankAccountsRepository : IBankAccountsRepository
 
         entity.Bank =
             dto.Bank?.Trim()
+            ??
+            string.Empty;
+
+        entity.FullAccountNumber =
+            dto.FullAccountNumber?.Trim()
+            ??
+            string.Empty;
+
+        entity.ShortAccountName =
+            dto.ShortAccountName?.Trim()
+            ??
+            string.Empty;
+
+        entity.ShortAccountNumber =
+            dto.ShortAccountNumber?.Trim()
+            ??
+            string.Empty;
+
+        entity.ShortBranchName =
+            dto.ShortBranchName?.Trim()
+            ??
+            string.Empty;
+
+        entity.SwiftCode =
+            dto.SwiftCode?.Trim()
+            ??
+            string.Empty;
+
+        entity.RoutingNumber =
+            dto.RoutingNumber?.Trim()
+            ??
+            string.Empty;
+
+        entity.BranchExclusive =
+            dto.BranchExclusive;
+
+        entity.BankBranchName =
+            dto.BankBranchName?.Trim()
             ??
             string.Empty;
 

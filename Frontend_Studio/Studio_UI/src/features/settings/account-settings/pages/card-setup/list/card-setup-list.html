@@ -8,9 +8,9 @@
 
         title="Card Setup"
 
-        subtitle="Manage cardsetups"
+        subtitle="Manage card setup"
 
-        icon="fas fa-list">
+        icon="fas fa-credit-card">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search cardsetups..."
+                placeholder="Search card setup..."
 
                 (valueChange)="onSearch($event)">
 
@@ -82,23 +82,23 @@
              STATUS FILTER
         ================================================== -->
 
-        <app-dropdown
+        <app-search-dropdown
 
             pageToolbarRight
 
             placeholder="All Status"
 
-            [items]="statusItems"
+            [items]="statusFilterItems"
 
-            labelField="text"
+            labelField="label"
 
             valueField="value"
 
-            [(value)]="selectedStatus"
+            [value]="selectedStatus"
 
             (valueChange)="onStatusFilterChange($event)">
 
-        </app-dropdown>
+        </app-search-dropdown>
 
     </app-page-toolbar>
 
@@ -123,7 +123,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedCardSetups"
+                [rows]="pagedCardSetup"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -144,7 +144,6 @@
         </div>
 
 
-
         <!-- =================================================
              PAGINATION
         ================================================== -->
@@ -153,7 +152,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredCardSetups.length"
+            [totalRecords]="filteredCardSetup.length"
 
             [currentPage]="currentPage"
 
@@ -194,5 +193,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

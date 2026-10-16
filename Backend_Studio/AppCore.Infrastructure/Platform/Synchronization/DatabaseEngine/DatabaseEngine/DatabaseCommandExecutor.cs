@@ -3,6 +3,7 @@
 //===============================================================
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Npgsql;
@@ -236,6 +237,50 @@ public class DatabaseCommandExecutor
         }
 
 
+        await ExecuteSqlInTransactionAsync(
+            sql
+        );
+    }
+
+
+    //===========================================================
+    // Execute SQL In Transaction
+    //
+    // All statements succeed together, or none are applied.
+    //
+    // Used for DROP + CREATE so a failed CREATE never leaves
+    // the table dropped.
+    //===========================================================
+
+    public async Task ExecuteSqlInTransactionAsync
+    (
+        params string[] statements
+    )
+    {
+        var sqlStatements =
+            (statements ?? Array.Empty<string>())
+                .Where
+                (
+                    statement =>
+                        !string.IsNullOrWhiteSpace(
+                            statement
+                        )
+                )
+                .ToList();
+
+
+        if
+        (
+            !sqlStatements.Any()
+        )
+        {
+            throw new ArgumentException(
+                "At least one SQL command is required.",
+                nameof(statements)
+            );
+        }
+
+
         //=======================================================
         // Resolve Connection String
         //=======================================================
@@ -259,7 +304,7 @@ public class DatabaseCommandExecutor
 
 
         //=======================================================
-        // PostgreSQL Connection
+        // Open Connection & Transaction
         //=======================================================
 
         await using var connection =
@@ -268,38 +313,47 @@ public class DatabaseCommandExecutor
             );
 
 
-        //=======================================================
-        // Open Connection
-        //=======================================================
-
         await connection.OpenAsync();
 
 
-        //=======================================================
-        // Create Command
-        //=======================================================
+        await using var transaction =
+            await connection.BeginTransactionAsync();
 
-        await using var command =
-            connection.CreateCommand();
-
-
-        command.CommandText =
-            sql;
-
-
-        //=======================================================
-        // Execute SQL
-        //=======================================================
 
         try
         {
-            await command.ExecuteNonQueryAsync();
+            foreach
+            (
+                var sql
+                in sqlStatements
+            )
+            {
+                await using var command =
+                    connection.CreateCommand();
+
+
+                command.Transaction =
+                    transaction;
+
+
+                command.CommandText =
+                    sql;
+
+
+                await command.ExecuteNonQueryAsync();
+            }
+
+
+            await transaction.CommitAsync();
         }
         catch
         (
             PostgresException exception
         )
         {
+            await transaction.RollbackAsync();
+
+
             throw new InvalidOperationException(
                 $"Database SQL execution failed: {exception.SqlState}: {exception.MessageText}",
                 exception
@@ -310,6 +364,9 @@ public class DatabaseCommandExecutor
             Exception exception
         )
         {
+            await transaction.RollbackAsync();
+
+
             throw new InvalidOperationException(
                 $"Database SQL execution failed: {exception.Message}",
                 exception
@@ -320,6 +377,10 @@ public class DatabaseCommandExecutor
 
     //===========================================================
     // Extract SQL From Arguments
+    //
+    // Looks for ' -c "' (with the opening quote) so a "-c"
+    // inside the connection string is never mistaken for the
+    // SQL command switch.
     //===========================================================
 
     private string ExtractSqlFromArguments
@@ -342,7 +403,7 @@ public class DatabaseCommandExecutor
 
 
         const string commandToken =
-            "-c";
+            " -c \"";
 
 
         var commandIndex =
@@ -364,34 +425,23 @@ public class DatabaseCommandExecutor
 
 
         //=======================================================
-        // Resolve SQL Start
+        // Resolve SQL (inside the quotes)
         //=======================================================
-
-        var sqlStart =
-            commandIndex +
-            commandToken.Length;
-
 
         var sqlArguments =
-            arguments[sqlStart..]
-                .Trim();
+            arguments[(commandIndex + commandToken.Length)..]
+                .TrimEnd();
 
-
-        //=======================================================
-        // Remove SQL Argument Quotes
-        //=======================================================
 
         if
         (
-            sqlArguments.Length >= 2
-            &&
-            sqlArguments[0] == '"'
-            &&
-            sqlArguments[^1] == '"'
+            sqlArguments.EndsWith(
+                "\""
+            )
         )
         {
             sqlArguments =
-                sqlArguments[1..^1];
+                sqlArguments[..^1];
         }
 
 

@@ -6,10 +6,17 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -24,6 +31,19 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    forkJoin,
+    of,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -31,10 +51,11 @@ from '@angular/router';
 
 import
 {
-    SystemConfigurations
+    SystemConfiguration,
+    ConfigurationModule,
+    DEFAULT_MODULE_ICON
 }
 from '../../../models/system-configurations.model';
-
 
 //===============================================================
 // Shared Components
@@ -54,17 +75,16 @@ from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
 
 import
 {
-    PageCanvasComponent,
-    PageCanvasConfig
-}
-from '../../../../../../shared/components/layout/page-canvas/page-canvas';
-
-import
-{
     ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
@@ -74,28 +94,15 @@ from '../../../../../../shared/components/utilities/search-box/search-box';
 
 import
 {
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
-
-import
-{
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
 
 import
 {
-    ListTableComponent,
-    ListTableColumn
+    EmptyStateComponent
 }
-from '../../../../../../shared/components/layout/list-table/list-table';
-
-import
-{
-    PaginationComponent
-}
-from '../../../../../../shared/components/controls/pagination/pagination';
+from '../../../../../../shared/components/layout/empty-state/empty-state';
 
 import
 {
@@ -117,6 +124,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -127,9 +146,8 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -138,6 +156,86 @@ import
 }
 from '../../../services/system-configurations.service';
 
+import
+{
+    ModuleService
+}
+from '../../../../../infrastructure-control/navigation-management/services/module.service';
+
+//===============================================================
+// Module Panel
+//===============================================================
+
+interface ModulePanel
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    isActive:
+        boolean;
+
+    icon:
+        string;
+
+    items:
+        SystemConfiguration[];
+
+    total:
+        number;
+
+    enabled:
+        number;
+}
+
+//===============================================================
+// Case-Insensitive Field Reader
+//===============================================================
+
+function readField
+(
+    item:
+        any,
+    name:
+        string
+):
+    any
+{
+    if
+    (
+        item == null
+        ||
+        typeof item !== 'object'
+    )
+    {
+        return undefined;
+    }
+
+    if
+    (
+        name in item
+    )
+    {
+        return item[name];
+    }
+
+    const target =
+        name.toLowerCase();
+
+    const key =
+        Object.keys(item).find
+        (
+            k =>
+                k.toLowerCase() ===
+                target
+        );
+
+    return key !== undefined
+        ? item[key]
+        : undefined;
+}
 
 //===============================================================
 // Component
@@ -145,36 +243,23 @@ from '../../../services/system-configurations.service';
 
 @Component(
 {
-    selector:'systemConfigurations-list',
+    selector:'system-configurations-list',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
+        SearchDropdownComponent,
         CommandCenterComponent,
-
-        PageCanvasComponent,
-
-        ListTableComponent,
-
-        PaginationComponent,
-
+        EmptyStateComponent,
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
         ToastComponent
     ],
 
@@ -183,43 +268,80 @@ from '../../../services/system-configurations.service';
     styleUrl:'./system-configurations-list.css'
 })
 
-
 //===============================================================
-// System Configurations List Component
+// System Configurations List
+//
+// Not a table: one panel per module, each holding its settings
+// as cards with an on/off switch. Panels in a row share the
+// height of the tallest one. No pagination.
 //===============================================================
 
 export class SystemConfigurationsList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
 
-    private readonly systemconfigurationsservice =
+    private readonly systemConfigurationsService =
         inject(SystemConfigurationsService);
 
+    private readonly moduleService =
+        inject(ModuleService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
 
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private readonly CONFIRM_CLOSE_DELAY_MS:
+        number =
+        150;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
     //===========================================================
     // Page Tabs
@@ -230,70 +352,88 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All SystemConfigurationses'
+            label:'All Configurations'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
 
-
-
     //===========================================================
-    // Status Filter
+    // Data
     //===========================================================
 
-    statusItems:
+    private configurations:
+        SystemConfiguration[] =
+        [];
+
+    // Navigation Modules (DB driven) — one panel each
+    private modules:
+        ConfigurationModule[] =
+        [];
+
+    panels:
+        ModulePanel[] =
+        [];
+
+    //===========================================================
+    // Summary
+    //===========================================================
+
+    totalCount:
+        number =
+        0;
+
+    enabledCount:
+        number =
+        0;
+
+    disabledCount:
+        number =
+        0;
+
+    activeModuleCount:
+        number =
+        0;
+
+    //===========================================================
+    // Toggle In Progress (per configuration id)
+    //===========================================================
+
+    private readonly togglingIds:
+        Set<number> =
+        new Set<number>();
+
+    //===========================================================
+    // Module Filter
+    //===========================================================
+
+    moduleFilterItems:
         any[] =
     [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
+        { label:'All Modules', value:null }
     ];
 
-
-    selectedStatus:
-        string | null =
+    selectedModule:
+        number | null =
         null;
 
-
-
     //===========================================================
-    // Data Source
+    // Enabled Filter
     //===========================================================
 
-    systemconfigurationses:
-        SystemConfigurations[] =
-    [];
+    enabledFilterItems:
+        any[] =
+    [
+        { label:'All Settings', value:null },
+        { label:'Enabled', value:true },
+        { label:'Disabled', value:false }
+    ];
 
-
-    filteredSystemConfigurationses:
-        SystemConfigurations[] =
-    [];
-
-
-    pagedSystemConfigurationses:
-        SystemConfigurations[] =
-    [];
-
-
+    selectedEnabled:
+        boolean | null =
+        null;
 
     //===========================================================
     // Search & Loading
@@ -303,32 +443,13 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
 
-
     loadFailed:
         boolean =
         false;
-
-
-
-    //===========================================================
-    // Pagination
-    //===========================================================
-
-    currentPage:
-        number =
-        1;
-
-
-    pageSize:
-        number =
-        10;
-
-
 
     //===========================================================
     // History
@@ -338,114 +459,16 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
-        'System Configurations History';
-
+        'System Configuration History';
 
     historyItems:
         any[] =
-    [];
-
-
+        [];
 
     //===========================================================
-    // Page Canvas Configuration
-    //===========================================================
-
-    readonly canvasConfig:
-        PageCanvasConfig =
-    {
-        mode:'list',
-
-        showHeader:false,
-
-        showFooter:true,
-
-        reserveFooterSpace:true,
-
-        bodyScrollable:true,
-
-        fixedHeight:true,
-
-        visibleRows:10,
-
-        rowHeight:32,
-
-        headerHeight:36,
-
-        footerHeight:56
-    };
-
-
-
-    //===========================================================
-    // Table Columns
-    //===========================================================
-
-    readonly columns:
-        ListTableColumn[] =
-    [
-        {
-            header:'#',
-
-            field:'serial',
-
-            type:'serial',
-
-            width:'60px',
-
-            align:'center'
-        },
-
-        {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
-
-            align:'left'
-        },
-
-        {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:'120px',
-
-            align:'center'
-        },
-
-        {
-            header:'Actions',
-
-            field:'actions',
-
-            type:'actions',
-
-            width:'180px',
-
-            align:'center'
-        }
-    ];
-
-
-
-    //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -454,10 +477,153 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
 
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Load SystemConfigurationses
+    // Filters Active
+    //===========================================================
+
+    get hasActiveFilters():
+        boolean
+    {
+        return !!this.searchText.trim()
+            ||
+            this.selectedModule !== null
+            ||
+            this.selectedEnabled !== null;
+    }
+
+    //===========================================================
+    // Any Module To Show (no module, no panel)
+    //===========================================================
+
+    get hasModules():
+        boolean
+    {
+        return this.visibleModules().length > 0;
+    }
+
+    //===========================================================
+    // Navigation Module → Panel Module
+    //===========================================================
+
+    private toModule
+    (
+        item:
+            any
+    ):
+        ConfigurationModule
+    {
+        const icon =
+            String(readField(item, 'icon') ?? '').trim();
+
+        const active =
+            readField(item, 'isActive');
+
+        return {
+            id:
+                Number(readField(item, 'id') ?? 0) || 0,
+
+            code:
+                String(readField(item, 'code') ?? '').trim(),
+
+            name:
+                String(readField(item, 'name') ?? '').trim(),
+
+            icon:
+                icon || DEFAULT_MODULE_ICON,
+
+            displayOrder:
+                Number(readField(item, 'displayOrder') ?? 0) || 0,
+
+            isActive:
+                active == null
+                    ? true
+                    : Boolean(active)
+        };
+    }
+
+    //===========================================================
+    // Build Module Filter Items
+    //===========================================================
+
+    private buildModuleFilterItems():
+        void
+    {
+        this.moduleFilterItems =
+        [
+            { label:'All Modules', value:null },
+
+            ...this.visibleModules().map
+            (
+                module =>
+                ({
+                    label:module.name,
+                    value:module.id
+                })
+            )
+        ];
+    }
+
+    //===========================================================
+    // Visible Modules
+    //
+    // Active Navigation Modules, plus inactive ones that still
+    // hold settings (so nothing is hidden). Deleted modules
+    // never come back from the API.
+    //===========================================================
+
+    private visibleModules():
+        ConfigurationModule[]
+    {
+        const usedIds =
+            new Set(
+                this.configurations.map
+                (
+                    item =>
+                        item.NavigationModuleId
+                )
+            );
+
+        return this.modules
+            .filter
+            (
+                module =>
+                    module.id > 0
+                    &&
+                    (
+                        module.isActive
+                        ||
+                        usedIds.has(module.id)
+                    )
+            )
+            .sort
+            (
+                (a, b) =>
+                    a.displayOrder - b.displayOrder
+                    ||
+                    a.name.localeCompare(b.name)
+            );
+    }
+
+    //===========================================================
+    // Load Items (modules + configurations together)
     //===========================================================
 
     loadItems():
@@ -466,176 +632,277 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-        this.systemconfigurationsservice
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        SystemConfigurations[]
-                ): void =>
-                {
-                    this.systemconfigurationses =
-                    [
-                        ...response
-                    ];
-
-
-                    this.applyFilters();
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
+        forkJoin
+        ({
+            modules:
+                this.moduleService
+                    .getAll()
+                    .pipe
                     (
-                        'Load SystemConfigurationses Error',
+                        catchError
+                        (
+                            error =>
+                            {
+                                console.error(
+                                    'Load Navigation Modules Error:',
+                                    error
+                                );
 
-                        error
-                    );
+                                return of(null);
+                            }
+                        )
+                    ),
 
-
-                    this.systemconfigurationses =
-                    [];
-
-
-                    this.filteredSystemConfigurationses =
-                    [];
-
-
-                    this.pagedSystemConfigurationses =
-                    [];
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        true;
-
-
-                    this.toast.error
-                    (
-                        'Load Failed',
-
-                        'Unable to load systemconfigurationses.'
-                    );
-
-
-                    this.cdr.detectChanges();
+            configurations:
+                this.systemConfigurationsService.getAll()
+        })
+        .subscribe
+        ({
+            next:
+            (
+                result:
+                {
+                    modules:
+                        any;
+                    configurations:
+                        SystemConfiguration[];
                 }
-            });
+            ):
+                void =>
+            {
+                if
+                (
+                    result.modules === null
+                )
+                {
+                    this.toast.error(
+                        'Load Failed',
+                        'Unable to load modules from Navigation Management.'
+                    );
+                }
+
+                this.modules =
+                    (Array.isArray(result.modules) ? result.modules : [])
+                        .map
+                        (
+                            item =>
+                                this.toModule(
+                                    item
+                                )
+                        );
+
+                this.configurations =
+                    result.configurations ?? [];
+
+                this.buildModuleFilterItems();
+
+                this.buildSummary();
+
+                this.applyFilters();
+
+                this.loading =
+                    false;
+
+                this.loadFailed =
+                    result.modules === null;
+
+                this.cdr.detectChanges();
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Load System Configurations Error:',
+                    error
+                );
+
+                this.configurations =
+                    [];
+
+                this.buildSummary();
+
+                this.applyFilters();
+
+                this.loading =
+                    false;
+
+                this.loadFailed =
+                    true;
+
+                this.toast.error(
+                    'Load Failed',
+                    'Unable to load system configurations.'
+                );
+
+                this.cdr.detectChanges();
+            }
+        });
     }
 
-
-
     //===========================================================
-    // Status Filter Changed
+    // Summary (whole data set, ignores filters)
     //===========================================================
 
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
+    private buildSummary():
         void
     {
-        this.selectedStatus =
-            value;
+        this.totalCount =
+            this.configurations.length;
 
+        this.enabledCount =
+            this.configurations.filter
+            (
+                item =>
+                    item.IsEnabled
+            ).length;
 
-        this.applyFilters();
+        this.disabledCount =
+            this.totalCount - this.enabledCount;
+
+        this.activeModuleCount =
+            new Set(
+                this.configurations.map
+                (
+                    item =>
+                        item.NavigationModuleId
+                )
+            ).size;
     }
 
-
-
     //===========================================================
-    // Apply Filters
+    // Apply Filters → Panels
     //===========================================================
 
     applyFilters():
         void
     {
-        const keyword =
+        const keyword:
+            string =
             this.searchText
                 .trim()
                 .toLowerCase();
 
+        const matches =
+            (
+                item:
+                    SystemConfiguration
+            ):
+                boolean =>
+            {
+                if
+                (
+                    this.selectedEnabled !== null
+                    &&
+                    item.IsEnabled !== this.selectedEnabled
+                )
+                {
+                    return false;
+                }
 
-        this.filteredSystemConfigurationses =
-            this.systemconfigurationses
+                if
+                (
+                    !keyword
+                )
+                {
+                    return true;
+                }
+
+                return [
+                    item.ConfigurationCode,
+                    item.ConfigurationName,
+                    item.Remarks,
+                    item.ModuleName,
+                    item.ModuleCode,
+                    item.IsEnabled ? 'enabled' : 'disabled'
+                ]
+                .some
+                (
+                    value =>
+                        String(value ?? '')
+                            .toLowerCase()
+                            .includes(keyword)
+                );
+            };
+
+        const modules:
+            ConfigurationModule[] =
+            this.visibleModules()
                 .filter
                 (
-                    (
-                        x:
-                            SystemConfigurations
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
-
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
+                    module =>
+                        this.selectedModule === null
+                        ||
+                        module.id === this.selectedModule
                 );
 
+        this.panels =
+            modules
+                .map
+                (
+                    module =>
+                    {
+                        const all =
+                            this.configurations.filter
+                            (
+                                item =>
+                                    item.NavigationModuleId === module.id
+                            );
 
-        this.currentPage =
-            1;
+                        return {
+                            id:
+                                module.id,
 
+                            name:
+                                module.name,
 
-        this.updatePagination();
+                            isActive:
+                                module.isActive,
+
+                            icon:
+                                module.icon,
+
+                            items:
+                                all
+                                    .filter(matches)
+                                    .sort
+                                    (
+                                        (a, b) =>
+                                            a.ConfigurationCode.localeCompare(b.ConfigurationCode)
+                                    ),
+
+                            total:
+                                all.length,
+
+                            enabled:
+                                all.filter
+                                (
+                                    item =>
+                                        item.IsEnabled
+                                ).length
+                        };
+                    }
+                )
+                // While searching / filtering, hide modules with no match
+                .filter
+                (
+                    panel =>
+                        !this.hasActiveFilters
+                        ||
+                        this.selectedModule !== null
+                        ||
+                        panel.items.length > 0
+                );
+
+        this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Search
@@ -649,145 +916,65 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
+            value
+            ??
+            '';
 
         this.applyFilters();
     }
 
-
-
     //===========================================================
-    // Sort
+    // Module Filter Change
     //===========================================================
 
-    onSort
+    onModuleFilterChange
     (
-        event:
-        {
-            field:
-                string;
-
-            direction:
-                'asc' | 'desc';
-        }
+        value:
+            number | null
     ):
         void
     {
-        this.filteredSystemConfigurationses =
-        [
-            ...this.filteredSystemConfigurationses
-        ];
+        this.selectedModule =
+            value;
 
-
-        this.filteredSystemConfigurationses.sort
-        (
-            (
-                a:
-                    SystemConfigurations,
-
-                b:
-                    SystemConfigurations
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof SystemConfigurations
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof SystemConfigurations
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.applyFilters();
     }
 
+    //===========================================================
+    // Enabled Filter Change
+    //===========================================================
 
+    onEnabledFilterChange
+    (
+        value:
+            boolean | null
+    ):
+        void
+    {
+        this.selectedEnabled =
+            value;
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Clear Filters
+    //===========================================================
+
+    clearFilters():
+        void
+    {
+        this.searchText =
+            '';
+
+        this.selectedModule =
+            null;
+
+        this.selectedEnabled =
+            null;
+
+        this.applyFilters();
+    }
 
     //===========================================================
     // Refresh
@@ -796,170 +983,267 @@ implements OnInit
     refresh():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.searchText =
             '';
 
-
-        this.selectedStatus =
+        this.selectedModule =
             null;
 
+        this.selectedEnabled =
+            null;
 
         this.loadItems();
     }
 
-
-
     //===========================================================
-    // Update Pagination
+    // Navigate
     //===========================================================
 
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
-        this.pagedSystemConfigurationses =
-        [
-            ...this.filteredSystemConfigurationses
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
-        ];
-    }
-
-
-
-    //===========================================================
-    // Page Change
-    //===========================================================
-
-    onPageChange
+    private navigateTo
     (
-        page:
+        action:
+            'add' | 'view' | 'edit',
+        id?:
+            number,
+        moduleId?:
             number
     ):
         void
     {
-        this.currentPage =
-            page;
+        const commands:
+            any[] =
+            id
+                ? [action, id]
+                : [action];
 
+        void this.router.navigate
+        (
+            commands,
+            {
+                relativeTo:
+                    this.route.parent
+                    ??
+                    this.route,
 
-        this.updatePagination();
+                queryParams:
+                    moduleId
+                        ? { moduleId }
+                        : undefined
+            }
+        );
     }
 
-
-
     //===========================================================
-    // Page Size Change
-    //===========================================================
-
-    onPageSizeChange
-    (
-        size:
-            number
-    ):
-        void
-    {
-        this.pageSize =
-            size;
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
-    }
-
-
-
-    //===========================================================
-    // Add
+    // Add (header) / Add To Module (panel "+")
     //===========================================================
 
     add():
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'add'
-            ],
+            this.isProcessing
+        )
+        {
+            return;
+        }
 
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'add',
+            undefined,
+            this.selectedModule ?? undefined
         );
     }
 
+    addToModule
+    (
+        moduleId:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
 
+        this.navigateTo(
+            'add',
+            undefined,
+            moduleId
+        );
+    }
 
     //===========================================================
-    // View
+    // View / Edit
     //===========================================================
 
     view
     (
         item:
-            SystemConfigurations
+            SystemConfiguration
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'view',
+            this.isProcessing
+            ||
+            !item.SystemConfigurationId
+        )
+        {
+            return;
+        }
 
-                item.id
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'view',
+            item.SystemConfigurationId
         );
     }
-
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
 
     edit
     (
         item:
-            SystemConfigurations
+            SystemConfiguration
     ):
         void
     {
-        void this.router.navigate
+        if
         (
-            [
-                'edit',
+            this.isProcessing
+            ||
+            !item.SystemConfigurationId
+        )
+        {
+            return;
+        }
 
-                item.id
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        this.navigateTo(
+            'edit',
+            item.SystemConfigurationId
         );
     }
 
+    //===========================================================
+    // Toggle Enabled (saves immediately)
+    //===========================================================
 
+    isToggling
+    (
+        item:
+            SystemConfiguration
+    ):
+        boolean
+    {
+        return this.togglingIds.has(
+            item.SystemConfigurationId
+        );
+    }
+
+    toggleEnabled
+    (
+        item:
+            SystemConfiguration
+    ):
+        void
+    {
+        if
+        (
+            this.isProcessing
+            ||
+            this.isToggling(item)
+        )
+        {
+            return;
+        }
+
+        const previous =
+            item.IsEnabled;
+
+        const next =
+            !previous;
+
+        // Optimistic: flip now, revert if the server refuses
+        item.IsEnabled =
+            next;
+
+        this.togglingIds.add(
+            item.SystemConfigurationId
+        );
+
+        this.buildSummary();
+
+        this.applyFilters();
+
+        this.systemConfigurationsService
+            .setEnabled(
+                item.SystemConfigurationId,
+                next
+            )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.togglingIds.delete(
+                        item.SystemConfigurationId
+                    );
+
+                    this.toast.success(
+                        next ? 'Enabled' : 'Disabled',
+                        `${item.ConfigurationName} is now ${next ? 'enabled' : 'disabled'}.`
+                    );
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Toggle Configuration Error:',
+                        error
+                    );
+
+                    item.IsEnabled =
+                        previous;
+
+                    this.togglingIds.delete(
+                        item.SystemConfigurationId
+                    );
+
+                    this.buildSummary();
+
+                    this.applyFilters();
+
+                    this.toast.error(
+                        'Update Failed',
+                        error instanceof HttpErrorResponse
+                            ? this.extractErrorMessage(
+                                error,
+                                `Could not change ${item.ConfigurationName}.`
+                            )
+                            : `Could not change ${item.ConfigurationName}.`
+                    );
+                }
+            });
+    }
 
     //===========================================================
     // Delete
@@ -968,67 +1252,152 @@ implements OnInit
     delete
     (
         item:
-            SystemConfigurations
+            SystemConfiguration
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+            ||
+            !item.SystemConfigurationId
+        )
+        {
+            return;
+        }
+
+        const id =
+            item.SystemConfigurationId;
+
+        const name =
+            item.ConfigurationName
+            ||
+            item.ConfigurationCode
+            ||
+            'this configuration';
+
         this.confirmDialog.open
         (
-            'Delete System Configurations',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
-            (): void =>
+            'Delete Configuration',
+            `Are you sure you want to delete "${name}"?`,
+            ():
+                void =>
             {
-                this.systemconfigurationsservice
-                    .delete
-                    (
-                        item.id
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.name} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ): void =>
-                        {
-                            console.error
-                            (
-                                'Delete System Configurations Error',
-
-                                error
-                            );
-
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete systemConfigurations.'
-                            );
-                        }
-                    });
+                setTimeout
+                (
+                    () =>
+                        this.deleteItem(
+                            id,
+                            name
+                        ),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             }
         );
     }
 
+    //===========================================================
+    // Delete Item
+    //===========================================================
 
+    private deleteItem
+    (
+        id:
+            number,
+        name:
+            string
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Configuration',
+            `Please wait while "${name}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.systemConfigurationsService.delete(
+                id
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Configuration deleted.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Delete Successful',
+                            `${name} deleted successfully.`
+                        );
+
+                        this.loadItems();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Delete Configuration Error:',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Delete Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'This configuration cannot be deleted.'
+                                )
+                            );
+
+                            return;
+                        }
+
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'Not Found',
+                                'This configuration no longer exists. The page has been refreshed.'
+                            );
+
+                            this.loadItems();
+
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Delete Failed',
+                            'Failed to delete configuration.'
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Restore
@@ -1037,26 +1406,33 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
-            'Restore System Configurations',
-
-            'Are you sure you want to restore the most recently deleted systemConfigurations?',
-
-            (): void =>
+            'Restore Configuration',
+            'Are you sure you want to restore the most recently deleted configuration?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout
+                (
+                    () =>
+                        this.restoreItem(),
+                    this.CONFIRM_CLOSE_DELAY_MS
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Restore Item
@@ -1065,50 +1441,301 @@ implements OnInit
     private restoreItem():
         void
     {
-        this.systemconfigurationsservice
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+        this.startProgress(
+            'Restoring Configuration',
+            'Please wait while the most recently deleted configuration is being restored...'
+        );
 
-                        'The most recently deleted systemConfigurations has been restored.'
-                    );
+        this.withMinimumDuration(
+            this.systemConfigurationsService.restore()
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Configuration restored.',
+                    () =>
+                    {
+                        this.toast.success(
+                            'Restore Successful',
+                            'The most recently deleted configuration has been restored.'
+                        );
 
+                        this.loadItems();
+                    }
+                );
+            },
 
-                    this.loadItems();
-                },
-
-
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
-                    (
-                        'Restore System Configurations Error',
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Restore Configuration Error',
+                    error
+                );
 
-                        error
-                    );
+                this.failProgress(
+                    () =>
+                    {
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 404
+                        )
+                        {
+                            this.toast.info(
+                                'No Data to Restore',
+                                'There is no deleted configuration to restore.'
+                            );
 
+                            return;
+                        }
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                        if
+                        (
+                            error instanceof HttpErrorResponse
+                            &&
+                            error.status === 409
+                        )
+                        {
+                            this.toast.info(
+                                'Restore Blocked',
+                                this.extractErrorMessage(
+                                    error,
+                                    'The configuration cannot be restored.'
+                                )
+                            );
 
-                        'Failed to restore systemConfigurations.'
-                    );
-                }
-            });
+                            return;
+                        }
+
+                        this.toast.error(
+                            'Restore Failed',
+                            'Failed to restore configuration.'
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
 
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            HttpErrorResponse,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            typeof error.error === 'string'
+            &&
+            error.error.trim()
+        )
+        {
+            return error.error;
+        }
+
+        if
+        (
+            error.error?.message
+        )
+        {
+            return error.error.message;
+        }
+
+        if
+        (
+            error.error?.title
+        )
+        {
+            return error.error.title;
+        }
+
+        return fallback;
+    }
 
     //===========================================================
     // Open History
@@ -1117,7 +1744,7 @@ implements OnInit
     openHistory():
         void
     {
-        this.systemconfigurationsservice
+        this.systemConfigurationsService
             .getHistory()
             .subscribe
             ({
@@ -1125,78 +1752,64 @@ implements OnInit
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
+                                    readField(history, 'ActivityTitle'),
 
                                 description:
-                                    history.activityDescription,
-
+                                    readField(history, 'ActivityDescription'),
 
                                 user:
-                                    history.performedByName
+                                    readField(history, 'PerformedByName')
                                     ??
                                     'System',
 
-
                                 dateTime:
-                                    new Date
-                                    (
-                                        history.performedDate
+                                    new Date(
+                                        readField(history, 'PerformedDate')
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
-                                    history.activityType
+                                    readField(history, 'ActivityType')
                             })
                         );
 
-
                     this.historyTitle =
-                        'System Configurations Management History';
-
+                        'System Configuration History';
 
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.error
-                    (
-                        'History Load Failed',
-
+                    console.error(
+                        'History Load Failed:',
                         error
                     );
 
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'History',
-
-                        'Failed to load systemConfigurations history.'
+                        'Failed to load configuration history.'
                     );
                 }
             });
     }
-
-
 
     //===========================================================
     // Close History
@@ -1208,5 +1821,4 @@ implements OnInit
         this.historyOpened =
             false;
     }
-
 }

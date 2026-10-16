@@ -1,1 +1,13 @@
 @import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   SYSTEM CONFIGURATIONS FORM
+
+   Standard 4-section form page. Layout comes from the
+   shared form-page styles (app-form-grid / form-section).
+===================================================== */
+
+:host
+{
+    display: block;
+}

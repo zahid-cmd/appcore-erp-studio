@@ -7,6 +7,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -30,6 +31,18 @@ import
     FormsModule
 }
 from '@angular/forms';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 
 //===============================================================
@@ -137,6 +150,18 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
 
 //===============================================================
 // Models & Services
@@ -243,7 +268,9 @@ const RESERVED_SUB_GROUP_CODE:
 
         ToastComponent,
 
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+
+        ProgressDialogComponent
     ],
 
 
@@ -258,7 +285,7 @@ const RESERVED_SUB_GROUP_CODE:
 
 
 export class CashAccountsForm
-implements OnInit
+implements OnInit, OnDestroy
 {
 
     //===========================================================
@@ -287,6 +314,10 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
 
     private readonly toast =
@@ -319,12 +350,12 @@ implements OnInit
 
     pageTitle:
         string =
-        'CashAccount';
+        'Cash Account';
 
 
     entityName:
         string =
-        'CashAccount';
+        'Cash Account';
 
 
 
@@ -479,6 +510,50 @@ implements OnInit
         false;
 
 
+    // Prevents double submit while Save / Update is running
+    isSaving:
+        boolean =
+        false;
+
+
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+        5000;
+
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+
+    private progressTimer?:
+        number;
+
+
+    private progressValue:
+        number =
+        0;
+
+
 
     //===========================================================
     // Initialize
@@ -492,6 +567,27 @@ implements OnInit
         this.loadAccountSubGroups();
 
         this.initializeMode();
+    }
+
+
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
     }
 
 
@@ -1009,7 +1105,7 @@ implements OnInit
                     this.toast.error(
                         'Error',
 
-                        'Failed to generate CashAccount Code.'
+                        'Failed to generate Cash Account Code.'
                     );
 
 
@@ -1118,7 +1214,7 @@ implements OnInit
                     this.toast.error(
                         'Error',
 
-                        'Failed to load CashAccount.'
+                        'Failed to load Cash Account.'
                     );
 
 
@@ -1257,6 +1353,224 @@ implements OnInit
 
 
     //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isSaving =
+            true;
+
+
+        this.progressValue =
+            0;
+
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+
+            message,
+
+            false
+        );
+
+
+        this.clearProgressTimer();
+
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.05
+                        );
+
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.update(
+            100,
+
+            message
+        );
+
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+
+                this.isSaving =
+                    false;
+
+
+                this.cdr.detectChanges();
+
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+
+        this.progressDialog.close();
+
+
+        this.isSaving =
+            false;
+
+
+        this.cdr.detectChanges();
+
+
+        done();
+    }
+
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+
+
+    //===========================================================
     // Save
     //===========================================================
 
@@ -1266,6 +1580,8 @@ implements OnInit
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
@@ -1407,26 +1723,42 @@ implements OnInit
         };
 
 
-        this.cashAccountsService
-            .create(
+        this.startProgress(
+            'Saving Cash Account',
+
+            'Please wait while the cash account is being saved...'
+        );
+
+
+        this.withMinimumDuration(
+            this.cashAccountsService.create(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.setInitialFormState();
+                    this.completeProgress(
+
+                        'Cash account saved.',
+
+                        () =>
+                        {
+                            this.setInitialFormState();
 
 
-                    this.toast.success(
-                        'Success',
+                            this.toast.success(
+                                'Success',
 
-                        'CashAccount created successfully.'
+                                'Cash Account created successfully.'
+                            );
+
+
+                            this.onBackToList();
+                        }
                     );
-
-
-                    this.onBackToList();
                 },
 
 
@@ -1443,16 +1775,21 @@ implements OnInit
                     );
 
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create CashAccount.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to create Cash Account.';
 
 
-                    this.toast.error(
-                        'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                        message
+                                message
+                            );
+                        }
                     );
                 }
             });
@@ -1502,26 +1839,42 @@ implements OnInit
         };
 
 
-        this.cashAccountsService
-            .update(
+        this.startProgress(
+            'Updating Cash Account',
+
+            'Please wait while the cash account is being updated...'
+        );
+
+
+        this.withMinimumDuration(
+            this.cashAccountsService.update(
                 model
             )
+        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.setInitialFormState();
+                    this.completeProgress(
+
+                        'Cash account updated.',
+
+                        () =>
+                        {
+                            this.setInitialFormState();
 
 
-                    this.toast.success(
-                        'Success',
+                            this.toast.success(
+                                'Success',
 
-                        'CashAccount updated successfully.'
+                                'Cash Account updated successfully.'
+                            );
+
+
+                            this.onBackToList();
+                        }
                     );
-
-
-                    this.onBackToList();
                 },
 
 
@@ -1538,16 +1891,21 @@ implements OnInit
                     );
 
 
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update CashAccount.';
+                    this.failProgress(
+                        () =>
+                        {
+                            const message =
+                                (error as any)?.error
+                                ??
+                                'Failed to update Cash Account.';
 
 
-                    this.toast.error(
-                        'Validation',
+                            this.toast.error(
+                                'Validation',
 
-                        message
+                                message
+                            );
+                        }
                     );
                 }
             });
@@ -1562,6 +1920,15 @@ implements OnInit
     onClear():
         void
     {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+
         if
         (
             this.mode === 'edit'

@@ -17,6 +17,12 @@ namespace AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.Databas
 
 //===============================================================
 // Database Creation Engine
+//
+// IMPORTANT:
+// Create / Initialize DROP and re-CREATE the table, so all rows
+// in that table are lost. Both SQL statements are resolved first
+// and then executed in ONE transaction, so if the CREATE fails
+// the DROP is rolled back and the existing table stays intact.
 //===============================================================
 
 public class DatabaseEngine : IDatabaseCreationEngine
@@ -76,107 +82,26 @@ public class DatabaseEngine : IDatabaseCreationEngine
         long submenuId
     )
     {
-        var backendStudioRoot =
-            await _projectResolver
-                .ResolveBackendStudioRootAsync();
+        await RecreateAsync(
+            submenuId,
+            "creation"
+        );
+    }
 
 
-        var infrastructureProject =
-            await _projectResolver
-                .ResolveInfrastructureProjectAsync();
+    //===========================================================
+    // Initialize Database
+    //===========================================================
 
-
-        var apiProject =
-            await _projectResolver
-                .ResolveApiProjectAsync();
-
-
-        var connectionString =
-            await _connectionResolver
-                .ResolveAsync();
-
-
-        //=======================================================
-        // Resolve Database Removal Operation
-        //=======================================================
-
-        var removalOperation =
-            await _operationResolver
-                .ResolveRemovalAsync
-                (
-                    submenuId
-                );
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                removalOperation
-            )
-        )
-        {
-            throw new InvalidOperationException(
-                $"Unable to resolve database initialization removal operation for submenu synchronization {submenuId}."
-            );
-        }
-
-
-        //=======================================================
-        // Remove Existing Database Table
-        //=======================================================
-
-        await _commandExecutor
-            .ExecuteSqlAsync
-            (
-                removalOperation
-            );
-
-
-        //=======================================================
-        // Resolve Database Creation Operation
-        //=======================================================
-
-        var operation =
-            await _operationResolver
-                .ResolveAsync
-                (
-                    submenuId
-                );
-
-
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                operation
-            )
-        )
-        {
-            throw new InvalidOperationException(
-                $"Unable to resolve database creation operation for submenu synchronization {submenuId}."
-            );
-        }
-
-
-        //=======================================================
-        // Execute Database SQL
-        //=======================================================
-
-        await _commandExecutor
-            .ExecuteAsync
-            (
-                "psql",
-
-                $"-d \"{connectionString}\" -c \"{operation}\"",
-
-                backendStudioRoot
-            );
-
-
-        _ =
-            infrastructureProject;
-
-        _ =
-            apiProject;
+    public async Task InitializeAsync
+    (
+        long submenuId
+    )
+    {
+        await RecreateAsync(
+            submenuId,
+            "initialization"
+        );
     }
 
 
@@ -189,25 +114,16 @@ public class DatabaseEngine : IDatabaseCreationEngine
         long submenuId
     )
     {
-        var backendStudioRoot =
-            await _projectResolver
-                .ResolveBackendStudioRootAsync();
+        //=======================================================
+        // Validate Environment
+        //=======================================================
+
+        await ValidateEnvironmentAsync();
 
 
-        var infrastructureProject =
-            await _projectResolver
-                .ResolveInfrastructureProjectAsync();
-
-
-        var apiProject =
-            await _projectResolver
-                .ResolveApiProjectAsync();
-
-
-        var connectionString =
-            await _connectionResolver
-                .ResolveAsync();
-
+        //=======================================================
+        // Resolve Removal SQL
+        //=======================================================
 
         var operation =
             await _operationResolver
@@ -231,61 +147,40 @@ public class DatabaseEngine : IDatabaseCreationEngine
 
 
         //=======================================================
-        // Execute Database SQL
+        // Execute
         //=======================================================
 
         await _commandExecutor
-            .ExecuteSqlAsync
+            .ExecuteSqlInTransactionAsync
             (
                 operation
             );
-
-
-        _ =
-            backendStudioRoot;
-
-        _ =
-            infrastructureProject;
-
-        _ =
-            apiProject;
-
-        _ =
-            connectionString;
     }
 
 
     //===========================================================
-    // Initialize Database
+    // Recreate (DROP + CREATE in one transaction)
     //===========================================================
 
-    public async Task InitializeAsync
+    private async Task RecreateAsync
     (
-        long submenuId
+        long submenuId,
+
+        string operationName
     )
     {
-        var backendStudioRoot =
-            await _projectResolver
-                .ResolveBackendStudioRootAsync();
+        //=======================================================
+        // Validate Environment
+        //=======================================================
 
-
-        var infrastructureProject =
-            await _projectResolver
-                .ResolveInfrastructureProjectAsync();
-
-
-        var apiProject =
-            await _projectResolver
-                .ResolveApiProjectAsync();
-
-
-        var connectionString =
-            await _connectionResolver
-                .ResolveAsync();
+        await ValidateEnvironmentAsync();
 
 
         //=======================================================
-        // Resolve Database Removal Operation
+        // Resolve BOTH SQL statements before executing anything
+        //
+        // If building the CREATE statement fails (for example an
+        // unsupported property type), nothing has been dropped.
         //=======================================================
 
         var removalOperation =
@@ -304,27 +199,12 @@ public class DatabaseEngine : IDatabaseCreationEngine
         )
         {
             throw new InvalidOperationException(
-                $"Unable to resolve database initialization removal operation for submenu synchronization {submenuId}."
+                $"Unable to resolve database {operationName} removal operation for submenu synchronization {submenuId}."
             );
         }
 
 
-        //=======================================================
-        // Drop Existing Database Table
-        //=======================================================
-
-        await _commandExecutor
-            .ExecuteSqlAsync
-            (
-                removalOperation
-            );
-
-
-        //=======================================================
-        // Resolve Database Creation Operation
-        //=======================================================
-
-        var operation =
+        var creationOperation =
             await _operationResolver
                 .ResolveAsync
                 (
@@ -335,35 +215,52 @@ public class DatabaseEngine : IDatabaseCreationEngine
         if
         (
             string.IsNullOrWhiteSpace(
-                operation
+                creationOperation
             )
         )
         {
             throw new InvalidOperationException(
-                $"Unable to resolve database initialization creation operation for submenu synchronization {submenuId}."
+                $"Unable to resolve database {operationName} creation operation for submenu synchronization {submenuId}."
             );
         }
 
 
         //=======================================================
-        // Execute Database SQL
+        // Execute DROP + CREATE atomically
         //=======================================================
 
         await _commandExecutor
-            .ExecuteAsync
+            .ExecuteSqlInTransactionAsync
             (
-                "psql",
+                removalOperation,
 
-                $"-d \"{connectionString}\" -c \"{operation}\"",
-
-                backendStudioRoot
+                creationOperation
             );
+    }
 
 
-        _ =
-            infrastructureProject;
+    //===========================================================
+    // Validate Environment
+    //
+    // Confirms the backend projects and connection string can
+    // be resolved before any SQL is built or executed.
+    //===========================================================
 
-        _ =
-            apiProject;
+    private async Task ValidateEnvironmentAsync()
+    {
+        await _projectResolver
+            .ResolveBackendStudioRootAsync();
+
+
+        await _projectResolver
+            .ResolveInfrastructureProjectAsync();
+
+
+        await _projectResolver
+            .ResolveApiProjectAsync();
+
+
+        await _connectionResolver
+            .ResolveAsync();
     }
 }

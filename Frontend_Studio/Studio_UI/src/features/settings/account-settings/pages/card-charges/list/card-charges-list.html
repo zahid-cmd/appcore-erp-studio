@@ -8,9 +8,9 @@
 
         title="Card Charges"
 
-        subtitle="Manage cardchargeses"
+        subtitle="Manage card charges per POS account"
 
-        icon="fas fa-list">
+        icon="fas fa-credit-card">
 
         <div pageHeaderCenter>
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search cardchargeses..."
+                placeholder="Search card charges..."
 
                 (valueChange)="onSearch($event)">
 
@@ -79,26 +79,36 @@
 
 
         <!-- =================================================
-             STATUS FILTER
+             STATUS FILTER (POS Account status)
         ================================================== -->
 
-        <app-dropdown
+        <div
 
             pageToolbarRight
 
-            placeholder="All Status"
+            style="display:flex; align-items:center; gap:12px;">
 
-            [items]="statusItems"
+            <div style="width:220px;">
 
-            labelField="text"
+                <app-search-dropdown
 
-            valueField="value"
+                    placeholder="All Status"
 
-            [(value)]="selectedStatus"
+                    [items]="statusFilterItems"
 
-            (valueChange)="onStatusFilterChange($event)">
+                    labelField="label"
 
-        </app-dropdown>
+                    valueField="value"
+
+                    [value]="selectedStatus"
+
+                    (valueChange)="onStatusFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -123,7 +133,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedCardChargeses"
+                [rows]="pagedCardCharges"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -144,7 +154,6 @@
         </div>
 
 
-
         <!-- =================================================
              PAGINATION
         ================================================== -->
@@ -153,7 +162,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredCardChargeses.length"
+            [totalRecords]="filteredCardCharges.length"
 
             [currentPage]="currentPage"
 
@@ -194,5 +203,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

@@ -17,7 +17,8 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    map
 }
 from 'rxjs';
 
@@ -29,13 +30,179 @@ from '../../../../environments/environment';
 
 import
 {
-    PosAccounts,
-
-    CreatePosAccounts,
-
-    UpdatePosAccounts
+    POSAccount,
+    CreatePOSAccount,
+    UpdatePOSAccount
 }
 from '../models/pos-accounts.model';
+
+
+//===============================================================
+// Case-Insensitive Field Reader
+//
+// ASP.NET Core camel-cases JSON names :
+//   POSAccountId   → "posAccountId"
+//   POSAccountCode → "posAccountCode"
+// This reads a field regardless of its casing.
+//===============================================================
+
+function readField
+(
+    item:
+        any,
+    name:
+        string
+):
+    any
+{
+    if
+    (
+        item == null
+        ||
+        typeof item !== 'object'
+    )
+    {
+        return undefined;
+    }
+
+    if
+    (
+        name in item
+    )
+    {
+        return item[name];
+    }
+
+    const target =
+        name.toLowerCase();
+
+    const key =
+        Object.keys(item).find
+        (
+            k =>
+                k.toLowerCase() ===
+                target
+        );
+
+    return key !== undefined
+        ? item[key]
+        : undefined;
+}
+
+
+//===============================================================
+// Typed Readers
+//===============================================================
+
+function readText
+(
+    item:
+        any,
+    name:
+        string
+):
+    string
+{
+    return String(
+        readField(item, name)
+        ??
+        ''
+    ).trim();
+}
+
+function readNumber
+(
+    item:
+        any,
+    name:
+        string
+):
+    number
+{
+    const value =
+        Number(
+            readField(item, name)
+            ??
+            0
+        );
+
+    return Number.isFinite(value)
+        ? value
+        : 0;
+}
+
+function readBool
+(
+    item:
+        any,
+    name:
+        string,
+    fallback:
+        boolean
+):
+    boolean
+{
+    const value =
+        readField(item, name);
+
+    return value == null
+        ? fallback
+        : Boolean(value);
+}
+
+
+//===============================================================
+// Normalize POS Account (API → Model)
+//===============================================================
+
+export function normalizePOSAccount
+(
+    item:
+        any
+):
+    POSAccount
+{
+    return {
+        POSAccountId:
+            readNumber(item, 'POSAccountId'),
+
+        AccountSubGroupsId:
+            readNumber(item, 'AccountSubGroupsId'),
+
+        POSAccountCode:
+            readText(item, 'POSAccountCode'),
+
+        POSAccountName:
+            readText(item, 'POSAccountName'),
+
+        IssuingBank:
+            readText(item, 'IssuingBank'),
+
+        TerminalNumber:
+            readText(item, 'TerminalNumber'),
+
+        LinkedBankAccount:
+            readText(item, 'LinkedBankAccount'),
+
+        Branch:
+            readText(item, 'Branch'),
+
+        CollectionAccount:
+            readBool(item, 'CollectionAccount', false),
+
+        PaymentAccount:
+            readBool(item, 'PaymentAccount', false),
+
+        BranchExclusive:
+            readBool(item, 'BranchExclusive', false),
+
+        Remarks:
+            readText(item, 'Remarks'),
+
+        Status:
+            readBool(item, 'Status', true)
+    };
+}
 
 
 //===============================================================
@@ -47,17 +214,14 @@ from '../models/pos-accounts.model';
     providedIn:'root'
 })
 
-
-export class PosAccountsService
+export class POSAccountsService
 {
-
     //===========================================================
     // Injection
     //===========================================================
 
     private readonly http =
         inject(HttpClient);
-
 
 
     //===========================================================
@@ -68,19 +232,84 @@ export class PosAccountsService
         `${environment.apiUrl}/settings/account-settings/pos-accounts`;
 
 
+    //===========================================================
+    // Get API Base URL
+    //===========================================================
+
+    getApiBaseUrl():
+        string
+    {
+        return environment.apiUrl
+            .replace(
+                /\/api\/?$/,
+                ''
+            );
+    }
+
 
     //===========================================================
     // Get All
     //===========================================================
 
     getAll():
-        Observable<PosAccounts[]>
+        Observable<POSAccount[]>
     {
-        return this.http.get<PosAccounts[]>(
-            this.apiUrl
-        );
+        return this.http
+            .get<any[]>(
+                this.apiUrl
+            )
+            .pipe(
+                map(
+                    response =>
+                        (Array.isArray(response) ? response : [])
+                            .map(
+                                item =>
+                                    normalizePOSAccount(
+                                        item
+                                    )
+                            )
+                )
+            );
     }
 
+
+    //===========================================================
+    // Get Next Code
+    //
+    // The API returns a plain string; quotes are stripped in
+    // case it arrives JSON-encoded ("\"POS-003-002-004-00001\"").
+    //===========================================================
+
+    getNextCode
+    (
+        accountSubGroupsId:
+            number
+    ):
+        Observable<string>
+    {
+        return this.http
+            .get(
+                `${this.apiUrl}/next-code`,
+                {
+                    params:
+                    {
+                        accountSubGroupsId:
+                            accountSubGroupsId
+                    },
+
+                    responseType:
+                        'text'
+                }
+            )
+            .pipe(
+                map(
+                    code =>
+                        String(code ?? '')
+                            .trim()
+                            .replace(/^"+|"+$/g, '')
+                )
+            );
+    }
 
 
     //===========================================================
@@ -92,13 +321,21 @@ export class PosAccountsService
         id:
             number
     ):
-        Observable<PosAccounts>
+        Observable<POSAccount>
     {
-        return this.http.get<PosAccounts>(
-            `${this.apiUrl}/${id}`
-        );
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/${id}`
+            )
+            .pipe(
+                map(
+                    response =>
+                        normalizePOSAccount(
+                            response
+                        )
+                )
+            );
     }
-
 
 
     //===========================================================
@@ -108,17 +345,15 @@ export class PosAccountsService
     create
     (
         model:
-            CreatePosAccounts
+            CreatePOSAccount
     ):
         Observable<number>
     {
         return this.http.post<number>(
             this.apiUrl,
-
             model
         );
     }
-
 
 
     //===========================================================
@@ -128,17 +363,15 @@ export class PosAccountsService
     update
     (
         model:
-            UpdatePosAccounts
+            UpdatePOSAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
+            this.apiUrl,
             model
         );
     }
-
 
 
     //===========================================================
@@ -158,7 +391,6 @@ export class PosAccountsService
     }
 
 
-
     //===========================================================
     // Restore
     //===========================================================
@@ -168,11 +400,9 @@ export class PosAccountsService
     {
         return this.http.put<void>(
             `${this.apiUrl}/restore`,
-
             {}
         );
     }
-
 
 
     //===========================================================
@@ -186,7 +416,6 @@ export class PosAccountsService
             `${this.apiUrl}/history`
         );
     }
-
 
 
     //===========================================================
@@ -204,5 +433,4 @@ export class PosAccountsService
             `${this.apiUrl}/${id}/history`
         );
     }
-
 }

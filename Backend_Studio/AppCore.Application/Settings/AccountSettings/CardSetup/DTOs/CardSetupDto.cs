@@ -1,12 +1,14 @@
+// PAGE-CLONED : Bank Setup -> Card Setup
+// PAGE-CLONED : Wings -> Card Setup
 //===============================================================
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.AccountSettings;
+namespace AppCore.Application.Settings.AccountSettings.CardSetup.DTOs;
 
 
 //===============================================================
-// CardSetupDto
+// CardSetup DTO
 //===============================================================
 
 public class CardSetupDto
@@ -15,83 +17,102 @@ public class CardSetupDto
     // Primary Key
     //===========================================================
 
-    public long Id
+    public long CardSetupId
     {
         get;
         set;
     }
 
 
-    //===========================================================
-    // Code
-    //===========================================================
+    //===============================================================
+    // Card Code
+    //===============================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string CardCode { get; set; } = string.Empty;
 
+    //===============================================================
+    // Card Name
+    //===============================================================
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string CardName { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
+    //===============================================================
     // Remarks
+    //===============================================================
+
+    public string Remarks { get; set; } = string.Empty;
+
+    //===============================================================
+    // Status
+    //===============================================================
+
+    public bool Status { get; set; }
+
+    //===============================================================
+    // Short Name
+    //===============================================================
+
+    public string ShortName { get; set; } = string.Empty;
+
+    //===============================================================
+    // Issuing Bank
+    //===============================================================
+
+    public string IssuingBank { get; set; } = string.Empty;
+
+    //===========================================================
+    // Soft Delete
     //===========================================================
 
-    public string Remarks
+    public bool IsDeleted
     {
         get;
         set;
     }
-    =
-        string.Empty;
+
+
+    public long? DeletedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? DeletedDate
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Audit Information
+    //===========================================================
+
+    public long CreatedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime CreatedDate
+    {
+        get;
+        set;
+    }
+
+
+    public long? ModifiedBy
+    {
+        get;
+        set;
+    }
+
+
+    public DateTime? ModifiedDate
+    {
+        get;
+        set;
+    }
 }

@@ -1,4 +1,3 @@
-// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Imports
 //===============================================================
@@ -7,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -31,6 +31,23 @@ import
 }
 from '@angular/forms';
 
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Shared Components
@@ -79,7 +96,6 @@ import
 }
 from '../../../../../../shared/components/layout/form-section/form-section';
 
-
 //===============================================================
 // Form Controls
 //===============================================================
@@ -101,7 +117,6 @@ import
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
-
 
 //===============================================================
 // Utilities
@@ -131,6 +146,17 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
 //===============================================================
 // Models & Services
@@ -139,9 +165,7 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 import
 {
     BankSetup,
-
     CreateBankSetup,
-
     UpdateBankSetup
 }
 from '../../../models/bank-setup.model';
@@ -165,52 +189,38 @@ from '../../../services/bank-setup.service';
     imports:
     [
         CommonModule,
-
         FormsModule,
-
 
         //=======================================================
         // Layout
         //=======================================================
 
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         CommandCenterComponent,
-
         ControlTabsComponent,
-
         PageCanvasComponent,
-
         FormGridComponent,
-
         FormSectionComponent,
-
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-
         TextareaComponent,
-
         DropdownComponent,
-
 
         //=======================================================
         // Utilities
         //=======================================================
 
         ToastComponent,
-
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+        ProgressDialogComponent
     ],
 
-
     templateUrl:'./bank-setup-form.html',
-
 
     styleUrls:
     [
@@ -218,11 +228,13 @@ from '../../../services/bank-setup.service';
     ]
 })
 
+//===============================================================
+// Bank Setup Form
+//===============================================================
 
 export class BankSetupForm
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
@@ -230,27 +242,55 @@ implements OnInit
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly bankSetupService =
         inject(BankSetupService);
 
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
 
+    private readonly MIN_PROGRESS_MS:
+        number =
+        5000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents double submit while Save / Update is running
+    isSaving:
+        boolean =
+        false;
 
     //===========================================================
     // Mode
@@ -260,12 +300,9 @@ implements OnInit
         'add' | 'edit' | 'view' =
         'add';
 
-
     entityId:
         number =
         0;
-
-
 
     //===========================================================
     // Page Header
@@ -273,14 +310,11 @@ implements OnInit
 
     pageTitle:
         string =
-        'BankSetup';
-
+        'Bank Setup';
 
     entityName:
         string =
-        'BankSetup';
-
-
+        'Bank Setup';
 
     //===========================================================
     // Selected Tab
@@ -289,8 +323,6 @@ implements OnInit
     selectedTab:
         string =
         'general';
-
-
 
     //===========================================================
     // Tabs
@@ -302,13 +334,10 @@ implements OnInit
         return [
             {
                 id:'general',
-
                 label:this.tabTitle
             }
         ];
     }
-
-
 
     //===========================================================
     // Tab Title
@@ -323,73 +352,37 @@ implements OnInit
         )
         {
             case 'add':
-
                 return `Add ${this.entityName}`;
 
-
             case 'edit':
-
                 return `Update ${this.entityName}`;
 
-
             case 'view':
-
                 return `View ${this.entityName}`;
 
-
             default:
-
                 return this.entityName;
         }
     }
 
-
-
-//===========================================================
+    //===========================================================
     // Status Items
     //===========================================================
 
     statusItems:
-        any[]
-    =
+        any[] =
     [
-        {
-            label:'Active',
-
-            value:true
-        },
-
-        {
-            label:'Inactive',
-
-            value:false
-        }
+        { label:'Active', value:true },
+        { label:'Inactive', value:false }
     ];
-
-
 
     //===========================================================
     // Entity
     //===========================================================
 
     entity:
-        BankSetup
-    =
-    {
-        BankSetupId:0,
-
-        BankCode:'',
-
-        BankName:'',
-
-        Remarks:'',
-
-        Status:true,
-
-        ShortName:''
-    };
-
-
+        BankSetup =
+        this.createEmptyEntity();
 
     //===========================================================
     // Form State
@@ -399,13 +392,11 @@ implements OnInit
         string =
         '';
 
-
     hasChanges:
         boolean =
         false;
 
-
-//===========================================================
+    //===========================================================
     // Initialize
     //===========================================================
 
@@ -415,9 +406,42 @@ implements OnInit
         this.initializeMode();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
 
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
 
-//===========================================================
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Empty Entity
+    //===========================================================
+
+    private createEmptyEntity():
+        BankSetup
+    {
+        return {
+            BankSetupId:0,
+            BankCode:'',
+            BankName:'',
+            Remarks:'',
+            Status:true,
+            ShortName:''
+        };
+    }
+
+    //===========================================================
     // Initialize Mode
     //===========================================================
 
@@ -427,11 +451,6 @@ implements OnInit
         const url =
             this.router.url.toLowerCase();
 
-
-        //=======================================================
-        // View Mode
-        //=======================================================
-
         if
         (
             url.includes('/view/')
@@ -440,12 +459,6 @@ implements OnInit
             this.mode =
                 'view';
         }
-
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
         else if
         (
             url.includes('/edit/')
@@ -454,30 +467,14 @@ implements OnInit
             this.mode =
                 'edit';
         }
-
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
         else
         {
             this.mode =
                 'add';
         }
 
-
-        //=======================================================
-        // Resolve Entity Id
-        //=======================================================
-
         const id =
             this.resolveEntityId();
-
-
-        //=======================================================
-        // Existing Entity
-        //=======================================================
 
         if
         (
@@ -487,22 +484,13 @@ implements OnInit
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
 
-
-        //=======================================================
-        // New Entity
-        //=======================================================
-
         this.initializeEntity();
     }
-
-
 
     //===========================================================
     // Resolve Entity Id
@@ -513,8 +501,7 @@ implements OnInit
     {
         let currentRoute:
             ActivatedRoute | null =
-        this.route;
-
+            this.route;
 
         while
         (
@@ -526,7 +513,6 @@ implements OnInit
                     currentRoute.snapshot.paramMap.get('id')
                 );
 
-
             if
             (
                 id > 0
@@ -535,16 +521,12 @@ implements OnInit
                 return id;
             }
 
-
             currentRoute =
                 currentRoute.parent;
         }
 
-
         return 0;
     }
-
-
 
     //===========================================================
     // Initialize Entity
@@ -554,40 +536,20 @@ implements OnInit
         void
     {
         this.entity =
-        {
-        BankSetupId:0,
-
-        BankCode:'',
-
-        BankName:'',
-
-        Remarks:'',
-
-        Status:true,
-
-        ShortName:''
-    };
-
+            this.createEmptyEntity();
 
         this.setInitialFormState();
-
 
         this.generateBankSetupCode();
     }
 
-
-
     //===========================================================
-    // Generate BankSetup Code
+    // Generate Bank Setup Code
     //===========================================================
 
     private generateBankSetupCode():
         void
     {
-        //=======================================================
-        // Existing Record
-        //=======================================================
-
         if
         (
             this.entityId > 0
@@ -595,20 +557,6 @@ implements OnInit
         {
             return;
         }
-
-
-        //=======================================================
-        // Company Required
-        //
-        // BankSetup Code is company dependent.
-        //=======================================================
-
-//=======================================================
-        // Backend Generation
-        //
-        // CompanyId is required because BankSetup Code is
-        // generated independently for each Company.
-        //=======================================================
 
         this.bankSetupService
             .getNextCode()
@@ -618,52 +566,59 @@ implements OnInit
                 (
                     code:
                         string
-                ): void =>
+                ):
+                    void =>
                 {
                     this.entity.BankCode =
-                        code;
+                        String(code ?? '')
+                            .trim()
+                            .replace(/^"+|"+$/g, '');
 
+                    // Auto-generated code is part of the initial state
+                    if
+                    (
+                        !this.hasChanges
+                    )
+                    {
+                        this.setInitialFormState();
+
+                        return;
+                    }
 
                     this.checkForChanges();
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error(
-                        'Generate BankSetup Code Error',
-
+                        'Generate Bank Setup Code Error',
                         error
                     );
-
 
                     this.entity.BankCode =
                         '';
 
-
                     this.toast.error(
                         'Error',
-
-                        'Failed to generate BankSetup Code.'
+                        this.extractErrorMessage(
+                            error,
+                            'Failed to generate Bank Code.'
+                        )
                     );
 
-
                     this.checkForChanges();
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
-
-
 
     //===========================================================
     // Set Initial Form State
@@ -677,15 +632,11 @@ implements OnInit
                 this.entity
             );
 
-
         this.hasChanges =
             false;
 
-
         this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Load Entity
@@ -704,19 +655,13 @@ implements OnInit
                 (
                     response:
                         any
-                ): void =>
+                ):
+                    void =>
                 {
-                    console.log(
-                        'BankSetup API Response:',
-
-                        response
-                    );
-
-
                     this.entity =
                     {
                         BankSetupId:
-                            Number(response?.BankSetupId ?? response?.bankSetupId ?? 0),
+                            Number(response?.BankSetupId ?? response?.bankSetupId ?? this.entityId),
 
                         BankCode:
                             response?.BankCode ?? response?.bankCode ?? '',
@@ -734,56 +679,35 @@ implements OnInit
                             response?.ShortName ?? response?.shortName ?? ''
                     };
 
-
-                    console.log(
-                        'BankSetup Form Entity:',
-
-                        this.entity
-                    );
-
-
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.cdr.detectChanges();
+                    this.setInitialFormState();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error(
-                        'Load BankSetup Error',
-
+                        'Load Bank Setup Error',
                         error
                     );
 
-
                     this.toast.error(
                         'Error',
-
-                        'Failed to load BankSetup.'
+                        'Failed to load Bank Setup.'
                     );
 
+                    this.hasChanges =
+                        false;
 
                     this.onBackToList();
                 }
             });
     }
 
-
-
-//===========================================================
+    //===========================================================
     // Track Changes
     //===========================================================
 
@@ -797,8 +721,6 @@ implements OnInit
             !==
             this.originalEntity;
     }
-
-
 
     //===========================================================
     // Tab Change
@@ -815,7 +737,221 @@ implements OnInit
             tabId;
     }
 
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
 
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
+        }
+
+        return fallback;
+    }
+
+    //===========================================================
+    // Progress Dialog (Animated)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.isSaving =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.05
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isSaving =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isSaving =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
 
     //===========================================================
     // Save
@@ -824,22 +960,15 @@ implements OnInit
     onSave():
         void
     {
-        //=======================================================
-        // View Mode
-        //=======================================================
-
         if
         (
             this.isViewMode
+            ||
+            this.isSaving
         )
         {
             return;
         }
-
-
-        //=======================================================
-        // Validation
-        //=======================================================
 
         if
         (
@@ -848,13 +977,11 @@ implements OnInit
         {
             this.toast.error(
                 'Validation',
-
                 'Bank Code is required.'
             );
 
             return;
         }
-
 
         if
         (
@@ -863,22 +990,15 @@ implements OnInit
         {
             this.toast.error(
                 'Validation',
-
                 'Bank Name is required.'
             );
 
             return;
         }
 
-
-
-        //=======================================================
-        // Add
-        //=======================================================
-
         if
         (
-            this.mode === 'add'
+            this.isAddMode
         )
         {
             this.saveCreate();
@@ -886,27 +1006,17 @@ implements OnInit
             return;
         }
 
-
-        //=======================================================
-        // Update
-        //=======================================================
-
         this.saveUpdate();
     }
 
-
-
     //===========================================================
-    // Create
+    // Build Payload
     //===========================================================
 
-    private saveCreate():
-        void
+    private buildPayload():
+        CreateBankSetup
     {
-        const model:
-            CreateBankSetup =
-        {
-
+        return {
             BankCode:
                 this.entity.BankCode?.trim() ?? '',
 
@@ -922,67 +1032,78 @@ implements OnInit
             ShortName:
                 this.entity.ShortName?.trim() ?? ''
         };
-
-
-        this.bankSetupService
-            .create(
-                model
-            )
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.toast.success(
-                        'Success',
-
-                        'BankSetup created successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error(
-                        'Create BankSetup Error',
-
-                        error
-                    );
-
-
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create BankSetup.';
-
-
-                    this.toast.error(
-                        'Validation',
-
-                        message
-                    );
-                }
-            });
     }
 
+    //===========================================================
+    // Create
+    //===========================================================
 
+    private saveCreate():
+        void
+    {
+        const model:
+            CreateBankSetup =
+            this.buildPayload();
+
+        this.startProgress(
+            'Saving Bank Setup',
+            'Please wait while the bank setup is being saved...'
+        );
+
+        this.withMinimumDuration(
+            this.bankSetupService.create(
+                model
+            )
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Bank setup saved.',
+                    () =>
+                    {
+                        this.setInitialFormState();
+
+                        this.toast.success(
+                            'Success',
+                            'Bank Setup created successfully.'
+                        );
+
+                        this.onBackToList();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Create Bank Setup Error',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to create Bank Setup.'
+                            )
+                        );
+                    }
+                );
+            }
+        });
+    }
 
     //===========================================================
     // Update
@@ -995,84 +1116,72 @@ implements OnInit
             UpdateBankSetup =
         {
             BankSetupId:
-                this.entity.BankSetupId,
+                this.entity.BankSetupId
+                ||
+                this.entityId,
 
-            BankCode:
-                this.entity.BankCode?.trim() ?? '',
-
-            BankName:
-                this.entity.BankName?.trim() ?? '',
-
-            Remarks:
-                this.entity.Remarks?.trim() ?? '',
-
-            Status:
-                this.entity.Status,
-
-            ShortName:
-                this.entity.ShortName?.trim() ?? ''
+            ...this.buildPayload()
         };
 
+        this.startProgress(
+            'Updating Bank Setup',
+            'Please wait while the bank setup is being updated...'
+        );
 
-        this.bankSetupService
-            .update(
+        this.withMinimumDuration(
+            this.bankSetupService.update(
                 model
             )
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Bank setup updated.',
+                    () =>
+                    {
+                        this.setInitialFormState();
+
+                        this.toast.success(
+                            'Success',
+                            'Bank Setup updated successfully.'
                         );
 
+                        this.onBackToList();
+                    }
+                );
+            },
 
-                    this.hasChanges =
-                        false;
-
-
-                    this.toast.success(
-                        'Success',
-
-                        'BankSetup updated successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
+            error:
+            (
                 error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error(
-                        'Update BankSetup Error',
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Update Bank Setup Error',
+                    error
+                );
 
-                        error
-                    );
-
-
-                    const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update BankSetup.';
-
-
-                    this.toast.error(
-                        'Validation',
-
-                        message
-                    );
-                }
-            });
+                this.failProgress(
+                    () =>
+                    {
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to update Bank Setup.'
+                            )
+                        );
+                    }
+                );
+            }
+        });
     }
-
-
 
     //===========================================================
     // Clear
@@ -1081,33 +1190,28 @@ implements OnInit
     onClear():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
 
         if
         (
-            this.mode === 'edit'
+            this.isEditMode
         )
         {
             this.loadEntity();
 
-
             return;
         }
 
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
         this.initializeEntity();
-
 
         this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Back To List
@@ -1118,60 +1222,46 @@ implements OnInit
     {
         if
         (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        const listRoute =
+        [
+            '/settings',
+            'account-settings',
+            'bank-setup',
+            'list'
+        ];
+
+        if
+        (
             !this.hasChanges
         )
         {
-            void this.router.navigate
-            (
-                [
-                    '/settings',
-
-                    'account-settings',
-
-                    'bank-setup',
-
-                    'list'
-                ]
+            void this.router.navigate(
+                listRoute
             );
-
 
             return;
         }
 
-
         this.confirmDialog.open(
-
             'Cancel Changes',
-
             'Any unsaved changes will be lost. Do you want to leave this page?',
-
-
             () =>
             {
-                void this.router.navigate
-                (
-                    [
-                        '/settings',
-
-                        'account-settings',
-
-                        'bank-setup',
-
-                        'list'
-                    ]
+                void this.router.navigate(
+                    listRoute
                 );
             },
-
-
             'Leave',
-
             'Stay',
-
             'primary'
         );
     }
-
-
 
     //===========================================================
     // Save Button Text
@@ -1180,15 +1270,13 @@ implements OnInit
     get saveButtonText():
         string
     {
-        return this.mode === 'edit'
+        return this.isEditMode
             ? 'Update'
             : 'Save';
     }
 
-
-
     //===========================================================
-    // View Mode
+    // Mode Helpers
     //===========================================================
 
     get isViewMode():
@@ -1197,31 +1285,17 @@ implements OnInit
         return this.mode === 'view';
     }
 
-
-
-    //===========================================================
-    // Edit Mode
-    //===========================================================
-
     get isEditMode():
         boolean
     {
         return this.mode === 'edit';
     }
 
-
-
-    //===========================================================
-    // Add Mode
-    //===========================================================
-
     get isAddMode():
         boolean
     {
         return this.mode === 'add';
     }
-
-
 
     //===========================================================
     // Close
@@ -1233,8 +1307,6 @@ implements OnInit
         this.onBackToList();
     }
 
-
-
     //===========================================================
     // Refresh
     //===========================================================
@@ -1244,9 +1316,17 @@ implements OnInit
     {
         if
         (
-            this.mode === 'edit'
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            this.isEditMode
             ||
-            this.mode === 'view'
+            this.isViewMode
         )
         {
             this.loadEntity();
@@ -1254,14 +1334,10 @@ implements OnInit
             return;
         }
 
-
         this.initializeEntity();
-
 
         this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Value Changed
@@ -1272,8 +1348,6 @@ implements OnInit
     {
         this.checkForChanges();
 
-
         this.cdr.detectChanges();
     }
-
 }

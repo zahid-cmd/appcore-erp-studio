@@ -3,14 +3,17 @@
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Settings.GeneralSettings;
+using AppCore.Application.Settings.GeneralSettings.FinancialYears.DTOs;
 
-using AppCore.Domain.Common;
+using FinancialYearsEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears;
 
 using AppCore.Infrastructure.Persistence;
 
-using global::AppCore.Application.Settings.GeneralSettings;
+using AppCore.Domain.Common;
 
 
 //===============================================================
@@ -21,594 +24,1123 @@ namespace AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 
 
 //===============================================================
-// FinancialYearsRepository
+// Financial Years Repository
 //===============================================================
 
-public class FinancialYearsRepository
-    : IFinancialYearsRepository
+public class FinancialYearsRepository : IFinancialYearsRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    private const string ModuleName =
+        "General Settings";
+
+    private const string EntityName =
+        "FinancialYear";
+
+    // Code : FY-0001
+    private const string CodePrefix =
+        "FY";
+
+    private const int CodeDigits =
+        4;
+
+    // Name : FY 2026-2027 / FY 2026
+    private const string NamePrefix =
+        "FY";
+
+    // Default financial year : July – June
+    private const int DefaultStartMonth =
+        7;
+
+    private const int DefaultYearMonths =
+        12;
+
+    private const int MaxYearMonths =
+        18;
+
+    private const int RemarksMaxLength =
+        1000;
+
+    private const string StatusOpen =
+        "Open";
+
+    private const string StatusClosed =
+        "Closed";
+
+    private const string StatusLocked =
+        "Locked";
+
+    private static readonly string[] AllowedYearStatuses =
+    [
+        StatusOpen,
+        StatusClosed,
+        StatusLocked
+    ];
+
 
     //===========================================================
-    // DbContext
+    // Private Fields
     //===========================================================
 
-    private readonly AppDbContext
-        _context;
-
+    private readonly AppDbContext _context;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public FinancialYearsRepository
-    (
-        AppDbContext context
-    )
+    public FinancialYearsRepository(
+        AppDbContext context)
     {
         _context =
             context;
     }
 
 
-
     //===========================================================
-    // Get All
+    // Normalized Input
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>>
-        GetAllAsync()
+    private sealed class YearInput
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>()
-            .AsNoTracking()
-            .Where(
-                x =>
-                    !x.IsDeleted
-            )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
-            .ToListAsync();
+        public string FinancialYearName { get; set; } = string.Empty;
+
+        public DateOnly StartDate { get; set; }
+
+        public DateOnly EndDate { get; set; }
+
+        public bool IsCurrent { get; set; }
+
+        public string YearStatus { get; set; } = StatusOpen;
+
+        public string Remarks { get; set; } = string.Empty;
+
+        public bool Status { get; set; }
     }
 
+
+    //===========================================================
+    // Financial Years Query
+    //===========================================================
+
+    private IQueryable<FinancialYearsDto> FinancialYearsQuery()
+    {
+        return _context
+            .Set<FinancialYearsEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select
+            (
+                x =>
+                    new FinancialYearsDto
+                    {
+                        FinancialYearId =
+                            x.FinancialYearId,
+
+                        FinancialYearCode =
+                            x.FinancialYearCode,
+
+                        FinancialYearName =
+                            x.FinancialYearName,
+
+                        StartDate =
+                            x.StartDate,
+
+                        EndDate =
+                            x.EndDate,
+
+                        IsCurrent =
+                            x.IsCurrent,
+
+                        YearStatus =
+                            x.YearStatus,
+
+                        Remarks =
+                            x.Remarks,
+
+                        Status =
+                            x.Status,
+
+                        IsDeleted =
+                            x.IsDeleted,
+
+                        DeletedBy =
+                            x.DeletedBy,
+
+                        DeletedDate =
+                            x.DeletedDate,
+
+                        CreatedBy =
+                            x.CreatedBy,
+
+                        CreatedDate =
+                            x.CreatedDate,
+
+                        ModifiedBy =
+                            x.ModifiedBy,
+
+                        ModifiedDate =
+                            x.ModifiedDate
+                    }
+            );
+    }
+
+
+    //===========================================================
+    // Get All (newest year first)
+    //===========================================================
+
+    public async Task<List<FinancialYearsDto>>
+        GetAllAsync()
+    {
+        return await FinancialYearsQuery()
+            .OrderByDescending(x => x.StartDate)
+            .ToListAsync();
+    }
 
 
     //===========================================================
     // Get By Id
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears?>
+    public async Task<FinancialYearsDto?>
         GetByIdAsync
-    (
-        long id
-    )
+        (
+            long id
+        )
     {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
-            );
+        return await FinancialYearsQuery()
+            .FirstOrDefaultAsync(x => x.FinancialYearId == id);
     }
 
+
+    //===========================================================
+    // Get Current
+    //===========================================================
+
+    public async Task<FinancialYearsDto?>
+        GetCurrentAsync()
+    {
+        return await FinancialYearsQuery()
+            .FirstOrDefaultAsync(x => x.IsCurrent);
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //
+    // Deleted rows are included, because the unique index on
+    // FinancialYearCode covers them too. A code is never reused.
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync()
+    {
+        List<string> existingCodes =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .AsNoTracking()
+                .Select(x => x.FinancialYearCode)
+                .ToListAsync();
+
+        int highest = 0;
+
+        foreach (string code in existingCodes)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                continue;
+            }
+
+            string[] parts =
+                code.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
+            if (!string.Equals(parts[0].Trim(), CodePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (int.TryParse(parts[1].Trim(), out int sequenceNo) && sequenceNo > highest)
+            {
+                highest = sequenceNo;
+            }
+        }
+
+        return $"{CodePrefix}-{(highest + 1).ToString().PadLeft(CodeDigits, '0')}";
+    }
+
+
+    //===========================================================
+    // Get Defaults
+    //===========================================================
+
+    public async Task<FinancialYearsDefaultsDto>
+        GetDefaultsAsync()
+    {
+        DateOnly? latestEnd =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .OrderByDescending(x => x.EndDate)
+                .Select(x => (DateOnly?)x.EndDate)
+                .FirstOrDefaultAsync();
+
+        DateOnly start;
+
+        if (latestEnd.HasValue)
+        {
+            start =
+                latestEnd.Value.AddDays(1);
+        }
+        else
+        {
+            DateOnly today =
+                DateOnly.FromDateTime(DateTime.Today);
+
+            int year =
+                today.Month >= DefaultStartMonth
+                    ? today.Year
+                    : today.Year - 1;
+
+            start =
+                new DateOnly(year, DefaultStartMonth, 1);
+        }
+
+        DateOnly end =
+            start.AddMonths(DefaultYearMonths).AddDays(-1);
+
+        bool hasCurrent =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .AnyAsync(x => !x.IsDeleted && x.IsCurrent);
+
+        return new FinancialYearsDefaultsDto
+        {
+            Code =
+                await GetNextCodeAsync(),
+
+            Name =
+                BuildFinancialYearName(start, end),
+
+            StartDate =
+                start,
+
+            EndDate =
+                end,
+
+            IsCurrent =
+                !hasCurrent
+        };
+    }
+
+
+    //===========================================================
+    // Build Financial Year Name
+    //===========================================================
+
+    private static string BuildFinancialYearName
+    (
+        DateOnly start,
+        DateOnly end
+    )
+    {
+        return start.Year == end.Year
+            ? $"{NamePrefix} {start.Year}"
+            : $"{NamePrefix} {start.Year}-{end.Year}";
+    }
+
+
+    //===========================================================
+    // Months Covered (start and end inclusive)
+    //
+    // 2026-07-01 → 2027-06-30 = 12
+    //===========================================================
+
+    private static int MonthsCovered
+    (
+        DateOnly start,
+        DateOnly end
+    )
+    {
+        DateOnly next =
+            end.AddDays(1);
+
+        return (next.Year - start.Year) * 12
+            + (next.Month - start.Month);
+    }
+
+
+    //===========================================================
+    // Normalize Year Status
+    //===========================================================
+
+    private static string NormalizeYearStatus
+    (
+        string? value
+    )
+    {
+        string status =
+            (value ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return StatusOpen;
+        }
+
+        string? match =
+            AllowedYearStatuses.FirstOrDefault
+            (
+                x =>
+                    string.Equals(x, status, StringComparison.OrdinalIgnoreCase)
+            );
+
+        if (match == null)
+        {
+            throw new InvalidOperationException(
+                "Year Status must be Open, Closed or Locked.");
+        }
+
+        return match;
+    }
+
+
+    //===========================================================
+    // Normalize & Validate Input
+    //===========================================================
+
+    private async Task<YearInput>
+        NormalizeInputAsync
+        (
+            DateOnly startDate,
+            DateOnly endDate,
+            bool isCurrent,
+            string? yearStatus,
+            string? remarks,
+            bool status,
+            long? excludeId
+        )
+    {
+        //=======================================================
+        // Dates
+        //=======================================================
+
+        if (startDate == default)
+        {
+            throw new InvalidOperationException(
+                "Start Date is required.");
+        }
+
+        if (endDate == default)
+        {
+            throw new InvalidOperationException(
+                "End Date is required.");
+        }
+
+        if (endDate <= startDate)
+        {
+            throw new InvalidOperationException(
+                "End Date must be after Start Date.");
+        }
+
+        int months =
+            MonthsCovered(startDate, endDate);
+
+        if (months < 1 || months > MaxYearMonths)
+        {
+            throw new InvalidOperationException(
+                $"A financial year must be between 1 and {MaxYearMonths} months long.");
+        }
+
+        //=======================================================
+        // Year Status & Current
+        //=======================================================
+
+        string normalizedStatus =
+            NormalizeYearStatus(yearStatus);
+
+        if (isCurrent && normalizedStatus != StatusOpen)
+        {
+            throw new InvalidOperationException(
+                "Only an Open year can be the current year.");
+        }
+
+        //=======================================================
+        // Remarks
+        //=======================================================
+
+        string cleanRemarks =
+            remarks?.Trim()
+            ??
+            string.Empty;
+
+        if (cleanRemarks.Length > RemarksMaxLength)
+        {
+            throw new InvalidOperationException(
+                $"Remarks cannot be longer than {RemarksMaxLength} characters.");
+        }
+
+        //=======================================================
+        // Name (generated) & Duplicates
+        //=======================================================
+
+        string name =
+            BuildFinancialYearName(startDate, endDate);
+
+        await EnsureNoOverlapAsync(
+            startDate,
+            endDate,
+            excludeId);
+
+        await EnsureUniqueNameAsync(
+            name,
+            excludeId);
+
+        return new YearInput
+        {
+            FinancialYearName =
+                name,
+
+            StartDate =
+                startDate,
+
+            EndDate =
+                endDate,
+
+            IsCurrent =
+                isCurrent,
+
+            YearStatus =
+                normalizedStatus,
+
+            Remarks =
+                cleanRemarks,
+
+            Status =
+                status
+        };
+    }
+
+
+    //===========================================================
+    // Ensure No Overlap
+    //
+    // Two ranges overlap when A.Start <= B.End and A.End >= B.Start.
+    //===========================================================
+
+    private async Task
+        EnsureNoOverlapAsync
+        (
+            DateOnly startDate,
+            DateOnly endDate,
+            long? excludeId
+        )
+    {
+        FinancialYearsEntity? overlap =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (excludeId == null || x.FinancialYearId != excludeId)
+                        &&
+                        x.StartDate <= endDate
+                        &&
+                        x.EndDate >= startDate
+                )
+                .OrderBy(x => x.StartDate)
+                .FirstOrDefaultAsync();
+
+        if (overlap != null)
+        {
+            throw new InvalidOperationException(
+                $"These dates overlap {overlap.FinancialYearName} " +
+                $"({overlap.StartDate:dd-MMM-yyyy} to {overlap.EndDate:dd-MMM-yyyy}). " +
+                "Financial years cannot overlap.");
+        }
+    }
+
+
+    //===========================================================
+    // Ensure Unique Name
+    //===========================================================
+
+    private async Task
+        EnsureUniqueNameAsync
+        (
+            string name,
+            long? excludeId
+        )
+    {
+        string key =
+            name.Trim().ToUpper();
+
+        bool exists =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (excludeId == null || x.FinancialYearId != excludeId)
+                        &&
+                        x.FinancialYearName.Trim().ToUpper() == key
+                );
+
+        if (exists)
+        {
+            throw new InvalidOperationException(
+                $"Financial Year '{name}' already exists.");
+        }
+    }
+
+
+    //===========================================================
+    // Clear Other Current Years
+    //
+    // Saved before the new current year, so the one-current
+    // unique index is never violated.
+    //===========================================================
+
+    private async Task
+        ClearOtherCurrentAsync
+        (
+            long? keepId,
+            long userId,
+            DateTime now
+        )
+    {
+        List<FinancialYearsEntity> others =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.IsCurrent
+                        &&
+                        (keepId == null || x.FinancialYearId != keepId)
+                )
+                .ToListAsync();
+
+        if (others.Count == 0)
+        {
+            return;
+        }
+
+        foreach (FinancialYearsEntity other in others)
+        {
+            other.IsCurrent =
+                false;
+
+            other.ModifiedBy =
+                userId;
+
+            other.ModifiedDate =
+                now;
+
+            AddHistory(
+                other,
+                "Update",
+                "Current Year Changed",
+                $"Financial Year '{other.FinancialYearName}' ({other.FinancialYearCode}) is no longer the current year.",
+                userId,
+                now);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Apply Input To Entity
+    //===========================================================
+
+    private static void ApplyInput
+    (
+        FinancialYearsEntity entity,
+        YearInput input
+    )
+    {
+        entity.FinancialYearName =
+            input.FinancialYearName;
+
+        entity.StartDate =
+            input.StartDate;
+
+        entity.EndDate =
+            input.EndDate;
+
+        entity.IsCurrent =
+            input.IsCurrent;
+
+        entity.YearStatus =
+            input.YearStatus;
+
+        entity.Remarks =
+            input.Remarks;
+
+        entity.Status =
+            input.Status;
+    }
+
+
+    //===========================================================
+    // Add Activity History
+    //===========================================================
+
+    private void AddHistory
+    (
+        FinancialYearsEntity entity,
+        string activityType,
+        string title,
+        string description,
+        long userId,
+        DateTime performedDate
+    )
+    {
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module =
+                    ModuleName,
+
+                EntityName =
+                    EntityName,
+
+                EntityId =
+                    entity.FinancialYearId,
+
+                ActivityType =
+                    activityType,
+
+                ActivityTitle =
+                    title,
+
+                ActivityDescription =
+                    description,
+
+                PerformedBy =
+                    userId,
+
+                PerformedByName =
+                    "System",
+
+                PerformedDate =
+                    performedDate
+            });
+    }
 
 
     //===========================================================
     // Create
+    //
+    // Code and Name are always generated here (values sent by
+    // the client are ignored).
     //===========================================================
 
     public async Task<long>
         CreateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears entity
-    )
+        (
+            CreateFinancialYearsDto dto,
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        entity.IsActive =
-            true;
-
-
-        entity.IsDeleted =
-            false;
-
-
-        entity.CreatedBy =
-            userId;
-
-
-        entity.CreatedDate =
-            DateTime.UtcNow;
-
-
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>()
-            .AddAsync(
-                entity
+        YearInput input =
+            await NormalizeInputAsync
+            (
+                dto.StartDate,
+                dto.EndDate,
+                dto.IsCurrent,
+                dto.YearStatus,
+                dto.Remarks,
+                dto.Status,
+                null
             );
 
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
 
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+            if (input.IsCurrent)
             {
-                Module =
-                    "Settings",
-
-                EntityName =
-                    "FinancialYears",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Create",
-
-                ActivityTitle =
-                    "FinancialYears Created",
-
-                ActivityDescription =
-                    $"FinancialYears '{entity.Name}' was created.",
-
-                PerformedBy =
+                await ClearOtherCurrentAsync(
+                    null,
                     userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                    now);
             }
-        );
 
+            FinancialYearsEntity entity =
+                new FinancialYearsEntity
+                {
+                    FinancialYearCode =
+                        await GetNextCodeAsync(),
 
-        await _context.SaveChangesAsync();
+                    IsDeleted =
+                        false,
 
+                    CreatedBy =
+                        userId,
 
-        return entity.Id;
+                    CreatedDate =
+                        now
+                };
+
+            ApplyInput(
+                entity,
+                input);
+
+            _context
+                .Set<FinancialYearsEntity>()
+                .Add(entity);
+
+            await _context.SaveChangesAsync();
+
+            AddHistory(
+                entity,
+                "Create",
+                "Financial Year Created",
+                $"Financial Year '{entity.FinancialYearName}' ({entity.FinancialYearCode}) created." +
+                (entity.IsCurrent ? " Set as the current year." : string.Empty),
+                userId,
+                now);
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return entity.FinancialYearId;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
-
 
 
     //===========================================================
     // Update
+    //
+    // Code is locked after creation. A Locked year cannot be
+    // changed at all.
     //===========================================================
 
     public async Task
         UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears entity
-    )
+        (
+            UpdateFinancialYearsDto dto,
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var existing =
+        FinancialYearsEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>()
-                .FirstOrDefaultAsync(
+                .Set<FinancialYearsEntity>()
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == entity.Id
+                        x.FinancialYearId == dto.FinancialYearId
                         &&
                         !x.IsDeleted
                 );
 
-
-        if
-        (
-            existing is null
-        )
+        if (entity == null)
         {
-            throw new InvalidOperationException(
-                "FinancialYears record was not found."
-            );
+            throw new KeyNotFoundException(
+                "Financial Year not found.");
         }
 
+        if (entity.YearStatus == StatusLocked)
+        {
+            throw new InvalidOperationException(
+                $"Financial Year '{entity.FinancialYearName}' is Locked and cannot be changed.");
+        }
 
-        existing.Code =
-            entity.Code;
+        YearInput input =
+            await NormalizeInputAsync
+            (
+                dto.StartDate,
+                dto.EndDate,
+                dto.IsCurrent,
+                dto.YearStatus,
+                dto.Remarks,
+                dto.Status,
+                entity.FinancialYearId
+            );
 
+        //=======================================================
+        // TODO: when vouchers / opening balances exist, block
+        // changing the dates of a year that already has postings.
+        //=======================================================
 
-        existing.Name =
-            entity.Name;
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
 
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
 
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
+            bool becameCurrent =
+                input.IsCurrent
+                &&
+                !entity.IsCurrent;
 
-
-        existing.SampleField =
-            entity.SampleField;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
-            userId;
-
-
-        existing.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
+            if (becameCurrent)
             {
-                Module =
-                    "Settings",
-
-                EntityName =
-                    "FinancialYears",
-
-                EntityId =
-                    existing.Id,
-
-                ActivityType =
-                    "Update",
-
-                ActivityTitle =
-                    "FinancialYears Updated",
-
-                ActivityDescription =
-                    $"FinancialYears '{existing.Name}' was updated.",
-
-                PerformedBy =
+                await ClearOtherCurrentAsync(
+                    entity.FinancialYearId,
                     userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
+                    now);
             }
-        );
 
+            ApplyInput(
+                entity,
+                input);
 
-        await _context.SaveChangesAsync();
+            entity.ModifiedBy =
+                userId;
+
+            entity.ModifiedDate =
+                now;
+
+            AddHistory(
+                entity,
+                "Update",
+                "Financial Year Updated",
+                $"Financial Year '{entity.FinancialYearName}' ({entity.FinancialYearCode}) updated." +
+                (becameCurrent ? " Set as the current year." : string.Empty),
+                userId,
+                now);
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
     }
-
 
 
     //===========================================================
     // Delete
+    //
+    // Blocked (409) when the year is:
+    //   • the current year, or
+    //   • Closed / Locked.
     //===========================================================
 
     public async Task
         DeleteAsync
-    (
-        long id
-    )
+        (
+            long id,
+            long userId
+        )
     {
-        const long userId =
-            1;
-
-
-        var entity =
+        FinancialYearsEntity? entity =
             await _context
-                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>()
-                .FirstOrDefaultAsync(
+                .Set<FinancialYearsEntity>()
+                .FirstOrDefaultAsync
+                (
                     x =>
-                        x.Id == id
+                        x.FinancialYearId == id
                         &&
                         !x.IsDeleted
                 );
 
-
-        if
-        (
-            entity is null
-        )
+        if (entity == null)
         {
-            return;
+            throw new KeyNotFoundException(
+                "Financial Year not found.");
         }
 
+        if (entity.IsCurrent)
+        {
+            throw new InvalidOperationException(
+                $"Financial Year '{entity.FinancialYearName}' is the current year and cannot be deleted. Make another year current first.");
+        }
 
-        entity.IsDeleted =
-            true;
+        if (entity.YearStatus != StatusOpen)
+        {
+            throw new InvalidOperationException(
+                $"Financial Year '{entity.FinancialYearName}' is {entity.YearStatus} and cannot be deleted.");
+        }
 
+        //=======================================================
+        // TODO: vouchers / opening balances dated inside this
+        // year → count them here and throw (409).
+        //=======================================================
 
-        entity.IsActive =
-            false;
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
 
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
 
-        entity.ModifiedBy =
-            userId;
+            entity.IsDeleted =
+                true;
 
+            entity.DeletedBy =
+                userId;
 
-        entity.ModifiedDate =
-            DateTime.UtcNow;
+            entity.DeletedDate =
+                now;
 
+            AddHistory(
+                entity,
+                "Delete",
+                "Financial Year Deleted",
+                $"Financial Year '{entity.FinancialYearName}' ({entity.FinancialYearCode}) deleted.",
+                userId,
+                now);
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Settings",
+            await _context.SaveChangesAsync();
 
-                EntityName =
-                    "FinancialYears",
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
 
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Delete",
-
-                ActivityTitle =
-                    "FinancialYears Deleted",
-
-                ActivityDescription =
-                    $"FinancialYears '{entity.Name}' was deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
+            throw;
+        }
     }
-
 
 
     //===========================================================
     // Restore
+    //
+    // Restores the most recently deleted year (never as current).
+    // Blocked (409) when its dates now overlap an active year or
+    // its name is taken.
     //===========================================================
 
-    public async Task
+    public async Task<bool>
         RestoreAsync
-    (
-        long id
-    )
-    {
-        const long userId =
-            1;
-
-
-        var entity =
-            await _context
-                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == id
-                        &&
-                        x.IsDeleted
-                );
-
-
-        if
         (
-            entity is null
+            long userId
         )
+    {
+        FinancialYearsEntity? entity =
+            await _context
+                .Set<FinancialYearsEntity>()
+                .Where(x => x.IsDeleted)
+                .OrderByDescending(x => x.DeletedDate)
+                .FirstOrDefaultAsync();
+
+        if (entity == null)
         {
-            return;
+            return false;
         }
 
+        try
+        {
+            await EnsureNoOverlapAsync(
+                entity.StartDate,
+                entity.EndDate,
+                entity.FinancialYearId);
 
-        entity.IsDeleted =
-            false;
+            await EnsureUniqueNameAsync(
+                entity.FinancialYearName ?? string.Empty,
+                entity.FinancialYearId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new InvalidOperationException(
+                $"Financial Year '{entity.FinancialYearName}' cannot be restored. {ex.Message}");
+        }
 
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
 
-        entity.IsActive =
-            true;
+        try
+        {
+            DateTime now =
+                DateTime.UtcNow;
 
+            entity.IsDeleted =
+                false;
 
-        entity.ModifiedBy =
-            userId;
+            entity.DeletedBy =
+                null;
 
+            entity.DeletedDate =
+                null;
 
-        entity.ModifiedDate =
-            DateTime.UtcNow;
+            entity.IsCurrent =
+                false;
 
+            entity.ModifiedBy =
+                userId;
 
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Settings",
+            entity.ModifiedDate =
+                now;
 
-                EntityName =
-                    "FinancialYears",
+            AddHistory(
+                entity,
+                "Restore",
+                "Financial Year Restored",
+                $"Financial Year '{entity.FinancialYearName}' ({entity.FinancialYearCode}) restored.",
+                userId,
+                now);
 
-                EntityId =
-                    entity.Id,
+            await _context.SaveChangesAsync();
 
-                ActivityType =
-                    "Restore",
+            await transaction.CommitAsync();
 
-                ActivityTitle =
-                    "FinancialYears Restored",
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
 
-                ActivityDescription =
-                    $"FinancialYears '{entity.Name}' was restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
+            throw;
+        }
     }
 
 
-
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
+    public async Task<bool>
+        ExistsAsync
+        (
+            long id
+        )
     {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
+        return await _context
+            .Set<FinancialYearsEntity>()
+            .AnyAsync
+            (
                 x =>
-                    x.Module ==
-                    "Settings"
-
+                    x.FinancialYearId == id
                     &&
-
-                    x.EntityName ==
-                    "FinancialYears"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
+                    !x.IsDeleted
+            );
     }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Settings"
-
-                    &&
-
-                    x.EntityName ==
-                    "FinancialYears"
-
-                    &&
-
-                    x.EntityId ==
-                    id
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
 }

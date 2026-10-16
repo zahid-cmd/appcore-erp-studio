@@ -1,4 +1,3 @@
-// PAGE-CLONED : Wings -> Bank Setup
 //===============================================================
 // Namespaces
 //===============================================================
@@ -20,7 +19,7 @@ namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 
 //===============================================================
-// BankSetup Controller
+// Bank Setup Controller
 //===============================================================
 
 [ApiController]
@@ -29,47 +28,53 @@ namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 public class BankSetupController : ControllerBase
 {
-    //===============================================================
+    //===========================================================
     // Fields
-    //===============================================================
+    //===========================================================
 
     private readonly IBankSetupRepository _repository;
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
 
+    private readonly ILogger<BankSetupController> _logger;
 
-    //===============================================================
+
+    //===========================================================
     // Constructor
-    //===============================================================
+    //===========================================================
 
     public BankSetupController(
         IBankSetupRepository repository,
-        IActivityHistoryRepository activityHistoryRepository)
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<BankSetupController> logger)
     {
-        _repository = repository;
+        _repository =
+            repository;
 
-        _activityHistoryRepository = activityHistoryRepository;
+        _activityHistoryRepository =
+            activityHistoryRepository;
+
+        _logger =
+            logger;
     }
 
 
-    //===============================================================
+    //===========================================================
     // Get All
-    //===============================================================
+    //===========================================================
 
     [HttpGet]
 
     public async Task<ActionResult<List<BankSetupDto>>> GetAll()
     {
-        List<BankSetupDto> bankSetup =
-            await _repository.GetAllAsync();
-
-        return Ok(bankSetup);
+        return Ok(
+            await _repository.GetAllAsync());
     }
 
 
-    //===============================================================
+    //===========================================================
     // Get Next Code
-    //===============================================================
+    //===========================================================
 
     [HttpGet("next-code")]
 
@@ -80,9 +85,9 @@ public class BankSetupController : ControllerBase
     }
 
 
-    //===============================================================
+    //===========================================================
     // Get Defaults
-    //===============================================================
+    //===========================================================
 
     [HttpGet("defaults")]
 
@@ -93,9 +98,9 @@ public class BankSetupController : ControllerBase
     }
 
 
-    //===============================================================
+    //===========================================================
     // Get By Id
-    //===============================================================
+    //===========================================================
 
     [HttpGet("{id:long}")]
 
@@ -107,16 +112,17 @@ public class BankSetupController : ControllerBase
 
         if (bankSetup == null)
         {
-            return NotFound();
+            return NotFound(
+                "Bank Setup not found.");
         }
 
         return Ok(bankSetup);
     }
 
 
-    //===============================================================
+    //===========================================================
     // Create
-    //===============================================================
+    //===========================================================
 
     [HttpPost]
 
@@ -125,96 +131,115 @@ public class BankSetupController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Create Bank Setup failed.");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to create Bank Setup.");
+        }
     }
 
 
-    //===============================================================
+    //===========================================================
     // Update
-    //===============================================================
+    //===========================================================
 
     [HttpPut]
 
     public async Task<IActionResult> Update(
         UpdateBankSetupDto dto)
     {
-        if (!await _repository.ExistsAsync(
-                dto.BankSetupId))
-        {
-            return NotFound();
-        }
-
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Update Bank Setup failed. Id: {Id}", dto.BankSetupId);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to update Bank Setup.");
+        }
     }
 
 
-    //===============================================================
+    //===========================================================
     // Delete
-    //===============================================================
+    //
+    // 404 : not found / already deleted
+    // 409 : used by Bank Accounts / Card Setup / MFS Accounts
+    //===========================================================
 
     [HttpDelete("{id:long}")]
 
     public async Task<IActionResult> Delete(
         long id)
     {
-        //===========================================================
-        // Verify BankSetup Exists
-        //===========================================================
-
-        if (!await _repository.ExistsAsync(id))
-        {
-            return NotFound();
-        }
-
-
-        //===========================================================
-        // Current User
-        //===========================================================
-
         long userId = 1;
-
-
-        //===========================================================
-        // Delete
-        //===========================================================
 
         try
         {
             await _repository.DeleteAsync(
                 id,
                 userId);
+
+            return NoContent();
         }
-        catch
-        (
-            InvalidOperationException ex
-        )
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
         {
             return Conflict(ex.Message);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Delete Bank Setup failed. Id: {Id}", id);
 
-
-        //===========================================================
-        // Delete Successful
-        //===========================================================
-
-        return NoContent();
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to delete Bank Setup.");
+        }
     }
 
 
-    //===============================================================
+    //===========================================================
     // Restore
-    //===============================================================
+    //
+    // 404 : nothing to restore
+    // 409 : duplicate Bank Name / Bank Code
+    //===========================================================
 
     [HttpPut("restore")]
 
@@ -222,23 +247,38 @@ public class BankSetupController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
-
-        if (!restored)
+        try
         {
-            return NotFound(
-                "There are no deleted bankSetup available to restore.");
-        }
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
 
-        return NoContent();
+            if (!restored)
+            {
+                return NotFound(
+                    "There is no deleted Bank Setup available to restore.");
+            }
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Restore Bank Setup failed.");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Failed to restore Bank Setup.");
+        }
     }
 
 
-    //===============================================================
+    //===========================================================
     // Get History
-    //===============================================================
+    //===========================================================
 
     [HttpGet("history")]
 

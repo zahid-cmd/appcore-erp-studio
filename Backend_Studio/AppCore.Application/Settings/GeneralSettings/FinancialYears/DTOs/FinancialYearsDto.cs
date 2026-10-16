@@ -2,11 +2,13 @@
 // Namespace
 //===============================================================
 
-namespace AppCore.Application.Settings.GeneralSettings;
+namespace AppCore.Application.Settings.GeneralSettings.FinancialYears.DTOs;
 
 
 //===============================================================
-// FinancialYearsDto
+// Financial Years DTO
+//
+// StartDate / EndDate are DateOnly → JSON "2026-07-01".
 //===============================================================
 
 public class FinancialYearsDto
@@ -15,83 +17,50 @@ public class FinancialYearsDto
     // Primary Key
     //===========================================================
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long FinancialYearId { get; set; }
 
 
     //===========================================================
-    // Code
+    // Fields
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string FinancialYearCode { get; set; } = string.Empty;
 
+    public string FinancialYearName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public DateOnly StartDate { get; set; }
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public DateOnly EndDate { get; set; }
+
+    public bool IsCurrent { get; set; }
+
+    public string YearStatus { get; set; } = "Open";
+
+    public string Remarks { get; set; } = string.Empty;
+
+    public bool Status { get; set; }
 
 
     //===========================================================
-    // Sample Search Dropdown
+    // Soft Delete
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public bool IsDeleted { get; set; }
 
+    public long? DeletedBy { get; set; }
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public DateTime? DeletedDate { get; set; }
 
 
     //===========================================================
-    // Status
+    // Audit Information
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Remarks
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public DateTime? ModifiedDate { get; set; }
 }
