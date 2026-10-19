@@ -64,7 +64,9 @@ public class AccountClassConfiguration
                .HasMaxLength(30);
 
         builder.HasIndex(x => x.ClassCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_AccountClasses_ClassCode");
 
 
         //===========================================================
@@ -74,6 +76,11 @@ public class AccountClassConfiguration
         builder.Property(x => x.ClassName)
                .IsRequired()
                .HasMaxLength(200);
+
+        builder.HasIndex(x => x.ClassName)
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_AccountClasses_ClassName");
 
 
         //===========================================================
@@ -93,14 +100,16 @@ public class AccountClassConfiguration
                .IsRequired()
                .HasMaxLength(10);
 
+        builder.HasIndex(x => x.ClassPrefix)
+               .HasDatabaseName("IX_AccountClasses_ClassPrefix");
+
 
         //===========================================================
         // Manual Group Creation
         //===========================================================
 
         builder.Property(x => x.AllowManualGroupCreation)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
 
         //===========================================================
@@ -117,8 +126,7 @@ public class AccountClassConfiguration
         //===========================================================
 
         builder.Property(x => x.IsActive)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         //===========================================================

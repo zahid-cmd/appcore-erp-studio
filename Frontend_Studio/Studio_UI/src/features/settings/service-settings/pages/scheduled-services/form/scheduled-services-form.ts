@@ -1,0 +1,1787 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Component,
+    OnInit,
+    OnDestroy,
+    ChangeDetectorRef,
+    inject
+}
+from '@angular/core';
+
+import
+{
+    CommonModule
+}
+from '@angular/common';
+
+import
+{
+    ActivatedRoute,
+    Router
+}
+from '@angular/router';
+
+import
+{
+    FormsModule
+}
+from '@angular/forms';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError
+}
+from 'rxjs';
+
+import
+{
+    catchError,
+    delayWhen,
+    switchMap
+}
+from 'rxjs/operators';
+
+//===============================================================
+// Shared Components
+//===============================================================
+
+import
+{
+    PageHeaderComponent
+}
+from '../../../../../../shared/components/layout/page-header/page-header';
+
+import
+{
+    PageToolbarComponent
+}
+from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
+import
+{
+    CommandCenterComponent
+}
+from '../../../../../../shared/components/utilities/command-center/command-center';
+
+import
+{
+    ControlTabsComponent,
+    ControlTab
+}
+from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
+    PageCanvasComponent
+}
+from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    FormGridComponent
+}
+from '../../../../../../shared/components/layout/form-grid/form-grid';
+
+import
+{
+    FormSectionComponent
+}
+from '../../../../../../shared/components/layout/form-section/form-section';
+
+//===============================================================
+// Form Controls
+//===============================================================
+
+import
+{
+    TextboxComponent
+}
+from '../../../../../../shared/components/controls/textbox/textbox';
+
+import
+{
+    TextareaComponent
+}
+from '../../../../../../shared/components/controls/textarea/textarea';
+
+import
+{
+    DropdownComponent
+}
+from '../../../../../../shared/components/controls/dropdown/dropdown';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+//===============================================================
+// Utilities
+//===============================================================
+
+import
+{
+    ToastComponent
+}
+from '../../../../../../shared/components/utilities/toast/toast';
+
+import
+{
+    ToastService
+}
+from '../../../../../../shared/components/utilities/toast/toast.service';
+
+import
+{
+    ConfirmDialogService
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
+import
+{
+    ConfirmDialogComponent
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+//===============================================================
+// Models & Services
+//===============================================================
+
+import
+{
+    ScheduledService,
+    ConfigureScheduledService
+}
+from '../../../models/scheduled-services.model';
+
+import
+{
+    ScheduledServicesService
+}
+from '../../../services/scheduled-services.service';
+
+//===============================================================
+// Component
+//===============================================================
+
+@Component(
+{
+    selector:'scheduled-services-form',
+
+    standalone:true,
+
+    imports:
+    [
+        CommonModule,
+        FormsModule,
+
+        //=======================================================
+        // Layout
+        //=======================================================
+
+        PageHeaderComponent,
+        PageToolbarComponent,
+        CommandCenterComponent,
+        ControlTabsComponent,
+        PageCanvasComponent,
+        FormGridComponent,
+        FormSectionComponent,
+
+        //=======================================================
+        // Form Controls
+        //=======================================================
+
+        TextboxComponent,
+        TextareaComponent,
+        DropdownComponent,
+        SearchDropdownComponent,
+
+        //=======================================================
+        // Utilities
+        //=======================================================
+
+        ToastComponent,
+        ConfirmDialogComponent,
+        ProgressDialogComponent
+    ],
+
+    templateUrl:'./scheduled-services-form.html',
+
+    styleUrls:
+    [
+        './scheduled-services-form.css'
+    ]
+})
+
+//===============================================================
+// Scheduled Service Form
+//
+// Rows are generated by Service Policy. Add mode = "Configure" :
+// pick a Pending service by name, then set its price. Saving
+// assigns the service code and creates the income ledger.
+//===============================================================
+
+export class ScheduledServicesForm
+implements OnInit, OnDestroy
+{
+    //===========================================================
+    // Dependency Injection
+    //===========================================================
+
+    private readonly route =
+        inject(ActivatedRoute);
+
+    private readonly router =
+        inject(Router);
+
+    private readonly scheduledServiceService =
+        inject(ScheduledServicesService);
+
+    private readonly confirmDialog =
+        inject(ConfirmDialogService);
+
+    private readonly toast =
+        inject(ToastService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
+    private readonly cdr =
+        inject(ChangeDetectorRef);
+
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
+
+    private readonly minimumSaveDurationMs:
+        number =
+        5000;
+
+    private readonly progressCeiling:
+        number =
+        90;
+
+    private readonly progressEaseFactor:
+        number =
+        0.05;
+
+    private readonly progressIntervalMs:
+        number =
+        100;
+
+    private readonly progressCompleteHoldMs:
+        number =
+        600;
+
+    //===========================================================
+    // Progress State
+    //===========================================================
+
+    private progressTimer:
+        ReturnType<typeof setInterval> | null =
+        null;
+
+    private progressValue:
+        number =
+        0;
+
+    isSaving:
+        boolean =
+        false;
+
+    //===========================================================
+    // Mode
+    //===========================================================
+
+    mode:
+        'add' | 'edit' | 'view' =
+        'add';
+
+    entityId:
+        number =
+        0;
+
+    //===========================================================
+    // Page Header
+    //===========================================================
+
+    pageTitle:
+        string =
+        'Scheduled Services';
+
+    entityName:
+        string =
+        'Scheduled Service';
+
+    //===========================================================
+    // Tabs
+    //===========================================================
+
+    selectedTab:
+        string =
+        'general';
+
+    get tabs():
+        ControlTab[]
+    {
+        return [
+            {
+                id:'general',
+                label:this.tabTitle
+            }
+        ];
+    }
+
+    get tabTitle():
+        string
+    {
+        switch
+        (
+            this.mode
+        )
+        {
+            case 'add':
+                return `Configure ${this.entityName}`;
+
+            case 'edit':
+                return `Update ${this.entityName}`;
+
+            case 'view':
+                return `View ${this.entityName}`;
+
+            default:
+                return this.entityName;
+        }
+    }
+
+    //===========================================================
+    // Dropdown Items
+    //===========================================================
+
+    serviceItems:
+        any[]
+        =
+        [];
+
+    statusItems:
+        any[]
+        =
+        [
+            {
+                label:'Active',
+                value:true
+            },
+            {
+                label:'Inactive',
+                value:false
+            }
+        ];
+
+    //===========================================================
+    // Selected Service (generated by the Service Policy)
+    //===========================================================
+
+    record:
+        ScheduledService | null =
+        null;
+
+    //===========================================================
+    // Editable Values
+    //===========================================================
+
+    entity:
+        ConfigureScheduledService
+        =
+        this.createEmptyEntity();
+
+    // Amount text as typed ("1200", "1,200.50")
+    customerChargeText:
+        string =
+        '';
+
+    brandReimbursementText:
+        string =
+        '';
+
+    //===========================================================
+    // Form State
+    //===========================================================
+
+    private originalEntity:
+        string =
+        '';
+
+    hasChanges:
+        boolean =
+        false;
+
+    //===========================================================
+    // Initialize
+    //===========================================================
+
+    ngOnInit():
+        void
+    {
+        this.initializeMode();
+    }
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Create Empty Entity
+    //===========================================================
+
+    private createEmptyEntity():
+        ConfigureScheduledService
+    {
+        return {
+            ScheduledServiceId:0,
+            CustomerCharge:0,
+            BrandReimbursement:0,
+            Remarks:'',
+            IsActive:true
+        };
+    }
+
+    //===========================================================
+    // Initialize Mode
+    //===========================================================
+
+    private initializeMode():
+        void
+    {
+        const url =
+            this.router.url.toLowerCase();
+
+        if
+        (
+            url.includes('/view/')
+        )
+        {
+            this.mode =
+                'view';
+        }
+        else if
+        (
+            url.includes('/edit/')
+        )
+        {
+            this.mode =
+                'edit';
+        }
+        else
+        {
+            this.mode =
+                'add';
+        }
+
+        const id =
+            this.resolveEntityId();
+
+        if
+        (
+            id > 0
+        )
+        {
+            this.entityId =
+                id;
+
+            this.loadEntity();
+
+            return;
+        }
+
+        this.initializeEntity();
+    }
+
+    //===========================================================
+    // Resolve Entity Id
+    //===========================================================
+
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+            this.route;
+
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+        return 0;
+    }
+
+    //===========================================================
+    // Initialize Entity (Configure mode : nothing selected)
+    //===========================================================
+
+    private initializeEntity():
+        void
+    {
+        this.entityId =
+            0;
+
+        this.record =
+            null;
+
+        this.entity =
+            this.createEmptyEntity();
+
+        this.syncAmountTexts();
+
+        this.setInitialFormState();
+
+        this.loadPendingServices();
+    }
+
+    //===========================================================
+    // Load Pending Services (Configure mode)
+    //===========================================================
+
+    private loadPendingServices():
+        void
+    {
+        this.scheduledServiceService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        ScheduledService[]
+                ):
+                    void =>
+                {
+                    this.serviceItems =
+                        (response ?? [])
+                            .filter(
+                                item =>
+                                    item.Readiness === 'Pending'
+                            )
+                            .map(
+                                item =>
+                                ({
+                                    label:
+                                        `${item.ServiceName} (${item.PolicyCode})`,
+
+                                    value:
+                                        Number(item.ScheduledServiceId)
+                                })
+                            );
+
+                    if
+                    (
+                        this.serviceItems.length === 0
+                    )
+                    {
+                        this.toast.info(
+                            'Nothing to Configure',
+                            'Every scheduled service generated by the Service Policies is already priced.'
+                        );
+                    }
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Pending Scheduled Services Error',
+                        error
+                    );
+
+                    this.serviceItems =
+                        [];
+
+                    this.toast.error(
+                        'Error',
+                        this.extractErrorMessage(
+                            error,
+                            'Failed to load scheduled services.'
+                        )
+                    );
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+    //===========================================================
+    // Service Name Change (Configure mode)
+    //===========================================================
+
+    onServiceChange
+    (
+        value?:
+            any
+    ):
+        void
+    {
+        const id =
+            Number(this.unwrapValue(value) ?? 0);
+
+        if
+        (
+            !(id > 0)
+        )
+        {
+            this.entityId =
+                0;
+
+            this.record =
+                null;
+
+            this.entity =
+                this.createEmptyEntity();
+
+            this.syncAmountTexts();
+
+            this.checkForChanges();
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        this.entityId =
+            id;
+
+        this.loadEntity();
+    }
+
+    // A dropdown may emit the value or the whole { label, value } item
+    private unwrapValue
+    (
+        value:
+            any
+    ):
+        any
+    {
+        return value !== null
+            &&
+            typeof value === 'object'
+            &&
+            'value' in value
+                ? value.value
+                : value;
+    }
+
+    //===========================================================
+    // Load Entity
+    //===========================================================
+
+    private loadEntity():
+        void
+    {
+        this.scheduledServiceService
+            .getById(
+                this.entityId
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        ScheduledService
+                ): void =>
+                {
+                    this.record =
+                        response;
+
+                    this.entity =
+                    {
+                        ScheduledServiceId:
+                            response.ScheduledServiceId,
+
+                        CustomerCharge:
+                            this.isPaid
+                                ? Number(response.CustomerCharge ?? 0)
+                                : 0,
+
+                        BrandReimbursement:
+                            this.isFree
+                                ? Number(response.BrandReimbursement ?? 0)
+                                : 0,
+
+                        Remarks:
+                            response.Remarks,
+
+                        IsActive:
+                            response.IsActive
+                    };
+
+                    // Edit / View : the only item is this service
+                    if
+                    (
+                        !this.isAddMode
+                    )
+                    {
+                        this.serviceItems =
+                        [
+                            {
+                                label:
+                                    `${response.ServiceName} (${response.PolicyCode})`,
+
+                                value:
+                                    Number(response.ScheduledServiceId)
+                            }
+                        ];
+                    }
+
+                    this.syncAmountTexts();
+
+                    // Picking a service in Configure mode is not a change yet
+                    this.setInitialFormState();
+
+                    if
+                    (
+                        response.SubCategoryMessage
+                        &&
+                        !this.isViewMode
+                    )
+                    {
+                        this.toast.info(
+                            'Not Ready to Configure',
+                            response.SubCategoryMessage
+                        );
+                    }
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Load Scheduled Service Error',
+                        error
+                    );
+
+                    this.toast.error(
+                        'Error',
+                        'Failed to load Scheduled Service.'
+                    );
+
+                    if
+                    (
+                        this.isAddMode
+                    )
+                    {
+                        this.record =
+                            null;
+
+                        this.cdr.detectChanges();
+
+                        return;
+                    }
+
+                    this.hasChanges =
+                        false;
+
+                    this.onBackToList();
+                }
+            });
+    }
+
+    //===========================================================
+    // Display Helpers
+    //===========================================================
+
+    get selectedServiceId():
+        number
+    {
+        return this.record
+            ? Number(this.record.ScheduledServiceId)
+            : 0;
+    }
+
+    get isFree():
+        boolean
+    {
+        return (this.record?.ServiceType ?? '').toLowerCase() === 'free';
+    }
+
+    get isPaid():
+        boolean
+    {
+        return (this.record?.ServiceType ?? '').toLowerCase() === 'paid';
+    }
+
+    get brandDisplay():
+        string
+    {
+        return this.record?.BrandName ?? '';
+    }
+
+    get policyDisplay():
+        string
+    {
+        return this.record
+            ? [
+                this.record.PolicyCode,
+                this.record.BrandName
+              ]
+              .filter(value => !!value)
+              .join(' - ')
+            : '';
+    }
+
+    get subCategoryDisplay():
+        string
+    {
+        if
+        (
+            !this.record
+        )
+        {
+            return '';
+        }
+
+        if
+        (
+            this.record.SubCategoryCode
+        )
+        {
+            return `${this.record.SubCategoryCode} - ${this.record.SubCategoryName}`;
+        }
+
+        return this.record.SubCategoryMessage
+            ? 'Not available yet'
+            : '';
+    }
+
+    get serviceCodeDisplay():
+        string
+    {
+        return this.record?.ServiceCode
+            ||
+            this.record?.NextServiceCode
+            ||
+            '';
+    }
+
+    get positionDisplay():
+        string
+    {
+        return this.record
+            ? `Seq ${this.record.SequenceNo} - ${this.record.PositionName}`
+            : '';
+    }
+
+    get serviceTypeDisplay():
+        string
+    {
+        return this.record?.ServiceType ?? '';
+    }
+
+    get dueDaysDisplay():
+        string
+    {
+        return this.record
+            ? `${this.record.IntervalDays} days`
+            : '';
+    }
+
+    get dueKmDisplay():
+        string
+    {
+        return this.record
+            ? `${Number(this.record.IntervalKm ?? 0).toLocaleString('en-US')} km (reference)`
+            : '';
+    }
+
+    get graceDaysDisplay():
+        string
+    {
+        return this.record
+            ? `${this.record.GraceDays} days`
+            : '';
+    }
+
+    get ledgerCodeDisplay():
+        string
+    {
+        return this.record?.IncomeLedgerCode
+            ||
+            this.record?.NextIncomeLedgerCode
+            ||
+            '';
+    }
+
+    get ledgerNameDisplay():
+        string
+    {
+        return this.record?.ServiceName ?? '';
+    }
+
+    get readinessDisplay():
+        string
+    {
+        if
+        (
+            !this.record
+        )
+        {
+            return '';
+        }
+
+        if
+        (
+            this.record.Readiness === 'Ready'
+        )
+        {
+            return this.record.IsActive
+                ? 'Ready - can be invoiced'
+                : 'Ready - inactive, not invoiced';
+        }
+
+        if
+        (
+            this.record.Readiness === 'Not in Policy'
+        )
+        {
+            return 'Not in Policy - never invoiced';
+        }
+
+        return 'Pending - set the price to make it ready';
+    }
+
+    // Not in Policy : can only stay inactive
+    get isStatusLocked():
+        boolean
+    {
+        return !!this.record
+            &&
+            !this.record.InPolicy;
+    }
+
+    //===========================================================
+    // Amounts
+    //===========================================================
+
+    private syncAmountTexts():
+        void
+    {
+        this.customerChargeText =
+            this.amountText(
+                this.entity.CustomerCharge
+            );
+
+        this.brandReimbursementText =
+            this.amountText(
+                this.entity.BrandReimbursement
+            );
+    }
+
+    private amountText
+    (
+        value:
+            number
+    ):
+        string
+    {
+        const amount =
+            Number(value ?? 0);
+
+        return amount > 0
+            ? amount.toFixed(2)
+            : '';
+    }
+
+    // "1,200.50" -> 1200.5; anything else -> NaN
+    private parseAmount
+    (
+        text:
+            string
+    ):
+        number
+    {
+        const value =
+            String(text ?? '')
+                .replace(/,/g, '')
+                .trim();
+
+        if
+        (
+            !value
+        )
+        {
+            return 0;
+        }
+
+        return /^\d+(\.\d{0,2})?$/.test(value)
+            ? Number(value)
+            : NaN;
+    }
+
+    onCustomerChargeChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.customerChargeText =
+            String(value ?? '');
+
+        const amount =
+            this.parseAmount(
+                this.customerChargeText
+            );
+
+        this.entity.CustomerCharge =
+            Number.isNaN(amount)
+                ? -1
+                : amount;
+
+        this.onValueChange();
+    }
+
+    onBrandReimbursementChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.brandReimbursementText =
+            String(value ?? '');
+
+        const amount =
+            this.parseAmount(
+                this.brandReimbursementText
+            );
+
+        this.entity.BrandReimbursement =
+            Number.isNaN(amount)
+                ? -1
+                : amount;
+
+        this.onValueChange();
+    }
+
+    //===========================================================
+    // Set Initial Form State
+    //===========================================================
+
+    private setInitialFormState():
+        void
+    {
+        this.originalEntity =
+            JSON.stringify(
+                this.entity
+            );
+
+        this.hasChanges =
+            false;
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Track Changes
+    //===========================================================
+
+    checkForChanges():
+        void
+    {
+        this.hasChanges =
+            JSON.stringify(
+                this.entity
+            )
+            !==
+            this.originalEntity;
+    }
+
+    //===========================================================
+    // Save
+    //===========================================================
+
+    onSave():
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        //=======================================================
+        // Validation
+        //=======================================================
+
+        const record =
+            this.record;
+
+        if
+        (
+            !record
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Select a Service Name.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            record.SubCategoryMessage
+        )
+        {
+            this.toast.error(
+                'Validation',
+                record.SubCategoryMessage
+            );
+
+            return;
+        }
+
+        if
+        (
+            this.entity.CustomerCharge < 0
+            ||
+            this.entity.BrandReimbursement < 0
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Enter amounts as numbers with up to 2 decimals (e.g. 1200 or 1200.50).'
+            );
+
+            return;
+        }
+
+        if
+        (
+            this.isFree
+            &&
+            !(this.entity.BrandReimbursement > 0)
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Brand Reimbursement is required for a free service.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            this.isPaid
+            &&
+            !(this.entity.CustomerCharge > 0)
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Customer Charge is required for a paid service.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            this.entity.IsActive
+            &&
+            !record.InPolicy
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'This service is no longer in the Service Policy, so it cannot be active.'
+            );
+
+            return;
+        }
+
+        this.saveConfigure();
+    }
+
+    //===========================================================
+    // Configure (price)
+    //===========================================================
+
+    private saveConfigure():
+        void
+    {
+        const model:
+            ConfigureScheduledService =
+        {
+            ScheduledServiceId:
+                this.selectedServiceId,
+
+            CustomerCharge:
+                this.isPaid
+                    ? this.entity.CustomerCharge
+                    : 0,
+
+            BrandReimbursement:
+                this.isFree
+                    ? this.entity.BrandReimbursement
+                    : 0,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
+        };
+
+        const firstSave =
+            !this.record?.IsConfigured;
+
+        this.isSaving =
+            true;
+
+        this.startProgress(
+            firstSave
+                ? 'Configuring Scheduled Service'
+                : 'Updating Scheduled Service',
+            firstSave
+                ? 'Saving the price and creating its income ledger...'
+                : 'Saving the price and updating its income ledger...'
+        );
+
+        this.withMinimumDuration(
+            this.scheduledServiceService.configure(
+                model
+            ),
+            this.minimumSaveDurationMs
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    'Scheduled Service saved successfully.',
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.originalEntity =
+                            JSON.stringify(
+                                this.entity
+                            );
+
+                        this.hasChanges =
+                            false;
+
+                        this.toast.success(
+                            'Success',
+                            firstSave
+                                ? 'Scheduled Service configured. It is ready for invoicing.'
+                                : 'Scheduled Service updated successfully.'
+                        );
+
+                        this.cdr.detectChanges();
+
+                        this.onBackToList();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Configure Scheduled Service Error',
+                    error
+                );
+
+                this.failProgress(
+                    ():
+                        void =>
+                    {
+                        this.isSaving =
+                            false;
+
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to save Scheduled Service.'
+                            )
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                );
+            }
+        });
+    }
+
+    //===========================================================
+    // Progress : Start
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+        message:
+            string
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.progressDialog.update(
+            0,
+            message
+        );
+
+        this.progressTimer =
+            setInterval
+            (
+                ():
+                    void =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (
+                                this.progressCeiling -
+                                this.progressValue
+                            )
+                            *
+                            this.progressEaseFactor
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.progressCeiling,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+                this.progressIntervalMs
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Progress : Complete
+    //===========================================================
+
+    private completeProgress
+    (
+        message:
+            string,
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressValue =
+            100;
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        setTimeout
+        (
+            ():
+                void =>
+            {
+                this.progressDialog.close();
+
+                callback();
+            },
+            this.progressCompleteHoldMs
+        );
+    }
+
+    //===========================================================
+    // Progress : Fail
+    //===========================================================
+
+    private failProgress
+    (
+        callback:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        callback();
+    }
+
+    //===========================================================
+    // Progress : Clear Timer
+    //===========================================================
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer !== null
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                null;
+        }
+    }
+
+    //===========================================================
+    // Minimum Duration Wrapper
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source:
+            Observable<T>,
+        minimumMs:
+            number
+    ):
+        Observable<T>
+    {
+        return defer
+        (
+            ():
+                Observable<T> =>
+            {
+                const startedAt =
+                    Date.now();
+
+                const remaining =
+                    ():
+                        number =>
+                        Math.max(
+                            0,
+                            minimumMs -
+                            (
+                                Date.now() -
+                                startedAt
+                            )
+                        );
+
+                return source.pipe
+                (
+                    delayWhen
+                    (
+                        () =>
+                            timer(
+                                remaining()
+                            )
+                    ),
+
+                    catchError
+                    (
+                        error =>
+                            timer(
+                                remaining()
+                            )
+                            .pipe
+                            (
+                                switchMap
+                                (
+                                    () =>
+                                        throwError(
+                                            () => error
+                                        )
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Extract Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
+        }
+
+        return fallback;
+    }
+
+    //===========================================================
+    // Clear
+    //===========================================================
+
+    onClear():
+        void
+    {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            this.isEditMode
+        )
+        {
+            this.loadEntity();
+
+            return;
+        }
+
+        this.initializeEntity();
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Back To List
+    //===========================================================
+
+    onBackToList():
+        void
+    {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            !this.hasChanges
+        )
+        {
+            void this.router.navigate(
+                [
+                    'list'
+                ],
+                {
+                    relativeTo:
+                        this.route.parent
+                }
+            );
+
+            return;
+        }
+
+        this.confirmDialog.open(
+            'Cancel Changes',
+            'Any unsaved changes will be lost. Do you want to leave this page?',
+            () =>
+            {
+                void this.router.navigate(
+                    [
+                        'list'
+                    ],
+                    {
+                        relativeTo:
+                            this.route.parent
+                    }
+                );
+            },
+            'Leave',
+            'Stay',
+            'primary'
+        );
+    }
+
+    //===========================================================
+    // Save Button Text
+    //===========================================================
+
+    get saveButtonText():
+        string
+    {
+        return this.isEditMode
+            ? 'Update'
+            : 'Save';
+    }
+
+    //===========================================================
+    // Mode Helpers
+    //===========================================================
+
+    get isViewMode():
+        boolean
+    {
+        return this.mode === 'view';
+    }
+
+    get isEditMode():
+        boolean
+    {
+        return this.mode === 'edit';
+    }
+
+    get isAddMode():
+        boolean
+    {
+        return this.mode === 'add';
+    }
+
+    // The service is chosen in Configure mode only
+    get isServiceLocked():
+        boolean
+    {
+        return !this.isAddMode;
+    }
+
+    //===========================================================
+    // Value Changed
+    //===========================================================
+
+    onValueChange():
+        void
+    {
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+}

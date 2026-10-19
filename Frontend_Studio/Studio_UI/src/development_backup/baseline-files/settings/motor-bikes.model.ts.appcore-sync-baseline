@@ -1,0 +1,90 @@
+/* ============================================================
+   Motor Bikes
+============================================================ */
+
+export interface MotorBikes
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Motor Bikes
+============================================================ */
+
+export interface CreateMotorBikes
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Motor Bikes
+============================================================ */
+
+export interface UpdateMotorBikes
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Motor Bikes Defaults
+============================================================ */
+
+export interface MotorBikesDefaults
+{
+    code:
+        string;
+}

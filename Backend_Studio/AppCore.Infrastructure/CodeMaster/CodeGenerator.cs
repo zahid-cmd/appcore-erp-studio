@@ -529,14 +529,33 @@ public static class CodeGenerator
 
     //===============================================================
     // Account Class Code
+    //
+    // <ClassPrefix>-<nnn>   e.g. CLS-001, INV-001, WIP-002, COGS-003
+    // The prefix is typed on the Account Class form (2–5 letters);
+    // nothing is hard-coded here.
     //===============================================================
 
 
     public static string GenerateAccountClassCode(
-        int sequenceNo,
-        string classType)
+        string classPrefix,
+        int sequenceNo)
 
     {
+        string prefix =
+            (classPrefix ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant();
+
+
+        if (prefix.Length < 2 || prefix.Length > 5 || !prefix.All(c => c >= 'A' && c <= 'Z'))
+
+        {
+            throw new ArgumentException(
+                "Invalid account class prefix.");
+
+        }
+
+
         if (sequenceNo < 1)
 
         {
@@ -544,22 +563,6 @@ public static class CodeGenerator
                 "Invalid account class sequence number.");
 
         }
-
-
-        string prefix =
-
-            string.Equals(
-                classType?.Trim(),
-                "Inventory Class",
-                StringComparison.OrdinalIgnoreCase)
-
-                    ?
-
-                        "INV"
-
-                    :
-
-                        "ACC";
 
 
         return $"{prefix}-{sequenceNo:D3}";
@@ -682,7 +685,7 @@ public static class CodeGenerator
         }
 
 
-        return $"GLR-{classSequenceNo:D3}-{groupSequenceNo:D3}-{subGroupSequenceNo:D3}-{ledgerSequenceNo:D4}";
+        return $"GLR-{classSequenceNo:D3}-{groupSequenceNo:D3}-{subGroupSequenceNo:D3}-{ledgerSequenceNo:D5}";
     }
 
     //===============================================================
@@ -832,14 +835,14 @@ public static class CodeGenerator
     }
 
     //===============================================================
-    // Product Master Code
+    // Motor Bikes Code   (MTB-class-category-subcategory-0001)
     //===============================================================
 
-    public static string GenerateProductMasterCode(
+    public static string GenerateMotorBikesCode(
         int inventoryClassSequenceNo,
         int categorySequenceNo,
         int subCategorySequenceNo,
-        int productSequenceNo)
+        int motorBikeSequenceNo)
     {
         if (inventoryClassSequenceNo < 1)
         {
@@ -859,13 +862,13 @@ public static class CodeGenerator
                 "Invalid product sub category sequence number.");
         }
 
-        if (productSequenceNo < 1)
+        if (motorBikeSequenceNo < 1)
         {
             throw new ArgumentException(
-                "Invalid product master sequence number.");
+                "Invalid motor bike sequence number.");
         }
 
-        return $"PRD-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D3}-{productSequenceNo:D4}";
+        return $"MTB-{inventoryClassSequenceNo:D3}-{categorySequenceNo:D3}-{subCategorySequenceNo:D3}-{motorBikeSequenceNo:D4}";
     }
 
     //===============================================================
@@ -952,6 +955,51 @@ public static class CodeGenerator
     }
 
 
+    //===============================================================
+    // Cash Account Code (MANUAL)
+    //
+    // CSH-ccc-ggg-sss-nnnnn   e.g. CSH-002-002-002-00001
+    //
+    // Kept outside the AUTO blocks on purpose: Code Synchronization
+    // rewrites AUTO blocks (GenerateCashAccountsCode below goes back
+    // to CAS- every time it runs), so the Cash Accounts repository
+    // calls this method instead.
+    //===============================================================
+
+    public static string GenerateCashAccountCode(
+        int classSequenceNo,
+        int groupSequenceNo,
+        int subGroupSequenceNo,
+        int sequenceNo)
+    {
+        if (classSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid account class sequence number.");
+        }
+
+        if (groupSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid account group sequence number.");
+        }
+
+        if (subGroupSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid account sub group sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid cash account sequence number.");
+        }
+
+        return $"CSH-{classSequenceNo:D3}-{groupSequenceNo:D3}-{subGroupSequenceNo:D3}-{sequenceNo:D5}";
+    }
+
+
     // AUTO-BEGIN : GenerateCashAccountsCode
     public static string GenerateCashAccountsCode(
         int accountClassSequenceNo,
@@ -996,6 +1044,50 @@ public static class CodeGenerator
         return $"BAN-{sequenceNo:D3}";
     }
     // AUTO-END : GenerateBankSetupCode
+
+
+    //===============================================================
+    // Bank Account Code (MANUAL)
+    //
+    // BNK-ccc-ggg-sss-nnnnn   e.g. BNK-002-002-002-00001
+    //
+    // Kept outside the AUTO blocks on purpose: Code Synchronization
+    // rewrites AUTO blocks (GenerateBankAccountsCode below stays
+    // BAN-), so the Bank Accounts repository calls this method.
+    //===============================================================
+
+    public static string GenerateBankAccountCode(
+        int classSequenceNo,
+        int groupSequenceNo,
+        int subGroupSequenceNo,
+        int sequenceNo)
+    {
+        if (classSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid account class sequence number.");
+        }
+
+        if (groupSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid account group sequence number.");
+        }
+
+        if (subGroupSequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid account sub group sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid bank account sequence number.");
+        }
+
+        return $"BNK-{classSequenceNo:D3}-{groupSequenceNo:D3}-{subGroupSequenceNo:D3}-{sequenceNo:D5}";
+    }
 
 
     // AUTO-BEGIN : GenerateBankAccountsCode
@@ -1107,4 +1199,240 @@ public static class CodeGenerator
     }
     // AUTO-END : GeneratePOSAccountsCode
 
+
+    // AUTO-BEGIN : GenerateColorManagementCode
+    public static string GenerateColorManagementCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"CLR-{sequenceNo:D3}";
+    }
+    // AUTO-END : GenerateColorManagementCode
+
+
+    // AUTO-BEGIN : GenerateBrandManagementCode
+    public static string GenerateBrandManagementCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid sequence number.");
+        }
+
+        return $"BRAND-{sequenceNo:D3}";
+    }
+    // AUTO-END : GenerateBrandManagementCode
+    
+    //===============================================================
+    // SERVICE SETTINGS
+    //
+    // Paste this whole section into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block - e.g. right after the
+    // PRODUCT SETTINGS section. The names differ from the ones Code
+    // Synchronization generates, so they never clash with them.
+    //===============================================================
+
+
+    //===============================================================
+    // Service Policy Code   SVP-001
+    //===============================================================
+
+    public static string GeneratePolicyCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service policy sequence number.");
+        }
+
+        return $"SVP-{sequenceNo:D3}";
+    }
+
+
+    //===============================================================
+    // Service Category Code   BRS-001 (Brand Services)
+    //                         DRS-001 (Differential Services)
+    //===============================================================
+
+    public static string GenerateServiceCategoryCode(
+        string categoryPrefix,
+        int categorySequenceNo)
+    {
+        string prefix =
+            ServicePrefix(
+                categoryPrefix);
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service category sequence number.");
+        }
+
+        return $"{prefix}-{categorySequenceNo:D3}";
+    }
+
+
+    //===============================================================
+    // Service Sub Category Code   BRS-001-002
+    //===============================================================
+
+    public static string GenerateServiceSubCategoryCode(
+        string categoryPrefix,
+        int categorySequenceNo,
+        int subCategorySequenceNo)
+    {
+        string prefix =
+            ServicePrefix(
+                categoryPrefix);
+
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service sub category sequence number.");
+        }
+
+        return $"{prefix}-{categorySequenceNo:D3}-{subCategorySequenceNo:D3}";
+    }
+
+
+    //===============================================================
+    // Scheduled Service Code   MSS-001-002-00001
+    // (category no - sub category no - running no)
+    //===============================================================
+
+    public static string GenerateScheduledServiceItemCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int sequenceNo)
+    {
+        return ServiceItemCode(
+            "MSS",
+            categorySequenceNo,
+            subCategorySequenceNo,
+            sequenceNo);
+    }
+
+
+    //===============================================================
+    // Labor Chart Code   BLC-001-001-00001
+    // (category no - sub category no - running no)
+    //===============================================================
+
+    public static string GenerateLaborChartItemCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int sequenceNo)
+    {
+        return ServiceItemCode(
+            "BLC",
+            categorySequenceNo,
+            subCategorySequenceNo,
+            sequenceNo);
+    }
+
+
+    //===============================================================
+    // Service Settings helpers
+    //===============================================================
+
+    private static string ServicePrefix(
+        string prefixValue)
+    {
+        string prefix =
+            (prefixValue ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant();
+
+        if (prefix.Length < 2 || prefix.Length > 5 || !prefix.All(c => c >= 'A' && c <= 'Z'))
+        {
+            throw new ArgumentException(
+                "Invalid service code prefix.");
+        }
+
+        return prefix;
+    }
+
+
+    private static string ServiceItemCode(
+        string itemPrefix,
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int sequenceNo)
+    {
+        if (categorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service category sequence number.");
+        }
+
+        if (subCategorySequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service sub category sequence number.");
+        }
+
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid service item sequence number.");
+        }
+
+        return $"{itemPrefix}-{categorySequenceNo:D3}-{subCategorySequenceNo:D3}-{sequenceNo:D5}";
+    }
+
+    //===============================================================
+    // Customized Services Code   OCS-001-001-00001
+    // (category no - sub category no - running no)
+    //
+    // Paste into CodeGenerator.cs, inside the SERVICE SETTINGS
+    // section added for Labor Chart (next to
+    // GenerateLaborChartItemCode). It uses the ServiceItemCode
+    // helper of that section.
+    //===============================================================
+
+    public static string GenerateCustomizedServiceItemCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int sequenceNo)
+    {
+        return ServiceItemCode(
+            "OCS",
+            categorySequenceNo,
+            subCategorySequenceNo,
+            sequenceNo);
+    }
+
+    //===============================================================
+    // Membership Services Code   MSC-002-001-00001
+    // (category no - sub category no - running no)
+    //
+    // Paste into CodeGenerator.cs, inside the SERVICE SETTINGS
+    // section added for Labor Chart (next to
+    // GenerateCustomizedServiceItemCode). It uses the ServiceItemCode
+    // helper of that section.
+    //===============================================================
+
+    public static string GenerateMembershipServiceItemCode(
+        int categorySequenceNo,
+        int subCategorySequenceNo,
+        int sequenceNo)
+    {
+        return ServiceItemCode(
+            "MSC",
+            categorySequenceNo,
+            subCategorySequenceNo,
+            sequenceNo);
+    }
 }

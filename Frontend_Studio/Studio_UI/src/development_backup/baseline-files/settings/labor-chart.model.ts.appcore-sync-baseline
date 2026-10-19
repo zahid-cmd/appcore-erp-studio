@@ -1,0 +1,90 @@
+/* ============================================================
+   Labor Chart
+============================================================ */
+
+export interface LaborChart
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Labor Chart
+============================================================ */
+
+export interface CreateLaborChart
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Labor Chart
+============================================================ */
+
+export interface UpdateLaborChart
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Labor Chart Defaults
+============================================================ */
+
+export interface LaborChartDefaults
+{
+    code:
+        string;
+}

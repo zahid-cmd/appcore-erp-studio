@@ -58,7 +58,7 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR : TAB + SCOPED COUNTERS | STATUS
+         PAGE TOOLBAR : TAB + SCOPED STATS | STATUS
     ====================================================== -->
 
     <app-page-toolbar>
@@ -78,54 +78,86 @@
             </app-control-tabs>
 
 
-            <div class="coa-counters">
+            <!-- STAT STRIP (one capsule, four readings) -->
 
-                <div class="coa-counter" title="Account classes in scope">
-                    <span class="coa-counter-icon"><i class="fas fa-layer-group"></i></span>
-                    <span class="coa-counter-value">{{ countClasses }}</span>
-                    <span class="coa-counter-label">Classes</span>
+            <div class="coa-stats" aria-label="Counts in scope">
+
+                <div class="coa-stat" title="Account classes in scope">
+                    <i class="fas fa-layer-group"></i>
+                    <span class="coa-stat-value">{{ countClasses }}</span>
+                    <span class="coa-stat-label">Classes</span>
                 </div>
 
-                <div class="coa-counter" title="Account groups in scope">
-                    <span class="coa-counter-icon"><i class="fas fa-folder-tree"></i></span>
-                    <span class="coa-counter-value">{{ countGroups }}</span>
-                    <span class="coa-counter-label">Groups</span>
+                <div class="coa-stat" title="Account groups in scope">
+                    <i class="fas fa-folder-tree"></i>
+                    <span class="coa-stat-value">{{ countGroups }}</span>
+                    <span class="coa-stat-label">Groups</span>
                 </div>
 
-                <div class="coa-counter" title="Account sub groups in scope">
-                    <span class="coa-counter-icon"><i class="fas fa-folder-open"></i></span>
-                    <span class="coa-counter-value">{{ countSubGroups }}</span>
-                    <span class="coa-counter-label">Sub Groups</span>
+                <div class="coa-stat" title="Account sub groups in scope">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="coa-stat-value">{{ countSubGroups }}</span>
+                    <span class="coa-stat-label">Sub Groups</span>
                 </div>
 
-                <div class="coa-counter" title="Ledgers in scope">
-                    <span class="coa-counter-icon coa-counter-ledger"><i class="fas fa-book"></i></span>
-                    <span class="coa-counter-value">{{ countLedgers }}</span>
-                    <span class="coa-counter-label">Ledgers</span>
+                <div class="coa-stat coa-stat-accent" title="Ledgers in scope">
+                    <i class="fas fa-book"></i>
+                    <span class="coa-stat-value">{{ countLedgers }}</span>
+                    <span class="coa-stat-label">Ledgers</span>
                 </div>
-
-                @if (scopeLabel)
-                {
-                    <button
-
-                        type="button"
-
-                        class="coa-scope"
-
-                        title="Show the whole chart"
-
-                        (click)="clearSelection()">
-
-                        <span class="coa-scope-label">Scope</span>
-
-                        <span class="coa-scope-value">{{ scopeLabel }}</span>
-
-                        <i class="fas fa-xmark"></i>
-
-                    </button>
-                }
 
             </div>
+
+            <!-- LINK ISSUES : shown only when the link check finds some -->
+
+            @if (issues.length > 0)
+            {
+                <button
+
+                    type="button"
+
+                    class="coa-scope"
+
+                    style="border-color:#f59e0b; color:#b45309; background:#fffbeb"
+
+                    [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
+
+                    (click)="toggleIssues()">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span class="coa-scope-value">
+                        {{ issues.length }} Link {{ issues.length === 1 ? 'Issue' : 'Issues' }}
+                    </span>
+
+                    @if (issuesOpen)
+                    {
+                        <i class="fas fa-xmark coa-scope-x"></i>
+                    }
+
+                </button>
+            }
+
+            @if (scopeLabel)
+            {
+                <button
+
+                    type="button"
+
+                    class="coa-scope"
+
+                    title="Show the whole chart"
+
+                    (click)="clearSelection()">
+
+                    <i class="fas fa-crosshairs"></i>
+
+                    <span class="coa-scope-value">{{ scopeLabel }}</span>
+
+                    <i class="fas fa-xmark coa-scope-x"></i>
+
+                </button>
+            }
 
         </div>
 
@@ -194,27 +226,36 @@
 
             <aside class="coa-nav">
 
-                <div class="coa-pane-head">
+                <div class="coa-nav-head">
 
-                    <span class="coa-pane-title">
+                    <div class="coa-heading">
 
-                        <i class="fas fa-sitemap"></i>
+                        <span class="coa-tile">
+                            <i class="fas fa-sitemap"></i>
+                        </span>
 
-                        Navigator
+                        <div class="coa-heading-text">
+                            <span class="coa-heading-title">Navigator</span>
+                            <span class="coa-heading-sub">Class › Group › Sub Group</span>
+                        </div>
 
-                    </span>
+                    </div>
 
                     <button
 
                         type="button"
 
-                        class="coa-root"
+                        class="coa-expand-btn"
 
-                        [class.coa-root-on]="!selection"
+                        [title]="allExpanded ? 'Collapse all' : 'Expand all'"
 
-                        (click)="clearSelection()">
+                        [disabled]="loading || navClasses.length === 0"
 
-                        All Classes
+                        (click)="toggleAll()">
+
+                        <i [class]="allExpanded ? 'fas fa-angles-up' : 'fas fa-angles-down'"></i>
+
+                        {{ allExpanded ? 'Collapse all' : 'Expand all' }}
 
                     </button>
 
@@ -224,169 +265,190 @@
 
                     @if (loading)
                     {
-                        @for (n of [1, 2, 3, 4, 5]; track n)
+                        @for (n of [1, 2, 3, 4, 5, 6]; track n)
                         {
                             <span class="coa-skeleton"></span>
                         }
                     }
-                    @else if (navClasses.length === 0)
-                    {
-                        <div class="coa-nav-empty">
-
-                            {{ searchText ? 'Nothing matches the search.' : 'No account classes found.' }}
-
-                        </div>
-                    }
                     @else
                     {
-                        <ul class="coa-tree">
+                        <!-- ROOT -->
 
-                            @for (cls of navClasses; track cls.node.Id)
-                            {
-                                <li>
+                        <div
 
-                                    <!-- CLASS -->
+                            class="coa-node coa-node-root"
 
-                                    <div
+                            [class.coa-node-active]="!selection"
 
-                                        class="coa-node coa-node-class"
+                            (click)="clearSelection()">
 
-                                        [class.coa-node-active]="isSelected('class', cls.node.Id)"
+                            <span class="coa-root-icon">
+                                <i class="fas fa-house"></i>
+                            </span>
 
-                                        [class.coa-node-off]="!cls.node.Status"
+                            <span class="coa-node-name">All Classes</span>
 
-                                        (click)="select('class', cls.node.Id)">
+                            <span class="coa-badge" title="Classes">{{ navClasses.length }}</span>
 
-                                        <button
+                        </div>
 
-                                            type="button"
+                        @if (navClasses.length === 0)
+                        {
+                            <div class="coa-nav-empty">
 
-                                            class="coa-caret"
+                                <i class="fas fa-magnifying-glass"></i>
 
-                                            [class.coa-caret-open]="isExpanded(classKey(cls.node.Id))"
+                                {{ searchText ? 'Nothing matches the search.' : 'No account classes found.' }}
 
-                                            [style.visibility]="cls.groups.length ? 'visible' : 'hidden'"
+                            </div>
+                        }
+                        @else
+                        {
+                            <ul class="coa-tree">
 
-                                            [attr.aria-label]="isExpanded(classKey(cls.node.Id)) ? 'Collapse' : 'Expand'"
+                                @for (cls of navClasses; track cls.node.Id)
+                                {
+                                    <li>
 
-                                            (click)="toggle(classKey(cls.node.Id), $event)">
+                                        <!-- CLASS -->
 
-                                            <i class="fas fa-chevron-right"></i>
+                                        <div
 
-                                        </button>
+                                            class="coa-node coa-lv1"
 
-                                        <span class="coa-node-text">
+                                            [class.coa-node-active]="isSelected('class', cls.node.Id)"
 
-                                            <span class="coa-node-name">{{ cls.node.Name }}</span>
+                                            [class.coa-node-off]="!cls.node.Status"
+
+                                            [attr.title]="cls.node.Code + ' · ' + cls.node.Name"
+
+                                            (click)="select('class', cls.node.Id)">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="coa-caret"
+
+                                                [class.coa-caret-open]="isExpanded(classKey(cls.node.Id))"
+
+                                                [style.visibility]="cls.groups.length ? 'visible' : 'hidden'"
+
+                                                [attr.aria-label]="isExpanded(classKey(cls.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                                (click)="toggle(classKey(cls.node.Id), $event)">
+
+                                                <i class="fas fa-chevron-right"></i>
+
+                                            </button>
 
                                             <span class="coa-node-code">{{ cls.node.Code }}</span>
 
-                                        </span>
+                                            <span class="coa-node-name">{{ cls.node.Name }}</span>
 
-                                        <span class="coa-badge" title="Groups">{{ cls.groups.length }}</span>
+                                            <span class="coa-badge" title="Groups">{{ cls.groups.length }}</span>
 
-                                    </div>
+                                        </div>
 
-                                    @if (isExpanded(classKey(cls.node.Id)) && cls.groups.length)
-                                    {
-                                        <ul>
+                                        @if (isExpanded(classKey(cls.node.Id)) && cls.groups.length)
+                                        {
+                                            <ul>
 
-                                            @for (grp of cls.groups; track grp.node.Id)
-                                            {
-                                                <li>
+                                                @for (grp of cls.groups; track grp.node.Id)
+                                                {
+                                                    <li>
 
-                                                    <!-- GROUP -->
+                                                        <!-- GROUP -->
 
-                                                    <div
+                                                        <div
 
-                                                        class="coa-node"
+                                                            class="coa-node coa-lv2"
 
-                                                        [class.coa-node-active]="isSelected('group', grp.node.Id)"
+                                                            [class.coa-node-active]="isSelected('group', grp.node.Id)"
 
-                                                        [class.coa-node-off]="!grp.node.Status"
+                                                            [class.coa-node-off]="!grp.node.Status"
 
-                                                        (click)="select('group', grp.node.Id)">
+                                                            [attr.title]="grp.node.Code + ' · ' + grp.node.Name"
 
-                                                        <button
+                                                            (click)="select('group', grp.node.Id)">
 
-                                                            type="button"
+                                                            <button
 
-                                                            class="coa-caret"
+                                                                type="button"
 
-                                                            [class.coa-caret-open]="isExpanded(groupKey(grp.node.Id))"
+                                                                class="coa-caret"
 
-                                                            [style.visibility]="grp.subGroups.length ? 'visible' : 'hidden'"
+                                                                [class.coa-caret-open]="isExpanded(groupKey(grp.node.Id))"
 
-                                                            [attr.aria-label]="isExpanded(groupKey(grp.node.Id)) ? 'Collapse' : 'Expand'"
+                                                                [style.visibility]="grp.subGroups.length ? 'visible' : 'hidden'"
 
-                                                            (click)="toggle(groupKey(grp.node.Id), $event)">
+                                                                [attr.aria-label]="isExpanded(groupKey(grp.node.Id)) ? 'Collapse' : 'Expand'"
 
-                                                            <i class="fas fa-chevron-right"></i>
+                                                                (click)="toggle(groupKey(grp.node.Id), $event)">
 
-                                                        </button>
+                                                                <i class="fas fa-chevron-right"></i>
 
-                                                        <span class="coa-node-text">
-
-                                                            <span class="coa-node-name">{{ grp.node.Name }}</span>
+                                                            </button>
 
                                                             <span class="coa-node-code">{{ grp.node.Code }}</span>
 
-                                                        </span>
+                                                            <span class="coa-node-name">{{ grp.node.Name }}</span>
 
-                                                        <span class="coa-badge" title="Sub Groups">{{ grp.subGroups.length }}</span>
+                                                            <span class="coa-badge" title="Sub Groups">{{ grp.subGroups.length }}</span>
 
-                                                    </div>
+                                                        </div>
 
-                                                    @if (isExpanded(groupKey(grp.node.Id)) && grp.subGroups.length)
-                                                    {
-                                                        <ul>
+                                                        @if (isExpanded(groupKey(grp.node.Id)) && grp.subGroups.length)
+                                                        {
+                                                            <ul>
 
-                                                            @for (sub of grp.subGroups; track sub.node.Id)
-                                                            {
-                                                                <li>
+                                                                @for (sub of grp.subGroups; track sub.node.Id)
+                                                                {
+                                                                    <li>
 
-                                                                    <!-- SUB GROUP -->
+                                                                        <!-- SUB GROUP -->
 
-                                                                    <div
+                                                                        <div
 
-                                                                        class="coa-node coa-node-leaf"
+                                                                            class="coa-node coa-lv3"
 
-                                                                        [class.coa-node-active]="isSelected('subgroup', sub.node.Id)"
+                                                                            [class.coa-node-active]="isSelected('subgroup', sub.node.Id)"
 
-                                                                        [class.coa-node-off]="!sub.node.Status"
+                                                                            [class.coa-node-off]="!sub.node.Status"
 
-                                                                        (click)="select('subgroup', sub.node.Id)">
+                                                                            [attr.title]="sub.node.Code + ' · ' + sub.node.Name"
 
-                                                                        <span class="coa-leaf-dot"></span>
+                                                                            (click)="select('subgroup', sub.node.Id)">
 
-                                                                        <span class="coa-node-text">
-
-                                                                            <span class="coa-node-name">{{ sub.node.Name }}</span>
+                                                                            <span class="coa-leaf">
+                                                                                <span class="coa-leaf-dot"></span>
+                                                                            </span>
 
                                                                             <span class="coa-node-code">{{ sub.node.Code }}</span>
 
-                                                                        </span>
+                                                                            <span class="coa-node-name">{{ sub.node.Name }}</span>
 
-                                                                        <span class="coa-badge" title="Ledgers">{{ sub.ledgers }}</span>
+                                                                            <span class="coa-badge coa-badge-ledger" title="Ledgers">{{ sub.ledgers }}</span>
 
-                                                                    </div>
+                                                                        </div>
 
-                                                                </li>
-                                                            }
+                                                                    </li>
+                                                                }
 
-                                                        </ul>
-                                                    }
+                                                            </ul>
+                                                        }
 
-                                                </li>
-                                            }
+                                                    </li>
+                                                }
 
-                                        </ul>
-                                    }
+                                            </ul>
+                                        }
 
-                                </li>
-                            }
+                                    </li>
+                                }
 
-                        </ul>
+                            </ul>
+                        }
                     }
 
                 </div>
@@ -401,65 +463,76 @@
 
             <section class="coa-preview">
 
+                <!-- PREVIEW HEAD : one compact bar, same height as the navigator head
+                     tile | title + count / path | filter -->
+
                 <div class="coa-preview-head">
 
-                    <!-- PATH RAIL -->
+                    <div class="coa-heading">
 
-                    <nav class="coa-path" aria-label="Path">
+                        <span class="coa-tile">
+                            <i [class]="previewIcon"></i>
+                        </span>
 
-                        @for (step of path; track $index; let last = $last)
-                        {
-                            <button
+                        <div class="coa-heading-text">
 
-                                type="button"
+                            <span class="coa-heading-title">
 
-                                class="coa-path-step"
+                                {{ previewTitle }}
 
-                                [class.coa-path-current]="last"
+                                <span class="coa-count">{{ previewRows.length }}</span>
 
-                                [disabled]="last"
+                            </span>
 
-                                (click)="onPathClick(step)">
+                            <!-- PATH : where this list sits -->
 
-                                {{ step.label }}
+                            <nav class="coa-path" aria-label="Path">
 
-                            </button>
+                                @for (step of path; track $index; let last = $last)
+                                {
+                                    <button
 
-                            @if (!last)
-                            {
-                                <span class="coa-path-sep"></span>
-                            }
-                        }
+                                        type="button"
 
-                    </nav>
+                                        class="coa-path-step"
 
-                    <div class="coa-preview-titlebar">
+                                        [class.coa-path-current]="last"
 
-                        <div>
+                                        [disabled]="last"
 
-                            <div class="coa-preview-title">{{ previewTitle }}</div>
+                                        (click)="onPathClick(step)">
 
-                            <div class="coa-preview-sub">{{ previewSubtitle }}</div>
+                                        {{ step.label }}
+
+                                    </button>
+
+                                    @if (!last)
+                                    {
+                                        <i class="fas fa-chevron-right coa-path-sep"></i>
+                                    }
+                                }
+
+                            </nav>
 
                         </div>
 
-                        <label class="coa-filter">
-
-                            <i class="fas fa-filter"></i>
-
-                            <input
-
-                                type="text"
-
-                                placeholder="Filter rows..."
-
-                                [ngModel]="rowFilterText"
-
-                                (ngModelChange)="onRowFilterChange($event)">
-
-                        </label>
-
                     </div>
+
+                    <label class="coa-filter">
+
+                        <i class="fas fa-filter"></i>
+
+                        <input
+
+                            type="text"
+
+                            placeholder="Filter rows..."
+
+                            [ngModel]="rowFilterText"
+
+                            (ngModelChange)="onRowFilterChange($event)">
+
+                    </label>
 
                 </div>
 
@@ -534,11 +607,14 @@
                                                     {
                                                         <span class="coa-name">
 
-                                                            {{ row.name }}
+                                                            <span class="coa-name-text">{{ row.name }}</span>
 
                                                             @if (row.drillable)
                                                             {
-                                                                <i class="fas fa-chevron-right coa-drill"></i>
+                                                                <span class="coa-open">
+                                                                    Open
+                                                                    <i class="fas fa-arrow-right"></i>
+                                                                </span>
                                                             }
 
                                                         </span>
@@ -546,7 +622,34 @@
 
                                                     @case ('type')
                                                     {
-                                                        <span class="coa-type">{{ row.cells['type'] }}</span>
+                                                        <span
+
+                                                            class="coa-type"
+
+                                                            [attr.data-type]="row.cells['type']">
+
+                                                            {{ row.cells['type'] }}
+
+                                                        </span>
+                                                    }
+
+                                                    @case ('branch')
+                                                    {
+                                                        <span class="coa-branch">{{ row.cells['branch'] }}</span>
+                                                    }
+
+                                                    @case ('level')
+                                                    {
+                                                        <span class="coa-branch">{{ row.cells['level'] }}</span>
+                                                    }
+
+                                                    @case ('problem')
+                                                    {
+                                                        <span
+                                                            class="coa-branch"
+                                                            style="white-space:normal; color:#b45309">
+                                                            {{ row.cells['problem'] }}
+                                                        </span>
                                                     }
 
                                                     @case ('status')
@@ -566,7 +669,15 @@
 
                                                     @default
                                                     {
-                                                        <span class="coa-num">{{ row.cells[col.key] }}</span>
+                                                        <span
+
+                                                            class="coa-num"
+
+                                                            [class.coa-num-zero]="!row.cells[col.key]">
+
+                                                            {{ row.cells[col.key] }}
+
+                                                        </span>
                                                     }
                                                 }
 
@@ -575,26 +686,26 @@
 
                                     </tr>
                                 }
-
-                                @if (previewRows.length === 0)
-                                {
-                                    <tr>
-                                        <td
-
-                                            class="coa-empty"
-
-                                            [attr.colspan]="previewColumns.length + 1">
-
-                                            {{ previewEmptyText }}
-
-                                        </td>
-                                    </tr>
-                                }
                             }
 
                         </tbody>
 
                     </table>
+
+                    <!-- EMPTY : fills the space under the header, centered -->
+
+                    @if (!loading && !ledgersLoading && previewRows.length === 0)
+                    {
+                        <div class="coa-empty">
+
+                            <span class="coa-empty-icon">
+                                <i class="fas fa-inbox"></i>
+                            </span>
+
+                            <span>{{ previewEmptyText }}</span>
+
+                        </div>
+                    }
 
                 </div>
 
@@ -609,6 +720,8 @@
 
 <!-- =====================================================
      PRINT DIALOG
+     Left  : options (scope, depth, columns, page)
+     Right : live paper preview built from the real chart
 ====================================================== -->
 
 @if (printOpen)
@@ -631,21 +744,31 @@
 
             (click)="$event.stopPropagation()">
 
+            <!-- HEAD -->
+
             <div class="coa-modal-head">
 
-                <div>
+                <div class="coa-modal-brand">
 
-                    <div
+                    <span class="coa-modal-icon">
+                        <i class="fas fa-print"></i>
+                    </span>
 
-                        id="coaPrintTitle"
+                    <div>
 
-                        class="coa-modal-title">
+                        <div
 
-                        Print Chart of Accounts
+                            id="coaPrintTitle"
+
+                            class="coa-modal-title">
+
+                            Print Chart of Accounts
+
+                        </div>
+
+                        <div class="coa-modal-sub">Shape the printout — the preview follows every choice</div>
 
                     </div>
-
-                    <div class="coa-modal-sub">Choose what goes on paper</div>
 
                 </div>
 
@@ -667,123 +790,387 @@
 
             </div>
 
+
+            <!-- BODY -->
+
             <div class="coa-modal-body">
 
-                <!-- SCOPE -->
+                <!-- ===========================================
+                     OPTIONS
+                ============================================ -->
 
-                <div class="coa-field">
+                <div class="coa-print-options">
 
-                    <span class="coa-field-label">Scope</span>
+                    <!-- 1 · SCOPE -->
 
-                    <div class="coa-segment">
+                    <section class="coa-field">
 
-                        <button
+                        <span class="coa-field-label">
+                            <span class="coa-field-no">1</span>
+                            Scope
+                        </span>
 
-                            type="button"
+                        <div class="coa-choice-grid">
 
-                            [class.coa-segment-on]="printOptions.scope === 'all'"
-
-                            (click)="printOptions.scope = 'all'">
-
-                            Full Chart
-
-                        </button>
-
-                        <button
-
-                            type="button"
-
-                            [class.coa-segment-on]="printOptions.scope === 'selection'"
-
-                            [disabled]="!selection"
-
-                            [title]="selection ? scopeLabel : 'Select a class, group or sub group first'"
-
-                            (click)="printOptions.scope = 'selection'">
-
-                            Current Selection
-
-                        </button>
-
-                    </div>
-
-                    @if (printOptions.scope === 'selection' && scopeLabel)
-                    {
-                        <span class="coa-field-hint">{{ scopeLabel }}</span>
-                    }
-
-                </div>
-
-                <!-- LEVELS -->
-
-                <div class="coa-field">
-
-                    <span class="coa-field-label">Levels</span>
-
-                    <div class="coa-segment coa-segment-wrap">
-
-                        @for (item of printDepthItems; track item.value)
-                        {
                             <button
 
                                 type="button"
 
-                                [class.coa-segment-on]="printOptions.depth === item.value"
+                                class="coa-choice"
 
-                                (click)="printOptions.depth = item.value">
+                                [class.coa-choice-on]="printOptions.scope === 'all'"
 
-                                {{ item.label }}
+                                (click)="setPrintScope('all')">
+
+                                <span class="coa-choice-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </span>
+
+                                <span class="coa-choice-text">
+                                    <span class="coa-choice-title">Full Chart</span>
+                                    <span class="coa-choice-sub">Every class</span>
+                                </span>
+
+                                <span class="coa-choice-check">
+                                    <i class="fas fa-check"></i>
+                                </span>
 
                             </button>
+
+                            <button
+
+                                type="button"
+
+                                class="coa-choice"
+
+                                [class.coa-choice-on]="printOptions.scope === 'selection'"
+
+                                [disabled]="!selection"
+
+                                (click)="setPrintScope('selection')">
+
+                                <span class="coa-choice-icon">
+                                    <i class="fas fa-crosshairs"></i>
+                                </span>
+
+                                <span class="coa-choice-text">
+                                    <span class="coa-choice-title">Current Selection</span>
+                                    <span
+
+                                        class="coa-choice-sub"
+
+                                        [attr.title]="scopeLabel || null">
+
+                                        {{ selection ? scopeLabel : 'Pick a node in the navigator' }}
+
+                                    </span>
+                                </span>
+
+                                <span class="coa-choice-check">
+                                    <i class="fas fa-check"></i>
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 2 · DEPTH -->
+
+                    <section class="coa-field">
+
+                        <span class="coa-field-label">
+                            <span class="coa-field-no">2</span>
+                            Print down to
+                        </span>
+
+                        <div class="coa-depth">
+
+                            @for (item of printDepthItems; track item.value; let i = $index)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="coa-depth-step"
+
+                                    [class.coa-depth-reached]="i <= printDepthIndex"
+
+                                    [class.coa-depth-on]="i === printDepthIndex"
+
+                                    [attr.title]="item.label"
+
+                                    (click)="setPrintDepth(item.value)">
+
+                                    <span class="coa-depth-dot">
+                                        <i class="fas fa-check"></i>
+                                    </span>
+
+                                    <span class="coa-depth-label">{{ item.short }}</span>
+
+                                </button>
+                            }
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 3 · COLUMNS -->
+
+                    <section class="coa-field">
+
+                        <span class="coa-field-label">
+                            <span class="coa-field-no">3</span>
+                            Columns
+                        </span>
+
+                        <div class="coa-chips">
+
+                            <span class="coa-chip coa-chip-locked">
+                                <i class="fas fa-lock"></i>
+                                Code &amp; Name
+                            </span>
+
+                            <button
+
+                                type="button"
+
+                                class="coa-chip"
+
+                                [class.coa-chip-on]="printOptions.showType"
+
+                                (click)="togglePrintColumn('showType')">
+
+                                <i [class]="printOptions.showType ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Type
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="coa-chip"
+
+                                [class.coa-chip-on]="printOptions.showBranch"
+
+                                (click)="togglePrintColumn('showBranch')">
+
+                                <i [class]="printOptions.showBranch ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Branch
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="coa-chip"
+
+                                [class.coa-chip-on]="printOptions.showStatus"
+
+                                (click)="togglePrintColumn('showStatus')">
+
+                                <i [class]="printOptions.showStatus ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Status
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 4 · PAGE -->
+
+                    <section class="coa-field">
+
+                        <span class="coa-field-label">
+                            <span class="coa-field-no">4</span>
+                            Page
+                        </span>
+
+                        <div class="coa-page-row">
+
+                            <div class="coa-orient">
+
+                                <button
+
+                                    type="button"
+
+                                    class="coa-orient-btn"
+
+                                    [class.coa-orient-on]="!printOptions.landscape"
+
+                                    (click)="setPrintLandscape(false)">
+
+                                    <span class="coa-orient-sheet"></span>
+
+                                    Portrait
+
+                                </button>
+
+                                <button
+
+                                    type="button"
+
+                                    class="coa-orient-btn"
+
+                                    [class.coa-orient-on]="printOptions.landscape"
+
+                                    (click)="setPrintLandscape(true)">
+
+                                    <span class="coa-orient-sheet coa-orient-wide"></span>
+
+                                    Landscape
+
+                                </button>
+
+                            </div>
+
+                            <label class="coa-switch">
+
+                                <input
+
+                                    type="checkbox"
+
+                                    [ngModel]="printOptions.includeInactive"
+
+                                    (ngModelChange)="setPrintIncludeInactive($event)">
+
+                                <span class="coa-switch-track">
+                                    <span class="coa-switch-thumb"></span>
+                                </span>
+
+                                Include inactive
+
+                            </label>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LIVE PREVIEW
+                ============================================ -->
+
+                <div class="coa-print-stage">
+
+                    <div
+
+                        class="coa-paper"
+
+                        [class.coa-paper-wide]="printOptions.landscape">
+
+                        <div class="coa-paper-head">
+
+                            <div>
+                                <div class="coa-paper-company">{{ printCompanyName }}</div>
+                                <div class="coa-paper-title">Chart of Accounts</div>
+                            </div>
+
+                            <div class="coa-paper-meta">{{ printScopeText }}</div>
+
+                        </div>
+
+                        <div class="coa-paper-row coa-paper-cols">
+
+                            <span class="coa-paper-code">Code</span>
+                            <span class="coa-paper-name">Name</span>
+
+                            @if (printOptions.showType)
+                            {
+                                <span class="coa-paper-cell">Type</span>
+                            }
+
+                            @if (printOptions.showBranch)
+                            {
+                                <span class="coa-paper-cell">Branch</span>
+                            }
+
+                            @if (printOptions.showStatus)
+                            {
+                                <span class="coa-paper-cell">Status</span>
+                            }
+
+                        </div>
+
+                        @for (line of printPreviewLines; track $index)
+                        {
+                            <div
+
+                                class="coa-paper-row"
+
+                                [attr.data-lv]="line.level"
+
+                                [class.coa-paper-summary]="line.summary">
+
+                                <span class="coa-paper-code">{{ line.code }}</span>
+
+                                <span
+
+                                    class="coa-paper-name"
+
+                                    [style.padding-left.px]="(line.level - 1) * 7">
+
+                                    {{ line.name }}
+
+                                </span>
+
+                                @if (printOptions.showType)
+                                {
+                                    <span class="coa-paper-cell">{{ line.type }}</span>
+                                }
+
+                                @if (printOptions.showBranch)
+                                {
+                                    <span class="coa-paper-cell"><span class="coa-paper-bar"></span></span>
+                                }
+
+                                @if (printOptions.showStatus)
+                                {
+                                    <span class="coa-paper-cell">
+                                        <span
+
+                                            class="coa-paper-dot"
+
+                                            [class.coa-paper-dot-off]="!line.status">
+
+                                        </span>
+                                    </span>
+                                }
+
+                            </div>
                         }
 
-                    </div>
+                        @if (printPreviewLines.length === 0)
+                        {
+                            <div class="coa-paper-empty">Nothing to print for this choice.</div>
+                        }
 
-                </div>
+                        @if (printMoreRows > 0)
+                        {
+                            <div class="coa-paper-more">+ {{ printMoreRows }} more rows</div>
+                        }
 
-                <!-- COLUMNS -->
-
-                <div class="coa-field">
-
-                    <span class="coa-field-label">Columns</span>
-
-                    <div class="coa-checks">
-
-                        <label class="coa-check coa-check-fixed">
-                            <input type="checkbox" checked disabled> Code &amp; Name
-                        </label>
-
-                        <label class="coa-check">
-                            <input type="checkbox" [(ngModel)]="printOptions.showType"> Type
-                        </label>
-
-                        <label class="coa-check">
-                            <input type="checkbox" [(ngModel)]="printOptions.showBranch"> Branch
-                        </label>
-
-                        <label class="coa-check">
-                            <input type="checkbox" [(ngModel)]="printOptions.showStatus"> Status
-                        </label>
+                        <div class="coa-paper-foot">Page 1</div>
 
                     </div>
 
-                </div>
+                    <div class="coa-stage-caption">
 
-                <!-- OPTIONS -->
+                        <span class="coa-stage-live"></span>
 
-                <div class="coa-field">
-
-                    <span class="coa-field-label">Options</span>
-
-                    <div class="coa-checks">
-
-                        <label class="coa-check">
-                            <input type="checkbox" [(ngModel)]="printOptions.includeInactive"> Include inactive
-                        </label>
-
-                        <label class="coa-check">
-                            <input type="checkbox" [(ngModel)]="printOptions.landscape"> Landscape
-                        </label>
+                        Live preview · A4 {{ printOptions.landscape ? 'Landscape' : 'Portrait' }}
 
                     </div>
 
@@ -791,37 +1178,56 @@
 
             </div>
 
+
+            <!-- FOOT -->
+
             <div class="coa-modal-foot">
 
-                <button
+                <div class="coa-foot-summary">
 
-                    type="button"
+                    <i class="fas fa-file-lines"></i>
 
-                    class="coa-btn coa-btn-ghost"
+                    <span><b>{{ printRowEstimate }}</b> rows</span>
 
-                    [disabled]="printing"
+                    <span class="coa-foot-dot"></span>
 
-                    (click)="printFullChart()">
+                    <span>{{ printOptions.includeInactive ? 'Including inactive' : 'Active only' }}</span>
 
-                    Print Full Chart
+                </div>
 
-                </button>
+                <div class="coa-foot-actions">
 
-                <button
+                    <button
 
-                    type="button"
+                        type="button"
 
-                    class="coa-btn coa-btn-primary"
+                        class="coa-btn coa-btn-ghost"
 
-                    [disabled]="printing"
+                        [disabled]="printing"
 
-                    (click)="runPrint()">
+                        (click)="closePrint()">
 
-                    <i [class]="printing ? 'fas fa-spinner fa-spin' : 'fas fa-print'"></i>
+                        Cancel
 
-                    {{ printing ? 'Preparing…' : 'Print' }}
+                    </button>
 
-                </button>
+                    <button
+
+                        type="button"
+
+                        class="coa-btn coa-btn-primary"
+
+                        [disabled]="printing || printRowEstimate === 0"
+
+                        (click)="runPrint()">
+
+                        <i [class]="printing ? 'fas fa-spinner fa-spin' : 'fas fa-print'"></i>
+
+                        {{ printing ? 'Preparing…' : 'Print' }}
+
+                    </button>
+
+                </div>
 
             </div>
 

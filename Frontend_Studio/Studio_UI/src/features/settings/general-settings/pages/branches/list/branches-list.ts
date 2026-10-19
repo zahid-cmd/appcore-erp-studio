@@ -592,7 +592,7 @@ implements OnInit, OnDestroy
         {
             header:'Status',
             field:'IsActive',
-            width:'120px',
+            width:'150px',
             align:'center',
             type:'status'
         },

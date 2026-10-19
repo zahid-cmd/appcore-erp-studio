@@ -207,7 +207,7 @@ from '../../../../general-settings/services/branches.service';
 // MFS Accounts are reserved to this Account Sub Group only.
 const RESERVED_SUB_GROUP_CODE:
     string =
-    'SUB-003-002-003';
+    'SUB-002-002-003';
 
 // Mobile Financial Service providers available in Bangladesh.
 // Value is stored in UPPERCASE (used in Display Name).
@@ -628,7 +628,7 @@ implements OnInit, OnDestroy
     //===========================================================
     // Account Sub Group Items
     //
-    // Add mode   : reserved sub group only (SUB-003-002-003)
+    // Add mode   : reserved sub group only (SUB-002-002-003)
     // Edit / View: reserved + the record's own sub group
     //===========================================================
 

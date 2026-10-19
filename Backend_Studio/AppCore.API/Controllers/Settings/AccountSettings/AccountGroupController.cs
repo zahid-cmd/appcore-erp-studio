@@ -36,6 +36,8 @@ public class AccountGroupController : ControllerBase
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
 
+    private readonly ILogger<AccountGroupController> _logger;
+
 
     //===========================================================
     // Constructor
@@ -43,11 +45,14 @@ public class AccountGroupController : ControllerBase
 
     public AccountGroupController(
         IAccountGroupRepository repository,
-        IActivityHistoryRepository activityHistoryRepository)
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<AccountGroupController> logger)
     {
         _repository = repository;
 
         _activityHistoryRepository = activityHistoryRepository;
+
+        _logger = logger;
     }
 
 
@@ -166,6 +171,19 @@ public class AccountGroupController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch
+        (
+            Exception ex
+        )
+        {
+            _logger.LogError(
+                ex,
+                "Account Group create failed.");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Account Group could not be saved. Please try again.");
+        }
     }
 
 
@@ -205,6 +223,20 @@ public class AccountGroupController : ControllerBase
         )
         {
             return BadRequest(ex.Message);
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            _logger.LogError(
+                ex,
+                "Account Group update failed. Id {AccountGroupId}",
+                dto.AccountGroupId);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Account Group could not be updated. Please try again.");
         }
 
         return NoContent();
@@ -290,9 +322,27 @@ public class AccountGroupController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
+        bool restored;
+
+        try
+        {
+            restored =
+                await _repository.RestoreAsync(
+                    userId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            //=======================================================
+            // Restore Blocked
+            //
+            // Its class is deleted, or its name / code is taken.
+            //=======================================================
+
+            return Conflict(ex.Message);
+        }
 
         if (!restored)
         {

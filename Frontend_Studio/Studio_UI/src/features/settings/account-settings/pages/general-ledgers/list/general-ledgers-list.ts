@@ -202,6 +202,66 @@ import
 }
 from '../../../services/account-sub-group.service';
 
+import
+{
+    ServicePolicyService
+}
+from '../../../../service-settings/services/service-policy.service';
+
+import
+{
+    ServicePolicy
+}
+from '../../../../service-settings/models/service-policy.model';
+
+import
+{
+    ScheduledServicesService
+}
+from '../../../../service-settings/services/scheduled-services.service';
+
+import
+{
+    ScheduledService
+}
+from '../../../../service-settings/models/scheduled-services.model';
+
+import
+{
+    LaborChartService
+}
+from '../../../../service-settings/services/labor-chart.service';
+
+import
+{
+    LaborChart
+}
+from '../../../../service-settings/models/labor-chart.model';
+
+import
+{
+    CustomizedServicesService
+}
+from '../../../../service-settings/services/customized-services.service';
+
+import
+{
+    CustomizedService
+}
+from '../../../../service-settings/models/customized-services.model';
+
+import
+{
+    MembershipServicesService
+}
+from '../../../../service-settings/services/membership-services.service';
+
+import
+{
+    MembershipService
+}
+from '../../../../service-settings/models/membership-services.model';
+
 //===============================================================
 // Component
 //===============================================================
@@ -254,6 +314,21 @@ implements OnInit, OnDestroy
     private readonly accountSubGroupService =
         inject(AccountSubGroupService);
 
+    private readonly servicePolicyService =
+        inject(ServicePolicyService);
+
+    private readonly scheduledServicesService =
+        inject(ScheduledServicesService);
+
+    private readonly laborChartService =
+        inject(LaborChartService);
+
+    private readonly customizedServicesService =
+        inject(CustomizedServicesService);
+
+    private readonly membershipServicesService =
+        inject(MembershipServicesService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -286,8 +361,59 @@ implements OnInit, OnDestroy
         {
             id:'inventory-auto',
             label:'Inventory Auto Ledgers'
+        },
+        {
+            id:'auto-financial',
+            label:'Auto Financial Ledgers'
+        },
+        {
+            id:'auto-service',
+            label:'Auto Service Ledgers'
         }
     ];
+
+    //===========================================================
+    // Auto Financial Ledgers
+    //
+    // Ledgers created by other pages (today : the Associated
+    // Ledger of each Service Policy, the brand's free service
+    // claim receivable). Matched by LEDGER CODE, never by name;
+    // the name shown is the live one from the source record
+    // ("<Sub Group Name> - <Brand Name>"). Read only.
+    //===========================================================
+
+    private autoFinancialLedgers:
+        Map<string, string> =
+        new Map<string, string>();
+
+    //===========================================================
+    // Auto Service Ledgers
+    //
+    // Income ledgers created by the service item pages
+    // (Scheduled Services, e.g. "1st Free Service - Revoo", and
+    // Labor Chart).
+    // Matched by LEDGER CODE, never by name; the name shown is
+    // the live service name. Read only.
+    //===========================================================
+
+    private autoServiceLedgers:
+        Map<string, string> =
+        new Map<string, string>();
+
+    // Labor Chart income ledgers (code -> live service name)
+    private laborServiceLedgers:
+        Map<string, string> =
+        new Map<string, string>();
+
+    // Customized Services income ledgers (code -> live service name)
+    private customizedServiceLedgers:
+        Map<string, string> =
+        new Map<string, string>();
+
+    // Membership Services income + expense ledgers (code -> live display name)
+    private membershipServiceLedgers:
+        Map<string, string> =
+        new Map<string, string>();
 
     selectedTab:
         string =
@@ -607,7 +733,12 @@ implements OnInit, OnDestroy
     get displayColumns():
         ListTableColumn[]
     {
+        // Auto ledgers (inventory or financial) are read only : no actions
         return this.selectedTab === 'inventory-auto'
+            ||
+            this.selectedTab === 'auto-financial'
+            ||
+            this.selectedTab === 'auto-service'
             ? this.inventoryAutoLedgerColumns
             : this.columns;
     }
@@ -622,7 +753,397 @@ implements OnInit, OnDestroy
         this.loadAccountClasses();
         this.loadAccountGroups();
         this.loadAccountSubGroups();
+        this.loadAutoFinancialLedgers();
+        this.loadAutoServiceLedgers();
+        this.loadLaborServiceLedgers();
+        this.loadCustomizedServiceLedgers();
+        this.loadMembershipServiceLedgers();
         this.loadItems();
+    }
+
+    //===========================================================
+    // Load Auto Financial Ledgers (code -> live name)
+    //===========================================================
+
+    private loadAutoFinancialLedgers():
+        void
+    {
+        this.servicePolicyService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        ServicePolicy[]
+                ):
+                    void =>
+                {
+                    this.autoFinancialLedgers =
+                        new Map<string, string>(
+                            (response ?? [])
+                                .filter(
+                                    item =>
+                                        !!item.AssociatedLedgerCode
+                                )
+                                .map(
+                                    item =>
+                                    [
+                                        String(item.AssociatedLedgerCode)
+                                            .trim()
+                                            .toUpperCase(),
+                                        item.AssociatedLedgerName ?? ''
+                                    ] as [string, string]
+                                )
+                        );
+
+                    this.applyAutoFinancialNames();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Auto Financial Ledgers Error:',
+                        error
+                    );
+
+                    this.autoFinancialLedgers =
+                        new Map<string, string>();
+                }
+            });
+    }
+
+    private isAutoFinancialLedger
+    (
+        ledgerCode:
+            string
+    ):
+        boolean
+    {
+        return this.autoFinancialLedgers.has(
+            String(ledgerCode ?? '')
+                .trim()
+                .toUpperCase()
+        );
+    }
+
+    //===========================================================
+    // Load Auto Service Ledgers (code -> live service name)
+    //===========================================================
+
+    private loadAutoServiceLedgers():
+        void
+    {
+        this.scheduledServicesService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        ScheduledService[]
+                ):
+                    void =>
+                {
+                    this.autoServiceLedgers =
+                        new Map<string, string>(
+                            (response ?? [])
+                                .filter(
+                                    item =>
+                                        !!item.IncomeLedgerCode
+                                )
+                                .map(
+                                    item =>
+                                    [
+                                        String(item.IncomeLedgerCode)
+                                            .trim()
+                                            .toUpperCase(),
+                                        item.ServiceName ?? ''
+                                    ] as [string, string]
+                                )
+                        );
+
+                    this.applyAutoFinancialNames();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Auto Service Ledgers Error:',
+                        error
+                    );
+
+                    this.autoServiceLedgers =
+                        new Map<string, string>();
+                }
+            });
+    }
+
+    private isAutoServiceLedger
+    (
+        ledgerCode:
+            string
+    ):
+        boolean
+    {
+        const code =
+            String(ledgerCode ?? '')
+                .trim()
+                .toUpperCase();
+
+        return this.autoServiceLedgers.has(code)
+            ||
+            this.laborServiceLedgers.has(code)
+            ||
+            this.customizedServiceLedgers.has(code)
+            ||
+            this.membershipServiceLedgers.has(code);
+    }
+
+    //===========================================================
+    // Load Membership Services Ledgers (code -> live display name)
+    //===========================================================
+
+    private loadMembershipServiceLedgers():
+        void
+    {
+        this.membershipServicesService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        MembershipService[]
+                ):
+                    void =>
+                {
+                    // Income (billed) and expense (discount) ledgers
+                    this.membershipServiceLedgers =
+                        new Map<string, string>(
+                            (response ?? [])
+                                .flatMap(
+                                    item =>
+                                        [
+                                            item.IncomeLedgerCode,
+                                            item.ExpenseLedgerCode
+                                        ]
+                                        .filter(
+                                            code =>
+                                                !!code
+                                        )
+                                        .map(
+                                            code =>
+                                            [
+                                                String(code)
+                                                    .trim()
+                                                    .toUpperCase(),
+                                                item.DisplayName ?? ''
+                                            ] as [string, string]
+                                        )
+                                )
+                        );
+
+                    this.applyAutoFinancialNames();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Membership Services Ledgers Error:',
+                        error
+                    );
+
+                    this.membershipServiceLedgers =
+                        new Map<string, string>();
+                }
+            });
+    }
+
+    //===========================================================
+    // Load Customized Services Ledgers (code -> live service name)
+    //===========================================================
+
+    private loadCustomizedServiceLedgers():
+        void
+    {
+        this.customizedServicesService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        CustomizedService[]
+                ):
+                    void =>
+                {
+                    this.customizedServiceLedgers =
+                        new Map<string, string>(
+                            (response ?? [])
+                                .filter(
+                                    item =>
+                                        !!item.IncomeLedgerCode
+                                )
+                                .map(
+                                    item =>
+                                    [
+                                        String(item.IncomeLedgerCode)
+                                            .trim()
+                                            .toUpperCase(),
+                                        item.ServiceName ?? ''
+                                    ] as [string, string]
+                                )
+                        );
+
+                    this.applyAutoFinancialNames();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Customized Services Ledgers Error:',
+                        error
+                    );
+
+                    this.customizedServiceLedgers =
+                        new Map<string, string>();
+                }
+            });
+    }
+
+    //===========================================================
+    // Load Labor Chart Ledgers (code -> live service name)
+    //===========================================================
+
+    private loadLaborServiceLedgers():
+        void
+    {
+        this.laborChartService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        LaborChart[]
+                ):
+                    void =>
+                {
+                    this.laborServiceLedgers =
+                        new Map<string, string>(
+                            (response ?? [])
+                                .filter(
+                                    item =>
+                                        !!item.IncomeLedgerCode
+                                )
+                                .map(
+                                    item =>
+                                    [
+                                        String(item.IncomeLedgerCode)
+                                            .trim()
+                                            .toUpperCase(),
+                                        item.ServiceName ?? ''
+                                    ] as [string, string]
+                                )
+                        );
+
+                    this.applyAutoFinancialNames();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Labor Chart Ledgers Error:',
+                        error
+                    );
+
+                    this.laborServiceLedgers =
+                        new Map<string, string>();
+                }
+            });
+    }
+
+    // Show the live name of each auto financial / service ledger
+    private applyAutoFinancialNames():
+        void
+    {
+        for
+        (
+            const item
+            of this.generalLedgers
+        )
+        {
+            const code =
+                String(item.LedgerCode ?? '')
+                    .trim()
+                    .toUpperCase();
+
+            const name =
+                this.autoFinancialLedgers.get(code)
+                ||
+                this.autoServiceLedgers.get(code)
+                ||
+                this.laborServiceLedgers.get(code)
+                ||
+                this.customizedServiceLedgers.get(code)
+                ||
+                this.membershipServiceLedgers.get(code);
+
+            if
+            (
+                name
+            )
+            {
+                item.LedgerName =
+                    name;
+            }
+        }
     }
 
     //===========================================================
@@ -1052,6 +1573,8 @@ implements OnInit, OnDestroy
                         this.normalizeGeneralLedgers(
                             response
                         );
+
+                    this.applyAutoFinancialNames();
 
                     console.log
                     (
@@ -1494,7 +2017,13 @@ implements OnInit, OnDestroy
 
                     //===================================================
                     // Tab split
-                    //   inventory-auto tab : only the auto ledgers
+                    //   inventory-auto tab : inventory auto ledgers
+                    //   auto-financial tab : ledgers created by other
+                    //                        pages (Service Policy)
+                    //   auto-service tab   : service item income ledgers
+                    //                        (Scheduled Services, Labor Chart,
+                    //                        Customized Services; Membership
+                    //                        Services expense ledgers)
                     //   all tab            : only the manual ledgers
                     //===================================================
 
@@ -1503,10 +2032,30 @@ implements OnInit, OnDestroy
                             item.GroupCode
                         );
 
+                    const isAutoFinancial =
+                        !isInventoryAuto
+                        &&
+                        this.isAutoFinancialLedger(
+                            item.LedgerCode
+                        );
+
+                    const isAutoService =
+                        !isInventoryAuto
+                        &&
+                        !isAutoFinancial
+                        &&
+                        this.isAutoServiceLedger(
+                            item.LedgerCode
+                        );
+
                     const inventoryAutoLedgerMatch =
                         this.selectedTab === 'inventory-auto'
                             ? isInventoryAuto
-                            : !isInventoryAuto;
+                            : this.selectedTab === 'auto-financial'
+                                ? isAutoFinancial
+                                : this.selectedTab === 'auto-service'
+                                    ? isAutoService
+                                    : !isInventoryAuto && !isAutoFinancial && !isAutoService;
 
                     const statusMatch =
                         this.selectedStatus === null
@@ -1956,6 +2505,16 @@ implements OnInit, OnDestroy
         this.loadAccountGroups();
 
         this.loadAccountSubGroups();
+
+        this.loadAutoFinancialLedgers();
+
+        this.loadAutoServiceLedgers();
+
+        this.loadLaborServiceLedgers();
+
+        this.loadCustomizedServiceLedgers();
+
+        this.loadMembershipServiceLedgers();
 
         this.loadItems();
     }

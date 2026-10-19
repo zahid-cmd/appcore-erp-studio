@@ -1,0 +1,387 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-list-ol"
+
+        [title]="pageTitle"
+
+        subtitle="Manage brand labour operations and their service charges">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-list-ol">
+
+
+                <!-- Labor Chart sub category of a brand; locked once saved -->
+
+                <app-search-dropdown
+
+                    label="Service Sub Category"
+
+                    [items]="subCategoryItems"
+
+                    [(value)]="entity.ServiceSubCategoryId"
+
+                    (valueChange)="onSubCategoryChange($event)"
+
+                    [disabled]="isViewMode || isSaving || isSubCategoryLocked"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <app-textbox
+
+                    label="Brand"
+
+                    placeholder="Follows the sub category"
+
+                    [value]="brandDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Labor Code : BLC-ccc-sss-nnnnn (central code generator) -->
+
+                <app-textbox
+
+                    label="Labor Code"
+
+                    placeholder="Follows the sub category"
+
+                    [(value)]="entity.LaborCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Section (fixed list) -->
+
+                <app-dropdown
+
+                    label="Section"
+
+                    [items]="sectionItems"
+
+                    [(value)]="entity.Section"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Operation Name -->
+
+                <app-textbox
+
+                    label="Operation Name"
+
+                    placeholder="e.g. Valve Clearance Adjustment"
+
+                    [(value)]="entity.OperationName"
+
+                    (valueChange)="onNameSourceChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 RATE & TIME
+            ============================================== -->
+
+            <app-form-section
+
+                title="Rate & Time"
+
+                icon="fas fa-stopwatch">
+
+
+                <!-- Applies To : a model or a CC range -->
+
+                <app-textbox
+
+                    label="Applies To"
+
+                    placeholder="e.g. 100-125cc, a model, or All Models"
+
+                    [(value)]="entity.AppliesTo"
+
+                    (valueChange)="onNameSourceChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Standard Time (Minutes) -->
+
+                <app-textbox
+
+                    label="Standard Time (Minutes)"
+
+                    placeholder="e.g. 45"
+
+                    [value]="standardMinutesText"
+
+                    (valueChange)="onStandardMinutesChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Service Charge (fixed per operation) -->
+
+                <app-textbox
+
+                    label="Service Charge"
+
+                    placeholder="e.g. 650.00"
+
+                    [value]="serviceChargeText"
+
+                    (valueChange)="onServiceChargeChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Service Name : "<Operation> (<Applies To>) - <Brand>" -->
+
+                <app-textbox
+
+                    label="Service Name"
+
+                    placeholder="Follows operation, applies to and brand"
+
+                    [(value)]="entity.ServiceName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 INCOME LEDGER
+            ============================================== -->
+
+            <app-form-section
+
+                title="Income Ledger"
+
+                icon="fas fa-sack-dollar">
+
+
+                <!-- Income Ledger : GLR-ccc-ggg-sss-nnnnn under the sub category's
+                     account sub group (created on save) -->
+
+                <app-textbox
+
+                    label="Income Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.IncomeLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Income Ledger Name"
+
+                    placeholder="Follows the service name"
+
+                    [(value)]="entity.IncomeLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

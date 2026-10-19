@@ -1,0 +1,90 @@
+/* ============================================================
+   Customized Services
+============================================================ */
+
+export interface CustomizedServices
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Customized Services
+============================================================ */
+
+export interface CreateCustomizedServices
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Customized Services
+============================================================ */
+
+export interface UpdateCustomizedServices
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Customized Services Defaults
+============================================================ */
+
+export interface CustomizedServicesDefaults
+{
+    code:
+        string;
+}

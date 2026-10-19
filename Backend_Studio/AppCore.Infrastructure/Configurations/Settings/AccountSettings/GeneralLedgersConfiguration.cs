@@ -120,8 +120,11 @@ public class GeneralLedgersConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.LedgerCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_GeneralLedgers_LedgerCode");
 
 
         //===========================================================
@@ -131,6 +134,12 @@ public class GeneralLedgersConfiguration
         builder.Property(x => x.LedgerName)
                .IsRequired()
                .HasMaxLength(200);
+
+        // Unique within its sub group, among non-deleted rows only
+        builder.HasIndex(x => new { x.AccountSubGroupId, x.LedgerName })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_GeneralLedgers_AccountSubGroupId_LedgerName");
 
 
         //===========================================================
@@ -149,8 +158,7 @@ public class GeneralLedgersConfiguration
         //===========================================================
 
         builder.Property(x => x.IsActive)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         //===========================================================

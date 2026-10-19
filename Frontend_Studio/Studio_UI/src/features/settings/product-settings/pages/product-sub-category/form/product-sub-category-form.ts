@@ -201,6 +201,8 @@ interface ProductCategoryOption
         string;
     IsActive:
         boolean;
+    SubCategoryCreationAllowed:
+        boolean;
 }
 
 //===============================================================
@@ -421,23 +423,6 @@ implements OnInit, OnDestroy
         ];
 
     //===========================================================
-    // Sub Category Creation Items
-    //===========================================================
-
-    subCategoryCreationItems:
-        any[] =
-        [
-            {
-                label:'Yes',
-                value:true
-            },
-            {
-                label:'No',
-                value:false
-            }
-        ];
-
-    //===========================================================
     // Status Items
     //===========================================================
 
@@ -592,6 +577,14 @@ implements OnInit, OnDestroy
                                         item?.isActive
                                         ??
                                         true
+                                    ),
+                                SubCategoryCreationAllowed:
+                                    Boolean(
+                                        item?.SubCategoryCreationAllowed
+                                        ??
+                                        item?.subCategoryCreationAllowed
+                                        ??
+                                        true
                                     )
                             })
                         );
@@ -640,10 +633,16 @@ implements OnInit, OnDestroy
                 value:null
             },
             ...this.productCategories
+                // Active categories that allow sub categories
+                // (the record's own category is always kept)
                 .filter
                 (
                     item =>
-                        item.IsActive
+                        (
+                            item.IsActive
+                            &&
+                            item.SubCategoryCreationAllowed
+                        )
                         ||
                         item.ProductCategoryId ===
                         selectedId
@@ -987,14 +986,11 @@ implements OnInit, OnDestroy
             '';
 
         //=======================================================
-        // Group names are auto-built in Add mode only;
-        // they are locked in Edit mode.
+        // Preview only : the server builds the three sub group
+        // names as "<class prefix> - <Sub Category Name>" and
+        // renames them whenever the sub category is renamed.
         //=======================================================
 
-        if
-        (
-            this.isAddMode
-        )
         {
             this.entity.InventorySubGroupName =
                 subCategoryName

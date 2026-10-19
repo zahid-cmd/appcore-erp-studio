@@ -112,33 +112,33 @@
 
 
 
-                <!-- Class Code -->
-
-                <app-textbox
-
-                    label="Class Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.ClassCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
                 <!-- Class Prefix -->
 
                 <app-textbox
 
                     label="Class Prefix"
 
-                    placeholder="Auto generated"
+                    placeholder="e.g. CLS, INV, WIP, COGS"
 
                     [(value)]="entity.ClassPrefix"
+
+                    (valueChange)="onPrefixChange()"
+
+                    [readonly]="isEditMode || isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <!-- Class Code -->
+
+                <app-textbox
+
+                    label="Class Code"
+
+                    placeholder="Prefix + next number"
+
+                    [(value)]="entity.ClassCode"
 
                     [readonly]="true"
 
@@ -252,7 +252,7 @@
 
                     (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                    [disabled]="isViewMode || isInventoryClass"
 
                     [required]="true">
 

@@ -33,11 +33,27 @@ public class UpdateProductCategoryDto
     } = string.Empty;
 
 
+    // Ignored : the server builds it from Brand + Category Type
     public string CategoryName
     {
         get;
         set;
     } = string.Empty;
+
+
+    // Motor Bikes / Spare Parts / Accessories
+    public string CategoryType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public long BrandManagementId
+    {
+        get;
+        set;
+    }
 
 
     //===========================================================

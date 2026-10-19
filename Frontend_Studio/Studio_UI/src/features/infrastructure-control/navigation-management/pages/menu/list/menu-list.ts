@@ -340,14 +340,14 @@ implements OnInit
         {
             header:'Icon',
             field:'icon',
-            width:'200px',
+            width:'300px',
             align:'left'
         },
 
         {
             header:'Route',
             field:'route',
-            width:'380px',
+            width:'500px',
             align:'left'
         },
 

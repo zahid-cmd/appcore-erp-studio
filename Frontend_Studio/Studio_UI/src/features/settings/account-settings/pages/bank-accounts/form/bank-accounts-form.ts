@@ -219,10 +219,24 @@ from '../../../../general-settings/services/branches.service';
 // Constants
 //===============================================================
 
-// Bank Accounts are reserved to this Account Sub Group only.
-const RESERVED_SUB_GROUP_CODE:
+// Bank Accounts may only use these two Account Sub Groups.
+// The server enforces the same rule.
+//   SUB-002-002-002 - Cash At Banks          → BNK-002-002-002-00001 …
+//   SUB-003-002-002 - Liability For Finance  → BNK-003-002-002-00001 …
+const CASH_AT_BANKS_SUB_GROUP_CODE:
+    string =
+    'SUB-002-002-002';
+
+const LIABILITY_FOR_FINANCE_SUB_GROUP_CODE:
     string =
     'SUB-003-002-002';
+
+const ALLOWED_SUB_GROUP_CODES:
+    string[] =
+[
+    CASH_AT_BANKS_SUB_GROUP_CODE,
+    LIABILITY_FOR_FINANCE_SUB_GROUP_CODE
+];
 
 
 //===============================================================
@@ -439,7 +453,8 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // AccountSubGroup Items (Reserved Only)
+    // AccountSubGroup Items
+    // (Cash At Banks / Liability For Finance only)
     //===========================================================
 
     accountSubGroupItems:
@@ -447,9 +462,19 @@ implements OnInit, OnDestroy
     [];
 
 
-    private reservedSubGroupId:
-        number =
-        0;
+    // The two allowed sub groups, as loaded from the server
+    private allowedSubGroups:
+        AccountSubGroup[] =
+    [];
+
+
+    //===========================================================
+    // Sanction Limit (text shown in the textbox)
+    //===========================================================
+
+    sanctionLimitText:
+        string =
+        '';
 
 
 
@@ -621,7 +646,9 @@ implements OnInit, OnDestroy
 
             BranchExclusive:false,
 
-            BankBranchName:''
+            BankBranchName:'',
+
+            SanctionLimit:null
         };
     }
 
@@ -810,71 +837,70 @@ implements OnInit, OnDestroy
                         AccountSubGroup[]
                 ): void =>
                 {
-                    const reserved =
-                        subGroups.find(
-                            subGroup =>
-                                (subGroup.SubGroupCode ?? '')
-                                    .trim()
-                                    .toUpperCase()
-                                ===
-                                RESERVED_SUB_GROUP_CODE
-                        );
-
-
-                    if
-                    (
-                        !reserved
-                    )
-                    {
-                        this.reservedSubGroupId =
-                            0;
-
-
-                        this.accountSubGroupItems =
-                            [];
-
-
-                        this.isLoadingSubGroups =
-                            false;
-
-
-                        this.toast.error(
-                            'Error',
-
-                            `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} was not found.`
-                        );
-
-
-                        this.cdr.detectChanges();
-
-
-                        return;
-                    }
-
-
-                    this.reservedSubGroupId =
-                        Number(
-                            reserved.AccountSubGroupId
-                        );
+                    // Keep the allowed codes in their fixed order
+                    this.allowedSubGroups =
+                        ALLOWED_SUB_GROUP_CODES
+                            .map(
+                                code =>
+                                    (subGroups ?? []).find(
+                                        subGroup =>
+                                            (subGroup.SubGroupCode ?? '')
+                                                .trim()
+                                                .toUpperCase()
+                                            ===
+                                            code
+                                    )
+                            )
+                            .filter(
+                                (subGroup): subGroup is AccountSubGroup =>
+                                    !!subGroup
+                            );
 
 
                     this.accountSubGroupItems =
-                    [
-                        {
-                            label:
-                                `${reserved.SubGroupCode} - ${reserved.SubGroupName}`,
+                        this.allowedSubGroups.map(
+                            subGroup =>
+                            ({
+                                label:
+                                    `${subGroup.SubGroupCode} - ${subGroup.SubGroupName}`,
 
-                            value:
-                                this.reservedSubGroupId
-                        }
-                    ];
+                                value:
+                                    Number(subGroup.AccountSubGroupId)
+                            })
+                        );
 
 
                     this.isLoadingSubGroups =
                         false;
 
 
-                    this.applyReservedSubGroup();
+                    if
+                    (
+                        this.allowedSubGroups.length <
+                        ALLOWED_SUB_GROUP_CODES.length
+                    )
+                    {
+                        const missing =
+                            ALLOWED_SUB_GROUP_CODES
+                                .filter(
+                                    code =>
+                                        !this.allowedSubGroups.some(
+                                            subGroup =>
+                                                (subGroup.SubGroupCode ?? '')
+                                                    .trim()
+                                                    .toUpperCase()
+                                                ===
+                                                code
+                                        )
+                                )
+                                .join(', ');
+
+                        this.toast.error(
+                            'Error',
+
+                            `Account Sub Group ${missing} was not found.`
+                        );
+                    }
 
 
                     this.cdr.detectChanges();
@@ -898,8 +924,8 @@ implements OnInit, OnDestroy
                         [];
 
 
-                    this.reservedSubGroupId =
-                        0;
+                    this.allowedSubGroups =
+                        [];
 
 
                     this.isLoadingSubGroups =
@@ -921,31 +947,220 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Apply Reserved Sub Group (Add Mode Only)
+    // Account Sub Group Change (Add Mode Only)
+    //
+    // Each sub group numbers on its own, so the code is
+    // regenerated. Sanction Limit is cleared unless Liability
+    // For Finance is chosen.
     //===========================================================
 
-    private applyReservedSubGroup():
+    onAccountSubGroupChange():
         void
     {
         if
         (
             !this.isAddMode
-            ||
-            this.reservedSubGroupId <= 0
         )
         {
             return;
         }
 
 
-        this.entity.AccountSubGroupsId =
-            this.reservedSubGroupId;
+        if
+        (
+            !this.isLiabilityForFinance
+        )
+        {
+            this.entity.SanctionLimit =
+                null;
+
+            this.sanctionLimitText =
+                '';
+        }
 
 
-        // Auto-assigned values are part of the initial state,
-        // so they should not count as user changes.
-        this.generateBankAccountCode(
-            true
+        this.entity.BankAccountCode =
+            '';
+
+
+        this.generateBankAccountCode();
+    }
+
+
+
+    //===========================================================
+    // Selected Sub Group Code
+    //===========================================================
+
+    private get selectedSubGroupCode():
+        string
+    {
+        const selected =
+            this.allowedSubGroups.find(
+                subGroup =>
+                    Number(subGroup.AccountSubGroupId)
+                    ===
+                    Number(this.entity?.AccountSubGroupsId ?? 0)
+            );
+
+        return (selected?.SubGroupCode ?? '')
+            .trim()
+            .toUpperCase();
+    }
+
+
+
+    //===========================================================
+    // Liability For Finance Selected
+    //
+    // Shows / unlocks the Sanction Limit field.
+    //===========================================================
+
+    get isLiabilityForFinance():
+        boolean
+    {
+        return this.selectedSubGroupCode ===
+            LIABILITY_FOR_FINANCE_SUB_GROUP_CODE;
+    }
+
+
+
+    //===========================================================
+    // Sanction Limit Text Change
+    //
+    // Digits and one decimal point, at most 2 decimals.
+    //===========================================================
+
+    onSanctionLimitTextChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        let text =
+            String(value ?? '')
+                .replace(/,/g, '')
+                .replace(/[^0-9.]/g, '');
+
+
+        const dot =
+            text.indexOf('.');
+
+        if
+        (
+            dot >= 0
+        )
+        {
+            text =
+                text.substring(0, dot + 1)
+                +
+                text.substring(dot + 1)
+                    .replace(/\./g, '')
+                    .substring(0, 2);
+        }
+
+
+        this.entity.SanctionLimit =
+            text === '' || text === '.'
+                ? null
+                : Number(text);
+
+
+        // Show with thousands separators (10,000,000.50)
+        this.sanctionLimitText =
+            this.formatWithCommas(
+                text
+            );
+
+
+        this.onValueChange();
+    }
+
+
+
+    //===========================================================
+    // Format With Commas (comma style)
+    //
+    // Groups the whole-number part in thousands and keeps the
+    // decimal part exactly as typed, so typing is not disturbed:
+    //   10000000    → 10,000,000
+    //   10000000.5  → 10,000,000.5
+    //   1234.       → 1,234.
+    //===========================================================
+
+    private formatWithCommas
+    (
+        text:
+            string
+    ):
+        string
+    {
+        if
+        (
+            !text
+        )
+        {
+            return '';
+        }
+
+
+        const dot =
+            text.indexOf('.');
+
+        const wholePart =
+            dot >= 0
+                ? text.substring(0, dot)
+                : text;
+
+        const decimalPart =
+            dot >= 0
+                ? text.substring(dot)
+                : '';
+
+
+        // Drop leading zeros but keep a single 0 (e.g. 0.50)
+        const cleanWhole =
+            wholePart.replace(/^0+(?=\d)/, '');
+
+        const groupedWhole =
+            cleanWhole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+
+        return groupedWhole + decimalPart;
+    }
+
+
+
+    //===========================================================
+    // Sanction Limit → Display Text (comma style, 2 decimals)
+    //===========================================================
+
+    private formatSanctionLimit
+    (
+        value:
+            number | null
+    ):
+        string
+    {
+        if
+        (
+            value === null
+            ||
+            value === undefined
+            ||
+            isNaN(value)
+        )
+        {
+            return '';
+        }
+
+        return value.toLocaleString(
+            'en-US',
+            {
+                minimumFractionDigits:2,
+                maximumFractionDigits:2
+            }
         );
     }
 
@@ -1065,10 +1280,11 @@ implements OnInit, OnDestroy
             this.createEmptyEntity();
 
 
+        this.sanctionLimitText =
+            '';
+
+
         this.setInitialFormState();
-
-
-        this.applyReservedSubGroup();
     }
 
 
@@ -1166,10 +1382,18 @@ implements OnInit, OnDestroy
                         '';
 
 
+                    const message =
+                        typeof (error as any)?.error === 'string'
+                        &&
+                        (error as any).error.trim()
+                            ? (error as any).error
+                            : 'Failed to generate Bank Account Code.';
+
+
                     this.toast.error(
                         'Error',
 
-                        'Failed to generate BankAccount Code.'
+                        message
                     );
 
 
@@ -1281,8 +1505,19 @@ implements OnInit, OnDestroy
                             Boolean(response?.BranchExclusive ?? response?.branchExclusive ?? false),
 
                         BankBranchName:
-                            response?.BankBranchName ?? response?.bankBranchName ?? ''
+                            response?.BankBranchName ?? response?.bankBranchName ?? '',
+
+                        SanctionLimit:
+                            (response?.SanctionLimit ?? response?.sanctionLimit ?? null) === null
+                                ? null
+                                : Number(response?.SanctionLimit ?? response?.sanctionLimit)
                     };
+
+
+                    this.sanctionLimitText =
+                        this.formatSanctionLimit(
+                            this.entity.SanctionLimit
+                        );
 
 
                     this.setInitialFormState();
@@ -1723,33 +1958,54 @@ implements OnInit, OnDestroy
 
 
         //=======================================================
-        // Reserved Sub Group
+        // Account Sub Group (Cash At Banks / Liability For Finance)
         //=======================================================
 
         if
         (
-            this.reservedSubGroupId <= 0
+            !this.selectedSubGroupCode
         )
         {
             this.toast.error(
                 'Validation',
 
-                `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} is not available.`
+                'Account Sub Group is required.'
             );
 
             return;
         }
 
 
+        //=======================================================
+        // Sanction Limit (Liability For Finance only)
+        //=======================================================
+
         if
         (
-            this.isAddMode
-            &&
-            this.entity.AccountSubGroupsId !== this.reservedSubGroupId
+            !this.isLiabilityForFinance
         )
         {
-            this.entity.AccountSubGroupsId =
-                this.reservedSubGroupId;
+            this.entity.SanctionLimit =
+                null;
+        }
+        else if
+        (
+            this.entity.SanctionLimit !== null
+            &&
+            (
+                isNaN(this.entity.SanctionLimit)
+                ||
+                this.entity.SanctionLimit < 0
+            )
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Sanction Limit must be a valid amount (0 or more).'
+            );
+
+            return;
         }
 
 
@@ -1767,7 +2023,8 @@ implements OnInit, OnDestroy
             ||
             !this.requireText(this.entity.BankBranchName, 'Bank Branch Name')
             ||
-            !this.requireText(this.entity.BankAccountCode, 'Bank Account Code')
+            // In add mode the server assigns the final code on save
+            (!this.isAddMode && !this.requireText(this.entity.BankAccountCode, 'Bank Account Code'))
             ||
             !this.requireText(this.entity.Bank, 'Bank')
             ||
@@ -1865,7 +2122,12 @@ implements OnInit, OnDestroy
                 this.entity.BranchExclusive,
 
             BankBranchName:
-                this.entity.BankBranchName?.trim() ?? ''
+                this.entity.BankBranchName?.trim() ?? '',
+
+            SanctionLimit:
+                this.isLiabilityForFinance
+                    ? this.entity.SanctionLimit
+                    : null
         };
     }
 
@@ -2071,7 +2333,7 @@ implements OnInit, OnDestroy
         }
 
 
-        // Re-applies the reserved sub group and a fresh code
+        // Back to an empty form (sub group is chosen again)
         this.initializeEntity();
     }
 

@@ -33,11 +33,29 @@ public class ProductCategory
     } = string.Empty;
 
 
+    // Built by the server : "<Brand Name> <Category Type>"
     public string CategoryName
     {
         get;
         set;
     } = string.Empty;
+
+
+    // Motor Bikes / Spare Parts / Accessories
+    public string CategoryType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    // Brand Management (BrandManagements.BrandManagementId).
+    // Nullable only for rows saved before this field existed.
+    public long? BrandManagementId
+    {
+        get;
+        set;
+    }
 
 
     //===========================================================

@@ -13,7 +13,7 @@ public class CreateMFSAccountDto
 {
     //===========================================================
     // Account Sub Group
-    // (Must be the reserved SUB-003-002-003)
+    // (Must be the reserved SUB-002-002-003)
     //===========================================================
 
     public long AccountSubGroupsId

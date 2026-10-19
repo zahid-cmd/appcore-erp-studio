@@ -1,0 +1,90 @@
+/* ============================================================
+   Business Configuration
+============================================================ */
+
+export interface BusinessConfiguration
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Business Configuration
+============================================================ */
+
+export interface CreateBusinessConfiguration
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Business Configuration
+============================================================ */
+
+export interface UpdateBusinessConfiguration
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Business Configuration Defaults
+============================================================ */
+
+export interface BusinessConfigurationDefaults
+{
+    code:
+        string;
+}

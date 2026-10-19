@@ -23,6 +23,20 @@ public class ProductCategoryDefaultsDto
 
 
     //===========================================================
+    // Next Category Code of every Category Type
+    // { "Motor Bikes": "MB-001", "Spare Parts": "SP-001",
+    //   "Accessories": "AC-001" } — lets the form switch the code
+    // instantly when the type changes.
+    //===========================================================
+
+    public Dictionary<string, string> TypeCodes
+    {
+        get;
+        set;
+    } = new();
+
+
+    //===========================================================
     // Inventory Group Code
     //===========================================================
 

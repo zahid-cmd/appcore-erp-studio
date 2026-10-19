@@ -1,5 +1,3 @@
-// PAGE-CLONED : Cash Accounts -> Bank Accounts
-// PAGE-CLONED : Wings -> Bank Accounts
 //===============================================================
 // Namespaces
 //===============================================================
@@ -30,11 +28,53 @@ namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// BankAccounts Repository
+// Bank Accounts Repository
+//
+// Sub Group : one of two fixed sub groups, resolved by code on
+//             the server; anything else is rejected.
+//               SUB-002-002-002  Cash At Banks
+//               SUB-003-002-002  Liability For Finance
+// Code      : BNK-<ccc>-<ggg>-<sss>-<nnnnn>
+//             e.g. BNK-002-002-002-00001 / BNK-003-002-002-00001
+//             Each sub group numbers on its own from 00001;
+//             deleted rows are included, so a number is never
+//             reused and a restore can never clash.
+// Sanction  : optional, only for Liability For Finance (must be
+//  Limit      0 or more); always cleared for Cash At Banks.
+// Locked    : sub group and code never change after creation.
+// Name      : unique within a branch.
 //===============================================================
 
 public class BankAccountsRepository : IBankAccountsRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    // Cash At Banks
+    private const string CashAtBanksSubGroupCode =
+        "SUB-002-002-002";
+
+    // Liability For Finance (allows a Sanction Limit)
+    private const string LiabilityForFinanceSubGroupCode =
+        "SUB-003-002-002";
+
+    // The only sub groups Bank Accounts may use
+    private static readonly string[] AllowedSubGroupCodes =
+    {
+        CashAtBanksSubGroupCode,
+        LiabilityForFinanceSubGroupCode
+    };
+
+    // Sub group code prefix
+    private const string SubGroupPrefix =
+        "SUB";
+
+    // Code prefix : BNK-002-002-002-00001
+    private const string CodePrefix =
+        "BNK";
+
+
     //===========================================================
     // Private Fields
     //===========================================================
@@ -133,6 +173,9 @@ public class BankAccountsRepository : IBankAccountsRepository
                         BankBranchName =
                             x.BankBranchName,
 
+                        SanctionLimit =
+                            x.SanctionLimit,
+
                         IsDeleted =
                             x.IsDeleted,
 
@@ -209,69 +252,300 @@ public class BankAccountsRepository : IBankAccountsRepository
 
 
     //===========================================================
+    // Resolve Allowed Sub Group
+    //
+    // The sub group must be one of the two fixed ones (looked up
+    // by code) and must exist.
+    //===========================================================
+
+    private async Task<AccountSubGroupEntity>
+        ResolveAllowedSubGroupAsync
+        (
+            long accountSubGroupsId
+        )
+    {
+        AccountSubGroupEntity? subGroup =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.AccountSubGroupId ==
+                        accountSubGroupsId
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            subGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "Account Sub Group not found.");
+        }
+
+        if
+        (
+            !AllowedSubGroupCodes.Contains(
+                (subGroup.SubGroupCode ?? string.Empty)
+                    .Trim()
+                    .ToUpperInvariant())
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bank Accounts can only be created under {CashAtBanksSubGroupCode} (Cash At Banks) " +
+                $"or {LiabilityForFinanceSubGroupCode} (Liability For Finance).");
+        }
+
+        return subGroup;
+    }
+
+
+    //===========================================================
+    // Is Liability For Finance
+    //===========================================================
+
+    private static bool IsLiabilityForFinance
+    (
+        AccountSubGroupEntity subGroup
+    )
+    {
+        return string.Equals(
+            (subGroup.SubGroupCode ?? string.Empty).Trim(),
+            LiabilityForFinanceSubGroupCode,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    //===========================================================
+    // Normalize Sanction Limit
+    //
+    // Kept only for Liability For Finance; 0 or more, 2 decimals.
+    //===========================================================
+
+    private static decimal? NormalizeSanctionLimit
+    (
+        decimal? sanctionLimit,
+        AccountSubGroupEntity subGroup
+    )
+    {
+        if
+        (
+            !IsLiabilityForFinance(subGroup)
+            ||
+            sanctionLimit ==
+            null
+        )
+        {
+            return null;
+        }
+
+        if
+        (
+            sanctionLimit <
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                "Sanction Limit cannot be negative.");
+        }
+
+        return Math.Round(
+            sanctionLimit.Value,
+            2);
+    }
+
+
+    //===========================================================
+    // Sub Group Numbers From Its Code
+    //
+    // SUB-003-002-002 → (3, 2, 2).
+    //===========================================================
+
+    private static (int ClassNo, int GroupNo, int SubGroupNo)
+        ResolveSequences
+        (
+            string? subGroupCode
+        )
+    {
+        string[] parts =
+            SplitCode(
+                subGroupCode);
+
+        if
+        (
+            parts.Length !=
+            4
+            ||
+            !string.Equals(
+                parts[0],
+                SubGroupPrefix,
+                StringComparison.OrdinalIgnoreCase)
+            ||
+            !int.TryParse(
+                parts[1],
+                out int classNo)
+            ||
+            classNo < 1
+            ||
+            !int.TryParse(
+                parts[2],
+                out int groupNo)
+            ||
+            groupNo < 1
+            ||
+            !int.TryParse(
+                parts[3],
+                out int subGroupNo)
+            ||
+            subGroupNo < 1
+        )
+        {
+            throw new InvalidOperationException(
+                $"Invalid Account Sub Group code '{subGroupCode}'.");
+        }
+
+        return (classNo, groupNo, subGroupNo);
+    }
+
+
+    //===========================================================
+    // Split Code Into Trimmed Parts
+    //===========================================================
+
+    private static string[] SplitCode
+    (
+        string? code
+    )
+    {
+        return (code ?? string.Empty)
+            .Trim()
+            .Split(
+                '-',
+                StringSplitOptions.RemoveEmptyEntries)
+            .Select
+            (
+                x =>
+                    x.Trim()
+            )
+            .ToArray();
+    }
+
+
+    //===========================================================
+    // Build Next Code
+    //
+    // Reads the last part of every BNK-ccc-ggg-sss-nnnnn code
+    // under this sub group, deleted rows included.
+    //===========================================================
+
+    private async Task<string>
+        BuildNextCodeAsync
+        (
+            AccountSubGroupEntity subGroup
+        )
+    {
+        (int classNo, int groupNo, int subGroupNo) =
+            ResolveSequences(
+                subGroup.SubGroupCode);
+
+        string parentPart =
+            $"{classNo:D3}-{groupNo:D3}-{subGroupNo:D3}";
+
+
+        List<string> codes =
+            await _context
+                .Set<BankAccountsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.AccountSubGroupsId ==
+                        subGroup.AccountSubGroupId
+                )
+                .Select
+                (
+                    x =>
+                        x.BankAccountCode
+                )
+                .ToListAsync();
+
+
+        int highest =
+            0;
+
+        foreach
+        (
+            string code
+            in codes
+        )
+        {
+            string[] parts =
+                SplitCode(
+                    code);
+
+            if
+            (
+                parts.Length !=
+                5
+                ||
+                !string.Equals(
+                    parts[0],
+                    CodePrefix,
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                $"{parts[1]}-{parts[2]}-{parts[3]}" !=
+                parentPart
+            )
+            {
+                continue;
+            }
+
+            if
+            (
+                int.TryParse(
+                    parts[4],
+                    out int sequenceNo)
+                &&
+                sequenceNo >
+                highest
+            )
+            {
+                highest =
+                    sequenceNo;
+            }
+        }
+
+
+        // Manual method (BNK-): the AUTO GenerateBankAccountsCode
+        // is rewritten to BAN- by Code Synchronization.
+        return CodeGenerator.GenerateBankAccountCode(
+            classNo,
+            groupNo,
+            subGroupNo,
+            highest + 1);
+    }
+
+
+    //===========================================================
     // Get Next Code
     //===========================================================
 
     public async Task<string>
-        GetNextCodeAsync(
-            long accountSubGroupsId)
+        GetNextCodeAsync
+        (
+            long accountSubGroupsId
+        )
     {
-        var parent =
-            await _context.Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.AccountSubGroupId == accountSubGroupsId && !x.IsDeleted);
+        AccountSubGroupEntity subGroup =
+            await ResolveAllowedSubGroupAsync(
+                accountSubGroupsId);
 
-        if (parent == null)
-            throw new KeyNotFoundException("Account Sub Group not found.");
-
-        string[] parentParts =
-            (parent.SubGroupCode?.Trim() ?? string.Empty)
-                .Split('-', StringSplitOptions.RemoveEmptyEntries);
-
-        if (parentParts.Length != 4)
-            throw new InvalidOperationException("Invalid account sub group code.");
-
-        int[] seg = new int[3];
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (!int.TryParse(parentParts[i + 1].Trim(), out seg[i]) || seg[i] < 1)
-                throw new InvalidOperationException("Invalid account sub group sequence number.");
-        }
-
-        List<string> existingCodes =
-            await _context.Set<BankAccountsEntity>()
-                .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.AccountSubGroupsId == accountSubGroupsId)
-                .Select(x => x.BankAccountCode)
-                .ToListAsync();
-
-        int highest = 0;
-
-        foreach (string code in existingCodes)
-        {
-            if (string.IsNullOrWhiteSpace(code)) continue;
-
-            string[] parts = code.Split('-', StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length != 5) continue;
-
-            if (!string.Equals(parts[0].Trim(), "BAN", StringComparison.OrdinalIgnoreCase)) continue;
-
-            bool same = true;
-
-            for (int i = 0; i < 3; i++)
-            {
-                if (!int.TryParse(parts[i + 1].Trim(), out int v) || v != seg[i]) { same = false; break; }
-            }
-
-            if (!same) continue;
-
-            if (int.TryParse(parts[4].Trim(), out int sequenceNo) && sequenceNo > highest)
-                highest = sequenceNo;
-        }
-
-        return CodeGenerator.GenerateBankAccountsCode(seg[0], seg[1], seg[2], highest + 1);
+        return await BuildNextCodeAsync(
+            subGroup);
     }
 
 
@@ -295,6 +569,124 @@ public class BankAccountsRepository : IBankAccountsRepository
 
 
     //===========================================================
+    // Normalize Required Text
+    //===========================================================
+
+    private static string RequireText
+    (
+        string? value,
+        string label,
+        int maxLength
+    )
+    {
+        string text =
+            value?.Trim()
+            ??
+            string.Empty;
+
+        if
+        (
+            string.IsNullOrWhiteSpace(text)
+        )
+        {
+            throw new InvalidOperationException(
+                $"{label} is required.");
+        }
+
+        if
+        (
+            text.Length >
+            maxLength
+        )
+        {
+            throw new InvalidOperationException(
+                $"{label} cannot be longer than {maxLength} characters.");
+        }
+
+        return text;
+    }
+
+
+    //===========================================================
+    // Validate Unique Name / Code
+    //
+    // Bank Account Name is unique within its branch; the code is
+    // unique everywhere. Only non-deleted rows are compared.
+    //===========================================================
+
+    private async Task
+        EnsureUniqueAsync
+        (
+            string bankAccountCode,
+            string bankAccountName,
+            string branch,
+            long excludeId
+        )
+    {
+        string lowerName =
+            bankAccountName.ToLower();
+
+        string lowerBranch =
+            branch.ToLower();
+
+        BankAccountsEntity? sameName =
+            await _context
+                .Set<BankAccountsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.BankAccountId !=
+                        excludeId
+                        &&
+                        x.BankAccountName.ToLower() ==
+                        lowerName
+                        &&
+                        x.Branch.ToLower() ==
+                        lowerBranch
+                );
+
+        if
+        (
+            sameName !=
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bank Account '{bankAccountName}' already exists for this branch ({sameName.BankAccountCode}).");
+        }
+
+
+        bool codeTaken =
+            await _context
+                .Set<BankAccountsEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.BankAccountId !=
+                        excludeId
+                        &&
+                        x.BankAccountCode ==
+                        bankAccountCode
+                );
+
+        if
+        (
+            codeTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bank Account Code '{bankAccountCode}' is already in use.");
+        }
+    }
+
+
+    //===========================================================
     // Create
     //===========================================================
 
@@ -307,58 +699,59 @@ public class BankAccountsRepository : IBankAccountsRepository
         )
     {
         //===========================================================
-        // Resolve AccountSubGroup
+        // Resolve Sub Group (Cash At Banks / Liability For Finance)
         //===========================================================
 
-        AccountSubGroupEntity? accountSubGroup =
-
-            await _context
-                .Set<AccountSubGroupEntity>()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.AccountSubGroupId ==
-                        dto.AccountSubGroupsId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
+        AccountSubGroupEntity subGroup =
+            await ResolveAllowedSubGroupAsync(
+                dto.AccountSubGroupsId);
 
         if
         (
-            accountSubGroup ==
-            null
+            !subGroup.IsActive
         )
         {
-            throw new KeyNotFoundException(
-                "AccountSubGroup not found."
-            );
+            throw new InvalidOperationException(
+                $"Account Sub Group {subGroup.SubGroupCode} is inactive.");
         }
 
 
         //===========================================================
-        // Resolve BankAccount Code
+        // Validate
+        //===========================================================
+
+        string bankAccountName =
+            RequireText(
+                dto.BankAccountName,
+                "Bank Account Name",
+                200);
+
+        string branch =
+            RequireText(
+                dto.Branch,
+                "Branch",
+                1000);
+
+        decimal? sanctionLimit =
+            NormalizeSanctionLimit(
+                dto.SanctionLimit,
+                subGroup);
+
+
+        //===========================================================
+        // Generate Code (server side, never from the form)
         //===========================================================
 
         string bankAccountCode =
-            dto.BankAccountCode?.Trim()
-            ??
-            string.Empty;
+            await BuildNextCodeAsync(
+                subGroup);
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(bankAccountCode)
-        )
-        {
-            bankAccountCode =
-                await GetNextCodeAsync(
-                    dto.AccountSubGroupsId);
-        }
+        await EnsureUniqueAsync(
+            bankAccountCode,
+            bankAccountName,
+            branch,
+            0);
 
 
         //===========================================================
@@ -369,15 +762,13 @@ public class BankAccountsRepository : IBankAccountsRepository
             new BankAccountsEntity
             {
                 AccountSubGroupsId =
-                    dto.AccountSubGroupsId,
+                    subGroup.AccountSubGroupId,
 
                 BankAccountCode =
                     bankAccountCode,
 
                 BankAccountName =
-                    dto.BankAccountName?.Trim()
-                    ??
-                    string.Empty,
+                    bankAccountName,
 
                 Remarks =
                     dto.Remarks?.Trim()
@@ -388,9 +779,7 @@ public class BankAccountsRepository : IBankAccountsRepository
                     dto.Status,
 
                 Branch =
-                    dto.Branch?.Trim()
-                    ??
-                    string.Empty,
+                    branch,
 
                 DisplayName =
                     dto.DisplayName?.Trim()
@@ -446,6 +835,9 @@ public class BankAccountsRepository : IBankAccountsRepository
                     ??
                     string.Empty,
 
+                SanctionLimit =
+                    sanctionLimit,
+
                 IsDeleted =
                     false,
 
@@ -491,7 +883,7 @@ public class BankAccountsRepository : IBankAccountsRepository
                     "BankAccount Created",
 
                 ActivityDescription =
-                    $"BankAccount '{entity.BankAccountName}' created.",
+                    $"BankAccount '{entity.BankAccountName}' ({entity.BankAccountCode}) created.",
 
                 PerformedBy =
                     userId,
@@ -514,6 +906,8 @@ public class BankAccountsRepository : IBankAccountsRepository
 
     //===========================================================
     // Update
+    //
+    // Sub group and code are locked; only the details change.
     //===========================================================
 
     public async Task
@@ -559,51 +953,78 @@ public class BankAccountsRepository : IBankAccountsRepository
 
 
         //===========================================================
-        // Resolve AccountSubGroup
+        // Sub Group Is Locked
         //===========================================================
-
-        AccountSubGroupEntity? accountSubGroup =
-
-            await _context
-                .Set<AccountSubGroupEntity>()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.AccountSubGroupId ==
-                        dto.AccountSubGroupsId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
 
         if
         (
-            accountSubGroup ==
+            dto.AccountSubGroupsId > 0
+            &&
+            dto.AccountSubGroupsId !=
+            entity.AccountSubGroupsId
+        )
+        {
+            throw new InvalidOperationException(
+                "Account Sub Group cannot be changed after the bank account is created.");
+        }
+
+
+        AccountSubGroupEntity? subGroup =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.AccountSubGroupId ==
+                        entity.AccountSubGroupsId
+                );
+
+        if
+        (
+            subGroup ==
             null
         )
         {
             throw new KeyNotFoundException(
-                "AccountSubGroup not found."
-            );
+                "Account Sub Group not found.");
         }
 
 
-        entity.AccountSubGroupsId =
-            dto.AccountSubGroupsId;
+        //===========================================================
+        // Validate
+        //===========================================================
 
-        entity.BankAccountCode =
-            dto.BankAccountCode?.Trim()
-            ??
-            string.Empty;
+        string bankAccountName =
+            RequireText(
+                dto.BankAccountName,
+                "Bank Account Name",
+                200);
+
+        string branch =
+            RequireText(
+                dto.Branch,
+                "Branch",
+                1000);
+
+        decimal? sanctionLimit =
+            NormalizeSanctionLimit(
+                dto.SanctionLimit,
+                subGroup);
+
+        await EnsureUniqueAsync(
+            entity.BankAccountCode,
+            bankAccountName,
+            branch,
+            entity.BankAccountId);
+
+
+        //===========================================================
+        // Update Entity (code is never taken from the form)
+        //===========================================================
 
         entity.BankAccountName =
-            dto.BankAccountName?.Trim()
-            ??
-            string.Empty;
+            bankAccountName;
 
         entity.Remarks =
             dto.Remarks?.Trim()
@@ -614,9 +1035,7 @@ public class BankAccountsRepository : IBankAccountsRepository
             dto.Status;
 
         entity.Branch =
-            dto.Branch?.Trim()
-            ??
-            string.Empty;
+            branch;
 
         entity.DisplayName =
             dto.DisplayName?.Trim()
@@ -672,6 +1091,9 @@ public class BankAccountsRepository : IBankAccountsRepository
             ??
             string.Empty;
 
+        entity.SanctionLimit =
+            sanctionLimit;
+
 
         entity.ModifiedBy =
             userId;
@@ -708,7 +1130,7 @@ public class BankAccountsRepository : IBankAccountsRepository
                     "BankAccount Updated",
 
                 ActivityDescription =
-                    $"BankAccount '{entity.BankAccountName}' updated.",
+                    $"BankAccount '{entity.BankAccountName}' ({entity.BankAccountCode}) updated.",
 
                 PerformedBy =
                     userId,
@@ -835,6 +1257,10 @@ public class BankAccountsRepository : IBankAccountsRepository
 
     //===========================================================
     // Restore
+    //
+    // Restores the most recently deleted bank account. Blocked
+    // (409) while its sub group is deleted, or its name / code is
+    // taken.
     //===========================================================
 
     public async Task<bool>
@@ -870,6 +1296,56 @@ public class BankAccountsRepository : IBankAccountsRepository
         )
         {
             return false;
+        }
+
+
+        //===========================================================
+        // Sub Group Must Exist
+        //===========================================================
+
+        bool subGroupExists =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        x.AccountSubGroupId ==
+                        entity.AccountSubGroupsId
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            !subGroupExists
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bank Account '{entity.BankAccountName}' cannot be restored. " +
+                "Its Account Sub Group is deleted; restore the sub group first.");
+        }
+
+
+        //===========================================================
+        // Name / Code Must Be Free
+        //===========================================================
+
+        try
+        {
+            await EnsureUniqueAsync(
+                entity.BankAccountCode,
+                entity.BankAccountName,
+                entity.Branch ?? string.Empty,
+                entity.BankAccountId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bank Account '{entity.BankAccountName}' cannot be restored. {ex.Message}");
         }
 
 
@@ -920,7 +1396,7 @@ public class BankAccountsRepository : IBankAccountsRepository
                     "BankAccount Restored",
 
                 ActivityDescription =
-                    $"BankAccount '{entity.BankAccountName}' restored.",
+                    $"BankAccount '{entity.BankAccountName}' ({entity.BankAccountCode}) restored.",
 
                 PerformedBy =
                     userId,

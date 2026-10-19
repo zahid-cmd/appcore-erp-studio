@@ -81,7 +81,8 @@ public interface IAccountClassRepository
     //===========================================================
 
     Task<string> GetNextCodeAsync(
-        string classType);
+        string classType,
+        string classPrefix);
 
 
     //===========================================================

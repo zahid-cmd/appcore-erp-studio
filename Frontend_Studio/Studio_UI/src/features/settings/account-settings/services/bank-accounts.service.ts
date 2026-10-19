@@ -164,7 +164,12 @@ export class BankAccountsService
                                     Boolean(bankAccount.BranchExclusive ?? bankAccount.branchExclusive ?? false),
 
                                 BankBranchName:
-                                    bankAccount.BankBranchName ?? bankAccount.bankBranchName ?? ''
+                                    bankAccount.BankBranchName ?? bankAccount.bankBranchName ?? '',
+
+                                SanctionLimit:
+                                    (bankAccount.SanctionLimit ?? bankAccount.sanctionLimit ?? null) === null
+                                        ? null
+                                        : Number(bankAccount.SanctionLimit ?? bankAccount.sanctionLimit)
                             })
 
                         )

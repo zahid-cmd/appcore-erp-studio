@@ -108,4 +108,30 @@ export const settingsRoutes:
 
     // AUTO-END : MNU-003-003
 
+    // AUTO-BEGIN : MNU-003-004
+
+    //===========================================================
+    // Service Settings
+    //===========================================================
+
+    {
+        path:'service-settings',
+
+        data:
+        {
+            breadcrumb:'Service Settings'
+        },
+
+        loadChildren:() =>
+            import(
+                '../service-settings/routes/service-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu003004Routes
+            )
+    },
+
+    // AUTO-END : MNU-003-004
+
 ];

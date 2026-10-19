@@ -1,0 +1,90 @@
+/* ============================================================
+   Service Sub Category
+============================================================ */
+
+export interface ServiceSubCategory
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Service Sub Category
+============================================================ */
+
+export interface CreateServiceSubCategory
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Service Sub Category
+============================================================ */
+
+export interface UpdateServiceSubCategory
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Service Sub Category Defaults
+============================================================ */
+
+export interface ServiceSubCategoryDefaults
+{
+    code:
+        string;
+}

@@ -397,13 +397,23 @@ implements OnInit, OnDestroy
 
     [
         {
-            label:'Account Class',
-            value:'Account Class'
+            label:'Account',
+            value:'Account'
         },
 
         {
-            label:'Inventory Class',
-            value:'Inventory Class'
+            label:'Inventory',
+            value:'Inventory'
+        },
+
+        {
+            label:'Work In Progress',
+            value:'Work In Progress'
+        },
+
+        {
+            label:'Cost of Goods Sold',
+            value:'Cost of Goods Sold'
         }
     ];
 
@@ -486,7 +496,7 @@ implements OnInit, OnDestroy
     {
         AccountClassId:0,
 
-        ClassType:'Account Class',
+        ClassType:'Account',
 
         ClassCode:'',
 
@@ -592,6 +602,11 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+
+        window.clearTimeout(
+            this.prefixTimer
+        );
 
 
         if
@@ -743,7 +758,7 @@ implements OnInit, OnDestroy
         {
             AccountClassId:0,
 
-            ClassType:'Account Class',
+            ClassType:'Account',
 
             ClassCode:'',
 
@@ -751,7 +766,7 @@ implements OnInit, OnDestroy
 
             Mode:'Debit',
 
-            ClassPrefix:'ACC',
+            ClassPrefix:'',
 
             AllowManualGroupCreation:true,
 
@@ -759,9 +774,6 @@ implements OnInit, OnDestroy
 
             IsActive:true
         };
-
-
-        this.updateClassPrefix();
 
 
         this.generateDefaults();
@@ -790,10 +802,52 @@ implements OnInit, OnDestroy
 
 
         //=======================================================
-        // Generate Code From Class Type
+        // Suggest the prefix last used for Account Classes
+        // (nothing is suggested on a fresh database)
         //=======================================================
 
-        this.generateNextCode();
+        this.accountClassService
+            .getDefaults()
+            .subscribe
+            ({
+                next:
+                (
+                    defaults:
+                        AccountClassDefaults
+                ): void =>
+                {
+                    if
+                    (
+                        this.mode !== 'add'
+                        ||
+                        this.entity.ClassPrefix
+                    )
+                    {
+                        return;
+                    }
+
+                    this.entity.ClassPrefix =
+                        defaults.ClassPrefix ?? '';
+
+                    this.entity.ClassCode =
+                        defaults.Code ?? '';
+
+                    this.setInitialFormState();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    // Not fatal : the user simply types the prefix
+                    console.error(
+                        'Load Account Class Defaults Error',
+                        error
+                    );
+                }
+            });
     }
 
 
@@ -809,9 +863,30 @@ implements OnInit, OnDestroy
         const classType =
             this.entity.ClassType;
 
+        const classPrefix =
+            this.entity.ClassPrefix;
+
+        //=======================================================
+        // Wait for a complete prefix (2–5 letters)
+        //=======================================================
+
+        if
+        (
+            !this.isPrefixValid
+        )
+        {
+            this.entity.ClassCode =
+                '';
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
         this.accountClassService
             .getNextCode(
-                classType
+                classType,
+                classPrefix
             )
             .subscribe
             ({
@@ -839,13 +914,22 @@ implements OnInit, OnDestroy
                         return;
                     }
 
+                    // Ignore an answer for a prefix the user has already changed
+                    if
+                    (
+                        classPrefix !==
+                        this.entity.ClassPrefix
+                    )
+                    {
+                        return;
+                    }
+
                     this.entity.ClassCode =
                         code.trim();
 
-                    this.entity.IsActive =
-                        true;
+                    this.checkForChanges();
 
-                    this.setInitialFormState();
+                    this.cdr.detectChanges();
                 },
 
                 error:
@@ -876,12 +960,83 @@ implements OnInit, OnDestroy
     updateClassPrefix():
         void
     {
+        // Typed by the user : capital letters only, max 5
         this.entity.ClassPrefix =
-            this.entity.ClassType === 'Inventory Class'
-                ?
-                    'INV'
-                :
-                    'ACC';
+            (this.entity.ClassPrefix ?? '')
+                .toUpperCase()
+                .replace(/[^A-Z]/g, '')
+                .slice(0, 5);
+    }
+
+
+    //===========================================================
+    // Prefix Valid (2–5 capital letters)
+    //===========================================================
+
+    get isPrefixValid():
+        boolean
+    {
+        return /^[A-Z]{2,5}$/.test(
+            this.entity.ClassPrefix ?? ''
+        );
+    }
+
+
+    //===========================================================
+    // Prefix Change (Add mode only)
+    //
+    // Normalizes the typed prefix and refreshes the code preview
+    // after a short pause.
+    //===========================================================
+
+    private prefixTimer?:
+        number;
+
+    onPrefixChange():
+        void
+    {
+        if
+        (
+            this.mode !== 'add'
+        )
+        {
+            return;
+        }
+
+        this.updateClassPrefix();
+
+        this.entity.ClassCode =
+            '';
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+
+        window.clearTimeout(
+            this.prefixTimer
+        );
+
+        this.prefixTimer =
+            window.setTimeout(
+                () =>
+                    this.generateNextCode(),
+                350
+            );
+    }
+
+
+    //===========================================================
+    // Inventory Family
+    //===========================================================
+
+    // Inventory · Work In Progress · Cost of Goods Sold
+    get isInventoryClass():
+        boolean
+    {
+        return !!this.entity.ClassType
+            &&
+            this.entity.ClassType !==
+            'Account';
     }
 
 
@@ -902,9 +1057,28 @@ implements OnInit, OnDestroy
         }
 
 
-        this.updateClassPrefix();
+        // Inventory classes never allow manual groups :
+        // their groups come from Product Category only
+        if
+        (
+            this.isInventoryClass
+        )
+        {
+            this.entity.AllowManualGroupCreation =
+                false;
+
+            // Inventory, WIP and COGS are debit-balance accounts
+            this.entity.Mode =
+                'Debit';
+        }
+        else
+        {
+            this.entity.AllowManualGroupCreation =
+                true;
+        }
 
 
+        // Numbering runs per Class Type, so refresh the preview
         this.entity.ClassCode =
             '';
 
@@ -974,7 +1148,7 @@ implements OnInit, OnDestroy
                             ??
                             response?.classType
                             ??
-                            'Account Class',
+                            'Account',
 
                         ClassCode:
                             response?.ClassCode
@@ -1029,9 +1203,6 @@ implements OnInit, OnDestroy
                                 true
                             )
                     };
-
-
-                    this.updateClassPrefix();
 
 
                     this.originalEntity =
@@ -1366,6 +1537,23 @@ implements OnInit, OnDestroy
 
         if
         (
+            !this.isPrefixValid
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Class Prefix must be 2 to 5 letters (A–Z), e.g. CLS, INV, WIP, COGS.'
+            );
+
+            return;
+        }
+
+
+        // Add mode : the server assigns the final code on save
+        if
+        (
+            this.mode !== 'add'
+            &&
             !this.entity.ClassCode?.trim()
         )
         {

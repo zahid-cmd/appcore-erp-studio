@@ -1,0 +1,90 @@
+/* ============================================================
+   Accessories
+============================================================ */
+
+export interface Accessories
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Accessories
+============================================================ */
+
+export interface CreateAccessories
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Accessories
+============================================================ */
+
+export interface UpdateAccessories
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Accessories Defaults
+============================================================ */
+
+export interface AccessoriesDefaults
+{
+    code:
+        string;
+}

@@ -1,0 +1,90 @@
+/* ============================================================
+   Scheduled Services
+============================================================ */
+
+export interface ScheduledServices
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Scheduled Services
+============================================================ */
+
+export interface CreateScheduledServices
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Scheduled Services
+============================================================ */
+
+export interface UpdateScheduledServices
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Scheduled Services Defaults
+============================================================ */
+
+export interface ScheduledServicesDefaults
+{
+    code:
+        string;
+}

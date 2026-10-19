@@ -82,8 +82,11 @@ public class AccountGroupConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.GroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_AccountGroups_GroupCode");
 
 
         //===========================================================
@@ -94,14 +97,19 @@ public class AccountGroupConfiguration
                .IsRequired()
                .HasMaxLength(200);
 
+        // Unique within its class, among non-deleted rows only
+        builder.HasIndex(x => new { x.AccountClassId, x.GroupName })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_AccountGroups_AccountClassId_GroupName");
+
 
         //===========================================================
         // Manual Sub Group
         //===========================================================
 
         builder.Property(x => x.AllowManualSubGroup)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
 
         //===========================================================
@@ -118,8 +126,7 @@ public class AccountGroupConfiguration
         //===========================================================
 
         builder.Property(x => x.IsActive)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         //===========================================================

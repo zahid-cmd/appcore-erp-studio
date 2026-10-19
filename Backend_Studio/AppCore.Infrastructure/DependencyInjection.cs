@@ -156,12 +156,36 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : ServiceCategory
+
+using AppCore.Application.Settings.ServiceSettings;
+using AppCore.Infrastructure.Configurations.Settings.ServiceSettings;
+
+// AUTO-END : ServiceCategory
+
+
+// AUTO-BEGIN : BusinessConfiguration
+
+using AppCore.Infrastructure.Configurations.Settings.GeneralSettings;
+
+// AUTO-END : BusinessConfiguration
+
 // AUTO-BEGIN : ProductCategory
 
 using AppCore.Application.Settings.ProductSettings;
 using AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 
 // AUTO-END : ProductCategory
+
+
+// AUTO-BEGIN : ColorManagement
+
+using AppCore.Infrastructure.Repositories.Settings.ProductSettings;
+
+// AUTO-END : ColorManagement
+
+
+
 
 
 // AUTO-BEGIN : FinancialYears
@@ -627,10 +651,255 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Chart of Accounts Repository (manual, read-only page)
+        //=======================================================
+
+        services.AddScoped
+        <
+            IChartOfAccountsRepository,
+            ChartOfAccountsRepository
+        >();
+
+        //=======================================================
+        // Chart of Inventory Repository (manual, read-only page)
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.ProductSettings.IChartOfInventoryRepository,
+            AppCore.Infrastructure.Repositories.Settings.ProductSettings.ChartOfInventoryRepository
+        >();
+
+        //=======================================================
         // AUTO REGISTER SERVICES
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : ChartOfServices
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.ServiceSettings.IChartOfServicesRepository,
+            AppCore.Infrastructure.Configurations.Settings.ServiceSettings.ChartOfServicesRepository
+        >();
+
+        // AUTO-END : ChartOfServices
+
+        // AUTO-BEGIN : MembershipServices
+
+        services.AddScoped
+        <
+            IMembershipServicesRepository,
+            MembershipServicesRepository
+        >();
+
+        // AUTO-END : MembershipServices
+
+        // AUTO-BEGIN : CustomizedServices
+
+        services.AddScoped
+        <
+            ICustomizedServicesRepository,
+            CustomizedServicesRepository
+        >();
+
+        // AUTO-END : CustomizedServices
+
+
+        // AUTO-BEGIN : LaborChart
+
+        services.AddScoped
+        <
+            ILaborChartRepository,
+            LaborChartRepository
+        >();
+
+        // AUTO-END : LaborChart
+
+
+        // AUTO-BEGIN : ScheduledServices
+
+        services.AddScoped
+        <
+            IScheduledServicesRepository,
+            ScheduledServicesRepository
+        >();
+
+        // AUTO-END : ScheduledServices
+
+
+        // AUTO-BEGIN : ServiceSubCategory
+
+        services.AddScoped
+        <
+            IServiceSubCategoryRepository,
+            ServiceSubCategoryRepository
+        >();
+
+        // AUTO-END : ServiceSubCategory
+
+
+        // AUTO-BEGIN : ServicePolicy
+
+        services.AddScoped
+        <
+            IServicePolicyRepository,
+            ServicePolicyRepository
+        >();
+
+        // AUTO-END : ServicePolicy
+
+
+        // AUTO-BEGIN : ServiceCategory
+
+        services.AddScoped
+        <
+            IServiceCategoryRepository,
+            ServiceCategoryRepository
+        >();
+
+        // AUTO-END : ServiceCategory
+
+
+        // AUTO-BEGIN : BusinessConfiguration
+
+        services.AddScoped
+        <
+            IBusinessConfigurationRepository,
+            BusinessConfigurationRepository
+        >();
+
+        // AUTO-END : BusinessConfiguration
+
+        // AUTO-BEGIN : Accessories
+
+        services.AddScoped
+        <
+            IAccessoriesRepository,
+            AccessoriesRepository
+        >();
+
+        // AUTO-END : Accessories
+
+        // AUTO-BEGIN : RackManagement
+
+        services.AddScoped
+        <
+            IRackManagementRepository,
+            RackManagementRepository
+        >();
+
+        // AUTO-END : RackManagement
+
+
+        // AUTO-BEGIN : SpareParts
+
+        services.AddScoped
+        <
+            ISparePartsRepository,
+            SparePartsRepository
+        >();
+
+        // AUTO-END : SpareParts
+
+
+
+        // AUTO-BEGIN : MotorBikes
+
+        services.AddScoped
+        <
+            IMotorBikesRepository,
+            MotorBikesRepository
+        >();
+
+        // AUTO-END : MotorBikes
+
+        // AUTO-BEGIN : ProductCategory
+
+        services.AddScoped
+        <
+            IProductCategoryRepository,
+            ProductCategoryRepository
+        >();
+
+        // AUTO-END : ProductCategory
+
+        // AUTO-BEGIN : BrandManagement
+
+        services.AddScoped
+        <
+            IBrandManagementRepository,
+            BrandManagementRepository
+        >();
+
+        // AUTO-END : BrandManagement
+
+
+
+        // AUTO-BEGIN : ProductSubCategory
+
+        services.AddScoped
+        <
+            IProductSubCategoryRepository,
+            ProductSubCategoryRepository
+        >();
+
+        // AUTO-END : ProductSubCategory
+
+
+        // AUTO-BEGIN : CardCharges
+
+        services.AddScoped
+        <
+            ICardChargesRepository,
+            CardChargesRepository
+        >();
+
+        // AUTO-END : CardCharges
+
+        // AUTO-BEGIN : POSAccounts
+
+        services.AddScoped
+        <
+            IPOSAccountsRepository,
+            POSAccountsRepository
+        >();
+
+        // AUTO-END : POSAccounts
+
+        // AUTO-BEGIN : MFSAccounts
+
+        services.AddScoped
+        <
+            IMFSAccountsRepository,
+            MFSAccountsRepository
+        >();
+
+        // AUTO-END : MFSAccounts
+
+        // AUTO-BEGIN : BankAccounts
+
+        services.AddScoped
+        <
+            IBankAccountsRepository,
+            BankAccountsRepository
+        >();
+
+        // AUTO-END : BankAccounts
+
+        // AUTO-BEGIN : ColorManagement
+
+        services.AddScoped
+        <
+            IColorManagementRepository,
+            ColorManagementRepository
+        >();
+
+        // AUTO-END : ColorManagement
+
+
+
 
         // AUTO-BEGIN : SystemConfigurations
 
@@ -652,26 +921,8 @@ public static class DependencyInjection
 
         // AUTO-END : FinancialYears
 
-        // AUTO-BEGIN : CardCharges
-
-        services.AddScoped
-        <
-            ICardChargesRepository,
-            CardChargesRepository
-        >();
-
-        // AUTO-END : CardCharges
 
 
-        // AUTO-BEGIN : POSAccounts
-
-        services.AddScoped
-        <
-            IPOSAccountsRepository,
-            POSAccountsRepository
-        >();
-
-        // AUTO-END : POSAccounts
 
 
         // AUTO-BEGIN : CardSetup
@@ -684,26 +935,8 @@ public static class DependencyInjection
 
         // AUTO-END : CardSetup
 
-        // AUTO-BEGIN : MFSAccounts
-
-        services.AddScoped
-        <
-            IMFSAccountsRepository,
-            MFSAccountsRepository
-        >();
-
-        // AUTO-END : MFSAccounts
 
 
-        // AUTO-BEGIN : BankAccounts
-
-        services.AddScoped
-        <
-            IBankAccountsRepository,
-            BankAccountsRepository
-        >();
-
-        // AUTO-END : BankAccounts
 
 
 
@@ -735,15 +968,6 @@ public static class DependencyInjection
 
 
 
-        // AUTO-BEGIN : ProductMaster
-
-        services.AddScoped
-        <
-            IProductMasterRepository,
-            ProductMasterRepository
-        >();
-
-        // AUTO-END : ProductMaster
 
         // AUTO-BEGIN : GeneralLedgers
 
@@ -755,15 +979,6 @@ public static class DependencyInjection
 
         // AUTO-END : GeneralLedgers
 
-        // AUTO-BEGIN : ProductSubCategory
-
-        services.AddScoped
-        <
-            IProductSubCategoryRepository,
-            ProductSubCategoryRepository
-        >();
-
-        // AUTO-END : ProductSubCategory
 
         // AUTO-BEGIN : AccountSubGroup
 
@@ -775,15 +990,6 @@ public static class DependencyInjection
 
         // AUTO-END : AccountSubGroup
 
-        // AUTO-BEGIN : ProductCategory
-
-        services.AddScoped
-        <
-            IProductCategoryRepository,
-            ProductCategoryRepository
-        >();
-
-        // AUTO-END : ProductCategory
 
 
 

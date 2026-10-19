@@ -101,8 +101,11 @@ public class AccountSubGroupConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.SubGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_AccountSubGroups_SubGroupCode");
 
 
         //===========================================================
@@ -113,14 +116,19 @@ public class AccountSubGroupConfiguration
                .IsRequired()
                .HasMaxLength(200);
 
+        // Unique within its group, among non-deleted rows only
+        builder.HasIndex(x => new { x.AccountGroupId, x.SubGroupName })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_AccountSubGroups_AccountGroupId_SubGroupName");
+
 
         //===========================================================
         // Manual Ledger
         //===========================================================
 
         builder.Property(x => x.AllowManualLedger)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
 
         //===========================================================
@@ -137,8 +145,7 @@ public class AccountSubGroupConfiguration
         //===========================================================
 
         builder.Property(x => x.IsActive)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         //===========================================================

@@ -474,13 +474,6 @@ implements OnInit, OnDestroy
             align:'center'
         },
         {
-            header:'Sub Category',
-            field:'SubCategoryCreationAllowed',
-            width:'130px',
-            align:'center',
-            type:'boolean'
-        },
-        {
             header:'Status',
             field:'IsActive',
             type:'status',

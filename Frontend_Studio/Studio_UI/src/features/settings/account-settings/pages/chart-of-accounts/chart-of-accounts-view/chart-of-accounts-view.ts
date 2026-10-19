@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -93,6 +94,7 @@ import
     CoaGroupNode,
     CoaSubGroupNode,
     CoaLedgerRow,
+    CoaIssue,
     CoaPrintOptions,
     CoaPrintDepth
 }
@@ -117,6 +119,17 @@ const PRINT_COMPANY_NAME:
 const STORAGE_KEY:
     string =
     'appcore.chart-of-accounts.selection';
+
+// Remembers which navigator branches are open (per browser, optional).
+const EXPANDED_STORAGE_KEY:
+    string =
+    'appcore.chart-of-accounts.expanded';
+
+// Coming back to the page / browser tab reloads the chart, but
+// not more often than this (milliseconds).
+const AUTO_RELOAD_MIN_GAP_MS:
+    number =
+    5000;
 
 //===============================================================
 // View Types
@@ -194,10 +207,36 @@ interface PreviewColumn
         string;
 }
 
+interface PrintPreviewLine
+{
+    level:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    type:
+        string;
+
+    status:
+        boolean;
+
+    // "n ledgers" placeholder line (ledger names load at print time)
+    summary:
+        boolean;
+
+    // printed rows this line stands for
+    rows:
+        number;
+}
+
 interface PreviewRow
 {
     level:
-        CoaLevel | 'ledger';
+        CoaLevel | 'ledger' | 'issue';
 
     id:
         number;
@@ -253,10 +292,16 @@ interface PreviewRow
 // Read-only. Left : navigator tree (Class → Group → Sub Group).
 // Right : the direct children of the selected node only.
 // Print : full chart or customized.
+//
+// Independent of the account setting pages: it only reads the
+// live tables, and reloads by itself when the user comes back to
+// the page or the browser tab, so changes made elsewhere (new
+// ledgers, renamed groups, moved / deleted items) show up without
+// pressing Refresh. Broken links are listed under "Link Issues".
 //===============================================================
 
 export class ChartOfAccountsView
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Dependency Injection
@@ -311,6 +356,43 @@ implements OnInit
     ledgersLoading:
         boolean =
         false;
+
+    //===========================================================
+    // Link Issues (from the server's link check)
+    //===========================================================
+
+    issues:
+        CoaIssue[] =
+        [];
+
+    // Preview shows the issues list instead of the tree level
+    issuesOpen:
+        boolean =
+        false;
+
+    //===========================================================
+    // Auto Reload
+    //===========================================================
+
+    private lastLoadedAt:
+        number =
+        0;
+
+    private readonly onWindowFocus =
+        (): void =>
+            this.autoReload();
+
+    private readonly onVisibilityChange =
+        (): void =>
+        {
+            if
+            (
+                document.visibilityState === 'visible'
+            )
+            {
+                this.autoReload();
+            }
+        };
 
     //===========================================================
     // Filters
@@ -384,6 +466,10 @@ implements OnInit
         string =
         '';
 
+    previewIcon:
+        string =
+        'fas fa-layer-group';
+
     //===========================================================
     // Counters (scoped to the selection)
     //===========================================================
@@ -425,13 +511,41 @@ implements OnInit
         this.defaultPrintOptions();
 
     printDepthItems:
-        { value: CoaPrintDepth; label: string }[] =
+        { value: CoaPrintDepth; label: string; short: string }[] =
     [
-        { value:'class', label:'Classes only' },
-        { value:'group', label:'Up to Groups' },
-        { value:'subgroup', label:'Up to Sub Groups' },
-        { value:'ledger', label:'Up to Ledgers (full)' }
+        { value:'class', label:'Classes only', short:'Classes' },
+        { value:'group', label:'Up to Groups', short:'Groups' },
+        { value:'subgroup', label:'Up to Sub Groups', short:'Sub Groups' },
+        { value:'ledger', label:'Up to Ledgers (full)', short:'Ledgers' }
     ];
+
+    //===========================================================
+    // Print Preview (live paper in the dialog)
+    //===========================================================
+
+    readonly printCompanyName:
+        string =
+        PRINT_COMPANY_NAME;
+
+    printPreviewLines:
+        PrintPreviewLine[] =
+        [];
+
+    printRowEstimate:
+        number =
+        0;
+
+    printMoreRows:
+        number =
+        0;
+
+    printDepthIndex:
+        number =
+        3;
+
+    printScopeText:
+        string =
+        'Full Chart';
 
     //===========================================================
     // Initialize
@@ -443,21 +557,96 @@ implements OnInit
         this.selection =
             this.readStoredSelection();
 
+        this.readStoredExpanded();
+
         this.loadTree();
+
+        window.addEventListener(
+            'focus',
+            this.onWindowFocus
+        );
+
+        document.addEventListener(
+            'visibilitychange',
+            this.onVisibilityChange
+        );
+    }
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        window.removeEventListener(
+            'focus',
+            this.onWindowFocus
+        );
+
+        document.removeEventListener(
+            'visibilitychange',
+            this.onVisibilityChange
+        );
+    }
+
+    //===========================================================
+    // Auto Reload (page / tab comes back into view)
+    //
+    // Quiet reload: keeps the current tree on screen while the
+    // fresh data loads, then swaps it in.
+    //===========================================================
+
+    private autoReload():
+        void
+    {
+        if
+        (
+            this.loading
+            ||
+            this.printOpen
+            ||
+            Date.now() - this.lastLoadedAt < AUTO_RELOAD_MIN_GAP_MS
+        )
+        {
+            return;
+        }
+
+        this.loadTree(
+            true
+        );
     }
 
     //===========================================================
     // Load Tree
     //===========================================================
 
-    loadTree():
+    loadTree
+    (
+        quiet:
+            boolean =
+            false
+    ):
         void
     {
-        this.loading =
-            true;
+        this.lastLoadedAt =
+            Date.now();
 
-        this.loadFailed =
-            false;
+        // A quiet reload keeps the current tree on screen
+        if
+        (
+            !quiet
+        )
+        {
+            this.loading =
+                true;
+
+            this.loadFailed =
+                false;
+
+            // Show the loading state right away
+            this.cdr.detectChanges();
+        }
 
         this.chartOfAccountsService
             .getTree()
@@ -470,37 +659,61 @@ implements OnInit
                 ):
                     void =>
                 {
-                    this.classes =
-                        response ?? [];
+                    try
+                    {
+                        this.classes =
+                            response ?? [];
 
-                    this.ledgerCache.clear();
+                        this.loadFailed =
+                            false;
 
-                    this.loading =
-                        false;
+                        // Ledgers are re-read too (they may have changed)
+                        this.ledgerCache.clear();
 
-                    // Drop a stored selection that no longer exists
-                    if
+                        // Drop a stored selection that no longer exists
+                        if
+                        (
+                            this.selection
+                            &&
+                            !this.findNode(this.selection)
+                        )
+                        {
+                            this.selection =
+                                null;
+
+                            this.storeSelection();
+                        }
+
+                        if
+                        (
+                            this.selection
+                        )
+                        {
+                            this.expandAncestors(this.selection);
+                        }
+                    }
+                    catch
                     (
-                        this.selection
-                        &&
-                        !this.findNode(this.selection)
+                        error
                     )
                     {
-                        this.selection =
-                            null;
+                        console.error(
+                            'Build Chart of Accounts Error:',
+                            error
+                        );
                     }
-
-                    if
-                    (
-                        this.selection
-                    )
+                    finally
                     {
-                        this.expandAncestors(this.selection);
-                    }
+                        // Always leave the loading state, whatever happened above
+                        this.loading =
+                            false;
 
-                    this.refreshView();
+                        this.refreshView();
+                    }
 
                     this.ensureLedgers();
+
+                    this.loadIssues();
                 },
 
                 error:
@@ -514,6 +727,15 @@ implements OnInit
                         'Load Chart of Accounts Error:',
                         error
                     );
+
+                    // A failed quiet reload keeps what is on screen
+                    if
+                    (
+                        quiet
+                    )
+                    {
+                        return;
+                    }
 
                     this.classes =
                         [];
@@ -532,6 +754,74 @@ implements OnInit
                     );
                 }
             });
+    }
+
+    //===========================================================
+    // Load Link Issues
+    //===========================================================
+
+    private loadIssues():
+        void
+    {
+        this.chartOfAccountsService
+            .getIssues()
+            .subscribe
+            ({
+                next:
+                (
+                    rows:
+                        CoaIssue[]
+                ):
+                    void =>
+                {
+                    this.issues =
+                        rows ?? [];
+
+                    // Nothing left to show
+                    if
+                    (
+                        this.issues.length === 0
+                    )
+                    {
+                        this.issuesOpen =
+                            false;
+                    }
+
+                    this.refreshView();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    // The chart still works without the check
+                    console.error(
+                        'Load Chart of Accounts Issues Error:',
+                        error
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Toggle Link Issues (preview)
+    //===========================================================
+
+    toggleIssues():
+        void
+    {
+        this.issuesOpen =
+            !this.issuesOpen
+            &&
+            this.issues.length > 0;
+
+        this.rowFilterText =
+            '';
+
+        this.refreshView();
     }
 
     //===========================================================
@@ -983,15 +1273,32 @@ implements OnInit
     refreshView():
         void
     {
-        this.buildNavigator();
+        try
+        {
+            this.buildNavigator();
 
-        this.buildCounters();
+            this.buildCounters();
 
-        this.buildPath();
+            this.buildPath();
 
-        this.buildPreview();
+            this.buildPreview();
 
-        this.cdr.detectChanges();
+            this.syncAllExpanded();
+        }
+        catch
+        (
+            error
+        )
+        {
+            console.error(
+                'Chart of Accounts View Error:',
+                error
+            );
+        }
+        finally
+        {
+            this.cdr.detectChanges();
+        }
     }
 
     //===========================================================
@@ -1152,10 +1459,66 @@ implements OnInit
                 : null;
 
         //=======================================================
-        // Sub Group → Ledgers
+        // Link Issues
         //=======================================================
 
         if
+        (
+            this.issuesOpen
+        )
+        {
+            this.previewTitle =
+                'Link Issues';
+
+            this.previewIcon =
+                'fas fa-triangle-exclamation';
+
+            this.previewColumns =
+            [
+                { key:'level', label:'Level', align:'left', width:'150px' },
+                { key:'code', label:'Code', align:'left', width:'210px' },
+                { key:'name', label:'Name', align:'left', width:'220px' },
+                { key:'problem', label:'Problem', align:'left' }
+            ];
+
+            this.previewRows =
+                this.issues
+                    .map
+                    (
+                        (issue, index) =>
+                        ({
+                            level:'issue' as const,
+                            id:index + 1,
+                            code:issue.Code,
+                            name:issue.Name,
+                            status:true,
+                            drillable:false,
+                            cells:
+                            {
+                                level:issue.Level,
+                                problem:issue.Problem
+                            }
+                        })
+                    )
+                    .filter
+                    (
+                        row =>
+                            keep(row)
+                            ||
+                            String(row.cells['problem']).toLowerCase().includes(keyword)
+                    );
+
+            this.previewEmptyText =
+                keyword
+                    ? 'No issue matches the filter.'
+                    : 'No link issues. Everything is linked correctly.';
+        }
+
+        //=======================================================
+        // Sub Group → Ledgers
+        //=======================================================
+
+        else if
         (
             found?.sub
         )
@@ -1172,11 +1535,14 @@ implements OnInit
                     );
 
             this.previewTitle =
-                `Ledgers in ${sub.Name}`;
+                'Ledgers';
+
+            this.previewIcon =
+                'fas fa-book';
 
             this.previewColumns =
             [
-                { key:'code', label:'Code', align:'left', width:'200px' },
+                { key:'code', label:'Code', align:'left', width:'210px' },
                 { key:'name', label:'Ledger', align:'left' },
                 { key:'type', label:'Type', align:'center', width:'110px' },
                 { key:'branch', label:'Branch', align:'left', width:'200px' },
@@ -1225,11 +1591,14 @@ implements OnInit
                 found.grp;
 
             this.previewTitle =
-                `Sub Groups in ${grp.node.Name}`;
+                'Sub Groups';
+
+            this.previewIcon =
+                'fas fa-folder-open';
 
             this.previewColumns =
             [
-                { key:'code', label:'Code', align:'left', width:'200px' },
+                { key:'code', label:'Code', align:'left', width:'210px' },
                 { key:'name', label:'Sub Group', align:'left' },
                 { key:'ledgers', label:'Ledgers', align:'center', width:'120px' },
                 { key:'status', label:'Status', align:'center', width:'110px' }
@@ -1274,11 +1643,14 @@ implements OnInit
                 found.cls;
 
             this.previewTitle =
-                `Groups in ${cls.node.Name}`;
+                'Groups';
+
+            this.previewIcon =
+                'fas fa-folder-tree';
 
             this.previewColumns =
             [
-                { key:'code', label:'Code', align:'left', width:'200px' },
+                { key:'code', label:'Code', align:'left', width:'210px' },
                 { key:'name', label:'Group', align:'left' },
                 { key:'subGroups', label:'Sub Groups', align:'center', width:'120px' },
                 { key:'ledgers', label:'Ledgers', align:'center', width:'120px' },
@@ -1321,9 +1693,12 @@ implements OnInit
             this.previewTitle =
                 'Account Classes';
 
+            this.previewIcon =
+                'fas fa-layer-group';
+
             this.previewColumns =
             [
-                { key:'code', label:'Code', align:'left', width:'200px' },
+                { key:'code', label:'Code', align:'left', width:'210px' },
                 { key:'name', label:'Class', align:'left' },
                 { key:'groups', label:'Groups', align:'center', width:'110px' },
                 { key:'subGroups', label:'Sub Groups', align:'center', width:'120px' },
@@ -1379,6 +1754,9 @@ implements OnInit
         this.selection =
             { level, id };
 
+        this.issuesOpen =
+            false;
+
         this.rowFilterText =
             '';
 
@@ -1413,6 +1791,9 @@ implements OnInit
     {
         this.selection =
             null;
+
+        this.issuesOpen =
+            false;
 
         this.rowFilterText =
             '';
@@ -1457,6 +1838,8 @@ implements OnInit
             !row.drillable
             ||
             row.level === 'ledger'
+            ||
+            row.level === 'issue'
         )
         {
             return;
@@ -1494,6 +1877,8 @@ implements OnInit
         {
             this.expanded.add(key);
         }
+
+        this.syncAllExpanded();
 
         this.cdr.detectChanges();
     }
@@ -1537,7 +1922,64 @@ implements OnInit
             this.expandAncestors(this.selection);
         }
 
+        this.storeExpanded();
+
         this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Sync "all expanded" with the tree (and remember it)
+    //
+    // True when every branch that has children is open.
+    //===========================================================
+
+    private syncAllExpanded():
+        void
+    {
+        const keys:
+            string[] =
+            [];
+
+        for
+        (
+            const cls
+            of this.navClasses
+        )
+        {
+            if
+            (
+                cls.groups.length
+            )
+            {
+                keys.push(this.classKey(cls.node.Id));
+            }
+
+            for
+            (
+                const grp
+                of cls.groups
+            )
+            {
+                if
+                (
+                    grp.subGroups.length
+                )
+                {
+                    keys.push(this.groupKey(grp.node.Id));
+                }
+            }
+        }
+
+        this.allExpanded =
+            keys.length > 0
+            &&
+            keys.every
+            (
+                key =>
+                    this.expanded.has(key)
+            );
+
+        this.storeExpanded();
     }
 
     //===========================================================
@@ -1759,6 +2201,64 @@ implements OnInit
         }
     }
 
+    private readStoredExpanded():
+        void
+    {
+        try
+        {
+            const raw =
+                window.localStorage.getItem(EXPANDED_STORAGE_KEY);
+
+            const keys =
+                raw
+                    ? JSON.parse(raw)
+                    : [];
+
+            if
+            (
+                Array.isArray(keys)
+            )
+            {
+                for
+                (
+                    const key
+                    of keys
+                )
+                {
+                    if
+                    (
+                        typeof key === 'string'
+                        &&
+                        /^[cg]:\d+$/.test(key)
+                    )
+                    {
+                        this.expanded.add(key);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // storage unavailable — ignore
+        }
+    }
+
+    private storeExpanded():
+        void
+    {
+        try
+        {
+            window.localStorage.setItem(
+                EXPANDED_STORAGE_KEY,
+                JSON.stringify(Array.from(this.expanded))
+            );
+        }
+        catch
+        {
+            // storage unavailable — ignore
+        }
+    }
+
     //===========================================================
     // Print : Dialog
     //===========================================================
@@ -1807,6 +2307,292 @@ implements OnInit
 
         this.printOpen =
             true;
+
+        this.updatePrintPreview();
+    }
+
+    //===========================================================
+    // Print : Option Setters (each one refreshes the preview)
+    //===========================================================
+
+    setPrintScope
+    (
+        scope:
+            'all' | 'selection'
+    ):
+        void
+    {
+        if
+        (
+            scope === 'selection'
+            &&
+            !this.selection
+        )
+        {
+            return;
+        }
+
+        this.printOptions.scope =
+            scope;
+
+        this.updatePrintPreview();
+    }
+
+    setPrintDepth
+    (
+        depth:
+            CoaPrintDepth
+    ):
+        void
+    {
+        this.printOptions.depth =
+            depth;
+
+        this.updatePrintPreview();
+    }
+
+    togglePrintColumn
+    (
+        key:
+            'showType' | 'showBranch' | 'showStatus'
+    ):
+        void
+    {
+        this.printOptions[key] =
+            !this.printOptions[key];
+
+        this.updatePrintPreview();
+    }
+
+    setPrintLandscape
+    (
+        landscape:
+            boolean
+    ):
+        void
+    {
+        this.printOptions.landscape =
+            landscape;
+
+        this.updatePrintPreview();
+    }
+
+    setPrintIncludeInactive
+    (
+        include:
+            boolean
+    ):
+        void
+    {
+        this.printOptions.includeInactive =
+            !!include;
+
+        this.updatePrintPreview();
+    }
+
+    //===========================================================
+    // Print : Live Preview
+    //
+    // Walks the same scope / depth / status rules as the real
+    // printout. Ledger names are fetched only when printing, so
+    // the preview shows one "n ledgers" line per sub group.
+    //===========================================================
+
+    private updatePrintPreview():
+        void
+    {
+        const o =
+            this.printOptions;
+
+        const include =
+            (
+                status:
+                    boolean
+            ):
+                boolean =>
+                o.includeInactive
+                ||
+                status;
+
+        const depthOrder:
+            CoaPrintDepth[] =
+            ['class', 'group', 'subgroup', 'ledger'];
+
+        const maxDepth =
+            depthOrder.indexOf(o.depth) + 1;
+
+        this.printDepthIndex =
+            maxDepth - 1;
+
+        const found =
+            o.scope === 'selection'
+            &&
+            this.selection
+                ? this.findNode(this.selection)
+                : null;
+
+        this.printScopeText =
+            found
+                ? [found.cls.Name, found.grp?.Name, found.sub?.Name]
+                    .filter(part => !!part)
+                    .join(' › ')
+                : 'Full Chart';
+
+        const classes =
+            found
+                ? [found.cls]
+                : this.classes;
+
+        const lineLimit =
+            o.landscape
+                ? 9
+                : 15;
+
+        const lines:
+            PrintPreviewLine[] =
+            [];
+
+        let total =
+            0;
+
+        const add =
+            (
+                line:
+                    PrintPreviewLine
+            ):
+                void =>
+            {
+                total +=
+                    line.rows;
+
+                if
+                (
+                    lines.length < lineLimit
+                )
+                {
+                    lines.push(line);
+                }
+            };
+
+        for
+        (
+            const cls
+            of classes
+        )
+        {
+            if
+            (
+                !include(cls.Status)
+            )
+            {
+                continue;
+            }
+
+            add({ level:1, code:cls.Code, name:cls.Name, type:'Class', status:cls.Status, summary:false, rows:1 });
+
+            if
+            (
+                maxDepth < 2
+            )
+            {
+                continue;
+            }
+
+            for
+            (
+                const grp
+                of cls.Groups
+            )
+            {
+                if
+                (
+                    !include(grp.Status)
+                    ||
+                    (found?.grp && found.grp.Id !== grp.Id)
+                )
+                {
+                    continue;
+                }
+
+                add({ level:2, code:grp.Code, name:grp.Name, type:'Group', status:grp.Status, summary:false, rows:1 });
+
+                if
+                (
+                    maxDepth < 3
+                )
+                {
+                    continue;
+                }
+
+                for
+                (
+                    const sub
+                    of grp.SubGroups
+                )
+                {
+                    if
+                    (
+                        !include(sub.Status)
+                        ||
+                        (found?.sub && found.sub.Id !== sub.Id)
+                    )
+                    {
+                        continue;
+                    }
+
+                    add({ level:3, code:sub.Code, name:sub.Name, type:'Sub Group', status:sub.Status, summary:false, rows:1 });
+
+                    if
+                    (
+                        maxDepth < 4
+                    )
+                    {
+                        continue;
+                    }
+
+                    const ledgers =
+                        o.includeInactive
+                            ? sub.LedgerCount
+                            : sub.ActiveLedgerCount;
+
+                    if
+                    (
+                        ledgers > 0
+                    )
+                    {
+                        add(
+                            {
+                                level:4,
+                                code:'',
+                                name:`${ledgers} ${ledgers === 1 ? 'ledger' : 'ledgers'}`,
+                                type:'',
+                                status:true,
+                                summary:true,
+                                rows:ledgers
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        this.printPreviewLines =
+            lines;
+
+        this.printRowEstimate =
+            total;
+
+        // rows not drawn on the preview sheet
+        const drawn =
+            lines.reduce
+            (
+                (sum, line) =>
+                    sum + line.rows,
+                0
+            );
+
+        this.printMoreRows =
+            Math.max(0, total - drawn);
 
         this.cdr.detectChanges();
     }

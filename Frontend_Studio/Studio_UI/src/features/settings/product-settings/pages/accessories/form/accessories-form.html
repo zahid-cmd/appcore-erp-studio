@@ -1,0 +1,769 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-puzzle-piece"
+
+        [title]="pageTitle"
+
+        subtitle="Manage accessories">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+
+        <!-- Add Storage Location (opens the modal) -->
+
+        @if (!isViewMode)
+        {
+            <button
+
+                pageToolbarRight
+
+                type="button"
+
+                class="ac-toolbar-btn"
+
+                [disabled]="isSaving"
+
+                (click)="openAddLocation()">
+
+                <i class="fas fa-warehouse"></i>
+
+                Add Location
+
+            </button>
+        }
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 01 : PARENT INFORMATION
+                 Category (Accessories type only) → Sub Category
+                 (the model), both locked after saving; Brand
+                 follows the category; Remarks.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Parent Information"
+
+                icon="fas fa-sitemap">
+
+
+                <!-- Product Category -->
+
+                <app-search-dropdown
+
+                    label="Product Category"
+
+                    [items]="categoryItems"
+
+                    [(value)]="entity.ProductCategoryId"
+
+                    (valueChange)="onCategoryChange($event)"
+
+                    [disabled]="!isAddMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Product Sub Category -->
+
+                <app-search-dropdown
+
+                    label="Product Sub Category"
+
+                    [items]="subCategoryItems"
+
+                    [(value)]="entity.ProductSubCategoryId"
+
+                    (valueChange)="onSubCategoryChange($event)"
+
+                    [disabled]="!isAddMode || isSaving || !entity.ProductCategoryId"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Brand (from the category) -->
+
+                <app-textbox
+
+                    label="Brand"
+
+                    placeholder="Follows the product category"
+
+                    [value]="brandName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="3"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02 : ACCESSORY INFORMATION
+                 Part Number is optional; when given it is unique
+                 within the brand, ignoring spaces, hyphens, dots
+                 and case.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Accessory Information"
+
+                icon="fas fa-puzzle-piece">
+
+
+                <!-- Part Number (optional) -->
+
+                <app-textbox
+
+                    label="Part Number"
+
+                    placeholder="Optional"
+
+                    [(value)]="entity.PartNumber"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+                <!-- Accessory Name -->
+
+                <app-textbox
+
+                    label="Accessory Name"
+
+                    placeholder="Enter accessory name"
+
+                    [(value)]="entity.AccessoryName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Unit -->
+
+                <app-dropdown
+
+                    label="Unit"
+
+                    [items]="unitItems"
+
+                    [(value)]="entity.Unit"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Product Code -->
+
+                <app-textbox
+
+                    label="Product Code"
+
+                    placeholder="Select a product sub category"
+
+                    [(value)]="entity.ProductCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 03 : LEDGERS & STATUS
+                 General Ledgers created with the accessory.
+                 Names : "<INV / WIP / COGS> - <Part No.> - <Accessory Name>"
+                 (no Part No. : "<INV / WIP / COGS> - <Product Code> - <Accessory Name>")
+            ============================================== -->
+
+            <app-form-section
+
+                title="Ledgers & Status"
+
+                icon="fas fa-book">
+
+
+                <!-- Inventory Ledger Code -->
+
+                <app-textbox
+
+                    label="Inventory Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.InventoryLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- WIP Ledger Code -->
+
+                <app-textbox
+
+                    label="WIP Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.WipLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- COGS Ledger Code -->
+
+                <app-textbox
+
+                    label="COGS Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.CogsLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 04 : STOCK & STORAGE
+                 Stock levels and the storage locations
+                 (one per warehouse).
+            ============================================== -->
+
+            <app-form-section
+
+                title="Stock & Storage"
+
+                icon="fas fa-boxes-stacked">
+
+
+                <!-- Re-order Level -->
+
+                <app-textbox
+
+                    label="Re-order Level"
+
+                    placeholder="0"
+
+                    [value]="reorderLevelText"
+
+                    (valueChange)="onReorderLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+                <!-- Red Level -->
+
+                <app-textbox
+
+                    label="Red Level"
+
+                    placeholder="0"
+
+                    [value]="redLevelText"
+
+                    (valueChange)="onRedLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+                <!-- =========================================
+                     STORAGE LOCATIONS
+                     One per warehouse. Added from the page
+                     toolbar (Add Location) in a modal; click a
+                     row to edit it. Optional.
+                ========================================== -->
+
+                <div class="ac-locations">
+
+                    <div class="ac-locations-title">
+
+                        <i class="fas fa-warehouse"></i>
+
+                        Storage Locations
+
+                        @if (entity.Locations?.length)
+                        {
+                            <span class="ac-locations-count">
+
+                                {{ entity.Locations.length }}
+
+                            </span>
+                        }
+
+                    </div>
+
+
+                    @if (!entity.Locations?.length)
+                    {
+                        <div class="ac-locations-empty">
+
+                            No storage location added.
+
+                            @if (!isViewMode)
+                            {
+                                Use <b>Add Location</b> in the toolbar.
+                            }
+
+                        </div>
+                    }
+
+
+                    @if (entity.Locations?.length)
+                    {
+                        <div class="ac-locations-list appcore-scrollbar">
+
+                            @for (location of entity.Locations; track $index; let i = $index)
+                            {
+                                <div
+                                    class="ac-location-row"
+                                    [class.ac-location-row-editable]="!isViewMode"
+                                    [class.ac-location-row-revoked]="locationLabels[i]?.revoked"
+                                    (click)="openEditLocation(i)">
+
+                                    <div class="ac-location-main">
+
+                                        <div class="ac-location-warehouse">
+
+                                            {{ locationLabels[i]?.warehouse }}
+
+                                            @if (locationLabels[i]?.revoked)
+                                            {
+                                                <span
+                                                    class="ac-location-revoked"
+                                                    title="This branch no longer runs the Accessories business. Move this item to another warehouse.">
+
+                                                    <i class="fas fa-ban"></i>
+
+                                                    Access revoked
+
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                        <div class="ac-location-place">
+
+                                            {{ locationLabels[i]?.rack }}
+
+                                            <span class="ac-location-shelf">
+
+                                                {{ locationLabels[i]?.shelf }}
+
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                    @if (!isViewMode)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="ac-location-remove"
+                                            title="Remove location"
+                                            [disabled]="isSaving"
+                                            (click)="$event.stopPropagation(); removeLocation(i)">
+
+                                            <i class="fas fa-trash"></i>
+
+                                        </button>
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+
+
+    <!-- =====================================================
+         STORAGE LOCATION MODAL (shared Form Modal)
+    ====================================================== -->
+
+    <app-form-modal
+
+        [opened]="locationModalOpened"
+
+        [title]="locationModalTitle"
+
+        subtitle="Warehouse → Rack → Shelf (one location per warehouse)"
+
+        icon="fas fa-warehouse"
+
+        width="520px"
+
+        [saveText]="editingLocationIndex >= 0 ? 'Update' : 'Add'"
+
+        [saveDisabled]="!canSaveLocation"
+
+        (save)="saveLocation()"
+
+        (closed)="closeLocationModal()">
+
+
+        <!-- Steps : Warehouse → Rack → Shelf (all the same width) -->
+
+        <div class="ac-steps">
+
+            <div class="ac-step" [class.ac-step-done]="!!locationDraft.WarehouseId">
+
+                <span class="ac-step-badge">
+
+                    @if (locationDraft.WarehouseId)
+                    {
+                        <i class="fas fa-check"></i>
+                    }
+                    @else
+                    {
+                        1
+                    }
+
+                </span>
+
+                <div class="ac-step-field">
+
+                    <app-search-dropdown
+
+                        label="Warehouse"
+
+                        [items]="draftWarehouseItems"
+
+                        [value]="locationDraft.WarehouseId"
+
+                        (valueChange)="onDraftWarehouseChange($event)"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+                </div>
+
+            </div>
+
+
+            <!-- Rack -->
+
+            <div class="ac-step" [class.ac-step-done]="!!locationDraft.RackManagementId" [class.ac-step-locked]="!locationDraft.WarehouseId">
+
+                <span class="ac-step-badge">
+
+                    @if (locationDraft.RackManagementId)
+                    {
+                        <i class="fas fa-check"></i>
+                    }
+                    @else
+                    {
+                        2
+                    }
+
+                </span>
+
+                <div class="ac-step-field">
+
+                    <app-search-dropdown
+
+                        label="Rack"
+
+                        [items]="draftRackItems"
+
+                        [value]="locationDraft.RackManagementId"
+
+                        (valueChange)="onDraftRackChange($event)"
+
+                        [disabled]="!locationDraft.WarehouseId"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+                </div>
+
+            </div>
+
+
+            <!-- Shelf -->
+
+            <div class="ac-step" [class.ac-step-done]="!!locationDraft.ShelfNumber" [class.ac-step-locked]="!locationDraft.RackManagementId">
+
+                <span class="ac-step-badge">
+
+                    @if (locationDraft.ShelfNumber)
+                    {
+                        <i class="fas fa-check"></i>
+                    }
+                    @else
+                    {
+                        3
+                    }
+
+                </span>
+
+                <div class="ac-step-field">
+
+                    <app-dropdown
+
+                        label="Shelf"
+
+                        [items]="draftShelfItems"
+
+                        [value]="locationDraft.ShelfNumber"
+
+                        (valueChange)="onDraftShelfChange($event)"
+
+                        [disabled]="!locationDraft.RackManagementId"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Picked place preview -->
+
+        <div class="ac-modal-preview">
+
+            <div class="ac-modal-preview-label">
+
+                Location
+
+            </div>
+
+            @if (canSaveLocation)
+            {
+                <div class="ac-modal-preview-path">
+
+                    <span class="ac-modal-chip">
+
+                        <i class="fas fa-warehouse"></i>
+
+                        {{ draftPreview.warehouse }}
+
+                    </span>
+
+                    <i class="fas fa-chevron-right ac-modal-sep"></i>
+
+                    <span class="ac-modal-chip">
+
+                        <i class="fas fa-table-cells-large"></i>
+
+                        {{ draftPreview.rack }}
+
+                    </span>
+
+                    <i class="fas fa-chevron-right ac-modal-sep"></i>
+
+                    <span class="ac-modal-chip ac-modal-chip-strong">
+
+                        <i class="fas fa-layer-group"></i>
+
+                        {{ draftPreview.shelf }}
+
+                    </span>
+
+                </div>
+            }
+            @else
+            {
+                <div class="ac-modal-preview-empty">
+
+                    Choose a warehouse, rack and shelf.
+
+                </div>
+            }
+
+        </div>
+
+
+        @if (locationDraft.WarehouseId && !draftRackItems.length)
+        {
+            <div
+                modalFooterLeft>
+
+                No active rack in this warehouse. Create one in Rack Management.
+
+            </div>
+        }
+        @else if (draftRackFull)
+        {
+            <div
+                modalFooterLeft>
+
+                Every shelf on this rack is used by another accessory. Choose another rack.
+
+            </div>
+        }
+
+    </app-form-modal>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

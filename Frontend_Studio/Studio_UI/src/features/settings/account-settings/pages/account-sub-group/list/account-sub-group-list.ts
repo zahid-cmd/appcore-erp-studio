@@ -190,6 +190,18 @@ import
 }
 from '../../../services/account-group.service';
 
+import
+{
+    ServiceSubCategoryService
+}
+from '../../../../service-settings/services/service-sub-category.service';
+
+import
+{
+    ServiceSubCategory
+}
+from '../../../../service-settings/models/service-sub-category.model';
+
 //===============================================================
 // Component
 //===============================================================
@@ -239,6 +251,9 @@ implements OnInit, OnDestroy
     private readonly accountGroupService =
         inject(AccountGroupService);
 
+    private readonly serviceSubCategoryService =
+        inject(ServiceSubCategoryService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -271,8 +286,25 @@ implements OnInit, OnDestroy
         {
             id:'inventory-auto',
             label:'Inventory Auto Sub Groups'
+        },
+        {
+            id:'service-auto',
+            label:'Service Auto Sub Groups'
         }
     ];
+
+    //===========================================================
+    // Service Sub Groups
+    //
+    // Income Sub Group Codes of the Service Sub Categories
+    // (SUB-ccc-ggg-sss). Those sub groups are created by Service
+    // Sub Category, so they are shown on the Service Auto Sub
+    // Groups tab only, read only.
+    //===========================================================
+
+    private serviceSubGroupCodes:
+        Set<string> =
+        new Set<string>();
 
     selectedTab:
         string =
@@ -331,6 +363,18 @@ implements OnInit, OnDestroy
     selectedAccountClassId:
         number | null =
         null;
+
+    //===========================================================
+    // Inventory Classes
+    //
+    // Ids of the Inventory / Work In Progress / Cost of Goods Sold
+    // classes, taken from Class Type (never from a code pattern).
+    // Their groups are the ones Product Category creates.
+    //===========================================================
+
+    private inventoryClassIds:
+        Set<number> =
+        new Set<number>();
 
     accountGroupFilterItems:
         any[] =
@@ -594,7 +638,10 @@ implements OnInit, OnDestroy
     get displayColumns():
         ListTableColumn[]
     {
+        // Auto sub groups (inventory or service) are read only : no actions
         return this.selectedTab === 'inventory-auto'
+            ||
+            this.selectedTab === 'service-auto'
             ? this.inventoryAutoSubGroupColumns
             : this.columns;
     }
@@ -608,6 +655,7 @@ implements OnInit, OnDestroy
     {
         this.loadAccountClasses();
         this.loadAccountGroups();
+        this.loadServiceSubGroups();
         this.loadItems();
     }
 
@@ -1097,6 +1145,24 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    // Classes whose groups come from Product Category
+                    this.inventoryClassIds =
+                        new Set<number>(
+                            (response ?? [])
+                                .filter
+                                (
+                                    item =>
+                                        !!item.ClassType
+                                        &&
+                                        item.ClassType !== 'Account'
+                                )
+                                .map
+                                (
+                                    item =>
+                                        Number(item.AccountClassId)
+                                )
+                        );
+
                     this.accountClassFilterItems =
                     [
                         {
@@ -1125,20 +1191,44 @@ implements OnInit, OnDestroy
                                         return false;
                                     }
 
+                                    // Inventory / WIP / COGS classes (by Class Type)
+                                    const isInventoryClass =
+                                        this.inventoryClassIds.has(
+                                            Number(item.AccountClassId)
+                                        );
+
                                     if
                                     (
                                         this.selectedTab ===
                                         'inventory-auto'
                                     )
                                     {
-                                        return classCode.startsWith(
-                                            'INV-'
-                                        );
+                                        return isInventoryClass;
                                     }
 
-                                    return !classCode.startsWith(
-                                        'INV-'
-                                    );
+                                    // Service tab : the class(es) holding
+                                    // service sub groups (Income), once known
+                                    if
+                                    (
+                                        this.selectedTab ===
+                                        'service-auto'
+                                    )
+                                    {
+                                        const serviceClassIds =
+                                            this.serviceClassIds;
+
+                                        return !isInventoryClass
+                                            &&
+                                            (
+                                                serviceClassIds.size === 0
+                                                ||
+                                                serviceClassIds.has(
+                                                    Number(item.AccountClassId)
+                                                )
+                                            );
+                                    }
+
+                                    return !isInventoryClass;
                                 }
                             )
                             .map
@@ -1156,6 +1246,11 @@ implements OnInit, OnDestroy
                                 })
                             )
                     ];
+
+                    // Re-split now that the class types are known
+                    this.loadAccountGroups();
+
+                    this.applyFilters();
 
                     this.cdr.detectChanges();
                 },
@@ -1229,8 +1324,8 @@ implements OnInit, OnDestroy
                                         this.selectedAccountClassId;
 
                                     const inventoryAutoGroup =
-                                        /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
-                                            groupCode
+                                        this.inventoryClassIds.has(
+                                            Number(item.AccountClassId)
                                         );
 
                                     if
@@ -1256,6 +1351,27 @@ implements OnInit, OnDestroy
                                     )
                                     {
                                         return inventoryAutoGroup;
+                                    }
+
+                                    // Service tab : groups holding service sub groups
+                                    if
+                                    (
+                                        this.selectedTab ===
+                                        'service-auto'
+                                    )
+                                    {
+                                        const serviceGroupIds =
+                                            this.serviceGroupIds;
+
+                                        return !inventoryAutoGroup
+                                            &&
+                                            (
+                                                serviceGroupIds.size === 0
+                                                ||
+                                                serviceGroupIds.has(
+                                                    Number(item.AccountGroupId)
+                                                )
+                                            );
                                     }
 
                                     return !inventoryAutoGroup;
@@ -1341,19 +1457,29 @@ implements OnInit, OnDestroy
 
                     //===================================================
                     // Tab split
-                    //   inventory-auto tab : only the auto sub groups
+                    //   inventory-auto tab : sub groups of Product Sub Category
+                    //   service-auto tab   : sub groups of Service Sub Category
                     //   all tab            : only the manual sub groups
                     //===================================================
 
                     const isInventoryAuto =
                         this.isInventoryAutoSubGroup(
-                            item.GroupCode
+                            item.AccountClassId
+                        );
+
+                    const isServiceAuto =
+                        !isInventoryAuto
+                        &&
+                        this.isServiceAutoSubGroup(
+                            item.SubGroupCode
                         );
 
                     const inventoryAutoSubGroupMatch =
                         this.selectedTab === 'inventory-auto'
                             ? isInventoryAuto
-                            : !isInventoryAuto;
+                            : this.selectedTab === 'service-auto'
+                                ? isServiceAuto
+                                : !isInventoryAuto && !isServiceAuto;
 
                     const statusMatch =
                         this.selectedStatus === null
@@ -1497,22 +1623,140 @@ implements OnInit, OnDestroy
     // Inventory Auto Sub Group
     //===========================================================
 
+    // A sub group of an Inventory / WIP / COGS class, i.e. one
+    // that Product Sub Category created (SCG-…, WIP-…, COGS-…).
     private isInventoryAutoSubGroup
     (
-        groupCode:
+        accountClassId:
+            number
+    ):
+        boolean
+    {
+        return this.inventoryClassIds.has(
+            Number(accountClassId)
+        );
+    }
+
+    //===========================================================
+    // Load Service Sub Groups (from Service Sub Categories)
+    //===========================================================
+
+    private loadServiceSubGroups():
+        void
+    {
+        this.serviceSubCategoryService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        ServiceSubCategory[]
+                ):
+                    void =>
+                {
+                    this.serviceSubGroupCodes =
+                        new Set<string>(
+                            (response ?? [])
+                                .map
+                                (
+                                    item =>
+                                        String(item.IncomeSubGroupCode ?? '')
+                                            .trim()
+                                            .toUpperCase()
+                                )
+                                .filter
+                                (
+                                    code =>
+                                        !!code
+                                )
+                        );
+
+                    // Re-split the tabs and filters now that the
+                    // service sub groups are known
+                    this.loadAccountClasses();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Service Sub Groups Error:',
+                        error
+                    );
+
+                    this.serviceSubGroupCodes =
+                        new Set<string>();
+                }
+            });
+    }
+
+    //===========================================================
+    // Service Auto Sub Group
+    //===========================================================
+
+    // A sub group created by Service Sub Category (its Income Sub Group Code)
+    private isServiceAutoSubGroup
+    (
+        subGroupCode:
             string
     ):
         boolean
     {
-        const code =
-            String(
-                groupCode
-                ??
-                ''
-            ).trim().toUpperCase();
+        return this.serviceSubGroupCodes.has(
+            String(subGroupCode ?? '')
+                .trim()
+                .toUpperCase()
+        );
+    }
 
-        return /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
-            code
+    // Classes that hold at least one service auto sub group (Income)
+    private get serviceClassIds():
+        Set<number>
+    {
+        return new Set<number>(
+            this.accountSubGroups
+                .filter
+                (
+                    item =>
+                        this.isServiceAutoSubGroup(
+                            item.SubGroupCode
+                        )
+                )
+                .map
+                (
+                    item =>
+                        Number(item.AccountClassId)
+                )
+        );
+    }
+
+    // Groups that hold at least one service auto sub group
+    private get serviceGroupIds():
+        Set<number>
+    {
+        return new Set<number>(
+            this.accountSubGroups
+                .filter
+                (
+                    item =>
+                        this.isServiceAutoSubGroup(
+                            item.SubGroupCode
+                        )
+                )
+                .map
+                (
+                    item =>
+                        Number(item.AccountGroupId)
+                )
         );
     }
 
@@ -1744,6 +1988,8 @@ implements OnInit, OnDestroy
         this.loadAccountClasses();
 
         this.loadAccountGroups();
+
+        this.loadServiceSubGroups();
 
         this.loadItems();
     }

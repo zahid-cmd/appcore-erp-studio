@@ -69,8 +69,11 @@ public class ProductSubCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.SubCategoryCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductSubCategories_SubCategoryCode");
 
 
         //===========================================================
@@ -81,6 +84,12 @@ public class ProductSubCategoryConfiguration
                .IsRequired()
                .HasMaxLength(200);
 
+        // Unique within its category, among non-deleted rows only
+        builder.HasIndex(x => new { x.ProductCategoryId, x.SubCategoryName })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductSubCategories_ProductCategoryId_SubCategoryName");
+
 
         //===========================================================
         // Inventory Sub Group Code
@@ -90,8 +99,11 @@ public class ProductSubCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.InventorySubGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductSubCategories_InventorySubGroupCode");
 
 
         //===========================================================
@@ -102,8 +114,11 @@ public class ProductSubCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.WipSubGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductSubCategories_WipSubGroupCode");
 
 
         //===========================================================
@@ -114,8 +129,11 @@ public class ProductSubCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.CogsSubGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductSubCategories_CogsSubGroupCode");
 
 
         //===========================================================
@@ -149,9 +167,10 @@ public class ProductSubCategoryConfiguration
         // Configuration
         //===========================================================
 
+        // No database default : with HasDefaultValue(true) EF would
+        // skip a 'false' value on insert and the row would be saved true.
         builder.Property(x => x.SubCategoryCreationAllowed)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         builder.Property(x => x.Remarks)
@@ -163,9 +182,10 @@ public class ProductSubCategoryConfiguration
         // Status
         //===========================================================
 
+        // No database default : with HasDefaultValue(true) EF would
+        // skip a 'false' value on insert and the row would be saved true.
         builder.Property(x => x.IsActive)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         //===========================================================

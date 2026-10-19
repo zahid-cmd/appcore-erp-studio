@@ -763,6 +763,12 @@ implements OnInit, OnDestroy
             BankBranchName:
                 this.text(item, 'BankBranchName'),
 
+            // Optional; only for Liability For Finance
+            SanctionLimit:
+                (item?.SanctionLimit ?? item?.sanctionLimit ?? null) === null
+                    ? null
+                    : Number(item?.SanctionLimit ?? item?.sanctionLimit),
+
             CollectionAccountText:
                 this.toYesNo(collectionAccount),
 

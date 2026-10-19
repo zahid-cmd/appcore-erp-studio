@@ -40,6 +40,27 @@ public class ProductCategoryDto
     } = string.Empty;
 
 
+    public string CategoryType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public long? BrandManagementId
+    {
+        get;
+        set;
+    }
+
+
+    public string BrandName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     //===========================================================
     // Inventory Group
     //===========================================================

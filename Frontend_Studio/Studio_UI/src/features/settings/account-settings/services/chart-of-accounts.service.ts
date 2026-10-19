@@ -34,7 +34,7 @@ import
     CoaGroupNode,
     CoaSubGroupNode,
     CoaLedgerRow,
-    CoaLedgerType
+    CoaIssue
 }
 from '../models/chart-of-accounts.model';
 
@@ -234,6 +234,9 @@ export function normalizeClass
         Name:
             text(item, 'Name'),
 
+        ClassType:
+            text(item, 'ClassType'),
+
         Status:
             bool(item, 'Status', true),
 
@@ -241,10 +244,6 @@ export function normalizeClass
             list(item, 'Groups').map(normalizeGroup)
     };
 }
-
-const LEDGER_TYPES:
-    CoaLedgerType[] =
-    ['GL', 'Cash', 'Bank', 'MFS', 'POS'];
 
 export function normalizeLedger
 (
@@ -269,14 +268,10 @@ export function normalizeLedger
         Name:
             text(item, 'Name'),
 
+        // Shown exactly as the server sends it, so a new ledger
+        // type needs no change here.
         Type:
-            LEDGER_TYPES.find
-            (
-                t =>
-                    t.toLowerCase() === type.toLowerCase()
-            )
-            ??
-            'GL',
+            type || 'GL',
 
         Branch:
             text(item, 'Branch'),
@@ -289,6 +284,9 @@ export function normalizeLedger
 
 //===============================================================
 // Chart of Accounts Service (read-only)
+//
+// Every call goes to the server; nothing is cached here, so
+// the page always reflects the account setting pages.
 //===============================================================
 
 @Injectable(
@@ -355,6 +353,46 @@ export class ChartOfAccountsService
                     response =>
                         (Array.isArray(response) ? response : [])
                             .map(normalizeLedger)
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Link Issues (broken / inconsistent links)
+    //===========================================================
+
+    getIssues():
+        Observable<CoaIssue[]>
+    {
+        return this.http
+            .get<any[]>(
+                `${this.apiUrl}/issues`
+            )
+            .pipe(
+                map(
+                    response =>
+                        (Array.isArray(response) ? response : [])
+                            .map
+                            (
+                                item =>
+                                ({
+                                    Level:
+                                        text(item, 'Level'),
+
+                                    Id:
+                                        num(item, 'Id'),
+
+                                    Code:
+                                        text(item, 'Code'),
+
+                                    Name:
+                                        text(item, 'Name'),
+
+                                    Problem:
+                                        text(item, 'Problem')
+                                })
+                            )
                 )
             );
     }

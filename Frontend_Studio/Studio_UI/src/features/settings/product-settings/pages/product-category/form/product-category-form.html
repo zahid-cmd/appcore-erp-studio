@@ -91,13 +91,33 @@
                 icon="fas fa-layer-group">
 
 
+                <!-- Category Type : decides the code prefix (MB / SP / AC);
+                     locked once saved -->
+
+                <app-dropdown
+
+                    label="Category Type"
+
+                    [items]="categoryTypeItems"
+
+                    [(value)]="entity.CategoryType"
+
+                    (valueChange)="onCategoryTypeChange($event)"
+
+                    [disabled]="isViewMode || isSaving || isCategoryTypeLocked"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
                 <!-- Category Code -->
 
                 <app-textbox
 
                     label="Category Code"
 
-                    placeholder="Auto generated"
+                    placeholder="Select a category type"
 
                     [(value)]="entity.CategoryCode"
 
@@ -108,17 +128,40 @@
                 </app-textbox>
 
 
-                <!-- Category Name -->
+                <!-- Brand -->
+
+                <app-search-dropdown
+
+                    label="Brand"
+
+                    [items]="brandItems"
+
+                    [(value)]="entity.BrandManagementId"
+
+                    (valueChange)="onBrandChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Category Name :
+                     Motor Bikes / Spare Parts : "<Brand> <Category Type>", built automatically
+                     Accessories               : typed (editable) -->
 
                 <app-textbox
 
                     label="Category Name"
 
-                    placeholder="Enter category name"
+                    [placeholder]="isAccessories ? 'Enter category name' : 'Select category type and brand'"
 
                     [(value)]="entity.CategoryName"
 
                     (valueChange)="onCategoryNameChange()"
+
+                    [readonly]="!isAccessories"
 
                     [disabled]="isViewMode || isSaving"
 
@@ -199,6 +242,8 @@
             <!-- =============================================
                  SECTION 03
                  ACCOUNT GROUP NAMES
+                 Built by the server as "<class prefix> - <Category Name>"
+                 and renamed with the category. Shown here as a preview.
             ============================================== -->
 
             <app-form-section
@@ -214,13 +259,11 @@
 
                     label="Inventory Group Name"
 
-                    placeholder="Enter inventory group name"
+                    placeholder="Follows the category name"
 
                     [(value)]="entity.InventoryGroupName"
 
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isEditMode || isSaving"
+                    [readonly]="true"
 
                     [required]="true">
 
@@ -233,13 +276,11 @@
 
                     label="WIP Group Name"
 
-                    placeholder="Enter WIP group name"
+                    placeholder="Follows the category name"
 
                     [(value)]="entity.WipGroupName"
 
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isEditMode || isSaving"
+                    [readonly]="true"
 
                     [required]="true">
 
@@ -252,13 +293,11 @@
 
                     label="COGS Group Name"
 
-                    placeholder="Enter COGS group name"
+                    placeholder="Follows the category name"
 
                     [(value)]="entity.CogsGroupName"
 
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isEditMode || isSaving"
+                    [readonly]="true"
 
                     [required]="true">
 

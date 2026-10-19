@@ -1,0 +1,135 @@
+@if (opened)
+{
+    <div
+        class="form-modal-backdrop"
+        (mousedown)="onBackdropClick($event)">
+
+        <div
+            class="form-modal"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="title"
+            [style.width]="width">
+
+
+            <!-- =================================================
+                 HEADER : navy aurora band with floating icon
+            ================================================== -->
+
+            <div class="form-modal-header">
+
+                <!-- decoration only -->
+                <span class="form-modal-aurora form-modal-aurora-a"></span>
+
+                <span class="form-modal-aurora form-modal-aurora-b"></span>
+
+                <span class="form-modal-dots"></span>
+
+
+                @if (icon)
+                {
+                    <span class="form-modal-icon">
+
+                        <span class="form-modal-icon-core">
+
+                            <i [class]="icon"></i>
+
+                        </span>
+
+                    </span>
+                }
+
+                <div class="form-modal-titles">
+
+                    <div class="form-modal-title">
+
+                        {{ title }}
+
+                    </div>
+
+                    @if (subtitle)
+                    {
+                        <div class="form-modal-subtitle">
+
+                            {{ subtitle }}
+
+                        </div>
+                    }
+
+                </div>
+
+                <button
+                    type="button"
+                    class="form-modal-close"
+                    title="Close (Esc)"
+                    [disabled]="busy"
+                    (click)="onClose()">
+
+                    <i class="fas fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 BODY (projected form content)
+            ================================================== -->
+
+            <div class="form-modal-body">
+
+                <ng-content></ng-content>
+
+            </div>
+
+
+            <!-- =================================================
+                 FOOTER
+            ================================================== -->
+
+            <div class="form-modal-footer">
+
+                <div class="form-modal-footer-left">
+
+                    <ng-content select="[modalFooterLeft]"></ng-content>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="form-modal-btn form-modal-btn-cancel"
+                    [disabled]="busy"
+                    (click)="onClose()">
+
+                    {{ cancelText }}
+
+                </button>
+
+                @if (showSave)
+                {
+                    <button
+                        type="button"
+                        class="form-modal-btn form-modal-btn-save"
+                        [disabled]="busy || saveDisabled"
+                        (click)="onSave()">
+
+                        @if (busy)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                        }
+                        @else
+                        {
+                            <i [class]="saveIcon"></i>
+                        }
+
+                        {{ saveText }}
+
+                    </button>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+}

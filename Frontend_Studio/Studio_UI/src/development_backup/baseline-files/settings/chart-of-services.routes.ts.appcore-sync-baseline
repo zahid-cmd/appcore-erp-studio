@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const ChartOfServicesRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Chart of Services'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/chart-of-services/list/chart-of-services-list'
+            )
+            .then(
+                m =>
+                    m.ChartOfServicesList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Chart of Services'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/chart-of-services/form/chart-of-services-form'
+            )
+            .then(
+                m =>
+                    m.ChartOfServicesForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Chart of Services'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/chart-of-services/form/chart-of-services-form'
+            )
+            .then(
+                m =>
+                    m.ChartOfServicesForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Chart of Services'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/chart-of-services/form/chart-of-services-form'
+            )
+            .then(
+                m =>
+                    m.ChartOfServicesForm
+            )
+    }
+
+];

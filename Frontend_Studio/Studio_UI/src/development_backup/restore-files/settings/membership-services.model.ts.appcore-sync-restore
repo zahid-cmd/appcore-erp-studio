@@ -1,0 +1,90 @@
+/* ============================================================
+   Membership Services
+============================================================ */
+
+export interface MembershipServices
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Membership Services
+============================================================ */
+
+export interface CreateMembershipServices
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Membership Services
+============================================================ */
+
+export interface UpdateMembershipServices
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Membership Services Defaults
+============================================================ */
+
+export interface MembershipServicesDefaults
+{
+    code:
+        string;
+}

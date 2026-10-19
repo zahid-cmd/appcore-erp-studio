@@ -20,6 +20,10 @@ namespace AppCore.API.Controllers.Settings.AccountSettings;
 
 //===============================================================
 // Account Class Controller
+//
+// Errors : 400 invalid input (Create / Update / next-code)
+//          404 not found
+//          409 Delete / Restore blocked (plain text)
 //===============================================================
 
 [ApiController]
@@ -36,6 +40,8 @@ public class AccountClassController : ControllerBase
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
 
+    private readonly ILogger<AccountClassController> _logger;
+
 
     //===========================================================
     // Constructor
@@ -43,11 +49,14 @@ public class AccountClassController : ControllerBase
 
     public AccountClassController(
         IAccountClassRepository repository,
-        IActivityHistoryRepository activityHistoryRepository)
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<AccountClassController> logger)
     {
         _repository = repository;
 
         _activityHistoryRepository = activityHistoryRepository;
+
+        _logger = logger;
     }
 
 
@@ -68,16 +77,27 @@ public class AccountClassController : ControllerBase
 
     //===========================================================
     // Get Next Code
+    //
+    // GET next-code?classType=Account%20Class&classPrefix=CLS
     //===========================================================
 
-    [HttpGet("next-code/{classType}")]
+    [HttpGet("next-code")]
 
     public async Task<ActionResult<string>> GetNextCode(
-        string classType)
+        [FromQuery] string classType,
+        [FromQuery] string classPrefix)
     {
-        return Ok(
-            await _repository.GetNextCodeAsync(
-                classType));
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    classType,
+                    classPrefix));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -126,12 +146,29 @@ public class AccountClassController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Create Account Class failed.");
+
+            return StatusCode(500, "Unable to create the account class.");
+        }
     }
 
 
@@ -152,9 +189,26 @@ public class AccountClassController : ControllerBase
 
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Update Account Class {Id} failed.", dto.AccountClassId);
+
+            return StatusCode(500, "Unable to update the account class.");
+        }
 
         return NoContent();
     }
@@ -169,26 +223,12 @@ public class AccountClassController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        //===========================================================
-        // Verify Account Class Exists
-        //===========================================================
-
         if (!await _repository.ExistsAsync(id))
         {
             return NotFound();
         }
 
-
-        //===========================================================
-        // Current User
-        //===========================================================
-
         long userId = 1;
-
-
-        //===========================================================
-        // Delete
-        //===========================================================
 
         try
         {
@@ -196,34 +236,18 @@ public class AccountClassController : ControllerBase
                 id,
                 userId);
         }
-        catch
-        (
-            KeyNotFoundException ex
-        )
+        catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
         }
-        catch
-        (
-            InvalidOperationException ex
-        )
+        catch (InvalidOperationException ex)
         {
             //=======================================================
-            // Deletion Blocked
-            //
-            // Raised by the repository when Account Groups still
-            // exist under this Account Class. Returned as HTTP 409
-            // with a plain-text message, which the list page shows
-            // in its "Delete Blocked" toast.
+            // Delete Blocked : account groups still exist
             //=======================================================
 
             return Conflict(ex.Message);
         }
-
-
-        //===========================================================
-        // Delete Successful
-        //===========================================================
 
         return NoContent();
     }
@@ -239,14 +263,25 @@ public class AccountClassController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
-
-        if (!restored)
+        try
         {
-            return NotFound(
-                "There are no deleted account classes available to restore.");
+            bool restored =
+                await _repository.RestoreAsync(
+                    userId);
+
+            if (!restored)
+            {
+                return NotFound(
+                    "There are no deleted account classes available to restore.");
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            //=======================================================
+            // Restore Blocked : name / code / prefix in use
+            //=======================================================
+
+            return Conflict(ex.Message);
         }
 
         return NoContent();

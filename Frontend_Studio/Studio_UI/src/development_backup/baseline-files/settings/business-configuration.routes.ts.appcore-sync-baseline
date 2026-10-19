@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const BusinessConfigurationRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Business Configuration'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/business-configuration/list/business-configuration-list'
+            )
+            .then(
+                m =>
+                    m.BusinessConfigurationList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Business Configuration'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/business-configuration/form/business-configuration-form'
+            )
+            .then(
+                m =>
+                    m.BusinessConfigurationForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Business Configuration'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/business-configuration/form/business-configuration-form'
+            )
+            .then(
+                m =>
+                    m.BusinessConfigurationForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Business Configuration'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/business-configuration/form/business-configuration-form'
+            )
+            .then(
+                m =>
+                    m.BusinessConfigurationForm
+            )
+    }
+
+];

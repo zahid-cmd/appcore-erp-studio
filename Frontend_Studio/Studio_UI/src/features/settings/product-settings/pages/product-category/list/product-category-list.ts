@@ -428,6 +428,12 @@ implements OnInit, OnDestroy
             align:'left'
         },
         {
+            header:'Category Type',
+            field:'CategoryType',
+            width:'130px',
+            align:'left'
+        },
+        {
             header:'Inventory Group',
             field:'InventoryGroupCode',
             width:'160px',
@@ -530,6 +536,26 @@ implements OnInit, OnDestroy
                 item?.CategoryName
                 ??
                 item?.categoryName
+                ??
+                '',
+            CategoryType:
+                item?.CategoryType
+                ??
+                item?.categoryType
+                ??
+                '',
+            BrandManagementId:
+                Number(
+                    item?.BrandManagementId
+                    ??
+                    item?.brandManagementId
+                    ??
+                    0
+                ),
+            BrandName:
+                item?.BrandName
+                ??
+                item?.brandName
                 ??
                 '',
             InventoryGroupCode:
@@ -755,6 +781,8 @@ implements OnInit, OnDestroy
                     [
                         item.CategoryCode ?? '',
                         item.CategoryName ?? '',
+                        item.CategoryType ?? '',
+                        item.BrandName ?? '',
                         item.InventoryGroupCode ?? '',
                         item.InventoryGroupName ?? '',
                         item.WipGroupCode ?? '',

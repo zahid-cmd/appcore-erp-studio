@@ -1,0 +1,672 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   SPARE PARTS FORM
+   Layout (locked) : Parent Information · Part Information
+   · Ledgers & Status · Stock & Storage. No image.
+===================================================== */
+
+
+/* -----------------------------------------------------
+   APPCORE SCROLLBAR on the form page
+   Same look as src/shared/styles/scrollbar.css
+   (.appcore-scrollbar), applied to the page canvas and
+   every scrolling area inside it. The location modal is
+   outside app-page-canvas, so it is not affected.
+----------------------------------------------------- */
+
+.app-form-page ::ng-deep app-page-canvas,
+.app-form-page ::ng-deep app-page-canvas *
+{
+    scrollbar-width:thin;
+
+    scrollbar-color:#2563eb transparent;
+}
+
+
+.app-form-page ::ng-deep app-page-canvas::-webkit-scrollbar,
+.app-form-page ::ng-deep app-page-canvas *::-webkit-scrollbar
+{
+    width:6px;
+
+    height:6px;
+}
+
+
+.app-form-page ::ng-deep app-page-canvas::-webkit-scrollbar-track,
+.app-form-page ::ng-deep app-page-canvas *::-webkit-scrollbar-track
+{
+    background:transparent;
+
+    margin-top:4px;
+
+    margin-bottom:4px;
+}
+
+
+.app-form-page ::ng-deep app-page-canvas::-webkit-scrollbar-thumb,
+.app-form-page ::ng-deep app-page-canvas *::-webkit-scrollbar-thumb
+{
+    background:#2563eb;
+
+    border-radius:999px;
+
+    border:1px solid transparent;
+
+    background-clip:padding-box;
+
+    transition:background 0.2s ease;
+}
+
+
+.app-form-page ::ng-deep app-page-canvas::-webkit-scrollbar-thumb:hover,
+.app-form-page ::ng-deep app-page-canvas *::-webkit-scrollbar-thumb:hover
+{
+    background:#1d4ed8;
+}
+
+
+/* -----------------------------------------------------
+   PAGE TOOLBAR : Add Location
+----------------------------------------------------- */
+
+.sp-toolbar-btn
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:32px;
+
+    padding:0 14px;
+
+    border:1px solid #1e3a8a;
+
+    border-radius:8px;
+
+    background:#1e3a8a;
+
+    color:#ffffff;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+}
+
+
+.sp-toolbar-btn:hover:not(:disabled)
+{
+    background:#1e40af;
+}
+
+
+.sp-toolbar-btn:disabled
+{
+    opacity:0.55;
+
+    cursor:not-allowed;
+}
+
+
+/* -----------------------------------------------------
+   STORAGE LOCATIONS (Section 4 : Stock & Storage)
+----------------------------------------------------- */
+
+.sp-locations
+{
+    margin-top:12px;
+
+    padding-top:10px;
+
+    border-top:1px dashed #cbd5e1;
+}
+
+
+.sp-locations-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    margin-bottom:8px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#1e293b;
+}
+
+
+.sp-locations-title i
+{
+    color:#2563eb;
+}
+
+
+.sp-locations-count
+{
+    min-width:20px;
+
+    padding:0 6px;
+
+    border-radius:10px;
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    font-size:11px;
+
+    text-align:center;
+}
+
+
+.sp-locations-empty
+{
+    padding:6px 0;
+
+    font-size:12px;
+
+    color:#94a3b8;
+}
+
+
+/* Rows sit in a scroll area : AppCore scrollbar (global
+   .appcore-scrollbar class) once there are many locations */
+.sp-locations-list
+{
+    max-height:232px;
+
+    padding-right:6px;
+
+    overflow-x:hidden;
+
+    overflow-y:auto;
+}
+
+
+.sp-location-row
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin-bottom:6px;
+
+    padding:7px 10px;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:8px;
+
+    background:#f8fafc;
+}
+
+
+.sp-location-row-editable
+{
+    cursor:pointer;
+}
+
+
+.sp-location-row-editable:hover
+{
+    border-color:#93c5fd;
+
+    background:#eff6ff;
+}
+
+
+.sp-location-main
+{
+    flex:1;
+
+    min-width:0;
+}
+
+
+.sp-location-warehouse
+{
+    overflow:hidden;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    color:#1e293b;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+.sp-location-place
+{
+    margin-top:2px;
+
+    font-size:12px;
+
+    color:#475569;
+}
+
+
+.sp-location-shelf
+{
+    margin-left:6px;
+
+    padding:1px 7px;
+
+    border:1px solid #cbd5e1;
+
+    border-radius:10px;
+
+    background:#ffffff;
+
+    font-size:11px;
+
+    color:#334155;
+}
+
+
+.sp-location-remove
+{
+    border:none;
+
+    background:none;
+
+    color:#dc2626;
+
+    font-size:13px;
+
+    cursor:pointer;
+}
+
+
+.sp-location-remove:disabled
+{
+    opacity:0.5;
+
+    cursor:not-allowed;
+}
+
+
+/* Warehouse whose branch no longer runs the business */
+.sp-location-row-revoked
+{
+    border-color:#fecaca;
+
+    background:#fef2f2;
+}
+
+
+.sp-location-revoked
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:4px;
+
+    margin-left:6px;
+
+    padding:1px 7px;
+
+    border-radius:10px;
+
+    background:#dc2626;
+
+    color:#ffffff;
+
+    font-size:10.5px;
+
+    font-weight:600;
+
+    vertical-align:middle;
+}
+
+
+.sp-location-revoked i
+{
+    font-size:9px;
+}
+
+
+/* -----------------------------------------------------
+   STORAGE LOCATION MODAL : numbered steps
+   Warehouse → Rack → Shelf on a vertical rail. Every
+   field sits in the same .sp-step-field column, so the
+   three dropdowns are exactly the same width.
+----------------------------------------------------- */
+
+.sp-steps
+{
+    position:relative;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:16px;
+}
+
+
+.sp-step
+{
+    position:relative;
+
+    display:grid;
+
+    grid-template-columns:34px minmax(0, 1fr);
+
+    align-items:end;
+
+    column-gap:14px;
+}
+
+
+/* rail joining the badges */
+.sp-step:not(:last-child)::before
+{
+    content:'';
+
+    position:absolute;
+
+    left:16px;
+
+    top:calc(100% - 17px);
+
+    width:2px;
+
+    height:calc(16px + 100% - 34px);
+
+    min-height:16px;
+
+    border-radius:2px;
+
+    background:linear-gradient(180deg, #c7d2fe, #e2e8f0);
+}
+
+
+.sp-step-done:not(:last-child)::before
+{
+    background:linear-gradient(180deg, #22c55e, #93c5fd);
+}
+
+
+.sp-step-badge
+{
+    position:relative;
+
+    z-index:1;
+
+    width:34px;
+
+    height:34px;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:2px solid #c7d2fe;
+
+    border-radius:50%;
+
+    background:#ffffff;
+
+    color:#3730a3;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    box-shadow:0 4px 10px rgba(37, 99, 235, 0.12);
+
+    transition:background 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.25s;
+}
+
+
+.sp-step-done .sp-step-badge
+{
+    border-color:transparent;
+
+    background:linear-gradient(135deg, #16a34a, #22c55e);
+
+    color:#ffffff;
+
+    font-size:12px;
+
+    box-shadow:0 6px 14px rgba(34, 197, 94, 0.35);
+}
+
+
+.sp-step-locked .sp-step-badge
+{
+    border-color:#e2e8f0;
+
+    color:#94a3b8;
+
+    box-shadow:none;
+}
+
+
+/* the field column : full width, same for all three */
+.sp-step-field
+{
+    min-width:0;
+
+    width:100%;
+}
+
+
+.sp-step-field ::ng-deep app-search-dropdown,
+.sp-step-field ::ng-deep app-dropdown
+{
+    display:block;
+
+    width:100%;
+
+    max-width:100%;
+
+    min-width:0;
+
+    margin:0;
+}
+
+
+.sp-step-field ::ng-deep app-search-dropdown > *,
+.sp-step-field ::ng-deep app-dropdown > *,
+.sp-step-field ::ng-deep app-search-dropdown > * > *:not(i):not(span):not(label):not(button),
+.sp-step-field ::ng-deep app-dropdown > * > *:not(i):not(span):not(label):not(button)
+{
+    width:100% !important;
+
+    max-width:100% !important;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+.sp-step-field ::ng-deep app-search-dropdown input,
+.sp-step-field ::ng-deep app-dropdown select
+{
+    width:100%;
+
+    max-width:100%;
+}
+
+
+/* -----------------------------------------------------
+   STORAGE LOCATION MODAL : picked place preview
+----------------------------------------------------- */
+
+.sp-modal-preview
+{
+    position:relative;
+
+    margin-top:6px;
+
+    padding:14px 16px;
+
+    border:1px solid #dbe5ff;
+
+    border-radius:14px;
+
+    background:
+        radial-gradient(circle at 100% 0%, rgba(167, 139, 250, 0.16), transparent 50%),
+        linear-gradient(135deg, #f7faff, #eef3ff);
+
+    overflow:hidden;
+}
+
+
+/* left accent bar */
+.sp-modal-preview::before
+{
+    content:'';
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    bottom:0;
+
+    width:4px;
+
+    background:linear-gradient(180deg, #2563eb, #7c3aed);
+}
+
+
+.sp-modal-preview-label
+{
+    margin-bottom:9px;
+
+    font-size:10.5px;
+
+    font-weight:700;
+
+    letter-spacing:1.2px;
+
+    text-transform:uppercase;
+
+    color:#6366f1;
+}
+
+
+.sp-modal-preview-path
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:6px;
+}
+
+
+.sp-modal-chip
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    max-width:100%;
+
+    padding:5px 11px;
+
+    border:1px solid #dbe4f0;
+
+    border-radius:999px;
+
+    background:#ffffff;
+
+    font-size:12px;
+
+    font-weight:500;
+
+    color:#1e293b;
+
+    box-shadow:0 2px 6px rgba(15, 23, 42, 0.06);
+
+    animation:sp-chip-in 0.25s ease-out both;
+}
+
+
+.sp-modal-chip i
+{
+    color:#2563eb;
+
+    font-size:11px;
+}
+
+
+.sp-modal-chip-strong
+{
+    border-color:transparent;
+
+    background:linear-gradient(135deg, #1e3a8a, #2563eb 60%, #4f46e5);
+
+    color:#ffffff;
+
+    font-weight:700;
+
+    letter-spacing:0.3px;
+
+    box-shadow:0 6px 14px -2px rgba(37, 99, 235, 0.45);
+}
+
+
+.sp-modal-chip-strong i
+{
+    color:#ffffff;
+}
+
+
+.sp-modal-sep
+{
+    font-size:10px;
+
+    color:#a5b4fc;
+}
+
+
+.sp-modal-preview-empty
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-size:12px;
+
+    color:#94a3b8;
+}
+
+
+@keyframes sp-chip-in
+{
+    from { opacity:0; transform:translateY(4px); }
+
+    to   { opacity:1; transform:translateY(0); }
+}

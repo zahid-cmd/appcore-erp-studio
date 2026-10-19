@@ -1,0 +1,90 @@
+/* ============================================================
+   Color Management
+============================================================ */
+
+export interface ColorManagement
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Color Management
+============================================================ */
+
+export interface CreateColorManagement
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Color Management
+============================================================ */
+
+export interface UpdateColorManagement
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Color Management Defaults
+============================================================ */
+
+export interface ColorManagementDefaults
+{
+    code:
+        string;
+}

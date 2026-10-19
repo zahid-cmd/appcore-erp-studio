@@ -37,6 +37,8 @@ public class CashAccountsController : ControllerBase
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
 
+    private readonly ILogger<CashAccountsController> _logger;
+
 
     //===============================================================
     // Constructor
@@ -44,11 +46,14 @@ public class CashAccountsController : ControllerBase
 
     public CashAccountsController(
         ICashAccountsRepository repository,
-        IActivityHistoryRepository activityHistoryRepository)
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<CashAccountsController> logger)
     {
         _repository = repository;
 
         _activityHistoryRepository = activityHistoryRepository;
+
+        _logger = logger;
     }
 
 
@@ -76,9 +81,26 @@ public class CashAccountsController : ControllerBase
     public async Task<ActionResult<string>> GetNextCode(
         [FromQuery] long accountSubGroupsId)
     {
-        return Ok(
-            await _repository.GetNextCodeAsync(
-                accountSubGroupsId));
+        try
+        {
+            return Ok(
+                await _repository.GetNextCodeAsync(
+                    accountSubGroupsId));
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -91,9 +113,26 @@ public class CashAccountsController : ControllerBase
     public async Task<ActionResult<CashAccountsDefaultsDto>> GetDefaults(
         [FromQuery] long accountSubGroupsId)
     {
-        return Ok(
-            await _repository.GetDefaultsAsync(
-                accountSubGroupsId));
+        try
+        {
+            return Ok(
+                await _repository.GetDefaultsAsync(
+                    accountSubGroupsId));
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
 
@@ -129,12 +168,42 @@ public class CashAccountsController : ControllerBase
     {
         long userId = 1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            _logger.LogError(
+                ex,
+                "Cash Account create failed.");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Cash Account could not be saved. Please try again.");
+        }
     }
 
 
@@ -155,9 +224,39 @@ public class CashAccountsController : ControllerBase
 
         long userId = 1;
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+        }
+        catch
+        (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            return BadRequest(ex.Message);
+        }
+        catch
+        (
+            Exception ex
+        )
+        {
+            _logger.LogError(
+                ex,
+                "Cash Account update failed.");
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "Cash Account could not be updated. Please try again.");
+        }
 
         return NoContent();
     }
@@ -201,6 +300,13 @@ public class CashAccountsController : ControllerBase
         }
         catch
         (
+            KeyNotFoundException ex
+        )
+        {
+            return NotFound(ex.Message);
+        }
+        catch
+        (
             InvalidOperationException ex
         )
         {
@@ -226,14 +332,32 @@ public class CashAccountsController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
+        bool restored;
+
+        try
+        {
+            restored =
+                await _repository.RestoreAsync(
+                    userId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            //=======================================================
+            // Restore Blocked
+            //
+            // Its sub group is deleted, or its name / code is taken.
+            //=======================================================
+
+            return Conflict(ex.Message);
+        }
 
         if (!restored)
         {
             return NotFound(
-                "There are no deleted cashAccounts available to restore.");
+                "There are no deleted cash accounts available to restore.");
         }
 
         return NoContent();

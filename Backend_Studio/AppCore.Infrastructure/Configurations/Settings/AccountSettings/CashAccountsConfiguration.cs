@@ -69,8 +69,11 @@ public class CashAccountsConfiguration
                .IsRequired()
                .HasMaxLength(30);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.CashAccountCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_CashAccounts_CashAccountCode");
 
         //===========================================================
         // Cash Account Name
@@ -79,6 +82,12 @@ public class CashAccountsConfiguration
         builder.Property(x => x.CashAccountName)
                .IsRequired()
                .HasMaxLength(200);
+
+        // Unique within a branch, among non-deleted rows only
+        builder.HasIndex(x => new { x.Branch, x.CashAccountName })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_CashAccounts_Branch_CashAccountName");
 
         //===========================================================
         // Remarks
@@ -92,8 +101,7 @@ public class CashAccountsConfiguration
         //===========================================================
 
         builder.Property(x => x.Status)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Branch
@@ -115,16 +123,14 @@ public class CashAccountsConfiguration
         //===========================================================
 
         builder.Property(x => x.CollectionAccount)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Payment Account
         //===========================================================
 
         builder.Property(x => x.PaymentAccount)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Soft Delete

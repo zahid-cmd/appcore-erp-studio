@@ -54,8 +54,11 @@ public class ProductCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.CategoryCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductCategories_CategoryCode");
 
 
         //===========================================================
@@ -66,6 +69,36 @@ public class ProductCategoryConfiguration
                .IsRequired()
                .HasMaxLength(200);
 
+        // Unique among non-deleted rows only
+        builder.HasIndex(x => x.CategoryName)
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductCategories_CategoryName");
+
+
+        //===========================================================
+        // Category Type (Motor Bikes / Spare Parts / Accessories)
+        //===========================================================
+
+        builder.Property(x => x.CategoryType)
+               .IsRequired()
+               .HasMaxLength(50);
+
+
+        //===========================================================
+        // Brand
+        //
+        // No database foreign key (Code Synchronization rebuilds
+        // tables independently); the repository checks the brand,
+        // and Brand Management blocks deleting a brand in use.
+        // Brand + Category Type is unique through the name.
+        //===========================================================
+
+        builder.Property(x => x.BrandManagementId);
+
+        builder.HasIndex(x => x.BrandManagementId)
+               .HasDatabaseName("IX_ProductCategories_BrandManagementId");
+
 
         //===========================================================
         // Inventory Group Code
@@ -75,8 +108,11 @@ public class ProductCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.InventoryGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductCategories_InventoryGroupCode");
 
 
         //===========================================================
@@ -87,8 +123,11 @@ public class ProductCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.WipGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductCategories_WipGroupCode");
 
 
         //===========================================================
@@ -99,8 +138,11 @@ public class ProductCategoryConfiguration
                .IsRequired()
                .HasMaxLength(50);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.CogsGroupCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_ProductCategories_CogsGroupCode");
 
 
         //===========================================================
@@ -134,9 +176,10 @@ public class ProductCategoryConfiguration
         // Configuration
         //===========================================================
 
+        // No database default : with HasDefaultValue(true) EF would
+        // skip a 'false' value on insert and the row would be saved true.
         builder.Property(x => x.SubCategoryCreationAllowed)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         builder.Property(x => x.Remarks)
@@ -148,9 +191,10 @@ public class ProductCategoryConfiguration
         // Status
         //===========================================================
 
+        // No database default : with HasDefaultValue(true) EF would
+        // skip a 'false' value on insert and the row would be saved true.
         builder.Property(x => x.IsActive)
-               .IsRequired()
-               .HasDefaultValue(true);
+               .IsRequired();
 
 
         //===========================================================

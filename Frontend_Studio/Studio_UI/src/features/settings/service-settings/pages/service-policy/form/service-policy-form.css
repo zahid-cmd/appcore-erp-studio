@@ -1,0 +1,13 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   SERVICE POLICY FORM
+
+   Layout comes from the shared form-page styles. The
+   Service Schedule has its own page (schedule/service-schedule).
+===================================================== */
+
+:host
+{
+    display: block;
+}

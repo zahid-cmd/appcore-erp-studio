@@ -233,13 +233,11 @@
 
                     label="Inventory Sub Group Name"
 
-                    placeholder="Enter inventory sub group name"
+                    placeholder="Follows the sub category name"
 
                     [(value)]="entity.InventorySubGroupName"
 
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isEditMode || isSaving"
+                    [readonly]="true"
 
                     [required]="true">
 
@@ -252,13 +250,11 @@
 
                     label="WIP Sub Group Name"
 
-                    placeholder="Enter WIP sub group name"
+                    placeholder="Follows the sub category name"
 
                     [(value)]="entity.WipSubGroupName"
 
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isEditMode || isSaving"
+                    [readonly]="true"
 
                     [required]="true">
 
@@ -271,13 +267,11 @@
 
                     label="COGS Sub Group Name"
 
-                    placeholder="Enter COGS sub group name"
+                    placeholder="Follows the sub category name"
 
                     [(value)]="entity.CogsSubGroupName"
 
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isEditMode || isSaving"
+                    [readonly]="true"
 
                     [required]="true">
 
@@ -297,25 +291,6 @@
                 title="Status & Control"
 
                 icon="fas fa-toggle-on">
-
-
-                <!-- Sub Category Creation Allowed -->
-
-                <app-dropdown
-
-                    label="Sub Category Creation Allowed"
-
-                    [items]="subCategoryCreationItems"
-
-                    [(value)]="entity.SubCategoryCreationAllowed"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
 
 
                 <!-- Status -->

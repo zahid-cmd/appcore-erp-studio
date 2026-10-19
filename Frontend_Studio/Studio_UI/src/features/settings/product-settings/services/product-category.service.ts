@@ -124,6 +124,29 @@ export class ProductCategoryService
                                     ??
                                     '',
 
+                                CategoryType:
+                                    productCategory.CategoryType
+                                    ??
+                                    productCategory.categoryType
+                                    ??
+                                    '',
+
+                                BrandManagementId:
+                                    Number(
+                                        productCategory.BrandManagementId
+                                        ??
+                                        productCategory.brandManagementId
+                                        ??
+                                        0
+                                    ),
+
+                                BrandName:
+                                    productCategory.BrandName
+                                    ??
+                                    productCategory.brandName
+                                    ??
+                                    '',
+
                                 InventoryGroupCode:
                                     productCategory.InventoryGroupCode
                                     ??
@@ -201,12 +224,22 @@ export class ProductCategoryService
     // Get Next Code
     //===========================================================
 
-    getNextCode():
+    // MB-/SP-/AC-nnn for the given Category Type ('' without one)
+    getNextCode
+    (
+        categoryType:
+            string = ''
+    ):
         Observable<string>
     {
         return this.http.get(
             `${this.apiUrl}/next-code`,
             {
+                params:
+                {
+                    categoryType
+                },
+
                 responseType:'text'
             }
         );
@@ -217,12 +250,24 @@ export class ProductCategoryService
     // Get Defaults
     //===========================================================
 
-    getDefaults():
+    // Code is '' until a Category Type is given;
+    // the three group codes do not depend on it
+    getDefaults
+    (
+        categoryType:
+            string = ''
+    ):
         Observable<ProductCategoryDefaults>
     {
         return this.http
             .get<any>(
-                `${this.apiUrl}/defaults`
+                `${this.apiUrl}/defaults`,
+                {
+                    params:
+                    {
+                        categoryType
+                    }
+                }
             )
             .pipe(
                 map(
@@ -234,6 +279,13 @@ export class ProductCategoryService
                             response.Code
                             ??
                             '',
+
+                        TypeCodes:
+                            response.typeCodes
+                            ??
+                            response.TypeCodes
+                            ??
+                            {},
 
                         InventoryGroupCode:
                             response.inventoryGroupCode

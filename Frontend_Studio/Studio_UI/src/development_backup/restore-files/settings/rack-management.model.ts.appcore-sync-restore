@@ -1,0 +1,90 @@
+/* ============================================================
+   Rack Management
+============================================================ */
+
+export interface RackManagement
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Rack Management
+============================================================ */
+
+export interface CreateRackManagement
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Rack Management
+============================================================ */
+
+export interface UpdateRackManagement
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Rack Management Defaults
+============================================================ */
+
+export interface RackManagementDefaults
+{
+    code:
+        string;
+}

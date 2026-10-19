@@ -21,7 +21,8 @@
                         [class.sortable]="
                             column.type!=='serial' &&
                             column.type!=='actions' &&
-                            column.type!=='operation'
+                            column.type!=='operation' &&
+                            column.type!=='image'
                         "
                         (click)="sort(column)"
                     >
@@ -193,6 +194,39 @@
                                         )
                                     )
                                 }}
+
+                            </span>
+
+                        </ng-container>
+
+
+                        <!-- =================================================
+                             IMAGE (thumbnail)
+                        ================================================== -->
+
+                        <ng-container
+                            *ngIf="column.type==='image'">
+
+                            <span
+                                style="display:inline-flex; align-items:center; justify-content:center; width:44px; height:26px; border:1px solid #e2e8f0; border-radius:4px; background:#fff; overflow:hidden; vertical-align:middle;">
+
+                                <img
+                                    *ngIf="getImageValue(row, column) as imageSrc; else noImage"
+                                    [src]="imageSrc"
+                                    [alt]="column.header"
+                                    loading="lazy"
+                                    style="max-width:100%; max-height:100%; object-fit:contain;"
+                                    (error)="onImageError(row, column)">
+
+                                <ng-template #noImage>
+
+                                    <i
+                                        class="fas fa-image"
+                                        style="color:#cbd5e1; font-size:13px;">
+
+                                    </i>
+
+                                </ng-template>
 
                             </span>
 

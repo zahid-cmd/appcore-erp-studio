@@ -207,10 +207,11 @@ from '../../../../general-settings/services/branches.service';
 //===============================================================
 
 // Cash Accounts are reserved to this Account Sub Group only.
-// SUB-003-002-001 - Cash In Hand
+// SUB-002-002-001 - Cash In Hand (fixed). The server enforces it too.
+// Codes : CSH-002-002-001-00001, CSH-002-002-001-00002 …
 const RESERVED_SUB_GROUP_CODE:
     string =
-    'SUB-003-002-001';
+    'SUB-002-002-001';
 
 
 //===============================================================
@@ -777,7 +778,7 @@ implements OnInit, OnDestroy
                         this.toast.error(
                             'Error',
 
-                            `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} (Cash In Hand) was not found.`
+                            `Reserved Account Sub Group ${RESERVED_SUB_GROUP_CODE} (Cash In Hand) was not found. Create it first.`
                         );
 
 
@@ -1102,10 +1103,18 @@ implements OnInit, OnDestroy
                         '';
 
 
+                    const message =
+                        typeof (error as any)?.error === 'string'
+                        &&
+                        (error as any).error.trim()
+                            ? (error as any).error
+                            : 'Failed to generate Cash Account Code.';
+
+
                     this.toast.error(
                         'Error',
 
-                        'Failed to generate Cash Account Code.'
+                        message
                     );
 
 
@@ -1634,8 +1643,11 @@ implements OnInit, OnDestroy
         }
 
 
+        // In add mode the server assigns the final code on save
         if
         (
+            !this.isAddMode
+            &&
             !this.entity.CashAccountCode?.trim()
         )
         {

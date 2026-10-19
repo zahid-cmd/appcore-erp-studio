@@ -1,0 +1,399 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-motorcycle"
+
+        [title]="pageTitle"
+
+        subtitle="Manage motor bike models and colors">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 01 : PARENT INFORMATION
+                 Category (Motor Bikes type only) → Sub Category
+                 (the model). Both locked after saving.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Parent Information & Status"
+
+                icon="fas fa-sitemap">
+
+
+                <!-- Product Category -->
+
+                <app-search-dropdown
+
+                    label="Product Category"
+
+                    [items]="categoryItems"
+
+                    [(value)]="entity.ProductCategoryId"
+
+                    (valueChange)="onCategoryChange($event)"
+
+                    [disabled]="!isAddMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Product Sub Category -->
+
+                <app-search-dropdown
+
+                    label="Product Sub Category"
+
+                    [items]="subCategoryItems"
+
+                    [(value)]="entity.ProductSubCategoryId"
+
+                    (valueChange)="onSubCategoryChange($event)"
+
+                    [disabled]="!isAddMode || isSaving || !entity.ProductCategoryId"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Brand (from the category) -->
+
+                <app-textbox
+
+                    label="Brand"
+
+                    placeholder="Follows the product category"
+
+                    [value]="brandName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02 : MOTOR BIKE INFORMATION
+                 Product Name = "<Sub Category> - <Color>"
+            ============================================== -->
+
+            <app-form-section
+
+                title="Motor Bike Information"
+
+                icon="fas fa-motorcycle">
+
+
+                <!-- Color (locked after saving) -->
+
+                <app-search-dropdown
+
+                    label="Color"
+
+                    [items]="colorItems"
+
+                    [(value)]="entity.ColorManagementId"
+
+                    (valueChange)="onColorChange($event)"
+
+                    [disabled]="!isAddMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Product Code -->
+
+                <app-textbox
+
+                    label="Product Code"
+
+                    placeholder="Select a product sub category"
+
+                    [(value)]="entity.ProductCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Product Name -->
+
+                <app-textbox
+
+                    label="Product Name"
+
+                    placeholder="Select sub category and color"
+
+                    [(value)]="entity.ProductName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <!-- Re-order Level -->
+
+                <app-textbox
+
+                    label="Re-order Level"
+
+                    placeholder="0"
+
+                    [value]="reorderLevelText"
+
+                    (valueChange)="onReorderLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 03 : INVENTORY LEDGERS
+                 General Ledgers created with the motor bike.
+                 Names : "<INV / WIP / COGS> - <Product Name>"
+            ============================================== -->
+
+            <app-form-section
+
+                title="Inventory Ledgers"
+
+                icon="fas fa-book">
+
+
+                <!-- Inventory Ledger Code -->
+
+                <app-textbox
+
+                    label="Inventory Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.InventoryLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- WIP Ledger Code -->
+
+                <app-textbox
+
+                    label="WIP Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.WipLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- COGS Ledger Code -->
+
+                <app-textbox
+
+                    label="COGS Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.CogsLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <!-- Red Level -->
+
+                <app-textbox
+
+                    label="Red Level"
+
+                    placeholder="0"
+
+                    [value]="redLevelText"
+
+                    (valueChange)="onRedLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 04 : IMAGE & Description
+            ============================================== -->
+
+            <app-form-section
+
+                title="Image & Description"
+
+                icon="fas fa-sliders">
+
+
+                <!-- Motor Bike Image (shared Image Hub; uploaded on save) -->
+
+                <app-image-hub
+
+                    label="Motor Bike Image"
+
+                    placeholder="No motor bike image selected"
+
+                    [imageUrl]="imagePreview"
+
+                    (imageChange)="onImageChange($event)"
+
+                    [disabled]="isSaving"
+
+                    [readonly]="isViewMode">
+
+                </app-image-hub>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="3"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

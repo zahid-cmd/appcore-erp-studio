@@ -1,0 +1,244 @@
+<!-- PAGE-CLONED : Color Management -> Brand Management -->
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-copyright"
+
+        [title]="pageTitle"
+
+        subtitle="Manage product brands">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 01 : BRAND INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Brand Information"
+
+                icon="fas fa-copyright">
+
+
+                <!-- Brand Code -->
+
+                <app-textbox
+
+                    label="Brand Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.BrandCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Brand Name -->
+
+                <app-textbox
+
+                    label="Brand Name"
+
+                    placeholder="Enter brand name"
+
+                    [(value)]="entity.BrandName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02 : STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status"
+
+                icon="fas fa-sliders">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 03 : BRAND IMAGE (shared Image Hub)
+                 The picked image is previewed here and uploaded
+                 when the brand is saved.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Brand Image"
+
+                icon="fas fa-image">
+
+
+                <!-- Brand Image -->
+
+                <app-image-hub
+
+                    label="Brand Image"
+
+                    placeholder="No brand image selected"
+
+                    [imageUrl]="imagePreview"
+
+                    (imageChange)="onImageChange($event)"
+
+                    [disabled]="isSaving"
+
+                    [readonly]="isViewMode">
+
+                </app-image-hub>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 04 : DESCRIPTION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Description"
+
+                icon="fas fa-align-left">
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

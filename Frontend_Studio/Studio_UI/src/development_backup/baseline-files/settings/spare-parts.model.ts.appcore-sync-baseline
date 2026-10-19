@@ -1,0 +1,90 @@
+/* ============================================================
+   Spare Parts
+============================================================ */
+
+export interface SpareParts
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Spare Parts
+============================================================ */
+
+export interface CreateSpareParts
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Spare Parts
+============================================================ */
+
+export interface UpdateSpareParts
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Spare Parts Defaults
+============================================================ */
+
+export interface SparePartsDefaults
+{
+    code:
+        string;
+}

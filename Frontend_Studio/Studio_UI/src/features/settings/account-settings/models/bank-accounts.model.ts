@@ -43,6 +43,9 @@ export interface BankAccount
 
     BankBranchName: string;
 
+    // Optional; only for Liability For Finance (SUB-003-002-002)
+    SanctionLimit: number | null;
+
 }
 
 
@@ -87,6 +90,9 @@ export interface CreateBankAccount
     BranchExclusive: boolean;
 
     BankBranchName: string;
+
+    // Optional; only for Liability For Finance (SUB-003-002-002)
+    SanctionLimit: number | null;
 
 }
 
@@ -134,5 +140,8 @@ export interface UpdateBankAccount
     BranchExclusive: boolean;
 
     BankBranchName: string;
+
+    // Optional; only for Liability For Finance (SUB-003-002-002)
+    SanctionLimit: number | null;
 
 }

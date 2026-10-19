@@ -4,7 +4,6 @@ import
 }
 from '@angular/router';
 
-
 //===========================================================
 // MNU-003-003 Routes
 //===========================================================
@@ -12,7 +11,6 @@ from '@angular/router';
 export const mnu003003Routes:
 Routes =
 [
-
 
     //===========================================================
     // Menu Routes
@@ -24,7 +22,6 @@ Routes =
     //   • Page routes
     //===========================================================
 
-
     {
         path:'',
 
@@ -32,6 +29,32 @@ Routes =
         [
 
             // SUBMENU ROUTE PLACEHOLDER
+
+            // MANUAL : SUB-003-003-004 (not managed by Submenu Synchronization)
+
+                //===========================================================
+                // Chart of Inventory (single read-only page)
+                //===========================================================
+
+                {
+                    path:'chart-of-inventory',
+
+                    data:
+                    {
+                        breadcrumb:'Chart of Inventory'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './chart-of-inventory.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ChartOfInventoryRoutes
+                        )
+                },
+
+                // MANUAL-END : SUB-003-003-004
 
             // AUTO-BEGIN : SUB-003-003-001
 
@@ -59,32 +82,6 @@ Routes =
 
                 // AUTO-END : SUB-003-003-001
 
-            // AUTO-BEGIN : SUB-003-003-003
-
-                //===========================================================
-                // Product Master
-                //===========================================================
-
-                {
-                    path:'product-master',
-
-                    data:
-                    {
-                        breadcrumb:'Product Master'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './product-master.routes'
-                        )
-                        .then(
-                            m =>
-                                m.ProductMasterRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-003-003
-
             // AUTO-BEGIN : SUB-003-003-002
 
                 //===========================================================
@@ -110,6 +107,162 @@ Routes =
                 },
 
                 // AUTO-END : SUB-003-003-002
+
+            // AUTO-BEGIN : SUB-003-003-005
+
+                //===========================================================
+                // Color Management
+                //===========================================================
+
+                {
+                    path:'color-management',
+
+                    data:
+                    {
+                        breadcrumb:'Color Management'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './color-management.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ColorManagementRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-005
+
+            // AUTO-BEGIN : SUB-003-003-003
+
+                //===========================================================
+                // Motor Bikes
+                //===========================================================
+
+                {
+                    path:'motor-bikes',
+
+                    data:
+                    {
+                        breadcrumb:'Motor Bikes'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './motor-bikes.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MotorBikesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-003
+
+            // AUTO-BEGIN : SUB-003-003-006
+
+                //===========================================================
+                // Brand Management
+                //===========================================================
+
+                {
+                    path:'brand-management',
+
+                    data:
+                    {
+                        breadcrumb:'Brand Management'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './brand-management.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BrandManagementRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-006
+
+            // AUTO-BEGIN : SUB-003-003-007
+
+                //===========================================================
+                // Spare Parts
+                //===========================================================
+
+                {
+                    path:'spare-parts',
+
+                    data:
+                    {
+                        breadcrumb:'Spare Parts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './spare-parts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.SparePartsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-007
+
+            // AUTO-BEGIN : SUB-003-003-008
+
+                //===========================================================
+                // Accessories
+                //===========================================================
+
+                {
+                    path:'accessories',
+
+                    data:
+                    {
+                        breadcrumb:'Accessories'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './accessories.routes'
+                        )
+                        .then(
+                            m =>
+                                m.AccessoriesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-008
+
+            // AUTO-BEGIN : SUB-003-003-009
+
+                //===========================================================
+                // Rack Management
+                //===========================================================
+
+                {
+                    path:'rack-management',
+
+                    data:
+                    {
+                        breadcrumb:'Rack Management'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './rack-management.routes'
+                        )
+                        .then(
+                            m =>
+                                m.RackManagementRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-009
 
         ]
 

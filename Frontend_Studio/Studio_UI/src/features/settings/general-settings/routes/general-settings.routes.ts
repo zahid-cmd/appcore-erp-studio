@@ -184,6 +184,32 @@ Routes =
 
                 // AUTO-END : SUB-003-001-005
 
+            // AUTO-BEGIN : SUB-003-001-007
+
+                //===========================================================
+                // Business Configuration
+                //===========================================================
+
+                {
+                    path:'business-configuration',
+
+                    data:
+                    {
+                        breadcrumb:'Business Configuration'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './business-configuration.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BusinessConfigurationRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-007
+
         ]
 
     }

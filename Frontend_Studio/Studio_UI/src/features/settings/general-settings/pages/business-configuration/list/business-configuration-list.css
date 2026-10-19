@@ -1,0 +1,966 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   BUSINESS CONFIGURATION
+===================================================== */
+
+
+/* -----------------------------------------------------
+   TOOLBAR : wing filter
+----------------------------------------------------- */
+
+.bc-toolbar-filter
+{
+    width:300px;
+
+    max-width:100%;
+}
+
+
+.bc-toolbar-filter ::ng-deep app-dropdown
+{
+    display:block;
+
+    width:100%;
+}
+
+
+/* -----------------------------------------------------
+   PANEL (overview / wing core)
+----------------------------------------------------- */
+
+.bc-panel
+{
+    height:100%;
+
+    padding:14px 16px 18px;
+
+    overflow:auto;
+}
+
+
+.bc-empty
+{
+    padding:40px 0;
+
+    text-align:center;
+
+    font-size:13px;
+
+    color:#94a3b8;
+}
+
+
+.bc-empty-error
+{
+    color:#dc2626;
+}
+
+
+/* -----------------------------------------------------
+   LEGEND
+----------------------------------------------------- */
+
+.bc-legend
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin-bottom:12px;
+}
+
+
+.bc-legend-note
+{
+    margin-left:auto;
+
+    font-size:12px;
+
+    color:#64748b;
+}
+
+
+/* -----------------------------------------------------
+   CHIPS
+----------------------------------------------------- */
+
+.bc-chip
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    padding:3px 10px;
+
+    border:1px solid transparent;
+
+    border-radius:999px;
+
+    font-size:11.5px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+}
+
+
+.bc-chip i
+{
+    font-size:10px;
+}
+
+
+.bc-chip-core
+{
+    background:linear-gradient(135deg, #1e3a8a, #2563eb);
+
+    color:#ffffff;
+}
+
+
+.bc-chip-granted
+{
+    border-color:#bbf7d0;
+
+    background:#f0fdf4;
+
+    color:#15803d;
+}
+
+
+.bc-chip-scheduled
+{
+    border-color:#fde68a;
+
+    background:#fffbeb;
+
+    color:#b45309;
+}
+
+
+.bc-chip-off
+{
+    border-color:#e2e8f0;
+
+    background:#f8fafc;
+
+    color:#94a3b8;
+}
+
+
+/* -----------------------------------------------------
+   MATRIX
+----------------------------------------------------- */
+
+.bc-matrix
+{
+    width:100%;
+
+    border-collapse:separate;
+
+    border-spacing:0;
+
+    font-size:13px;
+}
+
+
+.bc-matrix thead th
+{
+    position:sticky;
+
+    top:0;
+
+    z-index:1;
+
+    padding:10px 12px;
+
+    border-bottom:1px solid #e2e8f0;
+
+    background:#f8fafc;
+
+    font-size:11.5px;
+
+    font-weight:700;
+
+    letter-spacing:0.4px;
+
+    text-transform:uppercase;
+
+    color:#475569;
+
+    text-align:left;
+}
+
+
+.bc-matrix thead th.bc-col-line
+{
+    text-align:center;
+}
+
+
+.bc-matrix thead th.bc-col-line i
+{
+    margin-right:4px;
+
+    color:#2563eb;
+}
+
+
+.bc-matrix tbody td
+{
+    padding:9px 12px;
+
+    border-bottom:1px solid #f1f5f9;
+
+    vertical-align:middle;
+}
+
+
+.bc-matrix tbody tr:hover td
+{
+    background:#f8fbff;
+}
+
+
+.bc-col-wing
+{
+    width:160px;
+
+    color:#475569;
+}
+
+
+.bc-branch-name
+{
+    font-weight:600;
+
+    color:#0f172a;
+}
+
+
+.bc-branch-code
+{
+    margin-top:1px;
+
+    font-size:11.5px;
+
+    color:#64748b;
+}
+
+
+.bc-row-inactive td
+{
+    opacity:0.55;
+}
+
+
+.bc-cell
+{
+    width:150px;
+
+    text-align:center;
+}
+
+
+.bc-cell-clickable
+{
+    cursor:pointer;
+}
+
+
+.bc-cell-clickable:hover .bc-add
+{
+    border-color:#2563eb;
+
+    color:#2563eb;
+}
+
+
+.bc-add
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:26px;
+
+    height:26px;
+
+    border:1px dashed #cbd5e1;
+
+    border-radius:50%;
+
+    color:#cbd5e1;
+
+    font-size:11px;
+
+    transition:border-color 0.15s, color 0.15s;
+}
+
+
+.bc-hint
+{
+    margin-top:3px;
+
+    font-size:11px;
+
+    color:#64748b;
+}
+
+
+/* -----------------------------------------------------
+   WING CORE BUSINESS
+----------------------------------------------------- */
+
+.bc-core-note
+{
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:8px;
+
+    margin-bottom:14px;
+
+    padding:10px 12px;
+
+    border:1px solid #dbeafe;
+
+    border-radius:10px;
+
+    background:#eff6ff;
+
+    font-size:12.5px;
+
+    color:#1e3a8a;
+}
+
+
+.bc-core-note i
+{
+    margin-top:2px;
+}
+
+
+.bc-wing-grid
+{
+    display:grid;
+
+    /* auto-fit : the cards stretch to fill the full width
+       (3 wings → 3 equal columns; they wrap on small screens) */
+    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+
+    gap:14px;
+}
+
+
+.bc-wing-card
+{
+    display:flex;
+
+    flex-direction:column;
+
+    padding:0;
+
+    border:1px solid #e5e9f0;
+
+    border-radius:14px;
+
+    background:#ffffff;
+
+    box-shadow:0 1px 3px rgba(15, 23, 42, 0.05);
+
+    overflow:hidden;
+
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+
+
+.bc-wing-card:hover
+{
+    box-shadow:0 6px 18px rgba(15, 23, 42, 0.07);
+}
+
+
+/* unsaved changes : quiet blue outline only */
+.bc-wing-card-changed
+{
+    border-color:#93c5fd;
+}
+
+
+/* --- head --- */
+
+.bc-wing-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:18px 20px 16px;
+
+    border-bottom:1px solid #f1f4f8;
+}
+
+
+.bc-wing-icon
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:40px;
+
+    height:40px;
+
+    flex-shrink:0;
+
+    border:1px solid #dbe5fb;
+
+    border-radius:11px;
+
+    background:#f5f8ff;
+
+    color:#1e3a8a;
+
+    font-size:15px;
+}
+
+
+.bc-wing-titles
+{
+    flex:1;
+
+    min-width:0;
+}
+
+
+.bc-wing-name
+{
+    font-size:14.5px;
+
+    font-weight:700;
+
+    color:#0f172a;
+}
+
+
+.bc-wing-code
+{
+    margin-top:2px;
+
+    font-size:11.5px;
+
+    color:#94a3b8;
+
+    letter-spacing:0.3px;
+}
+
+
+.bc-wing-count
+{
+    padding:3px 10px;
+
+    border-radius:999px;
+
+    background:#f1f5f9;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    color:#475569;
+
+    white-space:nowrap;
+}
+
+
+/* --- lines (2 × 2) --- */
+
+.bc-wing-section-label
+{
+    padding:16px 20px 0;
+
+    font-size:10.5px;
+
+    font-weight:700;
+
+    letter-spacing:0.8px;
+
+    text-transform:uppercase;
+
+    color:#94a3b8;
+}
+
+
+.bc-wing-lines
+{
+    display:grid;
+
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+
+    gap:10px;
+
+    padding:10px 20px 20px;
+}
+
+
+.bc-toggle
+{
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    min-height:44px;
+
+    padding:0 14px;
+
+    border:1px solid #e5e9f0;
+
+    border-radius:10px;
+
+    background:#ffffff;
+
+    color:#64748b;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    text-align:left;
+
+    cursor:pointer;
+
+    transition:background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+
+.bc-toggle > i:first-child
+{
+    width:16px;
+
+    text-align:center;
+
+    color:#94a3b8;
+}
+
+
+.bc-toggle:hover:not(:disabled)
+{
+    border-color:#cbd5e1;
+
+    background:#f8fafc;
+}
+
+
+.bc-toggle-on,
+.bc-toggle-on:hover:not(:disabled)
+{
+    border-color:#2563eb;
+
+    background:#f5f8ff;
+
+    color:#1e3a8a;
+}
+
+
+.bc-toggle-on > i:first-child
+{
+    color:#2563eb;
+}
+
+
+.bc-toggle-check
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:18px;
+
+    height:18px;
+
+    margin-left:auto;
+
+    border-radius:50%;
+
+    background:#2563eb;
+
+    color:#ffffff;
+
+    font-size:9px;
+}
+
+
+.bc-toggle:disabled
+{
+    cursor:not-allowed;
+
+    opacity:0.6;
+}
+
+
+/* --- footer --- */
+
+.bc-wing-actions
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:8px;
+
+    margin-top:auto;
+
+    padding:12px 20px;
+
+    border-top:1px solid #f1f4f8;
+
+    background:#fbfcfe;
+}
+
+
+.bc-wing-hint
+{
+    margin-right:auto;
+
+    font-size:11.5px;
+
+    color:#94a3b8;
+}
+
+
+.bc-wing-hint-changed
+{
+    color:#2563eb;
+
+    font-weight:600;
+}
+
+
+.bc-btn
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:32px;
+
+    padding:0 14px;
+
+    border-radius:8px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:background 0.15s, opacity 0.15s;
+}
+
+
+.bc-btn:disabled
+{
+    opacity:0.45;
+
+    cursor:not-allowed;
+}
+
+
+.bc-btn-ghost
+{
+    border:1px solid #d6dde8;
+
+    background:#ffffff;
+
+    color:#334155;
+}
+
+
+.bc-btn-primary
+{
+    border:1px solid #1e3a8a;
+
+    background:#1e3a8a;
+
+    color:#ffffff;
+}
+
+
+.bc-btn-primary:hover:not(:disabled)
+{
+    background:#1e40af;
+}
+
+
+/* -----------------------------------------------------
+   MODAL (content projected into the shared Form Modal)
+----------------------------------------------------- */
+
+/* two controls side by side, same width */
+.bc-modal-row
+{
+    display:grid;
+
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+
+    gap:14px;
+}
+
+
+.bc-modal-row ::ng-deep app-dropdown,
+.bc-modal-full ::ng-deep app-textarea
+{
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+}
+
+
+.bc-modal-row ::ng-deep app-dropdown > *,
+.bc-modal-full ::ng-deep app-textarea > *,
+.bc-modal-full ::ng-deep textarea
+{
+    width:100% !important;
+
+    max-width:100% !important;
+
+    box-sizing:border-box;
+}
+
+
+/* Remarks : every wrapper inside the textarea control fills the
+   modal width (the control has its own fixed inner width) */
+.bc-modal-full
+{
+    width:100%;
+}
+
+
+.bc-modal-full ::ng-deep app-textarea,
+.bc-modal-full ::ng-deep app-textarea *:not(label):not(span):not(i):not(small)
+{
+    width:100% !important;
+
+    max-width:100% !important;
+
+    min-width:0 !important;
+
+    box-sizing:border-box;
+}
+
+
+.bc-modal-full ::ng-deep textarea
+{
+    min-height:64px;
+
+    resize:vertical;
+}
+
+
+/* core lines of the chosen branch */
+.bc-modal-core
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:6px;
+
+    margin-top:-4px;
+
+    padding:8px 10px;
+
+    border:1px dashed #bfdbfe;
+
+    border-radius:10px;
+
+    background:#f8fbff;
+}
+
+
+.bc-modal-core-label
+{
+    margin-right:4px;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    letter-spacing:0.5px;
+
+    text-transform:uppercase;
+
+    color:#64748b;
+}
+
+
+/* validity box */
+.bc-validity
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+    padding:12px 14px 14px;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:12px;
+
+    background:#f8fafc;
+
+    transition:border-color 0.2s, background 0.2s;
+}
+
+
+.bc-validity-temporary
+{
+    border-color:#fde68a;
+
+    background:#fffbeb;
+}
+
+
+.bc-validity-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+    color:#475569;
+}
+
+
+.bc-validity-head i
+{
+    color:#2563eb;
+}
+
+
+.bc-validity-temporary .bc-validity-head,
+.bc-validity-temporary .bc-validity-head i
+{
+    color:#b45309;
+}
+
+
+.bc-date
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    min-width:0;
+}
+
+
+.bc-date-label
+{
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#334155;
+}
+
+
+.bc-required
+{
+    color:#dc2626;
+}
+
+
+.bc-date-input
+{
+    width:100%;
+
+    height:38px;
+
+    padding:0 12px;
+
+    border:1px solid #d6dde8;
+
+    border-radius:8px;
+
+    background:#ffffff;
+
+    font-family:inherit;
+
+    font-size:13px;
+
+    color:#0f172a;
+
+    outline:none;
+
+    box-sizing:border-box;
+}
+
+
+.bc-date-input:focus
+{
+    border-color:#2563eb;
+
+    box-shadow:0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+
+.bc-date-off
+{
+    opacity:0.5;
+}
+
+
+.bc-date-input:disabled
+{
+    background:#f1f5f9;
+
+    cursor:not-allowed;
+}
+
+
+@media (max-width: 560px)
+{
+    .bc-modal-row
+    {
+        grid-template-columns:1fr;
+    }
+}

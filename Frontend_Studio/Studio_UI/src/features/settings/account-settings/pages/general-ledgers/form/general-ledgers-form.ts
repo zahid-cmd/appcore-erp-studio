@@ -383,6 +383,12 @@ implements OnInit, OnDestroy
     // Account Classes
     //===========================================================
 
+    // Every class from the server (unfiltered)
+    allAccountClasses:
+        AccountClass[]
+        = [];
+
+    // Classes a ledger can be created under
     accountClasses:
         AccountClass[]
         = [];
@@ -665,40 +671,10 @@ implements OnInit, OnDestroy
                         AccountClass[]
                 ): void =>
                 {
-                    this.accountClasses =
-                        (response ?? [])
-                            .filter
-                            (
-                                (
-                                    item:
-                                        AccountClass
-                                ): boolean =>
-                                {
-                                    return (
-                                        item.IsActive
-                                        &&
-                                        item.AllowManualGroupCreation
-                                    );
-                                }
-                            );
+                    this.allAccountClasses =
+                        response ?? [];
 
-                    this.accountClassItems =
-                        this.accountClasses.map
-                        (
-                            (
-                                item:
-                                    AccountClass
-                            ) =>
-                            ({
-                                label:
-                                    `${item.ClassCode} - ${item.ClassName}`,
-
-                                value:
-                                    item.AccountClassId
-                            })
-                        );
-
-                    this.cdr.detectChanges();
+                    this.buildAccountClassItems();
                 },
 
                 error:
@@ -721,7 +697,74 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
+    // Build Account Class Items
+    //
+    // Only active 'Account' type classes. Inventory / WIP / COGS
+    // ledgers are the products themselves. In edit / view mode
+    // the ledger's own class is always kept so its label still
+    // shows.
+    //===========================================================
+
+    private buildAccountClassItems():
+        void
+    {
+        const currentClassId =
+            Number(
+                this.entity?.AccountClassId
+                ??
+                0
+            );
+
+        this.accountClasses =
+            this.allAccountClasses
+                .filter
+                (
+                    (
+                        item:
+                            AccountClass
+                    ): boolean =>
+                    {
+                        const selectable =
+                            item.ClassType === 'Account'
+                            &&
+                            item.IsActive;
+
+                        const isCurrent =
+                            !this.isAddMode
+                            &&
+                            currentClassId > 0
+                            &&
+                            Number(item.AccountClassId) ===
+                            currentClassId;
+
+                        return selectable || isCurrent;
+                    }
+                );
+
+        this.accountClassItems =
+            this.accountClasses.map
+            (
+                (
+                    item:
+                        AccountClass
+                ) =>
+                ({
+                    label:
+                        `${item.ClassCode} - ${item.ClassName}`,
+
+                    value:
+                        item.AccountClassId
+                })
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
     // Load Account Groups
+    //
+    // Active groups of the class. In edit / view mode the
+    // ledger's own group is always kept.
     //===========================================================
 
     private loadAccountGroups
@@ -767,12 +810,24 @@ implements OnInit, OnDestroy
                                 ):
                                     boolean =>
                                 {
-                                    return (
-                                        item.IsActive
-                                        &&
-                                        item.AccountClassId ===
+                                    if
+                                    (
+                                        Number(item.AccountClassId) !==
                                         Number(accountClassId)
-                                    );
+                                    )
+                                    {
+                                        return false;
+                                    }
+
+                                    const isCurrent =
+                                        !this.isAddMode
+                                        &&
+                                        Number(selectedGroupId) > 0
+                                        &&
+                                        Number(item.AccountGroupId) ===
+                                        Number(selectedGroupId);
+
+                                    return item.IsActive || isCurrent;
                                 }
                             );
 
@@ -914,14 +969,29 @@ implements OnInit, OnDestroy
                                 ):
                                     boolean =>
                                 {
-                                    return (
+                                    if
+                                    (
+                                        Number(item.AccountGroupId) !==
+                                        Number(accountGroupId)
+                                    )
+                                    {
+                                        return false;
+                                    }
+
+                                    const selectable =
                                         item.IsActive
                                         &&
-                                        item.AllowManualLedger
+                                        item.AllowManualLedger;
+
+                                    const isCurrent =
+                                        !this.isAddMode
                                         &&
-                                        item.AccountGroupId ===
-                                        Number(accountGroupId)
-                                    );
+                                        Number(selectedSubGroupId) > 0
+                                        &&
+                                        Number(item.AccountSubGroupId) ===
+                                        Number(selectedSubGroupId);
+
+                                    return selectable || isCurrent;
                                 }
                             );
 
@@ -1458,6 +1528,16 @@ implements OnInit, OnDestroy
                         string
                 ): void =>
                 {
+                    // Ignore a late reply for a sub group no longer selected
+                    if
+                    (
+                        Number(this.entity.AccountSubGroupId) !==
+                        accountSubGroupId
+                    )
+                    {
+                        return;
+                    }
+
                     if
                     (
                         !code?.trim()
@@ -1496,10 +1576,22 @@ implements OnInit, OnDestroy
                         codeError
                     );
 
+                    this.entity.LedgerCode =
+                        '';
+
+                    const message =
+                        typeof (codeError as any)?.error === 'string'
+                        &&
+                        (codeError as any).error.trim()
+                            ? (codeError as any).error
+                            : 'Failed to generate General Ledger code.';
+
                     this.toast.error(
                         'Error',
-                        'Failed to generate General Ledger code.'
+                        message
                     );
+
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -1660,6 +1752,9 @@ implements OnInit, OnDestroy
                                 true
                             )
                     };
+
+                    // Keep this ledger's class in the dropdown
+                    this.buildAccountClassItems();
 
                     this.loadAccountGroups(
                         this.entity.AccountClassId,
@@ -2044,8 +2139,11 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // In add mode the server assigns the final code on save
         if
         (
+            !this.isAddMode
+            &&
             !this.entity.LedgerCode?.trim()
         )
         {

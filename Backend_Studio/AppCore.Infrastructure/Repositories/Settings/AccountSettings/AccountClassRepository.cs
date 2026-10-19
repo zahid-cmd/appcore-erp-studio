@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using System.Text.RegularExpressions;
+
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.Settings.AccountSettings;
@@ -27,10 +29,70 @@ namespace AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
 //===============================================================
 // Account Class Repository
+//
+// Code      : <ClassPrefix>-<nnn>     e.g. CLS-001, INV-001, WIP-001, COGS-001
+// Prefix    : typed on the form (2–5 capital letters), never
+//             hard-coded here. Locked after creation, because the
+//             groups / sub groups / ledgers below build on it.
+// Types     : Account · Inventory · Work In Progress ·
+//             Cost of Goods Sold
+// Numbering : every Class Type has its own count, starting at
+//             001 — CLS-001, CLS-002 … / INV-001 / WIP-001 /
+//             COGS-001. Deleted rows are included, so a number is
+//             never reused and a restore can never clash.
+// Inventory : only one class of each inventory type may exist,
+//             each with its own prefix, and none allow manual
+//             groups (Product Category creates them).
 //===============================================================
 
 public class AccountClassRepository : IAccountClassRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    private const string AccountClassType =
+        "Account";
+
+    private static readonly string[] InventoryClassTypes =
+    {
+        "Inventory",
+        "Work In Progress",
+        "Cost of Goods Sold"
+    };
+
+    private static readonly string[] AllowedClassTypes =
+        new[] { AccountClassType }
+            .Concat(InventoryClassTypes)
+            .ToArray();
+
+
+    //===========================================================
+    // Inventory Family (Inventory · WIP · COGS)
+    //===========================================================
+
+    private static bool IsInventoryFamily
+    (
+        string classType
+    )
+    {
+        return InventoryClassTypes.Contains(
+            classType);
+    }
+
+
+    private static readonly string[] AllowedModes =
+    {
+        "Debit",
+        "Credit"
+    };
+
+    private static readonly Regex PrefixPattern =
+        new Regex(
+            "^[A-Z]{2,5}$",
+            RegexOptions.Compiled);
+
+
     //===========================================================
     // Private Fields
     //===========================================================
@@ -148,6 +210,11 @@ public class AccountClassRepository : IAccountClassRepository
             .OrderBy
             (
                 x =>
+                    x.ClassType
+            )
+            .ThenBy
+            (
+                x =>
                     x.ClassCode
             )
             .ToListAsync();
@@ -175,48 +242,123 @@ public class AccountClassRepository : IAccountClassRepository
 
 
     //===========================================================
-    // Get Next Code
+    // Normalize Helpers
     //===========================================================
 
-    public async Task<string>
-        GetNextCodeAsync(
-            string classType)
+    private static string NormalizeClassType
+    (
+        string? classType
+    )
     {
-        string normalizedClassType =
+        string value =
             classType?.Trim()
             ??
             string.Empty;
 
+        string? match =
+            AllowedClassTypes.FirstOrDefault
+            (
+                x =>
+                    string.Equals(
+                        x,
+                        value,
+                        StringComparison.OrdinalIgnoreCase)
+            );
+
         if
         (
-            string.IsNullOrWhiteSpace(normalizedClassType)
+            match ==
+            null
         )
         {
-            normalizedClassType =
-                "Account Class";
+            throw new InvalidOperationException(
+                "Class Type must be Account, Inventory, Work In Progress or Cost of Goods Sold.");
         }
 
-        string prefix =
-            string.Equals(
-                normalizedClassType,
-                "Inventory Class",
-                StringComparison.OrdinalIgnoreCase)
-                    ?
-                        "INV"
-                    :
-                        "ACC";
+        return match;
+    }
 
-        List<string> existingCodes =
+
+    private static string NormalizePrefix
+    (
+        string? classPrefix
+    )
+    {
+        string value =
+            (classPrefix ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant();
+
+        if
+        (
+            !PrefixPattern.IsMatch(value)
+        )
+        {
+            throw new InvalidOperationException(
+                "Class Prefix must be 2 to 5 letters (A–Z), e.g. CLS, INV, WIP, COGS.");
+        }
+
+        return value;
+    }
+
+
+    private static string NormalizeMode
+    (
+        string? mode
+    )
+    {
+        string value =
+            mode?.Trim()
+            ??
+            string.Empty;
+
+        string? match =
+            AllowedModes.FirstOrDefault
+            (
+                x =>
+                    string.Equals(
+                        x,
+                        value,
+                        StringComparison.OrdinalIgnoreCase)
+            );
+
+        if
+        (
+            match ==
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                "Mode must be 'Debit' or 'Credit'.");
+        }
+
+        return match;
+    }
+
+
+    //===========================================================
+    // Highest Sequence Within A Class Type
+    //
+    // Each Class Type numbers on its own. Reads the number part
+    // of every code of this type (any prefix, deleted rows
+    // included).
+    //===========================================================
+
+    private async Task<int>
+        GetHighestSequenceAsync
+        (
+            string classType
+        )
+    {
+        List<string> codes =
             await _context
                 .Set<AccountClassEntity>()
                 .AsNoTracking()
                 .Where
                 (
                     x =>
-                        !x.IsDeleted
-                        &&
                         x.ClassType ==
-                        normalizedClassType
+                        classType
                 )
                 .Select
                 (
@@ -225,13 +367,13 @@ public class AccountClassRepository : IAccountClassRepository
                 )
                 .ToListAsync();
 
-        int highestSequenceNo =
+        int highest =
             0;
 
         foreach
         (
             string code
-            in existingCodes
+            in codes
         )
         {
             if
@@ -243,69 +385,285 @@ public class AccountClassRepository : IAccountClassRepository
             }
 
             string[] parts =
-                code.Split(
+                code.Split
+                (
                     '-',
-                    StringSplitOptions.RemoveEmptyEntries);
+                    StringSplitOptions.RemoveEmptyEntries
+                );
 
             if
             (
-                parts.Length !=
+                parts.Length ==
                 2
-            )
-            {
-                continue;
-            }
-
-            if
-            (
-                !string.Equals(
-                    parts[0].Trim(),
-                    prefix,
-                    StringComparison.OrdinalIgnoreCase)
-            )
-            {
-                continue;
-            }
-
-            if
-            (
-                int.TryParse(
+                &&
+                int.TryParse
+                (
                     parts[1].Trim(),
-                    out int sequenceNo)
+                    out int sequenceNo
+                )
                 &&
                 sequenceNo >
-                highestSequenceNo
+                highest
             )
             {
-                highestSequenceNo =
+                highest =
                     sequenceNo;
             }
         }
 
+        return highest;
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync
+        (
+            string classType,
+            string classPrefix
+        )
+    {
+        string normalizedClassType =
+            NormalizeClassType(
+                classType);
+
+        string normalizedPrefix =
+            NormalizePrefix(
+                classPrefix);
+
         int nextSequenceNo =
-            highestSequenceNo +
+            await GetHighestSequenceAsync(
+                normalizedClassType)
+            +
             1;
 
-        return
-            CodeGenerator.GenerateAccountClassCode(
-                nextSequenceNo,
-                normalizedClassType);
+        return CodeGenerator.GenerateAccountClassCode(
+            normalizedPrefix,
+            nextSequenceNo);
     }
 
 
     //===========================================================
     // Get Defaults
+    //
+    // Suggests the prefix last used for Account Classes (if any)
+    // and the code it would produce. Nothing is hard-coded: on a
+    // fresh database both come back empty and the user types the
+    // prefix.
     //===========================================================
 
     public async Task<AccountClassDefaultsDto>
         GetDefaultsAsync()
     {
+        string lastPrefix =
+            await _context
+                .Set<AccountClassEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.ClassType ==
+                        AccountClassType
+                )
+                .OrderByDescending
+                (
+                    x =>
+                        x.CreatedDate
+                )
+                .Select
+                (
+                    x =>
+                        x.ClassPrefix
+                )
+                .FirstOrDefaultAsync()
+            ??
+            string.Empty;
+
         return new AccountClassDefaultsDto
         {
+            ClassPrefix =
+                lastPrefix,
+
             Code =
-                await GetNextCodeAsync(
-                    "Account Class")
+                string.IsNullOrWhiteSpace(lastPrefix)
+                    ? string.Empty
+                    : await GetNextCodeAsync(
+                        AccountClassType,
+                        lastPrefix)
         };
+    }
+
+
+    //===========================================================
+    // Validate Prefix Ownership
+    //
+    // A prefix belongs to one Class Type only. Each inventory
+    // type has its own unique prefix (INV / WIP / COGS), while all
+    // Account classes may share one prefix (CLS). Only one class
+    // of each inventory type may exist.
+    //===========================================================
+
+    private async Task EnsurePrefixAllowedAsync
+    (
+        string classType,
+        string classPrefix,
+        long excludeId
+    )
+    {
+        List<AccountClassEntity> samePrefix =
+            await _context
+                .Set<AccountClassEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.AccountClassId !=
+                        excludeId
+                        &&
+                        x.ClassPrefix ==
+                        classPrefix
+                )
+                .ToListAsync();
+
+        AccountClassEntity? otherType =
+            samePrefix.FirstOrDefault
+            (
+                x =>
+                    x.ClassType !=
+                    classType
+            );
+
+        if
+        (
+            otherType !=
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                $"Prefix '{classPrefix}' is already used by {otherType.ClassType} '{otherType.ClassName}'.");
+        }
+
+        if
+        (
+            IsInventoryFamily(classType)
+            &&
+            samePrefix.Count >
+            0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Prefix '{classPrefix}' is already used by '{samePrefix[0].ClassName}'. " +
+                "Each inventory class needs its own prefix.");
+        }
+
+        if
+        (
+            IsInventoryFamily(classType)
+        )
+        {
+            AccountClassEntity? sameType =
+                await _context
+                    .Set<AccountClassEntity>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            x.AccountClassId !=
+                            excludeId
+                            &&
+                            x.ClassType ==
+                            classType
+                    );
+
+            if
+            (
+                sameType !=
+                null
+            )
+            {
+                throw new InvalidOperationException(
+                    $"A {classType} class already exists ('{sameType.ClassName}', {sameType.ClassCode}). " +
+                    "Only one class of each inventory type is allowed.");
+            }
+        }
+    }
+
+
+    //===========================================================
+    // Validate Unique Name / Code
+    //===========================================================
+
+    private async Task EnsureUniqueAsync
+    (
+        string classCode,
+        string className,
+        long excludeId
+    )
+    {
+        string codeKey =
+            classCode.ToLower();
+
+        string nameKey =
+            className.ToLower();
+
+        bool codeTaken =
+            await _context
+                .Set<AccountClassEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.AccountClassId !=
+                        excludeId
+                        &&
+                        x.ClassCode.ToLower() ==
+                        codeKey
+                );
+
+        if
+        (
+            codeTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Class Code '{classCode}' already exists.");
+        }
+
+        bool nameTaken =
+            await _context
+                .Set<AccountClassEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.AccountClassId !=
+                        excludeId
+                        &&
+                        x.ClassName.ToLower() ==
+                        nameKey
+                );
+
+        if
+        (
+            nameTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Class '{className}' already exists.");
+        }
     }
 
 
@@ -320,44 +678,58 @@ public class AccountClassRepository : IAccountClassRepository
             long userId
         )
     {
-        string classType =
-            dto.ClassType?.Trim()
-            ??
-            string.Empty;
+        //=======================================================
+        // Validate Input
+        //=======================================================
 
-        if
-        (
-            string.IsNullOrWhiteSpace(classType)
-        )
-        {
-            classType =
-                "Account Class";
-        }
+        string classType =
+            NormalizeClassType(
+                dto.ClassType);
 
         string classPrefix =
-            string.Equals(
-                classType,
-                "Inventory Class",
-                StringComparison.OrdinalIgnoreCase)
-                    ?
-                        "INV"
-                    :
-                        "ACC";
+            NormalizePrefix(
+                dto.ClassPrefix);
 
-        string classCode =
-            dto.ClassCode?.Trim()
+        string mode =
+            NormalizeMode(
+                dto.Mode);
+
+        string className =
+            dto.ClassName?.Trim()
             ??
             string.Empty;
 
         if
         (
-            string.IsNullOrWhiteSpace(classCode)
+            string.IsNullOrWhiteSpace(className)
         )
         {
-            classCode =
-                await GetNextCodeAsync(
-                    classType);
+            throw new InvalidOperationException(
+                "Class Name is required.");
         }
+
+        await EnsurePrefixAllowedAsync(
+            classType,
+            classPrefix,
+            0);
+
+        //=======================================================
+        // Generate Code (always on the server)
+        //=======================================================
+
+        string classCode =
+            await GetNextCodeAsync(
+                classType,
+                classPrefix);
+
+        await EnsureUniqueAsync(
+            classCode,
+            className,
+            0);
+
+        //=======================================================
+        // Build Entity
+        //=======================================================
 
         AccountClassEntity entity =
             new AccountClassEntity
@@ -369,20 +741,19 @@ public class AccountClassRepository : IAccountClassRepository
                     classCode,
 
                 ClassName =
-                    dto.ClassName?.Trim()
-                    ??
-                    string.Empty,
+                    className,
 
                 Mode =
-                    dto.Mode?.Trim()
-                    ??
-                    string.Empty,
+                    mode,
 
                 ClassPrefix =
                     classPrefix,
 
+                // Inventory classes only get groups from Product Category
                 AllowManualGroupCreation =
-                    dto.AllowManualGroupCreation,
+                    IsInventoryFamily(classType)
+                        ? false
+                        : dto.AllowManualGroupCreation,
 
                 //=======================================================
                 // Configuration
@@ -441,7 +812,7 @@ public class AccountClassRepository : IAccountClassRepository
                     "Account Class Created",
 
                 ActivityDescription =
-                    $"Account Class '{entity.ClassName}' created.",
+                    $"Account Class '{entity.ClassName}' ({entity.ClassCode}) created.",
 
                 PerformedBy =
                     userId,
@@ -462,6 +833,8 @@ public class AccountClassRepository : IAccountClassRepository
 
     //===========================================================
     // Update
+    //
+    // Class Type, Prefix and Code are locked after creation.
     //===========================================================
 
     public async Task
@@ -494,53 +867,114 @@ public class AccountClassRepository : IAccountClassRepository
             );
         }
 
-        string classType =
-            dto.ClassType?.Trim()
+        //=======================================================
+        // Locked Fields
+        //=======================================================
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(dto.ClassType)
+            &&
+            !string.Equals(
+                dto.ClassType.Trim(),
+                entity.ClassType,
+                StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            throw new InvalidOperationException(
+                "Class Type cannot be changed after the Account Class is created.");
+        }
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(dto.ClassPrefix)
+            &&
+            !string.Equals(
+                dto.ClassPrefix.Trim(),
+                entity.ClassPrefix,
+                StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            throw new InvalidOperationException(
+                "Class Prefix cannot be changed after the Account Class is created.");
+        }
+
+        //=======================================================
+        // Validate Editable Fields
+        //=======================================================
+
+        string className =
+            dto.ClassName?.Trim()
             ??
             string.Empty;
 
         if
         (
-            string.IsNullOrWhiteSpace(classType)
+            string.IsNullOrWhiteSpace(className)
         )
         {
-            classType =
-                "Account Class";
+            throw new InvalidOperationException(
+                "Class Name is required.");
         }
 
-        string classPrefix =
-            string.Equals(
-                classType,
-                "Inventory Class",
+        string mode =
+            NormalizeMode(
+                dto.Mode);
+
+        await EnsureUniqueAsync(
+            entity.ClassCode,
+            className,
+            entity.AccountClassId);
+
+        //=======================================================
+        // Mode Is Locked Once Groups Exist
+        //=======================================================
+
+        if
+        (
+            !string.Equals(
+                mode,
+                entity.Mode,
                 StringComparison.OrdinalIgnoreCase)
-                    ?
-                        "INV"
-                    :
-                        "ACC";
+        )
+        {
+            bool hasGroups =
+                await _context
+                    .Set<AccountGroupEntity>()
+                    .AsNoTracking()
+                    .AnyAsync
+                    (
+                        x =>
+                            x.AccountClassId ==
+                            entity.AccountClassId
+                            &&
+                            !x.IsDeleted
+                    );
 
-        entity.ClassType =
-            classType;
+            if
+            (
+                hasGroups
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Mode cannot be changed because account groups already exist under '{entity.ClassName}'.");
+            }
+        }
 
-        entity.ClassCode =
-            dto.ClassCode?.Trim()
-            ??
-            string.Empty;
+        //=======================================================
+        // Apply
+        //=======================================================
 
         entity.ClassName =
-            dto.ClassName?.Trim()
-            ??
-            string.Empty;
+            className;
 
         entity.Mode =
-            dto.Mode?.Trim()
-            ??
-            string.Empty;
-
-        entity.ClassPrefix =
-            classPrefix;
+            mode;
 
         entity.AllowManualGroupCreation =
-            dto.AllowManualGroupCreation;
+            IsInventoryFamily(entity.ClassType)
+                ? false
+                : dto.AllowManualGroupCreation;
 
         //===========================================================
         // Configuration
@@ -765,6 +1199,31 @@ public class AccountClassRepository : IAccountClassRepository
         )
         {
             return false;
+        }
+
+        //===========================================================
+        // Restore Blocked : name / code / prefix now used elsewhere
+        //===========================================================
+
+        try
+        {
+            await EnsureUniqueAsync(
+                entity.ClassCode,
+                entity.ClassName,
+                entity.AccountClassId);
+
+            await EnsurePrefixAllowedAsync(
+                entity.ClassType,
+                entity.ClassPrefix,
+                entity.AccountClassId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Class '{entity.ClassName}' cannot be restored. {ex.Message}");
         }
 
         entity.IsDeleted =

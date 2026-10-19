@@ -49,9 +49,9 @@ public class POSAccountsRepository : IPOSAccountsRepository
 
     // POS Accounts are reserved to this Account Sub Group only.
     private const string ReservedSubGroupCode =
-        "SUB-003-002-004";
+        "SUB-002-002-004";
 
-    // Code prefix : POS-003-002-004-00001
+    // Code prefix : POS-002-002-004-00001
     private const string CodePrefix =
         "POS";
 
@@ -273,6 +273,16 @@ public class POSAccountsRepository : IPOSAccountsRepository
                 "Account Sub Group not found.");
         }
 
+        // POS Accounts live under the reserved sub group only
+        if (!string.Equals(
+                parent.SubGroupCode?.Trim(),
+                ReservedSubGroupCode,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"POS Accounts can only be created under Account Sub Group {ReservedSubGroupCode}.");
+        }
+
         string[] parentParts =
             (parent.SubGroupCode?.Trim() ?? string.Empty)
                 .Split('-', StringSplitOptions.RemoveEmptyEntries);
@@ -375,7 +385,7 @@ public class POSAccountsRepository : IPOSAccountsRepository
 
 
     //===========================================================
-    // Resolve Reserved Sub Group (SUB-003-002-004)
+    // Resolve Reserved Sub Group (SUB-002-002-004)
     //===========================================================
 
     private async Task<AccountSubGroupEntity>
@@ -854,7 +864,7 @@ public class POSAccountsRepository : IPOSAccountsRepository
     //===========================================================
     // Create
     //
-    // Sub group is always the reserved SUB-003-002-004, and the
+    // Sub group is always the reserved SUB-002-002-004, and the
     // code and name are always generated here (values sent by
     // the client are ignored).
     //===========================================================

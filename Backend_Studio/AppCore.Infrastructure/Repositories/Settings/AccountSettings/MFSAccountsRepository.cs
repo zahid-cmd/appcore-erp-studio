@@ -42,7 +42,7 @@ public class MFSAccountsRepository : IMFSAccountsRepository
 
     // MFS Accounts are reserved to this Account Sub Group only.
     private const string ReservedSubGroupCode =
-        "SUB-003-002-003";
+        "SUB-002-002-003";
 
     private const string AccountTypePersonal =
         "Personal";
@@ -297,6 +297,19 @@ public class MFSAccountsRepository : IMFSAccountsRepository
                 "Account Sub Group not found.");
         }
 
+        // MFS Accounts live under the reserved sub group only
+        if
+        (
+            !string.Equals(
+                parent.SubGroupCode?.Trim(),
+                ReservedSubGroupCode,
+                StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            throw new InvalidOperationException(
+                $"MFS Accounts can only be created under Account Sub Group {ReservedSubGroupCode}.");
+        }
+
         string[] parentParts =
             (parent.SubGroupCode?.Trim() ?? string.Empty)
                 .Split
@@ -477,7 +490,7 @@ public class MFSAccountsRepository : IMFSAccountsRepository
 
 
     //===========================================================
-    // Resolve Reserved Sub Group (SUB-003-002-003)
+    // Resolve Reserved Sub Group (SUB-002-002-003)
     //===========================================================
 
     private async Task<AccountSubGroupEntity>
@@ -895,7 +908,7 @@ public class MFSAccountsRepository : IMFSAccountsRepository
     //===========================================================
     // Create
     //
-    // Sub group is always the reserved SUB-003-002-003 and the
+    // Sub group is always the reserved SUB-002-002-003 and the
     // code is always generated here (values sent are ignored).
     //===========================================================
 

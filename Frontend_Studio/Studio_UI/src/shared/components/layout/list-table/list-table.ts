@@ -47,6 +47,7 @@ export type ListTableColumnType =
   | 'serial'
   | 'status'
   | 'boolean'
+  | 'image'
   | 'operation'
   | 'actions';
 
@@ -697,6 +698,8 @@ private readonly navigationContextSubscription =
       column.type === 'actions'
       ||
       column.type === 'operation'
+      ||
+      column.type === 'image'
     )
     {
       return;
@@ -755,6 +758,50 @@ private readonly navigationContextSubscription =
     any
   {
     return row[column.field];
+  }
+
+
+  /* =====================================================
+     IMAGE VALUE
+
+     'image' columns : the row field holds a full image URL.
+     Empty / broken images fall back to a placeholder icon.
+  ====================================================== */
+
+  private readonly brokenImages =
+    new Set<string>();
+
+
+  getImageValue(
+    row: any,
+    column: ListTableColumn
+  ):
+    string
+  {
+    const value =
+      String(row?.[column.field] ?? '').trim();
+
+    return value && !this.brokenImages.has(value)
+      ? value
+      : '';
+  }
+
+
+  onImageError(
+    row: any,
+    column: ListTableColumn
+  ):
+    void
+  {
+    const value =
+      String(row?.[column.field] ?? '').trim();
+
+    if (value)
+    {
+      this.brokenImages.add(value);
+
+      this.cdr.markForCheck();
+    }
   }
 
 

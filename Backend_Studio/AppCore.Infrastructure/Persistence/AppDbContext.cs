@@ -557,16 +557,6 @@ public class AppDbContext
 
 
 
-    // AUTO-BEGIN : ProductCategory
-
-    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory>
-    ProductCategorys
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : ProductCategory
 
     // AUTO-BEGIN : AccountSubGroup
 
@@ -579,16 +569,6 @@ public class AppDbContext
 
     // AUTO-END : AccountSubGroup
 
-    // AUTO-BEGIN : ProductSubCategory
-
-    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory>
-    ProductSubCategorys
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : ProductSubCategory
 
     // AUTO-BEGIN : GeneralLedgers
 
@@ -601,16 +581,6 @@ public class AppDbContext
 
     // AUTO-END : GeneralLedgers
 
-    // AUTO-BEGIN : ProductMaster
-
-    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductMaster>
-    ProductMasters
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : ProductMaster
 
 
 
@@ -644,28 +614,8 @@ public class AppDbContext
 
 
 
-    // AUTO-BEGIN : BankAccounts
-
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>
-    BankAccountss
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : BankAccounts
 
 
-    // AUTO-BEGIN : MFSAccounts
-
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.MFSAccounts>
-    MFSAccountss
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : MFSAccounts
 
     // AUTO-BEGIN : CardSetup
 
@@ -679,27 +629,7 @@ public class AppDbContext
     // AUTO-END : CardSetup
 
 
-    // AUTO-BEGIN : POSAccounts
 
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.POSAccounts>
-    POSAccountss
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : POSAccounts
-
-    // AUTO-BEGIN : CardCharges
-
-    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CardCharges>
-    CardChargess
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : CardCharges
 
     // AUTO-BEGIN : FinancialYears
 
@@ -723,7 +653,294 @@ public class AppDbContext
 
     // AUTO-END : SystemConfigurations
 
+
+
+
+    // AUTO-BEGIN : ColorManagement
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ColorManagement>
+    ColorManagements
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ColorManagement
+
+    // AUTO-BEGIN : BankAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts>
+    BankAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BankAccounts
+
+    // AUTO-BEGIN : MFSAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.MFSAccounts>
+    MFSAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MFSAccounts
+
+    // AUTO-BEGIN : POSAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.POSAccounts>
+    POSAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : POSAccounts
+
+    // AUTO-BEGIN : CardCharges
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CardCharges>
+    CardChargess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CardCharges
+
+
+    // AUTO-BEGIN : ProductSubCategory
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory>
+    ProductSubCategorys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductSubCategory
+
+
+
+    // AUTO-BEGIN : BrandManagement
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement>
+    BrandManagements
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BrandManagement
+
+    // AUTO-BEGIN : ProductCategory
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory>
+    ProductCategorys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductCategory
+
+    // AUTO-BEGIN : MotorBikes
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.MotorBikes>
+    MotorBikess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MotorBikes
+
+
+
+    // AUTO-BEGIN : SpareParts
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.SpareParts>
+    SparePartss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SpareParts
+
+    // AUTO-BEGIN : RackManagement
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.RackManagement>
+    RackManagements
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : RackManagement
+
+    // AUTO-BEGIN : Accessories
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.Accessories>
+    Accessoriess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Accessories
+
+    // AUTO-BEGIN : BusinessConfiguration
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.BusinessConfiguration>
+    BusinessConfigurations
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BusinessConfiguration
+
+
+    // AUTO-BEGIN : ServiceCategory
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ServiceCategory>
+    ServiceCategorys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ServiceCategory
+
+
+    // AUTO-BEGIN : ServicePolicy
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ServicePolicy>
+    ServicePolicys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ServicePolicy
+
+
+    // AUTO-BEGIN : ServiceSubCategory
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ServiceSubCategory>
+    ServiceSubCategorys
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ServiceSubCategory
+
+
+    // AUTO-BEGIN : ScheduledServices
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ScheduledServices>
+    ScheduledServicess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ScheduledServices
+
+
+    // AUTO-BEGIN : LaborChart
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.LaborChart>
+    LaborCharts
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : LaborChart
+
+
+    // AUTO-BEGIN : CustomizedServices
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.CustomizedServices>
+    CustomizedServicess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CustomizedServices
+
+    // AUTO-BEGIN : MembershipServices
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.MembershipServices>
+    MembershipServicess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MembershipServices
+
+    // AUTO-BEGIN : ChartOfServices
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ChartOfServices>
+    ChartOfServicess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ChartOfServices
+
     // AUTO-END : AUTO REGISTER DBSETS
+
+
+    //===========================================================
+    // MANUAL DBSETS
+    //
+    // Entities without a page of their own (link tables), so
+    // Code Synchronization does not register them. Keep this
+    // block OUTSIDE the AUTO-BEGIN / AUTO-END markers.
+    //===========================================================
+
+    // Spare Part ↔ Warehouse / Rack / Shelf (one row per warehouse)
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.SparePartLocations>
+    SparePartLocationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Accessory ↔ Warehouse / Rack / Shelf (one row per warehouse)
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.AccessoryLocations>
+    AccessoryLocationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Wing → core business line(s) (Business Configuration page)
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WingBusinessLines>
+    WingBusinessLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Policy → its ordered free / paid services (Service Schedule)
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ServicePolicySchedule>
+    ServicePolicyScheduleRows
+    {
+    get;
+    set;
+    } = null!;
+
 
     //===========================================================
     // Configure Entity Models

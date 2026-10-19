@@ -30,10 +30,36 @@ namespace AppCore.Infrastructure.Configurations.Settings.AccountSettings;
 
 //===============================================================
 // Account Group Repository
+//
+// Code      : GRP-<ccc>-<ggg>          e.g. GRP-001-001
+//             ccc = the number part of the parent class code
+//                   (CLS-001 → 001, CLS-002 → 002)
+//             ggg = the group's own number inside that class
+// Numbering : restarts at 001 for every Account Class. Deleted
+//             rows are included, so a number is never reused and
+//             a restore can never clash.
+// Parent    : only classes of type 'Account' that are active and
+//             allow manual group creation. Groups of the
+//             Inventory / WIP / COGS classes are created from
+//             Product Category, never from this page.
+// Locked    : the parent class (and so the code) cannot change
+//             after the group is saved.
+// Name      : unique within its class.
 //===============================================================
 
 public class AccountGroupRepository : IAccountGroupRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    private const string GroupPrefix =
+        "GRP";
+
+    private const string AccountClassType =
+        "Account";
+
+
     //===========================================================
     // Private Fields
     //===========================================================
@@ -157,6 +183,7 @@ public class AccountGroupRepository : IAccountGroupRepository
             );
     }
 
+
     //===========================================================
     // Get All
     //===========================================================
@@ -195,17 +222,18 @@ public class AccountGroupRepository : IAccountGroupRepository
 
 
     //===========================================================
-    // Get Next Code
+    // Resolve Parent Class For A New Group
+    //
+    // The class must exist, be of type 'Account', be active and
+    // allow manual group creation.
     //===========================================================
 
-    public async Task<string>
-        GetNextCodeAsync(
-            long accountClassId)
+    private async Task<AccountClassEntity>
+        ResolveParentClassAsync
+        (
+            long accountClassId
+        )
     {
-        //=======================================================
-        // Resolve Account Class
-        //=======================================================
-
         AccountClassEntity? accountClass =
             await _context
                 .Set<AccountClassEntity>()
@@ -226,14 +254,22 @@ public class AccountGroupRepository : IAccountGroupRepository
         )
         {
             throw new KeyNotFoundException(
-                "Account Class not found."
-            );
+                "Account Class not found.");
         }
 
 
-        //=======================================================
-        // Validate Manual Group Creation
-        //=======================================================
+        if
+        (
+            !string.Equals(
+                accountClass.ClassType?.Trim(),
+                AccountClassType,
+                StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            throw new InvalidOperationException(
+                $"Groups of the {accountClass.ClassType} class '{accountClass.ClassName}' are created from Product Category, not from Account Group.");
+        }
+
 
         if
         (
@@ -241,8 +277,7 @@ public class AccountGroupRepository : IAccountGroupRepository
         )
         {
             throw new InvalidOperationException(
-                "The selected Account Class is inactive."
-            );
+                "The selected Account Class is inactive.");
         }
 
 
@@ -252,65 +287,73 @@ public class AccountGroupRepository : IAccountGroupRepository
         )
         {
             throw new InvalidOperationException(
-                "Manual Account Group creation is not allowed for the selected Account Class."
-            );
+                "Manual Account Group creation is not allowed for the selected Account Class.");
         }
 
 
-        //=======================================================
-        // Resolve Class Sequence
-        //=======================================================
+        return accountClass;
+    }
 
-        string classCode =
-            accountClass.ClassCode?.Trim()
-            ??
-            string.Empty;
 
-        string[] classCodeParts =
-            classCode.Split(
-                '-',
-                StringSplitOptions.RemoveEmptyEntries);
+    //===========================================================
+    // Class Sequence From Class Code
+    //
+    // CLS-001 → 1. The number part is always the last segment.
+    //===========================================================
+
+    private static int ResolveClassSequence
+    (
+        string? classCode
+    )
+    {
+        string[] parts =
+            (classCode ?? string.Empty)
+                .Trim()
+                .Split(
+                    '-',
+                    StringSplitOptions.RemoveEmptyEntries);
 
         if
         (
-            classCodeParts.Length !=
+            parts.Length !=
             2
-        )
-        {
-            throw new InvalidOperationException(
-                "Invalid Account Class code."
-            );
-        }
-
-
-        if
-        (
+            ||
             !int.TryParse(
-                classCodeParts[1].Trim(),
+                parts[1].Trim(),
                 out int classSequenceNo)
             ||
             classSequenceNo < 1
         )
         {
             throw new InvalidOperationException(
-                "Invalid Account Class sequence number."
-            );
+                $"Invalid Account Class code '{classCode}'.");
         }
 
+        return classSequenceNo;
+    }
 
-        //=======================================================
-        // Existing Group Codes
-        //=======================================================
 
-        List<string> existingCodes =
+    //===========================================================
+    // Highest Group Sequence Within A Class
+    //
+    // Reads the last part of every GRP-ccc-ggg code under this
+    // class, deleted rows included.
+    //===========================================================
+
+    private async Task<int>
+        GetHighestSequenceAsync
+        (
+            long accountClassId,
+            int classSequenceNo
+        )
+    {
+        List<string> codes =
             await _context
                 .Set<AccountGroupEntity>()
                 .AsNoTracking()
                 .Where
                 (
                     x =>
-                        !x.IsDeleted
-                        &&
                         x.AccountClassId ==
                         accountClassId
                 )
@@ -322,9 +365,8 @@ public class AccountGroupRepository : IAccountGroupRepository
                 .ToListAsync();
 
 
-        //=======================================================
-        // Resolve Highest Group Sequence
-        //=======================================================
+        string classPart =
+            classSequenceNo.ToString("D3");
 
         int highestSequenceNo =
             0;
@@ -332,7 +374,7 @@ public class AccountGroupRepository : IAccountGroupRepository
         foreach
         (
             string code
-            in existingCodes
+            in codes
         )
         {
             if
@@ -352,28 +394,14 @@ public class AccountGroupRepository : IAccountGroupRepository
             (
                 parts.Length !=
                 3
-            )
-            {
-                continue;
-            }
-
-            if
-            (
+                ||
                 !string.Equals(
                     parts[0].Trim(),
-                    "GRP",
+                    GroupPrefix,
                     StringComparison.OrdinalIgnoreCase)
-            )
-            {
-                continue;
-            }
-
-            if
-            (
-                !string.Equals(
-                    parts[1].Trim(),
-                    classSequenceNo.ToString("D3"),
-                    StringComparison.OrdinalIgnoreCase)
+                ||
+                parts[1].Trim() !=
+                classPart
             )
             {
                 continue;
@@ -394,23 +422,59 @@ public class AccountGroupRepository : IAccountGroupRepository
             }
         }
 
+        return highestSequenceNo;
+    }
 
-        //=======================================================
-        // Generate Next Group Code
-        //=======================================================
 
-        int nextSequenceNo =
-            highestSequenceNo +
-            1;
+    //===========================================================
+    // Build Next Code For A Resolved Class
+    //===========================================================
+
+    private async Task<string>
+        BuildNextCodeAsync
+        (
+            AccountClassEntity accountClass
+        )
+    {
+        int classSequenceNo =
+            ResolveClassSequence(
+                accountClass.ClassCode);
+
+        int highestSequenceNo =
+            await GetHighestSequenceAsync(
+                accountClass.AccountClassId,
+                classSequenceNo);
 
         return CodeGenerator.GenerateAccountGroupCode(
             classSequenceNo,
-            nextSequenceNo);
+            highestSequenceNo + 1);
+    }
+
+
+    //===========================================================
+    // Get Next Code
+    //===========================================================
+
+    public async Task<string>
+        GetNextCodeAsync
+        (
+            long accountClassId
+        )
+    {
+        AccountClassEntity accountClass =
+            await ResolveParentClassAsync(
+                accountClassId);
+
+        return await BuildNextCodeAsync(
+            accountClass);
     }
 
 
     //===========================================================
     // Get Defaults
+    //
+    // Next code of the first class a group can be created under
+    // (empty when there is none yet).
     //===========================================================
 
     public async Task<AccountGroupDefaultsDto>
@@ -428,6 +492,9 @@ public class AccountGroupRepository : IAccountGroupRepository
                         x.IsActive
                         &&
                         x.AllowManualGroupCreation
+                        &&
+                        x.ClassType ==
+                        AccountClassType
                 )
                 .OrderBy
                 (
@@ -444,16 +511,130 @@ public class AccountGroupRepository : IAccountGroupRepository
         {
             return new AccountGroupDefaultsDto
             {
-                Code = string.Empty
+                Code =
+                    string.Empty
             };
         }
 
         return new AccountGroupDefaultsDto
         {
             Code =
-                await GetNextCodeAsync(
-                    accountClass.AccountClassId)
+                await BuildNextCodeAsync(
+                    accountClass)
         };
+    }
+
+
+    //===========================================================
+    // Normalize Group Name
+    //===========================================================
+
+    private static string NormalizeGroupName
+    (
+        string? groupName
+    )
+    {
+        string name =
+            groupName?.Trim()
+            ??
+            string.Empty;
+
+        if
+        (
+            string.IsNullOrWhiteSpace(name)
+        )
+        {
+            throw new InvalidOperationException(
+                "Group Name is required.");
+        }
+
+        if
+        (
+            name.Length >
+            200
+        )
+        {
+            throw new InvalidOperationException(
+                "Group Name cannot be longer than 200 characters.");
+        }
+
+        return name;
+    }
+
+
+    //===========================================================
+    // Validate Unique Name / Code
+    //
+    // Group Name is unique within its class; Group Code is
+    // unique everywhere. Only non-deleted rows are compared.
+    //===========================================================
+
+    private async Task
+        EnsureUniqueAsync
+        (
+            long accountClassId,
+            string groupCode,
+            string groupName,
+            long excludeId
+        )
+    {
+        string lowerName =
+            groupName.ToLower();
+
+        AccountGroupEntity? sameName =
+            await _context
+                .Set<AccountGroupEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.AccountGroupId !=
+                        excludeId
+                        &&
+                        x.AccountClassId ==
+                        accountClassId
+                        &&
+                        x.GroupName.ToLower() ==
+                        lowerName
+                );
+
+        if
+        (
+            sameName !=
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Group '{groupName}' already exists in this class ({sameName.GroupCode}).");
+        }
+
+
+        bool codeTaken =
+            await _context
+                .Set<AccountGroupEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.AccountGroupId !=
+                        excludeId
+                        &&
+                        x.GroupCode ==
+                        groupCode
+                );
+
+        if
+        (
+            codeTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Group Code '{groupCode}' is already in use.");
+        }
     }
 
 
@@ -472,63 +653,34 @@ public class AccountGroupRepository : IAccountGroupRepository
         // Resolve Account Class
         //=======================================================
 
-        AccountClassEntity? accountClass =
-            await _context
-                .Set<AccountClassEntity>()
-                .FirstOrDefaultAsync
-                (
-                    x =>
-                        x.AccountClassId ==
-                        dto.AccountClassId
-                        &&
-                        !x.IsDeleted
-                );
-
-        if
-        (
-            accountClass ==
-            null
-        )
-        {
-            throw new KeyNotFoundException(
-                "Account Class not found."
-            );
-        }
+        AccountClassEntity accountClass =
+            await ResolveParentClassAsync(
+                dto.AccountClassId);
 
 
         //=======================================================
-        // Validate Account Class
+        // Validate
         //=======================================================
 
-        if
-        (
-            !accountClass.IsActive
-        )
-        {
-            throw new InvalidOperationException(
-                "The selected Account Class is inactive."
-            );
-        }
-
-
-        if
-        (
-            !accountClass.AllowManualGroupCreation
-        )
-        {
-            throw new InvalidOperationException(
-                "Manual Account Group creation is not allowed for the selected Account Class."
-            );
-        }
+        string groupName =
+            NormalizeGroupName(
+                dto.GroupName);
 
 
         //=======================================================
-        // Generate Group Code
+        // Generate Group Code (server side, never from the form)
         //=======================================================
 
         string groupCode =
-            await GetNextCodeAsync(
-                accountClass.AccountClassId);
+            await BuildNextCodeAsync(
+                accountClass);
+
+
+        await EnsureUniqueAsync(
+            accountClass.AccountClassId,
+            groupCode,
+            groupName,
+            0);
 
 
         //=======================================================
@@ -551,9 +703,7 @@ public class AccountGroupRepository : IAccountGroupRepository
                     groupCode,
 
                 GroupName =
-                    dto.GroupName?.Trim()
-                    ??
-                    string.Empty,
+                    groupName,
 
                 AllowManualSubGroup =
                     dto.AllowManualSubGroup,
@@ -617,7 +767,7 @@ public class AccountGroupRepository : IAccountGroupRepository
                     "Account Group Created",
 
                 ActivityDescription =
-                    $"Account Group '{entity.GroupName}' created.",
+                    $"Account Group '{entity.GroupName}' ({entity.GroupCode}) created.",
 
                 PerformedBy =
                     userId,
@@ -670,82 +820,80 @@ public class AccountGroupRepository : IAccountGroupRepository
         )
         {
             throw new KeyNotFoundException(
-                "Account Group not found."
-            );
+                "Account Group not found.");
         }
 
 
         //=======================================================
-        // Resolve Account Class
+        // Parent Class Is Locked
+        //
+        // The code is built from the class number, so moving a
+        // group to another class would break its code.
+        //=======================================================
+
+        if
+        (
+            dto.AccountClassId > 0
+            &&
+            dto.AccountClassId !=
+            entity.AccountClassId
+        )
+        {
+            throw new InvalidOperationException(
+                "Account Class cannot be changed after the group is created.");
+        }
+
+
+        //=======================================================
+        // Refresh Class Snapshot (Mode / Class Code)
         //=======================================================
 
         AccountClassEntity? accountClass =
             await _context
                 .Set<AccountClassEntity>()
+                .AsNoTracking()
                 .FirstOrDefaultAsync
                 (
                     x =>
                         x.AccountClassId ==
-                        dto.AccountClassId
-                        &&
-                        !x.IsDeleted
+                        entity.AccountClassId
                 );
 
         if
         (
-            accountClass ==
+            accountClass !=
             null
         )
         {
-            throw new KeyNotFoundException(
-                "Account Class not found."
-            );
+            entity.ClassCode =
+                accountClass.ClassCode;
+
+            entity.Mode =
+                accountClass.Mode;
         }
 
 
         //=======================================================
-        // Validate Account Class
+        // Validate
         //=======================================================
 
-        if
-        (
-            !accountClass.IsActive
-        )
-        {
-            throw new InvalidOperationException(
-                "The selected Account Class is inactive."
-            );
-        }
+        string groupName =
+            NormalizeGroupName(
+                dto.GroupName);
 
-
-        if
-        (
-            !accountClass.AllowManualGroupCreation
-        )
-        {
-            throw new InvalidOperationException(
-                "Manual Account Group creation is not allowed for the selected Account Class."
-            );
-        }
+        await EnsureUniqueAsync(
+            entity.AccountClassId,
+            entity.GroupCode,
+            groupName,
+            entity.AccountGroupId);
 
 
         //=======================================================
         // Update Entity
         //=======================================================
 
-        entity.AccountClassId =
-            accountClass.AccountClassId;
-
-        entity.ClassCode =
-            accountClass.ClassCode;
-
-        entity.Mode =
-            accountClass.Mode;
-
         entity.GroupName =
-            dto.GroupName?.Trim()
-            ??
-            string.Empty;
+            groupName;
 
         entity.AllowManualSubGroup =
             dto.AllowManualSubGroup;
@@ -800,7 +948,7 @@ public class AccountGroupRepository : IAccountGroupRepository
                     "Account Group Updated",
 
                 ActivityDescription =
-                    $"Account Group '{entity.GroupName}' updated.",
+                    $"Account Group '{entity.GroupName}' ({entity.GroupCode}) updated.",
 
                 PerformedBy =
                     userId,
@@ -851,8 +999,7 @@ public class AccountGroupRepository : IAccountGroupRepository
         )
         {
             throw new KeyNotFoundException(
-                "Account Group not found."
-            );
+                "Account Group not found.");
         }
 
 
@@ -886,8 +1033,7 @@ public class AccountGroupRepository : IAccountGroupRepository
             throw new InvalidOperationException(
                 $"Account Group '{entity.GroupName}' cannot be deleted because " +
                 $"{accountSubGroupCount} account sub group(s) are created under it. " +
-                "Delete those account sub groups first."
-            );
+                "Delete those account sub groups first.");
         }
 
 
@@ -930,7 +1076,7 @@ public class AccountGroupRepository : IAccountGroupRepository
                     "Account Group Deleted",
 
                 ActivityDescription =
-                    $"Account Group '{entity.GroupName}' deleted.",
+                    $"Account Group '{entity.GroupName}' ({entity.GroupCode}) deleted.",
 
                 PerformedBy =
                     userId,
@@ -949,6 +1095,9 @@ public class AccountGroupRepository : IAccountGroupRepository
 
     //===========================================================
     // Restore
+    //
+    // Restores the most recently deleted group. Blocked (409)
+    // while its class is deleted, or its name / code is taken.
     //===========================================================
 
     public async Task<bool>
@@ -979,6 +1128,56 @@ public class AccountGroupRepository : IAccountGroupRepository
         )
         {
             return false;
+        }
+
+
+        //=======================================================
+        // Parent Class Must Exist
+        //=======================================================
+
+        bool classExists =
+            await _context
+                .Set<AccountClassEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        x.AccountClassId ==
+                        entity.AccountClassId
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            !classExists
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Group '{entity.GroupName}' cannot be restored. " +
+                "Its Account Class is deleted; restore the class first.");
+        }
+
+
+        //=======================================================
+        // Name / Code Must Be Free
+        //=======================================================
+
+        try
+        {
+            await EnsureUniqueAsync(
+                entity.AccountClassId,
+                entity.GroupCode,
+                entity.GroupName,
+                entity.AccountGroupId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            throw new InvalidOperationException(
+                $"Account Group '{entity.GroupName}' cannot be restored. {ex.Message}");
         }
 
 
@@ -1023,7 +1222,7 @@ public class AccountGroupRepository : IAccountGroupRepository
                     "Account Group Restored",
 
                 ActivityDescription =
-                    $"Account Group '{entity.GroupName}' restored.",
+                    $"Account Group '{entity.GroupName}' ({entity.GroupCode}) restored.",
 
                 PerformedBy =
                     userId,

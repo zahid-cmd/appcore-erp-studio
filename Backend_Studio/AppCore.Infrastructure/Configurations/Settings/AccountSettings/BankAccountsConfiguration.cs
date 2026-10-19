@@ -70,8 +70,11 @@ public class BankAccountsConfiguration
                .IsRequired()
                .HasMaxLength(30);
 
+        // Unique among non-deleted rows only
         builder.HasIndex(x => x.BankAccountCode)
-               .IsUnique();
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_BankAccounts_BankAccountCode");
 
         //===========================================================
         // Bank Account Name
@@ -80,6 +83,12 @@ public class BankAccountsConfiguration
         builder.Property(x => x.BankAccountName)
                .IsRequired()
                .HasMaxLength(200);
+
+        // Unique within a branch, among non-deleted rows only
+        builder.HasIndex(x => new { x.Branch, x.BankAccountName })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false")
+               .HasDatabaseName("IX_BankAccounts_Branch_BankAccountName");
 
         //===========================================================
         // Remarks
@@ -93,8 +102,7 @@ public class BankAccountsConfiguration
         //===========================================================
 
         builder.Property(x => x.Status)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Branch
@@ -116,16 +124,14 @@ public class BankAccountsConfiguration
         //===========================================================
 
         builder.Property(x => x.CollectionAccount)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Payment Account
         //===========================================================
 
         builder.Property(x => x.PaymentAccount)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Bank
@@ -186,8 +192,7 @@ public class BankAccountsConfiguration
         //===========================================================
 
         builder.Property(x => x.BranchExclusive)
-               .IsRequired()
-               .HasDefaultValue(false);
+               .IsRequired();
 
         //===========================================================
         // Bank Branch Name
@@ -196,6 +201,14 @@ public class BankAccountsConfiguration
         builder.Property(x => x.BankBranchName)
                .IsRequired()
                .HasMaxLength(100);
+
+
+        //===========================================================
+        // Sanction Limit (optional; Liability For Finance only)
+        //===========================================================
+
+        builder.Property(x => x.SanctionLimit)
+               .HasPrecision(18, 2);
 
         //===========================================================
         // Soft Delete

@@ -1,0 +1,603 @@
+/* =====================================================
+   FORM MODAL (shared) — premium
+   Light header with soft glow, floating icon, gradient
+   hairline border, frosted footer. No scrolling: dropdown panels
+   open freely past the bottom edge.
+===================================================== */
+
+
+/* -----------------------------------------------------
+   BACKDROP : dim navy, no blur
+----------------------------------------------------- */
+
+.form-modal-backdrop
+{
+    position:fixed;
+
+    inset:0;
+
+    z-index:1050;
+
+    display:flex;
+
+    /* a modal taller than the screen starts at the top and the
+       backdrop scrolls, so the header is never cut off */
+    align-items:flex-start;
+
+    justify-content:center;
+
+    padding:24px 16px;
+
+    overflow-y:auto;
+
+    background:rgba(6, 12, 32, 0.45);
+
+    /* no blur : the page behind stays sharp */
+    backdrop-filter:none;
+
+    -webkit-backdrop-filter:none;
+
+    animation:form-modal-fade 0.2s ease-out;
+}
+
+
+/* -----------------------------------------------------
+   DIALOG : gradient hairline border
+----------------------------------------------------- */
+
+.form-modal
+{
+    position:relative;
+
+    max-width:100%;
+
+    /* centred when it fits, top-aligned when taller */
+    margin:auto 0;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    border:1px solid transparent;
+
+    border-radius:20px;
+
+    background:
+        linear-gradient(#ffffff, #ffffff) padding-box,
+        linear-gradient(140deg, rgba(96, 165, 250, 0.9), rgba(167, 139, 250, 0.55) 45%, rgba(226, 232, 240, 0.9) 70%) border-box;
+
+    box-shadow:
+        0 30px 80px -10px rgba(6, 12, 32, 0.55),
+        0 12px 28px rgba(6, 12, 32, 0.18);
+
+    /* visible : dropdown panels inside the body must not be cut off */
+    overflow:visible;
+
+    animation:form-modal-rise 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* -----------------------------------------------------
+   HEADER : light, soft blue / lavender
+----------------------------------------------------- */
+
+.form-modal-header
+{
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    padding:22px 22px 24px;
+
+    border-radius:19px 19px 0 0;
+
+    background:linear-gradient(125deg, #ffffff 0%, #f1f6ff 50%, #e6eeff 100%);
+
+    border-bottom:1px solid #e3eaf7;
+
+    color:#0f172a;
+
+    overflow:hidden;
+
+    isolation:isolate;
+}
+
+
+/* glowing colour blobs */
+.form-modal-aurora
+{
+    position:absolute;
+
+    z-index:-1;
+
+    border-radius:50%;
+
+    filter:blur(30px);
+
+    pointer-events:none;
+}
+
+
+.form-modal-aurora-a
+{
+    width:220px;
+
+    height:140px;
+
+    top:-70px;
+
+    right:-40px;
+
+    background:rgba(147, 197, 253, 0.45);
+}
+
+
+.form-modal-aurora-b
+{
+    width:180px;
+
+    height:110px;
+
+    bottom:-80px;
+
+    left:30%;
+
+    background:rgba(196, 181, 253, 0.40);
+}
+
+
+/* fine dot grid, fading to the left */
+.form-modal-dots
+{
+    position:absolute;
+
+    inset:0;
+
+    z-index:-1;
+
+    background-image:radial-gradient(rgba(37, 99, 235, 0.14) 1px, transparent 1.2px);
+
+    background-size:14px 14px;
+
+    -webkit-mask-image:linear-gradient(270deg, #000 0%, transparent 70%);
+
+    mask-image:linear-gradient(270deg, #000 0%, transparent 70%);
+
+    pointer-events:none;
+}
+
+
+/* shimmering accent line under the header */
+.form-modal-header::after
+{
+    content:'';
+
+    position:absolute;
+
+    left:0;
+
+    right:0;
+
+    bottom:0;
+
+    height:2px;
+
+    background:linear-gradient(90deg, #60a5fa, #818cf8, #c4b5fd, #818cf8, #60a5fa);
+
+    background-size:200% 100%;
+
+    animation:form-modal-shimmer 6s linear infinite;
+}
+
+
+/* icon : glass ring + bright core */
+.form-modal-icon
+{
+    width:52px;
+
+    height:52px;
+
+    flex-shrink:0;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:4px;
+
+    border-radius:16px;
+
+    border:1px solid #dbe5fb;
+
+    background:#ffffff;
+
+    box-shadow:0 8px 18px -4px rgba(37, 99, 235, 0.30);
+}
+
+
+.form-modal-icon-core
+{
+    width:100%;
+
+    height:100%;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:12px;
+
+    background:linear-gradient(145deg, #60a5fa, #2563eb 55%, #4338ca);
+
+    color:#ffffff;
+
+    font-size:18px;
+
+    text-shadow:0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+
+.form-modal-titles
+{
+    flex:1;
+
+    min-width:0;
+}
+
+
+.form-modal-title
+{
+    font-size:17px;
+
+    font-weight:700;
+
+    letter-spacing:0.2px;
+
+    line-height:1.25;
+
+    color:#0f172a;
+}
+
+
+.form-modal-subtitle
+{
+    margin-top:4px;
+
+    font-size:12px;
+
+    line-height:1.4;
+
+    color:#64748b;
+}
+
+
+.form-modal-close
+{
+    width:34px;
+
+    height:34px;
+
+    flex-shrink:0;
+
+    align-self:flex-start;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:1px solid #dbe3ef;
+
+    border-radius:50%;
+
+    background:#ffffff;
+
+    color:#64748b;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    transition:background 0.2s, transform 0.25s, border-color 0.2s;
+}
+
+
+.form-modal-close:hover:not(:disabled)
+{
+    border-color:#fecaca;
+
+    background:#fef2f2;
+
+    color:#dc2626;
+
+    transform:rotate(90deg);
+}
+
+
+.form-modal-close:disabled
+{
+    opacity:0.5;
+
+    cursor:not-allowed;
+}
+
+
+/* -----------------------------------------------------
+   BODY : no scroll (dropdown panels open freely)
+----------------------------------------------------- */
+
+.form-modal-body
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+    padding:22px 24px 20px;
+
+    background:
+        linear-gradient(180deg, #f5f8ff 0%, #ffffff 90px);
+
+    overflow:visible;
+}
+
+
+/* Every projected control fills the full width, so all
+   dropdowns / textboxes / textareas line up at the same width */
+.form-modal-body ::ng-deep app-dropdown,
+.form-modal-body ::ng-deep app-search-dropdown,
+.form-modal-body ::ng-deep app-textbox,
+.form-modal-body ::ng-deep app-textarea
+{
+    display:block;
+
+    width:100%;
+
+    max-width:100%;
+
+    min-width:0;
+
+    margin:0;
+}
+
+
+.form-modal-body ::ng-deep app-dropdown > *,
+.form-modal-body ::ng-deep app-search-dropdown > *,
+.form-modal-body ::ng-deep app-textbox > *,
+.form-modal-body ::ng-deep app-textarea > *,
+.form-modal-body ::ng-deep app-textarea textarea,
+.form-modal-body ::ng-deep app-textbox input
+{
+    width:100% !important;
+
+    max-width:100% !important;
+
+    min-width:0;
+
+    box-sizing:border-box;
+}
+
+
+/* -----------------------------------------------------
+   FOOTER : frosted bar
+----------------------------------------------------- */
+
+.form-modal-footer
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:14px 24px 16px;
+
+    border-top:1px solid #edf1f7;
+
+    border-radius:0 0 19px 19px;
+
+    background:linear-gradient(180deg, #fbfcfe, #f3f6fb);
+}
+
+
+.form-modal-footer-left
+{
+    flex:1;
+
+    min-width:0;
+
+    font-size:12px;
+
+    line-height:1.4;
+
+    color:#b45309;
+}
+
+
+.form-modal-btn
+{
+    position:relative;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    min-width:104px;
+
+    height:40px;
+
+    padding:0 20px;
+
+    border-radius:999px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    letter-spacing:0.3px;
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    transition:box-shadow 0.2s, transform 0.12s, background 0.2s, border-color 0.2s;
+}
+
+
+.form-modal-btn:active:not(:disabled)
+{
+    transform:translateY(1px) scale(0.99);
+}
+
+
+.form-modal-btn:disabled
+{
+    opacity:0.45;
+
+    cursor:not-allowed;
+
+    box-shadow:none;
+}
+
+
+.form-modal-btn-cancel
+{
+    border:1px solid #d8dfea;
+
+    background:#ffffff;
+
+    color:#475569;
+}
+
+
+.form-modal-btn-cancel:hover:not(:disabled)
+{
+    border-color:#b6c2d4;
+
+    color:#0f172a;
+}
+
+
+.form-modal-btn-save
+{
+    border:1px solid transparent;
+
+    background:linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #4f46e5 100%);
+
+    color:#ffffff;
+
+    box-shadow:
+        0 8px 20px -4px rgba(37, 99, 235, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+
+/* light sweep on hover */
+.form-modal-btn-save::after
+{
+    content:'';
+
+    position:absolute;
+
+    top:0;
+
+    left:-60%;
+
+    width:40%;
+
+    height:100%;
+
+    background:linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+
+    transform:skewX(-20deg);
+
+    transition:left 0.55s ease;
+}
+
+
+.form-modal-btn-save:hover:not(:disabled)
+{
+    box-shadow:
+        0 12px 26px -4px rgba(37, 99, 235, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+
+.form-modal-btn-save:hover:not(:disabled)::after
+{
+    left:120%;
+}
+
+
+/* -----------------------------------------------------
+   ANIMATION
+----------------------------------------------------- */
+
+@keyframes form-modal-fade
+{
+    from { opacity:0; }
+
+    to   { opacity:1; }
+}
+
+
+@keyframes form-modal-rise
+{
+    from { opacity:0; transform:translateY(22px) scale(0.97); }
+
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+
+@keyframes form-modal-shimmer
+{
+    from { background-position:0% 0; }
+
+    to   { background-position:200% 0; }
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .form-modal,
+    .form-modal-backdrop,
+    .form-modal-header::after
+    {
+        animation:none;
+    }
+}
+
+
+@media (max-width: 560px)
+{
+    .form-modal-footer
+    {
+        flex-wrap:wrap;
+    }
+
+    .form-modal-footer-left
+    {
+        flex-basis:100%;
+    }
+
+    .form-modal-btn
+    {
+        flex:1;
+    }
+}

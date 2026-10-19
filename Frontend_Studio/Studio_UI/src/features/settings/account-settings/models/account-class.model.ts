@@ -156,6 +156,10 @@ export interface UpdateAccountClass
 
 export interface AccountClassDefaults
 {
+    // Last prefix used by Account Classes (empty on a fresh database)
+    ClassPrefix:
+        string;
+
     Code:
         string;
 }

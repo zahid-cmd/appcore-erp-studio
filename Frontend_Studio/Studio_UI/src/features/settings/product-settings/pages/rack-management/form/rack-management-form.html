@@ -1,0 +1,319 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-warehouse"
+
+        [title]="pageTitle"
+
+        subtitle="Manage racks and shelves per warehouse">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 01 : RACK INFORMATION
+                 All active warehouses of every branch. Warehouse is
+                 locked after saving; Rack Code R-nnn is numbered
+                 per warehouse by the server.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Rack Information"
+
+                icon="fas fa-warehouse">
+
+
+                <!-- Warehouse -->
+
+                <app-search-dropdown
+
+                    label="Warehouse"
+
+                    [items]="warehouseItems"
+
+                    [(value)]="entity.WarehouseId"
+
+                    (valueChange)="onWarehouseChange($event)"
+
+                    [disabled]="!isAddMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Rack Code ("<Warehouse Code>-R-001") -->
+
+                <app-textbox
+
+                    label="Rack Code"
+
+                    placeholder="Select a warehouse"
+
+                    [value]="fullRackCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Rack Name : "Rack A", "Rack B" … auto (lowest free letter) -->
+
+                <app-textbox
+
+                    label="Rack Name"
+
+                    placeholder="Select a warehouse"
+
+                    [(value)]="entity.RackName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02 : SHELVES
+                 Lowering the count is refused while a spare part
+                 sits on a removed shelf.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Shelves"
+
+                icon="fas fa-layer-group">
+
+
+                <!-- Number of Shelves -->
+
+                <app-textbox
+
+                    [label]="'Number of Shelves (1 - ' + maxShelves + ')'"
+
+                    placeholder="1"
+
+                    [value]="shelfCountText"
+
+                    (valueChange)="onShelfCountChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Shelf preview : SLF-A-01 … SLF-A-nn -->
+
+                @if (shelfPreview.length > 0)
+                {
+                    <div
+                        style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+
+                        @for (shelf of shelfPreview; track shelf)
+                        {
+                            <span
+                                style="padding:2px 8px; border:1px solid #cbd5e1; border-radius:10px; font-size:12px; color:#334155; background:#f8fafc;">
+
+                                {{ shelf }}
+
+                            </span>
+                        }
+
+                    </div>
+                }
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 03 : LOCATION DETAILS (optional)
+            ============================================== -->
+
+            <app-form-section
+
+                title="Location Details"
+
+                icon="fas fa-location-dot">
+
+
+                <!-- Zone / Aisle -->
+
+                <app-textbox
+
+                    label="Zone / Aisle"
+
+                    placeholder="e.g. Ground Floor - Aisle 2"
+
+                    [(value)]="entity.ZoneAisle"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+                <!-- Rack Type -->
+
+                <app-dropdown
+
+                    label="Rack Type"
+
+                    [items]="rackTypeItems"
+
+                    [(value)]="entity.RackType"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 04 : STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

@@ -2,8 +2,10 @@
 // Chart of Accounts (read-only)
 //
 // Tree    : Account Class → Account Group → Account Sub Group
-// Ledgers : loaded per Sub Group (GL / Cash / Bank / MFS / POS)
+// Ledgers : loaded per Sub Group (GL / Cash / Bank / MFS / POS …)
 //
+// The page owns no data: every load reads the live account
+// setting tables, so changes made on those pages show up here.
 // Counts come from the server. ActiveLedgerCount lets the page
 // show "active only" totals without loading every ledger.
 //===============================================================
@@ -13,12 +15,11 @@ export type CoaLevel =
     | 'group'
     | 'subgroup';
 
+// Sent by the server (GL / Cash / Bank / MFS / POS today).
+// Kept as a plain string so a new ledger type shows up as-is,
+// without a frontend change.
 export type CoaLedgerType =
-    | 'GL'
-    | 'Cash'
-    | 'Bank'
-    | 'MFS'
-    | 'POS';
+    string;
 
 
 //===============================================================
@@ -71,6 +72,9 @@ export interface CoaClassNode
 
     Name: string;
 
+    // Account / Inventory / Work In Progress / Cost of Goods Sold
+    ClassType: string;
+
     Status: boolean;
 
     Groups: CoaGroupNode[];
@@ -96,6 +100,25 @@ export interface CoaLedgerRow
     Branch: string;
 
     Status: boolean;
+}
+
+
+//===============================================================
+// Link Issue (from the server's link check)
+//===============================================================
+
+export interface CoaIssue
+{
+    // Group / Sub Group / Ledger (Cash) …
+    Level: string;
+
+    Id: number;
+
+    Code: string;
+
+    Name: string;
+
+    Problem: string;
 }
 
 

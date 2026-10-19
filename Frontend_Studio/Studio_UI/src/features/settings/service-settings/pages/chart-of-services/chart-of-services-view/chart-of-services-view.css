@@ -1,0 +1,1983 @@
+@import '../../../../../../shared/styles/scrollbar.css';
+
+/* =====================================================
+   CHART OF INVENTORY (read-only)
+
+   --cos-offset : space taken above / below the split area
+                  (top bar, breadcrumb, header, toolbar,
+                  footer). Raise it if the bottom is cut off,
+                  lower it if the gap is too big.
+
+   --cos-bottom-gap : breathing space between the box and the
+                      footer.
+
+   --cos-nav-width : navigator column width.
+===================================================== */
+
+:host
+{
+    display: block;
+
+    --cos-offset: 384px;
+    --cos-bottom-gap: 14px;
+    --cos-nav-width: 400px;
+
+    --cos-navy: #1e3a8a;
+    --cos-brand: #26338a;
+    --cos-blue: #2563eb;
+    --cos-gradient: linear-gradient(135deg, #0f2a44 0%, #1e3a8a 45%, #2563eb 100%);
+    --cos-header-gradient: linear-gradient(180deg, #eef4ff 0%, #f7faff 55%, #ffffff 100%);
+
+    --cos-surface: #ffffff;
+    --cos-canvas: #f8fafd;
+    --cos-soft: #f8fafc;
+    --cos-soft-blue: #edf4ff;
+    --cos-tint: #e8eefc;
+
+    --cos-border: #e5e9f0;
+    --cos-border-soft: #eef2f7;
+    --cos-guide: #dfe6ef;
+    --cos-ring: #d6e2f7;
+
+    --cos-text: #0f172a;
+    --cos-text-2: #1e293b;
+    --cos-text-3: #334155;
+    --cos-muted: #64748b;
+    --cos-faint: #94a3b8;
+
+    --cos-on: #16a34a;
+    --cos-on-soft: #dcfce7;
+
+    --cos-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+
+    --cos-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.cos-page
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* =====================================================
+   TOOLBAR : TAB + STAT STRIP + SCOPE
+===================================================== */
+
+.cos-toolbar-left
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.cos-stats
+{
+    display: inline-flex;
+    align-items: stretch;
+    height: 36px;
+    background: var(--cos-surface);
+    border: 1px solid var(--cos-border);
+    border-radius: 11px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+}
+
+.cos-stat
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px;
+    white-space: nowrap;
+}
+
+.cos-stat + .cos-stat
+{
+    border-left: 1px solid var(--cos-border-soft);
+}
+
+.cos-stat i
+{
+    font-size: 12px;
+    color: var(--cos-faint);
+}
+
+.cos-stat-value
+{
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cos-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.cos-stat-label
+{
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--cos-muted);
+}
+
+.cos-stat-accent
+{
+    background: linear-gradient(180deg, #f3f7ff 0%, #ffffff 100%);
+}
+
+.cos-stat-accent i,
+.cos-stat-accent .cos-stat-value
+{
+    color: var(--cos-navy);
+}
+
+.cos-scope
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 340px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--cos-ring);
+    border-radius: 11px;
+    background: var(--cos-soft-blue);
+    color: var(--cos-navy);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cos-scope:hover
+{
+    background: #e2ecff;
+    border-color: var(--cos-navy);
+}
+
+.cos-scope > i
+{
+    font-size: 12px;
+}
+
+.cos-scope-value
+{
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cos-scope-x
+{
+    opacity: 0.6;
+}
+
+.cos-scope:hover .cos-scope-x
+{
+    opacity: 1;
+}
+
+/* =====================================================
+   SPLIT
+===================================================== */
+
+.cos-split
+{
+    display: grid;
+    grid-template-columns: var(--cos-nav-width) minmax(0, 1fr);
+    gap: 14px;
+    height: calc(100vh - var(--cos-offset) - var(--cos-bottom-gap));
+    min-height: 380px;
+}
+
+.cos-nav,
+.cos-preview
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--cos-surface);
+    border: 1px solid var(--cos-border);
+    border-radius: 16px;
+    box-shadow: var(--cos-shadow);
+    overflow: hidden;
+}
+
+/* =====================================================
+   SHARED : HEADING + ICON TILE
+===================================================== */
+
+.cos-heading
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.cos-heading-text
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.cos-heading-title
+{
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cos-text);
+    letter-spacing: -0.1px;
+}
+
+.cos-heading-sub
+{
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cos-faint);
+}
+
+.cos-tile
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: var(--cos-gradient);
+    color: #ffffff;
+    font-size: 14px;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+}
+
+/* =====================================================
+   NAVIGATOR HEAD
+===================================================== */
+
+.cos-nav-head
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--cos-header-gradient);
+    border-bottom: 1px solid #e3ebf7;
+}
+
+.cos-expand-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--cos-ring);
+    border-radius: 9px;
+    background: #ffffff;
+    color: var(--cos-navy);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cos-expand-btn:hover:not(:disabled)
+{
+    background: var(--cos-soft-blue);
+    border-color: var(--cos-navy);
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.1);
+}
+
+.cos-expand-btn:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cos-expand-btn i
+{
+    font-size: 11px;
+}
+
+/* =====================================================
+   NAVIGATOR TREE
+===================================================== */
+
+.cos-nav-body
+{
+    flex: 1;
+    min-height: 0;
+    padding: 10px 10px 14px;
+    background: var(--cos-canvas);
+    overflow-y: auto;
+}
+
+.cos-tree,
+.cos-tree ul
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* vertical guide */
+
+.cos-tree ul
+{
+    position: relative;
+    margin-left: 17px;
+    padding-left: 14px;
+    border-left: 1px solid var(--cos-guide);
+}
+
+/* elbow from the guide to each child */
+
+.cos-tree ul > li
+{
+    position: relative;
+}
+
+.cos-tree ul > li::before
+{
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 20px;
+    width: 10px;
+    border-top: 1px solid var(--cos-guide);
+}
+
+/* NODE ROW : caret | code | name | count */
+
+.cos-node
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    margin: 2px 0;
+    padding: 4px 10px 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.cos-node:hover
+{
+    background: #ffffff;
+    border-color: var(--cos-border-soft);
+}
+
+/* selected : lifted white card with a brand accent */
+
+.cos-node-active,
+.cos-node-active:hover
+{
+    background: #ffffff;
+    border-color: var(--cos-ring);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 6px 16px rgba(30, 58, 138, 0.08);
+}
+
+.cos-node-active::after
+{
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 9px;
+    bottom: 9px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--cos-gradient);
+}
+
+.cos-caret
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--cos-faint);
+    font-size: 10.5px;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.cos-caret i
+{
+    transition: transform 0.2s ease;
+}
+
+.cos-caret:hover
+{
+    background: var(--cos-tint);
+    color: var(--cos-navy);
+}
+
+.cos-caret-open
+{
+    color: var(--cos-navy);
+}
+
+.cos-caret-open i
+{
+    transform: rotate(90deg);
+}
+
+.cos-leaf
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+}
+
+.cos-leaf-dot
+{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 2px solid #c3cfdf;
+    background: #ffffff;
+}
+
+.cos-node-active .cos-leaf-dot
+{
+    border-color: var(--cos-blue);
+    background: var(--cos-blue);
+}
+
+/* code chip (side by side with the name) */
+
+.cos-node-code
+{
+    flex: 0 0 auto;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #eef2f7;
+    color: #475569;
+    font-family: var(--cos-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+    transition: background 0.14s ease, color 0.14s ease;
+}
+
+.cos-lv1 > .cos-node-code
+{
+    background: var(--cos-tint);
+    color: var(--cos-navy);
+}
+
+.cos-node-active > .cos-node-code
+{
+    background: var(--cos-navy);
+    color: #ffffff;
+}
+
+.cos-node-name
+{
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--cos-text-2);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cos-lv1 > .cos-node-name
+{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cos-text);
+}
+
+.cos-lv3 > .cos-node-name
+{
+    font-weight: 500;
+    color: var(--cos-text-3);
+}
+
+.cos-node-active > .cos-node-name
+{
+    color: var(--cos-navy);
+}
+
+.cos-node-off > .cos-node-name,
+.cos-node-off > .cos-node-code
+{
+    opacity: 0.55;
+}
+
+.cos-node-off > .cos-node-name
+{
+    text-decoration: line-through;
+    text-decoration-color: rgba(100, 116, 139, 0.45);
+}
+
+.cos-badge
+{
+    flex: 0 0 auto;
+    min-width: 26px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--cos-border);
+    color: var(--cos-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.cos-badge-service
+{
+    background: transparent;
+    border-color: transparent;
+}
+
+.cos-node-active > .cos-badge
+{
+    background: var(--cos-soft-blue);
+    border-color: var(--cos-ring);
+    color: var(--cos-navy);
+}
+
+/* ROOT ("All Types") */
+
+.cos-node-root
+{
+    gap: 10px;
+    margin-bottom: 6px;
+    padding-left: 8px;
+}
+
+.cos-node-root .cos-node-name
+{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cos-text);
+}
+
+.cos-node-root.cos-node-active .cos-node-name
+{
+    color: var(--cos-navy);
+}
+
+.cos-root-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: var(--cos-tint);
+    color: var(--cos-navy);
+    font-size: 11px;
+}
+
+.cos-node-root.cos-node-active .cos-root-icon
+{
+    background: var(--cos-gradient);
+    color: #ffffff;
+}
+
+.cos-nav-empty
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 36px 12px;
+    font-size: 13px;
+    color: var(--cos-faint);
+    text-align: center;
+}
+
+.cos-nav-empty i
+{
+    font-size: 18px;
+    color: #cbd5e1;
+}
+
+/* =====================================================
+   PREVIEW HEAD (one compact bar, matches navigator head)
+===================================================== */
+
+.cos-preview-head
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--cos-header-gradient);
+    border-bottom: 1px solid #e3ebf7;
+}
+
+.cos-preview-head .cos-heading-title
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cos-count
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--cos-tint);
+    color: var(--cos-navy);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* path : quiet text line under the title */
+
+.cos-path
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.cos-path-step
+{
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--cos-faint);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: color 0.12s ease;
+}
+
+.cos-path-step:hover:not(:disabled)
+{
+    color: var(--cos-navy);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.cos-path-current,
+.cos-path-step:disabled
+{
+    color: var(--cos-muted);
+    font-weight: 600;
+    cursor: default;
+}
+
+.cos-path-sep
+{
+    font-size: 8px;
+    color: #c3cfdf;
+}
+
+.cos-filter
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    width: 260px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--cos-faint);
+    font-size: 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cos-filter:focus-within
+{
+    border-color: var(--cos-navy);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.cos-filter input
+{
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--cos-text);
+    font-family: inherit;
+    font-size: 13.5px;
+}
+
+/* =====================================================
+   PREVIEW TABLE
+===================================================== */
+
+.cos-table-wrap
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.cos-table-wrap > .cos-table
+{
+    flex: 0 0 auto;
+}
+
+.cos-table
+{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+}
+
+.cos-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 40px;
+    padding: 0 16px;
+    background: #fbfcfe;
+    border-bottom: 1px solid var(--cos-border);
+    color: var(--cos-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.cos-table tbody td
+{
+    height: 48px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--cos-border-soft);
+    color: var(--cos-text-3);
+    vertical-align: middle;
+    transition: background 0.12s ease;
+}
+
+.cos-table tbody tr:last-child td
+{
+    border-bottom: none;
+}
+
+.cos-table tbody tr:hover td
+{
+    background: #f7faff;
+}
+
+.cos-col-no
+{
+    width: 60px;
+    color: var(--cos-faint) !important;
+    font-size: 13px;
+    text-align: center !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.cos-row-drill
+{
+    cursor: pointer;
+}
+
+.cos-row-off td
+{
+    color: var(--cos-faint);
+}
+
+.cos-row-off .cos-name-text
+{
+    color: var(--cos-faint);
+}
+
+.cos-code
+{
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 7px;
+    background: var(--cos-soft-blue);
+    border: 1px solid #dde8fb;
+    color: var(--cos-navy);
+    font-family: var(--cos-mono);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cos-name
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cos-name-text
+{
+    font-weight: 600;
+    color: var(--cos-text-2);
+    transition: color 0.12s ease;
+}
+
+.cos-row-drill:hover .cos-name-text
+{
+    color: var(--cos-navy);
+}
+
+/* "Open →" appears on hover for drillable rows */
+
+.cos-open
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: var(--cos-navy);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.cos-open i
+{
+    font-size: 9px;
+}
+
+.cos-row-drill:hover .cos-open
+{
+    opacity: 1;
+    transform: none;
+}
+
+.cos-num
+{
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cos-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.cos-num-zero
+{
+    font-weight: 500;
+    color: #cbd5e1;
+}
+
+.cos-branch
+{
+    color: var(--cos-text-3);
+}
+
+/* type chips (Scheduled Service, Labor Chart …) : one neutral style */
+
+.cos-type
+{
+    display: inline-block;
+    min-width: 54px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-align: center;
+}
+
+
+.cos-status
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 26px;
+    padding: 0 11px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cos-muted);
+}
+
+.cos-status-dot
+{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cos-faint);
+}
+
+.cos-status-on
+{
+    background: #effaf3;
+    color: var(--cos-on);
+}
+
+.cos-status-on .cos-status-dot
+{
+    background: var(--cos-on);
+    box-shadow: 0 0 0 3px var(--cos-on-soft);
+}
+
+/* empty : takes the remaining height under the header and
+   centers itself both ways */
+
+.cos-empty
+{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 180px;
+    padding: 24px;
+    color: var(--cos-faint);
+    font-size: 13.5px;
+    text-align: center;
+}
+
+.cos-empty-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    background: var(--cos-soft);
+    border: 1px solid var(--cos-border-soft);
+    color: #cbd5e1;
+    font-size: 17px;
+}
+
+/* =====================================================
+   STATES / SKELETON
+===================================================== */
+
+.cos-state
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - var(--cos-offset) - var(--cos-bottom-gap));
+    min-height: 380px;
+    background: var(--cos-surface);
+    border: 1px solid var(--cos-border);
+    border-radius: 16px;
+    box-shadow: var(--cos-shadow);
+}
+
+.cos-skeleton
+{
+    display: block;
+    height: 32px;
+    margin: 8px 6px;
+    border-radius: 9px;
+    background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 50%, #eef2f7 100%);
+    background-size: 200% 100%;
+    animation: cos-shimmer 1.2s ease-in-out infinite;
+}
+
+.cos-row-skeleton td
+{
+    padding: 0 8px !important;
+}
+
+@keyframes cos-shimmer
+{
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* =====================================================
+   PRINT DIALOG
+   Left : numbered option steps. Right : live paper preview.
+===================================================== */
+
+.cos-modal-overlay
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.38);
+    backdrop-filter: blur(3px);
+    animation: cos-fade 0.16s ease;
+}
+
+@keyframes cos-fade
+{
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.cos-modal
+{
+    display: flex;
+    flex-direction: column;
+    width: 880px;
+    max-width: 100%;
+    max-height: calc(100vh - 48px);
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.06),
+        0 30px 80px rgba(15, 23, 42, 0.28);
+    animation: cos-pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes cos-pop
+{
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* HEAD : brand gradient band */
+
+.cos-modal-head
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    background: var(--cos-gradient);
+    color: #ffffff;
+    overflow: hidden;
+}
+
+/* soft light sweep across the band */
+
+.cos-modal-head::after
+{
+    content: '';
+    position: absolute;
+    right: -60px;
+    top: -80px;
+    width: 260px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.cos-modal-brand
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cos-modal-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    font-size: 17px;
+}
+
+.cos-modal-title
+{
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.cos-modal-sub
+{
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.cos-modal-close
+{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.cos-modal-close:hover:not(:disabled)
+{
+    background: rgba(255, 255, 255, 0.24);
+}
+
+/* BODY : options | stage */
+
+.cos-modal-body
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    min-height: 0;
+    flex: 1;
+}
+
+.cos-print-options
+{
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 22px 24px;
+    overflow-y: auto;
+}
+
+.cos-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cos-field-label
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cos-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.cos-field-no
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--cos-tint);
+    color: var(--cos-navy);
+    font-size: 11px;
+    letter-spacing: 0;
+}
+
+/* 1 · SCOPE : selectable cards */
+
+.cos-choice-grid
+{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.cos-choice
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1.5px solid var(--cos-border);
+    border-radius: 14px;
+    background: #ffffff;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.cos-choice:hover:not(:disabled):not(.cos-choice-on)
+{
+    border-color: #c7d6f3;
+    background: #fbfcff;
+}
+
+.cos-choice:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cos-choice-on
+{
+    border-color: var(--cos-navy);
+    background: linear-gradient(180deg, #f5f8ff 0%, #ffffff 100%);
+    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.08);
+}
+
+.cos-choice-icon
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--cos-soft);
+    color: var(--cos-muted);
+    font-size: 14px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cos-choice-on .cos-choice-icon
+{
+    background: var(--cos-gradient);
+    color: #ffffff;
+}
+
+.cos-choice-text
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cos-choice-title
+{
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--cos-text);
+}
+
+.cos-choice-sub
+{
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--cos-faint);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cos-choice-check
+{
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cos-navy);
+    color: #ffffff;
+    font-size: 9px;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.cos-choice-on .cos-choice-check
+{
+    opacity: 1;
+    transform: none;
+}
+
+/* 2 · DEPTH : a rail of four stops */
+
+.cos-depth
+{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 6px 4px 2px;
+}
+
+.cos-depth-step
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* connector to the previous stop */
+
+.cos-depth-step + .cos-depth-step::before
+{
+    content: '';
+    position: absolute;
+    top: 11px;
+    right: 50%;
+    width: 100%;
+    height: 3px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    transition: background 0.2s ease;
+}
+
+.cos-depth-reached + .cos-depth-reached::before
+{
+    background: var(--cos-navy);
+}
+
+.cos-depth-dot
+{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    background: #ffffff;
+    color: transparent;
+    font-size: 10px;
+    transition: all 0.18s ease;
+}
+
+.cos-depth-step:hover .cos-depth-dot
+{
+    border-color: var(--cos-navy);
+}
+
+.cos-depth-reached .cos-depth-dot
+{
+    border-color: var(--cos-navy);
+    background: var(--cos-navy);
+    color: #ffffff;
+}
+
+.cos-depth-on .cos-depth-dot
+{
+    box-shadow: 0 0 0 5px rgba(30, 58, 138, 0.14);
+}
+
+.cos-depth-label
+{
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--cos-faint);
+    transition: color 0.15s ease;
+}
+
+.cos-depth-reached .cos-depth-label
+{
+    color: var(--cos-text-3);
+}
+
+.cos-depth-on .cos-depth-label
+{
+    color: var(--cos-navy);
+    font-weight: 700;
+}
+
+/* 3 · COLUMNS : toggle chips */
+
+.cos-chips
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cos-chip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1.5px solid var(--cos-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--cos-muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cos-chip i
+{
+    font-size: 10px;
+}
+
+.cos-chip:hover:not(.cos-chip-locked)
+{
+    border-color: #c7d6f3;
+    color: var(--cos-text-3);
+}
+
+.cos-chip-on,
+.cos-chip-on:hover:not(.cos-chip-locked)
+{
+    border-color: var(--cos-navy);
+    background: var(--cos-soft-blue);
+    color: var(--cos-navy);
+}
+
+.cos-chip-locked
+{
+    border-style: dashed;
+    background: var(--cos-soft);
+    color: var(--cos-faint);
+    cursor: default;
+}
+
+/* 4 · PAGE : orientation + include inactive */
+
+.cos-page-row
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.cos-orient
+{
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--cos-border);
+    border-radius: 12px;
+    background: var(--cos-soft);
+}
+
+.cos-orient-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--cos-muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cos-orient-on
+{
+    background: #ffffff;
+    color: var(--cos-navy);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.cos-orient-sheet
+{
+    width: 11px;
+    height: 15px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+}
+
+.cos-orient-wide
+{
+    width: 15px;
+    height: 11px;
+}
+
+.cos-switch
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cos-text-3);
+    cursor: pointer;
+    user-select: none;
+}
+
+.cos-switch input
+{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cos-switch-track
+{
+    position: relative;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: background 0.18s ease;
+}
+
+.cos-switch-thumb
+{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+    transition: transform 0.18s ease;
+}
+
+.cos-switch input:checked + .cos-switch-track
+{
+    background: var(--cos-navy);
+}
+
+.cos-switch input:checked + .cos-switch-track .cos-switch-thumb
+{
+    transform: translateX(16px);
+}
+
+.cos-switch input:focus-visible + .cos-switch-track
+{
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+}
+
+/* STAGE : the paper sits on a soft desk */
+
+.cos-print-stage
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 22px 20px;
+    background:
+        radial-gradient(circle at 1px 1px, #d9e2ef 1px, transparent 0) 0 0 / 14px 14px,
+        linear-gradient(180deg, #f3f6fb 0%, #eef2f8 100%);
+    border-left: 1px solid var(--cos-border-soft);
+}
+
+.cos-paper
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 228px;
+    aspect-ratio: 210 / 297;
+    padding: 14px 12px 18px;
+    background: #ffffff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.08),
+        0 14px 30px rgba(15, 23, 42, 0.14);
+    transition: width 0.25s ease, aspect-ratio 0.25s ease;
+}
+
+.cos-paper-wide
+{
+    width: 300px;
+    aspect-ratio: 297 / 210;
+}
+
+.cos-paper-head
+{
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1.5px solid var(--cos-navy);
+}
+
+.cos-paper-company
+{
+    font-size: 8.5px;
+    font-weight: 800;
+    color: var(--cos-navy);
+}
+
+.cos-paper-title
+{
+    font-size: 7px;
+    font-weight: 700;
+    color: var(--cos-text);
+}
+
+.cos-paper-meta
+{
+    max-width: 50%;
+    overflow: hidden;
+    font-size: 6px;
+    color: var(--cos-muted);
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cos-paper-row
+{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 11px;
+    padding: 1px 3px;
+    border-bottom: 0.5px solid #eef2f7;
+    font-size: 6px;
+    color: var(--cos-text-3);
+    animation: cos-fade 0.2s ease;
+}
+
+.cos-paper-cols
+{
+    background: #eef2f7;
+    border-bottom: none;
+    color: var(--cos-muted);
+    font-size: 5.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.cos-paper-row[data-lv="1"]
+{
+    background: #f1f5f9;
+    font-weight: 800;
+    color: var(--cos-text);
+}
+
+.cos-paper-row[data-lv="2"]
+{
+    font-weight: 700;
+}
+
+.cos-paper-summary
+{
+    color: var(--cos-faint);
+    font-style: italic;
+}
+
+.cos-paper-code
+{
+    flex: 0 0 52px;
+    overflow: hidden;
+    font-family: var(--cos-mono);
+    font-size: 5.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cos-paper-name
+{
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cos-paper-cell
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 32px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.cos-paper-bar
+{
+    width: 18px;
+    height: 3px;
+    border-radius: 2px;
+    background: #e2e8f0;
+}
+
+.cos-paper-dot
+{
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--cos-on);
+}
+
+.cos-paper-dot-off
+{
+    background: #cbd5e1;
+}
+
+.cos-paper-empty,
+.cos-paper-more
+{
+    padding: 8px 0 0;
+    font-size: 6.5px;
+    color: var(--cos-faint);
+    text-align: center;
+}
+
+.cos-paper-more
+{
+    font-weight: 700;
+    color: var(--cos-navy);
+}
+
+.cos-paper-foot
+{
+    position: absolute;
+    right: 12px;
+    bottom: 6px;
+    font-size: 5.5px;
+    color: var(--cos-faint);
+}
+
+.cos-stage-caption
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cos-muted);
+}
+
+.cos-stage-live
+{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cos-on);
+    box-shadow: 0 0 0 3px var(--cos-on-soft);
+}
+
+/* FOOT */
+
+.cos-modal-foot
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--cos-border-soft);
+    background: #ffffff;
+}
+
+.cos-foot-summary
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--cos-muted);
+}
+
+.cos-foot-summary i
+{
+    color: var(--cos-navy);
+}
+
+.cos-foot-summary b
+{
+    color: var(--cos-text);
+}
+
+.cos-foot-dot
+{
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #cbd5e1;
+}
+
+.cos-foot-actions
+{
+    display: flex;
+    gap: 10px;
+}
+
+.cos-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 11px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cos-btn:disabled
+{
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.cos-btn-ghost
+{
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+    color: var(--cos-text-3);
+}
+
+.cos-btn-ghost:hover:not(:disabled)
+{
+    border-color: var(--cos-navy);
+    color: var(--cos-navy);
+}
+
+.cos-btn-primary
+{
+    min-width: 120px;
+    justify-content: center;
+    border: none;
+    background: var(--cos-gradient);
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.26);
+}
+
+.cos-btn-primary:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(37, 99, 235, 0.32);
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1600px)
+{
+    :host
+    {
+        --cos-nav-width: 370px;
+    }
+}
+
+@media (max-width: 1400px)
+{
+    :host
+    {
+        --cos-nav-width: 340px;
+    }
+
+    .cos-stat-label
+    {
+        display: none;
+    }
+
+    .cos-stat
+    {
+        padding: 0 11px;
+    }
+
+}
+
+@media (max-width: 992px)
+{
+    .cos-split
+    {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .cos-nav
+    {
+        max-height: 380px;
+    }
+
+    .cos-preview
+    {
+        min-height: 420px;
+    }
+
+    .cos-stats,
+    .cos-scope
+    {
+        display: none;
+    }
+
+    .cos-preview-head
+    {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cos-modal-body
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .cos-print-stage
+    {
+        display: none;
+    }
+
+    .cos-filter
+    {
+        width: 100%;
+    }
+}

@@ -1,0 +1,383 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-id-card"
+
+        [title]="pageTitle"
+
+        subtitle="Manage complimentary services for card members">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-id-card">
+
+
+                <!-- Membership Services sub category; locked once saved -->
+
+                <app-search-dropdown
+
+                    label="Service Sub Category"
+
+                    [items]="subCategoryItems"
+
+                    [(value)]="entity.ServiceSubCategoryId"
+
+                    (valueChange)="onSubCategoryChange($event)"
+
+                    [disabled]="isViewMode || isSaving || isSubCategoryLocked"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Membership Type (fixed list for now; later from the Membership module) -->
+
+                <app-dropdown
+
+                    label="Membership Type"
+
+                    [items]="membershipTypeItems"
+
+                    [(value)]="entity.MembershipType"
+
+                    (valueChange)="onMembershipTypeChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Service Code : MSC-ccc-sss-nnnnn (central code generator) -->
+
+                <app-textbox
+
+                    label="Service Code"
+
+                    placeholder="Follows the sub category"
+
+                    [(value)]="entity.ServiceCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Service Name : the sub category's name (read only) -->
+
+                <app-textbox
+
+                    label="Service Name"
+
+                    placeholder="Follows the sub category"
+
+                    [(value)]="entity.ServiceName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 SERVICE VALUE & INCOME LEDGER
+                 Billed on the invoice at the Service Value
+            ============================================== -->
+
+            <app-form-section
+
+                title="Service Value & Income Ledger"
+
+                icon="fas fa-gift">
+
+
+                <!-- Service Value (value of the free service) -->
+
+                <app-textbox
+
+                    label="Service Value"
+
+                    placeholder="e.g. 300.00"
+
+                    [value]="serviceValueText"
+
+                    (valueChange)="onServiceValueChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Display Name : "<Service Name> - <Membership Type>" -->
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    placeholder="Follows sub category and membership type"
+
+                    [(value)]="entity.DisplayName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Income Ledger : GLR-ccc-ggg-sss-nnnnn under the sub category's
+                     income sub group (created on save) -->
+
+                <app-textbox
+
+                    label="Income Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.IncomeLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Income Ledger Name"
+
+                    placeholder="Follows the display name"
+
+                    [(value)]="entity.IncomeLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 EXPENSE LEDGER (the same amount discounted)
+                 Under SUB-004-002-001 (found by code)
+            ============================================== -->
+
+            <app-form-section
+
+                title="Expense Ledger"
+
+                icon="fas fa-receipt">
+
+
+                <!-- Expense Sub Group : Selling & Marketing Expenses - Non Cash -->
+
+                <app-textbox
+
+                    label="Expense Sub Group"
+
+                    placeholder="SUB-004-002-001"
+
+                    [value]="expenseSubGroupDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Expense Ledger Code : GLR-004-002-001-nnnnn (created on save) -->
+
+                <app-textbox
+
+                    label="Expense Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.ExpenseLedgerCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Expense Ledger Name : same as the Display Name -->
+
+                <app-textbox
+
+                    label="Expense Ledger Name"
+
+                    placeholder="Follows the display name"
+
+                    [(value)]="entity.ExpenseLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

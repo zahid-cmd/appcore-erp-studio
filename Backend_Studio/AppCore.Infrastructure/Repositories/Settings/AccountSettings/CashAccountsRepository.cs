@@ -1,4 +1,3 @@
-// PAGE-CLONED : Wings -> Cash Accounts
 //===============================================================
 // Namespaces
 //===============================================================
@@ -29,11 +28,40 @@ namespace AppCore.Infrastructure.Repositories.Settings.AccountSettings;
 
 
 //===============================================================
-// CashAccounts Repository
+// Cash Accounts Repository
+//
+// Sub Group : always the fixed SUB-002-002-001, resolved by code
+//             on the server. Any other sub group is rejected.
+// Code      : CSH-<ccc>-<ggg>-<sss>-<nnnnn>
+//             e.g. CSH-002-002-001-00001
+//             ccc / ggg / sss come from the fixed sub group code,
+//             nnnnn is the cash account's own number.
+// Numbering : starts at 00001 and never reuses a number (deleted
+//             rows are included), so a restore can never clash.
+// Locked    : sub group and code never change after creation.
+// Name      : unique within a branch (each branch can have its
+//             own 'Cash In Hand').
 //===============================================================
 
 public class CashAccountsRepository : ICashAccountsRepository
 {
+    //===========================================================
+    // Constants
+    //===========================================================
+
+    // Cash Accounts are reserved to this Account Sub Group only.
+    private const string ReservedSubGroupCode =
+        "SUB-002-002-001";
+
+    // Sub group code prefix
+    private const string SubGroupPrefix =
+        "SUB";
+
+    // Code prefix : CSH-002-002-001-00001
+    private const string CodePrefix =
+        "CSH";
+
+
     //===========================================================
     // Private Fields
     //===========================================================
@@ -181,69 +209,252 @@ public class CashAccountsRepository : ICashAccountsRepository
 
 
     //===========================================================
+    // Resolve Reserved Sub Group (SUB-002-002-001)
+    //===========================================================
+
+    private async Task<AccountSubGroupEntity>
+        ResolveReservedSubGroupAsync()
+    {
+        AccountSubGroupEntity? subGroup =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.SubGroupCode ==
+                        ReservedSubGroupCode
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            subGroup ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                $"Reserved Account Sub Group {ReservedSubGroupCode} (Cash In Hand) was not found. Create it first.");
+        }
+
+        return subGroup;
+    }
+
+
+    //===========================================================
+    // Validate Requested Sub Group
+    //
+    // The form sends the reserved sub group id; anything else is
+    // rejected. 0 means "not sent" and falls back to the reserved
+    // one.
+    //===========================================================
+
+    private static void EnsureReservedSubGroup
+    (
+        long requestedSubGroupId,
+        AccountSubGroupEntity reserved
+    )
+    {
+        if
+        (
+            requestedSubGroupId > 0
+            &&
+            requestedSubGroupId !=
+            reserved.AccountSubGroupId
+        )
+        {
+            throw new InvalidOperationException(
+                $"Cash Accounts can only be created under Account Sub Group {ReservedSubGroupCode}.");
+        }
+    }
+
+
+    //===========================================================
+    // Sub Group Numbers From The Reserved Code
+    //
+    // SUB-002-002-001 → (2, 2, 1).
+    //===========================================================
+
+    private static (int ClassNo, int GroupNo, int SubGroupNo)
+        ResolveSequences
+        (
+            string? subGroupCode
+        )
+    {
+        string[] parts =
+            (subGroupCode ?? string.Empty)
+                .Trim()
+                .Split(
+                    '-',
+                    StringSplitOptions.RemoveEmptyEntries)
+                .Select
+                (
+                    x =>
+                        x.Trim()
+                )
+                .ToArray();
+
+        if
+        (
+            parts.Length !=
+            4
+            ||
+            !string.Equals(
+                parts[0],
+                SubGroupPrefix,
+                StringComparison.OrdinalIgnoreCase)
+            ||
+            !int.TryParse(
+                parts[1],
+                out int classNo)
+            ||
+            classNo < 1
+            ||
+            !int.TryParse(
+                parts[2],
+                out int groupNo)
+            ||
+            groupNo < 1
+            ||
+            !int.TryParse(
+                parts[3],
+                out int subGroupNo)
+            ||
+            subGroupNo < 1
+        )
+        {
+            throw new InvalidOperationException(
+                $"Invalid Account Sub Group code '{subGroupCode}'.");
+        }
+
+        return (classNo, groupNo, subGroupNo);
+    }
+
+
+    //===========================================================
+    // Build Next Code
+    //
+    // Reads the last part of every CSH-ccc-ggg-sss-nnnnn code under
+    // the reserved sub group, deleted rows included.
+    //===========================================================
+
+    private async Task<string>
+        BuildNextCodeAsync
+        (
+            AccountSubGroupEntity subGroup
+        )
+    {
+        (int classNo, int groupNo, int subGroupNo) =
+            ResolveSequences(
+                subGroup.SubGroupCode);
+
+        string parentPart =
+            $"{classNo:D3}-{groupNo:D3}-{subGroupNo:D3}";
+
+
+        List<string> codes =
+            await _context
+                .Set<CashAccountsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.AccountSubGroupsId ==
+                        subGroup.AccountSubGroupId
+                )
+                .Select
+                (
+                    x =>
+                        x.CashAccountCode
+                )
+                .ToListAsync();
+
+
+        int highest =
+            0;
+
+        foreach
+        (
+            string code
+            in codes
+        )
+        {
+            string[] parts =
+                (code ?? string.Empty)
+                    .Trim()
+                    .Split(
+                        '-',
+                        StringSplitOptions.RemoveEmptyEntries)
+                    .Select
+                    (
+                        x =>
+                            x.Trim()
+                    )
+                    .ToArray();
+
+            if
+            (
+                parts.Length !=
+                5
+                ||
+                !string.Equals(
+                    parts[0],
+                    CodePrefix,
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                $"{parts[1]}-{parts[2]}-{parts[3]}" !=
+                parentPart
+            )
+            {
+                continue;
+            }
+
+            if
+            (
+                int.TryParse(
+                    parts[4],
+                    out int sequenceNo)
+                &&
+                sequenceNo >
+                highest
+            )
+            {
+                highest =
+                    sequenceNo;
+            }
+        }
+
+
+        // Manual method (CSH-): the AUTO GenerateCashAccountsCode is
+        // rewritten to CAS- by Code Synchronization.
+        return CodeGenerator.GenerateCashAccountCode(
+            classNo,
+            groupNo,
+            subGroupNo,
+            highest + 1);
+    }
+
+
+    //===========================================================
     // Get Next Code
     //===========================================================
 
     public async Task<string>
-        GetNextCodeAsync(
-            long accountSubGroupsId)
+        GetNextCodeAsync
+        (
+            long accountSubGroupsId
+        )
     {
-        var parent =
-            await _context.Set<global::AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.AccountSubGroupId == accountSubGroupsId && !x.IsDeleted);
+        AccountSubGroupEntity reserved =
+            await ResolveReservedSubGroupAsync();
 
-        if (parent == null)
-            throw new KeyNotFoundException("Account Sub Group not found.");
+        EnsureReservedSubGroup(
+            accountSubGroupsId,
+            reserved);
 
-        string[] parentParts =
-            (parent.SubGroupCode?.Trim() ?? string.Empty)
-                .Split('-', StringSplitOptions.RemoveEmptyEntries);
-
-        if (parentParts.Length != 4)
-            throw new InvalidOperationException("Invalid account sub group code.");
-
-        int[] seg = new int[3];
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (!int.TryParse(parentParts[i + 1].Trim(), out seg[i]) || seg[i] < 1)
-                throw new InvalidOperationException("Invalid account sub group sequence number.");
-        }
-
-        List<string> existingCodes =
-            await _context.Set<CashAccountsEntity>()
-                .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.AccountSubGroupsId == accountSubGroupsId)
-                .Select(x => x.CashAccountCode)
-                .ToListAsync();
-
-        int highest = 0;
-
-        foreach (string code in existingCodes)
-        {
-            if (string.IsNullOrWhiteSpace(code)) continue;
-
-            string[] parts = code.Split('-', StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length != 5) continue;
-
-            if (!string.Equals(parts[0].Trim(), "CAS", StringComparison.OrdinalIgnoreCase)) continue;
-
-            bool same = true;
-
-            for (int i = 0; i < 3; i++)
-            {
-                if (!int.TryParse(parts[i + 1].Trim(), out int v) || v != seg[i]) { same = false; break; }
-            }
-
-            if (!same) continue;
-
-            if (int.TryParse(parts[4].Trim(), out int sequenceNo) && sequenceNo > highest)
-                highest = sequenceNo;
-        }
-
-        return CodeGenerator.GenerateCashAccountsCode(seg[0], seg[1], seg[2], highest + 1);
+        return await BuildNextCodeAsync(
+            reserved);
     }
 
 
@@ -267,6 +478,150 @@ public class CashAccountsRepository : ICashAccountsRepository
 
 
     //===========================================================
+    // Normalize Cash Account Name
+    //===========================================================
+
+    private static string NormalizeName
+    (
+        string? cashAccountName
+    )
+    {
+        string name =
+            cashAccountName?.Trim()
+            ??
+            string.Empty;
+
+        if
+        (
+            string.IsNullOrWhiteSpace(name)
+        )
+        {
+            throw new InvalidOperationException(
+                "Cash Account Name is required.");
+        }
+
+        if
+        (
+            name.Length >
+            200
+        )
+        {
+            throw new InvalidOperationException(
+                "Cash Account Name cannot be longer than 200 characters.");
+        }
+
+        return name;
+    }
+
+
+    //===========================================================
+    // Normalize Branch
+    //===========================================================
+
+    private static string NormalizeBranch
+    (
+        string? branch
+    )
+    {
+        string value =
+            branch?.Trim()
+            ??
+            string.Empty;
+
+        if
+        (
+            string.IsNullOrWhiteSpace(value)
+        )
+        {
+            throw new InvalidOperationException(
+                "Branch is required.");
+        }
+
+        return value;
+    }
+
+
+    //===========================================================
+    // Validate Unique Name / Code
+    //
+    // Cash Account Name is unique within its branch, so every
+    // branch can have its own 'Cash In Hand'. The code is unique
+    // everywhere. Only non-deleted rows are compared.
+    //===========================================================
+
+    private async Task
+        EnsureUniqueAsync
+        (
+            string cashAccountCode,
+            string cashAccountName,
+            string branch,
+            long excludeId
+        )
+    {
+        string lowerName =
+            cashAccountName.ToLower();
+
+        string lowerBranch =
+            branch.ToLower();
+
+        CashAccountsEntity? sameName =
+            await _context
+                .Set<CashAccountsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.CashAccountId !=
+                        excludeId
+                        &&
+                        x.CashAccountName.ToLower() ==
+                        lowerName
+                        &&
+                        x.Branch.ToLower() ==
+                        lowerBranch
+                );
+
+        if
+        (
+            sameName !=
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                $"Cash Account '{cashAccountName}' already exists for this branch ({sameName.CashAccountCode}).");
+        }
+
+
+        bool codeTaken =
+            await _context
+                .Set<CashAccountsEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.CashAccountId !=
+                        excludeId
+                        &&
+                        x.CashAccountCode ==
+                        cashAccountCode
+                );
+
+        if
+        (
+            codeTaken
+        )
+        {
+            throw new InvalidOperationException(
+                $"Cash Account Code '{cashAccountCode}' is already in use.");
+        }
+    }
+
+
+    //===========================================================
     // Create
     //===========================================================
 
@@ -279,58 +634,53 @@ public class CashAccountsRepository : ICashAccountsRepository
         )
     {
         //===========================================================
-        // Resolve AccountSubGroup
+        // Resolve Reserved Sub Group
         //===========================================================
 
-        AccountSubGroupEntity? accountSubGroup =
+        AccountSubGroupEntity reserved =
+            await ResolveReservedSubGroupAsync();
 
-            await _context
-                .Set<AccountSubGroupEntity>()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.AccountSubGroupId ==
-                        dto.AccountSubGroupsId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
+        EnsureReservedSubGroup(
+            dto.AccountSubGroupsId,
+            reserved);
 
         if
         (
-            accountSubGroup ==
-            null
+            !reserved.IsActive
         )
         {
-            throw new KeyNotFoundException(
-                "AccountSubGroup not found."
-            );
+            throw new InvalidOperationException(
+                $"Account Sub Group {ReservedSubGroupCode} is inactive.");
         }
 
 
         //===========================================================
-        // Resolve CashAccount Code
+        // Validate
+        //===========================================================
+
+        string cashAccountName =
+            NormalizeName(
+                dto.CashAccountName);
+
+
+        //===========================================================
+        // Generate Code (server side, never from the form)
         //===========================================================
 
         string cashAccountCode =
-            dto.CashAccountCode?.Trim()
-            ??
-            string.Empty;
+            await BuildNextCodeAsync(
+                reserved);
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(cashAccountCode)
-        )
-        {
-            cashAccountCode =
-                await GetNextCodeAsync(
-                    dto.AccountSubGroupsId);
-        }
+        string branch =
+            NormalizeBranch(
+                dto.Branch);
+
+        await EnsureUniqueAsync(
+            cashAccountCode,
+            cashAccountName,
+            branch,
+            0);
 
 
         //===========================================================
@@ -341,15 +691,13 @@ public class CashAccountsRepository : ICashAccountsRepository
             new CashAccountsEntity
             {
                 AccountSubGroupsId =
-                    dto.AccountSubGroupsId,
+                    reserved.AccountSubGroupId,
 
                 CashAccountCode =
                     cashAccountCode,
 
                 CashAccountName =
-                    dto.CashAccountName?.Trim()
-                    ??
-                    string.Empty,
+                    cashAccountName,
 
                 Remarks =
                     dto.Remarks?.Trim()
@@ -360,9 +708,7 @@ public class CashAccountsRepository : ICashAccountsRepository
                     dto.Status,
 
                 Branch =
-                    dto.Branch?.Trim()
-                    ??
-                    string.Empty,
+                    branch,
 
                 DisplayName =
                     dto.DisplayName?.Trim()
@@ -420,7 +766,7 @@ public class CashAccountsRepository : ICashAccountsRepository
                     "CashAccount Created",
 
                 ActivityDescription =
-                    $"CashAccount '{entity.CashAccountName}' created.",
+                    $"CashAccount '{entity.CashAccountName}' ({entity.CashAccountCode}) created.",
 
                 PerformedBy =
                     userId,
@@ -443,6 +789,8 @@ public class CashAccountsRepository : ICashAccountsRepository
 
     //===========================================================
     // Update
+    //
+    // Sub group and code are locked; only the details change.
     //===========================================================
 
     public async Task
@@ -488,51 +836,47 @@ public class CashAccountsRepository : ICashAccountsRepository
 
 
         //===========================================================
-        // Resolve AccountSubGroup
+        // Sub Group Is Locked
         //===========================================================
-
-        AccountSubGroupEntity? accountSubGroup =
-
-            await _context
-                .Set<AccountSubGroupEntity>()
-
-                .FirstOrDefaultAsync
-                (
-                    x =>
-
-                        x.AccountSubGroupId ==
-                        dto.AccountSubGroupsId
-
-                        &&
-
-                        !x.IsDeleted
-                );
-
 
         if
         (
-            accountSubGroup ==
-            null
+            dto.AccountSubGroupsId > 0
+            &&
+            dto.AccountSubGroupsId !=
+            entity.AccountSubGroupsId
         )
         {
-            throw new KeyNotFoundException(
-                "AccountSubGroup not found."
-            );
+            throw new InvalidOperationException(
+                "Account Sub Group cannot be changed after the cash account is created.");
         }
 
 
-        entity.AccountSubGroupsId =
-            dto.AccountSubGroupsId;
+        //===========================================================
+        // Validate
+        //===========================================================
 
-        entity.CashAccountCode =
-            dto.CashAccountCode?.Trim()
-            ??
-            string.Empty;
+        string cashAccountName =
+            NormalizeName(
+                dto.CashAccountName);
+
+        string branch =
+            NormalizeBranch(
+                dto.Branch);
+
+        await EnsureUniqueAsync(
+            entity.CashAccountCode,
+            cashAccountName,
+            branch,
+            entity.CashAccountId);
+
+
+        //===========================================================
+        // Update Entity (code is never taken from the form)
+        //===========================================================
 
         entity.CashAccountName =
-            dto.CashAccountName?.Trim()
-            ??
-            string.Empty;
+            cashAccountName;
 
         entity.Remarks =
             dto.Remarks?.Trim()
@@ -543,9 +887,7 @@ public class CashAccountsRepository : ICashAccountsRepository
             dto.Status;
 
         entity.Branch =
-            dto.Branch?.Trim()
-            ??
-            string.Empty;
+            branch;
 
         entity.DisplayName =
             dto.DisplayName?.Trim()
@@ -594,7 +936,7 @@ public class CashAccountsRepository : ICashAccountsRepository
                     "CashAccount Updated",
 
                 ActivityDescription =
-                    $"CashAccount '{entity.CashAccountName}' updated.",
+                    $"CashAccount '{entity.CashAccountName}' ({entity.CashAccountCode}) updated.",
 
                 PerformedBy =
                     userId,
@@ -701,7 +1043,7 @@ public class CashAccountsRepository : ICashAccountsRepository
                     "CashAccount Deleted",
 
                 ActivityDescription =
-                    $"CashAccount '{entity.CashAccountName}' deleted.",
+                    $"CashAccount '{entity.CashAccountName}' ({entity.CashAccountCode}) deleted.",
 
                 PerformedBy =
                     userId,
@@ -721,6 +1063,10 @@ public class CashAccountsRepository : ICashAccountsRepository
 
     //===========================================================
     // Restore
+    //
+    // Restores the most recently deleted cash account. Blocked
+    // (409) while its sub group is deleted, or its name / code is
+    // taken.
     //===========================================================
 
     public async Task<bool>
@@ -756,6 +1102,56 @@ public class CashAccountsRepository : ICashAccountsRepository
         )
         {
             return false;
+        }
+
+
+        //===========================================================
+        // Sub Group Must Exist
+        //===========================================================
+
+        bool subGroupExists =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        x.AccountSubGroupId ==
+                        entity.AccountSubGroupsId
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            !subGroupExists
+        )
+        {
+            throw new InvalidOperationException(
+                $"Cash Account '{entity.CashAccountName}' cannot be restored. " +
+                "Its Account Sub Group is deleted; restore the sub group first.");
+        }
+
+
+        //===========================================================
+        // Name / Code Must Be Free
+        //===========================================================
+
+        try
+        {
+            await EnsureUniqueAsync(
+                entity.CashAccountCode,
+                entity.CashAccountName,
+                entity.Branch ?? string.Empty,
+                entity.CashAccountId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            throw new InvalidOperationException(
+                $"Cash Account '{entity.CashAccountName}' cannot be restored. {ex.Message}");
         }
 
 
@@ -806,7 +1202,7 @@ public class CashAccountsRepository : ICashAccountsRepository
                     "CashAccount Restored",
 
                 ActivityDescription =
-                    $"CashAccount '{entity.CashAccountName}' restored.",
+                    $"CashAccount '{entity.CashAccountName}' ({entity.CashAccountCode}) restored.",
 
                 PerformedBy =
                     userId,

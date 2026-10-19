@@ -77,15 +77,18 @@ public interface IProductCategoryRepository
 
 
     //===========================================================
-    // Get Next Product Category Code
+    // Get Next Product Category Code (MB-/SP-/AC-nnn per type;
+    // '' when no Category Type is given)
     //===========================================================
 
-    Task<string> GetNextCodeAsync();
+    Task<string> GetNextCodeAsync(
+        string? categoryType);
 
 
     //===========================================================
     // Get Defaults
     //===========================================================
 
-    Task<ProductCategoryDefaultsDto> GetDefaultsAsync();
+    Task<ProductCategoryDefaultsDto> GetDefaultsAsync(
+        string? categoryType);
 }

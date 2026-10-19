@@ -1,0 +1,90 @@
+/* ============================================================
+   Brand Management
+============================================================ */
+
+export interface BrandManagement
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Brand Management
+============================================================ */
+
+export interface CreateBrandManagement
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Brand Management
+============================================================ */
+
+export interface UpdateBrandManagement
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Brand Management Defaults
+============================================================ */
+
+export interface BrandManagementDefaults
+{
+    code:
+        string;
+}

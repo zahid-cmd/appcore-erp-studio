@@ -1,0 +1,90 @@
+/* ============================================================
+   Service Policy
+============================================================ */
+
+export interface ServicePolicy
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Service Policy
+============================================================ */
+
+export interface CreateServicePolicy
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Service Policy
+============================================================ */
+
+export interface UpdateServicePolicy
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Service Policy Defaults
+============================================================ */
+
+export interface ServicePolicyDefaults
+{
+    code:
+        string;
+}

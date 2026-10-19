@@ -1,0 +1,656 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Business Configuration"
+
+        subtitle="Business lines per branch : wing core business + extra access"
+
+        icon="fas fa-diagram-project">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search branches, wings, lines..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Grant"
+
+                command1Icon="fas fa-plus"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR : tabs + wing filter
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+
+        @if (selectedTab !== 'core')
+        {
+            <div
+                pageToolbarRight
+                class="bc-toolbar-filter">
+
+                <app-dropdown
+
+                    [items]="wingFilterItems"
+
+                    [value]="wingFilter"
+
+                    (valueChange)="onWingFilterChange($event)">
+
+                </app-dropdown>
+
+            </div>
+        }
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <!-- =================================================
+                 TAB 1 : BRANCH OVERVIEW (today)
+            ================================================== -->
+
+            @if (selectedTab === 'overview')
+            {
+                <div class="bc-panel appcore-scrollbar">
+
+                    <div class="bc-legend">
+
+                        <span class="bc-chip bc-chip-core"><i class="fas fa-lock"></i> Core</span>
+
+                        <span class="bc-chip bc-chip-granted"><i class="fas fa-check"></i> Granted</span>
+
+                        <span class="bc-chip bc-chip-scheduled"><i class="fas fa-hourglass-start"></i> Scheduled</span>
+
+                        <span class="bc-chip bc-chip-off"><i class="fas fa-ban"></i> Expired / Inactive</span>
+
+                        <span class="bc-legend-note">Click an empty cell to grant, a granted cell to edit.</span>
+
+                    </div>
+
+
+                    @if (loading)
+                    {
+                        <div class="bc-empty">Loading…</div>
+                    }
+                    @else if (loadFailed)
+                    {
+                        <div class="bc-empty bc-empty-error">Business configuration could not be loaded.</div>
+                    }
+                    @else if (!filteredOverview.length)
+                    {
+                        <div class="bc-empty">No branch found.</div>
+                    }
+                    @else
+                    {
+                        <table class="bc-matrix">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th class="bc-col-wing">Wing</th>
+
+                                    <th class="bc-col-branch">Branch</th>
+
+                                    @for (line of lines; track line)
+                                    {
+                                        <th class="bc-col-line">
+
+                                            <i [class]="lineIcons[line]"></i>
+
+                                            {{ line }}
+
+                                        </th>
+                                    }
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of filteredOverview; track row.BranchId)
+                                {
+                                    <tr [class.bc-row-inactive]="!row.IsActive">
+
+                                        <td class="bc-col-wing">{{ row.WingName }}</td>
+
+                                        <td class="bc-col-branch">
+
+                                            <div class="bc-branch-name">{{ row.BranchName }}</div>
+
+                                            <div class="bc-branch-code">{{ row.BranchCode }}</div>
+
+                                        </td>
+
+                                        @for (line of lines; track line)
+                                        {
+                                            <td
+                                                class="bc-cell"
+                                                [class.bc-cell-clickable]="lineStatus(row, line)?.Source !== 'Core'"
+                                                (click)="onCellClick(row, lineStatus(row, line))">
+
+                                                @switch (lineStatus(row, line)?.Source)
+                                                {
+                                                    @case ('Core')
+                                                    {
+                                                        <span class="bc-chip bc-chip-core"><i class="fas fa-lock"></i> Core</span>
+                                                    }
+                                                    @case ('Granted')
+                                                    {
+                                                        <span class="bc-chip bc-chip-granted"><i class="fas fa-check"></i> Granted</span>
+                                                    }
+                                                    @case ('Scheduled')
+                                                    {
+                                                        <span class="bc-chip bc-chip-scheduled"><i class="fas fa-hourglass-start"></i> Scheduled</span>
+                                                    }
+                                                    @case ('Expired')
+                                                    {
+                                                        <span class="bc-chip bc-chip-off"><i class="fas fa-ban"></i> Expired</span>
+                                                    }
+                                                    @case ('Inactive')
+                                                    {
+                                                        <span class="bc-chip bc-chip-off"><i class="fas fa-pause"></i> Inactive</span>
+                                                    }
+                                                    @default
+                                                    {
+                                                        <span class="bc-add"><i class="fas fa-plus"></i></span>
+                                                    }
+                                                }
+
+                                                @if (lineHint(lineStatus(row, line)))
+                                                {
+                                                    <div class="bc-hint">{{ lineHint(lineStatus(row, line)) }}</div>
+                                                }
+
+                                            </td>
+                                        }
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+                    }
+
+                </div>
+            }
+
+
+
+            <!-- =================================================
+                 TAB 2 : EXTRA BUSINESS (grants)
+            ================================================== -->
+
+            @if (selectedTab === 'grants')
+            {
+                <app-list-table
+
+                    [columns]="columns"
+
+                    [rows]="pagedGrants"
+
+                    [serialOffset]="(currentPage - 1) * pageSize"
+
+                    [loading]="loading"
+
+                    [error]="loadFailed"
+
+                    [actions]="{ view: false, edit: true, delete: true }"
+
+                    (edit)="edit($event)"
+
+                    (delete)="delete($event)">
+
+                </app-list-table>
+            }
+
+
+
+            <!-- =================================================
+                 TAB 3 : WING CORE BUSINESS
+            ================================================== -->
+
+            @if (selectedTab === 'core')
+            {
+                <div class="bc-panel appcore-scrollbar">
+
+                    <div class="bc-core-note">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        Every branch under a wing always runs the wing's core business; it cannot be revoked per branch.
+                        Other lines are given to single branches on <b>Extra Business</b>.
+
+                    </div>
+
+
+                    <div class="bc-wing-grid">
+
+                        @for (wing of wings; track wing.WingId)
+                        {
+                            <div class="bc-wing-card" [class.bc-wing-card-changed]="isWingChanged(wing)">
+
+                                <div class="bc-wing-head">
+
+                                    <span class="bc-wing-icon"><i class="fas fa-sitemap"></i></span>
+
+                                    <div class="bc-wing-titles">
+
+                                        <div class="bc-wing-name">{{ wing.WingName }}</div>
+
+                                        <div class="bc-wing-code">{{ wing.WingCode }}</div>
+
+                                    </div>
+
+                                    <span class="bc-wing-count">
+
+                                        {{ (wingDrafts[wing.WingId] ?? []).length }} core
+
+                                    </span>
+
+                                </div>
+
+
+                                <div class="bc-wing-section-label">Core business lines</div>
+
+                                <div class="bc-wing-lines">
+
+                                    @for (line of lines; track line)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="bc-toggle"
+                                            [class.bc-toggle-on]="isWingLineOn(wing.WingId, line)"
+                                            [disabled]="savingWingId === wing.WingId"
+                                            (click)="toggleWingLine(wing.WingId, line)">
+
+                                            <i [class]="lineIcons[line]"></i>
+
+                                            {{ line }}
+
+                                            @if (isWingLineOn(wing.WingId, line))
+                                            {
+                                                <span class="bc-toggle-check"><i class="fas fa-check"></i></span>
+                                            }
+
+                                        </button>
+                                    }
+
+                                </div>
+
+
+                                <div class="bc-wing-actions">
+
+                                    <span
+                                        class="bc-wing-hint"
+                                        [class.bc-wing-hint-changed]="isWingChanged(wing)">
+
+                                        {{ isWingChanged(wing) ? 'Unsaved changes' : 'Applies to every branch of this wing' }}
+
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        class="bc-btn bc-btn-ghost"
+                                        [disabled]="!isWingChanged(wing) || savingWingId === wing.WingId"
+                                        (click)="resetWing(wing)">
+
+                                        Reset
+
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="bc-btn bc-btn-primary"
+                                        [disabled]="!isWingChanged(wing) || savingWingId === wing.WingId"
+                                        (click)="saveWing(wing)">
+
+                                        @if (savingWingId === wing.WingId)
+                                        {
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        }
+                                        @else
+                                        {
+                                            <i class="fas fa-floppy-disk"></i>
+                                        }
+
+                                        Save
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="bc-empty">No wing found.</div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+
+
+        <!-- =================================================
+             PAGINATION (Extra Business tab)
+        ================================================== -->
+
+        @if (selectedTab === 'grants')
+        {
+            <app-pagination
+
+                canvasFooter
+
+                [totalRecords]="filteredGrants.length"
+
+                [currentPage]="currentPage"
+
+                [pageSize]="pageSize"
+
+                (pageChange)="onPageChange($event)"
+
+                (pageSizeChange)="onPageSizeChange($event)">
+
+            </app-pagination>
+        }
+
+    </app-page-canvas>
+
+
+
+    <!-- =====================================================
+         GRANT MODAL (shared Form Modal)
+    ====================================================== -->
+
+    <app-form-modal
+
+        [opened]="modalOpened"
+
+        [title]="modalTitle"
+
+        subtitle="Give a branch a business line on top of its wing's core business"
+
+        icon="fas fa-diagram-project"
+
+        width="560px"
+
+        [saveText]="isEditingGrant ? 'Update' : 'Grant'"
+
+        [saveDisabled]="!canSaveGrant"
+
+        [busy]="isProcessing"
+
+        (save)="saveGrant()"
+
+        (closed)="closeModal()">
+
+
+        <!-- Branch (locked after saving) -->
+
+        <app-dropdown
+
+            label="Branch"
+
+            [items]="branchItems"
+
+            [value]="draft.BranchId"
+
+            (valueChange)="onDraftBranchChange($event)"
+
+            [disabled]="isEditingGrant"
+
+            [required]="true">
+
+        </app-dropdown>
+
+
+        @if (draft.BranchId && draftCoreLines.length)
+        {
+            <div class="bc-modal-core">
+
+                <span class="bc-modal-core-label">Core business</span>
+
+                @for (line of draftCoreLines; track line)
+                {
+                    <span class="bc-chip bc-chip-core"><i class="fas fa-lock"></i> {{ line }}</span>
+                }
+
+            </div>
+        }
+
+
+        <!-- Business Line (locked after saving) -->
+
+        <app-dropdown
+
+            label="Business Line"
+
+            [items]="lineItems"
+
+            [value]="draft.BusinessLine"
+
+            (valueChange)="onDraftLineChange($event)"
+
+            [disabled]="isEditingGrant || !draft.BranchId"
+
+            [required]="true">
+
+        </app-dropdown>
+
+
+        <!-- Access Type + Status -->
+
+        <div class="bc-modal-row">
+
+            <app-dropdown
+
+                label="Access Type"
+
+                [items]="accessTypeItems"
+
+                [value]="draft.AccessType"
+
+                (valueChange)="onDraftAccessTypeChange($event)"
+
+                [required]="true">
+
+            </app-dropdown>
+
+            <app-dropdown
+
+                label="Status"
+
+                [items]="statusItems"
+
+                [value]="draft.IsActive"
+
+                (valueChange)="onDraftStatusChange($event)"
+
+                [required]="true">
+
+            </app-dropdown>
+
+        </div>
+
+
+        <!-- Validity -->
+
+        <div class="bc-validity" [class.bc-validity-temporary]="isTemporary">
+
+            <div class="bc-validity-head">
+
+                <i [class]="isTemporary ? 'fas fa-hourglass-half' : 'fas fa-infinity'"></i>
+
+                @if (isTemporary)
+                {
+                    Temporary access : ends by itself after Valid Until.
+                }
+                @else
+                {
+                    Fixed access : no end date, stays until revoked.
+                }
+
+            </div>
+
+            <div class="bc-modal-row">
+
+                <label class="bc-date">
+
+                    <span class="bc-date-label">Valid From</span>
+
+                    <input
+                        type="date"
+                        class="bc-date-input"
+                        [(ngModel)]="draft.ValidFrom">
+
+                </label>
+
+                <label class="bc-date" [class.bc-date-off]="!isTemporary">
+
+                    <span class="bc-date-label">
+
+                        Valid Until
+
+                        @if (isTemporary)
+                        {
+                            <span class="bc-required">*</span>
+                        }
+
+                    </span>
+
+                    <input
+                        type="date"
+                        class="bc-date-input"
+                        [disabled]="!isTemporary"
+                        [min]="draft.ValidFrom"
+                        [(ngModel)]="draft.ValidUntil">
+
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <!-- Remarks -->
+
+        <div class="bc-modal-full">
+
+            <app-textarea
+
+                label="Remarks"
+
+                placeholder="Reason for the access (optional)"
+
+                [rows]="2"
+
+                [(value)]="draft.Remarks">
+
+            </app-textarea>
+
+        </div>
+
+    </app-form-modal>
+
+
+
+    <!-- =====================================================
+         HISTORY
+    ====================================================== -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+
+    <!-- =====================================================
+         UTILITIES
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+</div>

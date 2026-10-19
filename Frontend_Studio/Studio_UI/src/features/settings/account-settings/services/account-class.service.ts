@@ -187,13 +187,21 @@ export class AccountClassService
 
     getNextCode(
         classType:
+            string,
+        classPrefix:
             string
     ):
         Observable<string>
     {
         return this.http.get(
-            `${this.apiUrl}/next-code/${encodeURIComponent(classType)}`,
+            `${this.apiUrl}/next-code`,
             {
+                params:
+                {
+                    classType,
+                    classPrefix
+                },
+
                 responseType:'text'
             }
         );
@@ -215,10 +223,17 @@ export class AccountClassService
                 map(
                     response =>
                     ({
-                        Code:
-                            response.code
+                        ClassPrefix:
+                            response?.classPrefix
                             ??
-                            response.Code
+                            response?.ClassPrefix
+                            ??
+                            '',
+
+                        Code:
+                            response?.code
+                            ??
+                            response?.Code
                             ??
                             ''
                     })

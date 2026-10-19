@@ -1,4 +1,16 @@
 /* ============================================================
+   Category Types
+============================================================ */
+
+export const PRODUCT_CATEGORY_TYPES:
+    readonly string[] =
+[
+    'Motor Bikes',
+    'Spare Parts',
+    'Accessories'
+];
+
+/* ============================================================
    Product Category
 ============================================================ */
 
@@ -12,6 +24,16 @@ export interface ProductCategory
 
     CategoryName:
         string;
+
+    //===========================================================
+    // Category Type + Brand (the name is built from these)
+    //===========================================================
+
+    CategoryType:
+        string;
+
+    BrandManagementId:
+        number;
 
     //===========================================================
     // Inventory Group Codes
@@ -55,6 +77,13 @@ export interface ProductCategory
 
     IsActive:
         boolean;
+
+    //===========================================================
+    // Display only (from the server)
+    //===========================================================
+
+    BrandName?:
+        string;
 }
 
 /* ============================================================
@@ -68,6 +97,16 @@ export interface CreateProductCategory
 
     CategoryName:
         string;
+
+    //===========================================================
+    // Category Type + Brand (the name is built from these)
+    //===========================================================
+
+    CategoryType:
+        string;
+
+    BrandManagementId:
+        number;
 
     //===========================================================
     // Inventory Group Codes
@@ -129,6 +168,16 @@ export interface UpdateProductCategory
         string;
 
     //===========================================================
+    // Category Type + Brand (the name is built from these)
+    //===========================================================
+
+    CategoryType:
+        string;
+
+    BrandManagementId:
+        number;
+
+    //===========================================================
     // Inventory Group Codes
     //===========================================================
 
@@ -184,6 +233,14 @@ export interface ProductCategoryDefaults
 
     Code:
         string;
+
+    //===========================================================
+    // Next Category Code per Category Type
+    // { 'Motor Bikes': 'MB-001', 'Spare Parts': 'SP-001', ... }
+    //===========================================================
+
+    TypeCodes:
+        Record<string, string>;
 
     //===========================================================
     // Inventory Group Code

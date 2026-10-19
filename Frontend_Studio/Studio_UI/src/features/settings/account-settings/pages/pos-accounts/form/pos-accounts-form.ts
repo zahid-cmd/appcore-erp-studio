@@ -213,7 +213,7 @@ from '../../../../general-settings/services/branches.service';
 // POS Accounts are reserved to this Account Sub Group only.
 const RESERVED_SUB_GROUP_CODE:
     string =
-    'SUB-003-002-004';
+    'SUB-002-002-004';
 
 // Fixed prefix of the generated POS Account Name.
 const POS_NAME_PREFIX:

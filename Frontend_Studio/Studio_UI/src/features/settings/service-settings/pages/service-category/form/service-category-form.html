@@ -1,0 +1,358 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-screwdriver-wrench"
+
+        [title]="pageTitle"
+
+        subtitle="Manage brand and differential service categories">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-screwdriver-wrench">
+
+
+                <!-- Category Type : Brand Services / Differential Services;
+                     locked once saved -->
+
+                <app-dropdown
+
+                    label="Category Type"
+
+                    [items]="categoryTypeItems"
+
+                    [(value)]="entity.CategoryType"
+
+                    (valueChange)="onCategoryTypeChange($event)"
+
+                    [disabled]="isViewMode || isSaving || isCategoryTypeLocked"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Category Code : BRS-nnn (Brand) / DRS-nnn (Differential) -->
+
+                <app-textbox
+
+                    label="Category Code"
+
+                    placeholder="Follows the category type"
+
+                    [(value)]="entity.CategoryCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Brand : Brand Services only (one category per brand) -->
+
+                <app-search-dropdown
+
+                    label="Brand"
+
+                    [items]="brandItems"
+
+                    [(value)]="entity.BrandManagementId"
+
+                    (valueChange)="onBrandChange($event)"
+
+                    [disabled]="isViewMode || isSaving || !isBrandServices"
+
+                    [required]="isBrandServices">
+
+                </app-search-dropdown>
+
+
+                <!-- Category Name :
+                     Brand Services  : "Service Charges - <Brand>", built automatically
+                     Differential Services : typed -->
+
+                <app-textbox
+
+                    label="Category Name"
+
+                    [placeholder]="namePlaceholder"
+
+                    [(value)]="entity.CategoryName"
+
+                    (valueChange)="onCategoryNameChange()"
+
+                    [readonly]="!isDifferentialServices"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 INCOME ACCOUNT GROUP
+            ============================================== -->
+
+            <app-form-section
+
+                title="Income Account Group"
+
+                icon="fas fa-sack-dollar">
+
+
+                <!-- Income Class (found by the server) -->
+
+                <app-textbox
+
+                    label="Account Class"
+
+                    placeholder="Income class"
+
+                    [(value)]="incomeClassDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Income Group Code : GRP-ccc-ggg -->
+
+                <app-textbox
+
+                    label="Income Group Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.IncomeGroupCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 ACCOUNT GROUP NAME
+                 Same as the Category Name; renamed with it.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Account Group Name"
+
+                icon="fas fa-folder-tree">
+
+
+                <!-- Income Group Name -->
+
+                <app-textbox
+
+                    label="Income Group Name"
+
+                    placeholder="Follows the category name"
+
+                    [(value)]="entity.IncomeGroupName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Sub Category Types this category will allow -->
+
+                <app-textbox
+
+                    label="Sub Category Types"
+
+                    placeholder="Follows the category type"
+
+                    [value]="allowedSubCategoryTypes"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Sub Category Creation Allowed -->
+
+                <app-dropdown
+
+                    label="Sub Category Creation Allowed"
+
+                    [items]="subCategoryCreationItems"
+
+                    [(value)]="entity.SubCategoryCreationAllowed"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

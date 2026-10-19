@@ -31,7 +31,7 @@ public class MFSAccounts
 
     //===========================================================
     // Account Sub Group
-    // (Reserved : SUB-003-002-003 - Cash With MFS)
+    // (Reserved : SUB-002-002-003 - Cash With MFS)
     //===========================================================
 
     public long AccountSubGroupsId

@@ -1,0 +1,90 @@
+/* ============================================================
+   Chart of Services
+============================================================ */
+
+export interface ChartOfServices
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Chart of Services
+============================================================ */
+
+export interface CreateChartOfServices
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Chart of Services
+============================================================ */
+
+export interface UpdateChartOfServices
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Chart of Services Defaults
+============================================================ */
+
+export interface ChartOfServicesDefaults
+{
+    code:
+        string;
+}

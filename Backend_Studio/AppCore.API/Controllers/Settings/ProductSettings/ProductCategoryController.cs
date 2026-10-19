@@ -72,12 +72,14 @@ public class ProductCategoryController : ControllerBase
 
     [HttpGet("next-code")]
 
-    public async Task<ActionResult<string>> GetNextCode()
+    public async Task<ActionResult<string>> GetNextCode(
+        [FromQuery] string? categoryType)
     {
         try
         {
             return Ok(
-                await _repository.GetNextCodeAsync());
+                await _repository.GetNextCodeAsync(
+                    categoryType));
         }
         catch
         (
@@ -95,12 +97,14 @@ public class ProductCategoryController : ControllerBase
 
     [HttpGet("defaults")]
 
-    public async Task<ActionResult<ProductCategoryDefaultsDto>> GetDefaults()
+    public async Task<ActionResult<ProductCategoryDefaultsDto>> GetDefaults(
+        [FromQuery] string? categoryType)
     {
         try
         {
             return Ok(
-                await _repository.GetDefaultsAsync());
+                await _repository.GetDefaultsAsync(
+                    categoryType));
         }
         catch
         (
@@ -291,9 +295,22 @@ public class ProductCategoryController : ControllerBase
     {
         long userId = 1;
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
+        bool restored;
+
+        try
+        {
+            restored =
+                await _repository.RestoreAsync(
+                    userId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            // Blocked : name / code taken, or a class is missing
+            return Conflict(ex.Message);
+        }
 
         if (!restored)
         {

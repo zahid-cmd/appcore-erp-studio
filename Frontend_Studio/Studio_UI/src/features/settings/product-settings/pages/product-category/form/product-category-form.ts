@@ -123,6 +123,12 @@ import
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
 //===============================================================
 // Utilities
 //===============================================================
@@ -171,7 +177,8 @@ import
 {
     ProductCategory,
     CreateProductCategory,
-    UpdateProductCategory
+    UpdateProductCategory,
+    PRODUCT_CATEGORY_TYPES
 }
 from '../../../models/product-category.model';
 
@@ -180,6 +187,18 @@ import
     ProductCategoryService
 }
 from '../../../services/product-category.service';
+
+import
+{
+    BrandManagement
+}
+from '../../../models/brand-management.model';
+
+import
+{
+    BrandManagementService
+}
+from '../../../services/brand-management.service';
 
 //===============================================================
 // Component
@@ -215,6 +234,7 @@ from '../../../services/product-category.service';
         TextboxComponent,
         TextareaComponent,
         DropdownComponent,
+        SearchDropdownComponent,
 
         //=======================================================
         // Utilities
@@ -252,6 +272,9 @@ implements OnInit, OnDestroy
 
     private readonly productCategoryService =
         inject(ProductCategoryService);
+
+    private readonly brandService =
+        inject(BrandManagementService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
@@ -397,6 +420,51 @@ implements OnInit, OnDestroy
         ];
 
     //===========================================================
+    // Category Type Items
+    //===========================================================
+
+    categoryTypeItems:
+        any[]
+        =
+        PRODUCT_CATEGORY_TYPES.map(
+            type =>
+            ({
+                label:type,
+                value:type
+            })
+        );
+
+    //===========================================================
+    // Brand Items
+    //
+    // Active brands, plus the category's own brand when it has
+    // since been made inactive (so edit / view still shows it).
+    //===========================================================
+
+    brandItems:
+        any[]
+        =
+        [];
+
+    private brands:
+        BrandManagement[]
+        =
+        [];
+
+    // Next Category Code per type, from the defaults call
+    // ({ 'Motor Bikes': 'MB-001', ... })
+    private nextTypeCodes:
+        Record<string, string>
+        =
+        {};
+
+    // Category Type as saved on the server ('' for new / older rows)
+    private savedCategoryType:
+        string
+        =
+        '';
+
+    //===========================================================
     // Status Items
     //===========================================================
 
@@ -442,6 +510,8 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
+        this.loadBrands();
+
         this.initializeMode();
     }
 
@@ -474,6 +544,8 @@ implements OnInit, OnDestroy
             ProductCategoryId:0,
             CategoryCode:'',
             CategoryName:'',
+            CategoryType:'',
+            BrandManagementId:0,
             InventoryGroupCode:'',
             WipGroupCode:'',
             CogsGroupCode:'',
@@ -630,14 +702,25 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    this.entity.CategoryCode =
-                        String(
-                            response?.Code
-                            ??
-                            response?.code
-                            ??
-                            ''
-                        ).trim();
+                    const rawTypeCodes =
+                        response?.TypeCodes
+                        ??
+                        response?.typeCodes
+                        ??
+                        {};
+
+                    this.nextTypeCodes =
+                        {};
+
+                    for
+                    (
+                        const key
+                        of Object.keys(rawTypeCodes)
+                    )
+                    {
+                        this.nextTypeCodes[key.toLowerCase()] =
+                            String(rawTypeCodes[key] ?? '').trim();
+                    }
 
                     this.entity.InventoryGroupCode =
                         String(
@@ -666,11 +749,27 @@ implements OnInit, OnDestroy
                             ''
                         ).trim();
 
+                    // A type may already be picked while this loaded
+                    this.applyTypeCode();
+
                     //===========================================
-                    // Auto-filled values are the new baseline
+                    // Auto-filled values are the new baseline,
+                    // unless the user has already picked a type
                     //===========================================
 
-                    this.setInitialFormState();
+                    if
+                    (
+                        !this.entity.CategoryType
+                    )
+                    {
+                        this.setInitialFormState();
+
+                        return;
+                    }
+
+                    this.checkForChanges();
+
+                    this.cdr.detectChanges();
                 },
 
                 error:
@@ -697,10 +796,220 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Category Name Change
+    // Load Brands
     //===========================================================
 
-    onCategoryNameChange():
+    private loadBrands():
+        void
+    {
+        this.brandService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        BrandManagement[]
+                ):
+                    void =>
+                {
+                    this.brands =
+                        (response ?? [])
+                            .slice()
+                            .sort(
+                                (a, b) =>
+                                    (a.BrandName ?? '')
+                                        .localeCompare(
+                                            b.BrandName ?? ''
+                                        )
+                            );
+
+                    this.buildBrandItems();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Brands Error',
+                        error
+                    );
+
+                    this.brandItems =
+                        [];
+
+                    this.toast.error(
+                        'Error',
+                        'Failed to load brands.'
+                    );
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+    //===========================================================
+    // Build Brand Items
+    //===========================================================
+
+    private buildBrandItems():
+        void
+    {
+        const currentId =
+            Number(
+                this.entity.BrandManagementId
+                ??
+                0
+            );
+
+        this.brandItems =
+            this.brands
+                .filter(
+                    brand =>
+                        brand.Status
+                        ||
+                        Number(brand.BrandManagementId) ===
+                        currentId
+                )
+                .map(
+                    brand =>
+                    ({
+                        label:
+                            brand.Status
+                                ? brand.BrandName
+                                : `${brand.BrandName} (Inactive)`,
+
+                        value:
+                            Number(brand.BrandManagementId)
+                    })
+                );
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Category Type / Brand Change
+    //
+    // Category Name = "<Brand Name> <Category Type>",
+    // e.g. "Yadea Motor Bikes". The server builds the same name
+    // (and the three group names "<class prefix> - <Name>");
+    // the values here are a preview.
+    // Accessories : Category Name is typed (editable), the group
+    // names still follow it.
+    //===========================================================
+
+    onCategoryTypeChange
+    (
+        value?:
+            any
+    ):
+        void
+    {
+        // Take the selected value directly, so the code never
+        // waits for the two-way binding
+        if
+        (
+            value !== undefined
+        )
+        {
+            this.entity.CategoryType =
+                String(this.unwrapValue(value) ?? '');
+        }
+
+        // New category : code switches instantly (MB / SP / AC)
+        this.applyTypeCode();
+
+        this.onNameSourceChange();
+    }
+
+    onBrandChange
+    (
+        value?:
+            any
+    ):
+        void
+    {
+        if
+        (
+            value !== undefined
+        )
+        {
+            this.entity.BrandManagementId =
+                Number(this.unwrapValue(value) ?? 0);
+        }
+
+        this.onNameSourceChange();
+    }
+
+    // A dropdown may emit the value or the whole { label, value } item
+    private unwrapValue
+    (
+        value:
+            any
+    ):
+        any
+    {
+        return value !== null
+            &&
+            typeof value === 'object'
+            &&
+            'value' in value
+                ? value.value
+                : value;
+    }
+
+    //===========================================================
+    // Category Code for the chosen type (add mode only)
+    //===========================================================
+
+    private applyTypeCode():
+        void
+    {
+        if
+        (
+            !this.isAddMode
+        )
+        {
+            return;
+        }
+
+        const type =
+            (this.entity.CategoryType ?? '')
+                .trim()
+                .toLowerCase();
+
+        this.entity.CategoryCode =
+            type
+                ? this.nextTypeCodes[type] ?? ''
+                : '';
+
+        this.cdr.detectChanges();
+    }
+
+    // Category Type "Accessories" : the name is typed by the user
+    get isAccessories():
+        boolean
+    {
+        return (this.entity.CategoryType ?? '')
+            .trim()
+            .toLowerCase()
+            ===
+            'accessories';
+    }
+
+
+    // The last name this form generated (to know whether the
+    // current name was typed or built)
+    private lastAutoName:
+        string =
+        '';
+
+
+    onNameSourceChange():
         void
     {
         if
@@ -711,10 +1020,96 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const categoryName =
-            this.entity.CategoryName?.trim()
+        //=======================================================
+        // Accessories : name is typed, not generated. A name that
+        // was generated for another type is cleared once.
+        //=======================================================
+
+        if
+        (
+            this.isAccessories
+        )
+        {
+            if
+            (
+                this.entity.CategoryName
+                &&
+                this.entity.CategoryName === this.lastAutoName
+            )
+            {
+                this.entity.CategoryName =
+                    '';
+            }
+
+            this.lastAutoName =
+                '';
+
+            this.refreshGroupNames();
+
+            return;
+        }
+
+        //=======================================================
+        // Motor Bikes / Spare Parts : "<Brand Name> <Category Type>"
+        //=======================================================
+
+        const brandName =
+            this.brands
+                .find(
+                    brand =>
+                        Number(brand.BrandManagementId) ===
+                        Number(this.entity.BrandManagementId)
+                )
+                ?.BrandName
+                ?.trim()
             ??
             '';
+
+        const categoryType =
+            this.entity.CategoryType?.trim()
+            ??
+            '';
+
+        const categoryName =
+            brandName && categoryType
+                ? `${brandName} ${categoryType}`
+                : '';
+
+        this.entity.CategoryName =
+            categoryName;
+
+        this.lastAutoName =
+            categoryName;
+
+        this.refreshGroupNames();
+    }
+
+
+    // Accessories : the typed Category Name changed
+    onCategoryNameChange():
+        void
+    {
+        if
+        (
+            !this.isAccessories
+            ||
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+        this.refreshGroupNames();
+    }
+
+
+    // Group names follow the Category Name : "<prefix> - <Name>"
+    private refreshGroupNames():
+        void
+    {
+        const categoryName =
+            (this.entity.CategoryName ?? '')
+                .trim();
 
         this.entity.InventoryGroupName =
             categoryName
@@ -798,6 +1193,22 @@ implements OnInit, OnDestroy
                             ??
                             '',
 
+                        CategoryType:
+                            response?.CategoryType
+                            ??
+                            response?.categoryType
+                            ??
+                            '',
+
+                        BrandManagementId:
+                            Number(
+                                response?.BrandManagementId
+                                ??
+                                response?.brandManagementId
+                                ??
+                                0
+                            ),
+
                         InventoryGroupCode:
                             response?.InventoryGroupCode
                             ??
@@ -865,6 +1276,11 @@ implements OnInit, OnDestroy
                                 true
                             )
                     };
+
+                    this.savedCategoryType =
+                        this.entity.CategoryType;
+
+                    this.buildBrandItems();
 
                     this.setInitialFormState();
                 },
@@ -948,6 +1364,32 @@ implements OnInit, OnDestroy
         // Validation
         //=======================================================
 
+        if
+        (
+            !this.entity.CategoryType?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Category Type is required.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            !(Number(this.entity.BrandManagementId) > 0)
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Brand is required.'
+            );
+
+            return;
+        }
+
         const requiredFields:
             {
                 value:
@@ -962,7 +1404,10 @@ implements OnInit, OnDestroy
             },
             {
                 value:this.entity.CategoryName,
-                message:'Category Name is required.'
+                message:
+                    this.isAccessories
+                        ? 'Category Name is required.'
+                        : 'Category Name could not be built. Select the Category Type and Brand again.'
             },
             {
                 value:this.entity.InventoryGroupCode,
@@ -1040,6 +1485,12 @@ implements OnInit, OnDestroy
 
             CategoryName:
                 this.entity.CategoryName.trim(),
+
+            CategoryType:
+                this.entity.CategoryType.trim(),
+
+            BrandManagementId:
+                Number(this.entity.BrandManagementId),
 
             InventoryGroupCode:
                 this.entity.InventoryGroupCode.trim(),
@@ -1621,6 +2072,15 @@ implements OnInit, OnDestroy
         boolean
     {
         return this.mode === 'add';
+    }
+
+    // Category Type sets the code prefix, so it is locked once saved
+    get isCategoryTypeLocked():
+        boolean
+    {
+        return !this.isAddMode
+            &&
+            !!this.savedCategoryType;
     }
 
     //===========================================================

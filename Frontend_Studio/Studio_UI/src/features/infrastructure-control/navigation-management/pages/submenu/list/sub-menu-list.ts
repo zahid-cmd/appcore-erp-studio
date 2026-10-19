@@ -383,27 +383,27 @@ implements OnInit
         {
             header:'Submenu Name',
             field:'name',
+            width:'220px',
             align:'left'
         },
 
         {
             header:'Icon',
             field:'icon',
-            width:'180px',
+            width:'220px',
             align:'left'
         },
 
         {
             header:'Route',
             field:'route',
-            width:'530px',
             align:'left'
         },
 
         {
             header:'Order',
             field:'displayOrder',
-            width:'100px',
+            width:'180px',
             align:'center'
         },
 
@@ -411,7 +411,7 @@ implements OnInit
             header:'Status',
             field:'isActive',
             type:'status',
-            width:'120px',
+            width:'180px',
             align:'center'
         },
 

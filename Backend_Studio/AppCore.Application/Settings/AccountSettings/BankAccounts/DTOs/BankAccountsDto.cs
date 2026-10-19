@@ -132,6 +132,15 @@ public class BankAccountDto
 
     public string BankBranchName { get; set; } = string.Empty;
 
+    //===============================================================
+    // Sanction Limit
+    //
+    // Optional. Only kept for accounts under SUB-003-002-002
+    // (Liability For Finance); always null otherwise.
+    //===============================================================
+
+    public decimal? SanctionLimit { get; set; }
+
     //===========================================================
     // Soft Delete
     //===========================================================
