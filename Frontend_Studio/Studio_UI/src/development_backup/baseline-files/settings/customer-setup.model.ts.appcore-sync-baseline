@@ -1,0 +1,90 @@
+/* ============================================================
+   Customer Setup
+============================================================ */
+
+export interface CustomerSetup
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Customer Setup
+============================================================ */
+
+export interface CreateCustomerSetup
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Customer Setup
+============================================================ */
+
+export interface UpdateCustomerSetup
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Customer Setup Defaults
+============================================================ */
+
+export interface CustomerSetupDefaults
+{
+    code:
+        string;
+}

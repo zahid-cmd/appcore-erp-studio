@@ -1,0 +1,90 @@
+/* ============================================================
+   Customer Profiles
+============================================================ */
+
+export interface CustomerProfiles
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Customer Profiles
+============================================================ */
+
+export interface CreateCustomerProfiles
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Customer Profiles
+============================================================ */
+
+export interface UpdateCustomerProfiles
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Customer Profiles Defaults
+============================================================ */
+
+export interface CustomerProfilesDefaults
+{
+    code:
+        string;
+}

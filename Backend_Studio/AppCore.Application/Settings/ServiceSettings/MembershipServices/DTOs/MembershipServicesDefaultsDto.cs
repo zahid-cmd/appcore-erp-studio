@@ -12,8 +12,15 @@ namespace AppCore.Application.Settings.ServiceSettings;
 public class MembershipServicesDefaultsDto
 {
     //===========================================================
-    // Membership Services sub categories (live) with the next codes
+    // List filters
     //===========================================================
+
+    public List<MembershipServicesCardOptionDto> Cards
+    {
+        get;
+        set;
+    } = new();
+
 
     public List<MembershipServicesSubCategoryOptionDto> SubCategories
     {
@@ -23,18 +30,7 @@ public class MembershipServicesDefaultsDto
 
 
     //===========================================================
-    // Membership Types (fixed for now)
-    //===========================================================
-
-    public List<string> MembershipTypes
-    {
-        get;
-        set;
-    } = new();
-
-
-    //===========================================================
-    // Expense sub group (SUB-004-002-001, display)
+    // Expense sub group (display)
     //===========================================================
 
     public string ExpenseSubGroupCode
@@ -49,27 +45,57 @@ public class MembershipServicesDefaultsDto
         get;
         set;
     } = string.Empty;
-
-
-    // Set when the sub group is missing / deleted
-    public string ExpenseSubGroupMessage
-    {
-        get;
-        set;
-    } = string.Empty;
 }
 
 
 //===============================================================
-// Membership Services : one sub category option
+// Membership card (filter option)
+//===============================================================
+
+public class MembershipServicesCardOptionDto
+{
+    public long MembershipCardId
+    {
+        get;
+        set;
+    }
+
+
+    public string CardCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string CardName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public int CardRank
+    {
+        get;
+        set;
+    }
+
+
+    public bool IsActive
+    {
+        get;
+        set;
+    }
+}
+
+
+//===============================================================
+// Membership Services sub category (filter option)
 //===============================================================
 
 public class MembershipServicesSubCategoryOptionDto
 {
-    //===========================================================
-    // Sub Category
-    //===========================================================
-
     public long ServiceSubCategoryId
     {
         get;
@@ -85,61 +111,6 @@ public class MembershipServicesSubCategoryOptionDto
 
 
     public string SubCategoryName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string CategoryName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    // Sub category and its category active
-    public bool IsActive
-    {
-        get;
-        set;
-    }
-
-
-    public bool ItemCreationAllowed
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Preview of the codes the next service gets
-    //===========================================================
-
-    public string NextServiceCode
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string NextIncomeLedgerCode
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string NextExpenseLedgerCode
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    // Why no service can be added under it ('' when it can)
-    public string Message
     {
         get;
         set;

@@ -204,63 +204,18 @@ from '../../../services/account-sub-group.service';
 
 import
 {
-    ServicePolicyService
+    AutoAccountsService,
+    emptyAutoAccountCodes,
+    ledgerOrigin
 }
-from '../../../../service-settings/services/service-policy.service';
+from '../../../services/auto-accounts.service';
 
 import
 {
-    ServicePolicy
+    AccountOrigin,
+    AutoAccountCodes
 }
-from '../../../../service-settings/models/service-policy.model';
-
-import
-{
-    ScheduledServicesService
-}
-from '../../../../service-settings/services/scheduled-services.service';
-
-import
-{
-    ScheduledService
-}
-from '../../../../service-settings/models/scheduled-services.model';
-
-import
-{
-    LaborChartService
-}
-from '../../../../service-settings/services/labor-chart.service';
-
-import
-{
-    LaborChart
-}
-from '../../../../service-settings/models/labor-chart.model';
-
-import
-{
-    CustomizedServicesService
-}
-from '../../../../service-settings/services/customized-services.service';
-
-import
-{
-    CustomizedService
-}
-from '../../../../service-settings/models/customized-services.model';
-
-import
-{
-    MembershipServicesService
-}
-from '../../../../service-settings/services/membership-services.service';
-
-import
-{
-    MembershipService
-}
-from '../../../../service-settings/models/membership-services.model';
+from '../../../models/auto-accounts.model';
 
 //===============================================================
 // Component
@@ -314,20 +269,8 @@ implements OnInit, OnDestroy
     private readonly accountSubGroupService =
         inject(AccountSubGroupService);
 
-    private readonly servicePolicyService =
-        inject(ServicePolicyService);
-
-    private readonly scheduledServicesService =
-        inject(ScheduledServicesService);
-
-    private readonly laborChartService =
-        inject(LaborChartService);
-
-    private readonly customizedServicesService =
-        inject(CustomizedServicesService);
-
-    private readonly membershipServicesService =
-        inject(MembershipServicesService);
+    private readonly autoAccountsService =
+        inject(AutoAccountsService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
@@ -359,61 +302,56 @@ implements OnInit, OnDestroy
             label:'All General Ledgers'
         },
         {
-            id:'inventory-auto',
-            label:'Inventory Auto Ledgers'
+            id:'auto-inventory',
+            label:'Auto Inventory Ledgers'
         },
         {
             id:'auto-financial',
             label:'Auto Financial Ledgers'
-        },
-        {
-            id:'auto-service',
-            label:'Auto Service Ledgers'
         }
     ];
 
     //===========================================================
-    // Auto Financial Ledgers
+    // Auto Accounts
     //
-    // Ledgers created by other pages (today : the Associated
-    // Ledger of each Service Policy, the brand's free service
-    // claim receivable). Matched by LEDGER CODE, never by name;
-    // the name shown is the live one from the source record
-    // ("<Sub Group Name> - <Brand Name>"). Read only.
+    // Codes of the ledgers created by other pages (from the
+    // server, matched by CODE only, never by name):
+    //   all tab            : ledgers created on this page's form
+    //   auto-inventory tab : ledgers of Motor Bikes / Spare Parts /
+    //                        Accessories
+    //   auto-financial tab : ledgers of any other page (Service
+    //                        Policy, Scheduled Services, Labor
+    //                        Chart, Customized / Membership
+    //                        Services, …)
+    // Auto ledgers are read only here.
     //===========================================================
 
-    private autoFinancialLedgers:
-        Map<string, string> =
-        new Map<string, string>();
+    private autoCodes:
+        AutoAccountCodes =
+        emptyAutoAccountCodes();
 
-    //===========================================================
-    // Auto Service Ledgers
-    //
-    // Income ledgers created by the service item pages
-    // (Scheduled Services, e.g. "1st Free Service - Revoo", and
-    // Labor Chart).
-    // Matched by LEDGER CODE, never by name; the name shown is
-    // the live service name. Read only.
-    //===========================================================
+    // Rows are shown only once the auto codes are known (or failed
+    // to load), so auto records never flash on the first tab.
+    private autoCodesReady:
+        boolean =
+        false;
 
-    private autoServiceLedgers:
-        Map<string, string> =
-        new Map<string, string>();
+    private itemsLoaded:
+        boolean =
+        false;
 
-    // Labor Chart income ledgers (code -> live service name)
-    private laborServiceLedgers:
-        Map<string, string> =
-        new Map<string, string>();
+    // Raw classes / groups / sub groups for the filters of the tab
+    private accountClasses:
+        AccountClass[] =
+        [];
 
-    // Customized Services income ledgers (code -> live service name)
-    private customizedServiceLedgers:
-        Map<string, string> =
-        new Map<string, string>();
+    private accountGroupsAll:
+        AccountGroup[] =
+        [];
 
-    // Membership Services income + expense ledgers (code -> live display name)
-    private membershipServiceLedgers:
-        Map<string, string> =
-        new Map<string, string>();
+    private accountSubGroupsAll:
+        AccountSubGroup[] =
+        [];
 
     selectedTab:
         string =
@@ -734,11 +672,7 @@ implements OnInit, OnDestroy
         ListTableColumn[]
     {
         // Auto ledgers (inventory or financial) are read only : no actions
-        return this.selectedTab === 'inventory-auto'
-            ||
-            this.selectedTab === 'auto-financial'
-            ||
-            this.selectedTab === 'auto-service'
+        return this.selectedTab !== 'all'
             ? this.inventoryAutoLedgerColumns
             : this.columns;
     }
@@ -753,51 +687,49 @@ implements OnInit, OnDestroy
         this.loadAccountClasses();
         this.loadAccountGroups();
         this.loadAccountSubGroups();
-        this.loadAutoFinancialLedgers();
-        this.loadAutoServiceLedgers();
-        this.loadLaborServiceLedgers();
-        this.loadCustomizedServiceLedgers();
-        this.loadMembershipServiceLedgers();
+        this.loadAutoCodes();
         this.loadItems();
     }
 
     //===========================================================
-    // Load Auto Financial Ledgers (code -> live name)
+    // Load Auto Codes (which accounts other pages created)
     //===========================================================
 
-    private loadAutoFinancialLedgers():
+    private loadAutoCodes():
         void
     {
-        this.servicePolicyService
-            .getAll()
+        this.autoCodesReady =
+            false;
+
+        this.autoAccountsService
+            .getCodes()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        ServicePolicy[]
+                        AutoAccountCodes
                 ):
                     void =>
                 {
-                    this.autoFinancialLedgers =
-                        new Map<string, string>(
-                            (response ?? [])
-                                .filter(
-                                    item =>
-                                        !!item.AssociatedLedgerCode
-                                )
-                                .map(
-                                    item =>
-                                    [
-                                        String(item.AssociatedLedgerCode)
-                                            .trim()
-                                            .toUpperCase(),
-                                        item.AssociatedLedgerName ?? ''
-                                    ] as [string, string]
-                                )
-                        );
+                    this.autoCodes =
+                        response;
 
-                    this.applyAutoFinancialNames();
+                    this.autoCodesReady =
+                        true;
+
+                    if
+                    (
+                        this.itemsLoaded
+                    )
+                    {
+                        this.loading =
+                            false;
+                    }
+
+                    // Re-split the tabs and filters now that the
+                    // origins are known
+                    this.buildFilterItems();
 
                     this.applyFilters();
 
@@ -812,338 +744,245 @@ implements OnInit, OnDestroy
                     void =>
                 {
                     console.error(
-                        'Load Auto Financial Ledgers Error:',
+                        'Load Auto Account Codes Error:',
                         error
                     );
 
-                    this.autoFinancialLedgers =
-                        new Map<string, string>();
+                    this.autoCodes =
+                        emptyAutoAccountCodes();
+
+                    this.autoCodesReady =
+                        true;
+
+                    if
+                    (
+                        this.itemsLoaded
+                    )
+                    {
+                        this.loading =
+                            false;
+                    }
+
+                    this.buildFilterItems();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+
+                    this.toast.error
+                    (
+                        'Load Failed',
+                        'Unable to load the auto ledger codes. Every ledger is shown on the first tab.'
+                    );
                 }
             });
     }
 
-    private isAutoFinancialLedger
+    //===========================================================
+    // Origin / Tab
+    //===========================================================
+
+    private originOf
     (
-        ledgerCode:
-            string
+        item:
+            GeneralLedger
     ):
-        boolean
+        AccountOrigin
     {
-        return this.autoFinancialLedgers.has(
-            String(ledgerCode ?? '')
-                .trim()
-                .toUpperCase()
+        return ledgerOrigin(
+            this.autoCodes,
+            item.LedgerCode
         );
     }
 
-    //===========================================================
-    // Load Auto Service Ledgers (code -> live service name)
-    //===========================================================
-
-    private loadAutoServiceLedgers():
-        void
+    private get selectedOrigin():
+        AccountOrigin
     {
-        this.scheduledServicesService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        ScheduledService[]
-                ):
-                    void =>
-                {
-                    this.autoServiceLedgers =
-                        new Map<string, string>(
-                            (response ?? [])
-                                .filter(
-                                    item =>
-                                        !!item.IncomeLedgerCode
-                                )
-                                .map(
-                                    item =>
-                                    [
-                                        String(item.IncomeLedgerCode)
-                                            .trim()
-                                            .toUpperCase(),
-                                        item.ServiceName ?? ''
-                                    ] as [string, string]
-                                )
-                        );
-
-                    this.applyAutoFinancialNames();
-
-                    this.applyFilters();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Auto Service Ledgers Error:',
-                        error
-                    );
-
-                    this.autoServiceLedgers =
-                        new Map<string, string>();
-                }
-            });
-    }
-
-    private isAutoServiceLedger
-    (
-        ledgerCode:
-            string
-    ):
-        boolean
-    {
-        const code =
-            String(ledgerCode ?? '')
-                .trim()
-                .toUpperCase();
-
-        return this.autoServiceLedgers.has(code)
-            ||
-            this.laborServiceLedgers.has(code)
-            ||
-            this.customizedServiceLedgers.has(code)
-            ||
-            this.membershipServiceLedgers.has(code);
+        return this.selectedTab === 'auto-inventory'
+            ? 'inventory'
+            : this.selectedTab === 'auto-financial'
+                ? 'financial'
+                : 'manual';
     }
 
     //===========================================================
-    // Load Membership Services Ledgers (code -> live display name)
+    // Filters (classes / groups / sub groups holding ledgers of
+    // the selected tab)
     //===========================================================
 
-    private loadMembershipServiceLedgers():
+    private buildFilterItems():
         void
     {
-        this.membershipServicesService
-            .getAll()
-            .subscribe
-            ({
-                next:
+        const origin =
+            this.selectedOrigin;
+
+        const inTab =
+            this.generalLedgers
+                .filter
                 (
-                    response:
-                        MembershipService[]
-                ):
-                    void =>
-                {
-                    // Income (billed) and expense (discount) ledgers
-                    this.membershipServiceLedgers =
-                        new Map<string, string>(
-                            (response ?? [])
-                                .flatMap(
-                                    item =>
-                                        [
-                                            item.IncomeLedgerCode,
-                                            item.ExpenseLedgerCode
-                                        ]
-                                        .filter(
-                                            code =>
-                                                !!code
-                                        )
-                                        .map(
-                                            code =>
-                                            [
-                                                String(code)
-                                                    .trim()
-                                                    .toUpperCase(),
-                                                item.DisplayName ?? ''
-                                            ] as [string, string]
-                                        )
-                                )
-                        );
+                    item =>
+                        this.originOf(item) === origin
+                );
 
-                    this.applyAutoFinancialNames();
+        // ledgers not loaded yet : no narrowing
+        const loaded =
+            this.generalLedgers.length > 0;
 
-                    this.applyFilters();
+        const classIds =
+            new Set<number>(
+                inTab.map(item => Number(item.AccountClassId))
+            );
 
-                    this.cdr.detectChanges();
-                },
+        const groupIds =
+            new Set<number>(
+                inTab.map(item => Number(item.AccountGroupId))
+            );
 
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Membership Services Ledgers Error:',
-                        error
-                    );
+        const subGroupIds =
+            new Set<number>(
+                inTab.map(item => Number(item.AccountSubGroupId))
+            );
 
-                    this.membershipServiceLedgers =
-                        new Map<string, string>();
-                }
-            });
-    }
-
-    //===========================================================
-    // Load Customized Services Ledgers (code -> live service name)
-    //===========================================================
-
-    private loadCustomizedServiceLedgers():
-        void
-    {
-        this.customizedServicesService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        CustomizedService[]
-                ):
-                    void =>
-                {
-                    this.customizedServiceLedgers =
-                        new Map<string, string>(
-                            (response ?? [])
-                                .filter(
-                                    item =>
-                                        !!item.IncomeLedgerCode
-                                )
-                                .map(
-                                    item =>
-                                    [
-                                        String(item.IncomeLedgerCode)
-                                            .trim()
-                                            .toUpperCase(),
-                                        item.ServiceName ?? ''
-                                    ] as [string, string]
-                                )
-                        );
-
-                    this.applyAutoFinancialNames();
-
-                    this.applyFilters();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Customized Services Ledgers Error:',
-                        error
-                    );
-
-                    this.customizedServiceLedgers =
-                        new Map<string, string>();
-                }
-            });
-    }
-
-    //===========================================================
-    // Load Labor Chart Ledgers (code -> live service name)
-    //===========================================================
-
-    private loadLaborServiceLedgers():
-        void
-    {
-        this.laborChartService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        LaborChart[]
-                ):
-                    void =>
-                {
-                    this.laborServiceLedgers =
-                        new Map<string, string>(
-                            (response ?? [])
-                                .filter(
-                                    item =>
-                                        !!item.IncomeLedgerCode
-                                )
-                                .map(
-                                    item =>
-                                    [
-                                        String(item.IncomeLedgerCode)
-                                            .trim()
-                                            .toUpperCase(),
-                                        item.ServiceName ?? ''
-                                    ] as [string, string]
-                                )
-                        );
-
-                    this.applyAutoFinancialNames();
-
-                    this.applyFilters();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Labor Chart Ledgers Error:',
-                        error
-                    );
-
-                    this.laborServiceLedgers =
-                        new Map<string, string>();
-                }
-            });
-    }
-
-    // Show the live name of each auto financial / service ledger
-    private applyAutoFinancialNames():
-        void
-    {
-        for
-        (
-            const item
-            of this.generalLedgers
-        )
-        {
-            const code =
-                String(item.LedgerCode ?? '')
-                    .trim()
-                    .toUpperCase();
-
-            const name =
-                this.autoFinancialLedgers.get(code)
-                ||
-                this.autoServiceLedgers.get(code)
-                ||
-                this.laborServiceLedgers.get(code)
-                ||
-                this.customizedServiceLedgers.get(code)
-                ||
-                this.membershipServiceLedgers.get(code);
-
-            if
-            (
-                name
-            )
+        this.accountClassFilterItems =
+        [
             {
-                item.LedgerName =
-                    name;
-            }
-        }
+                label:'All Account Classes',
+                value:null
+            },
+
+            ...this.accountClasses
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        &&
+                        (
+                            !loaded
+                            ||
+                            classIds.has(
+                                Number(item.AccountClassId)
+                            )
+                        )
+                )
+                .map
+                (
+                    (
+                        item:
+                            AccountClass
+                    ) =>
+                    ({
+                        label:
+                            `${item.ClassCode} - ${item.ClassName}`,
+
+                        value:
+                            item.AccountClassId
+                    })
+                )
+        ];
+
+        this.accountGroupFilterItems =
+        [
+            {
+                label:'All Account Groups',
+                value:null
+            },
+
+            ...this.accountGroupsAll
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        &&
+                        (
+                            this.selectedAccountClassId === null
+                            ||
+                            item.AccountClassId ===
+                            this.selectedAccountClassId
+                        )
+                        &&
+                        (
+                            !loaded
+                            ||
+                            groupIds.has(
+                                Number(item.AccountGroupId)
+                            )
+                        )
+                )
+                .map
+                (
+                    (
+                        item:
+                            AccountGroup
+                    ) =>
+                    ({
+                        label:
+                            `${item.GroupCode} - ${item.GroupName}`,
+
+                        value:
+                            item.AccountGroupId,
+
+                        AccountClassId:
+                            item.AccountClassId
+                    })
+                )
+        ];
+
+        this.accountSubGroupFilterItems =
+        [
+            {
+                label:'All Account Sub Groups',
+                value:null
+            },
+
+            ...this.accountSubGroupsAll
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        &&
+                        (
+                            this.selectedAccountClassId === null
+                            ||
+                            item.AccountClassId ===
+                            this.selectedAccountClassId
+                        )
+                        &&
+                        (
+                            this.selectedAccountGroupId === null
+                            ||
+                            item.AccountGroupId ===
+                            this.selectedAccountGroupId
+                        )
+                        &&
+                        (
+                            !loaded
+                            ||
+                            subGroupIds.has(
+                                Number(item.AccountSubGroupId)
+                            )
+                        )
+                )
+                .map
+                (
+                    (
+                        item:
+                            AccountSubGroup
+                    ) =>
+                    ({
+                        label:
+                            `${item.SubGroupCode} - ${item.SubGroupName}`,
+
+                        value:
+                            item.AccountSubGroupId,
+
+                        AccountClassId:
+                            item.AccountClassId,
+
+                        AccountGroupId:
+                            item.AccountGroupId
+                    })
+                )
+        ];
     }
 
     //===========================================================
@@ -1549,6 +1388,9 @@ implements OnInit, OnDestroy
         this.loading =
             true;
 
+        this.itemsLoaded =
+            false;
+
         this.loadFailed =
             false;
 
@@ -1574,7 +1416,7 @@ implements OnInit, OnDestroy
                             response
                         );
 
-                    this.applyAutoFinancialNames();
+                    this.buildFilterItems();
 
                     console.log
                     (
@@ -1582,10 +1424,14 @@ implements OnInit, OnDestroy
                         this.generalLedgers
                     );
 
+                    this.itemsLoaded =
+                        true;
+
                     this.applyFilters();
 
+                    // keep the loader until the auto codes are known
                     this.loading =
-                        false;
+                        !this.autoCodesReady;
 
                     this.loadFailed =
                         false;
@@ -1650,65 +1496,10 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    this.accountClassFilterItems =
-                    [
-                        {
-                            label:'All Account Classes',
-                            value:null
-                        },
+                    this.accountClasses =
+                        response ?? [];
 
-                        ...response
-                            .filter(
-                                item =>
-                                {
-                                    const classCode =
-                                        String(
-                                            item.ClassCode
-                                            ??
-                                            ''
-                                        )
-                                            .trim()
-                                            .toUpperCase();
-
-                                    if
-                                    (
-                                        !item.IsActive
-                                    )
-                                    {
-                                        return false;
-                                    }
-
-                                    if
-                                    (
-                                        this.selectedTab ===
-                                        'inventory-auto'
-                                    )
-                                    {
-                                        return classCode.startsWith(
-                                            'INV-'
-                                        );
-                                    }
-
-                                    return !classCode.startsWith(
-                                        'INV-'
-                                    );
-                                }
-                            )
-                            .map
-                            (
-                                (
-                                    item:
-                                        AccountClass
-                                ) =>
-                                ({
-                                    label:
-                                        `${item.ClassCode} - ${item.ClassName}`,
-
-                                    value:
-                                        item.AccountClassId
-                                })
-                            )
-                    ];
+                    this.buildFilterItems();
 
                     this.cdr.detectChanges();
                 },
@@ -1725,13 +1516,10 @@ implements OnInit, OnDestroy
                         error
                     );
 
-                    this.accountClassFilterItems =
-                    [
-                        {
-                            label:'All Account Classes',
-                            value:null
-                        }
-                    ];
+                    this.accountClasses =
+                        [];
+
+                    this.buildFilterItems();
                 }
             });
     }
@@ -1754,75 +1542,10 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    this.accountGroupFilterItems =
-                    [
-                        {
-                            label:'All Account Groups',
-                            value:null
-                        },
+                    this.accountGroupsAll =
+                        response ?? [];
 
-                        ...response
-                            .filter(
-                                item =>
-                                {
-                                    const classMatch =
-                                        this.selectedAccountClassId ===
-                                        null
-                                        ||
-                                        item.AccountClassId ===
-                                        this.selectedAccountClassId;
-
-                                    const inventoryAutoGroup =
-                                        this.isInventoryAutoGroup(
-                                            item.GroupCode
-                                        );
-
-                                    if
-                                    (
-                                        !item.IsActive
-                                    )
-                                    {
-                                        return false;
-                                    }
-
-                                    if
-                                    (
-                                        !classMatch
-                                    )
-                                    {
-                                        return false;
-                                    }
-
-                                    if
-                                    (
-                                        this.selectedTab ===
-                                        'inventory-auto'
-                                    )
-                                    {
-                                        return inventoryAutoGroup;
-                                    }
-
-                                    return !inventoryAutoGroup;
-                                }
-                            )
-                            .map
-                            (
-                                (
-                                    item:
-                                        AccountGroup
-                                ) =>
-                                ({
-                                    label:
-                                        `${item.GroupCode} - ${item.GroupName}`,
-
-                                    value:
-                                        item.AccountGroupId,
-
-                                    AccountClassId:
-                                        item.AccountClassId
-                                })
-                            )
-                    ];
+                    this.buildFilterItems();
 
                     this.cdr.detectChanges();
                 },
@@ -1839,13 +1562,10 @@ implements OnInit, OnDestroy
                         error
                     );
 
-                    this.accountGroupFilterItems =
-                    [
-                        {
-                            label:'All Account Groups',
-                            value:null
-                        }
-                    ];
+                    this.accountGroupsAll =
+                        [];
+
+                    this.buildFilterItems();
                 }
             });
     }
@@ -1868,87 +1588,10 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    this.accountSubGroupFilterItems =
-                    [
-                        {
-                            label:'All Account Sub Groups',
-                            value:null
-                        },
+                    this.accountSubGroupsAll =
+                        response ?? [];
 
-                        ...response
-                            .filter(
-                                item =>
-                                {
-                                    const classMatch =
-                                        this.selectedAccountClassId ===
-                                        null
-                                        ||
-                                        item.AccountClassId ===
-                                        this.selectedAccountClassId;
-
-                                    const groupMatch =
-                                        this.selectedAccountGroupId ===
-                                        null
-                                        ||
-                                        item.AccountGroupId ===
-                                        this.selectedAccountGroupId;
-
-                                    const inventoryAutoGroup =
-                                        this.isInventoryAutoGroup(
-                                            item.GroupCode
-                                        );
-
-                                    if
-                                    (
-                                        !item.IsActive
-                                    )
-                                    {
-                                        return false;
-                                    }
-
-                                    if
-                                    (
-                                        !classMatch
-                                        ||
-                                        !groupMatch
-                                    )
-                                    {
-                                        return false;
-                                    }
-
-                                    if
-                                    (
-                                        this.selectedTab ===
-                                        'inventory-auto'
-                                    )
-                                    {
-                                        return inventoryAutoGroup;
-                                    }
-
-                                    return !inventoryAutoGroup;
-                                }
-                            )
-                            .map
-                            (
-                                (
-                                    item:
-                                        AccountSubGroup
-                                ) =>
-                                ({
-                                    label:
-                                        `${item.SubGroupCode} - ${item.SubGroupName}`,
-
-                                    value:
-                                        item.AccountSubGroupId,
-
-                                    AccountClassId:
-                                        item.AccountClassId,
-
-                                    AccountGroupId:
-                                        item.AccountGroupId
-                                })
-                            )
-                    ];
+                    this.buildFilterItems();
 
                     this.cdr.detectChanges();
                 },
@@ -1965,13 +1608,10 @@ implements OnInit, OnDestroy
                         error
                     );
 
-                    this.accountSubGroupFilterItems =
-                    [
-                        {
-                            label:'All Account Sub Groups',
-                            value:null
-                        }
-                    ];
+                    this.accountSubGroupsAll =
+                        [];
+
+                    this.buildFilterItems();
                 }
             });
     }
@@ -1983,6 +1623,21 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
+        // Tabs can only be split once the auto codes are known
+        if
+        (
+            !this.autoCodesReady
+        )
+        {
+            this.filteredGeneralLedgers =
+                [];
+
+            this.pagedGeneralLedgers =
+                [];
+
+            return;
+        }
+
         const keyword =
             this.searchText
                 .trim()
@@ -2016,46 +1671,15 @@ implements OnInit, OnDestroy
                         this.selectedAccountSubGroupId;
 
                     //===================================================
-                    // Tab split
-                    //   inventory-auto tab : inventory auto ledgers
-                    //   auto-financial tab : ledgers created by other
-                    //                        pages (Service Policy)
-                    //   auto-service tab   : service item income ledgers
-                    //                        (Scheduled Services, Labor Chart,
-                    //                        Customized Services; Membership
-                    //                        Services expense ledgers)
-                    //   all tab            : only the manual ledgers
+                    // Tab split (by origin, matched by ledger code)
+                    //   all tab            : ledgers created manually
+                    //   auto-inventory tab : ledgers of the product pages
+                    //   auto-financial tab : ledgers of other pages
                     //===================================================
 
-                    const isInventoryAuto =
-                        this.isInventoryAutoGroup(
-                            item.GroupCode
-                        );
-
-                    const isAutoFinancial =
-                        !isInventoryAuto
-                        &&
-                        this.isAutoFinancialLedger(
-                            item.LedgerCode
-                        );
-
-                    const isAutoService =
-                        !isInventoryAuto
-                        &&
-                        !isAutoFinancial
-                        &&
-                        this.isAutoServiceLedger(
-                            item.LedgerCode
-                        );
-
                     const inventoryAutoLedgerMatch =
-                        this.selectedTab === 'inventory-auto'
-                            ? isInventoryAuto
-                            : this.selectedTab === 'auto-financial'
-                                ? isAutoFinancial
-                                : this.selectedTab === 'auto-service'
-                                    ? isAutoService
-                                    : !isInventoryAuto && !isAutoFinancial && !isAutoService;
+                        this.originOf(item) ===
+                        this.selectedOrigin;
 
                     const statusMatch =
                         this.selectedStatus === null
@@ -2211,37 +1835,12 @@ implements OnInit, OnDestroy
         this.currentPage =
             1;
 
-        this.loadAccountClasses();
-
-        this.loadAccountGroups();
-
-        this.loadAccountSubGroups();
+        this.buildFilterItems();
 
         this.applyFilters();
     }
 
-    //===========================================================
-    // Inventory Auto Group
-    //===========================================================
 
-    private isInventoryAutoGroup
-    (
-        groupCode:
-            string
-    ):
-        boolean
-    {
-        const code =
-            String(
-                groupCode
-                ??
-                ''
-            ).trim().toUpperCase();
-
-        return /^(INV-001|INV-002|INV-003)-\d{3}$/.test(
-            code
-        );
-    }
 
     //===========================================================
     // Search
@@ -2506,15 +2105,7 @@ implements OnInit, OnDestroy
 
         this.loadAccountSubGroups();
 
-        this.loadAutoFinancialLedgers();
-
-        this.loadAutoServiceLedgers();
-
-        this.loadLaborServiceLedgers();
-
-        this.loadCustomizedServiceLedgers();
-
-        this.loadMembershipServiceLedgers();
+        this.loadAutoCodes();
 
         this.loadItems();
     }

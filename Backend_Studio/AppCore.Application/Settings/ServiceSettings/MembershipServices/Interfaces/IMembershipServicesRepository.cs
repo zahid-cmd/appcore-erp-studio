@@ -7,57 +7,31 @@ namespace AppCore.Application.Settings.ServiceSettings;
 
 //===============================================================
 // Membership Services Repository Interface
+//
+// Configure-only : rows are created, renamed, deleted and restored
+// by Membership Cards. No Create / Delete / Restore here.
 //===============================================================
 
 public interface IMembershipServicesRepository
 {
     //===========================================================
-    // Get All
+    // Read
     //===========================================================
 
     Task<List<MembershipServicesDto>> GetAllAsync();
 
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
     Task<MembershipServicesDto?> GetByIdAsync(
         long id);
 
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    Task<long> CreateAsync(
-        CreateMembershipServicesDto dto,
-        long userId);
+    Task<MembershipServicesDefaultsDto> GetDefaultsAsync();
 
 
     //===========================================================
-    // Update
+    // Configure (Service Value, status, remarks)
     //===========================================================
 
     Task UpdateAsync(
         UpdateMembershipServicesDto dto,
-        long userId);
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    Task DeleteAsync(
-        long id,
-        long userId);
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task<bool> RestoreAsync(
         long userId);
 
 
@@ -67,12 +41,4 @@ public interface IMembershipServicesRepository
 
     Task<bool> ExistsAsync(
         long id);
-
-
-    //===========================================================
-    // Get Defaults
-    // (Membership Services sub categories with the next codes)
-    //===========================================================
-
-    Task<MembershipServicesDefaultsDto> GetDefaultsAsync();
 }

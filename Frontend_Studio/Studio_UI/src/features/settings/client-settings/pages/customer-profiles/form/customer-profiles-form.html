@@ -1,0 +1,983 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-id-card"
+
+        [title]="pageTitle"
+
+        subtitle="Inbound (bike) and Outside (service) customers">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [selectedTab]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+
+        <!-- Inbound : two pages of 4 sections -->
+
+        @if (showPager)
+        {
+            <div class="cus-pager" pageToolbarRight>
+
+                <span class="cus-pager-step">Page {{ formPage }} of 2</span>
+
+                @if (formPage === 1)
+                {
+                    <button
+
+                        type="button"
+
+                        class="cus-pager-btn"
+
+                        (click)="nextPage()">
+
+                        Next
+
+                        <i class="fas fa-arrow-right"></i>
+
+                    </button>
+                }
+                @else
+                {
+                    <button
+
+                        type="button"
+
+                        class="cus-pager-btn cus-pager-btn-back"
+
+                        (click)="previousPage()">
+
+                        <i class="fas fa-arrow-left"></i>
+
+                        Back
+
+                    </button>
+                }
+
+            </div>
+        }
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    @if (isConverting)
+    {
+        <div class="cus-note">
+            <i class="fas fa-arrow-right-arrow-left"></i>
+            Converting to an Inbound customer : a new CIB code is given on save,
+            {{ entity.PreviousCode }} is kept as Previous Code, and the receivable
+            ledger stays the same. NID No and Present Address are now required.
+        </div>
+    }
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            @if (!isInbound)
+            {
+                <!-- OUTSIDE CUSTOMER : one page, 4 sections -->
+
+                <!-- =============================================
+                     SECTION 01
+                     CUSTOMER & ADDRESS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Customer & Address"
+
+                    icon="fas fa-id-card">
+
+
+                    <!-- Customer Code : CIB-000001 / COS-000001 (central code generator) -->
+
+                    <app-textbox
+
+                        label="Customer Code"
+
+                        placeholder="Auto generated"
+
+                        [(value)]="entity.CustomerCode"
+
+                        [readonly]="true"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    @if (entity.PreviousCode)
+                    {
+                        <!-- Previous Code : the COS code before conversion -->
+
+                        <app-textbox
+
+                            label="Previous Code"
+
+                            [(value)]="entity.PreviousCode"
+
+                            [readonly]="true">
+
+                        </app-textbox>
+                    }
+
+
+                    <app-textbox
+
+                        label="Customer Name"
+
+                        placeholder="e.g. Rahim Uddin"
+
+                        [(value)]="entity.CustomerName"
+
+                        (valueChange)="onCustomerNameChange()"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <!-- Display Name : "<Customer Name> - <Phone 1>" -->
+
+                    <app-textbox
+
+                        label="Display Name"
+
+                        placeholder="Follows the name and Phone 1"
+
+                        [(value)]="entity.DisplayName"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+                    <app-textarea
+
+                        label="Present Address"
+
+                        placeholder="Enter present address"
+
+                        [rows]="2"
+
+                        [(value)]="entity.PresentAddress"
+
+                        (valueChange)="onUpperCaseChange('PresentAddress')"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 02
+                     PHOTO & REMARKS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Photo & Remarks"
+
+                    icon="fas fa-camera">
+
+
+                    <!-- Photo : optional, JPG / PNG, max 2 MB (uploaded on save) -->
+
+                    <app-image-hub
+
+                        label="Photo"
+
+                        placeholder="No photo selected"
+
+                        [imageUrl]="photoPreview"
+
+                        (imageChange)="onPhotoChange($event)"
+
+                        [disabled]="isSaving"
+
+                        [readonly]="isViewMode">
+
+                    </app-image-hub>
+
+
+                    <app-textarea
+
+                        label="Remarks"
+
+                        placeholder="Enter remarks"
+
+                        [rows]="2"
+
+                        [(value)]="entity.Remarks"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+                    
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 03
+                     CONTACT & LOCATION
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Contact & Location"
+
+                    icon="fas fa-phone">
+                    <!-- Phone 1 : 11 digits, starts 01, unique -->
+
+                    <app-textbox
+
+                        label="Phone 1"
+
+                        placeholder="e.g. 01711223344"
+
+                        [value]="entity.Phone1"
+
+                        (valueChange)="onPhone1Change($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                    @if (!isViewMode && phone1Warning)
+                    {
+                        <div class="cus-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            {{ phone1Warning }}
+                        </div>
+                    }
+
+
+                    <app-textbox
+
+                        label="Phone 2"
+
+                        placeholder="Optional, e.g. 01811223344"
+
+                        [value]="entity.Phone2"
+
+                        (valueChange)="onPhone2Change($event)"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+                    @if (!isViewMode && phone2Warning)
+                    {
+                        <div class="cus-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            {{ phone2Warning }}
+                        </div>
+                    }
+
+
+                    <app-textbox
+
+                        label="Email"
+
+                        placeholder="Optional"
+
+                        [(value)]="entity.Email"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+                    <!-- Location : optional (General Settings > Locations) -->
+
+                    <app-search-dropdown
+
+                        label="Location"
+
+                        placeholder="Optional"
+
+                        [items]="locationItems"
+
+                        [value]="entity.LocationId"
+
+                        (valueChange)="onLocationChange($event)"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-search-dropdown>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 04
+                     ACCOUNTS & STATUS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Accounts & Status"
+
+                    icon="fas fa-sack-dollar">
+
+
+                    <!-- Receivable Ledger : GLR-... under SUB-002-002-005 (created on save) -->
+
+                    <app-textbox
+
+                        label="Receivable Ledger Code"
+
+                        placeholder="Auto generated"
+
+                        [(value)]="entity.ReceivableLedgerCode"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Receivable Ledger Name"
+
+                        placeholder="Follows the display name"
+
+                        [(value)]="entity.ReceivableLedgerName"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Credit Limit"
+
+                        placeholder="0 = cash only"
+
+                        [value]="creditLimitText"
+
+                        (valueChange)="onCreditLimitChange($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-dropdown
+
+                        label="Status"
+
+                        [items]="statusItems"
+
+                        [(value)]="entity.IsActive"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+                </app-form-section>
+
+
+            }
+
+            @else if (formPage === 1)
+            {
+                <!-- INBOUND CUSTOMER : page 1 of 2 (sections 1-4) -->
+
+                <!-- =============================================
+                     SECTION 01
+                     CUSTOMER INFORMATION
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Customer Information"
+
+                    icon="fas fa-id-card">
+
+
+                    <!-- Customer Code : CIB-000001 / COS-000001 (central code generator) -->
+
+                    <app-textbox
+
+                        label="Customer Code"
+
+                        placeholder="Auto generated"
+
+                        [(value)]="entity.CustomerCode"
+
+                        [readonly]="true"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    @if (entity.PreviousCode)
+                    {
+                        <!-- Previous Code : the COS code before conversion -->
+
+                        <app-textbox
+
+                            label="Previous Code"
+
+                            [(value)]="entity.PreviousCode"
+
+                            [readonly]="true">
+
+                        </app-textbox>
+                    }
+
+
+                    <app-textbox
+
+                        label="Customer Name"
+
+                        placeholder="e.g. Rahim Uddin"
+
+                        [(value)]="entity.CustomerName"
+
+                        (valueChange)="onCustomerNameChange()"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <!-- Display Name : "<Customer Name> - <Phone 1>" -->
+
+                    <app-textbox
+
+                        label="Display Name"
+
+                        placeholder="Follows the name and Phone 1"
+
+                        [(value)]="entity.DisplayName"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 02
+                     PERSONAL DETAILS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Personal Details"
+
+                    icon="fas fa-user">
+
+
+                    <app-textbox
+
+                        label="Father's Name"
+
+                        placeholder="Enter father's name"
+
+                        [(value)]="entity.FatherName"
+
+                        (valueChange)="onUpperCaseChange('FatherName')"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Mother's Name"
+
+                        placeholder="Enter mother's name"
+
+                        [(value)]="entity.MotherName"
+
+                        (valueChange)="onUpperCaseChange('MotherName')"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+
+                    <div class="cus-date-field">
+
+                        <label class="cus-date-label">Date of Birth</label>
+
+                        <app-datepicker
+
+                            placeholder="Select date of birth"
+
+                            [value]="$any(dateOfBirthValue)"
+
+                            (valueChange)="onDateOfBirthChange($event)"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-datepicker>
+
+                    </div>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 03
+                     CONTACT
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Contact"
+
+                    icon="fas fa-phone">
+
+
+                    <!-- Phone 1 : 11 digits, starts 01, unique -->
+
+                    <app-textbox
+
+                        label="Phone 1"
+
+                        placeholder="e.g. 01711223344"
+
+                        [value]="entity.Phone1"
+
+                        (valueChange)="onPhone1Change($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                    @if (!isViewMode && phone1Warning)
+                    {
+                        <div class="cus-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            {{ phone1Warning }}
+                        </div>
+                    }
+
+
+                    <app-textbox
+
+                        label="Phone 2"
+
+                        placeholder="Optional, e.g. 01811223344"
+
+                        [value]="entity.Phone2"
+
+                        (valueChange)="onPhone2Change($event)"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+                    @if (!isViewMode && phone2Warning)
+                    {
+                        <div class="cus-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            {{ phone2Warning }}
+                        </div>
+                    }
+
+
+                    <app-textbox
+
+                        label="Email"
+
+                        placeholder="Optional"
+
+                        [(value)]="entity.Email"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 04
+                     PHOTO
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Photo"
+
+                    icon="fas fa-camera">
+
+
+                    <!-- Photo : optional, JPG / PNG, max 2 MB (uploaded on save) -->
+
+                    <app-image-hub
+
+                        label="Photo"
+
+                        placeholder="No photo selected"
+
+                        [imageUrl]="photoPreview"
+
+                        (imageChange)="onPhotoChange($event)"
+
+                        [disabled]="isSaving"
+
+                        [readonly]="isViewMode">
+
+                    </app-image-hub>
+
+                </app-form-section>
+
+
+            }
+            @else
+            {
+                <!-- INBOUND CUSTOMER : page 2 of 2 (sections 5-8) -->
+
+                <!-- =============================================
+                     SECTION 05
+                     IDENTITY & PRESENT ADDRESS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Identity & Present Address"
+
+                    icon="fas fa-fingerprint">
+
+
+                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound -->
+
+                    <app-textbox
+
+                        label="NID No"
+
+                        placeholder="10, 13 or 17 digits"
+
+                        [value]="entity.NidNo"
+
+                        (valueChange)="onNidChange($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                    @if (!isViewMode && nidWarning)
+                    {
+                        <div class="cus-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            {{ nidWarning }}
+                        </div>
+                    }
+
+
+                    <app-textbox
+
+                        label="Driving License No"
+
+                        placeholder="Optional"
+
+                        [(value)]="entity.DrivingLicenseNo"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textbox>
+
+                    <app-textarea
+
+                        label="Present Address *"
+
+                        placeholder="Enter present address"
+
+                        [rows]="2"
+
+                        [(value)]="entity.PresentAddress"
+
+                        (valueChange)="onUpperCaseChange('PresentAddress')"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 06
+                     PERMANENT & REGISTRATION ADDRESS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Permanent & Registration Address"
+
+                    icon="fas fa-house">
+
+                    <app-textarea
+
+                        label="Permanent Address"
+
+                        placeholder="Enter permanent address"
+
+                        [rows]="2"
+
+                        [(value)]="entity.PermanentAddress"
+
+                        (valueChange)="onUpperCaseChange('PermanentAddress')"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+
+                    <app-textarea
+
+                        label="Registration Address"
+
+                        placeholder="Address for bike registration"
+
+                        [rows]="2"
+
+                        [(value)]="entity.RegistrationAddress"
+
+                        (valueChange)="onUpperCaseChange('RegistrationAddress')"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 07
+                     LOCATION, REMARKS & STATUS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Location, Remarks & Status"
+
+                    icon="fas fa-map-location-dot">
+
+
+                    <app-textarea
+
+                        label="Remarks"
+
+                        placeholder="Enter remarks"
+
+                        [rows]="2"
+
+                        [(value)]="entity.Remarks"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+
+                    <!-- Location : optional (General Settings > Locations) -->
+
+                    <app-search-dropdown
+
+                        label="Location"
+
+                        placeholder="Optional"
+
+                        [items]="locationItems"
+
+                        [value]="entity.LocationId"
+
+                        (valueChange)="onLocationChange($event)"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-search-dropdown>
+
+                    <app-dropdown
+
+                        label="Status"
+
+                        [items]="statusItems"
+
+                        [(value)]="entity.IsActive"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     SECTION 08
+                     ACCOUNTS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Accounts"
+
+                    icon="fas fa-sack-dollar">
+
+
+                    <!-- Receivable Ledger : GLR-... under SUB-002-002-005 (created on save) -->
+
+                    <app-textbox
+
+                        label="Receivable Ledger Code"
+
+                        placeholder="Auto generated"
+
+                        [(value)]="entity.ReceivableLedgerCode"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Receivable Ledger Name"
+
+                        placeholder="Follows the display name"
+
+                        [(value)]="entity.ReceivableLedgerName"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Credit Limit"
+
+                        placeholder="0 = cash only"
+
+                        [value]="creditLimitText"
+
+                        (valueChange)="onCreditLimitChange($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+            }
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

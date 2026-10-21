@@ -8,13 +8,16 @@ namespace AppCore.Domain.Entities.Settings.ServiceSettings;
 //===============================================================
 // Membership Services
 //
-// A complimentary (free) service given to members of one card type.
-// It is billed on the invoice at its Service Value and then
-// discounted, so it owns two General Ledgers, created / renamed /
-// (de)activated / deleted / restored with it :
+// The complimentary (free) service of one membership card. Rows
+// are CREATED BY MEMBERSHIP CARDS (one per card) and are renamed,
+// (de)activated, deleted and restored with the card; this page
+// only configures the Service Value, status and remarks.
+//
+// Billed on the invoice at its Service Value, then discounted, so
+// it owns two General Ledgers, each "<Sub Group Name> - <Card Name>" :
 //   Income Ledger  under the sub category's income sub group
-//   Expense Ledger under SUB-004-002-001 (Selling & Marketing
-//                  Expenses - Non Cash)
+//                  (SUB-007-005-001)
+//   Expense Ledger under SUB-004-002-001 (Membership Service Charges)
 //===============================================================
 
 public class MembershipServices
@@ -50,8 +53,15 @@ public class MembershipServices
     }
 
 
-    // Silver Card / Gold Card / Platinum Card / Titanium Card
-    // (later loaded from the Membership module)
+    // The membership card that created this row (Membership Cards)
+    public long? MembershipCardId
+    {
+        get;
+        set;
+    }
+
+
+    // The card name (follows card renames)
     public string MembershipType
     {
         get;
@@ -59,7 +69,7 @@ public class MembershipServices
     } = string.Empty;
 
 
-    // Typed, e.g. "Free Wash"
+    // The sub category name (follows renames)
     public string ServiceName
     {
         get;
@@ -67,7 +77,7 @@ public class MembershipServices
     } = string.Empty;
 
 
-    // "<Service Name> - <Membership Type>", unique among live rows
+    // "<Service Name> - <Card Name>", unique among live rows
     public string DisplayName
     {
         get;
@@ -79,7 +89,7 @@ public class MembershipServices
     // Service Value (complimentary : booked as an expense)
     //===========================================================
 
-    // Value of the free service, > 0
+    // Value of the free service; 0 = Pending (not invoiceable)
     public decimal ServiceValue
     {
         get;
@@ -91,7 +101,7 @@ public class MembershipServices
     // Income Ledger (billed on the invoice; under the sub category's income sub group)
     //===========================================================
 
-    // GLR-005-005-001-nnnnn, created on create
+    // GLR-007-005-001-nnnnn, created with the card
     public string IncomeLedgerCode
     {
         get;
@@ -99,7 +109,7 @@ public class MembershipServices
     } = string.Empty;
 
 
-    // Always equal to the Display Name
+    // "<Sub Group Name> - <Card Name>"
     public string IncomeLedgerName
     {
         get;
@@ -111,7 +121,7 @@ public class MembershipServices
     // Expense Ledger (the same amount discounted; under SUB-004-002-001)
     //===========================================================
 
-    // GLR-004-002-001-nnnnn, created on create
+    // GLR-004-002-001-nnnnn, created with the card
     public string ExpenseLedgerCode
     {
         get;
@@ -119,7 +129,7 @@ public class MembershipServices
     } = string.Empty;
 
 
-    // Always equal to the Display Name
+    // "<Sub Group Name> - <Card Name>"
     public string ExpenseLedgerName
     {
         get;

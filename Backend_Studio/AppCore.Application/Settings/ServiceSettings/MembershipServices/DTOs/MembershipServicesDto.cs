@@ -23,10 +23,10 @@ public class MembershipServicesDto
 
 
     //===========================================================
-    // Basic Information
+    // Basic Information (created by Membership Cards; read only)
     //===========================================================
 
-    // MSC-002-001-00001 (central CodeGenerator), assigned on create
+    // MSC-002-001-00001 (central CodeGenerator)
     public string ServiceCode
     {
         get;
@@ -34,42 +34,12 @@ public class MembershipServicesDto
     } = string.Empty;
 
 
-    // A Membership Services sub category (locked after saving)
     public long ServiceSubCategoryId
     {
         get;
         set;
     }
 
-
-    // Silver Card / Gold Card / Platinum Card / Titanium Card
-    // (later loaded from the Membership module)
-    public string MembershipType
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    // Typed, e.g. "Free Wash"
-    public string ServiceName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    // "<Service Name> - <Membership Type>", unique among live rows
-    public string DisplayName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    //===========================================================
-    // Sub Category (display)
-    //===========================================================
 
     public string SubCategoryCode
     {
@@ -85,11 +55,56 @@ public class MembershipServicesDto
     } = string.Empty;
 
 
+    // The card that created this row
+    public long? MembershipCardId
+    {
+        get;
+        set;
+    }
+
+
+    public string CardCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public int CardRank
+    {
+        get;
+        set;
+    }
+
+
+    // The card name
+    public string MembershipType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    // The sub category name
+    public string ServiceName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    // "<Service Name> - <Card Name>"
+    public string DisplayName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     //===========================================================
-    // Service Value (complimentary : booked as an expense)
+    // Service Value (set on this page)
     //===========================================================
 
-    // Value of the free service, > 0
     public decimal ServiceValue
     {
         get;
@@ -97,11 +112,25 @@ public class MembershipServicesDto
     }
 
 
+    // Pending (no Service Value yet) / Ready
+    public string Readiness
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     //===========================================================
-    // Income Ledger (billed on the invoice; under the sub category's income sub group)
+    // Income Ledger (billed on the invoice)
     //===========================================================
 
-    // GLR-005-005-001-nnnnn, created on create
+    public string IncomeSubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     public string IncomeLedgerCode
     {
         get;
@@ -109,7 +138,7 @@ public class MembershipServicesDto
     } = string.Empty;
 
 
-    // Always equal to the Display Name
+    // "<Sub Group Name> - <Card Name>"
     public string IncomeLedgerName
     {
         get;
@@ -118,10 +147,16 @@ public class MembershipServicesDto
 
 
     //===========================================================
-    // Expense Ledger (the same amount discounted; under SUB-004-002-001)
+    // Expense Ledger (the same amount discounted; SUB-004-002-001)
     //===========================================================
 
-    // GLR-004-002-001-nnnnn, created on create
+    public string ExpenseSubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     public string ExpenseLedgerCode
     {
         get;
@@ -129,13 +164,17 @@ public class MembershipServicesDto
     } = string.Empty;
 
 
-    // Always equal to the Display Name
+    // "<Sub Group Name> - <Card Name>"
     public string ExpenseLedgerName
     {
         get;
         set;
     } = string.Empty;
 
+
+    //===========================================================
+    // Remarks
+    //===========================================================
 
     public string Remarks
     {
@@ -152,7 +191,7 @@ public class MembershipServicesDto
     {
         get;
         set;
-    } = true;
+    }
 
 
     //===========================================================
@@ -163,7 +202,7 @@ public class MembershipServicesDto
     {
         get;
         set;
-    } = false;
+    }
 
 
     public long? DeletedBy

@@ -6,17 +6,10 @@ import
 {
     Component,
     OnInit,
-    OnDestroy,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
-
-import
-{
-    HttpErrorResponse
-}
-from '@angular/common/http';
 
 import
 {
@@ -50,8 +43,7 @@ from 'rxjs';
 import
 {
     MembershipService,
-    MembershipServicesDefaults,
-    MEMBERSHIP_TYPES
+    MembershipServicesDefaults
 }
 from '../../../models/membership-services.model';
 
@@ -118,30 +110,6 @@ from '../../../../../../shared/components/utilities/history-drawer/history-drawe
 
 import
 {
-    ConfirmDialogService
-}
-from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
-
-import
-{
-    ConfirmDialogComponent
-}
-from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
-
-import
-{
-    ProgressDialogComponent
-}
-from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
-
-import
-{
-    ProgressDialogService
-}
-from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
-
-import
-{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -188,8 +156,6 @@ from '../../../services/membership-services.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
-        ConfirmDialogComponent,
-        ProgressDialogComponent,
         SearchDropdownComponent,
         ToastComponent
     ],
@@ -198,11 +164,14 @@ from '../../../services/membership-services.service';
 })
 
 //===============================================================
-// Membership Service List
+// Membership Services List (configure-only)
+//
+// Rows are created by Membership Cards. No Add, Delete or Restore :
+// View, and Edit to set the Service Value / status / remarks.
 //===============================================================
 
 export class MembershipServicesList
-implements OnInit, OnDestroy
+implements OnInit
 {
     //===========================================================
     // Dependency Injection
@@ -210,12 +179,6 @@ implements OnInit, OnDestroy
 
     private readonly membershipServicesService =
         inject(MembershipServicesService);
-
-    private readonly confirmDialog =
-        inject(ConfirmDialogService);
-
-    private readonly progressDialog =
-        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
@@ -277,12 +240,6 @@ implements OnInit, OnDestroy
     loadFailed:
         boolean =
         false;
-
-    // Prevents a second Delete / Restore while one is running
-    isProcessing:
-        boolean =
-        false;
-
     //===========================================================
     // Status Filter
     //===========================================================
@@ -309,73 +266,49 @@ implements OnInit, OnDestroy
         null;
 
     //===========================================================
-    // Sub Category Filter (Membership Services sub categories)
+    // Membership Card Filter
     //===========================================================
 
-    subCategoryFilterItems:
+    cardFilterItems:
         any[] =
     [
         {
-            label:'All Sub Categories',
+            label:'All Membership Cards',
             value:null
         }
     ];
 
-    selectedSubCategoryId:
+    selectedCardId:
         number | null =
         null;
 
+
     //===========================================================
-    // Membership Type Filter
+    // Readiness Filter (Pending : no Service Value yet)
     //===========================================================
 
-    membershipTypeFilterItems:
+    readinessFilterItems:
         any[] =
     [
         {
-            label:'All Membership Types',
+            label:'All Readiness',
             value:null
         },
-
-        ...MEMBERSHIP_TYPES.map(
-            type =>
-            ({
-                label:type,
-                value:type
-            })
-        )
+        {
+            label:'Pending',
+            value:'Pending'
+        },
+        {
+            label:'Ready',
+            value:'Ready'
+        }
     ];
 
-    selectedMembershipType:
+    selectedReadiness:
         string | null =
         null;
 
-    //===========================================================
-    // Progress Dialog Settings
-    //===========================================================
 
-    private readonly MIN_PROGRESS_MS:
-        number =
-        3000;
-
-    private readonly PROGRESS_TICK_MS:
-        number =
-        100;
-
-    private readonly PROGRESS_CEILING:
-        number =
-        90;
-
-    private readonly PROGRESS_COMPLETE_HOLD_MS:
-        number =
-        600;
-
-    private progressTimer?:
-        number;
-
-    private progressValue:
-        number =
-        0;
 
     //===========================================================
     // Pagination
@@ -445,39 +378,39 @@ implements OnInit, OnDestroy
             align:'center'
         },
         {
+            header:'Membership Card',
+            field:'MembershipType',
+            width:'150px',
+            align:'left'
+        },
+        {
             header:'Service Name',
             field:'DisplayName',
-            width:'260px',
-            align:'left'
-        },
-        {
-            header:'Membership Type',
-            field:'MembershipType',
-            width:'140px',
-            align:'left'
-        },
-        {
-            header:'Sub Category',
-            field:'SubCategoryDisplay',
-            width:'240px',
+            width:'280px',
             align:'left'
         },
         {
             header:'Service Value',
             field:'ServiceValueDisplay',
-            width:'130px',
+            width:'120px',
             align:'right'
+        },
+        {
+            header:'Readiness',
+            field:'Readiness',
+            width:'100px',
+            align:'center'
         },
         {
             header:'Income Ledger',
             field:'IncomeLedgerCode',
-            width:'190px',
+            width:'180px',
             align:'center'
         },
         {
             header:'Expense Ledger',
             field:'ExpenseLedgerCode',
-            width:'190px',
+            width:'180px',
             align:'center'
         },
         {
@@ -496,6 +429,20 @@ implements OnInit, OnDestroy
         }
     ];
 
+
+    //===========================================================
+    // Row Actions : view and configure only (rows are deleted
+    // with their card)
+    //===========================================================
+
+    readonly tableActions =
+    {
+        view:true,
+        edit:true,
+        delete:false
+    };
+
+
     //===========================================================
     // Initialize
     //===========================================================
@@ -503,250 +450,12 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
-        this.loadSubCategories();
+        this.loadFilters();
 
         this.loadItems();
     }
 
-    //===========================================================
-    // Destroy
-    //===========================================================
 
-    ngOnDestroy():
-        void
-    {
-        this.clearProgressTimer();
-
-        if
-        (
-            this.isProcessing
-        )
-        {
-            this.progressDialog.close();
-        }
-    }
-
-    //===========================================================
-    // Progress Dialog (Animated)
-    //===========================================================
-
-    private startProgress
-    (
-        title:
-            string,
-
-        message:
-            string
-    ):
-        void
-    {
-        this.isProcessing =
-            true;
-
-        this.progressValue =
-            0;
-
-        this.progressDialog.show(
-            title,
-            message,
-            false
-        );
-
-        this.clearProgressTimer();
-
-        this.progressTimer =
-            window.setInterval(
-                () =>
-                {
-                    const step =
-                        Math.max(
-                            0.4,
-                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
-                        );
-
-                    this.progressValue =
-                        Math.min(
-                            this.PROGRESS_CEILING,
-                            this.progressValue + step
-                        );
-
-                    this.progressDialog.update(
-                        Math.round(
-                            this.progressValue
-                        )
-                    );
-                },
-
-                this.PROGRESS_TICK_MS
-            );
-
-        this.cdr.detectChanges();
-    }
-
-    private completeProgress
-    (
-        message:
-            string,
-
-        done:
-            () => void
-    ):
-        void
-    {
-        this.clearProgressTimer();
-
-        this.progressDialog.update(
-            100,
-            message
-        );
-
-        window.setTimeout(
-            () =>
-            {
-                this.progressDialog.close();
-
-                this.isProcessing =
-                    false;
-
-                this.cdr.detectChanges();
-
-                done();
-            },
-
-            this.PROGRESS_COMPLETE_HOLD_MS
-        );
-    }
-
-    private failProgress
-    (
-        done:
-            () => void
-    ):
-        void
-    {
-        this.clearProgressTimer();
-
-        this.progressDialog.close();
-
-        this.isProcessing =
-            false;
-
-        this.cdr.detectChanges();
-
-        done();
-    }
-
-    private clearProgressTimer():
-        void
-    {
-        if
-        (
-            this.progressTimer
-        )
-        {
-            clearInterval(
-                this.progressTimer
-            );
-
-            this.progressTimer =
-                undefined;
-        }
-    }
-
-    //===========================================================
-    // Minimum Progress Duration
-    //===========================================================
-
-    private withMinimumDuration<T>
-    (
-        source$:
-            Observable<T>
-    ):
-        Observable<T>
-    {
-        return defer(
-            () =>
-            {
-                const startedAt:
-                    number =
-                    Date.now();
-
-                const remaining =
-                    (): number =>
-                        Math.max(
-                            0,
-                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
-                        );
-
-                return source$.pipe(
-
-                    delayWhen(
-                        () =>
-                            timer(remaining())
-                    ),
-
-                    catchError(
-                        error =>
-                            timer(remaining()).pipe(
-                                switchMap(
-                                    () =>
-                                        throwError(() => error)
-                                )
-                            )
-                    )
-                );
-            }
-        );
-    }
-
-    //===========================================================
-    // Error Message
-    //===========================================================
-
-    private extractErrorMessage
-    (
-        error:
-            unknown,
-
-        fallback:
-            string
-    ):
-        string
-    {
-        if
-        (
-            error instanceof HttpErrorResponse
-        )
-        {
-            if
-            (
-                typeof error.error === 'string'
-                &&
-                error.error.trim()
-            )
-            {
-                return error.error;
-            }
-
-            if
-            (
-                error.error?.message
-            )
-            {
-                return error.error.message;
-            }
-
-            if
-            (
-                error.error?.title
-            )
-            {
-                return error.error.title;
-            }
-        }
-
-        return fallback;
-    }
 
     //===========================================================
     // Load Items
@@ -794,7 +503,9 @@ implements OnInit, OnDestroy
                                     '-',
 
                                 ServiceValueDisplay:
-                                    Number(item.ServiceValue ?? 0).toLocaleString(
+                                    !(Number(item.ServiceValue ?? 0) > 0)
+                                        ? '-'
+                                        : Number(item.ServiceValue ?? 0).toLocaleString(
                                         'en-US',
                                         {
                                             minimumFractionDigits:2,
@@ -870,17 +581,17 @@ implements OnInit, OnDestroy
                 {
                     const tabMatch =
                         (
-                            this.selectedSubCategoryId === null
+                            this.selectedCardId === null
                             ||
-                            Number(item.ServiceSubCategoryId) ===
-                            this.selectedSubCategoryId
+                            Number(item.MembershipCardId) ===
+                            this.selectedCardId
                         )
                         &&
                         (
-                            this.selectedMembershipType === null
+                            this.selectedReadiness === null
                             ||
-                            item.MembershipType ===
-                            this.selectedMembershipType
+                            item.Readiness ===
+                            this.selectedReadiness
                         );
 
                     const statusMatch =
@@ -895,6 +606,8 @@ implements OnInit, OnDestroy
                             item.ServiceName,
                             item.DisplayName,
                             item.MembershipType,
+                            item.CardCode,
+                            item.Readiness,
                             item.SubCategoryCode,
                             item.SubCategoryName,
                             item.IncomeLedgerCode,
@@ -964,36 +677,17 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Membership Type Filter Change
+    // Membership Card Filter Change
     //===========================================================
 
-    onMembershipTypeFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedMembershipType =
-            value
-                ? String(value)
-                : null;
-
-        this.applyFilters();
-    }
-
-    //===========================================================
-    // Sub Category Filter Change
-    //===========================================================
-
-    onSubCategoryFilterChange
+    onCardFilterChange
     (
         value:
             number | null
     ):
         void
     {
-        this.selectedSubCategoryId =
+        this.selectedCardId =
             value === null
             ||
             value === undefined
@@ -1003,11 +697,32 @@ implements OnInit, OnDestroy
         this.applyFilters();
     }
 
+
     //===========================================================
-    // Load Sub Categories (Membership Services sub categories)
+    // Readiness Filter Change
     //===========================================================
 
-    private loadSubCategories():
+    onReadinessFilterChange
+    (
+        value:
+            string | null
+    ):
+        void
+    {
+        this.selectedReadiness =
+            value
+                ? String(value)
+                : null;
+
+        this.applyFilters();
+    }
+
+
+    //===========================================================
+    // Load Filters (membership cards)
+    //===========================================================
+
+    private loadFilters():
         void
     {
         this.membershipServicesService
@@ -1021,21 +736,21 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    this.subCategoryFilterItems =
+                    this.cardFilterItems =
                     [
                         {
-                            label:'All Sub Categories',
+                            label:'All Membership Cards',
                             value:null
                         },
 
-                        ...(response.SubCategories ?? []).map(
+                        ...(response.Cards ?? []).map(
                             option =>
                             ({
                                 label:
-                                    `${option.SubCategoryCode} - ${option.SubCategoryName}`,
+                                    `${option.CardCode} - ${option.CardName}`,
 
                                 value:
-                                    Number(option.ServiceSubCategoryId)
+                                    Number(option.MembershipCardId)
                             })
                         )
                     ];
@@ -1051,12 +766,14 @@ implements OnInit, OnDestroy
                     void =>
                 {
                     console.error(
-                        'Load Membership Services Sub Categories Error:',
+                        'Load Membership Cards Error:',
                         error
                     );
                 }
             });
     }
+
+
 
     //===========================================================
     // Status Filter Change
@@ -1175,16 +892,16 @@ implements OnInit, OnDestroy
         this.selectedStatus =
             null;
 
-        this.selectedSubCategoryId =
+        this.selectedCardId =
             null;
 
-        this.selectedMembershipType =
+        this.selectedReadiness =
             null;
 
         this.currentPage =
             1;
 
-        this.loadSubCategories();
+        this.loadFilters();
 
         this.loadItems();
     }
@@ -1240,23 +957,8 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Add / View / Edit
+    // View / Configure
     //===========================================================
-
-    add():
-        void
-    {
-        void this.router.navigate
-        (
-            [
-                'add'
-            ],
-            {
-                relativeTo:
-                    this.route.parent
-            }
-        );
-    }
 
     view
     (
@@ -1296,258 +998,6 @@ implements OnInit, OnDestroy
                     this.route.parent
             }
         );
-    }
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    delete
-    (
-        item:
-            MembershipService
-    ):
-        void
-    {
-        if
-        (
-            this.isProcessing
-        )
-        {
-            return;
-        }
-
-        this.confirmDialog.open
-        (
-            'Delete Membership Service',
-            `Are you sure you want to delete "${item.DisplayName}" and its ledgers ${item.IncomeLedgerCode} / ${item.ExpenseLedgerCode}?`,
-            ():
-                void =>
-            {
-                // Next tick : let the confirm dialog close first
-                setTimeout(
-                    () =>
-                        this.deleteItem(
-                            item
-                        )
-                );
-            }
-        );
-    }
-
-    private deleteItem
-    (
-        item:
-            MembershipService
-    ):
-        void
-    {
-        this.startProgress(
-            'Deleting Membership Service',
-            `Please wait while "${item.DisplayName}" is being deleted...`
-        );
-
-        this.withMinimumDuration(
-            this.membershipServicesService.delete(
-                item.MembershipServiceId
-            )
-        )
-            .subscribe
-            ({
-                next:
-                ():
-                    void =>
-                {
-                    this.completeProgress(
-
-                        'Service category deleted.',
-
-                        () =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-                                `${item.DisplayName} deleted successfully.`
-                            );
-
-                            this.loadItems();
-                        }
-                    );
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Delete Membership Service Error:',
-                        error
-                    );
-
-                    this.failProgress(
-                        () =>
-                        {
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 409
-                            )
-                            {
-                                this.toast.info
-                                (
-                                    'Delete Blocked',
-                                    this.extractErrorMessage(
-                                        error,
-                                        'Membership Service cannot be deleted because it is already in use.'
-                                    )
-                                );
-
-                                return;
-                            }
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-                                'Failed to delete membership service.'
-                            );
-                        }
-                    );
-                }
-            });
-    }
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    restore():
-        void
-    {
-        if
-        (
-            this.isProcessing
-        )
-        {
-            return;
-        }
-
-        this.confirmDialog.open
-        (
-            'Restore Membership Service',
-            'Are you sure you want to restore the most recently deleted membership service?',
-            ():
-                void =>
-            {
-                setTimeout(
-                    () =>
-                        this.restoreItem()
-                );
-            },
-            'Restore',
-            'Cancel',
-            'primary'
-        );
-    }
-
-    private restoreItem():
-        void
-    {
-        this.startProgress(
-            'Restoring Membership Service',
-            'Please wait while the most recently deleted membership service is being restored...'
-        );
-
-        this.withMinimumDuration(
-            this.membershipServicesService.restore()
-        )
-            .subscribe
-            ({
-                next:
-                ():
-                    void =>
-                {
-                    this.completeProgress(
-
-                        'Service category restored.',
-
-                        () =>
-                        {
-                            this.toast.success
-                            (
-                                'Restore Successful',
-                                'The most recently deleted membership service has been restored.'
-                            );
-
-                            this.loadItems();
-                        }
-                    );
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
-                    (
-                        'Restore Membership Service Error:',
-                        error
-                    );
-
-                    this.failProgress(
-                        () =>
-                        {
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 404
-                            )
-                            {
-                                this.toast.info
-                                (
-                                    'No Data to Restore',
-                                    'There is no deleted membership service record to restore.'
-                                );
-
-                                return;
-                            }
-
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 409
-                            )
-                            {
-                                this.toast.info
-                                (
-                                    'Restore Blocked',
-                                    this.extractErrorMessage(
-                                        error,
-                                        'The membership service cannot be restored.'
-                                    )
-                                );
-
-                                return;
-                            }
-
-                            this.toast.error
-                            (
-                                'Restore Failed',
-                                'Failed to restore membership service.'
-                            );
-                        }
-                    );
-                }
-            });
     }
 
     //===========================================================

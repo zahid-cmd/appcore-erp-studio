@@ -82,6 +82,7 @@
             <!-- =============================================
                  SECTION 01
                  BASIC INFORMATION
+                 Created by Membership Cards (read only)
             ============================================== -->
 
             <app-form-section
@@ -91,42 +92,32 @@
                 icon="fas fa-id-card">
 
 
-                <!-- Membership Services sub category; locked once saved -->
+                <!-- Membership Card : the card that created this row -->
 
-                <app-search-dropdown
+                <app-textbox
+
+                    label="Membership Card"
+
+                    placeholder="From Membership Cards"
+
+                    [value]="cardDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
 
                     label="Service Sub Category"
 
-                    [items]="subCategoryItems"
+                    placeholder="Membership Services sub category"
 
-                    [(value)]="entity.ServiceSubCategoryId"
+                    [value]="subCategoryDisplay"
 
-                    (valueChange)="onSubCategoryChange($event)"
+                    [readonly]="true">
 
-                    [disabled]="isViewMode || isSaving || isSubCategoryLocked"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Membership Type (fixed list for now; later from the Membership module) -->
-
-                <app-dropdown
-
-                    label="Membership Type"
-
-                    [items]="membershipTypeItems"
-
-                    [(value)]="entity.MembershipType"
-
-                    (valueChange)="onMembershipTypeChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
+                </app-textbox>
 
 
                 <!-- Service Code : MSC-ccc-sss-nnnnn (central code generator) -->
@@ -135,30 +126,26 @@
 
                     label="Service Code"
 
-                    placeholder="Follows the sub category"
+                    placeholder="Auto generated"
 
                     [(value)]="entity.ServiceCode"
 
-                    [readonly]="true"
-
-                    [required]="true">
+                    [readonly]="true">
 
                 </app-textbox>
 
 
-                <!-- Service Name : the sub category's name (read only) -->
+                <!-- Display Name : "<Service Name> - <Card Name>" -->
 
                 <app-textbox
 
                     label="Service Name"
 
-                    placeholder="Follows the sub category"
+                    placeholder="Follows the sub category and card"
 
-                    [(value)]="entity.ServiceName"
+                    [(value)]="entity.DisplayName"
 
-                    [readonly]="true"
-
-                    [required]="true">
+                    [readonly]="true">
 
                 </app-textbox>
 
@@ -179,7 +166,7 @@
                 icon="fas fa-gift">
 
 
-                <!-- Service Value (value of the free service) -->
+                <!-- Service Value : the only value set on this page -->
 
                 <app-textbox
 
@@ -198,37 +185,32 @@
                 </app-textbox>
 
 
-                <!-- Display Name : "<Service Name> - <Membership Type>" -->
+                <!-- Readiness : Pending until a Service Value is saved -->
 
                 <app-textbox
 
-                    label="Display Name"
+                    label="Readiness"
 
-                    placeholder="Follows sub category and membership type"
+                    placeholder="Pending"
 
-                    [(value)]="entity.DisplayName"
+                    [value]="readinessDisplay"
 
-                    [readonly]="true"
-
-                    [required]="true">
+                    [readonly]="true">
 
                 </app-textbox>
 
 
-                <!-- Income Ledger : GLR-ccc-ggg-sss-nnnnn under the sub category's
-                     income sub group (created on save) -->
+                <!-- Income Ledger : under SUB-007-005-001, created with the card -->
 
                 <app-textbox
 
                     label="Income Ledger Code"
 
-                    placeholder="Auto generated"
+                    placeholder="Created with the card"
 
                     [(value)]="entity.IncomeLedgerCode"
 
-                    [readonly]="true"
-
-                    [required]="true">
+                    [readonly]="true">
 
                 </app-textbox>
 
@@ -237,7 +219,7 @@
 
                     label="Income Ledger Name"
 
-                    placeholder="Follows the display name"
+                    placeholder="Sub group name - card name"
 
                     [(value)]="entity.IncomeLedgerName"
 
@@ -252,7 +234,7 @@
             <!-- =============================================
                  SECTION 03
                  EXPENSE LEDGER (the same amount discounted)
-                 Under SUB-004-002-001 (found by code)
+                 Under SUB-004-002-001, created with the card
             ============================================== -->
 
             <app-form-section
@@ -261,8 +243,6 @@
 
                 icon="fas fa-receipt">
 
-
-                <!-- Expense Sub Group : Selling & Marketing Expenses - Non Cash -->
 
                 <app-textbox
 
@@ -277,30 +257,24 @@
                 </app-textbox>
 
 
-                <!-- Expense Ledger Code : GLR-004-002-001-nnnnn (created on save) -->
-
                 <app-textbox
 
                     label="Expense Ledger Code"
 
-                    placeholder="Auto generated"
+                    placeholder="Created with the card"
 
                     [(value)]="entity.ExpenseLedgerCode"
 
-                    [readonly]="true"
-
-                    [required]="true">
+                    [readonly]="true">
 
                 </app-textbox>
 
-
-                <!-- Expense Ledger Name : same as the Display Name -->
 
                 <app-textbox
 
                     label="Expense Ledger Name"
 
-                    placeholder="Follows the display name"
+                    placeholder="Sub group name - card name"
 
                     [(value)]="entity.ExpenseLedgerName"
 
@@ -324,7 +298,7 @@
                 icon="fas fa-toggle-on">
 
 
-                <!-- Status -->
+                <!-- Status : cannot be active while the card is inactive -->
 
                 <app-dropdown
 
@@ -343,8 +317,6 @@
                 </app-dropdown>
 
 
-                <!-- Remarks -->
-
                 <app-textarea
 
                     label="Remarks"
@@ -362,6 +334,7 @@
                 </app-textarea>
 
             </app-form-section>
+
 
 
         </app-form-grid>

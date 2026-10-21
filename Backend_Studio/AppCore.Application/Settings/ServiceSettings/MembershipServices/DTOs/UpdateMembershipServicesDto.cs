@@ -6,7 +6,10 @@ namespace AppCore.Application.Settings.ServiceSettings;
 
 
 //===============================================================
-// Update Membership Services DTO
+// Update (Configure) Membership Services DTO
+//
+// Rows are created, renamed, deleted and restored by Membership
+// Cards. This page only sets the Service Value, status and remarks.
 //===============================================================
 
 public class UpdateMembershipServicesDto
@@ -23,92 +26,16 @@ public class UpdateMembershipServicesDto
 
 
     //===========================================================
-    // Basic Information
+    // Configuration (the only editable fields)
     //===========================================================
 
-    // Preview only : the server assigns MSC-...
-    public string ServiceCode
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public long ServiceSubCategoryId
-    {
-        get;
-        set;
-    }
-
-
-    public string MembershipType
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string ServiceName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    // Preview only : built by the server
-    public string DisplayName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    //===========================================================
-    // Service Value
-    //===========================================================
-
+    // > 0
     public decimal ServiceValue
     {
         get;
         set;
     }
 
-
-    //===========================================================
-    // Ledgers (preview only)
-    //===========================================================
-
-    public string IncomeLedgerCode
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string IncomeLedgerName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string ExpenseLedgerCode
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    public string ExpenseLedgerName
-    {
-        get;
-        set;
-    } = string.Empty;
-
-
-    //===========================================================
-    // Status & Control
-    //===========================================================
 
     public string Remarks
     {
@@ -121,5 +48,5 @@ public class UpdateMembershipServicesDto
     {
         get;
         set;
-    } = true;
+    }
 }

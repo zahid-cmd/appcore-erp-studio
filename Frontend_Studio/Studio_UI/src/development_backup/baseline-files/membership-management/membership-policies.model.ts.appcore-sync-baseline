@@ -1,0 +1,90 @@
+/* ============================================================
+   Membership Policies
+============================================================ */
+
+export interface MembershipPolicies
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Membership Policies
+============================================================ */
+
+export interface CreateMembershipPolicies
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Membership Policies
+============================================================ */
+
+export interface UpdateMembershipPolicies
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Membership Policies Defaults
+============================================================ */
+
+export interface MembershipPoliciesDefaults
+{
+    code:
+        string;
+}

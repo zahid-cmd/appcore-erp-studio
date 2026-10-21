@@ -31,11 +31,10 @@ from '../../../../environments/environment';
 import
 {
     MembershipService,
-    CreateMembershipService,
     UpdateMembershipService,
     MembershipServicesDefaults,
-    MembershipServiceSubCategoryOption,
-    MEMBERSHIP_TYPES
+    MembershipServiceCardOption,
+    MembershipServiceSubCategoryOption
 }
 from '../models/membership-services.model';
 
@@ -130,6 +129,17 @@ export class MembershipServicesService
             SubCategoryName:
                 text('SubCategoryName'),
 
+            MembershipCardId:
+                this.pick(item, 'MembershipCardId') == null
+                    ? null
+                    : Number(this.pick(item, 'MembershipCardId')),
+
+            CardCode:
+                text('CardCode'),
+
+            CardRank:
+                num('CardRank'),
+
             MembershipType:
                 text('MembershipType'),
 
@@ -142,11 +152,26 @@ export class MembershipServicesService
             ServiceValue:
                 num('ServiceValue'),
 
+            Readiness:
+                text('Readiness')
+                ||
+                (
+                    num('ServiceValue') > 0
+                        ? 'Ready'
+                        : 'Pending'
+                ),
+
+            IncomeSubGroupCode:
+                text('IncomeSubGroupCode'),
+
             IncomeLedgerCode:
                 text('IncomeLedgerCode'),
 
             IncomeLedgerName:
                 text('IncomeLedgerName'),
+
+            ExpenseSubGroupCode:
+                text('ExpenseSubGroupCode'),
 
             ExpenseLedgerCode:
                 text('ExpenseLedgerCode'),
@@ -168,50 +193,51 @@ export class MembershipServicesService
 
 
     //===========================================================
-    // Normalize Sub Category Option
+    // Normalize filter options
     //===========================================================
 
-    private normalizeOption
+    private normalizeCard
+    (
+        item:
+            any
+    ):
+        MembershipServiceCardOption
+    {
+        return {
+            MembershipCardId:
+                Number(this.pick(item, 'MembershipCardId') ?? 0),
+
+            CardCode:
+                String(this.pick(item, 'CardCode') ?? ''),
+
+            CardName:
+                String(this.pick(item, 'CardName') ?? ''),
+
+            CardRank:
+                Number(this.pick(item, 'CardRank') ?? 0),
+
+            IsActive:
+                Boolean(this.pick(item, 'IsActive') ?? true)
+        };
+    }
+
+
+    private normalizeSubCategory
     (
         item:
             any
     ):
         MembershipServiceSubCategoryOption
     {
-        const text =
-            (name: string): string =>
-                String(this.pick(item, name) ?? '');
-
         return {
             ServiceSubCategoryId:
                 Number(this.pick(item, 'ServiceSubCategoryId') ?? 0),
 
             SubCategoryCode:
-                text('SubCategoryCode'),
+                String(this.pick(item, 'SubCategoryCode') ?? ''),
 
             SubCategoryName:
-                text('SubCategoryName'),
-
-            CategoryName:
-                text('CategoryName'),
-
-            IsActive:
-                Boolean(this.pick(item, 'IsActive') ?? false),
-
-            ItemCreationAllowed:
-                Boolean(this.pick(item, 'ItemCreationAllowed') ?? false),
-
-            NextServiceCode:
-                text('NextServiceCode'),
-
-            NextIncomeLedgerCode:
-                text('NextIncomeLedgerCode'),
-
-            NextExpenseLedgerCode:
-                text('NextExpenseLedgerCode'),
-
-            Message:
-                text('Message')
+                String(this.pick(item, 'SubCategoryName') ?? '')
         };
     }
 
@@ -242,7 +268,7 @@ export class MembershipServicesService
 
 
     //===========================================================
-    // Get Defaults (Service Categories + next codes)
+    // Get Defaults (list filter options)
     //===========================================================
 
     getDefaults():
@@ -255,42 +281,29 @@ export class MembershipServicesService
             .pipe(
                 map(
                     response =>
-                    {
-                        const types =
-                            (this.pick(response, 'MembershipTypes') ?? [])
-                                .map(
-                                    (item: any) =>
-                                        String(item ?? '')
-                                )
-                                .filter(
-                                    (item: string) =>
-                                        !!item
-                                );
+                    ({
+                        Cards:
+                            (this.pick(response, 'Cards') ?? []).map(
+                                (item: any) =>
+                                    this.normalizeCard(
+                                        item
+                                    )
+                            ),
 
-                        return {
-                            SubCategories:
-                                (this.pick(response, 'SubCategories') ?? []).map(
-                                    (item: any) =>
-                                        this.normalizeOption(
-                                            item
-                                        )
-                                ),
+                        SubCategories:
+                            (this.pick(response, 'SubCategories') ?? []).map(
+                                (item: any) =>
+                                    this.normalizeSubCategory(
+                                        item
+                                    )
+                            ),
 
-                            MembershipTypes:
-                                types.length > 0
-                                    ? types
-                                    : [...MEMBERSHIP_TYPES],
+                        ExpenseSubGroupCode:
+                            String(this.pick(response, 'ExpenseSubGroupCode') ?? ''),
 
-                            ExpenseSubGroupCode:
-                                String(this.pick(response, 'ExpenseSubGroupCode') ?? ''),
-
-                            ExpenseSubGroupName:
-                                String(this.pick(response, 'ExpenseSubGroupName') ?? ''),
-
-                            ExpenseSubGroupMessage:
-                                String(this.pick(response, 'ExpenseSubGroupMessage') ?? '')
-                        };
-                    }
+                        ExpenseSubGroupName:
+                            String(this.pick(response, 'ExpenseSubGroupName') ?? '')
+                    })
                 )
             );
     }
@@ -323,25 +336,10 @@ export class MembershipServicesService
 
 
     //===========================================================
-    // Create
-    //===========================================================
-
-    create
-    (
-        model:
-            CreateMembershipService
-    ):
-        Observable<number>
-    {
-        return this.http.post<number>(
-            this.apiUrl,
-            model
-        );
-    }
-
-
-    //===========================================================
-    // Update
+    // Configure (Service Value, status, remarks)
+    //
+    // There is no create / delete / restore : rows come from
+    // Membership Cards.
     //===========================================================
 
     update
@@ -354,37 +352,6 @@ export class MembershipServicesService
         return this.http.put<void>(
             this.apiUrl,
             model
-        );
-    }
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    delete
-    (
-        id:
-            number
-    ):
-        Observable<void>
-    {
-        return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
-        );
-    }
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    restore():
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/restore`,
-            {}
         );
     }
 

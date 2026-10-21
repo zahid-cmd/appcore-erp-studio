@@ -472,6 +472,131 @@ public static class CodeGenerator
         return $"WH-{companySequenceNo:D2}-{wingSequenceNo:D2}-{branchSequenceNo:D2}-{warehouseSequenceNo:D2}";
     }
 
+    //===============================================================
+    // GENERAL SETTINGS : Location Code   LOC-0001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, e.g. right before the
+    // SERVICE SETTINGS section. The name differs from the ones Code
+    // Synchronization generates, so it never clashes with them.
+    //===============================================================
+
+    public static string GenerateLocationCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid location sequence number.");
+        }
+
+        return $"LOC-{sequenceNo:D4}";
+    }
+
+    //===============================================================
+    // CLIENT SETTINGS : Customer Codes
+    //
+    //   Inbound customer   CIB-000001
+    //   Outside customer   COS-000001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, e.g. after the
+    // GENERAL SETTINGS section. The names differ from the ones Code
+    // Synchronization generates, so they never clash with them.
+    //===============================================================
+
+    public static string GenerateInboundCustomerCode(
+        int sequenceNo)
+    {
+        return CustomerCode(
+            "CIB",
+            sequenceNo);
+    }
+
+
+    public static string GenerateOutsideCustomerCode(
+        int sequenceNo)
+    {
+        return CustomerCode(
+            "COS",
+            sequenceNo);
+    }
+
+
+    private static string CustomerCode(
+        string prefix,
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid customer sequence number.");
+        }
+
+        return $"{prefix}-{sequenceNo:D6}";
+    }
+    
+    //===============================================================
+    // CLIENT SETTINGS : Supplier Code   SUP-000001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, next to the customer
+    // code methods (it uses their CustomerCode helper).
+    //===============================================================
+
+    public static string GenerateSupplierCode(
+        int sequenceNo)
+    {
+        return CustomerCode(
+            "SUP",
+            sequenceNo);
+    }
+    
+    //===============================================================
+    // MEMBERSHIP MANAGEMENT : Membership Card Code   MCD-001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, e.g. after the SERVICE
+    // SETTINGS section. The repository finds the highest number
+    // used (deleted cards included) and passes highest + 1.
+    //===============================================================
+
+    public static string GenerateMembershipCardCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1 || sequenceNo > 999)
+        {
+            throw new ArgumentException(
+                "Membership card sequence number must be from 1 to 999.");
+        }
+
+        return $"MCD-{sequenceNo:D3}";
+    }
+    
+    //===============================================================
+    // MEMBERSHIP MANAGEMENT : Membership Policy Code   MSP-001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, next to
+    // GenerateMembershipCardCode.
+    //===============================================================
+
+    public static string GenerateMembershipPolicyCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1 || sequenceNo > 999)
+        {
+            throw new ArgumentException(
+                "Membership policy sequence number must be from 1 to 999.");
+        }
+
+        return $"MSP-{sequenceNo:D3}";
+    }
 
     //===============================================================
     // APPLICATION CONFIGURATION

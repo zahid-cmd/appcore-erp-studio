@@ -1,22 +1,12 @@
 /* ============================================================
-   Membership Types (fixed for now; later loaded from the
-   Membership module). The server sends the same list.
-============================================================ */
+   Membership Service (configure-only)
 
-export const MEMBERSHIP_TYPES:
-    readonly string[] =
-[
-    'Silver Card',
-    'Gold Card',
-    'Platinum Card',
-    'Titanium Card'
-];
-
-
-/* ============================================================
-   Membership Service
-   (complimentary : billed on the invoice at the Service Value,
-   then discounted - income ledger + expense ledger)
+   One complimentary service per membership card. Rows are
+   created, renamed, deleted and restored by Membership Cards;
+   this page only sets the Service Value, status and remarks.
+   Billed on the invoice at the Service Value, then discounted :
+   income ledger + expense ledger, each
+   "<Sub Group Name> - <Card Name>".
 ============================================================ */
 
 export interface MembershipService
@@ -28,10 +18,7 @@ export interface MembershipService
     ServiceCode:
         string;
 
-    //===========================================================
-    // Sub Category (locked after saving)
-    //===========================================================
-
+    // Sub Category (display)
     ServiceSubCategoryId:
         number;
 
@@ -41,29 +28,39 @@ export interface MembershipService
     SubCategoryName?:
         string;
 
-    //===========================================================
-    // Service
-    //===========================================================
+    // The card that created the row
+    MembershipCardId:
+        number | null;
 
-    // Silver Card / Gold Card / Platinum Card / Titanium Card
+    CardCode?:
+        string;
+
+    CardRank?:
+        number;
+
+    // The card name
     MembershipType:
         string;
 
-    // Typed, e.g. "Free Wash"
+    // The sub category name
     ServiceName:
         string;
 
-    // "Free Wash - Gold Card" (built; unique)
+    // "<Service Name> - <Card Name>"
     DisplayName:
         string;
 
-    // Value of the free service (expense)
+    // Value of the free service; 0 = Pending
     ServiceValue:
         number;
 
-    //===========================================================
+    // Pending (no Service Value yet) / Ready
+    Readiness:
+        string;
+
     // Income Ledger (billed on the invoice at the Service Value)
-    //===========================================================
+    IncomeSubGroupCode?:
+        string;
 
     IncomeLedgerCode:
         string;
@@ -71,9 +68,9 @@ export interface MembershipService
     IncomeLedgerName:
         string;
 
-    //===========================================================
-    // Expense Ledger (under SUB-004-002-001 : the discount)
-    //===========================================================
+    // Expense Ledger (SUB-004-002-001 : the discount)
+    ExpenseSubGroupCode?:
+        string;
 
     ExpenseLedgerCode:
         string;
@@ -90,60 +87,48 @@ export interface MembershipService
 
 
 /* ============================================================
-   Create / Update Membership Service
+   Configure (Update) Membership Service
 ============================================================ */
 
-export interface CreateMembershipService
-{
-    ServiceCode:
-        string;
-
-    ServiceSubCategoryId:
-        number;
-
-    MembershipType:
-        string;
-
-    ServiceName:
-        string;
-
-    DisplayName:
-        string;
-
-    ServiceValue:
-        number;
-
-    IncomeLedgerCode:
-        string;
-
-    IncomeLedgerName:
-        string;
-
-    ExpenseLedgerCode:
-        string;
-
-    ExpenseLedgerName:
-        string;
-
-    Remarks:
-        string;
-
-    IsActive:
-        boolean;
-}
-
-
 export interface UpdateMembershipService
-extends CreateMembershipService
 {
     MembershipServiceId:
         number;
+
+    // > 0
+    ServiceValue:
+        number;
+
+    Remarks:
+        string;
+
+    IsActive:
+        boolean;
 }
 
 
 /* ============================================================
-   Membership Services sub category option (with the next codes)
+   Filter options
 ============================================================ */
+
+export interface MembershipServiceCardOption
+{
+    MembershipCardId:
+        number;
+
+    CardCode:
+        string;
+
+    CardName:
+        string;
+
+    CardRank:
+        number;
+
+    IsActive:
+        boolean;
+}
+
 
 export interface MembershipServiceSubCategoryOption
 {
@@ -155,28 +140,6 @@ export interface MembershipServiceSubCategoryOption
 
     SubCategoryName:
         string;
-
-    CategoryName:
-        string;
-
-    IsActive:
-        boolean;
-
-    ItemCreationAllowed:
-        boolean;
-
-    NextServiceCode:
-        string;
-
-    NextIncomeLedgerCode:
-        string;
-
-    NextExpenseLedgerCode:
-        string;
-
-    // Why no service can be added under it ('' when it can)
-    Message:
-        string;
 }
 
 
@@ -186,20 +149,16 @@ export interface MembershipServiceSubCategoryOption
 
 export interface MembershipServicesDefaults
 {
+    Cards:
+        MembershipServiceCardOption[];
+
     SubCategories:
         MembershipServiceSubCategoryOption[];
-
-    MembershipTypes:
-        string[];
 
     // SUB-004-002-001 (display)
     ExpenseSubGroupCode:
         string;
 
     ExpenseSubGroupName:
-        string;
-
-    // Set when that sub group is missing / deleted
-    ExpenseSubGroupMessage:
         string;
 }

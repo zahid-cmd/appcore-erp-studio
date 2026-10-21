@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const CustomerSetupRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Customer Setup'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/customer-setup/list/customer-setup-list'
+            )
+            .then(
+                m =>
+                    m.CustomerSetupList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Customer Setup'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/customer-setup/form/customer-setup-form'
+            )
+            .then(
+                m =>
+                    m.CustomerSetupForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Customer Setup'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/customer-setup/form/customer-setup-form'
+            )
+            .then(
+                m =>
+                    m.CustomerSetupForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Customer Setup'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/customer-setup/form/customer-setup-form'
+            )
+            .then(
+                m =>
+                    m.CustomerSetupForm
+            )
+    }
+
+];

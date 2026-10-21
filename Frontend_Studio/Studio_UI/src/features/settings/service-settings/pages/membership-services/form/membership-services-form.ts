@@ -123,12 +123,6 @@ import
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
 
-import
-{
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
 //===============================================================
 // Utilities
 //===============================================================
@@ -176,11 +170,7 @@ from '../../../../../../shared/components/utilities/progress-dialog/progress-dia
 import
 {
     MembershipService,
-    CreateMembershipService,
-    UpdateMembershipService,
-    MembershipServicesDefaults,
-    MembershipServiceSubCategoryOption,
-    MEMBERSHIP_TYPES
+    UpdateMembershipService
 }
 from '../../../models/membership-services.model';
 
@@ -224,7 +214,6 @@ from '../../../services/membership-services.service';
         TextboxComponent,
         TextareaComponent,
         DropdownComponent,
-        SearchDropdownComponent,
 
         //=======================================================
         // Utilities
@@ -244,7 +233,10 @@ from '../../../services/membership-services.service';
 })
 
 //===============================================================
-// Membership Service Form
+// Membership Services Form (configure-only)
+//
+// The row is created by Membership Cards. Only the Service Value,
+// Status and Remarks can be changed; everything else is read only.
 //===============================================================
 
 export class MembershipServicesForm
@@ -320,8 +312,8 @@ implements OnInit, OnDestroy
     //===========================================================
 
     mode:
-        'add' | 'edit' | 'view' =
-        'add';
+        'edit' | 'view' =
+        'edit';
 
     entityId:
         number =
@@ -367,11 +359,8 @@ implements OnInit, OnDestroy
             this.mode
         )
         {
-            case 'add':
-                return `Add ${this.entityName}`;
-
             case 'edit':
-                return `Update ${this.entityName}`;
+                return `Configure ${this.entityName}`;
 
             case 'view':
                 return `View ${this.entityName}`;
@@ -384,50 +373,6 @@ implements OnInit, OnDestroy
     //===========================================================
     // Dropdown Items
     //===========================================================
-
-    subCategoryItems:
-        any[]
-        =
-        [];
-
-    // Shown in the dropdown : the types the selected sub category
-    // does not use yet (plus this record's own type when editing)
-    membershipTypeItems:
-        any[]
-        =
-        MEMBERSHIP_TYPES.map(
-            type =>
-            ({
-                label:type,
-                value:type
-            })
-        );
-
-    // Every Membership Type (from the server, else the fixed list)
-    private allMembershipTypes:
-        string[]
-        =
-        [...MEMBERSHIP_TYPES];
-
-    // Live rows : sub category id -> types already used
-    private usedTypes:
-        Map<number, { id: number; type: string }[]>
-        =
-        new Map<number, { id: number; type: string }[]>();
-
-    // Membership Type as saved (edit / view)
-    private savedMembershipType:
-        string =
-        '';
-
-    // Expense sub group SUB-004-002-001 (display; found by code)
-    expenseSubGroupDisplay:
-        string =
-        'SUB-004-002-001';
-
-    private expenseSubGroupMessage:
-        string =
-        '';
 
     statusItems:
         any[]
@@ -443,19 +388,6 @@ implements OnInit, OnDestroy
             }
         ];
 
-    //===========================================================
-    // Membership Service sub categories (from the defaults call)
-    //===========================================================
-
-    private subCategories:
-        MembershipServiceSubCategoryOption[]
-        =
-        [];
-
-    // Sub category as saved (edit / view)
-    private savedSubCategoryId:
-        number =
-        0;
 
     //===========================================================
     // Entity
@@ -465,6 +397,33 @@ implements OnInit, OnDestroy
         MembershipService
         =
         this.createEmptyEntity();
+
+
+    //===========================================================
+    // Read-only displays
+    //===========================================================
+
+    // "MCD-001 - GOLD CARD"
+    cardDisplay:
+        string =
+        '';
+
+    // "DRS-002-001 - Complimentary Membership Services"
+    subCategoryDisplay:
+        string =
+        '';
+
+    // "SUB-007-005-001"
+    incomeSubGroupDisplay:
+        string =
+        '';
+
+    // "SUB-004-002-001"
+    expenseSubGroupDisplay:
+        string =
+        '';
+
+
 
     // Service Value as typed ("300", "300.00")
     serviceValueText:
@@ -491,11 +450,9 @@ implements OnInit, OnDestroy
         void
     {
         this.initializeMode();
-
-        this.loadDefaults();
-
-        this.loadUsedTypes();
     }
+
+
 
     //===========================================================
     // Destroy
@@ -526,10 +483,12 @@ implements OnInit, OnDestroy
             MembershipServiceId:0,
             ServiceCode:'',
             ServiceSubCategoryId:0,
+            MembershipCardId:null,
             ServiceName:'',
             MembershipType:'',
             DisplayName:'',
             ServiceValue:0,
+            Readiness:'Pending',
             IncomeLedgerCode:'',
             IncomeLedgerName:'',
             ExpenseLedgerCode:'',
@@ -539,37 +498,18 @@ implements OnInit, OnDestroy
         };
     }
 
+
     //===========================================================
-    // Initialize Mode
+    // Initialize Mode (edit / view only; rows come from cards)
     //===========================================================
 
     private initializeMode():
         void
     {
-        const url =
-            this.router.url.toLowerCase();
-
-        if
-        (
-            url.includes('/view/')
-        )
-        {
-            this.mode =
-                'view';
-        }
-        else if
-        (
-            url.includes('/edit/')
-        )
-        {
-            this.mode =
-                'edit';
-        }
-        else
-        {
-            this.mode =
-                'add';
-        }
+        this.mode =
+            this.router.url.toLowerCase().includes('/view/')
+                ? 'view'
+                : 'edit';
 
         const id =
             this.resolveEntityId();
@@ -587,8 +527,15 @@ implements OnInit, OnDestroy
             return;
         }
 
-        this.initializeEntity();
+        this.toast.info(
+            'Membership Services',
+            'Membership services are created by Membership Cards.'
+        );
+
+        this.onBackToList();
     }
+
+
 
     //===========================================================
     // Resolve Entity Id
@@ -627,506 +574,7 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Initialize Entity (Add mode)
-    //===========================================================
-
-    private initializeEntity():
-        void
-    {
-        this.entity =
-            this.createEmptyEntity();
-
-        this.syncNumberTexts();
-
-        this.applySubCategory();
-
-        this.setInitialFormState();
-    }
-
-    //===========================================================
-    // Load Defaults (Membership Service sub categories + next codes)
-    //===========================================================
-
-    private loadDefaults():
-        void
-    {
-        this.membershipServicesService
-            .getDefaults()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        MembershipServicesDefaults
-                ):
-                    void =>
-                {
-                    this.subCategories =
-                        response.SubCategories ?? [];
-
-                    if
-                    (
-                        (response.MembershipTypes ?? []).length > 0
-                    )
-                    {
-                        this.allMembershipTypes =
-                            [...response.MembershipTypes];
-                    }
-
-                    this.buildMembershipTypeItems();
-
-                    this.expenseSubGroupDisplay =
-                        response.ExpenseSubGroupName
-                            ? `${response.ExpenseSubGroupCode} - ${response.ExpenseSubGroupName}`
-                            : response.ExpenseSubGroupCode || 'SUB-004-002-001';
-
-                    this.expenseSubGroupMessage =
-                        response.ExpenseSubGroupMessage ?? '';
-
-                    if
-                    (
-                        this.expenseSubGroupMessage
-                        &&
-                        !this.isViewMode
-                    )
-                    {
-                        this.toast.error(
-                            'Expense Sub Group',
-                            this.expenseSubGroupMessage
-                        );
-                    }
-
-                    this.buildSubCategoryItems();
-
-                    const touched =
-                        this.hasChanges;
-
-                    this.applySubCategory();
-
-                    if
-                    (
-                        this.isAddMode
-                        &&
-                        !touched
-                    )
-                    {
-                        this.setInitialFormState();
-
-                        return;
-                    }
-
-                    this.checkForChanges();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Membership Services Defaults Error',
-                        error
-                    );
-
-                    this.subCategoryItems =
-                        [];
-
-                    this.toast.error(
-                        'Error',
-                        this.extractErrorMessage(
-                            error,
-                            'Failed to load Membership Services sub categories.'
-                        )
-                    );
-
-                    this.cdr.detectChanges();
-                }
-            });
-    }
-
-    //===========================================================
-    // Build Sub Category Items
-    //
-    // Add : usable Membership Service sub categories only.
-    // Edit / View : the row's own sub category only (locked).
-    //===========================================================
-
-    private buildSubCategoryItems():
-        void
-    {
-        this.subCategoryItems =
-            this.subCategories
-                .filter(
-                    item =>
-                        this.isAddMode
-                            ? !item.Message
-                            : Number(item.ServiceSubCategoryId) ===
-                              Number(this.savedSubCategoryId || this.entity.ServiceSubCategoryId)
-                )
-                .map(
-                    item =>
-                    ({
-                        label:
-                            `${item.SubCategoryCode} - ${item.SubCategoryName}`,
-
-                        value:
-                            Number(item.ServiceSubCategoryId)
-                    })
-                );
-
-        if
-        (
-            this.isAddMode
-            &&
-            this.subCategories.length > 0
-            &&
-            this.subCategoryItems.length === 0
-        )
-        {
-            this.toast.info(
-                'No Membership Services Sub Category',
-                this.subCategories[0].Message
-                ||
-                'No Membership Services sub category can take new services.'
-            );
-        }
-
-        this.cdr.detectChanges();
-    }
-
-    //===========================================================
-    // Selected Sub Category
-    //===========================================================
-
-    get selectedSubCategory():
-        MembershipServiceSubCategoryOption | undefined
-    {
-        return this.subCategories.find(
-            item =>
-                Number(item.ServiceSubCategoryId) ===
-                Number(this.entity.ServiceSubCategoryId)
-        );
-    }
-
-    //===========================================================
-    // Sub Category Change
-    //===========================================================
-
-    onSubCategoryChange
-    (
-        value?:
-            any
-    ):
-        void
-    {
-        if
-        (
-            value !== undefined
-        )
-        {
-            this.entity.ServiceSubCategoryId =
-                Number(this.unwrapValue(value) ?? 0);
-        }
-
-        this.applySubCategory();
-
-        this.checkForChanges();
-
-        this.cdr.detectChanges();
-    }
-
-    // A dropdown may emit the value or the whole { label, value } item
-    private unwrapValue
-    (
-        value:
-            any
-    ):
-        any
-    {
-        return value !== null
-            &&
-            typeof value === 'object'
-            &&
-            'value' in value
-                ? value.value
-                : value;
-    }
-
-    //===========================================================
-    // Apply Sub Category
-    //
-    // Add mode : code previews from the selected sub category.
-    // Saved codes never change.
-    //===========================================================
-
-    //===========================================================
-    // Load Used Types (one card per sub category)
-    //===========================================================
-
-    private loadUsedTypes():
-        void
-    {
-        this.membershipServicesService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        MembershipService[]
-                ):
-                    void =>
-                {
-                    this.usedTypes =
-                        new Map<number, { id: number; type: string }[]>();
-
-                    for
-                    (
-                        const item
-                        of response ?? []
-                    )
-                    {
-                        const subCategoryId =
-                            Number(item.ServiceSubCategoryId);
-
-                        const list =
-                            this.usedTypes.get(subCategoryId)
-                            ??
-                            [];
-
-                        list.push(
-                            {
-                                id:
-                                    Number(item.MembershipServiceId),
-
-                                type:
-                                    item.MembershipType
-                            }
-                        );
-
-                        this.usedTypes.set(
-                            subCategoryId,
-                            list
-                        );
-                    }
-
-                    this.buildMembershipTypeItems();
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    // Not critical : the server checks it again
-                    console.error(
-                        'Load Membership Services Error',
-                        error
-                    );
-                }
-            });
-    }
-
-    //===========================================================
-    // Build Membership Type Items
-    //
-    // A type already used under the selected sub category is not
-    // offered again (the record's own type stays when editing).
-    //===========================================================
-
-    private buildMembershipTypeItems():
-        void
-    {
-        const used =
-            new Set<string>(
-                (
-                    this.usedTypes.get(
-                        Number(this.entity.ServiceSubCategoryId)
-                    )
-                    ??
-                    []
-                )
-                .filter(
-                    item =>
-                        item.id !==
-                        Number(this.entity.MembershipServiceId)
-                )
-                .map(
-                    item =>
-                        item.type
-                )
-            );
-
-        this.membershipTypeItems =
-            this.allMembershipTypes
-                .filter(
-                    type =>
-                        !used.has(type)
-                        ||
-                        type === this.savedMembershipType
-                )
-                .map(
-                    type =>
-                    ({
-                        label:type,
-                        value:type
-                    })
-                );
-
-        // A chosen type that is no longer offered is cleared (Add mode)
-        if
-        (
-            this.isAddMode
-            &&
-            this.entity.MembershipType
-            &&
-            !this.membershipTypeItems.some(
-                item =>
-                    item.value === this.entity.MembershipType
-            )
-        )
-        {
-            this.entity.MembershipType =
-                '';
-
-            this.refreshLedgerName();
-        }
-
-        if
-        (
-            this.isAddMode
-            &&
-            Number(this.entity.ServiceSubCategoryId) > 0
-            &&
-            this.membershipTypeItems.length === 0
-        )
-        {
-            this.toast.info(
-                'All Cards Used',
-                'This sub category already has a service for every Membership Type.'
-            );
-        }
-
-        this.cdr.detectChanges();
-    }
-
-    private applySubCategory():
-        void
-    {
-        this.buildMembershipTypeItems();
-
-        const option =
-            this.selectedSubCategory;
-
-        if
-        (
-            this.isAddMode
-        )
-        {
-            this.entity.ServiceCode =
-                option?.NextServiceCode ?? '';
-
-            this.entity.IncomeLedgerCode =
-                option?.NextIncomeLedgerCode ?? '';
-
-            this.entity.ExpenseLedgerCode =
-                option?.NextExpenseLedgerCode ?? '';
-        }
-
-        // Service Name = the sub category's name (read only)
-        if
-        (
-            !this.isViewMode
-            &&
-            (
-                option
-                ||
-                this.isAddMode
-            )
-        )
-        {
-            this.entity.ServiceName =
-                (option?.SubCategoryName ?? '')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-        }
-
-        this.refreshLedgerName();
-    }
-
-    //===========================================================
-    // Display Name : "<Service Name> - <Membership Type>"
-    // (the server builds the same; the expense ledger has it too)
-    //===========================================================
-
-    private refreshLedgerName():
-        void
-    {
-        if
-        (
-            this.isViewMode
-        )
-        {
-            return;
-        }
-
-        const name =
-            (this.entity.ServiceName ?? '')
-                .replace(/\s+/g, ' ')
-                .trim();
-
-        const type =
-            (this.entity.MembershipType ?? '').trim();
-
-        this.entity.DisplayName =
-            name && type
-                ? `${name} - ${type}`
-                : name;
-
-        this.entity.IncomeLedgerName =
-            this.entity.DisplayName;
-
-        this.entity.ExpenseLedgerName =
-            this.entity.DisplayName;
-    }
-
-    onServiceNameChange():
-        void
-    {
-        this.refreshLedgerName();
-
-        this.onValueChange();
-    }
-
-    onMembershipTypeChange
-    (
-        value?:
-            any
-    ):
-        void
-    {
-        if
-        (
-            value !== undefined
-        )
-        {
-            this.entity.MembershipType =
-                String(this.unwrapValue(value) ?? '');
-        }
-
-        this.refreshLedgerName();
-
-        this.onValueChange();
-    }
-
-    //===========================================================
-    // Numbers (typed as text)
+    // Service Value (typed as text)
     //===========================================================
 
     private syncNumberTexts():
@@ -1137,6 +585,7 @@ implements OnInit, OnDestroy
                 ? Number(this.entity.ServiceValue).toFixed(2)
                 : '';
     }
+
 
     onServiceValueChange
     (
@@ -1162,6 +611,18 @@ implements OnInit, OnDestroy
 
         this.onValueChange();
     }
+
+
+    // Pending until a Service Value is saved
+    get readinessDisplay():
+        string
+    {
+        return this.entity.Readiness === 'Ready'
+            ? 'Ready (invoiceable while active)'
+            : 'Pending (set the Service Value)';
+    }
+
+
 
     //===========================================================
     // Set Initial Form State
@@ -1202,57 +663,45 @@ implements OnInit, OnDestroy
                 {
                     this.entity =
                     {
-                        MembershipServiceId:
-                            response.MembershipServiceId,
-
-                        ServiceCode:
-                            response.ServiceCode,
-
-                        ServiceSubCategoryId:
-                            Number(response.ServiceSubCategoryId ?? 0),
-
-                        MembershipType:
-                            response.MembershipType,
-
-                        ServiceName:
-                            response.ServiceName,
-
-                        DisplayName:
-                            response.DisplayName,
+                        ...response,
 
                         ServiceValue:
-                            Number(response.ServiceValue ?? 0),
-
-                        IncomeLedgerCode:
-                            response.IncomeLedgerCode,
-
-                        IncomeLedgerName:
-                            response.IncomeLedgerName,
-
-                        ExpenseLedgerCode:
-                            response.ExpenseLedgerCode,
-
-                        ExpenseLedgerName:
-                            response.ExpenseLedgerName,
-
-                        Remarks:
-                            response.Remarks,
-
-                        IsActive:
-                            response.IsActive
+                            Number(response.ServiceValue ?? 0)
                     };
 
-                    this.savedSubCategoryId =
-                        this.entity.ServiceSubCategoryId;
+                    this.cardDisplay =
+                        [
+                            response.CardCode,
+                            response.MembershipType
+                        ]
+                        .filter(
+                            value =>
+                                !!value
+                        )
+                        .join(' - ');
 
-                    this.savedMembershipType =
-                        this.entity.MembershipType;
+                    this.subCategoryDisplay =
+                        [
+                            response.SubCategoryCode,
+                            response.SubCategoryName
+                        ]
+                        .filter(
+                            value =>
+                                !!value
+                        )
+                        .join(' - ');
 
-                    this.buildMembershipTypeItems();
+                    this.incomeSubGroupDisplay =
+                        response.IncomeSubGroupCode
+                        ??
+                        '';
+
+                    this.expenseSubGroupDisplay =
+                        response.ExpenseSubGroupCode
+                        ??
+                        '';
 
                     this.syncNumberTexts();
-
-                    this.buildSubCategoryItems();
 
                     this.setInitialFormState();
                 },
@@ -1281,6 +730,8 @@ implements OnInit, OnDestroy
             });
     }
 
+
+
     //===========================================================
     // Track Changes
     //===========================================================
@@ -1297,7 +748,7 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Save
+    // Save (configure)
     //===========================================================
 
     onSave():
@@ -1313,92 +764,15 @@ implements OnInit, OnDestroy
             return;
         }
 
-        //=======================================================
-        // Validation
-        //=======================================================
-
-        const option =
-            this.selectedSubCategory;
-
-        const checks:
-            {
-                failed:
-                    boolean;
-                message:
-                    string;
-            }[] =
-        [
-            {
-                failed:
-                    !(Number(this.entity.ServiceSubCategoryId) > 0),
-                message:
-                    'Service Sub Category is required.'
-            },
-            {
-                failed:
-                    this.isAddMode
-                    &&
-                    !!option?.Message,
-                message:
-                    option?.Message ?? ''
-            },
-            {
-                failed:
-                    !this.entity.ServiceName?.trim(),
-                message:
-                    'Service Name could not be filled. Select the Service Sub Category again.'
-            },
-            {
-                failed:
-                    !this.entity.MembershipType,
-                message:
-                    'Membership Type is required.'
-            },
-            {
-                failed:
-                    !(this.entity.ServiceValue > 0),
-                message:
-                    'Service Value must be an amount more than 0 (e.g. 300 or 300.50).'
-            },
-            {
-                failed:
-                    !!this.expenseSubGroupMessage,
-                message:
-                    this.expenseSubGroupMessage
-            },
-            {
-                failed:
-                    !this.entity.ServiceCode?.trim(),
-                message:
-                    'Service Code could not be prepared. Select the Service Sub Category again.'
-            }
-        ];
-
-        const failed =
-            checks.find(
-                check =>
-                    check.failed
-            );
-
         if
         (
-            failed
+            !(this.entity.ServiceValue > 0)
         )
         {
             this.toast.error(
                 'Validation',
-                failed.message
+                'Service Value must be an amount more than 0 (e.g. 300 or 300.50).'
             );
-
-            return;
-        }
-
-        if
-        (
-            this.isAddMode
-        )
-        {
-            this.saveCreate();
 
             return;
         }
@@ -1406,146 +780,7 @@ implements OnInit, OnDestroy
         this.saveUpdate();
     }
 
-    //===========================================================
-    // Build Payload
-    //===========================================================
 
-    private buildPayload():
-        CreateMembershipService
-    {
-        return {
-            ServiceCode:
-                this.entity.ServiceCode.trim(),
-
-            ServiceSubCategoryId:
-                Number(this.entity.ServiceSubCategoryId),
-
-            ServiceName:
-                this.entity.ServiceName.trim(),
-
-            MembershipType:
-                this.entity.MembershipType,
-
-            DisplayName:
-                this.entity.DisplayName,
-
-            ServiceValue:
-                this.entity.ServiceValue,
-
-            IncomeLedgerCode:
-                this.entity.IncomeLedgerCode,
-
-            IncomeLedgerName:
-                this.entity.IncomeLedgerName,
-
-            ExpenseLedgerCode:
-                this.entity.ExpenseLedgerCode,
-
-            ExpenseLedgerName:
-                this.entity.ExpenseLedgerName,
-
-            Remarks:
-                this.entity.Remarks?.trim()
-                ??
-                '',
-
-            IsActive:
-                this.entity.IsActive
-        };
-    }
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    private saveCreate():
-        void
-    {
-        const model:
-            CreateMembershipService =
-            this.buildPayload();
-
-        this.isSaving =
-            true;
-
-        this.startProgress(
-            'Saving Membership Service',
-            'Creating membership service and its income / expense ledgers...'
-        );
-
-        this.withMinimumDuration(
-            this.membershipServicesService.create(
-                model
-            ),
-            this.minimumSaveDurationMs
-        )
-        .subscribe
-        ({
-            next:
-            ():
-                void =>
-            {
-                this.completeProgress(
-                    'Membership Service saved successfully.',
-                    ():
-                        void =>
-                    {
-                        this.isSaving =
-                            false;
-
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-                        this.hasChanges =
-                            false;
-
-                        this.toast.success(
-                            'Success',
-                            'Membership Service created successfully.'
-                        );
-
-                        this.cdr.detectChanges();
-
-                        this.onBackToList();
-                    }
-                );
-            },
-
-            error:
-            (
-                error:
-                    unknown
-            ):
-                void =>
-            {
-                console.error(
-                    'Create Membership Service Error',
-                    error
-                );
-
-                this.failProgress(
-                    ():
-                        void =>
-                    {
-                        this.isSaving =
-                            false;
-
-                        this.toast.error(
-                            'Validation',
-                            this.extractErrorMessage(
-                                error,
-                                'Failed to create Membership Service.'
-                            )
-                        );
-
-                        this.cdr.detectChanges();
-                    }
-                );
-            }
-        });
-    }
 
     //===========================================================
     // Update
@@ -1560,15 +795,24 @@ implements OnInit, OnDestroy
             MembershipServiceId:
                 this.entity.MembershipServiceId,
 
-            ...this.buildPayload()
+            ServiceValue:
+                this.entity.ServiceValue,
+
+            Remarks:
+                this.entity.Remarks?.trim()
+                ??
+                '',
+
+            IsActive:
+                this.entity.IsActive
         };
 
         this.isSaving =
             true;
 
         this.startProgress(
-            'Updating Membership Service',
-            'Updating membership service and its income / expense ledgers...'
+            'Configuring Membership Service',
+            'Saving the service value and status...'
         );
 
         this.withMinimumDuration(
@@ -1584,7 +828,7 @@ implements OnInit, OnDestroy
                 void =>
             {
                 this.completeProgress(
-                    'Membership Service updated successfully.',
+                    'Membership Service configured successfully.',
                     ():
                         void =>
                     {
@@ -1601,7 +845,7 @@ implements OnInit, OnDestroy
 
                         this.toast.success(
                             'Success',
-                            'Membership Service updated successfully.'
+                            'Membership Service configured successfully.'
                         );
 
                         this.cdr.detectChanges();
@@ -1898,7 +1142,7 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Clear
+    // Clear (back to the saved values)
     //===========================================================
 
     onClear():
@@ -1912,20 +1156,10 @@ implements OnInit, OnDestroy
             return;
         }
 
-        if
-        (
-            this.isEditMode
-        )
-        {
-            this.loadEntity();
-
-            return;
-        }
-
-        this.initializeEntity();
-
-        this.cdr.detectChanges();
+        this.loadEntity();
     }
+
+
 
     //===========================================================
     // Back To List
@@ -1988,10 +1222,9 @@ implements OnInit, OnDestroy
     get saveButtonText():
         string
     {
-        return this.isEditMode
-            ? 'Update'
-            : 'Save';
+        return 'Update';
     }
+
 
     //===========================================================
     // Mode Helpers
@@ -2003,24 +1236,13 @@ implements OnInit, OnDestroy
         return this.mode === 'view';
     }
 
+
     get isEditMode():
         boolean
     {
         return this.mode === 'edit';
     }
 
-    get isAddMode():
-        boolean
-    {
-        return this.mode === 'add';
-    }
-
-    // Service Sub Category is locked once saved
-    get isSubCategoryLocked():
-        boolean
-    {
-        return !this.isAddMode;
-    }
 
     //===========================================================
     // Value Changed

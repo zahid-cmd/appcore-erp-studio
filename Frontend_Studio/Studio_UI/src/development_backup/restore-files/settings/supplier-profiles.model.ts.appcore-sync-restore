@@ -1,0 +1,90 @@
+/* ============================================================
+   Supplier Profiles
+============================================================ */
+
+export interface SupplierProfiles
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Supplier Profiles
+============================================================ */
+
+export interface CreateSupplierProfiles
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Supplier Profiles
+============================================================ */
+
+export interface UpdateSupplierProfiles
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Supplier Profiles Defaults
+============================================================ */
+
+export interface SupplierProfilesDefaults
+{
+    code:
+        string;
+}

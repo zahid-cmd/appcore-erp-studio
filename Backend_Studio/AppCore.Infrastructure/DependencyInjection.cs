@@ -156,6 +156,23 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : MembershipCards
+
+using AppCore.Application.MembershipManagement.MembershipSetup;
+using AppCore.Infrastructure.Configurations.MembershipManagement.MembershipSetup;
+
+// AUTO-END : MembershipCards
+
+// AUTO-BEGIN : CustomerProfiles
+
+using AppCore.Application.Settings.ClientSettings;
+using AppCore.Infrastructure.Configurations.Settings.ClientSettings;
+
+// AUTO-END : CustomerProfiles
+
+
+
+
 // AUTO-BEGIN : ServiceCategory
 
 using AppCore.Application.Settings.ServiceSettings;
@@ -671,10 +688,79 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Auto Accounts Repository (manual, read-only)
+        //
+        // Tells the Account Group / Sub Group / General Ledger
+        // lists which records other pages created.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.AccountSettings.IAutoAccountsRepository,
+            AppCore.Infrastructure.Configurations.Settings.AccountSettings.AutoAccountsRepository
+        >();
+
+        //=======================================================
         // AUTO REGISTER SERVICES
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : MembershipPolicies
+
+        services.AddScoped
+        <
+            IMembershipPoliciesRepository,
+            MembershipPoliciesRepository
+        >();
+
+        // AUTO-END : MembershipPolicies
+
+        // AUTO-BEGIN : MembershipCards
+
+        services.AddScoped
+        <
+            IMembershipCardsRepository,
+            MembershipCardsRepository
+        >();
+
+        // AUTO-END : MembershipCards
+
+        // AUTO-BEGIN : SupplierProfiles
+
+        services.AddScoped
+        <
+            ISupplierProfilesRepository,
+            SupplierProfilesRepository
+        >();
+
+        // AUTO-END : SupplierProfiles
+
+
+        // AUTO-BEGIN : CustomerProfiles
+
+        services.AddScoped
+        <
+            ICustomerProfilesRepository,
+            CustomerProfilesRepository
+        >();
+
+        // AUTO-END : CustomerProfiles
+
+
+
+
+
+        // AUTO-BEGIN : Locations
+
+        services.AddScoped
+        <
+            ILocationsRepository,
+            LocationsRepository
+        >();
+
+        // AUTO-END : Locations
+
 
         // AUTO-BEGIN : ChartOfServices
 

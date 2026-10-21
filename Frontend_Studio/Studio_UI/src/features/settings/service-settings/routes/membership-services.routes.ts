@@ -11,6 +11,8 @@ from '@angular/router';
 
 //===============================================================
 // Submenu Routes
+//
+// Configure-only : no Add route (rows come from Membership Cards)
 //===============================================================
 
 export const MembershipServicesRoutes:
@@ -55,29 +57,6 @@ Routes =
 
 
     //===========================================================
-    // Add
-    //===========================================================
-
-    {
-        path:'add',
-
-        data:
-        {
-            breadcrumb:'Add Membership Services'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/membership-services/form/membership-services-form'
-            )
-            .then(
-                m =>
-                    m.MembershipServicesForm
-            )
-    },
-
-
-    //===========================================================
     // Edit
     //===========================================================
 
@@ -86,7 +65,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Edit Membership Services'
+            breadcrumb:'Configure Membership Service'
         },
 
         loadComponent:() =>
@@ -109,7 +88,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'View Membership Services'
+            breadcrumb:'View Membership Service'
         },
 
         loadComponent:() =>

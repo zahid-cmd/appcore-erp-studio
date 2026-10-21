@@ -180,15 +180,18 @@ from '../../../services/account-class.service';
 
 import
 {
-    ServiceCategoryService
+    AutoAccountsService,
+    emptyAutoAccountCodes,
+    groupOrigin
 }
-from '../../../../service-settings/services/service-category.service';
+from '../../../services/auto-accounts.service';
 
 import
 {
-    ServiceCategory
+    AccountOrigin,
+    AutoAccountCodes
 }
-from '../../../../service-settings/models/service-category.model';
+from '../../../models/auto-accounts.model';
 
 //===============================================================
 // Component
@@ -236,8 +239,8 @@ implements OnInit, OnDestroy
     private readonly accountClassService =
         inject(AccountClassService);
 
-    private readonly serviceCategoryService =
-        inject(ServiceCategoryService);
+    private readonly autoAccountsService =
+        inject(AutoAccountsService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
@@ -269,12 +272,12 @@ implements OnInit, OnDestroy
             label:'All Account Groups'
         },
         {
-            id:'inventory-auto',
-            label:'Inventory Auto Groups'
+            id:'auto-inventory',
+            label:'Auto Inventory Groups'
         },
         {
-            id:'service-auto',
-            label:'Service Auto Groups'
+            id:'auto-financial',
+            label:'Auto Financial Groups'
         }
     ];
 
@@ -383,28 +386,35 @@ implements OnInit, OnDestroy
     //===========================================================
 
     //===========================================================
-    // Inventory Classes
+    // Auto Accounts
     //
-    // Ids of the Inventory / Work In Progress / Cost of Goods Sold
-    // classes, taken from Class Type (never from a code pattern).
-    // Their groups are the ones Product Category creates.
+    // Codes of the groups created by other pages (from the
+    // server, matched by CODE only):
+    //   all tab            : groups created on this page's form
+    //   auto-inventory tab : groups of Product Category
+    //   auto-financial tab : groups of any other page (Service
+    //                        Category, …)
+    // Auto groups are read only here.
     //===========================================================
 
-    private inventoryClassIds:
-        Set<number> =
-        new Set<number>();
+    private autoCodes:
+        AutoAccountCodes =
+        emptyAutoAccountCodes();
 
-    //===========================================================
-    // Service Groups
-    //
-    // Income Group Codes of the Service Categories (GRP-ccc-ggg).
-    // Those groups are created by Service Category, so they are
-    // shown on the Service Auto Groups tab only, read only.
-    //===========================================================
+    // Rows are shown only once the auto codes are known (or failed
+    // to load), so auto records never flash on the first tab.
+    private autoCodesReady:
+        boolean =
+        false;
 
-    private serviceGroupCodes:
-        Set<string> =
-        new Set<string>();
+    private itemsLoaded:
+        boolean =
+        false;
+
+    // Active classes (for the class filter of the selected tab)
+    private accountClasses:
+        AccountClass[] =
+        [];
 
     accountClassFilterItems:
         any[] =
@@ -573,10 +583,8 @@ implements OnInit, OnDestroy
     get displayColumns():
         ListTableColumn[]
     {
-        // Auto groups (inventory or service) are read only : no actions
-        return this.selectedTab === 'inventory-auto'
-            ||
-            this.selectedTab === 'service-auto'
+        // Auto groups (inventory or financial) are read only : no actions
+        return this.selectedTab !== 'all'
             ? this.inventoryAutoGroupColumns
             : this.columns;
     }
@@ -590,47 +598,50 @@ implements OnInit, OnDestroy
     {
         this.loadAccountClasses();
 
-        this.loadServiceGroups();
+        this.loadAutoCodes();
 
         this.loadItems();
     }
 
     //===========================================================
-    // Load Service Groups (from Service Categories)
+    // Load Auto Codes (which groups other pages created)
     //===========================================================
 
-    private loadServiceGroups():
+    private loadAutoCodes():
         void
     {
-        this.serviceCategoryService
-            .getAll()
+        this.autoCodesReady =
+            false;
+
+        this.autoAccountsService
+            .getCodes()
             .subscribe
             ({
                 next:
                 (
                     response:
-                        ServiceCategory[]
+                        AutoAccountCodes
                 ):
                     void =>
                 {
-                    this.serviceGroupCodes =
-                        new Set<string>(
-                            (response ?? [])
-                                .map
-                                (
-                                    item =>
-                                        String(item.IncomeGroupCode ?? '')
-                                            .trim()
-                                            .toUpperCase()
-                                )
-                                .filter
-                                (
-                                    code =>
-                                        !!code
-                                )
-                        );
+                    this.autoCodes =
+                        response;
 
-                    // Re-split the tabs now that the service groups are known
+                    this.autoCodesReady =
+                        true;
+
+                    if
+                    (
+                        this.itemsLoaded
+                    )
+                    {
+                        this.loading =
+                            false;
+                    }
+
+                    // Re-split the tabs now that the origins are known
+                    this.buildClassFilterItems();
+
                     this.applyFilters();
 
                     this.cdr.detectChanges();
@@ -644,54 +655,132 @@ implements OnInit, OnDestroy
                     void =>
                 {
                     console.error(
-                        'Load Service Groups Error:',
+                        'Load Auto Account Codes Error:',
                         error
                     );
 
-                    this.serviceGroupCodes =
-                        new Set<string>();
+                    this.autoCodes =
+                        emptyAutoAccountCodes();
+
+                    this.autoCodesReady =
+                        true;
+
+                    if
+                    (
+                        this.itemsLoaded
+                    )
+                    {
+                        this.loading =
+                            false;
+                    }
+
+                    this.buildClassFilterItems();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+
+                    this.toast.error
+                    (
+                        'Load Failed',
+                        'Unable to load the auto group codes. Every group is shown on the first tab.'
+                    );
                 }
             });
     }
 
     //===========================================================
-    // Service Auto Group
+    // Origin / Tab
     //===========================================================
 
-    // A group created by Service Category (its Income Group Code)
-    private isServiceAutoGroup
+    private originOf
     (
-        groupCode:
-            string
+        item:
+            AccountGroup
     ):
-        boolean
+        AccountOrigin
     {
-        return this.serviceGroupCodes.has(
-            String(groupCode ?? '')
-                .trim()
-                .toUpperCase()
+        return groupOrigin(
+            this.autoCodes,
+            item.GroupCode
         );
     }
 
-    // Classes that hold at least one service auto group (Income)
-    private get serviceClassIds():
-        Set<number>
+    private get selectedOrigin():
+        AccountOrigin
     {
-        return new Set<number>(
-            this.accountGroups
+        return this.selectedTab === 'auto-inventory'
+            ? 'inventory'
+            : this.selectedTab === 'auto-financial'
+                ? 'financial'
+                : 'manual';
+    }
+
+    //===========================================================
+    // Class Filter (classes holding groups of the selected tab)
+    //===========================================================
+
+    private buildClassFilterItems():
+        void
+    {
+        const origin =
+            this.selectedOrigin;
+
+        const classIds =
+            new Set<number>(
+                this.accountGroups
+                    .filter
+                    (
+                        item =>
+                            this.originOf(item) === origin
+                    )
+                    .map
+                    (
+                        item =>
+                            Number(item.AccountClassId)
+                    )
+            );
+
+        const classes =
+            this.accountClasses
                 .filter
                 (
                     item =>
-                        this.isServiceAutoGroup(
-                            item.GroupCode
+                        item.IsActive
+                        &&
+                        (
+                            // groups not loaded yet : every class
+                            this.accountGroups.length === 0
+                            ||
+                            classIds.has(
+                                Number(item.AccountClassId)
+                            )
                         )
-                )
+                );
+
+        this.accountClassFilterItems =
+        [
+            {
+                label:'All Account Classes',
+                value:null
+            },
+
+            ...classes
                 .map
                 (
-                    item =>
-                        Number(item.AccountClassId)
+                    (
+                        item:
+                            AccountClass
+                    ) =>
+                    ({
+                        label:
+                            `${item.ClassCode} - ${item.ClassName}`,
+
+                        value:
+                            item.AccountClassId
+                    })
                 )
-        );
+        ];
     }
 
     //===========================================================
@@ -1058,112 +1147,12 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    // Classes whose groups come from Product Category
-                    this.inventoryClassIds =
-                        new Set<number>(
-                            (response ?? [])
-                                .filter
-                                (
-                                    item =>
-                                        !!item.ClassType
-                                        &&
-                                        item.ClassType !== 'Account'
-                                )
-                                .map
-                                (
-                                    item =>
-                                        Number(item.AccountClassId)
-                                )
-                        );
+                    this.accountClasses =
+                        response ?? [];
 
-                    const classes =
-                        response
-                            .filter(
-                                item =>
-                                {
-                                    const classCode =
-                                        String(
-                                            item.ClassCode
-                                            ??
-                                            ''
-                                        )
-                                            .trim()
-                                            .toUpperCase();
+                    this.buildClassFilterItems();
 
-                                    if
-                                    (
-                                        !item.IsActive
-                                    )
-                                    {
-                                        return false;
-                                    }
-
-                                    // Inventory / WIP / COGS classes (by Class Type)
-                                    const isInventoryClass =
-                                        this.inventoryClassIds.has(
-                                            Number(item.AccountClassId)
-                                        );
-
-                                    if
-                                    (
-                                        this.selectedTab ===
-                                        'inventory-auto'
-                                    )
-                                    {
-                                        return isInventoryClass;
-                                    }
-
-                                    // Service tab : the class(es) holding
-                                    // service groups (Income), once known
-                                    if
-                                    (
-                                        this.selectedTab ===
-                                        'service-auto'
-                                    )
-                                    {
-                                        const serviceClassIds =
-                                            this.serviceClassIds;
-
-                                        return !isInventoryClass
-                                            &&
-                                            (
-                                                serviceClassIds.size === 0
-                                                ||
-                                                serviceClassIds.has(
-                                                    Number(item.AccountClassId)
-                                                )
-                                            );
-                                    }
-
-                                    return !isInventoryClass;
-                                }
-                            );
-
-                    this.accountClassFilterItems =
-                    [
-                        {
-                            label:'All Account Classes',
-                            value:null
-                        },
-
-                        ...classes
-                            .map
-                            (
-                                (
-                                    item:
-                                        AccountClass
-                                ) =>
-                                ({
-                                    label:
-                                        `${item.ClassCode} - ${item.ClassName}`,
-
-                                    value:
-                                        item.AccountClassId
-                                })
-                            )
-                    ];
-
-                    // Re-split the tabs now that the class types are known
+                    // Re-split the tabs now that the classes are known
                     this.applyFilters();
 
                     this.cdr.detectChanges();
@@ -1202,6 +1191,9 @@ implements OnInit, OnDestroy
         this.loading =
             true;
 
+        this.itemsLoaded =
+            false;
+
         this.loadFailed =
             false;
 
@@ -1233,10 +1225,16 @@ implements OnInit, OnDestroy
                         this.accountGroups
                     );
 
+                    this.buildClassFilterItems();
+
+                    this.itemsLoaded =
+                        true;
+
                     this.applyFilters();
 
+                    // keep the loader until the auto codes are known
                     this.loading =
-                        false;
+                        !this.autoCodesReady;
 
                     this.loadFailed =
                         false;
@@ -1290,6 +1288,21 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
+        // Tabs can only be split once the auto codes are known
+        if
+        (
+            !this.autoCodesReady
+        )
+        {
+            this.filteredAccountGroups =
+                [];
+
+            this.pagedAccountGroups =
+                [];
+
+            return;
+        }
+
         const keyword =
             this.searchText
                 .trim()
@@ -1322,30 +1335,15 @@ implements OnInit, OnDestroy
                         this.selectedStatus;
 
                     //===================================================
-                    // Tab split
-                    //   inventory-auto tab : groups of Product Category
-                    //   service-auto tab   : groups of Service Category
-                    //   all tab            : only the manual groups
+                    // Tab split (by origin, matched by group code)
+                    //   all tab            : groups created manually
+                    //   auto-inventory tab : groups of Product Category
+                    //   auto-financial tab : groups of other pages
                     //===================================================
 
-                    const isInventoryAuto =
-                        this.isInventoryAutoGroup(
-                            item.AccountClassId
-                        );
-
-                    const isServiceAuto =
-                        !isInventoryAuto
-                        &&
-                        this.isServiceAutoGroup(
-                            item.GroupCode
-                        );
-
                     const inventoryAutoGroupMatch =
-                        this.selectedTab === 'inventory-auto'
-                            ? isInventoryAuto
-                            : this.selectedTab === 'service-auto'
-                                ? isServiceAuto
-                                : !isInventoryAuto && !isServiceAuto;
+                        this.originOf(item) ===
+                        this.selectedOrigin;
 
                     const classCode =
                         item.ClassCode
@@ -1444,28 +1442,11 @@ implements OnInit, OnDestroy
         this.currentPage =
             1;
 
-        this.loadAccountClasses();
+        this.buildClassFilterItems();
 
         this.applyFilters();
     }
 
-    //===========================================================
-    // Inventory Auto Group
-    //===========================================================
-
-    // A group of an Inventory / WIP / COGS class, i.e. one that
-    // Product Category created (CAT-…, WIP-…, COGS-…).
-    private isInventoryAutoGroup
-    (
-        accountClassId:
-            number
-    ):
-        boolean
-    {
-        return this.inventoryClassIds.has(
-            Number(accountClassId)
-        );
-    }
 
     //===========================================================
     // Search
@@ -1667,7 +1648,7 @@ implements OnInit, OnDestroy
 
         this.loadAccountClasses();
 
-        this.loadServiceGroups();
+        this.loadAutoCodes();
 
         this.loadItems();
     }

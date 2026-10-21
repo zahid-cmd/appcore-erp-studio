@@ -247,6 +247,32 @@ export const routes:
             },
 
             // AUTO-END : MOD-006
+            // AUTO-BEGIN : MOD-009
+
+            //===========================================================
+            // Membership Management
+            //===========================================================
+
+            {
+                path:'membership-management',
+
+                data:
+                {
+                    breadcrumb:'Membership Management'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/membership-management/routes/membership-management.routes'
+                    )
+                    .then(
+                        m =>
+                            m.membershipManagementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-009
+
         ]
     },
 

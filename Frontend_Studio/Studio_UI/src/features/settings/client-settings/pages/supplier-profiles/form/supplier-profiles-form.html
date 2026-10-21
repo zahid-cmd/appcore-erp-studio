@@ -1,0 +1,480 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-truck-field"
+
+        [title]="pageTitle"
+
+        subtitle="Brand distributors, local vendors and service providers">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 SUPPLIER INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Supplier Information"
+
+                icon="fas fa-truck-field">
+
+
+                <!-- Supplier Code : SUP-000001 (central code generator) -->
+
+                <app-textbox
+
+                    label="Supplier Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.SupplierCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-dropdown
+
+                    label="Supplier Type"
+
+                    [items]="supplierTypeItems"
+
+                    [value]="entity.SupplierType"
+
+                    (valueChange)="onSupplierTypeChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-textbox
+
+                    label="Supplier Name"
+
+                    placeholder="e.g. RUNNER AUTOMOBILES LTD"
+
+                    [(value)]="entity.SupplierName"
+
+                    (valueChange)="onUpperCaseChange('SupplierName')"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Brand : optional (Product Settings > Brand Management) -->
+
+                <app-search-dropdown
+
+                    label="Brand"
+
+                    placeholder="Optional"
+
+                    [items]="brandItems"
+
+                    [value]="entity.BrandManagementId"
+
+                    (valueChange)="onBrandChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-search-dropdown>
+
+
+                <app-textbox
+
+                    label="Contact Person"
+
+                    placeholder="Optional"
+
+                    [(value)]="entity.ContactPerson"
+
+                    (valueChange)="onUpperCaseChange('ContactPerson')"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 CONTACT & TAX IDS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Contact & Tax IDs"
+
+                icon="fas fa-phone">
+
+
+                <!-- Phone 1 : 11 digits, starts 01, unique among suppliers -->
+
+                <app-textbox
+
+                    label="Phone 1"
+
+                    placeholder="e.g. 01711223344"
+
+                    [value]="entity.Phone1"
+
+                    (valueChange)="onDigitsChange('Phone1', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                @if (!isViewMode && phone1Warning)
+                {
+                    <div class="sup-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ phone1Warning }}
+                    </div>
+                }
+
+
+                <app-textbox
+
+                    label="Phone 2"
+
+                    placeholder="Optional, e.g. 01811223344"
+
+                    [value]="entity.Phone2"
+
+                    (valueChange)="onDigitsChange('Phone2', $event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+                @if (!isViewMode && phone2Warning)
+                {
+                    <div class="sup-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ phone2Warning }}
+                    </div>
+                }
+
+
+                <app-textbox
+
+                    label="Email"
+
+                    placeholder="Optional"
+
+                    [(value)]="entity.Email"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="BIN (VAT Reg. No)"
+
+                    placeholder="Optional, 9 to 13 digits"
+
+                    [value]="entity.BinNo"
+
+                    (valueChange)="onDigitsChange('BinNo', $event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+                @if (!isViewMode && binWarning)
+                {
+                    <div class="sup-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ binWarning }}
+                    </div>
+                }
+
+
+                <app-textbox
+
+                    label="TIN"
+
+                    placeholder="Optional, 12 digits"
+
+                    [value]="entity.TinNo"
+
+                    (valueChange)="onDigitsChange('TinNo', $event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+                @if (!isViewMode && tinWarning)
+                {
+                    <div class="sup-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ tinWarning }}
+                    </div>
+                }
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 ADDRESS, LICENSE & REMARKS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Address, License & Remarks"
+
+                icon="fas fa-location-dot">
+
+
+                <app-textarea
+
+                    label="Address *"
+
+                    placeholder="Enter address"
+
+                    [rows]="2"
+
+                    [(value)]="entity.Address"
+
+                    (valueChange)="onUpperCaseChange('Address')"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+
+                <app-textbox
+
+                    label="Trade License No"
+
+                    placeholder="Optional"
+
+                    [(value)]="entity.TradeLicenseNo"
+
+                    (valueChange)="onUpperCaseChange('TradeLicenseNo')"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="2"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 ACCOUNTS & STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Accounts & Status"
+
+                icon="fas fa-sack-dollar">
+
+
+                <!-- Payable Ledger : GLR-... under SUB-003-002-001 (created on save) -->
+
+                <app-textbox
+
+                    label="Payable Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.PayableLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Payable Ledger Name"
+
+                    placeholder="Follows the display name"
+
+                    [(value)]="entity.PayableLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <!-- Display Name : "<SUPPLIER NAME> - <BRAND> - <PHONE 1>" -->
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    placeholder="Follows the name, brand and Phone 1"
+
+                    [(value)]="entity.DisplayName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Credit Days"
+
+                    placeholder="0 = pay on purchase"
+
+                    [value]="creditDaysText"
+
+                    (valueChange)="onCreditDaysChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

@@ -16,6 +16,10 @@ export const settingsRoutes:
     //   • Menu routes
     //   • Submenu routes
     //   • Activity/Page routes
+    //
+    // Only MENU routes belong here. Submenu routes (e.g. Customer
+    // Profiles, Supplier Profiles) are registered in each menu's
+    // own routes file (client-settings.routes.ts).
     //===========================================================
 
 
@@ -133,5 +137,31 @@ export const settingsRoutes:
     },
 
     // AUTO-END : MNU-003-004
+
+    // AUTO-BEGIN : MNU-003-005
+
+    //===========================================================
+    // Client Settings (Customer Profiles, Supplier Profiles)
+    //===========================================================
+
+    {
+        path:'client-settings',
+
+        data:
+        {
+            breadcrumb:'Client Settings'
+        },
+
+        loadChildren:() =>
+            import(
+                '../client-settings/routes/client-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu003005Routes
+            )
+    },
+
+    // AUTO-END : MNU-003-005
 
 ];

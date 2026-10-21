@@ -1,0 +1,90 @@
+/* ============================================================
+   Membership Cards
+============================================================ */
+
+export interface MembershipCards
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Membership Cards
+============================================================ */
+
+export interface CreateMembershipCards
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Membership Cards
+============================================================ */
+
+export interface UpdateMembershipCards
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Membership Cards Defaults
+============================================================ */
+
+export interface MembershipCardsDefaults
+{
+    code:
+        string;
+}

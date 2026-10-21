@@ -313,14 +313,14 @@ implements OnInit
             header:'#',
             field:'serial',
             type:'serial',
-            width:'60px',
+            width:'50px',
             align:'center'
         },
 
         {
             header:'Module',
             field:'navigationModuleName',
-            width:'200px',
+            width:'180px',
             align:'left'
         },
 
@@ -334,27 +334,27 @@ implements OnInit
         {
             header:'Menu Name',
             field:'name',
+            width:'240px',
             align:'left'
         },
 
         {
             header:'Icon',
             field:'icon',
-            width:'300px',
+            width:'260px',
             align:'left'
         },
 
         {
             header:'Route',
             field:'route',
-            width:'500px',
             align:'left'
         },
 
         {
             header:'Order',
             field:'displayOrder',
-            width:'120px',
+            width:'100px',
             align:'center'
         },
 
@@ -362,7 +362,7 @@ implements OnInit
             header:'Status',
             field:'isActive',
             type:'status',
-            width:'140px',
+            width:'150px',
             align:'center'
         },
 
@@ -370,7 +370,7 @@ implements OnInit
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'180px',
+            width:'150px',
             align:'center'
         }
     ];

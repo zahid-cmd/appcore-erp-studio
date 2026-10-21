@@ -898,6 +898,67 @@ public class AppDbContext
 
     // AUTO-END : ChartOfServices
 
+
+    // AUTO-BEGIN : Locations
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.Locations>
+    Locationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : Locations
+
+
+
+
+
+    // AUTO-BEGIN : CustomerProfiles
+
+    public DbSet<AppCore.Domain.Entities.Settings.ClientSettings.CustomerProfiles>
+    CustomerProfiless
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CustomerProfiles
+
+
+    // AUTO-BEGIN : SupplierProfiles
+
+    public DbSet<AppCore.Domain.Entities.Settings.ClientSettings.SupplierProfiles>
+    SupplierProfiless
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SupplierProfiles
+
+    // AUTO-BEGIN : MembershipCards
+
+    public DbSet<AppCore.Domain.Entities.MembershipManagement.MembershipSetup.MembershipCards>
+    MembershipCardss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MembershipCards
+
+    // AUTO-BEGIN : MembershipPolicies
+
+    public DbSet<AppCore.Domain.Entities.MembershipManagement.MembershipSetup.MembershipPolicies>
+    MembershipPoliciess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MembershipPolicies
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 

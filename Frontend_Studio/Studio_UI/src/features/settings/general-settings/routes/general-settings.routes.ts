@@ -210,6 +210,32 @@ Routes =
 
                 // AUTO-END : SUB-003-001-007
 
+            // AUTO-BEGIN : SUB-003-001-008
+
+                //===========================================================
+                // Locations
+                //===========================================================
+
+                {
+                    path:'locations',
+
+                    data:
+                    {
+                        breadcrumb:'Locations'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './locations.routes'
+                        )
+                        .then(
+                            m =>
+                                m.LocationsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-001-008
+
         ]
 
     }

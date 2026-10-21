@@ -19,6 +19,9 @@ namespace AppCore.API.Controllers.Settings.ServiceSettings;
 
 //===============================================================
 // Membership Services Controller
+//
+// Configure-only : rows come from Membership Cards. There is no
+// POST, DELETE or restore endpoint.
 //===============================================================
 
 [ApiController]
@@ -64,7 +67,7 @@ public class MembershipServicesController : ControllerBase
 
 
     //===========================================================
-    // Get Defaults
+    // Get Defaults (filter options)
     //===========================================================
 
     [HttpGet("defaults")]
@@ -95,57 +98,20 @@ public class MembershipServicesController : ControllerBase
     public async Task<ActionResult<MembershipServicesDto>> GetById(
         long id)
     {
-        MembershipServicesDto? membershipService =
+        MembershipServicesDto? service =
             await _repository.GetByIdAsync(id);
 
-        if (membershipService == null)
+        if (service == null)
         {
             return NotFound();
         }
 
-        return Ok(membershipService);
+        return Ok(service);
     }
 
 
     //===========================================================
-    // Create
-    //===========================================================
-
-    [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
-        CreateMembershipServicesDto dto)
-    {
-        long userId = 1;
-
-        try
-        {
-            long id =
-                await _repository.CreateAsync(
-                    dto,
-                    userId);
-
-            return Ok(id);
-        }
-        catch
-        (
-            KeyNotFoundException ex
-        )
-        {
-            return NotFound(ex.Message);
-        }
-        catch
-        (
-            InvalidOperationException ex
-        )
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-
-    //===========================================================
-    // Update
+    // Configure (Service Value, status, remarks)
     //===========================================================
 
     [HttpPut]
@@ -180,90 +146,6 @@ public class MembershipServicesController : ControllerBase
         )
         {
             return BadRequest(ex.Message);
-        }
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    [HttpDelete("{id:long}")]
-
-    public async Task<IActionResult> Delete(
-        long id)
-    {
-        if (!await _repository.ExistsAsync(id))
-        {
-            return NotFound();
-        }
-
-        long userId = 1;
-
-        try
-        {
-            await _repository.DeleteAsync(
-                id,
-                userId);
-        }
-        catch
-        (
-            KeyNotFoundException ex
-        )
-        {
-            return NotFound(ex.Message);
-        }
-        catch
-        (
-            InvalidOperationException ex
-        )
-        {
-            //=======================================================
-            // Deletion Blocked
-            // HTTP 409 with a plain-text message for the toast.
-            //=======================================================
-
-            return Conflict(ex.Message);
-        }
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    [HttpPut("restore")]
-
-    public async Task<IActionResult> Restore()
-    {
-        long userId = 1;
-
-        bool restored;
-
-        try
-        {
-            restored =
-                await _repository.RestoreAsync(
-                    userId);
-        }
-        catch
-        (
-            InvalidOperationException ex
-        )
-        {
-            // Blocked : name / code taken, or its sub category /
-            // account sub group has been deleted
-            return Conflict(ex.Message);
-        }
-
-        if (!restored)
-        {
-            return NotFound(
-                "There are no deleted membership services available to restore.");
         }
 
         return NoContent();

@@ -71,6 +71,14 @@ public class MembershipServicesConfiguration
         builder.HasIndex(x => x.ServiceSubCategoryId)
                .HasDatabaseName("IX_MembershipServices_ServiceSubCategoryId");
 
+        // The card that created the row (no database foreign key)
+        builder.Property(x => x.MembershipCardId);
+
+        builder.HasIndex(x => x.MembershipCardId)
+               .HasDatabaseName("IX_MembershipServices_MembershipCardId");
+
+
+        // The card name
         builder.Property(x => x.MembershipType)
                .IsRequired()
                .HasMaxLength(50);
@@ -87,7 +95,7 @@ public class MembershipServicesConfiguration
                .IsRequired()
                .HasMaxLength(200);
 
-        // "<Service Name> - <Membership Type>" unique (live rows)
+        // "<Service Name> - <Card Name>" unique (live rows)
         builder.HasIndex(x => x.DisplayName)
                .IsUnique()
                .HasFilter("\"IsDeleted\" = false")
