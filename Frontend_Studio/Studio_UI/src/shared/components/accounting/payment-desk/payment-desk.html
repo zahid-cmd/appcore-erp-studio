@@ -1,0 +1,558 @@
+<!-- =============================================================
+     Payment Desk (step 2) : body of the voucher page's modal
+     Left  : receipt rows needing details (state per row)
+     Right : summary chips, then the selected row's details and
+             the Verified tick
+============================================================== -->
+
+<div class="pd-stage">
+
+<div class="pd">
+
+    <div class="pd-body">
+
+    <!-- =========================================================
+         LEFT : rows that need details
+    ========================================================== -->
+
+    <div class="pd-card pd-rows-card">
+
+        <div class="pd-card-header">
+
+            <i class="fas fa-list-ul"></i>
+
+            <span>Receipt Rows</span>
+
+            <span class="pd-count">{{ detailIndexes.length }}</span>
+
+        </div>
+
+        <!-- The card is as tall as the right section; the rows
+             scroll inside it once they fill it -->
+
+        <div class="pd-rows-frame">
+
+        <div class="pd-rows appcore-scrollbar">
+
+            @for (index of detailIndexes; track index)
+            {
+                <button
+
+                    type="button"
+
+                    class="pd-row"
+
+                    [class.pd-row-active]="index === selectedIndex"
+
+                    [class.pd-row-verified]="rowState(rows[index]) === 'verified'"
+
+                    [class.pd-row-pulse]="index === pulseIndex"
+
+                    (click)="selectRow(index)">
+
+                    <i
+
+                        class="pd-row-icon"
+
+                        [class]="modeIcon(rows[index].Mode)">
+
+                    </i>
+
+                    <span class="pd-row-text">
+
+                        <span class="pd-row-title">{{ rows[index].LedgerName }}</span>
+
+                        <span class="pd-row-sub">{{ rows[index].Mode }} · {{ money(rows[index].Amount) }}</span>
+
+                    </span>
+
+                    @switch (rowState(rows[index]))
+                    {
+                        @case ('todo')
+                        {
+                            <span class="pd-state pd-state-todo">
+
+                                <i class="fas fa-circle-exclamation"></i>
+
+                                Details needed
+
+                            </span>
+                        }
+
+                        @case ('ready')
+                        {
+                            <span class="pd-state pd-state-ready">
+
+                                <i class="fas fa-hourglass-half"></i>
+
+                                Ready to verify
+
+                            </span>
+                        }
+
+                        @default
+                        {
+                            <span class="pd-state pd-state-done">
+
+                                <i class="fas fa-circle-check"></i>
+
+                                Verified
+
+                            </span>
+                        }
+                    }
+
+                </button>
+            }
+
+            @if (detailIndexes.length === 0)
+            {
+                <div class="pd-empty">
+
+                    No check / MFS / POS / EMI row. Nothing to complete here.
+
+                </div>
+            }
+
+        </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         RIGHT : details of the selected row
+    ========================================================== -->
+
+    <div class="pd-right">
+
+        <div class="pd-summary">
+
+        <div class="pd-summary-item">
+
+            <span>Total Received</span>
+
+            <strong>{{ money(totalReceived) }}</strong>
+
+        </div>
+
+        <div class="pd-summary-item">
+
+            <span>Customer Charges (on top)</span>
+
+            <strong>{{ money(customerCharges) }}</strong>
+
+        </div>
+
+        <div class="pd-summary-item pd-summary-main">
+
+            <span>Total Collected</span>
+
+            <strong>{{ money(totalCollected) }}</strong>
+
+        </div>
+
+        <div class="pd-summary-item">
+
+            <span>Checks Awaiting Reconciliation</span>
+
+            <strong>{{ pendingChecks.length }} · {{ money(pendingCheckAmount) }}</strong>
+
+        </div>
+
+        </div>
+
+
+        <!-- Total Collected in words (read only, follows the total) -->
+
+        <div
+
+            class="pd-words"
+
+            [title]="collectedInWords">
+
+            <span class="pd-words-label">
+
+                <i class="fas fa-spell-check"></i>
+
+                In Words
+
+            </span>
+
+            <span class="pd-words-text">{{ collectedInWords }}</span>
+
+        </div>
+
+
+        <div class="pd-card">
+
+            <div class="pd-card-header">
+
+                <i class="fas fa-pen-to-square"></i>
+
+                <span>Row Details</span>
+
+                @if (selected)
+                {
+                    <span class="pd-mode">{{ selected.Mode }}</span>
+                }
+
+            </div>
+
+            @if (selected; as row)
+            {
+              @for (key of [selectedIndex]; track key)
+              {
+              <div class="pd-detail">
+
+                <div class="pd-fixed">
+
+                    <div>
+
+                        <span>{{ row.Mode === 'Check' ? 'Deposited Bank' : 'Account' }}</span>
+
+                        <strong>{{ row.LedgerName }}</strong>
+
+                    </div>
+
+                    <div class="pd-fixed-amount">
+
+                        <span>Amount</span>
+
+                        <strong>{{ money(row.Amount) }}</strong>
+
+                    </div>
+
+                </div>
+
+                <div class="pd-grid">
+
+
+                    <!-- ============== CHECK ============== -->
+
+                    @if (row.Mode === 'Check')
+                    {
+                        <app-textbox
+
+                            label="Check No"
+
+                            placeholder="Check number"
+
+                            [value]="row.CheckNo"
+
+                            (valueChange)="onCheckNo($event)"
+
+                            [disabled]="readonly"
+
+                            [required]="true">
+
+                        </app-textbox>
+
+                        <app-datepicker
+
+                            label="Check Date"
+
+                            [required]="true"
+
+                            [value]="$any(checkDateValue)"
+
+                            (valueChange)="onCheckDate($event)"
+
+                            [disabled]="readonly">
+
+                        </app-datepicker>
+
+                        <app-search-dropdown
+
+                                                    label="Issuing Bank"
+
+                            placeholder="Bank that issued the check"
+
+                            [items]="bankItems"
+
+                            [value]="row.CheckBank || null"
+
+                            (valueChange)="onCheckBank($event)"
+
+                            [disabled]="readonly"
+
+                            [required]="true">
+
+                        </app-search-dropdown>
+                    }
+
+
+                    <!-- ============== CARD (POS / EMI) ============== -->
+
+                    @if (hasCard(row))
+                    {
+                        <app-search-dropdown
+
+                                                    label="Card"
+
+                            placeholder="Select card"
+
+                            [items]="cardItems"
+
+                            [value]="row.CardSetupId || null"
+
+                            (valueChange)="onCardChange($event)"
+
+                            [disabled]="readonly"
+
+                            [required]="true">
+
+                        </app-search-dropdown>
+                    }
+
+
+                    <!-- ============== MFS / POS REFERENCE ============== -->
+
+                    @if (row.Mode === 'MFS' || row.Mode === 'POS')
+                    {
+                        <app-textbox
+
+                                                    [label]="row.Mode === 'MFS' ? 'Transaction ID' : 'Approval Code / Last 4'"
+
+                            [placeholder]="row.Mode === 'MFS' ? 'MFS transaction ID' : 'Optional'"
+
+                            [value]="row.TransactionRef"
+
+                            textCase="upper"
+
+                            (valueChange)="onTransactionRef($event)"
+
+                            [disabled]="readonly"
+
+                            [required]="row.Mode === 'MFS'">
+
+                        </app-textbox>
+
+                        @if (row.Mode === 'MFS')
+                        {
+                            <span class="pd-spacer"></span>
+                        }
+                    }
+
+
+                    <!-- ============== EMI ============== -->
+
+                    @if (row.Mode === 'EMI')
+                    {
+                        <app-textbox
+
+                            label="Tenure (months)"
+
+                            placeholder="e.g. 6"
+
+                            inputMode="numeric"
+
+                            [value]="tenureText"
+
+                            (valueChange)="onTenureText($event)"
+
+                            [disabled]="readonly"
+
+                            [required]="true">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            label="Interest %"
+
+                            placeholder="0"
+
+                            inputMode="decimal"
+
+                            [value]="interestPercentText"
+
+                            (valueChange)="onInterestPercentText($event)"
+
+                            [disabled]="readonly">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            label="Interest Amount"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            [value]="interestAmountText"
+
+                            (valueChange)="onInterestAmountText($event)"
+
+                            [disabled]="readonly">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            label="Total Charged"
+
+                            placeholder="Amount + interest"
+
+                            inputMode="decimal"
+
+                            [value]="totalChargedText"
+
+                            (valueChange)="onTotalChargedText($event)"
+
+                            [disabled]="readonly">
+
+                        </app-textbox>
+
+                        <span class="pd-spacer"></span>
+                    }
+
+
+                    <!-- ============== CHARGE (MFS / POS / EMI) ============== -->
+
+                    @if (hasCharge(row))
+                    {
+                        <app-textbox
+
+                            label="Charge %"
+
+                            placeholder="0"
+
+                            inputMode="decimal"
+
+                            [value]="chargePercentText"
+
+                            (valueChange)="onChargePercentText($event)"
+
+                            [disabled]="readonly">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            label="Charge Amount"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            [value]="chargeAmountText"
+
+                            (valueChange)="onChargeAmountText($event)"
+
+                            [disabled]="readonly">
+
+                        </app-textbox>
+
+                        <app-dropdown
+
+                                                    label="Charge Borne By"
+
+                            [items]="borneByItems"
+
+                            [value]="row.ChargeBorneBy || 'Company'"
+
+                            (valueChange)="onBorneByChange($event)"
+
+                            [disabled]="readonly">
+
+                        </app-dropdown>
+                    }
+
+                </div>
+
+                <!-- ============== VERIFY ==============
+                     One fixed-height bar for every state : the missing
+                     field message shows here, so nothing jumps -->
+
+                <div
+
+                    class="pd-verify-bar"
+
+                    [class.pd-verify-bar-done]="!!row.Verified"
+
+                    [class.pd-verify-bar-issue]="!!selectedIssue">
+
+                    <span class="pd-verify-hint">
+
+                        @if (row.Verified)
+                        {
+                            <i class="fas fa-circle-check"></i>
+
+                            Verified. Changing any detail asks for verification again.
+                        }
+                        @else if (selectedIssue)
+                        {
+                            <i class="fas fa-circle-exclamation"></i>
+
+                            {{ selectedIssue }}
+                        }
+                        @else
+                        {
+                            <i class="fas fa-circle-info"></i>
+
+                            Check these details against the slip / receipt, then verify.
+                        }
+
+                    </span>
+
+                    <button
+
+                        type="button"
+
+                        class="pd-verify-btn"
+
+                        [class.pd-verify-btn-done]="!!row.Verified"
+
+                        [disabled]="readonly || !!selectedIssue || !!row.Verified"
+
+                        (click)="verifyRow()">
+
+                        <i [class]="row.Verified ? 'fas fa-circle-check' : 'fas fa-shield-halved'"></i>
+
+                        {{ row.Verified ? 'Verified' : 'Verify Row' }}
+
+                    </button>
+
+                </div>
+
+                @if (row.Mode === 'Check' && row.CheckStatus)
+                {
+                    <div class="pd-note">
+
+                        <i class="fas fa-money-check"></i>
+
+                        Status : {{ row.CheckStatus }}
+
+                        @if (row.ClearedVoucherNo)
+                        {
+                            · Cleared by {{ row.ClearedVoucherNo }}
+                        }
+
+                    </div>
+                }
+
+              </div>
+              }
+            }
+            @else
+            {
+                <div class="pd-empty">
+
+                    Select a row on the left.
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    </div>
+
+</div>
+
+</div>

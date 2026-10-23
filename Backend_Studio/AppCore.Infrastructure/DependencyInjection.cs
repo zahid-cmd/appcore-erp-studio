@@ -74,6 +74,15 @@ using AppCore.Infrastructure.Platform.Authentication;
 
 
 //===============================================================
+// Platform Accounting (voucher foundation)
+//===============================================================
+
+using AppCore.Application.Platform.Accounting;
+
+using AppCore.Infrastructure.Platform.Accounting;
+
+
+//===============================================================
 // Platform Effective Access
 //===============================================================
 
@@ -155,6 +164,14 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 //===============================================================
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
+
+// AUTO-BEGIN : MembershipStatus
+
+using AppCore.Application.MembershipManagement.MembershipAssignment;
+using AppCore.Infrastructure.Configurations.MembershipManagement.MembershipAssignment;
+
+// AUTO-END : MembershipStatus
+
 
 // AUTO-BEGIN : MembershipCards
 
@@ -706,6 +723,60 @@ public static class DependencyInjection
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
 
+        // AUTO-BEGIN : ReceiptVoucher
+
+        services.AddScoped
+        <
+            IReceiptVoucherRepository,
+            ReceiptVoucherRepository
+        >();
+
+        // AUTO-END : ReceiptVoucher
+
+        // AUTO-BEGIN : JournalVoucher
+
+        services.AddScoped
+        <
+            IJournalVoucherRepository,
+            JournalVoucherRepository
+        >();
+
+        // AUTO-END : JournalVoucher
+
+        // AUTO-BEGIN : FundTransfer
+
+        services.AddScoped
+        <
+            IFundTransferRepository,
+            FundTransferRepository
+        >();
+
+        // AUTO-END : FundTransfer
+
+        // AUTO-BEGIN : EmiAccounts
+
+        services.AddScoped
+        <
+            IEmiAccountsRepository,
+            EmiAccountsRepository
+        >();
+
+        // AUTO-END : EmiAccounts
+
+
+
+
+        // AUTO-BEGIN : MembershipStatus
+
+        services.AddScoped
+        <
+            IMembershipStatusRepository,
+            MembershipStatusRepository
+        >();
+
+        // AUTO-END : MembershipStatus
+
+
         // AUTO-BEGIN : MembershipPolicies
 
         services.AddScoped
@@ -762,15 +833,6 @@ public static class DependencyInjection
         // AUTO-END : Locations
 
 
-        // AUTO-BEGIN : ChartOfServices
-
-        services.AddScoped
-        <
-            AppCore.Application.Settings.ServiceSettings.IChartOfServicesRepository,
-            AppCore.Infrastructure.Configurations.Settings.ServiceSettings.ChartOfServicesRepository
-        >();
-
-        // AUTO-END : ChartOfServices
 
         // AUTO-BEGIN : MembershipServices
 
@@ -1338,15 +1400,6 @@ public static class DependencyInjection
 
 
 
-        // AUTO-BEGIN : ReceiptVoucher
-
-        services.AddScoped
-        <
-            IReceiptVoucherRepository,
-            ReceiptVoucherRepository
-        >();
-
-        // AUTO-END : ReceiptVoucher
 
 
 
@@ -1630,6 +1683,33 @@ public static class DependencyInjection
         <
             IDatabaseCreationEngine,
             DatabaseEngine
+        >();
+
+
+        //=======================================================
+        // Platform Accounting (voucher foundation)
+        //
+        // Voucher numbers, the ledger list and the ONLY writer of
+        // VoucherEntries. Used by every voucher page (RV / PV /
+        // JV / FT) and every reconciliation (RRV / RRP).
+        //=======================================================
+
+        services.AddScoped
+        <
+            IVoucherNumberService,
+            VoucherNumberService
+        >();
+
+        services.AddScoped
+        <
+            IVoucherLedgerRepository,
+            VoucherLedgerRepository
+        >();
+
+        services.AddScoped
+        <
+            IVoucherPostingService,
+            VoucherPostingService
         >();
 
 

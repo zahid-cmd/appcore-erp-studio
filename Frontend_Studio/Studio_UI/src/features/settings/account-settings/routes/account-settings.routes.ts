@@ -342,6 +342,32 @@ Routes =
 
                 // AUTO-END : SUB-003-002-007
 
+            // AUTO-BEGIN : SUB-003-002-013
+
+                //===========================================================
+                // EMI Accounts
+                //===========================================================
+
+                {
+                    path:'emi-accounts',
+
+                    data:
+                    {
+                        breadcrumb:'EMI Accounts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './emi-accounts.routes'
+                        )
+                        .then(
+                            m =>
+                                m.EmiAccountsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-013
+
         ]
 
     }

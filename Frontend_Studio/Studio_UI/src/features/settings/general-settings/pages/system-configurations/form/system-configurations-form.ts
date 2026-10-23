@@ -200,6 +200,10 @@ const REMARKS_MAX_LENGTH:
     number =
     1000;
 
+const VALUE_MAX_LENGTH:
+    number =
+    100;
+
 //===============================================================
 // Case-Insensitive Field Reader
 //
@@ -556,6 +560,7 @@ implements OnInit, OnDestroy
             ConfigurationCode:'',
             ConfigurationName:'',
             IsEnabled:true,
+            Value:'',
             Remarks:''
         };
     }
@@ -1170,6 +1175,14 @@ implements OnInit, OnDestroy
 
         if
         (
+            (String(this.entity.Value ?? '').trim().length) > VALUE_MAX_LENGTH
+        )
+        {
+            return this.fail(`Value cannot be longer than ${VALUE_MAX_LENGTH} characters.`);
+        }
+
+        if
+        (
             (this.entity.Remarks?.trim().length ?? 0) > REMARKS_MAX_LENGTH
         )
         {
@@ -1446,6 +1459,9 @@ implements OnInit, OnDestroy
 
             IsEnabled:
                 this.entity.IsEnabled,
+
+            Value:
+                String(this.entity.Value ?? '').trim(),
 
             Remarks:
                 this.entity.Remarks?.trim() ?? ''

@@ -1,0 +1,655 @@
+/*===============================================================
+  Payment Desk (step 2)
+  Shown inside the voucher page modal : rows (left) | chips +
+  details (right). Stacks on narrow screens.
+===============================================================*/
+
+:host
+{
+    display: block;
+    width: 100%;
+}
+
+
+/*---------------------------------------------------------------
+  Stage + floating panel
+---------------------------------------------------------------*/
+
+.pd-stage
+{
+    display: flex;
+    justify-content: center;
+    padding: 0;
+}
+
+/* The modal is the frame; the desk is its body */
+.pd
+{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pd-body
+{
+    display: grid;
+    grid-template-columns: 400px minmax(0, 1fr);
+    gap: 16px;
+    /* Left card takes the height of the right section */
+    align-items: stretch;
+}
+
+/* Right section keeps its natural height and sets the row */
+.pd-right
+{
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+@media (max-width: 1100px)
+{
+    .pd-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+
+/*---------------------------------------------------------------
+  Card
+---------------------------------------------------------------*/
+
+.pd-card
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pd-card-header
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 4px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.pd-card-header > i
+{
+    color: #1e3a8a;
+}
+
+.pd-count,
+.pd-mode
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/*---------------------------------------------------------------
+  Rows (left)
+---------------------------------------------------------------*/
+
+/* Receipt Rows card : as tall as the right section (the rows
+   are taken out of the height calculation, so only the right
+   section decides it), never shorter than 300px */
+.pd-rows-card
+{
+    min-height: 300px;
+}
+
+.pd-rows-frame
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.pd-rows
+{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Rows keep their height while the list scrolls */
+.pd-rows > *
+{
+    flex: 0 0 auto;
+}
+/* Narrow screens stack the two columns : the page scrolls */
+@media (max-width: 1100px)
+{
+    .pd-rows-card
+    {
+        min-height: 0;
+    }
+
+    .pd-rows
+    {
+        position: static;
+        overflow: visible;
+    }
+}
+
+.pd-row
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+.pd-row:hover
+{
+    border-color: #c7d2fe;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -10px rgba(30, 58, 138, 0.45);
+}
+
+.pd-row-verified
+{
+    border-color: #bbf7d0;
+    background: #f7fef9;
+}
+
+.pd-row-verified .pd-row-icon
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pd-row-pulse
+{
+    animation: pd-pulse 0.65s ease-out;
+}
+
+@keyframes pd-pulse
+{
+    0%
+    {
+        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.45);
+    }
+
+    100%
+    {
+        box-shadow: 0 0 0 12px rgba(22, 163, 74, 0);
+    }
+}
+
+.pd-row-active
+{
+    border-color: #1e3a8a;
+    background: #eef2ff;
+    box-shadow: 0 4px 12px -6px rgba(30, 58, 138, 0.4);
+}
+
+.pd-row-icon
+{
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.pd-row-text
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Full ledger name, wraps when long */
+.pd-row-title
+{
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #1e293b;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.pd-row-sub
+{
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.pd-state
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pd-state-todo
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.pd-state-ready
+{
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.pd-state-done
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pd-state
+{
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.pd-empty
+{
+    padding: 24px 14px;
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+
+/*---------------------------------------------------------------
+  Summary chips (right, above the details)
+---------------------------------------------------------------*/
+
+.pd-summary
+{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+@media (max-width: 760px)
+{
+    .pd-summary
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.pd-summary-item
+{
+    transition: border-color 0.2s ease, background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.pd-summary-item span
+{
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pd-summary-item strong
+{
+    font-size: 15px;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pd-summary-main
+{
+    border-color: #1e3a8a;
+    background: #eef2ff;
+}
+
+
+/* Total Collected in words : one fixed line */
+.pd-words
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1px solid #dbe4f3;
+    border-radius: 10px;
+    background: linear-gradient(120deg, #f5f8ff 0%, #f8fafc 100%);
+}
+
+.pd-words-label
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 12px;
+    border-right: 1px solid #dbe4f3;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #1e3a8a;
+}
+
+.pd-words-text
+{
+    min-width: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-style: italic;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/*---------------------------------------------------------------
+  Details (right)
+---------------------------------------------------------------*/
+
+.pd-fixed
+{
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 14px 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 12px;
+}
+
+.pd-fixed > div
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pd-fixed span
+{
+    color: #64748b;
+}
+
+.pd-fixed strong
+{
+    color: #1e293b;
+    font-size: 13px;
+}
+
+.pd-fixed-amount
+{
+    align-items: flex-end;
+}
+
+.pd-fixed-amount strong
+{
+    font-variant-numeric: tabular-nums;
+}
+
+/* Two even columns; every field is a regular (half) width */
+.pd-grid
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    padding: 12px 14px 14px;
+}
+
+.pd-spacer
+{
+    display: block;
+}
+
+@media (max-width: 560px)
+{
+    .pd-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pd-spacer
+    {
+        display: none;
+    }
+}
+
+.pd-error,
+.pd-ok,
+.pd-note
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 14px 12px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+.pd-error
+{
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.pd-ok
+{
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.pd-note
+{
+    background: #f1f5f9;
+    color: #475569;
+}
+
+
+/*---------------------------------------------------------------
+  Row details : fades in when another row is chosen
+---------------------------------------------------------------*/
+
+.pd-detail
+{
+    animation: pd-detail-in 0.22s ease-out;
+}
+
+@keyframes pd-detail-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateX(6px);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+
+/*---------------------------------------------------------------
+  Verify bar : hint (left) + Verify Row button (right)
+---------------------------------------------------------------*/
+
+.pd-verify-bar
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    box-sizing: border-box;
+    margin: 4px 14px 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    transition: background 0.2s ease;
+}
+
+.pd-verify-bar-done
+{
+    background: #f0fdf4;
+}
+
+.pd-verify-bar-issue
+{
+    background: #fef2f2;
+}
+
+.pd-verify-bar-issue .pd-verify-hint
+{
+    color: #b91c1c;
+    font-weight: 500;
+}
+
+.pd-verify-hint
+{
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 12.5px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pd-verify-bar-done .pd-verify-hint
+{
+    color: #166534;
+}
+
+.pd-verify-btn
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.65);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.2s ease;
+}
+
+.pd-verify-btn:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px -8px rgba(37, 99, 235, 0.7);
+}
+
+.pd-verify-btn:active:not(:disabled)
+{
+    transform: translateY(0) scale(0.98);
+}
+
+/* Required fields missing / view only */
+.pd-verify-btn:disabled
+{
+    background: #cbd5e1;
+    color: #ffffff;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Done : green, disabled until a detail changes */
+.pd-verify-btn-done,
+.pd-verify-btn-done:disabled
+{
+    background: #16a34a;
+    color: #ffffff;
+    box-shadow: 0 6px 14px -8px rgba(22, 163, 74, 0.7);
+    animation: pd-verified 0.35s ease-out;
+}
+
+@keyframes pd-verified
+{
+    0%
+    {
+        transform: scale(0.92);
+    }
+
+    70%
+    {
+        transform: scale(1.05);
+    }
+
+    100%
+    {
+        transform: scale(1);
+    }
+}

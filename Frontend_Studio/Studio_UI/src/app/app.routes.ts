@@ -47,6 +47,32 @@ export const routes:
 
 
     //===========================================================
+    // Print Viewer (own browser tab, no layout)
+    //   /print-viewer/<source>/<id>?doc=<document key | all>
+    //===========================================================
+
+    {
+        path:
+            'print-viewer/:source/:id',
+
+        canActivate:
+        [
+            authenticationGuard
+        ],
+
+        loadComponent:
+            () =>
+                import(
+                    '../shared/print/print-viewer/print-viewer'
+                )
+                .then(
+                    m =>
+                        m.PrintViewerComponent
+                )
+    },
+
+
+    //===========================================================
     // Authenticated Application
     //===========================================================
 

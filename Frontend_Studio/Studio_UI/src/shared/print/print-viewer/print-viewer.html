@@ -1,0 +1,297 @@
+<div class="pv-app">
+
+
+    <!-- =========================================================
+         TOOLBAR (AppCore blue)
+           left   : thumbnails, title
+           center : document choice, pages, zoom
+           right  : Refresh, Excel, PDF, Print, Close
+    ========================================================== -->
+
+    <header class="pv-bar">
+
+
+        <!-- LEFT : thumbnails, title -->
+
+        <div class="pv-bar-left">
+
+            <button
+
+                type="button"
+
+                class="pv-icon-btn"
+
+                [class.pv-on]="thumbsOpen"
+
+                title="Page thumbnails"
+
+                (click)="toggleThumbs()">
+
+                <i class="fas fa-table-columns"></i>
+
+            </button>
+
+            <div class="pv-name">
+
+                <strong>{{ source?.title || 'Print' }}</strong>
+
+                <span>{{ recordTitle }}</span>
+
+            </div>
+
+        </div>
+
+
+        <!-- CENTER : document choice, pages, zoom -->
+
+        <div class="pv-bar-center">
+
+            @if (documents.length > 1)
+            {
+                <app-search-dropdown
+
+                    class="pv-doc-select"
+
+                    placeholder="Select document"
+
+                    [items]="documentItems"
+
+                    [value]="choice"
+
+                    [disabled]="loading || !!busy"
+
+                    (valueChange)="choose($event)">
+
+                </app-search-dropdown>
+            }
+
+            @if (documents.length > 1)
+            {
+                <span class="pv-sep"></span>
+            }
+
+            <div class="pv-group">
+
+                <button type="button" class="pv-icon-btn" title="First page" [disabled]="!ready || currentPage <= 1" (click)="first()">
+                    <i class="fas fa-angles-left"></i>
+                </button>
+
+                <button type="button" class="pv-icon-btn" title="Previous page" [disabled]="!ready || currentPage <= 1" (click)="previous()">
+                    <i class="fas fa-angle-left"></i>
+                </button>
+
+                <span class="pv-page-box">
+
+                    <input
+
+                        type="text"
+
+                        inputmode="numeric"
+
+                        aria-label="Page"
+
+                        [value]="pageInput"
+
+                        [disabled]="!ready"
+
+                        (input)="onPageInput($event)"
+
+                        (keydown.enter)="commitPageInput()"
+
+                        (blur)="commitPageInput()">
+
+                    <span>/ {{ pageCount }}</span>
+
+                </span>
+
+                <button type="button" class="pv-icon-btn" title="Next page" [disabled]="!ready || currentPage >= pageCount" (click)="next()">
+                    <i class="fas fa-angle-right"></i>
+                </button>
+
+                <button type="button" class="pv-icon-btn" title="Last page" [disabled]="!ready || currentPage >= pageCount" (click)="last()">
+                    <i class="fas fa-angles-right"></i>
+                </button>
+
+            </div>
+
+            <span class="pv-sep"></span>
+
+            <div class="pv-group">
+
+                <button type="button" class="pv-icon-btn" title="Zoom out" [disabled]="!ready" (click)="zoomOut()">
+                    <i class="fas fa-magnifying-glass-minus"></i>
+                </button>
+
+                <select
+
+                    class="pv-zoom"
+
+                    aria-label="Zoom"
+
+                    [disabled]="!ready"
+
+                    [value]="zoomSelectValue"
+
+                    (change)="onZoomSelect($event)">
+
+                    <option value="fit-width">Fit width</option>
+
+                    <option value="fit-page">Fit page</option>
+
+                    @if (zoomMode === 'custom' && !zoomIsStep)
+                    {
+                        <option [value]="'' + zoom">{{ zoom }}%</option>
+                    }
+
+                    @for (step of zoomSteps; track step)
+                    {
+                        <option [value]="'' + step">{{ step }}%</option>
+                    }
+
+                </select>
+
+                <button type="button" class="pv-icon-btn" title="Zoom in" [disabled]="!ready" (click)="zoomIn()">
+                    <i class="fas fa-magnifying-glass-plus"></i>
+                </button>
+
+                <button type="button" class="pv-icon-btn" title="Fit width" [class.pv-on]="zoomMode === 'fit-width'" [disabled]="!ready" (click)="fitWidth()">
+                    <i class="fas fa-arrows-left-right"></i>
+                </button>
+
+                <button type="button" class="pv-icon-btn" title="Fit page" [class.pv-on]="zoomMode === 'fit-page'" [disabled]="!ready" (click)="fitPage()">
+                    <i class="fas fa-expand"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT : actions -->
+
+        <div class="pv-bar-right">
+
+            <button type="button" class="pv-icon-btn" title="Refresh (reload the live data)" [disabled]="loading || !!busy" (click)="refresh()">
+                <i class="fas fa-rotate-right"></i>
+            </button>
+
+            <button type="button" class="pv-btn pv-btn-excel" title="Download Excel" [disabled]="!ready || !canExcel || !!busy" (click)="exportExcel()">
+                <i class="fas fa-file-excel"></i>
+                Excel
+            </button>
+
+            <button type="button" class="pv-btn pv-btn-pdf" title="Download PDF" [disabled]="!ready || !!busy" (click)="exportPdf()">
+                <i class="fas fa-file-pdf"></i>
+                PDF
+            </button>
+
+            <button type="button" class="pv-btn pv-btn-print" title="Print" [disabled]="!ready || !!busy" (click)="print()">
+                <i class="fas fa-print"></i>
+                Print
+            </button>
+
+            <span class="pv-sep"></span>
+
+            <button type="button" class="pv-icon-btn pv-close" title="Close this tab" (click)="closeTab()">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================================================
+         BODY : thumbnails | pages
+    ========================================================== -->
+
+    <div class="pv-main">
+
+        <aside
+
+            class="pv-thumbs"
+
+            [class.pv-thumbs-closed]="!thumbsOpen">
+
+            <iframe
+
+                #thumbFrame
+
+                class="pv-thumb-frame"
+
+                title="Page thumbnails">
+
+            </iframe>
+
+        </aside>
+
+        <div
+
+            #stage
+
+            class="pv-stage">
+
+            <iframe
+
+                #frame
+
+                class="pv-frame"
+
+                [class.pv-hidden]="loading || !!error"
+
+                title="Print preview">
+
+            </iframe>
+
+            @if (loading)
+            {
+                <div class="pv-state">
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                    Preparing the preview...
+
+                </div>
+            }
+
+            @if (error)
+            {
+                <div class="pv-state pv-state-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    <span>{{ error }}</span>
+
+                    <button type="button" class="pv-btn" (click)="refresh()">
+
+                        <i class="fas fa-rotate-right"></i>
+
+                        Try again
+
+                    </button>
+
+                </div>
+            }
+
+            @if (busy)
+            {
+                <div class="pv-busy">
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                    {{ busy }}
+
+                </div>
+            }
+
+            @if (notice)
+            {
+                <div class="pv-notice">{{ notice }}</div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

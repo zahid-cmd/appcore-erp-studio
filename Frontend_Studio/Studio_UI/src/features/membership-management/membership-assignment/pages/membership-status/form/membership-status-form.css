@@ -1,0 +1,405 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/* Dates: app-datepicker draws its own label (same as app-textbox),
+   so no date wrapper or label styles are needed here. */
+
+
+/* =========================================================
+   Service Schedule tab
+   Replaces the form in the canvas (View / Edit). Scrolls with
+   the AppCore scrollbar (global class appcore-scrollbar).
+========================================================= */
+
+.mst-schedule-page
+{
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: calc(100vh - 330px);
+    min-height: 320px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+
+/* Totals */
+.mst-totals
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.mst-total
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #64748b;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.mst-total-value
+{
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.mst-total-label
+{
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.mst-total-taken
+{
+    border-left-color: #16a34a;
+}
+
+.mst-total-available
+{
+    border-left-color: #2563eb;
+}
+
+.mst-total-lapsed
+{
+    border-left-color: #dc2626;
+}
+
+.mst-total-rescheduled
+{
+    border-left-color: #d97706;
+}
+
+
+/* Schedule card : fills the rest; only its body scrolls */
+.mst-schedule
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.mst-schedule-head
+{
+    flex: 0 0 auto;
+}
+
+.mst-schedule-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+/* Column titles stay visible while the windows scroll */
+.mst-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.mst-schedule *,
+.mst-schedule *::before,
+.mst-schedule *::after
+{
+    box-sizing: border-box;
+}
+
+.mst-empty
+{
+    padding: 28px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.mst-schedule-head
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mst-schedule-head i
+{
+    color: #2563eb;
+}
+
+.mst-schedule-count
+{
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+
+/* Table */
+.mst-table
+{
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 13px;
+}
+
+.mst-table th
+{
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.mst-table td
+{
+    padding: 8px 14px;
+    color: #1f2937;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.mst-table tbody tr:last-child td
+{
+    border-bottom: none;
+}
+
+.mst-table tbody tr:hover td
+{
+    background: #f8fafc;
+}
+
+/* # and Window columns stay on one line */
+.mst-table td:nth-child(1),
+.mst-table td:nth-child(2),
+.mst-table td:nth-child(4)
+{
+    white-space: nowrap;
+}
+
+.mst-actions-col
+{
+    width: 1%;
+    text-align: right !important;
+    white-space: nowrap;
+}
+
+.mst-note
+{
+    min-width: 180px;
+    color: #4b5563;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.mst-carried
+{
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #6d28d9;
+    background: #ede9fe;
+}
+
+
+/* =========================================================
+   Window states
+========================================================= */
+
+.mst-state
+{
+    display: inline-block;
+    min-width: 78px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    text-align: center;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.mst-state-upcoming
+{
+    color: #475569;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.mst-state-available
+{
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-color: #bfdbfe;
+}
+
+.mst-state-taken
+{
+    color: #15803d;
+    background: #dcfce7;
+    border-color: #bbf7d0;
+}
+
+.mst-state-lapsed
+{
+    color: #b91c1c;
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.mst-state-rescheduled
+{
+    color: #b45309;
+    background: #fef3c7;
+    border-color: #fde68a;
+}
+
+
+/* =========================================================
+   Inline actions (Mark Used / Approve)
+========================================================= */
+
+.mst-inline
+{
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.mst-input
+{
+    height: 30px;
+    width: 150px;
+    padding: 0 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 12px;
+    color: #1f2937;
+    outline: none;
+}
+
+.mst-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.mst-input[type="date"]
+{
+    width: 140px;
+}
+
+.mst-input-wide
+{
+    width: 240px;
+}
+
+
+/* Buttons */
+.mst-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    margin-left: 6px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.mst-inline .mst-btn
+{
+    margin-left: 0;
+}
+
+.mst-btn:hover:not(:disabled)
+{
+    background: #f3f4f6;
+}
+
+.mst-btn:disabled
+{
+    opacity: 0.6;
+    cursor: default;
+}
+
+.mst-btn-primary
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.mst-btn-primary:hover:not(:disabled)
+{
+    background: #1e40af;
+}
+
+.mst-btn-warn
+{
+    border-color: #d97706;
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.mst-btn-warn:hover:not(:disabled)
+{
+    background: #fef3c7;
+}
+
+
+/* Narrow screens : totals in two rows */
+@media (max-width: 1100px)
+{
+    .mst-totals
+    {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

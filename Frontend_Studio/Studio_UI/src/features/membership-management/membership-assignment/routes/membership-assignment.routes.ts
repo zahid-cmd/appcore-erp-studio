@@ -33,6 +33,58 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            // AUTO-BEGIN : SUB-009-002-001
+
+                //===========================================================
+                // Membership Status
+                //===========================================================
+
+                {
+                    path:'membership-status',
+
+                    data:
+                    {
+                        breadcrumb:'Membership Status'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './membership-status.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MembershipStatusRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-009-002-001
+
+            // AUTO-BEGIN : SUB-009-002-002
+
+                //===========================================================
+                // Membership Fees Collection
+                //===========================================================
+
+                {
+                    path:'membership-fees-collection',
+
+                    data:
+                    {
+                        breadcrumb:'Membership Fees Collection'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './membership-fees-collection.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MembershipFeesCollectionRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-009-002-002
+
         ]
 
     }

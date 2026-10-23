@@ -185,6 +185,9 @@ export function normalizeSystemConfiguration
         IsEnabled:
             readBool(item, 'IsEnabled', false),
 
+        Value:
+            readText(item, 'Value'),
+
         Remarks:
             readText(item, 'Remarks')
     };

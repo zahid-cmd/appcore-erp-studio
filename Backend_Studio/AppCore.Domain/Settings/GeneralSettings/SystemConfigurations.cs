@@ -11,6 +11,9 @@ namespace AppCore.Domain.Entities.Settings.GeneralSettings;
 // A switchable setting that belongs to one Navigation Module.
 // ConfigurationCode is system generated per module and never
 // reused : CFG-<ModuleCode>-0001
+//
+// Value (optional) : a number or short text the setting needs,
+// e.g. Max Lines = 20. Empty for plain on/off settings.
 //===============================================================
 
 public class SystemConfigurations
@@ -48,6 +51,13 @@ public class SystemConfigurations
     //===========================================================
 
     public bool IsEnabled { get; set; }
+
+
+    //===========================================================
+    // Value (optional : number or short text)
+    //===========================================================
+
+    public string Value { get; set; } = string.Empty;
 
 
     //===========================================================

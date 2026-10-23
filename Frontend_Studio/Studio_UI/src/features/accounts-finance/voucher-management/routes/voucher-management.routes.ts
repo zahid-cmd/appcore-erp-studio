@@ -85,6 +85,58 @@ Routes =
 
                 // AUTO-END : SUB-004-001-002
 
+            // AUTO-BEGIN : SUB-004-001-004
+
+                //===========================================================
+                // Fund Transfer
+                //===========================================================
+
+                {
+                    path:'fund-transfer',
+
+                    data:
+                    {
+                        breadcrumb:'Fund Transfer'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './fund-transfer.routes'
+                        )
+                        .then(
+                            m =>
+                                m.FundTransferRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-004-001-004
+
+            // AUTO-BEGIN : SUB-004-001-003
+
+                //===========================================================
+                // Journal Voucher
+                //===========================================================
+
+                {
+                    path:'journal-voucher',
+
+                    data:
+                    {
+                        breadcrumb:'Journal Voucher'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './journal-voucher.routes'
+                        )
+                        .then(
+                            m =>
+                                m.JournalVoucherRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-004-001-003
+
         ]
 
     }

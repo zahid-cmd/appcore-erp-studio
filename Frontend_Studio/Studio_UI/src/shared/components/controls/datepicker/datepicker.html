@@ -2,61 +2,107 @@
      DATEPICKER
 ===================================================== -->
 
-<div
-
-    cdkOverlayOrigin
-
-    #origin="cdkOverlayOrigin"
-
-    class="datepicker"
-
-    [class.disabled]="disabled"
-
-    [class.readonly]="readonly">
+<div class="datepicker-container">
 
     <!-- =====================================================
-         SELECTOR
+         LABEL (optional, same as app-textbox)
+    ====================================================== -->
+
+    <label
+
+        *ngIf="label"
+
+        class="datepicker-label"
+
+        [attr.for]="id || null">
+
+        <span>
+
+            {{ label }}
+
+        </span>
+
+        <span
+
+            *ngIf="required"
+
+            class="datepicker-required">
+
+            *
+
+        </span>
+
+    </label>
+
+    <!-- =====================================================
+         FIELD
     ====================================================== -->
 
     <div
 
-        class="datepicker-selector"
+        cdkOverlayOrigin
 
-        (click)="openCalendar()">
+        #origin="cdkOverlayOrigin"
 
-        <!-- =================================================
-             VALUE
-        ================================================== -->
+        class="datepicker"
 
-        <div class="datepicker-value">
+        [class.disabled]="disabled"
 
-            <ng-container
-
-                *ngIf="displayValue; else placeholderTemplate">
-
-                {{ displayValue }}
-
-            </ng-container>
-
-            <ng-template #placeholderTemplate>
-
-                <span class="datepicker-placeholder">
-
-                    {{ placeholder }}
-
-                </span>
-
-            </ng-template>
-
-        </div>
+        [class.readonly]="readonly">
 
         <!-- =================================================
-             ICON
+             SELECTOR
         ================================================== -->
 
-        <div class="datepicker-icon">
+        <div
 
-            <i class="far fa-calendar-alt"></i>
+            class="datepicker-selector"
+
+            role="button"
+
+            [attr.id]="id || null"
+
+            [attr.tabindex]="disabled ? -1 : 0"
+
+            [attr.aria-expanded]="calendarVisible"
+
+            [class.open]="calendarVisible"
+
+            (click)="openCalendar()"
+
+            (keydown)="onKeyDown($event)">
+
+            <!-- VALUE -->
+
+            <div class="datepicker-value">
+
+                <ng-container
+
+                    *ngIf="displayValue; else placeholderTemplate">
+
+                    {{ displayValue }}
+
+                </ng-container>
+
+                <ng-template #placeholderTemplate>
+
+                    <span class="datepicker-placeholder">
+
+                        {{ placeholder }}
+
+                    </span>
+
+                </ng-template>
+
+            </div>
+
+            <!-- ICON -->
+
+            <div class="datepicker-icon">
+
+                <i class="far fa-calendar-alt"></i>
+
+            </div>
 
         </div>
 
@@ -80,7 +126,11 @@
 
     <app-calendar
 
-        [(value)]="value"
+        [value]="value"
+
+        [minDate]="minDate"
+
+        [maxDate]="maxDate"
 
         (valueChange)="onDateSelected($event)">
 

@@ -92,9 +92,15 @@
 
             [attr.inputmode]="inputMode"
 
+            [attr.autocapitalize]="autoCapitalize"
+
             [attr.maxlength]="maxLength ?? null"
 
             (input)="onInput($event)"
+
+            (compositionstart)="onCompositionStart()"
+
+            (compositionend)="onCompositionEnd($event)"
 
             (focus)="onFocus($event)"
 

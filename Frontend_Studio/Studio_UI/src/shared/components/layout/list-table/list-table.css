@@ -457,6 +457,28 @@
 }
 
 
+/* Vouchers : Draft (amber), Approved (blue); Posted uses
+   .active (green), Cancelled uses .inactive (red) */
+
+.status.draft
+{
+    color: #92400e;
+
+    background: #fffbeb;
+
+    border: 1px solid #fcd34d;
+}
+
+.status.approved
+{
+    color: #1d4ed8;
+
+    background: #eff6ff;
+
+    border: 1px solid #93c5fd;
+}
+
+
 /* =====================================================
    ACTION BUTTONS
 ===================================================== */

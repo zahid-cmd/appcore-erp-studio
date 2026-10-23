@@ -22,5 +22,8 @@ public class CreateSystemConfigurationsDto
 
     public bool IsEnabled { get; set; }
 
+    // Optional number / short text (e.g. Max Lines = 20)
+    public string Value { get; set; } = string.Empty;
+
     public string Remarks { get; set; } = string.Empty;
 }

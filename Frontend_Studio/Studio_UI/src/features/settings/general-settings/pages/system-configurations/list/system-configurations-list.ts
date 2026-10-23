@@ -819,6 +819,7 @@ implements OnInit, OnDestroy
                     item.ConfigurationCode,
                     item.ConfigurationName,
                     item.Remarks,
+                    item.Value,
                     item.ModuleName,
                     item.ModuleCode,
                     item.IsEnabled ? 'enabled' : 'disabled'

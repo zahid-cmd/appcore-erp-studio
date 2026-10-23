@@ -1,0 +1,315 @@
+<!--===============================================================
+    Welcome Widget
+    Glass hero (greeting + live clock), profile card and four
+    stat cards. Bindings and behaviour are the same as before.
+===============================================================-->
+
+<div class="welcome-widget">
+
+    <div class="welcome-card">
+
+        <!--=======================================================
+            Hero : greeting and date / time (frosted glass)
+        =======================================================-->
+
+        <div class="welcome-hero">
+
+            <!--===================================================
+                Greeting
+            ===================================================-->
+
+            <div class="greeting-section">
+
+                <div class="welcome-badge">
+
+                    <span class="welcome-badge-dot" aria-hidden="true"></span>
+
+                    <span>Welcome Back</span>
+
+                </div>
+
+                <h1 class="greeting-title">
+
+                    <span class="greeting-text">{{ greeting }},</span>
+
+                    <span class="greeting-name">{{ userDisplayName }}!</span>
+
+                </h1>
+
+                <p class="greeting-message">
+
+                    It's great to have you back.
+                    Here's what's happening
+                    in your workspace today.
+
+                </p>
+
+            </div>
+
+
+            <!--===================================================
+                Date & Time
+            ===================================================-->
+
+            <div class="date-time-panel">
+
+                <div class="current-date">
+
+                    <i class="far fa-calendar" aria-hidden="true"></i>
+
+                    <span>{{ formattedDate }}</span>
+
+                </div>
+
+                <div class="date-time-divider" aria-hidden="true"></div>
+
+                <div class="current-time">
+
+                    {{ timeValue }}
+
+                    <span class="time-period">
+                        {{ timePeriod }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!--=======================================================
+            Profile Card (overlaps the hero)
+        =======================================================-->
+
+        <div class="profile-panel">
+
+            <!--===================================================
+                Identity
+            ===================================================-->
+
+            <div class="profile-identity">
+
+                <div class="avatar-ring">
+
+                    <div class="avatar-circle">
+
+                        <img
+                            *ngIf="userPhotoUrl"
+                            class="profile-photo"
+                            [src]="userPhotoUrl"
+                            alt="Profile photo"
+                            (error)="onUserPhotoError()">
+
+                        <i
+                            *ngIf="!userPhotoUrl"
+                            class="fas fa-user"
+                            aria-hidden="true">
+                        </i>
+
+                    </div>
+
+                </div>
+
+                <div class="profile-information">
+
+                    <div class="profile-name">
+                        {{ userFullName }}
+                    </div>
+
+                    <div
+                        class="profile-designation"
+                        *ngIf="userDesignation">
+
+                        {{ userDesignation }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!--===================================================
+                Role Profile & Branch
+            ===================================================-->
+
+            <div class="profile-details">
+
+                <div class="profile-detail">
+
+                    <div class="profile-detail-icon">
+                        <i class="fas fa-user-shield" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="profile-detail-text">
+
+                        <span class="profile-detail-label">Role Profile</span>
+
+                        <span class="profile-detail-value">
+                            {{ userRoleProfile || 'Not Assigned' }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="profile-detail-divider" aria-hidden="true"></div>
+
+
+                <div class="profile-detail">
+
+                    <div class="profile-detail-icon">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="profile-detail-text">
+
+                        <span class="profile-detail-label">Branch</span>
+
+                        <span class="profile-detail-value">
+                            {{ userBranchName || 'Not Assigned' }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!--=======================================================
+            Statistics / Quick Action Cards
+        =======================================================-->
+
+        <div class="welcome-actions">
+
+            <!--===================================================
+                My Tasks
+            ===================================================-->
+
+            <div class="action-card action-tone-1">
+
+                <div class="action-top">
+
+                    <div class="action-icon">
+                        <i class="fas fa-list-check" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </div>
+
+                </div>
+
+                <div class="action-content">
+
+                    <div class="action-title">My Tasks</div>
+
+                    <div class="action-value">{{ statistics.tasks.value }}</div>
+
+                    <div class="action-subtitle">Pending actions</div>
+
+                </div>
+
+            </div>
+
+
+            <!--===================================================
+                Notifications
+            ===================================================-->
+
+            <div class="action-card action-tone-2">
+
+                <div class="action-top">
+
+                    <div class="action-icon">
+                        <i class="fas fa-bell" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </div>
+
+                </div>
+
+                <div class="action-content">
+
+                    <div class="action-title">Notifications</div>
+
+                    <div class="action-value">{{ statistics.notifications.value }}</div>
+
+                    <div class="action-subtitle">New notifications</div>
+
+                </div>
+
+            </div>
+
+
+            <!--===================================================
+                Today
+            ===================================================-->
+
+            <div class="action-card action-tone-3">
+
+                <div class="action-top">
+
+                    <div class="action-icon">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </div>
+
+                </div>
+
+                <div class="action-content">
+
+                    <div class="action-title">Today</div>
+
+                    <div class="action-value">{{ statistics.meetings.value }}</div>
+
+                    <div class="action-subtitle">Scheduled items</div>
+
+                </div>
+
+            </div>
+
+
+            <!--===================================================
+                Quick Access (no count, as before)
+            ===================================================-->
+
+            <div class="action-card action-tone-4">
+
+                <div class="action-top">
+
+                    <div class="action-icon">
+                        <i class="fas fa-grip" aria-hidden="true"></i>
+                    </div>
+
+                    <div class="action-arrow">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </div>
+
+                </div>
+
+                <div class="action-content">
+
+                    <div class="action-title">Quick Access</div>
+
+                    <div class="action-subtitle">Frequently used modules</div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

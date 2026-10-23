@@ -98,6 +98,16 @@ public class SystemConfigurationsConfiguration
 
 
         //=======================================================
+        // Value (optional : number or short text)
+        //=======================================================
+
+        builder.Property(x => x.Value)
+               .IsRequired()
+               .HasMaxLength(100)
+               .HasDefaultValue(string.Empty);
+
+
+        //=======================================================
         // Remarks
         //=======================================================
 

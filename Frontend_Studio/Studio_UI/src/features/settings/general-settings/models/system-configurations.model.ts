@@ -10,6 +10,9 @@
 //
 // ModuleCode / ModuleName / ModuleIcon are read-only display
 // values joined from the Navigation Module.
+//
+// Value is optional : a number or short text the setting needs
+// (e.g. Max Lines = 20). Empty for plain on/off settings.
 //===============================================================
 
 export interface SystemConfiguration
@@ -30,6 +33,9 @@ export interface SystemConfiguration
 
     IsEnabled: boolean;
 
+    // Optional number / short text (e.g. Max Lines = 20)
+    Value: string;
+
     Remarks: string;
 }
 
@@ -47,6 +53,9 @@ export interface CreateSystemConfiguration
     ConfigurationName: string;
 
     IsEnabled: boolean;
+
+    // Optional number / short text (e.g. Max Lines = 20)
+    Value: string;
 
     Remarks: string;
 }

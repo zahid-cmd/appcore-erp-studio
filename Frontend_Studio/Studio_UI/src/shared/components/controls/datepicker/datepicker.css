@@ -1,12 +1,108 @@
 /* =====================================================
+   SIZE CONTROL
+   Same as app-textbox: the host is a block, so no
+   inline line-box gap is added under the field.
+===================================================== */
+
+:host
+{
+    --datepicker-height:36px;
+
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+
+    max-width:100%;
+
+    box-sizing:border-box;
+}
+
+/* =====================================================
+   CONTAINER (same as .textbox-container)
+===================================================== */
+
+.datepicker-container
+{
+    display:flex;
+
+    flex-direction:column;
+
+    width:100%;
+
+    min-width:0;
+
+    max-width:100%;
+
+    margin-bottom:0;
+
+    box-sizing:border-box;
+}
+
+/* =====================================================
+   LABEL (same as .textbox-label)
+===================================================== */
+
+.datepicker-label
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:4px;
+
+    width:100%;
+
+    min-width:0;
+
+    max-width:100%;
+
+    margin-bottom:10px;
+
+    color:#334155;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    line-height:1.3;
+
+    user-select:none;
+
+    box-sizing:border-box;
+}
+
+/* =====================================================
+   REQUIRED (same as .textbox-required)
+===================================================== */
+
+.datepicker-required
+{
+    color:#ef4444;
+
+    font-size:15px;
+
+    font-weight:700;
+}
+
+/* =====================================================
    DATEPICKER
 ===================================================== */
 
 .datepicker
 {
     position:relative;
+
     display:block;
+
     width:100%;
+
+    min-width:0;
+
+    max-width:100%;
+
+    box-sizing:border-box;
 }
 
 /* =====================================================
@@ -16,7 +112,9 @@
 .datepicker.disabled
 {
     opacity:.70;
+
     cursor:not-allowed;
+
     pointer-events:none;
 }
 
@@ -27,27 +125,53 @@
 
 /* =====================================================
    SELECTOR
+   Height, border, radius and left padding match the
+   textbox exactly (36px, 1px, 12px, 14px).
 ===================================================== */
 
 .datepicker-selector
 {
     display:flex;
+
     align-items:center;
+
     justify-content:space-between;
+
     gap:12px;
+
     width:100%;
-    height:36px;
+
+    min-width:0;
+
+    max-width:100%;
+
+    height:var(--datepicker-height);
+
+    min-height:var(--datepicker-height);
+
+    max-height:var(--datepicker-height);
+
+    margin:0;
+
     padding:0 8px 0 14px;
+
     box-sizing:border-box;
+
+    border:1px solid #d9e5f2;
+
+    border-radius:12px;
+
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
             #fcfdff 100%
         );
-    border:1px solid #d9e5f2;
-    border-radius:12px;
+
+    overflow:hidden;
+
     cursor:pointer;
+
     transition:
         border-color .20s ease,
         box-shadow .20s ease,
@@ -57,41 +181,60 @@
 .datepicker-selector:hover
 {
     border-color:#9fc2f7;
+
     box-shadow:
         0 4px 10px rgba(37,99,235,.08);
 }
 
-.datepicker-selector.open
+.datepicker-selector.open,
+
+.datepicker-selector:focus-visible
 {
+    outline:none;
+
     border-color:#2563eb;
+
     box-shadow:
         0 0 0 3px rgba(37,99,235,.12);
 }
 
 /* =====================================================
-   VALUE
+   VALUE (same text as the textbox input)
 ===================================================== */
 
 .datepicker-value
 {
-    flex:1;
+    flex:1 1 auto;
+
     min-width:0;
+
     overflow:hidden;
+
     white-space:nowrap;
+
     text-overflow:ellipsis;
+
     color:#1e293b;
-    font-size:16px;
+
+    font-family:inherit;
+
+    font-size:15px;
+
     font-weight:500;
+
+    line-height:normal;
 }
 
 /* =====================================================
-   PLACEHOLDER
+   PLACEHOLDER (same as the textbox placeholder)
 ===================================================== */
 
 .datepicker-placeholder
 {
     color:#94a3b8;
-    font-size:16px;
+
+    font-size:15px;
+
     font-weight:400;
 }
 
@@ -102,15 +245,26 @@
 .datepicker-icon
 {
     display:flex;
+
     align-items:center;
+
     justify-content:flex-end;
+
     flex-shrink:0;
+
     width:24px;
+
+    height:100%;
+
     color:#64748b;
+
     font-size:14px;
+
     transition:
         color .20s ease;
 }
+
+.datepicker-selector:hover .datepicker-icon,
 
 .datepicker-selector.open .datepicker-icon
 {
@@ -121,14 +275,31 @@
    OVERLAY
 ===================================================== */
 
+/* The calendar opens in the CDK overlay container, so the
+   host left in the page must take no space at all.
+   Otherwise it adds a gap under the date field. */
+
 app-overlay
 {
     display:block;
+
+    height:0;
+
+    min-height:0;
+
+    margin:0;
+
+    padding:0;
+
+    border:0;
+
+    overflow:visible;
 }
 
 app-overlay app-calendar
 {
     display:block;
+
     width:100%;
 }
 
@@ -138,17 +309,14 @@ app-overlay app-calendar
 
 .datepicker.readonly .datepicker-selector
 {
-    background:
-        linear-gradient(
-            180deg,
-            #f8fbff 0%,
-            #f2f7ff 100%
-        );
+    background:#fbfcfd;
+
+    cursor:default;
 }
 
 .datepicker.readonly .datepicker-value
 {
-    color:#475569;
+    color:#334155;
 }
 
 /* =====================================================
@@ -158,32 +326,42 @@ app-overlay app-calendar
 .datepicker.disabled .datepicker-selector
 {
     background:#f8fafc;
+
     box-shadow:none;
 }
 
-.datepicker.disabled .datepicker-value
-{
-    color:#94a3b8;
-}
+.datepicker.disabled .datepicker-value,
 
 .datepicker.disabled .datepicker-icon
 {
-    color:#94a3b8;
+    color:#64748b;
 }
 
 /* =====================================================
-   RESPONSIVE
+   RESPONSIVE (same as the textbox: height stays 36px,
+   label gap 8px)
 ===================================================== */
 
 @media (max-width:992px)
 {
-    .datepicker-selector
+    .datepicker-label
     {
-        height:42px;
+        margin-bottom:8px;
     }
 
-    .datepicker-icon
+    .datepicker-selector
     {
-        width:24px;
+        height:var(--datepicker-height);
+
+        min-height:var(--datepicker-height);
+
+        max-height:var(--datepicker-height);
+    }
+
+    .datepicker-value,
+
+    .datepicker-placeholder
+    {
+        font-size:15px;
     }
 }

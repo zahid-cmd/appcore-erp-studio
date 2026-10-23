@@ -1,0 +1,90 @@
+/* ============================================================
+   EMI Accounts
+============================================================ */
+
+export interface EmiAccounts
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create EMI Accounts
+============================================================ */
+
+export interface CreateEmiAccounts
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update EMI Accounts
+============================================================ */
+
+export interface UpdateEmiAccounts
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   EMI Accounts Defaults
+============================================================ */
+
+export interface EmiAccountsDefaults
+{
+    code:
+        string;
+}

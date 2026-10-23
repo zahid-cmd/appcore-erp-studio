@@ -1,3 +1,4 @@
+
 <!--===============================================================
     Welcome Widget
 ===============================================================-->
@@ -11,138 +12,53 @@
     <div class="welcome-card">
 
         <!--=======================================================
-            Top Row
-        =======================================================-->
-
-        <div class="welcome-top-row">
-
-            <!--===================================================
-                Welcome Badge
-            ===================================================-->
-
-            <div class="welcome-badge">
-
-                <span class="welcome-badge-icon">
-                    👋
-                </span>
-
-                <span>
-                    Welcome Back
-                </span>
-
-            </div>
-
-
-            <!--===================================================
-                Date & Time
-            ===================================================-->
-
-            <div class="date-time-panel">
-
-                <div class="date-time-icon">
-                    <i class="fas fa-calendar-days"></i>
-                </div>
-
-                <div class="date-time-content">
-
-                    <div class="current-date">
-                        {{ formattedDate }}
-                    </div>
-
-                    <div class="current-time">
-                        {{ timeValue }}
-
-                        <span class="time-period">
-                            {{ timePeriod }}
-                        </span>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!--=======================================================
             Main Content
         =======================================================-->
 
         <div class="welcome-main-content">
 
             <!--===================================================
-                Greeting Section
-            ===================================================-->
-
-            <div class="greeting-section">
-
-                <div class="greeting-title">
-                    {{ greeting }} ,
-                </div>
-
-                <div class="greeting-name">
-                    {{ userDisplayName }} !
-                </div>
-
-                <div class="greeting-message">
-
-                    It's great to have you back.
-                    Here's what's happening
-                    in your workspace today.
-
-                </div>
-
-            </div>
-
-
-            <!--===================================================
-                User Profile Section
+                User Profile Section - Left
             ===================================================-->
 
             <div class="profile-panel">
 
                 <!--================================================
-                    Profile Identity
+                    Profile Portrait
                 =================================================-->
 
-                <div class="profile-identity">
+                <div class="profile-avatar">
 
-                    <div class="profile-avatar">
+                    <div class="avatar-frame">
 
-                        <div class="avatar-circle">
+                        <img
+                            *ngIf="userPhotoUrl"
+                            class="profile-photo"
+                            [src]="userPhotoUrl"
+                            alt="Profile photo"
+                            (error)="onUserPhotoError()">
 
-                            <img
-                                *ngIf="userPhotoUrl"
-                                class="profile-photo"
-                                [src]="userPhotoUrl"
-                                alt="Profile photo"
-                                (error)="onUserPhotoError()">
-
-                            <i
-                                *ngIf="!userPhotoUrl"
-                                class="fas fa-user"
-                                aria-hidden="true">
-                            </i>
-
-                        </div>
+                        <i
+                            *ngIf="!userPhotoUrl"
+                            class="fas fa-user profile-placeholder"
+                            aria-hidden="true">
+                        </i>
 
                     </div>
 
+                </div>
 
-                    <div class="profile-information">
+                <!--================================================
+                    Profile Information
+                =================================================-->
 
-                        <!--========================================
-                            Full Name
-                        ========================================-->
+                <div class="profile-information">
+
+                    <div class="profile-identity">
 
                         <div class="profile-name">
-                            {{ userFullName }}
+                            {{ userFullName || userDisplayName }}
                         </div>
-
-
-                        <!--========================================
-                            Designation
-                        ========================================-->
 
                         <div
                             class="profile-designation"
@@ -154,21 +70,7 @@
 
                     </div>
 
-                </div>
-
-
-                <!--================================================
-                    Profile Divider
-                =================================================-->
-
-                <div class="profile-divider"></div>
-
-
-                <!--================================================
-                    Profile Details
-                =================================================-->
-
-                <div class="profile-details">
+                    <div class="profile-divider"></div>
 
                     <!--================================================
                         Role Profile
@@ -176,14 +78,23 @@
 
                     <div class="profile-detail">
 
-                        <i class="fas fa-user-tie"></i>
+                        <div class="profile-detail-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
 
-                        <span>
-                            {{ userRoleProfile || 'Not Assigned' }}
-                        </span>
+                        <div class="profile-detail-content">
+
+                            <span class="profile-detail-label">
+                                Role Profile
+                            </span>
+
+                            <span class="profile-detail-value">
+                                {{ userRoleProfile || 'Not Assigned' }}
+                            </span>
+
+                        </div>
 
                     </div>
-
 
                     <!--================================================
                         Branch
@@ -191,11 +102,21 @@
 
                     <div class="profile-detail">
 
-                        <i class="fas fa-building"></i>
+                        <div class="profile-detail-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
 
-                        <span>
-                            {{ userBranchName || 'Not Assigned' }}
-                        </span>
+                        <div class="profile-detail-content">
+
+                            <span class="profile-detail-label">
+                                Branch / Showroom
+                            </span>
+
+                            <span class="profile-detail-value">
+                                {{ userBranchName || 'Not Assigned' }}
+                            </span>
+
+                        </div>
 
                     </div>
 
@@ -203,8 +124,91 @@
 
             </div>
 
-        </div>
+            <!--===================================================
+                Greeting Section - Right
+            ===================================================-->
 
+            <div class="welcome-content">
+
+                <!--================================================
+                    Top Row
+                =================================================-->
+
+                <div class="welcome-top-row">
+
+                    <!--============================================
+                        Welcome Badge
+                    ============================================-->
+
+                    <div class="welcome-badge">
+
+                        <span class="welcome-badge-icon">
+                            👋
+                        </span>
+
+                        <span>
+                            Welcome Back
+                        </span>
+
+                    </div>
+
+                    <!--============================================
+                        Date & Time
+                    ============================================-->
+
+                    <div class="date-time-panel">
+
+                        <div class="date-time-icon">
+                            <i class="fas fa-calendar-days"></i>
+                        </div>
+
+                        <div class="date-time-content">
+
+                            <div class="current-date">
+                                {{ formattedDate }}
+                            </div>
+
+                            <div class="current-time">
+
+                                {{ timeValue }}
+
+                                <span class="time-period">
+                                    {{ timePeriod }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!--================================================
+                    Greeting Message
+                =================================================-->
+
+                <div class="greeting-section">
+
+                    <div class="greeting-title">
+                        {{ greeting }},
+                    </div>
+
+                    <div class="greeting-name">
+                        {{ userFirstName || userDisplayName }}!
+                    </div>
+
+                    <div class="greeting-message">
+                        It's great to have you back.
+                        Here's what's happening
+                        in your workspace today.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
         <!--=======================================================
             Statistics / Quick Action Cards
@@ -219,9 +223,7 @@
             <div class="action-card action-blue">
 
                 <div class="action-icon">
-
                     <i class="fas fa-list-check"></i>
-
                 </div>
 
                 <div class="action-content">
@@ -241,13 +243,10 @@
                 </div>
 
                 <div class="action-arrow">
-
                     <i class="fas fa-chevron-right"></i>
-
                 </div>
 
             </div>
-
 
             <!--===================================================
                 Notifications
@@ -256,9 +255,7 @@
             <div class="action-card action-green">
 
                 <div class="action-icon">
-
                     <i class="fas fa-bell"></i>
-
                 </div>
 
                 <div class="action-content">
@@ -278,13 +275,10 @@
                 </div>
 
                 <div class="action-arrow">
-
                     <i class="fas fa-chevron-right"></i>
-
                 </div>
 
             </div>
-
 
             <!--===================================================
                 Today
@@ -293,9 +287,7 @@
             <div class="action-card action-purple">
 
                 <div class="action-icon">
-
                     <i class="fas fa-calendar-days"></i>
-
                 </div>
 
                 <div class="action-content">
@@ -315,13 +307,10 @@
                 </div>
 
                 <div class="action-arrow">
-
                     <i class="fas fa-chevron-right"></i>
-
                 </div>
 
             </div>
-
 
             <!--===================================================
                 Quick Access
@@ -330,9 +319,7 @@
             <div class="action-card action-orange">
 
                 <div class="action-icon">
-
                     <i class="fas fa-grip"></i>
-
                 </div>
 
                 <div class="action-content">
@@ -342,18 +329,13 @@
                     </div>
 
                     <div class="action-subtitle quick-access-text">
-
-                        Frequently used
-                        modules
-
+                        Frequently used modules
                     </div>
 
                 </div>
 
                 <div class="action-arrow">
-
                     <i class="fas fa-chevron-right"></i>
-
                 </div>
 
             </div>

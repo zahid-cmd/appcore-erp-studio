@@ -78,12 +78,37 @@ export class DatepickerComponent
         new EventEmitter<Date>();
 
     /* =====================================================
+       BASIC (optional, same as app-textbox)
+    ====================================================== */
+
+    @Input()
+    id = '';
+
+    @Input()
+    label = '';
+
+    @Input()
+    required = false;
+
+    /* =====================================================
        PLACEHOLDER
     ====================================================== */
 
     @Input()
     placeholder =
         'Select Date';
+
+    /* =====================================================
+       RANGE (optional, passed to the calendar)
+    ====================================================== */
+
+    @Input()
+    minDate: Date | null =
+        null;
+
+    @Input()
+    maxDate: Date | null =
+        null;
 
     /* =====================================================
        BEHAVIOUR
@@ -107,7 +132,12 @@ export class DatepickerComponent
 
     get displayValue(): string
     {
-        if (!this.value)
+        if
+        (
+            !(this.value instanceof Date)
+            ||
+            isNaN(this.value.getTime())
+        )
         {
             return '';
         }
@@ -186,6 +216,32 @@ export class DatepickerComponent
     closeCalendar(): void
     {
         this.calendarVisible = false;
+    }
+
+    /* =====================================================
+       KEYBOARD (Enter / Space open, Escape closes)
+    ====================================================== */
+
+    onKeyDown
+    (
+        event: KeyboardEvent
+    ): void
+    {
+        if
+        (
+            event.key === 'Enter'
+            ||
+            event.key === ' '
+        )
+        {
+            event.preventDefault();
+
+            this.toggleCalendar();
+        }
+        else if (event.key === 'Escape')
+        {
+            this.closeCalendar();
+        }
     }
 
     /* =====================================================

@@ -13,6 +13,8 @@ using AppCore.Domain.InfrastructureControl.DevelopmentManagement;
 
 using AppCore.Domain.Platform.Authentication;
 
+using AppCore.Domain.Platform.Accounting;
+
 
 //===============================================================
 // Namespace
@@ -165,6 +167,31 @@ public class AppDbContext
 
 
     //===========================================================
+    // Platform Accounting (voucher foundation)
+    //
+    // Shared by every voucher (RV / PV / JV / FT) and every
+    // reconciliation (RRV / RRP).
+    //===========================================================
+
+    // Voucher number counters (prefix + branch + year + month)
+    public DbSet<VoucherSequences>
+        VoucherSequenceRows
+        {
+            get;
+            set;
+        } = null!;
+
+
+    // Posted debit / credit lines of every voucher type
+    public DbSet<VoucherEntries>
+        VoucherEntryRows
+        {
+            get;
+            set;
+        } = null!;
+
+
+    //===========================================================
     // AUTO REGISTER DBSETS
     //===========================================================
 
@@ -266,16 +293,6 @@ public class AppDbContext
 
     // AUTO-END : Designation
 
-    // AUTO-BEGIN : ReceiptVoucher
-
-    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucher>
-    ReceiptVouchers
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : ReceiptVoucher
 
     // AUTO-BEGIN : PaymentVoucher
 
@@ -887,16 +904,6 @@ public class AppDbContext
 
     // AUTO-END : MembershipServices
 
-    // AUTO-BEGIN : ChartOfServices
-
-    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ChartOfServices>
-    ChartOfServicess
-    {
-    get;
-    set;
-    } = null!;
-
-    // AUTO-END : ChartOfServices
 
 
     // AUTO-BEGIN : Locations
@@ -959,6 +966,65 @@ public class AppDbContext
 
     // AUTO-END : MembershipPolicies
 
+
+    // AUTO-BEGIN : MembershipStatus
+
+    public DbSet<AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipStatus>
+    MembershipStatuss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MembershipStatus
+
+
+
+
+    // AUTO-BEGIN : EmiAccounts
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.EmiAccounts>
+    EmiAccountss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : EmiAccounts
+
+    // AUTO-BEGIN : FundTransfer
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.FundTransfer>
+    FundTransfers
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : FundTransfer
+
+    // AUTO-BEGIN : JournalVoucher
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.JournalVoucher>
+    JournalVouchers
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : JournalVoucher
+
+    // AUTO-BEGIN : ReceiptVoucher
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucher>
+    ReceiptVouchers
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ReceiptVoucher
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -997,6 +1063,30 @@ public class AppDbContext
     // Service Policy → its ordered free / paid services (Service Schedule)
     public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.ServicePolicySchedule>
     ServicePolicyScheduleRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Membership → its free service windows (Membership Status page)
+    public DbSet<AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipServiceWindows>
+    MembershipServiceWindowRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Receipt Voucher → what is received for (master lines)
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucherLines>
+    ReceiptVoucherLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Receipt Voucher → how it is received (Payment Desk lines)
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucherPayments>
+    ReceiptVoucherPaymentRows
     {
     get;
     set;

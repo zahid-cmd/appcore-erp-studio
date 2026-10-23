@@ -1,0 +1,90 @@
+/* ============================================================
+   Membership Status
+============================================================ */
+
+export interface MembershipStatus
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Membership Status
+============================================================ */
+
+export interface CreateMembershipStatus
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Membership Status
+============================================================ */
+
+export interface UpdateMembershipStatus
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Membership Status Defaults
+============================================================ */
+
+export interface MembershipStatusDefaults
+{
+    code:
+        string;
+}

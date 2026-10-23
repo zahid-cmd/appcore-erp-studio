@@ -604,6 +604,21 @@ public class DatabaseOperationResolver
 
     //===========================================================
     // Resolve Entity CLR Type
+    //
+    // The entity name comes from the submenu's backend entity
+    // file (e.g. "EmiAccounts.cs" → "EmiAccounts").
+    //
+    // Matching, first hit wins :
+    //   1. exact name, among entities registered in AppDbContext
+    //   2. exact name, anywhere in the Domain assembly
+    //   3. same letters ignoring case / spaces / "-" / "_",
+    //      among entities registered in AppDbContext
+    //   4. same, anywhere in the Domain assembly
+    //
+    // Steps 3 - 4 fix names whose capitals differ from the file,
+    // e.g. file "EMIAccounts.cs" for class EmiAccounts (or
+    // "POS" / "Pos", "MFS" / "Mfs"). A loose match is only used
+    // when it is unique; two candidates → null (not guessed).
     //===========================================================
 
     private Type?
@@ -633,7 +648,7 @@ public class DatabaseOperationResolver
 
         var entityName =
             Path.GetFileNameWithoutExtension(
-                synchronization.BackendSubMenuEntityFile
+                synchronization.BackendSubMenuEntityFile.Trim()
             );
 
 
@@ -649,39 +664,162 @@ public class DatabaseOperationResolver
 
 
         //=======================================================
-        // Resolve Domain Assembly
+        // Candidates
         //=======================================================
 
-        var domainAssembly =
-            typeof(SubmenuSynchronization)
-                .Assembly;
-
-
-        //=======================================================
-        // Resolve CLR Type
-        //=======================================================
-
-        return
-            domainAssembly
-                .GetTypes()
-                .FirstOrDefault
+        // Entities registered in AppDbContext (DbSets)
+        var registeredTypes =
+            _context.Model
+                .GetEntityTypes()
+                .Select
+                (
+                    entityType =>
+                        entityType.ClrType
+                )
+                .Where
                 (
                     type =>
                         type.IsClass
-
                         &&
-
                         !type.IsAbstract
+                )
+                .Distinct()
+                .ToList();
 
+
+        // Every class in the Domain assembly
+        var domainTypes =
+            typeof(SubmenuSynchronization)
+                .Assembly
+                .GetTypes()
+                .Where
+                (
+                    type =>
+                        type.IsClass
                         &&
+                        !type.IsAbstract
+                )
+                .ToList();
 
-                        string.Equals
-                        (
-                            type.Name,
-                            entityName,
-                            StringComparison.Ordinal
+
+        //=======================================================
+        // 1 - 2 : Exact Name
+        //=======================================================
+
+        var exact =
+            registeredTypes.FirstOrDefault
+            (
+                type =>
+                    string.Equals(
+                        type.Name,
+                        entityName,
+                        StringComparison.Ordinal
+                    )
+            )
+            ??
+            domainTypes.FirstOrDefault
+            (
+                type =>
+                    string.Equals(
+                        type.Name,
+                        entityName,
+                        StringComparison.Ordinal
+                    )
+            );
+
+
+        if
+        (
+            exact != null
+        )
+        {
+            return exact;
+        }
+
+
+        //=======================================================
+        // 3 - 4 : Loose Name (case / separators ignored)
+        //=======================================================
+
+        var key =
+            NormalizeTypeName(
+                entityName
+            );
+
+
+        return
+            SingleLooseMatch(
+                registeredTypes,
+                key
+            )
+            ??
+            SingleLooseMatch(
+                domainTypes,
+                key
+            );
+    }
+
+
+
+    //===========================================================
+    // Single Loose Match
+    //
+    // Returns the type only when exactly one candidate matches.
+    //===========================================================
+
+    private static Type?
+        SingleLooseMatch
+    (
+        List<Type> candidates,
+        string key
+    )
+    {
+        var matches =
+            candidates
+                .Where
+                (
+                    type =>
+                        NormalizeTypeName(
+                            type.Name
                         )
-                );
+                        ==
+                        key
+                )
+                .Distinct()
+                .Take(2)
+                .ToList();
+
+
+        return
+            matches.Count == 1
+                ? matches[0]
+                : null;
+    }
+
+
+
+    //===========================================================
+    // Normalize Type Name
+    //
+    // "EMI Accounts" / "EMIAccounts" / "Emi_Accounts"
+    //     → "EMIACCOUNTS"
+    //===========================================================
+
+    private static string
+        NormalizeTypeName
+    (
+        string name
+    )
+    {
+        return
+            new string(
+                (name ?? string.Empty)
+                    .Where(
+                        char.IsLetterOrDigit
+                    )
+                    .ToArray()
+            )
+            .ToUpperInvariant();
     }
 
 
@@ -1664,12 +1802,35 @@ public class DatabaseOperationResolver
             }
 
 
+            //===================================================
+            // Filter (partial index)
+            //
+            // e.g. HasFilter("\"IsDeleted\" = false") → unique
+            // among live rows only, so a soft-deleted row never
+            // blocks a new one with the same value.
+            //===================================================
+
+            var indexFilter =
+                index.GetFilter();
+
+
+            var whereSql =
+                string.IsNullOrWhiteSpace(
+                    indexFilter
+                )
+                    ?
+                    string.Empty
+                    :
+                    $" WHERE {indexFilter.Trim()}";
+
+
             sql +=
                 Environment.NewLine +
                 Environment.NewLine +
                 $"CREATE UNIQUE INDEX \"{indexName}\" " +
                 $"ON {qualifiedTableName} " +
-                $"({string.Join(", ", indexColumns)});";
+                $"({string.Join(", ", indexColumns)})" +
+                $"{whereSql};";
         }
 
 

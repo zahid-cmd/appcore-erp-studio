@@ -1,38 +1,142 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
+         Center : Branch + Financial Year, status, step
+         Right  : commands (at most 3) + back to list
+           Add          : Next | Save*, Clear  (step 2 : Save, Back, Clear)
+           Edit (Draft) : Next | Update*, Approve, Clear
+                          (step 2 : Update, Back, Approve)
+           View Draft   : Edit, Approve, Next / Back
+           Approved     : Post, Return to Draft, Next / Back
+           Posted       : Cancel Voucher, Next / Back
+         * Save when every row is Cash / Bank; otherwise on step 2
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-file-invoice-dollar"
 
         [title]="pageTitle"
 
-        subtitle="Manage receiptvouchers">
+        subtitle="Money received : Draft → Approved → Posted">
+
+        <div
+
+            pageHeaderCenter
+
+            class="rv-center">
+
+          <div class="rv-ribbon">
+
+            <div class="rv-chip">
+
+                <span class="rv-chip-icon rv-chip-icon-branch">
+
+                    <i class="fas fa-building"></i>
+
+                </span>
+
+                <span class="rv-chip-text">
+
+                    <span class="rv-chip-label">Branch</span>
+
+                    <strong>{{ branchName || 'Not set' }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="rv-ribbon-sep"></span>
+
+            <div
+
+                class="rv-chip"
+
+                [class.rv-chip-error]="!!periodError && isEditable"
+
+                [title]="periodError">
+
+                <span class="rv-chip-icon rv-chip-icon-year">
+
+                    <i class="fas fa-calendar-days"></i>
+
+                </span>
+
+                <span class="rv-chip-text">
+
+                    <span class="rv-chip-label">Financial Year</span>
+
+                    <strong>{{ financialYearText }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="rv-ribbon-sep"></span>
+
+            <div class="rv-state">
+
+                <span [class]="statusClass">
+
+                    {{ voucher ? status : 'New Draft' }}
+
+                </span>
+
+                @if (needsDesk)
+                {
+                    <span class="rv-steps">
+
+                        Step {{ step }} of 2 · {{ step === 1 ? 'Entry' : 'Payment Desk' }}
+
+                    </span>
+                }
+
+                @if (hasChanges && isEditable)
+                {
+                    <span class="rv-unsaved">
+
+                        <i class="fas fa-circle"></i>
+
+                        Unsaved
+
+                    </span>
+                }
+
+            </div>
+
+          </div>
+
+        </div>
 
         <app-command-center
 
             pageHeaderRight
 
-            [command1Text]="saveButtonText"
+            [command1Text]="command1.text"
 
-            command1Icon="fas fa-floppy-disk"
+            [command1Icon]="command1.icon"
 
-            (command1Click)="onSave()"
+            [command1Visible]="!!command1.command"
 
-            [command1Visible]="!isViewMode"
+            (command1Click)="onCommand(0)"
 
-            command2Text="Clear"
+            [command2Text]="command2.text"
 
-            command2Icon="fas fa-broom"
+            [command2Icon]="command2.icon"
 
-            (command2Click)="onClear()"
+            [command2Visible]="!!command2.command"
 
-            [command2Visible]="!isViewMode"
+            (command2Click)="onCommand(1)"
 
-            [command3Visible]="false"
+            [command3Text]="command3.text"
+
+            [command3Icon]="command3.icon"
+
+            [command3Visible]="!!command3.command"
+
+            (command3Click)="onCommand(2)"
 
             rightCommandIcon="fas fa-arrow-left"
 
@@ -45,229 +149,513 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : BODY (full available height, scrolls)
     ====================================================== -->
 
-    <app-page-toolbar>
+    <div class="rv-body">
 
-        <app-control-tabs
+        @if (loading)
+        {
+            <div class="rv-loading">
 
-            pageToolbarLeft
+                <i class="fas fa-spinner fa-spin"></i>
 
-            [tabs]="tabs"
+                Loading receipt voucher...
 
-            [(selectedTab)]="selectedTab">
+            </div>
+        }
+        @else
+        {
 
-        </app-control-tabs>
+            <!-- Period problem (Add / Edit) -->
 
-    </app-page-toolbar>
+            @if (periodError && isEditable)
+            {
+                <div class="rv-banner rv-banner-warn">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span>{{ periodError }}</span>
+
+                </div>
+            }
+
+
+            <!-- Cancelled -->
+
+            @if (status === 'Cancelled' && voucher)
+            {
+                <div class="rv-banner rv-banner-cancelled">
+
+                    <i class="fas fa-ban"></i>
+
+                    <span>
+
+                        <strong>Cancelled</strong>
+
+                        on {{ displayDate(voucher.CancelDate) }}
+
+                        @if (voucher.CancelReason)
+                        {
+                            : {{ voucher.CancelReason }}
+                        }
+
+                    </span>
+
+                </div>
+            }
+
+
+            <!-- =============================================
+                 STEP 1 : VOUCHER MASTER DATA (always shown; the
+                 Payment Desk opens over it as a modal)
+            ============================================== -->
+
+            <app-voucher-master-data
+
+                mode="receipt"
+
+                [readonly]="isReadonly"
+
+                [multiMode]="multiMode"
+
+                [maxLines]="maxLines"
+
+                [voucherNo]="voucherNoText"
+
+                [branchName]="branchName"
+
+                [value]="entryInput"
+
+                (valueChange)="onEntryChange($event)"
+
+                (totalChange)="onTotalChange($event)"
+
+                (validChange)="onMasterValidChange($event)">
+
+            </app-voucher-master-data>
+
+
+
+        }
+
+    </div>
 
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         PAYMENT DESK MODAL (step 2)
+         Header : title, verified progress, X (close)
+         Body   : app-payment-desk
+         Footer : status note, Close, Okay
+           Okay  : keep the details, back to step 1
+           Close : leave without the changes made here (asks
+                   first when something changed)
     ====================================================== -->
 
-    <app-page-canvas>
+    @if (step === 2)
+    {
+        <div class="rv-modal-backdrop">
 
-        <app-form-grid
+            <div
 
-            canvasBody
+                class="rv-modal"
 
-            [columns]="4">
+                role="dialog"
 
+                aria-modal="true"
 
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
+                aria-labelledby="rv-desk-title">
 
-            <app-form-section
 
-                title="General Information"
+                <!-- Header -->
 
-                icon="fas fa-circle-info">
+                <div class="rv-modal-head">
 
+                    <span class="rv-modal-icon">
 
-                <!-- Code -->
+                        <i class="fas fa-cash-register"></i>
 
-                <app-textbox
+                    </span>
 
-                    label="Code"
+                    <div class="rv-modal-title">
 
-                    placeholder="Auto generated"
+                        <strong id="rv-desk-title">Payment Desk</strong>
 
-                    [(value)]="entity.code"
+                        <span>Fill each row's details, press Verify Row, then Okay.</span>
 
-                    [readonly]="true"
+                    </div>
 
-                    [required]="true">
+                    <div
 
-                </app-textbox>
+                        class="rv-modal-progress"
 
+                        [class.rv-modal-progress-done]="deskAllVerified">
 
+                        <span class="rv-modal-progress-text">
 
-                <!-- Name -->
+                            <i [class]="deskAllVerified ? 'fas fa-circle-check' : 'fas fa-list-check'"></i>
 
-                <app-textbox
+                            {{ deskVerifiedCount }} / {{ deskRowCount }} verified
 
-                    label="Name"
+                        </span>
 
-                    placeholder="Enter name"
+                        <span class="rv-progress-track">
 
-                    [(value)]="entity.name"
+                            <span
 
-                    (valueChange)="onValueChange()"
+                                class="rv-progress-bar"
 
-                    [disabled]="isViewMode"
+                                [style.width.%]="deskProgress">
 
-                    [required]="true">
+                            </span>
 
-                </app-textbox>
+                        </span>
 
+                    </div>
 
-            </app-form-section>
+                    <button
 
+                        type="button"
 
+                        class="rv-modal-x"
 
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
+                        title="Close"
 
-            <app-form-section
+                        aria-label="Close"
 
-                title="Sample Information"
+                        (click)="onDeskClose()">
 
-                icon="fas fa-layer-group">
+                        <i class="fas fa-xmark"></i>
 
+                    </button>
 
-                <!-- Sample Search Dropdown -->
+                </div>
 
-                <app-search-dropdown
 
-                    label="Sample Search Dropdown"
+                <!-- Body -->
 
-                    [items]="items"
+                <div class="rv-modal-body appcore-scrollbar">
 
-                    labelField="text"
+                    <app-payment-desk
 
-                    valueField="value"
+                        [readonly]="isReadonly"
 
-                    [(value)]="entity.sampleSearchDropdownId"
+                        [lines]="deskInput"
 
-                    (valueChange)="onValueChange()"
+                        (linesChange)="onDeskChange($event)"
 
-                    [disabled]="isViewMode">
+                        (validChange)="onDeskValidChange($event)">
 
-                </app-search-dropdown>
+                    </app-payment-desk>
 
+                </div>
 
 
-                <!-- Sample Field -->
+                <!-- Footer -->
 
-                <app-textbox
+                <div
 
-                    label="Sample Field"
+                    class="rv-modal-foot"
 
-                    placeholder="Enter sample value"
+                    [class.rv-modal-foot-confirm]="deskConfirmClose">
 
-                    [(value)]="entity.sampleField"
+                    @if (deskConfirmClose)
+                    {
+                        <span class="rv-modal-note rv-modal-note-warn">
 
-                    (valueChange)="onValueChange()"
+                            <i class="fas fa-triangle-exclamation"></i>
 
-                    [disabled]="isViewMode">
+                            Discard the changes made in the Payment Desk?
 
-                </app-textbox>
+                        </span>
 
+                        <button
 
-            </app-form-section>
+                            type="button"
 
+                            class="rv-btn rv-btn-light"
 
+                            (click)="onDeskKeepEditing()">
 
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
+                            <i class="fas fa-pen"></i>
 
-            <app-form-section
+                            Keep Editing
 
-                title="Status Information"
+                        </button>
 
-                icon="fas fa-toggle-on">
+                        <button
 
+                            type="button"
 
-                <!-- Status -->
+                            class="rv-btn rv-btn-danger"
 
-                <app-dropdown
+                            (click)="onDeskDiscard()">
 
-                    label="Status"
+                            <i class="fas fa-trash-can"></i>
 
-                    [items]="statusItems"
+                            Discard
 
-                    labelField="text"
+                        </button>
+                    }
+                    @else
+                    {
+                        <span
 
-                    valueField="value"
+                            class="rv-modal-note"
 
-                    [(value)]="entity.status"
+                            [class.rv-modal-note-ok]="deskAllVerified && isEditable">
 
-                    (valueChange)="onValueChange()"
+                            <i [class]="deskAllVerified && isEditable ? 'fas fa-circle-check' : 'fas fa-circle-info'"></i>
 
-                    [disabled]="isViewMode"
+                            {{ deskFooterNote }}
 
-                    [required]="true">
+                        </span>
 
-                </app-dropdown>
+                        <button
 
+                            type="button"
 
-            </app-form-section>
+                            class="rv-btn rv-btn-light"
 
+                            (click)="onDeskClose()">
 
+                            <i class="fas fa-xmark"></i>
 
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
+                            Close
 
-            <app-form-section
+                        </button>
 
-                title="Additional Information"
+                        @if (isEditable)
+                        {
+                            <button
 
-                icon="fas fa-clipboard">
+                                type="button"
 
+                                class="rv-btn rv-btn-primary"
 
-                <!-- Remarks -->
+                                (click)="onBack()">
 
-                <app-textarea
+                                <i class="fas fa-check"></i>
 
-                    label="Remarks"
+                                Okay
 
-                    placeholder="Enter remarks"
+                            </button>
+                        }
+                    }
 
-                    [(value)]="entity.remarks"
+                </div>
 
-                    (valueChange)="onValueChange()"
+            </div>
 
-                    [disabled]="isViewMode">
+        </div>
+    }
 
-                </app-textarea>
 
 
-            </app-form-section>
+    <!-- =====================================================
+         CANCEL VOUCHER MODAL (Posted)
+           Header : icon, title, voucher no, X
+           Body   : voucher summary, warning, Cancel Date, Reason
+           Footer : Keep Voucher, Cancel Voucher
+    ====================================================== -->
 
+    @if (cancelOpened)
+    {
+        <div class="rv-overlay">
 
-        </app-form-grid>
+            <div
 
-    </app-page-canvas>
+                class="rv-cx"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="rv-cx-title">
+
+
+                <!-- Header -->
+
+                <div class="rv-cx-head">
+
+                    <span class="rv-cx-icon">
+
+                        <i class="fas fa-ban"></i>
+
+                    </span>
+
+                    <div class="rv-cx-title">
+
+                        <strong id="rv-cx-title">Cancel Voucher</strong>
+
+                        <span>{{ voucher?.VoucherNo }}</span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-modal-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="closeCancel()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="rv-cx-body">
+
+                    <div class="rv-cx-summary">
+
+                        <div>
+
+                            <span>Voucher Date</span>
+
+                            <strong>{{ displayDate(voucher?.VoucherDate) }}</strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>Received From</span>
+
+                            <strong [title]="voucher?.PartyName || ''">{{ voucher?.PartyName || '—' }}</strong>
+
+                        </div>
+
+                        <div class="rv-cx-amount">
+
+                            <span>Amount</span>
+
+                            <strong>{{ money(voucher?.TotalAmount ?? 0) }}</strong>
+
+                        </div>
+
+                    </div>
+
+                    <div class="rv-cx-warn">
+
+                        <i class="fas fa-triangle-exclamation"></i>
+
+                        <span>
+
+                            A reversing entry is posted on the cancel date and the
+                            voucher becomes <b>Cancelled</b>. This cannot be undone.
+                            Not allowed when a check is already cleared.
+
+                        </span>
+
+                    </div>
+
+                    <div class="rv-cx-fields">
+
+                        <app-datepicker
+
+                            class="rv-cx-date"
+
+                            label="Cancel Date"
+
+                            [required]="true"
+
+                            [value]="$any(cancelDateValue)"
+
+                            (valueChange)="onCancelDateChange($event)">
+
+                        </app-datepicker>
+
+                        <app-textarea
+
+                            class="rv-cx-reason"
+
+                            label="Reason"
+
+                            placeholder="Why is this voucher cancelled?"
+
+                            [required]="true"
+
+                            [rows]="4"
+
+                            [maxLength]="500"
+
+                            [value]="cancelReason"
+
+                            (valueChange)="onCancelReasonChange($event)">
+
+                        </app-textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div class="rv-modal-foot">
+
+                    <span class="rv-modal-note">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        Date and reason are required.
+
+                    </span>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-btn rv-btn-light"
+
+                        (click)="closeCancel()">
+
+                        <i class="fas fa-arrow-left"></i>
+
+                        Keep Voucher
+
+                    </button>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-btn rv-btn-danger"
+
+                        (click)="confirmCancel()">
+
+                        <i class="fas fa-ban"></i>
+
+                        Cancel Voucher
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 </div>
 
 
 
-<!-- =====================================================
+<!-- =========================================================
      UTILITIES
-====================================================== -->
+========================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

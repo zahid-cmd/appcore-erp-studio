@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     ChangeDetectorRef,
     inject
 }
@@ -30,6 +31,23 @@ import
 }
 from '@angular/forms';
 
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Shared Components
@@ -43,74 +61,21 @@ from '../../../../../../shared/components/layout/page-header/page-header';
 
 import
 {
-    PageToolbarComponent
-}
-from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-
-import
-{
     CommandCenterComponent
 }
 from '../../../../../../shared/components/utilities/command-center/command-center';
 
 import
 {
-    ControlTabsComponent,
-    ControlTab
+    DatepickerComponent
 }
-from '../../../../../../shared/components/controls/control-tabs/control-tabs';
-
-import
-{
-    PageCanvasComponent
-}
-from '../../../../../../shared/components/layout/page-canvas/page-canvas';
-
-import
-{
-    FormGridComponent
-}
-from '../../../../../../shared/components/layout/form-grid/form-grid';
-
-import
-{
-    FormSectionComponent
-}
-from '../../../../../../shared/components/layout/form-section/form-section';
-
-
-//===============================================================
-// Form Controls
-//===============================================================
-
-import
-{
-    TextboxComponent
-}
-from '../../../../../../shared/components/controls/textbox/textbox';
+from '../../../../../../shared/components/controls/datepicker/datepicker';
 
 import
 {
     TextareaComponent
 }
 from '../../../../../../shared/components/controls/textarea/textarea';
-
-import
-{
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
-
-
-//===============================================================
-// Utilities
-//===============================================================
 
 import
 {
@@ -136,14 +101,86 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
 //===============================================================
-// Models & Services
+// Login session (active branch)
+//===============================================================
+
+import
+{
+    AuthenticationStorageService
+}
+from '../../../../../../core/authentication/authentication-storage.service';
+
+//===============================================================
+// Accounting Components
+//===============================================================
+
+import
+{
+    VoucherMasterDataComponent
+}
+from '../../../../../../shared/components/accounting/voucher-master-data/voucher-master-data';
+
+import
+{
+    PaymentDeskComponent
+}
+from '../../../../../../shared/components/accounting/payment-desk/payment-desk';
+
+import
+{
+    AccountingLookupService
+}
+from '../../../../../../shared/components/accounting/accounting-lookup.service';
+
+import
+{
+    VoucherEntryData,
+    VoucherDebitLine,
+    VoucherPeriod,
+    CreditLedgerType,
+    emptyVoucherEntry,
+    needsDetails,
+    debitDetailIssue,
+    isDebitRowReady,
+    roundMoney,
+    formatMoney,
+    toIsoDate
+}
+from '../../../../../../shared/components/accounting/accounting.models';
+
+import
+{
+    VOUCHER_SWITCH,
+    SwitchMap,
+    SwitchValueMap,
+    switchOn,
+    switchNumber,
+    VoucherSwitchesService
+}
+from '../../../../../../shared/components/accounting/voucher-switches';
+
+//===============================================================
+// Models / Service
 //===============================================================
 
 import
 {
     ReceiptVoucher,
+    ReceiptVoucherSaved,
+    ReceiptVoucherDefaults,
     CreateReceiptVoucher,
     UpdateReceiptVoucher
 }
@@ -155,68 +192,99 @@ import
 }
 from '../../../services/receipt-voucher.service';
 
+//===============================================================
+// Header Commands
+//===============================================================
+
+type FormCommand =
+    'save' | 'clear' | 'edit' | 'approve' | 'post' | 'return' | 'cancel' | 'next' | 'back' | 'print' | '';
+
+interface CommandSlot
+{
+    command:
+        FormCommand;
+
+    text:
+        string;
+
+    icon:
+        string;
+}
+
+const NO_COMMAND:
+    CommandSlot =
+{
+    command:'',
+    text:'',
+    icon:''
+};
+
+const VOUCHER_PREFIX:
+    string =
+    'RV';
 
 //===============================================================
 // Component
+//
+// Receipt Voucher : one page, up to two steps
+//
+//   Header  : Branch (login branch) + Financial Year chips,
+//             status and step in the center; Checkout / Back in
+//             the command center (only when a Check / MFS / POS
+//             / EMI row exists)
+//   Step 1  : Voucher Master Data (debits first, then credits,
+//             narration, summary)
+//   Step 2  : Payment Desk (details of Check / MFS / POS / EMI
+//             rows)
+//   Save    : step 1 when every row is Cash / Bank, otherwise
+//             step 2
+//
+// The voucher number is only previewed; the real one is taken
+// when the draft is first saved.
 //===============================================================
 
 @Component(
 {
-    selector:'receiptVoucher-form',
+    selector:'receipt-voucher-form',
 
     standalone:true,
 
     imports:
     [
         CommonModule,
-
         FormsModule,
-
 
         //=======================================================
         // Layout
         //=======================================================
 
         PageHeaderComponent,
-
-        PageToolbarComponent,
-
         CommandCenterComponent,
 
-        ControlTabsComponent,
-
-        PageCanvasComponent,
-
-        FormGridComponent,
-
-        FormSectionComponent,
-
-
         //=======================================================
-        // Form Controls
+        // Controls
         //=======================================================
 
-        TextboxComponent,
-
+        DatepickerComponent,
         TextareaComponent,
 
-        SearchDropdownComponent,
+        //=======================================================
+        // Accounting
+        //=======================================================
 
-        DropdownComponent,
-
+        VoucherMasterDataComponent,
+        PaymentDeskComponent,
 
         //=======================================================
         // Utilities
         //=======================================================
 
         ToastComponent,
-
-        ConfirmDialogComponent
+        ConfirmDialogComponent,
+        ProgressDialogComponent
     ],
 
-
     templateUrl:'./receipt-voucher-form.html',
-
 
     styleUrls:
     [
@@ -224,11 +292,13 @@ from '../../../services/receipt-voucher.service';
     ]
 })
 
+//===============================================================
+// Receipt Voucher Form
+//===============================================================
 
 export class ReceiptVoucherForm
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
@@ -236,27 +306,88 @@ implements OnInit
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly router =
         inject(Router);
 
-
-    private readonly receiptvoucherservice =
+    private readonly receiptVoucherService =
         inject(ReceiptVoucherService);
 
+    private readonly switchesService =
+        inject(VoucherSwitchesService);
+
+    // Settings › System Configuration (Accounts & Finance)
+    private switches:
+        SwitchMap =
+        {};
+
+    private switchValues:
+        SwitchValueMap =
+        {};
+
+
+
+    private readonly lookup =
+        inject(AccountingLookupService);
+
+    private readonly authenticationStorage =
+        inject(AuthenticationStorageService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    //===========================================================
+    // Progress Configuration
+    //===========================================================
 
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    // Prevents double submit while any command is running
+    isSaving:
+        boolean =
+        false;
+
+    //===========================================================
+    // List Route
+    //===========================================================
+
+    private readonly listRoute:
+        string[] =
+    [
+        '/accounts-finance',
+        'voucher-management',
+        'receipt-voucher',
+        'list'
+    ];
 
     //===========================================================
     // Mode
@@ -266,164 +397,143 @@ implements OnInit
         'add' | 'edit' | 'view' =
         'add';
 
-
     entityId:
         number =
         0;
 
+    loading:
+        boolean =
+        false;
 
-
-    //===========================================================
-    // Page Header
-    //===========================================================
-
-    pageTitle:
+    readonly entityName:
         string =
         'Receipt Voucher';
 
-
-    entityName:
-        string =
-        'Receipt Voucher';
-
-
-
     //===========================================================
-    // Selected Tab
+    // Login branch (active session)
     //===========================================================
 
-    selectedTab:
-        string =
-        'general';
+    loginBranchId:
+        number =
+        0;
 
-
-
-    //===========================================================
-    // Tabs
-    //===========================================================
-
-    get tabs():
-        ControlTab[]
-    {
-        return [
-            {
-                id:'general',
-
-                label:this.tabTitle
-            }
-        ];
-    }
-
-
-
-    //===========================================================
-    // Tab Title
-    //===========================================================
-
-    get tabTitle():
-        string
-    {
-        switch
-        (
-            this.mode
-        )
-        {
-            case 'add':
-
-                return `Add ${this.entityName}`;
-
-
-            case 'edit':
-
-                return `Update ${this.entityName}`;
-
-
-            case 'view':
-
-                return `View ${this.entityName}`;
-
-
-            default:
-
-                return this.entityName;
-        }
-    }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Items
-    //===========================================================
-
-    items:
-        any[]
-    =
-        [];
-
-
-
-    //===========================================================
-    // Status Items
-    //===========================================================
-
-    statusItems:
-        any[]
-    =
-        [
-            {
-                text:'Active',
-
-                value:'Active'
-            },
-
-            {
-                text:'Inactive',
-
-                value:'Inactive'
-            }
-        ];
-
-
-
-    //===========================================================
-    // Entity
-    //===========================================================
-
-    entity:
-        ReceiptVoucher
-    =
-    {
-        id:0,
-
-        code:'',
-
-        name:'',
-
-        sampleSearchDropdownId:0,
-
-        sampleField:'',
-
-        status:'Active',
-
-        remarks:''
-    };
-
-
-
-    //===========================================================
-    // Form State
-    //===========================================================
-
-    private originalEntity:
+    loginBranchName:
         string =
         '';
 
+    //===========================================================
+    // Loaded voucher (edit / view)
+    //===========================================================
+
+    voucher:
+        ReceiptVoucher | null =
+        null;
+
+    //===========================================================
+    // Step 1 : Voucher Master Data
+    //
+    // entryInput : what the component is given (load / clear /
+    //              back from step 2 only, so typing is never
+    //              reset)
+    // entry      : the latest value (with step 2 details)
+    //===========================================================
+
+    entryInput:
+        VoucherEntryData | null =
+        null;
+
+    entry:
+        VoucherEntryData =
+        emptyVoucherEntry(
+            toIsoDate(new Date())
+        );
+
+    total:
+        number =
+        0;
+
+    masterValid:
+        boolean =
+        false;
+
+    //===========================================================
+    // Step 2 : Payment Desk
+    //===========================================================
+
+    step:
+        1 | 2 =
+        1;
+
+    deskInput:
+        VoucherDebitLine[] =
+        [];
+
+    deskValid:
+        boolean =
+        true;
+
+    // Debits as they were when the desk opened (Close discards
+    // back to this)
+    private deskSnapshot:
+        VoucherDebitLine[] =
+        [];
+
+    // Close pressed with changes : footer asks to discard
+    deskConfirmClose:
+        boolean =
+        false;
+
+    //===========================================================
+    // Voucher No preview / Financial Year
+    //===========================================================
+
+    voucherNoText:
+        string =
+        '';
+
+    period:
+        VoucherPeriod | null =
+        null;
+
+    periodError:
+        string =
+        '';
+
+    periodChecking:
+        boolean =
+        false;
+
+    private periodDate:
+        string =
+        '';
+
+    //===========================================================
+    // Change Tracking
+    //===========================================================
+
+    private originalState:
+        string =
+        '';
 
     hasChanges:
         boolean =
         false;
 
+    //===========================================================
+    // Cancel Overlay (Posted)
+    //===========================================================
 
+    cancelOpened:
+        boolean =
+        false;
+
+    cancelDateValue:
+        Date | null =
+        null;
+
+    cancelReason:
+        string =
+        '';
 
     //===========================================================
     // Initialize
@@ -432,70 +542,128 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.readLoginBranch();
+
         this.initializeMode();
+
+        void this.loadSwitches();
     }
 
+    //===========================================================
+    // Switches (read by code)
+    //===========================================================
 
+    private async loadSwitches():
+        Promise<void>
+    {
+        this.switches =
+            await this.switchesService.load();
+
+        this.switchValues =
+            this.switchesService.lastValues;
+
+        this.cdr.detectChanges();
+    }
+
+    // Multi Mode Receipt Voucher : several receipt modes
+    get multiMode():
+        boolean
+    {
+        return switchOn(this.switches, VOUCHER_SWITCH.RV_MULTI_MODE, false);
+    }
+
+    // Post Receipt Voucher On Approval : Approve also posts
+    get postOnApproval():
+        boolean
+    {
+        return switchOn(this.switches, VOUCHER_SWITCH.RV_POST_ON_APPROVAL, false);
+    }
+
+    // Receipt Voucher : Max Lines (0 = no limit)
+    get maxLines():
+        number
+    {
+        return switchNumber(this.switches, this.switchValues, VOUCHER_SWITCH.RV_MAX_LINES);
+    }
+
+    // Receipt Voucher : Allow Print On Approval
+    get printOnApproval():
+        boolean
+    {
+        return switchOn(this.switches, VOUCHER_SWITCH.RV_PRINT_ON_APPROVAL, true);
+    }
 
     //===========================================================
-    // Initialize Mode
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isSaving
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Login branch
+    //===========================================================
+
+    private readLoginBranch():
+        void
+    {
+        const user =
+            this.authenticationStorage.getUser();
+
+        this.loginBranchId =
+            Number(user?.branchId) || 0;
+
+        this.loginBranchName =
+            (user?.branchName ?? '').trim();
+    }
+
+    // The voucher's own branch once saved, else the login branch
+    get branchId():
+        number
+    {
+        return this.voucher?.BranchId
+            ||
+            this.loginBranchId;
+    }
+
+    get branchName():
+        string
+    {
+        return this.voucher?.BranchName
+            ||
+            this.loginBranchName;
+    }
+
+    //===========================================================
+    // Mode
     //===========================================================
 
     private initializeMode():
         void
     {
-        const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
-
-
         const url =
             this.router.url.toLowerCase();
 
-
-        //=======================================================
-        // View Mode
-        //=======================================================
-
-        if
-        (
+        this.mode =
             url.includes('/view/')
-        )
-        {
-            this.mode =
-                'view';
-        }
+                ? 'view'
+                : url.includes('/edit/')
+                    ? 'edit'
+                    : 'add';
 
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
-        else if
-        (
-            url.includes('/edit/')
-        )
-        {
-            this.mode =
-                'edit';
-        }
-
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
-        else
-        {
-            this.mode =
-                'add';
-        }
-
-
-        //=======================================================
-        // Existing Entity
-        //=======================================================
+        const id =
+            this.resolveEntityId();
 
         if
         (
@@ -505,365 +673,2139 @@ implements OnInit
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
 
-
-        //=======================================================
-        // New Entity
-        //=======================================================
+        this.mode =
+            'add';
 
         this.initializeEntity();
     }
 
+    private resolveEntityId():
+        number
+    {
+        let currentRoute:
+            ActivatedRoute | null =
+            this.route;
 
+        while
+        (
+            currentRoute
+        )
+        {
+            const id =
+                Number(
+                    currentRoute.snapshot.paramMap.get('id')
+                );
+
+            if
+            (
+                id > 0
+            )
+            {
+                return id;
+            }
+
+            currentRoute =
+                currentRoute.parent;
+        }
+
+        return 0;
+    }
+
+    get isAddMode():
+        boolean
+    {
+        return this.mode === 'add';
+    }
+
+    get isEditMode():
+        boolean
+    {
+        return this.mode === 'edit';
+    }
+
+    get isViewMode():
+        boolean
+    {
+        return this.mode === 'view';
+    }
 
     //===========================================================
-    // Initialize Entity
+    // Status
+    //===========================================================
+
+    get status():
+        string
+    {
+        return this.voucher?.Status
+            ||
+            'Draft';
+    }
+
+    get statusClass():
+        string
+    {
+        return `rv-status rv-status-${this.status.toLowerCase()}`;
+    }
+
+    // Only a draft in Add / Edit can be changed
+    get isEditable():
+        boolean
+    {
+        return !this.isViewMode
+            &&
+            this.status === 'Draft'
+            &&
+            !this.loading;
+    }
+
+    get isReadonly():
+        boolean
+    {
+        return !this.isEditable
+            ||
+            this.isSaving;
+    }
+
+    get pageTitle():
+        string
+    {
+        switch
+        (
+            this.mode
+        )
+        {
+            case 'add':
+                return `Add ${this.entityName}`;
+
+            case 'edit':
+                return `Update ${this.entityName}`;
+
+            default:
+                return `View ${this.entityName}`;
+        }
+    }
+
+    //===========================================================
+    // Steps
+    //===========================================================
+
+    // A Check / MFS / POS / EMI row needs the Payment Desk
+    get needsDesk():
+        boolean
+    {
+        return this.entry.Debits.some
+        (
+            line =>
+                needsDetails(line.Mode)
+        );
+    }
+
+    // Every Check / MFS / POS / EMI row has its step 2 details
+    // and is ticked Verified
+    get deskComplete():
+        boolean
+    {
+        return this.entry.Debits.every
+        (
+            line =>
+                isDebitRowReady(line)
+        );
+    }
+
+    //-----------------------------------------------------------
+    // Payment Desk modal : progress + footer
+    //-----------------------------------------------------------
+
+    get deskRowCount():
+        number
+    {
+        return this.entry.Debits.filter
+        (
+            line =>
+                needsDetails(line.Mode)
+        ).length;
+    }
+
+    get deskVerifiedCount():
+        number
+    {
+        return this.entry.Debits.filter
+        (
+            line =>
+                needsDetails(line.Mode)
+                &&
+                isDebitRowReady(line)
+        ).length;
+    }
+
+    get deskProgress():
+        number
+    {
+        return this.deskRowCount > 0
+            ? Math.round(this.deskVerifiedCount * 100 / this.deskRowCount)
+            : 100;
+    }
+
+    get deskAllVerified():
+        boolean
+    {
+        return this.deskVerifiedCount === this.deskRowCount;
+    }
+
+    get deskFooterNote():
+        string
+    {
+        if
+        (
+            !this.isEditable
+        )
+        {
+            return 'View only.';
+        }
+
+        if
+        (
+            this.deskAllVerified
+        )
+        {
+            return 'All rows verified. Press Okay, then Save.';
+        }
+
+        const left =
+            this.deskRowCount - this.deskVerifiedCount;
+
+        return `${left} row${left === 1 ? '' : 's'} left to verify.`;
+    }
+
+    private get deskChanged():
+        boolean
+    {
+        return JSON.stringify(this.entry.Debits)
+            !==
+            JSON.stringify(this.deskSnapshot);
+    }
+
+    // Header X / footer Close : leave without keeping changes
+    onDeskClose():
+        void
+    {
+        if
+        (
+            this.isEditable
+            &&
+            this.deskChanged
+        )
+        {
+            this.deskConfirmClose =
+                true;
+
+            return;
+        }
+
+        this.onBack();
+    }
+
+    onDeskKeepEditing():
+        void
+    {
+        this.deskConfirmClose =
+            false;
+    }
+
+    onDeskDiscard():
+        void
+    {
+        this.entry =
+        {
+            ...this.entry,
+
+            Debits:
+                this.deskSnapshot.map
+                (
+                    line =>
+                    ({
+                        ...line
+                    })
+                )
+        };
+
+        this.checkForChanges();
+
+        this.onBack();
+    }
+
+    // Save always happens on step 1 : once step 2 is complete
+    // (or not needed) Checkout turns into Save
+    get isSaveStep():
+        boolean
+    {
+        return this.step === 1
+            &&
+            (
+                !this.needsDesk
+                ||
+                this.deskComplete
+            );
+    }
+
+    get canGoNext():
+        boolean
+    {
+        return this.masterValid
+            &&
+            (
+                !this.isEditable
+                ||
+                !!this.period
+            );
+    }
+
+    get nextHint():
+        string
+    {
+        if
+        (
+            this.isEditable
+            &&
+            this.periodError
+        )
+        {
+            return this.periodError;
+        }
+
+        return this.masterValid
+            ? ''
+            : 'Balance the debit and credit first.';
+    }
+
+    onNext():
+        void
+    {
+        if
+        (
+            !this.canGoNext
+        )
+        {
+            this.toast.info(
+                'Not Ready',
+                this.nextHint || 'Complete step 1 first.'
+            );
+
+            return;
+        }
+
+        this.deskInput =
+            this.entry.Debits.map
+            (
+                line =>
+                ({
+                    ...line
+                })
+            );
+
+        this.deskSnapshot =
+            this.entry.Debits.map
+            (
+                line =>
+                ({
+                    ...line
+                })
+            );
+
+        this.deskConfirmClose =
+            false;
+
+        this.step =
+            2;
+
+        this.cdr.detectChanges();
+    }
+
+    // Okay (modal footer) : keep the desk details, back to step 1
+    onBack():
+        void
+    {
+        this.deskConfirmClose =
+            false;
+
+        // Step 1 gets the debits back with their step 2 details
+        this.entryInput =
+            this.cloneEntry(
+                this.entry
+            );
+
+        this.step =
+            1;
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Header Commands (by mode, status and step; at most 3)
+    //
+    // Save always happens on step 1. Checkout opens step 2
+    // (Payment Desk) for Check / MFS / POS / EMI rows; once those
+    // details are complete Checkout turns into Save (Checkout
+    // stays as a second button to revisit the details).
+    //
+    // Add          : Checkout, Clear  |  Save, Checkout, Clear
+    // Edit (Draft) : Checkout, Approve, Clear  |  Update, Checkout, Approve
+    // Step 2       : Done → back to step 1 (View : workflow buttons + Done)
+    // View Draft   : Edit, Approve (+ Checkout)
+    // Approved     : Post, Return (+ Print)
+    // After any action (Save, Update, Approve, Post, Return,
+    // Cancel) the page goes back to the list
+    // Posted       : Cancel, Print (+ Checkout)
+    //
+    // Button texts (all vouchers) : Return = back to Draft,
+    // Cancel = cancel a posted voucher (command keys unchanged)
+    //===========================================================
+
+    private get commandSlots():
+        CommandSlot[]
+    {
+        const save:
+            CommandSlot =
+        {
+            command:'save',
+            text:this.isEditMode ? 'Update' : 'Save',
+            icon:'fas fa-floppy-disk'
+        };
+
+        const clear:
+            CommandSlot =
+        {
+            command:'clear',
+            text:'Clear',
+            icon:'fas fa-broom'
+        };
+
+        const edit:
+            CommandSlot =
+        {
+            command:'edit',
+            text:'Edit',
+            icon:'fas fa-pen'
+        };
+
+        const approve:
+            CommandSlot =
+        {
+            command:'approve',
+            text:'Approve',
+            icon:'fas fa-circle-check'
+        };
+
+        const post:
+            CommandSlot =
+        {
+            command:'post',
+            text:'Post',
+            icon:'fas fa-paper-plane'
+        };
+
+        const returnToDraft:
+            CommandSlot =
+        {
+            command:'return',
+            text:'Return',
+            icon:'fas fa-rotate-left'
+        };
+
+        const cancel:
+            CommandSlot =
+        {
+            command:'cancel',
+            text:'Cancel',
+            icon:'fas fa-ban'
+        };
+
+        const print:
+            CommandSlot =
+        {
+            command:'print',
+            text:'Print',
+            icon:'fas fa-print'
+        };
+
+        const checkout:
+            CommandSlot =
+        {
+            command:'next',
+            text:'Checkout',
+            icon:'fas fa-cash-register'
+        };
+
+        const back:
+            CommandSlot =
+        {
+            command:'back',
+            text:'Okay',
+            icon:'fas fa-check'
+        };
+
+        if
+        (
+            this.loading
+        )
+        {
+            return [];
+        }
+
+        // Step 2 (Payment Desk) : only Back while editing; the
+        // workflow buttons stay in View
+        if
+        (
+            this.step === 2
+        )
+        {
+            if
+            (
+                this.isEditable
+            )
+            {
+                return [back];
+            }
+
+            switch
+            (
+                this.status
+            )
+            {
+                case 'Draft':
+                    return [edit, approve, back];
+
+                case 'Approved':
+                    return [post, returnToDraft, back];
+
+                case 'Posted':
+                    return [cancel, print, back];
+
+                case 'Cancelled':
+                    return [print, back];
+
+                default:
+                    return [back];
+            }
+        }
+
+        // Step 1
+        //   desk needed, not complete : Checkout
+        //   desk complete / not needed : Save (+ Checkout to
+        //   revisit the details)
+        const reopen:
+            CommandSlot[] =
+            this.needsDesk
+                ? [checkout]
+                : [];
+
+        const primary:
+            CommandSlot[] =
+            this.isSaveStep
+                ? [save, ...reopen]
+                : [checkout];
+
+        if
+        (
+            this.isAddMode
+        )
+        {
+            return [...primary, clear].slice(0, 3);
+        }
+
+        switch
+        (
+            this.status
+        )
+        {
+            case 'Draft':
+
+                if
+                (
+                    this.isEditMode
+                )
+                {
+                    return [...primary, approve, clear].slice(0, 3);
+                }
+
+                return [edit, approve, ...reopen];
+
+            // Prints : Posted / Cancelled; Approved when allowed
+            case 'Approved':
+                return [post, returnToDraft, ...(this.printOnApproval ? [print] : [])];
+
+            case 'Posted':
+                return [cancel, print, ...reopen];
+
+            case 'Cancelled':
+                return [print, ...reopen];
+
+            default:
+                return reopen;
+        }
+    }
+
+    private slot
+    (
+        index:
+            number
+    ):
+        CommandSlot
+    {
+        return this.commandSlots[index]
+            ??
+            NO_COMMAND;
+    }
+
+    get command1():
+        CommandSlot
+    {
+        return this.slot(0);
+    }
+
+    get command2():
+        CommandSlot
+    {
+        return this.slot(1);
+    }
+
+    get command3():
+        CommandSlot
+    {
+        return this.slot(2);
+    }
+
+    onCommand
+    (
+        index:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        switch
+        (
+            this.slot(index).command
+        )
+        {
+            case 'save':
+                this.onSave();
+                break;
+
+            case 'clear':
+                this.onClear();
+                break;
+
+            case 'edit':
+                this.goTo('edit');
+                break;
+
+            case 'approve':
+                this.onApprove();
+                break;
+
+            case 'post':
+                this.onPost();
+                break;
+
+            case 'return':
+                this.onReturnToDraft();
+                break;
+
+            case 'cancel':
+                this.openCancel();
+                break;
+
+            case 'next':
+                this.onNext();
+                break;
+
+            case 'back':
+                this.onBack();
+                break;
+
+            case 'print':
+                this.onPrint();
+                break;
+        }
+    }
+
+    //===========================================================
+    // Print : opens the Print Viewer in a new tab
+    //   /print-viewer/receipt-voucher/<id>?doc=all
+    // (Receipt Voucher + Money Receipt; the viewer refuses Draft)
+    //===========================================================
+
+    onPrint():
+        void
+    {
+        const id =
+            this.voucher?.ReceiptVoucherId
+            ??
+            0;
+
+        const status =
+            String(this.voucher?.Status ?? '');
+
+        if
+        (
+            !(id > 0)
+            ||
+            !(
+                status === 'Posted'
+                ||
+                status === 'Cancelled'
+                ||
+                (status === 'Approved' && this.printOnApproval)
+            )
+        )
+        {
+            this.toast.info(
+                'Not Printable',
+                this.printOnApproval
+                    ? 'Prints are available once the voucher is approved.'
+                    : 'Prints are available once the voucher is posted.'
+            );
+
+            return;
+        }
+
+        const url =
+            this.router.serializeUrl(
+                this.router.createUrlTree(
+                    ['/print-viewer', 'receipt-voucher', id],
+                    {
+                        queryParams:{ doc:'all' }
+                    }
+                )
+            );
+
+        // Not "noopener" : the new tab keeps this session's login
+        const tab =
+            window.open(
+                url,
+                '_blank'
+            );
+
+        if
+        (
+            !tab
+        )
+        {
+            this.toast.error(
+                'Print Failed',
+                'The browser blocked the new tab. Allow pop-ups for this site.'
+            );
+        }
+    }
+
+    //===========================================================
+    // Initialize Entity (Add)
     //===========================================================
 
     private initializeEntity():
         void
     {
-        this.entity =
-        {
-            id:0,
+        this.voucher =
+            null;
 
-            code:'',
+        this.step =
+            1;
 
-            name:'',
-
-            sampleSearchDropdownId:0,
-
-            sampleField:'',
-
-            status:'Active',
-
-            remarks:''
-        };
-
-
-        this.originalEntity =
-            JSON.stringify(
-                this.entity
+        this.entry =
+            emptyVoucherEntry(
+                toIsoDate(new Date())
             );
 
+        this.entryInput =
+            this.cloneEntry(
+                this.entry
+            );
 
-        this.hasChanges =
-            false;
+        this.deskInput =
+            [];
+
+        this.total =
+            0;
+
+        this.voucherNoText =
+            '';
+
+        this.periodDate =
+            '';
+
+        this.setInitialFormState();
+
+        if
+        (
+            !this.loginBranchId
+        )
+        {
+            this.periodError =
+                'No login branch. Log in again and choose a branch.';
+
+            this.toast.error(
+                'Branch',
+                this.periodError
+            );
+        }
+        else
+        {
+            this.refreshPeriod();
+        }
+
+        this.cdr.detectChanges();
     }
 
-
-
     //===========================================================
-    // Load Entity
+    // Load Entity (Edit / View)
     //===========================================================
 
     private loadEntity():
         void
     {
-        this.receiptvoucherservice
+        this.loading =
+            true;
+
+        this.receiptVoucherService
             .getById(
                 this.entityId
             )
-            .subscribe(
-            {
-                next:(response) =>
+            .subscribe
+            ({
+                next:
+                (
+                    item:
+                        ReceiptVoucher
+                ):
+                    void =>
                 {
-                    this.entity =
-                        response;
+                    this.applyVoucher(
+                        item
+                    );
 
-
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
+                    this.loading =
                         false;
 
+                    // Only drafts open in Edit
+                    if
+                    (
+                        this.isEditMode
+                        &&
+                        item.Status !== 'Draft'
+                    )
+                    {
+                        this.mode =
+                            'view';
+
+                        this.toast.info(
+                            'View Only',
+                            `${item.VoucherNo} is ${item.Status}. Only a draft can be edited.`
+                        );
+                    }
+
+                    this.setInitialFormState();
+
+                    this.refreshPeriod();
 
                     this.cdr.detectChanges();
                 },
 
-
-                error:(error) =>
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
                 {
                     console.error(
                         'Load Receipt Voucher Error',
                         error
                     );
 
+                    this.loading =
+                        false;
 
                     this.toast.error(
-                        'Error',
-
-                        'Failed to load Receipt Voucher.'
+                        'Load Failed',
+                        this.extractErrorMessage(
+                            error,
+                            'Unable to load the receipt voucher.'
+                        )
                     );
 
-
-                    this.onBackToList();
+                    this.cdr.detectChanges();
                 }
             });
     }
 
-
-
-    //===========================================================
-    // Sample Search Dropdown Changed
-    //===========================================================
-
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
-
-
-    //===========================================================
-    // Track Changes
-    //===========================================================
-
-    checkForChanges():
-        void
-    {
-        this.hasChanges =
-            JSON.stringify(
-                this.entity
-            )
-            !==
-            this.originalEntity;
-    }
-
-
-
-    //===========================================================
-    // Tab Change
-    //===========================================================
-
-    onTabChange
+    private applyVoucher
     (
-        tabId:
+        item:
+            ReceiptVoucher
+    ):
+        void
+    {
+        this.voucher =
+            item;
+
+        this.step =
+            1;
+
+        this.voucherNoText =
+            item.VoucherNo;
+
+        this.entry =
+        {
+            VoucherDate:
+                item.VoucherDate,
+
+            Narration:
+                item.Narration,
+
+            LedgerType:
+                (item.LedgerType || '') as CreditLedgerType | '',
+
+            // Saved rows were checked already : load as verified
+            Debits:
+                item.Debits.map
+                (
+                    line =>
+                    ({
+                        ...line,
+
+                        Verified:
+                            !debitDetailIssue(line)
+                    })
+                ),
+
+            Credits:
+                item.Credits.map
+                (
+                    line =>
+                    ({
+                        ...line
+                    })
+                )
+        };
+
+        this.entryInput =
+            this.cloneEntry(
+                this.entry
+            );
+
+        this.deskInput =
+            this.entry.Debits.map
+            (
+                line =>
+                ({
+                    ...line
+                })
+            );
+
+        this.total =
+            roundMoney(
+                item.TotalAmount
+            );
+
+        this.periodDate =
+            '';
+    }
+
+    private cloneEntry
+    (
+        value:
+            VoucherEntryData
+    ):
+        VoucherEntryData
+    {
+        return {
+            ...value,
+
+            Debits:
+                value.Debits.map
+                (
+                    line =>
+                    ({
+                        ...line
+                    })
+                ),
+
+            Credits:
+                value.Credits.map
+                (
+                    line =>
+                    ({
+                        ...line
+                    })
+                )
+        };
+    }
+
+    //===========================================================
+    // Financial Year + Voucher No preview (branch + date)
+    //===========================================================
+
+    private refreshPeriod():
+        void
+    {
+        const date =
+            this.entry.VoucherDate;
+
+        const branchId =
+            this.branchId;
+
+        if
+        (
+            !date
+            ||
+            !branchId
+            ||
+            date === this.periodDate
+        )
+        {
+            return;
+        }
+
+        this.periodDate =
+            date;
+
+        this.periodChecking =
+            true;
+
+        this.periodError =
+            '';
+
+        //=======================================================
+        // Financial year (decides Save)
+        //=======================================================
+
+        this.lookup
+            .getPeriod(
+                branchId,
+                date
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    period:
+                        VoucherPeriod
+                ):
+                    void =>
+                {
+                    if
+                    (
+                        date !== this.entry.VoucherDate
+                    )
+                    {
+                        return;
+                    }
+
+                    this.period =
+                        period;
+
+                    this.periodChecking =
+                        false;
+
+                    this.cdr.detectChanges();
+
+                    // Add : preview the next number
+                    if
+                    (
+                        this.isAddMode
+                    )
+                    {
+                        this.refreshVoucherNoPreview(
+                            branchId,
+                            date
+                        );
+                    }
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    this.onPeriodError(
+                        date,
+                        error
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Voucher No preview (Add) : receipt-voucher/defaults
+    // (repository + CodeGenerator). Display only : the number
+    // actually taken on save may be higher.
+    //===========================================================
+
+    private refreshVoucherNoPreview
+    (
+        branchId:
+            number,
+        date:
             string
     ):
         void
     {
-        this.selectedTab =
-            tabId;
+        this.receiptVoucherService
+            .getDefaults(
+                branchId,
+                date
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    defaults:
+                        ReceiptVoucherDefaults
+                ):
+                    void =>
+                {
+                    if
+                    (
+                        date !== this.entry.VoucherDate
+                    )
+                    {
+                        return;
+                    }
+
+                    if
+                    (
+                        defaults.VoucherNo
+                    )
+                    {
+                        this.voucherNoText =
+                            defaults.VoucherNo;
+
+                        this.cdr.detectChanges();
+
+                        return;
+                    }
+
+                    console.warn(
+                        'Voucher No (receipt-voucher/defaults) :',
+                        defaults.Message || 'no number returned'
+                    );
+
+                    this.platformVoucherNoPreview(
+                        branchId,
+                        date
+                    );
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.warn(
+                        'Voucher No (receipt-voucher/defaults) failed; using platform/accounting/next-number',
+                        error
+                    );
+
+                    this.platformVoucherNoPreview(
+                        branchId,
+                        date
+                    );
+                }
+            });
     }
 
+    // Second source : the platform number service (same number)
+    private platformVoucherNoPreview
+    (
+        branchId:
+            number,
+        date:
+            string
+    ):
+        void
+    {
+        this.lookup
+            .getNextVoucherNo(
+                VOUCHER_PREFIX,
+                branchId,
+                date
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    preview
+                ):
+                    void =>
+                {
+                    if
+                    (
+                        date !== this.entry.VoucherDate
+                    )
+                    {
+                        return;
+                    }
 
+                    this.voucherNoText =
+                        preview.VoucherNo;
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Voucher No preview failed',
+                        error
+                    );
+
+                    this.voucherNoText =
+                        '';
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+    private onPeriodError
+    (
+        date:
+            string,
+        error:
+            unknown
+    ):
+        void
+    {
+        if
+        (
+            date !== this.entry.VoucherDate
+        )
+        {
+            return;
+        }
+
+        this.period =
+            null;
+
+        this.periodChecking =
+            false;
+
+        this.voucherNoText =
+            this.isAddMode
+                ? ''
+                : this.voucherNoText;
+
+        this.periodError =
+            this.extractErrorMessage(
+                error,
+                'No open financial year for this date.'
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    get financialYearText():
+        string
+    {
+        if
+        (
+            this.periodChecking
+        )
+        {
+            return 'Checking...';
+        }
+
+        if
+        (
+            this.period
+        )
+        {
+            return this.period.FinancialYearName
+                ||
+                this.period.FinancialYearCode;
+        }
+
+        return this.periodError
+            ? 'Not open'
+            : '-';
+    }
 
     //===========================================================
-    // Save
+    // Component Events
+    //===========================================================
+
+    onEntryChange
+    (
+        value:
+            VoucherEntryData
+    ):
+        void
+    {
+        this.entry =
+            value;
+
+        this.refreshPeriod();
+
+        // Back on step 1 with no detail rows left : start again
+        if
+        (
+            !this.needsDesk
+        )
+        {
+            this.step =
+                1;
+        }
+
+        this.checkForChanges();
+    }
+
+    onTotalChange
+    (
+        value:
+            number
+    ):
+        void
+    {
+        this.total =
+            roundMoney(
+                value
+            );
+    }
+
+    onMasterValidChange
+    (
+        value:
+            boolean
+    ):
+        void
+    {
+        this.masterValid =
+            value;
+
+        this.cdr.detectChanges();
+    }
+
+    onDeskChange
+    (
+        lines:
+            VoucherDebitLine[]
+    ):
+        void
+    {
+        this.entry =
+        {
+            ...this.entry,
+
+            Debits:
+                lines.map
+                (
+                    line =>
+                    ({
+                        ...line
+                    })
+                )
+        };
+
+        this.checkForChanges();
+    }
+
+    onDeskValidChange
+    (
+        value:
+            boolean
+    ):
+        void
+    {
+        this.deskValid =
+            value;
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Change Tracking
+    //===========================================================
+
+    private snapshot():
+        string
+    {
+        return JSON.stringify(
+            this.buildPayload()
+        );
+    }
+
+    private setInitialFormState():
+        void
+    {
+        this.originalState =
+            this.snapshot();
+
+        this.hasChanges =
+            false;
+    }
+
+    private checkForChanges():
+        void
+    {
+        this.hasChanges =
+            this.snapshot()
+            !==
+            this.originalState;
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Display Helpers
+    //===========================================================
+
+    money
+    (
+        value:
+            number
+    ):
+        string
+    {
+        return formatMoney(
+            value
+        );
+    }
+
+    displayDate
+    (
+        value:
+            string | null | undefined
+    ):
+        string
+    {
+        const parts =
+            (value ?? '').substring(0, 10).split('-');
+
+        return parts.length === 3
+            ? `${parts[2]}-${parts[1]}-${parts[0]}`
+            : '';
+    }
+
+    //===========================================================
+    // Build Payload
+    //===========================================================
+
+    private buildPayload():
+        CreateReceiptVoucher
+    {
+        return {
+            VoucherDate:
+                this.entry.VoucherDate,
+
+            BranchId:
+                this.branchId,
+
+            Narration:
+                this.entry.Narration?.trim() ?? '',
+
+            Debits:
+                this.entry.Debits.map
+                (
+                    ({ Verified: _verified, ...line }) =>
+                    ({
+                        ...line,
+
+                        Amount:
+                            roundMoney(
+                                line.Amount
+                            ),
+
+                        ShortNotes:
+                            line.ShortNotes?.trim() ?? ''
+                    })
+                ),
+
+            Credits:
+                this.entry.Credits.map
+                (
+                    line =>
+                    ({
+                        ...line,
+
+                        Amount:
+                            roundMoney(
+                                line.Amount
+                            ),
+
+                        ShortNotes:
+                            line.ShortNotes?.trim() ?? ''
+                    })
+                )
+        };
+    }
+
+    //===========================================================
+    // Save (Draft : create or update)
     //===========================================================
 
     onSave():
         void
     {
-        //=======================================================
-        // View Mode
-        //=======================================================
-
         if
         (
-            this.isViewMode
+            !this.isEditable
+            ||
+            this.isSaving
         )
         {
             return;
         }
 
-
-        //=======================================================
-        // Validation
-        //=======================================================
-
         if
         (
-            !this.entity.name?.trim()
+            !this.branchId
         )
         {
             this.toast.error(
-                'Validation',
-
-                'Name is required.'
+                'Branch',
+                'No login branch. Log in again and choose a branch.'
             );
 
             return;
         }
 
-
-        //=======================================================
-        // Create
-        //=======================================================
-
         if
         (
-            this.mode === 'add'
+            !this.period
         )
         {
-            const model:
-                CreateReceiptVoucher =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.receiptvoucherservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Receipt Voucher created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Receipt Voucher Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
+            this.toast.error(
+                'Financial Year',
+                this.periodError || 'No open financial year for the voucher date.'
+            );
 
             return;
         }
 
+        if
+        (
+            !this.masterValid
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Debit and credit must be entered and equal (Balance Remaining 0.00).'
+            );
 
-        //=======================================================
-        // Update
-        //=======================================================
+            this.step =
+                1;
+
+            return;
+        }
+
+        if
+        (
+            this.needsDesk
+            &&
+            !this.deskComplete
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Complete and verify every check / MFS / POS / EMI row (Checkout).'
+            );
+
+            return;
+        }
+
+        // Setting "Receipt Voucher : Max Lines"
+        const lines =
+            this.entry.Debits.length + this.entry.Credits.length;
+
+        if
+        (
+            this.maxLines > 0
+            &&
+            lines > this.maxLines
+        )
+        {
+            this.toast.error(
+                'Validation',
+                `Maximum ${this.maxLines} lines per voucher; this voucher has ${lines}. Remove ${lines - this.maxLines} row(s).`
+            );
+
+            return;
+        }
+
+        if
+        (
+            this.isAddMode
+        )
+        {
+            this.saveCreate();
+
+            return;
+        }
+
+        this.saveUpdate();
+    }
+
+    private saveCreate():
+        void
+    {
+        const model:
+            CreateReceiptVoucher =
+            this.buildPayload();
+
+        const previewNo =
+            this.voucherNoText;
+
+        this.startProgress(
+            'Saving Receipt Voucher',
+            'Please wait while the receipt voucher is being saved as a draft...'
+        );
+
+        this.withMinimumDuration(
+            this.receiptVoucherService.create(
+                model
+            )
+        )
+        .subscribe
+        ({
+            next:
+            (
+                saved:
+                    ReceiptVoucherSaved
+            ):
+                void =>
+            {
+                this.completeProgress(
+                    'Receipt voucher saved.',
+                    () =>
+                    {
+                        this.setInitialFormState();
+
+                        const note =
+                            previewNo
+                            &&
+                            saved.VoucherNo
+                            &&
+                            previewNo !== saved.VoucherNo
+                                ? ` (${previewNo} was taken by another entry)`
+                                : '';
+
+                        this.toast.success(
+                            'Saved as Draft',
+                            `Receipt voucher ${saved.VoucherNo} saved${note}.`
+                        );
+
+                        this.onBackToList();
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Create Receipt Voucher Error',
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to save the receipt voucher.'
+                            )
+                        );
+                    }
+                );
+            }
+        });
+    }
+
+    private saveUpdate():
+        void
+    {
+        const id:
+            number =
+            this.voucher?.ReceiptVoucherId
+            ||
+            this.entityId;
+
+        if
+        (
+            !(id > 0)
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Invalid receipt voucher. Please reload the page and try again.'
+            );
+
+            return;
+        }
 
         const model:
             UpdateReceiptVoucher =
         {
-            id:
-                this.entity.id,
+            ReceiptVoucherId:
+                id,
 
-            name:
-                this.entity.name,
-
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
-
-            sampleField:
-                this.entity.sampleField,
-
-            status:
-                this.entity.status,
-
-            remarks:
-                this.entity.remarks
+            ...this.buildPayload()
         };
 
+        this.startProgress(
+            'Updating Receipt Voucher',
+            'Please wait while the draft is being updated...'
+        );
 
-        this.receiptvoucherservice
-            .update(
+        this.withMinimumDuration(
+            this.receiptVoucherService.update(
                 model
             )
-            .subscribe(
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
             {
-                next:() =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                this.completeProgress(
+                    'Receipt voucher updated.',
+                    () =>
+                    {
+                        this.setInitialFormState();
+
+                        this.toast.success(
+                            'Success',
+                            'Receipt voucher updated successfully.'
                         );
 
+                        this.onBackToList();
+                    }
+                );
+            },
 
-                    this.hasChanges =
-                        false;
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'Update Receipt Voucher Error',
+                    error
+                );
 
-
-                    this.toast.success(
-                        'Success',
-
-                        'Receipt Voucher updated successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Update Receipt Voucher Error',
-                        error
-                    );
-
-
-                    const message =
-                        error?.error
-                        ??
-                        'Failed to update {{ENTITY_NAME}.';
-
-
-                    this.toast.error(
-                        'Validation',
-
-                        message
-                    );
-                }
-            });
+                this.failProgress(
+                    () =>
+                    {
+                        this.toast.error(
+                            'Validation',
+                            this.extractErrorMessage(
+                                error,
+                                'Failed to update the receipt voucher.'
+                            )
+                        );
+                    }
+                );
+            }
+        });
     }
 
+    //===========================================================
+    // Workflow
+    //===========================================================
 
+    private onApprove():
+        void
+    {
+        if
+        (
+            this.hasChanges
+        )
+        {
+            this.toast.info(
+                'Unsaved Changes',
+                'Update the draft before approving it.'
+            );
+
+            return;
+        }
+
+        this.confirmDialog.open(
+            'Approve Receipt Voucher',
+            this.postOnApproval
+                ? `Approve and post ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}? Posting writes the ledger entries.`
+                : `Approve ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}?`,
+            () =>
+                setTimeout(
+                    () =>
+                        this.runWorkflow(
+                            this.postOnApproval ? 'Approving and Posting' : 'Approving Receipt Voucher',
+                            this.postOnApproval ? 'Receipt voucher approved and posted.' : 'Receipt voucher approved.',
+                            id =>
+                                this.receiptVoucherService.approve(id),
+                            'list'
+                        )
+                ),
+            'Approve',
+            'Cancel',
+            'primary'
+        );
+    }
+
+    private onReturnToDraft():
+        void
+    {
+        this.confirmDialog.open(
+            'Return to Draft',
+            `Return ${this.voucher?.VoucherNo ?? 'this voucher'} to Draft so it can be edited?`,
+            () =>
+                setTimeout(
+                    () =>
+                        this.runWorkflow(
+                            'Returning to Draft',
+                            'Receipt voucher returned to draft.',
+                            id =>
+                                this.receiptVoucherService.returnToDraft(id),
+                            'list'
+                        )
+                ),
+            'Return',
+            'Cancel',
+            'primary'
+        );
+    }
+
+    private onPost():
+        void
+    {
+        const checkOnly =
+            this.entry.Debits.length > 0
+            &&
+            this.entry.Debits.every
+            (
+                line =>
+                    line.Mode === 'Check'
+            );
+
+        const note =
+            checkOnly
+                ? ' Checks post nothing now; they post at Check Reconciliation.'
+                : '';
+
+        this.confirmDialog.open(
+            'Post Receipt Voucher',
+            `Post ${this.voucher?.VoucherNo ?? 'this voucher'} to the ledgers? A posted voucher can only be cancelled.${note}`,
+            () =>
+                setTimeout(
+                    () =>
+                        this.runWorkflow(
+                            'Posting Receipt Voucher',
+                            'Receipt voucher posted.',
+                            id =>
+                                this.receiptVoucherService.post(id),
+                            'list'
+                        )
+                ),
+            'Post',
+            'Cancel',
+            'primary'
+        );
+    }
+
+    //===========================================================
+    // Cancel (Posted) : overlay asks for date and reason
+    //===========================================================
+
+    openCancel():
+        void
+    {
+        this.cancelDateValue =
+            new Date();
+
+        this.cancelReason =
+            '';
+
+        this.cancelOpened =
+            true;
+
+        this.cdr.detectChanges();
+    }
+
+    closeCancel():
+        void
+    {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        this.cancelOpened =
+            false;
+
+        this.cdr.detectChanges();
+    }
+
+    onCancelDateChange
+    (
+        value:
+            Date | null
+    ):
+        void
+    {
+        this.cancelDateValue =
+            value;
+    }
+
+    onCancelReasonChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        this.cancelReason =
+            String(value ?? '');
+    }
+
+    confirmCancel():
+        void
+    {
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        const reason =
+            this.cancelReason.trim();
+
+        if
+        (
+            !reason
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Reason is required to cancel a posted voucher.'
+            );
+
+            return;
+        }
+
+        if
+        (
+            !this.cancelDateValue
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Cancel Date is required.'
+            );
+
+            return;
+        }
+
+        const model =
+        {
+            CancelDate:
+                toIsoDate(
+                    this.cancelDateValue
+                ),
+
+            Reason:
+                reason
+        };
+
+        this.cancelOpened =
+            false;
+
+        this.runWorkflow(
+            'Cancelling Receipt Voucher',
+            'Receipt voucher cancelled.',
+            id =>
+                this.receiptVoucherService.cancel(
+                    id,
+                    model
+                ),
+            'list'
+        );
+    }
+
+    //===========================================================
+    // Run a workflow command, then open the list
+    // (every action : Save, Update, Approve, Post, Return,
+    //  Cancel ends on the list page)
+    //===========================================================
+
+    private runWorkflow
+    (
+        title:
+            string,
+
+        doneMessage:
+            string,
+
+        call:
+            (id: number) => Observable<void>,
+
+        nextMode:
+            'edit' | 'view' | 'list'
+    ):
+        void
+    {
+        const id:
+            number =
+            this.voucher?.ReceiptVoucherId
+            ||
+            this.entityId;
+
+        if
+        (
+            !(id > 0)
+        )
+        {
+            return;
+        }
+
+        this.startProgress(
+            title,
+            'Please wait...'
+        );
+
+        this.withMinimumDuration(
+            call(id)
+        )
+        .subscribe
+        ({
+            next:
+            ():
+                void =>
+            {
+                this.completeProgress(
+                    doneMessage,
+                    () =>
+                    {
+                        this.toast.success(
+                            'Success',
+                            doneMessage
+                        );
+
+                        if
+                        (
+                            nextMode === 'list'
+                        )
+                        {
+                            void this.router.navigate(
+                                this.listRoute
+                            );
+
+                            return;
+                        }
+
+                        if
+                        (
+                            this.mode === nextMode
+                        )
+                        {
+                            this.loadEntity();
+
+                            return;
+                        }
+
+                        this.goTo(
+                            nextMode
+                        );
+                    }
+                );
+            },
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    `${title} Error`,
+                    error
+                );
+
+                this.failProgress(
+                    () =>
+                    {
+                        this.toast.error(
+                            'Not Allowed',
+                            this.extractErrorMessage(
+                                error,
+                                `${title} failed.`
+                            )
+                        );
+
+                        // Status may have changed elsewhere
+                        this.loadEntity();
+                    }
+                );
+            }
+        });
+    }
+
+    //===========================================================
+    // Navigation
+    //===========================================================
+
+    private goTo
+    (
+        mode:
+            'edit' | 'view'
+    ):
+        void
+    {
+        void this.router.navigate(
+            [
+                '/accounts-finance',
+                'voucher-management',
+                'receipt-voucher',
+                mode,
+                this.entityId
+            ]
+        );
+    }
 
     //===========================================================
     // Clear
@@ -872,36 +2814,28 @@ implements OnInit
     onClear():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
+        if
+        (
+            this.isSaving
+            ||
+            !this.isEditable
+        )
+        {
+            return;
+        }
 
         if
         (
-            this.mode === 'edit'
+            this.isEditMode
         )
         {
             this.loadEntity();
 
-
-            this.checkForChanges();
-
-
             return;
         }
 
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
         this.initializeEntity();
-
-
-        this.cdr.detectChanges();
     }
-
-
 
     //===========================================================
     // Back To List
@@ -912,158 +2846,256 @@ implements OnInit
     {
         if
         (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        if
+        (
             !this.hasChanges
+            ||
+            !this.isEditable
         )
         {
             void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
+                this.listRoute
+            );
 
             return;
         }
 
-
         this.confirmDialog.open(
-
             'Cancel Changes',
-
             'Any unsaved changes will be lost. Do you want to leave this page?',
-
-
             () =>
             {
                 void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
+                    this.listRoute
+                );
             },
-
-
             'Leave',
-
             'Stay',
-
             'primary'
         );
     }
 
-
-
     //===========================================================
-    // Save Button Text
+    // Progress Dialog (Animated)
     //===========================================================
 
-    get saveButtonText():
-        string
-    {
-        return this.mode === 'edit'
-            ? 'Update'
-            : 'Save';
-    }
+    private startProgress
+    (
+        title:
+            string,
 
-
-
-    //===========================================================
-    // View Mode
-    //===========================================================
-
-    get isViewMode():
-        boolean
-    {
-        return this.mode === 'view';
-    }
-
-
-
-    //===========================================================
-    // Edit Mode
-    //===========================================================
-
-    get isEditMode():
-        boolean
-    {
-        return this.mode === 'edit';
-    }
-
-
-
-    //===========================================================
-    // Add Mode
-    //===========================================================
-
-    get isAddMode():
-        boolean
-    {
-        return this.mode === 'add';
-    }
-
-
-
-    //===========================================================
-    // Close
-    //===========================================================
-
-    close():
+        message:
+            string
+    ):
         void
     {
-        this.onBackToList();
+        this.isSaving =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
     }
 
+    private completeProgress
+    (
+        message:
+            string,
 
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
 
-    //===========================================================
-    // Refresh
-    //===========================================================
+        this.progressDialog.update(
+            100,
+            message
+        );
 
-    refresh():
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isSaving =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isSaving =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
         void
     {
         if
         (
-            this.mode === 'edit'
-            ||
-            this.mode === 'view'
+            this.progressTimer
         )
         {
-            this.loadEntity();
+            clearInterval(
+                this.progressTimer
+            );
 
-            return;
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
         }
 
-
-        this.initializeEntity();
-
-
-        this.cdr.detectChanges();
+        return fallback;
     }
-
-
-
-    //===========================================================
-    // Value Changed
-    //===========================================================
-
-    onValueChange():
-        void
-    {
-        this.checkForChanges();
-
-
-        this.cdr.detectChanges();
-    }
-
 }

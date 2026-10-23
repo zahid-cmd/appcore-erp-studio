@@ -101,7 +101,7 @@ public class CustomerProfilesRepository :
     // Customer receivable ledgers go under this sub group, found
     // by CODE only (never by name)
     private const string ReceivableSubGroupCode =
-        "SUB-002-002-005";
+        "SUB-002-002-006";
 
     private const int MaxNameLength =
         150;

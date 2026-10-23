@@ -1276,8 +1276,48 @@ public static class CodeGenerator
 
         return $"MFS-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
     }
+
     // AUTO-END : GenerateMFSAccountsCode
 
+    //===============================================================
+    // ACCOUNT SETTINGS : EMI Account Code   EMI-002-002-005-00001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, e.g. right after the
+    // GeneratePOSAccountsCode block. The repository finds the
+    // highest number used (deleted rows included) and passes
+    // highest + 1.
+    //===============================================================
+
+    public static string GenerateEmiAccountsCode(
+        int accountClassSequenceNo,
+        int accountGroupSequenceNo,
+        int accountSubGroupSequenceNo,
+        int sequenceNo)
+    {
+        if (accountClassSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountClass sequence number.");
+        }
+
+        if (accountGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountGroup sequence number.");
+        }
+
+        if (accountSubGroupSequenceNo < 1)
+        {
+            throw new ArgumentException("Invalid accountSubGroup sequence number.");
+        }
+
+        if (sequenceNo < 1 || sequenceNo > 99999)
+        {
+            throw new ArgumentException("EMI account sequence number must be from 1 to 99999.");
+        }
+
+        return $"EMI-{accountClassSequenceNo:D3}-{accountGroupSequenceNo:D3}-{accountSubGroupSequenceNo:D3}-{sequenceNo:D5}";
+    }
 
     // AUTO-BEGIN : GenerateCardSetupCode
     public static string GenerateCardSetupCode(
@@ -1350,6 +1390,7 @@ public static class CodeGenerator
 
         return $"BRAND-{sequenceNo:D3}";
     }
+
     // AUTO-END : GenerateBrandManagementCode
     
     //===============================================================
@@ -1559,5 +1600,104 @@ public static class CodeGenerator
             categorySequenceNo,
             subCategorySequenceNo,
             sequenceNo);
+    }
+
+    //===============================================================
+    // MEMBERSHIP MANAGEMENT : Membership No   MEM-000001
+    //
+    // Paste into CodeGenerator.cs (namespace
+    // AppCore.Infrastructure.CodeMaster), OUTSIDE any
+    // "// AUTO-BEGIN ... // AUTO-END" block, next to the customer
+    // code methods (it uses their CustomerCode helper : 6 digits).
+    //===============================================================
+
+    public static string GenerateMembershipNo(
+        int sequenceNo)
+    {
+        return CustomerCode(
+            "MEM",
+            sequenceNo);
+    }
+
+    //===============================================================
+    // ACCOUNTS & FINANCE : Voucher Number
+    //   RV-010101-2627-10-00001
+    //   <prefix>-<branch digits>-<FY>-<calendar month>-<seq5>
+    //
+    // GenerateVoucherNoPrefix : "RV-010101-2627-10-"
+    // GenerateVoucherNo       : prefix + 5-digit sequence
+    // ParseVoucherSequence    : sequence back out of a number (used
+    //                           by the voucher repositories to
+    //                           preview the next number)
+    //===============================================================
+
+    public static string GenerateVoucherNoPrefix(
+        string prefix,
+        string branchDigits,
+        string financialYearCode,
+        int periodMonth)
+    {
+        if (string.IsNullOrWhiteSpace(prefix))
+        {
+            throw new ArgumentException("Voucher prefix is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(branchDigits))
+        {
+            throw new ArgumentException("Branch digits are required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(financialYearCode))
+        {
+            throw new ArgumentException("Financial year code is required.");
+        }
+
+        if (periodMonth < 1 || periodMonth > 12)
+        {
+            throw new ArgumentException("Voucher month must be from 1 to 12.");
+        }
+
+        // e.g. "RV-010101-2627-10-"
+        return $"{prefix.Trim().ToUpperInvariant()}-{branchDigits.Trim()}-{financialYearCode.Trim()}-{periodMonth:D2}-";
+    }
+
+    public static string GenerateVoucherNo(
+        string prefix,
+        string branchDigits,
+        string financialYearCode,
+        int periodMonth,
+        int sequenceNo)
+    {
+        if (sequenceNo < 1 || sequenceNo > 99999)
+        {
+            throw new ArgumentException("Voucher sequence number must be from 1 to 99999.");
+        }
+
+        return GenerateVoucherNoPrefix(
+                   prefix,
+                   branchDigits,
+                   financialYearCode,
+                   periodMonth)
+               + sequenceNo.ToString("D5");
+    }
+
+    // "RV-010101-2627-10-00012" → 12 (0 when it cannot be read)
+    public static int ParseVoucherSequence(
+        string? voucherNo)
+    {
+        if (string.IsNullOrWhiteSpace(voucherNo))
+        {
+            return 0;
+        }
+
+        string[] parts =
+            voucherNo.Trim().Split('-');
+
+        string last =
+            parts[parts.Length - 1];
+
+        return int.TryParse(last, out int sequence)
+            ? sequence
+            : 0;
     }
 }

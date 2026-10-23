@@ -855,6 +855,7 @@ private readonly navigationContextSubscription =
       case 'active':
       case 'completed':
       case 'success':
+      case 'posted':
         return 'active';
 
       case 'pending':
@@ -865,7 +866,15 @@ private readonly navigationContextSubscription =
       case 'inactive':
       case 'failed':
       case 'error':
+      case 'cancelled':
         return 'inactive';
+
+      // Vouchers : Draft → Approved → Posted / Cancelled
+      case 'draft':
+        return 'draft';
+
+      case 'approved':
+        return 'approved';
 
       case 'not applicable':
         return 'neutral';

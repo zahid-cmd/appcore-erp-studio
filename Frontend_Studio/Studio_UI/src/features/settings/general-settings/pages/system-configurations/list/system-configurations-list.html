@@ -481,6 +481,23 @@
 
                                         </span>
 
+                                        @if (item.Value)
+                                        {
+                                            <span
+
+                                                class="sc-value"
+
+                                                [class.sc-value-on]="item.IsEnabled"
+
+                                                [title]="'Value : ' + item.Value">
+
+                                                <i class="fas fa-hashtag"></i>
+
+                                                {{ item.Value }}
+
+                                            </span>
+                                        }
+
                                         <button
 
                                             type="button"

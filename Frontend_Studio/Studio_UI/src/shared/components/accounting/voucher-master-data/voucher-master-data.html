@@ -1,0 +1,782 @@
+<div class="vmd">
+
+
+    <!-- =========================================================
+         ROW 1 : Voucher Information | Detail Narration (same height)
+         ROW 2 : Receipt Mode + Account Details | Transaction Summary
+                 (the summary ends at the bottom of Account Details;
+                 its rows scroll)
+    ========================================================== -->
+
+
+    <div class="vmd-info">
+
+        <!-- =====================================================
+             1. VOUCHER INFORMATION
+        ====================================================== -->
+
+        <div class="vmd-card">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-file-invoice"></i>
+
+                <span>Voucher Information</span>
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-3">
+
+                <app-textbox
+
+                    label="Voucher No"
+
+                    placeholder="Assigned on save"
+
+                    [value]="voucherNo"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-datepicker
+
+                    label="Voucher Date"
+
+                    [required]="true"
+
+                    [value]="$any(voucherDateValue)"
+
+                    (valueChange)="onDateChange($event)"
+
+                    [disabled]="readonly">
+
+                </app-datepicker>
+
+                <app-dropdown
+
+                    label="Receipt Mode"
+
+                    placeholder="Select receipt mode"
+
+                    [items]="modeItems"
+
+                    [value]="debitMode || null"
+
+                    (valueChange)="onDebitModeChange($event)"
+
+                    [disabled]="!canAddDebit || modeLocked"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="vmd-narr">
+
+        <!-- =====================================================
+             DETAIL NARRATION (single line, full right width)
+        ====================================================== -->
+
+        <div class="vmd-card">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-align-left"></i>
+
+                <span>Detail Narration</span>
+
+            </div>
+
+            <div class="vmd-narration">
+
+                <app-textbox
+
+                    placeholder="Enter detailed narration"
+
+                    textCase="none"
+
+                    [maxLength]="500"
+
+                    [value]="data.Narration"
+
+                    (valueChange)="onNarrationChange($event)"
+
+                    [readonly]="readonly">
+
+                </app-textbox>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =========================================================
+         LEFT : Receipt Mode (Dr), Account Details (Cr)
+    ========================================================== -->
+
+    <div class="vmd-col vmd-entry-col">
+
+        <!-- =====================================================
+             2. RECEIPT MODE (DEBIT, entered first)
+        ====================================================== -->
+
+        <div
+
+            class="vmd-card"
+
+            [class.vmd-locked]="!canAddDebit">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-hand-holding-dollar"></i>
+
+                <span>Receipt Mode{{ debitMode ? ' : ' + debitMode : '' }}</span>
+
+                <span class="vmd-side vmd-side-debit">Debit</span>
+
+                <button
+
+                    type="button"
+
+                    class="vmd-add"
+
+                    [disabled]="!canAddDebit || loading"
+
+                    (click)="addDebit()">
+
+                    <i class="fas fa-plus"></i>
+
+                    Add
+
+                </button>
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-2">
+
+                <app-search-dropdown
+
+                    label="Account Sub-Group"
+
+                    placeholder="Select"
+
+                    [items]="debitSubGroupItems"
+
+                    [value]="debitSubGroup || null"
+
+                    (valueChange)="onDebitSubGroupChange($event)"
+
+                    [disabled]="!canAddDebit || !debitMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account Ledger"
+
+                    placeholder="Select"
+
+                    [items]="debitLedgerItems"
+
+                    [value]="debitLedger || null"
+
+                    (valueChange)="onDebitLedgerChange($event)"
+
+                    [disabled]="!canAddDebit || !debitSubGroup"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Amount"
+
+                    placeholder="0.00"
+
+                    inputMode="decimal"
+
+                    [value]="debitAmountText"
+
+                    (valueChange)="onDebitAmountText($event)"
+
+                    (enterPressed)="addDebit()"
+
+                    [disabled]="!canAddDebit"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Short Notes"
+
+                    placeholder="Optional"
+
+                    [value]="debitNotes"
+
+                    (valueChange)="onDebitNotes($event)"
+
+                    (enterPressed)="addDebit()"
+
+                    [disabled]="!canAddDebit">
+
+                </app-textbox>
+
+            </div>
+
+            @if (debitError)
+            {
+                <div class="vmd-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ debitError }}
+
+                </div>
+            }
+            @else if (debitHint && !readonly)
+            {
+                <div
+
+                    class="vmd-hint"
+
+                    [class.vmd-hint-warn]="debitHintWarn">
+
+                    <i [class]="debitHintWarn ? 'fas fa-triangle-exclamation' : 'fas fa-lock'"></i>
+
+                    {{ debitHint }}
+
+                </div>
+            }
+
+        </div>
+
+
+        <!-- =====================================================
+             3. ACCOUNT DETAILS (CREDIT)
+        ====================================================== -->
+
+        <div
+
+            class="vmd-card"
+
+            [class.vmd-locked]="!canAddCredit">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-book"></i>
+
+                <span>Account Details</span>
+
+                <span class="vmd-side vmd-side-credit">Credit</span>
+
+                <button
+
+                    type="button"
+
+                    class="vmd-add"
+
+                    [disabled]="!canAddCredit || loading"
+
+                    (click)="addCredit()">
+
+                    <i class="fas fa-plus"></i>
+
+                    Add
+
+                </button>
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-2">
+
+                <app-dropdown
+
+                    label="Ledger Type"
+
+                    placeholder="Customer / Supplier / General Ledger"
+
+                    [items]="ledgerTypeItems"
+
+                    [value]="data.LedgerType || null"
+
+                    (valueChange)="onLedgerTypeChange($event)"
+
+                    [disabled]="ledgerTypeLocked"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <div></div>
+
+                <app-search-dropdown
+
+                    label="Account Sub-Group"
+
+                    placeholder="Select"
+
+                    [items]="creditSubGroupItems"
+
+                    [value]="creditSubGroup || null"
+
+                    (valueChange)="onCreditSubGroupChange($event)"
+
+                    [disabled]="!canAddCredit || !data.LedgerType"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account Ledger"
+
+                    placeholder="Select"
+
+                    [items]="creditLedgerItems"
+
+                    [value]="creditLedger || null"
+
+                    (valueChange)="onCreditLedgerChange($event)"
+
+                    [disabled]="!canAddCredit || !creditSubGroup"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Amount"
+
+                    placeholder="0.00"
+
+                    inputMode="decimal"
+
+                    [value]="creditAmountText"
+
+                    (valueChange)="onCreditAmountText($event)"
+
+                    (enterPressed)="addCredit()"
+
+                    [readonly]="creditAmountLocked"
+
+                    [disabled]="!canAddCredit"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Short Notes"
+
+                    placeholder="Optional"
+
+                    [value]="creditNotes"
+
+                    (valueChange)="onCreditNotes($event)"
+
+                    (enterPressed)="addCredit()"
+
+                    [disabled]="!canAddCredit">
+
+                </app-textbox>
+
+            </div>
+
+            @if (creditError)
+            {
+                <div class="vmd-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ creditError }}
+
+                </div>
+            }
+            @else if (!readonly)
+            {
+                <div
+
+                    class="vmd-hint"
+
+                    [class.vmd-hint-warn]="creditHintWarn">
+
+                    <i [class]="creditHintWarn ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'"></i>
+
+                    {{ creditHint }}
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         RIGHT : Transaction Summary
+    ========================================================== -->
+
+    <div class="vmd-summary-slot">
+
+        <!-- =====================================================
+             TRANSACTION SUMMARY
+        ====================================================== -->
+
+        <div class="vmd-card vmd-summary">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-list-check"></i>
+
+                <span>Transaction Summary</span>
+
+                @if (maxLines > 0)
+                {
+                    <span
+
+                        class="vmd-count vmd-lines"
+
+                        [class.vmd-lines-full]="atMaxLines"
+
+                        title="Lines entered / maximum per voucher (System Configuration)">
+
+                        {{ lineCount }} / {{ maxLines }} lines
+
+                    </span>
+                }
+
+                <span
+
+                    class="vmd-count"
+
+                    [class.vmd-count-after]="maxLines > 0">
+
+                    {{ gridRowCount }}
+
+                </span>
+
+            </div>
+
+            <!-- Rows scroll; header and totals stay -->
+
+            <div class="vmd-table-scroll appcore-scrollbar">
+
+                <table class="vmd-table">
+
+                    <colgroup>
+
+                        <col class="vmd-col-sl">
+
+                        <col>
+
+                        <col class="vmd-col-notes">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-action">
+
+                    </colgroup>
+
+                    <thead>
+
+                        <tr>
+
+                            <th class="vmd-sl">SL</th>
+
+                            <th>Particulars</th>
+
+                            <th>Short Notes</th>
+
+                            <th class="vmd-num">Debit</th>
+
+                            <th class="vmd-num">Credit</th>
+
+                            <th class="vmd-action">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @for (line of data.Debits; track $index)
+                        {
+                            <tr>
+
+                                <td class="vmd-sl">{{ $index + 1 }}</td>
+
+                                <td>
+
+                                    <div class="vmd-ledger">{{ line.LedgerName }} || {{ line.LedgerCode }}</div>
+
+                                    @if (debitDetails(line))
+                                    {
+                                        <div class="vmd-sub">{{ debitDetails(line) }}</div>
+                                    }
+
+                                </td>
+
+                                <td class="vmd-notes">{{ line.ShortNotes }}</td>
+
+                                <td class="vmd-num">{{ money(line.Amount) }}</td>
+
+                                <td class="vmd-num vmd-muted">-</td>
+
+                                <td class="vmd-action">
+
+                                    @if (!readonly)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="vmd-remove"
+
+                                            [disabled]="data.Credits.length > 0"
+
+                                            [title]="data.Credits.length > 0 ? 'Remove the credits first' : 'Remove'"
+
+                                            (click)="removeDebit($index)">
+
+                                            <i class="fas fa-xmark"></i>
+
+                                        </button>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @for (row of chargeDebitRows; track $index)
+                        {
+                            <tr class="vmd-charge-row">
+
+                                <td class="vmd-sl"></td>
+
+                                <td>
+
+                                    <div class="vmd-ledger">{{ row.LedgerName }} || {{ row.LedgerCode }}</div>
+
+                                    <div class="vmd-sub">{{ row.Subtitle }}</div>
+
+                                </td>
+
+                                <td class="vmd-notes">Charge</td>
+
+                                <td class="vmd-num">{{ money(row.Amount) }}</td>
+
+                                <td class="vmd-num vmd-muted">-</td>
+
+                                <td class="vmd-action">
+
+                                    <i
+
+                                        class="fas fa-gears vmd-auto"
+
+                                        title="Added by the system from the step 2 charge"></i>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @for (line of data.Credits; track $index)
+                        {
+                            <tr>
+
+                                <td class="vmd-sl">{{ creditSerial($index) }}</td>
+
+                                <td>
+
+                                    <div class="vmd-ledger">{{ line.LedgerName }} || {{ line.LedgerCode }}</div>
+
+                                    @if (creditDetails(line))
+                                    {
+                                        <div class="vmd-sub">{{ creditDetails(line) }}</div>
+                                    }
+
+                                </td>
+
+                                <td class="vmd-notes">{{ line.ShortNotes }}</td>
+
+                                <td class="vmd-num vmd-muted">-</td>
+
+                                <td class="vmd-num">{{ money(line.Amount) }}</td>
+
+                                <td class="vmd-action">
+
+                                    @if (!readonly)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="vmd-remove"
+
+                                            title="Remove"
+
+                                            (click)="removeCredit($index)">
+
+                                            <i class="fas fa-xmark"></i>
+
+                                        </button>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @for (row of chargeCreditRows; track $index)
+                        {
+                            <tr class="vmd-charge-row">
+
+                                <td class="vmd-sl"></td>
+
+                                <td>
+
+                                    <div class="vmd-ledger">{{ row.LedgerName }} || {{ row.LedgerCode }}</div>
+
+                                    <div class="vmd-sub">{{ row.Subtitle }}</div>
+
+                                </td>
+
+                                <td class="vmd-notes">Charge</td>
+
+                                <td class="vmd-num vmd-muted">-</td>
+
+                                <td class="vmd-num">{{ money(row.Amount) }}</td>
+
+                                <td class="vmd-action">
+
+                                    <i
+
+                                        class="fas fa-gears vmd-auto"
+
+                                        title="Added by the system from the step 2 charge"></i>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @if (data.Debits.length === 0 && data.Credits.length === 0)
+                        {
+                            <tr>
+
+                                <td
+
+                                    colspan="6"
+
+                                    class="vmd-empty">
+
+                                    No entry yet. Start with the receipt mode (debit).
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <table class="vmd-table vmd-table-foot">
+
+                    <colgroup>
+
+                        <col class="vmd-col-sl">
+
+                        <col>
+
+                        <col class="vmd-col-notes">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-action">
+
+                    </colgroup>
+
+                    <tbody>
+
+                        <tr class="vmd-total">
+
+                            <td colspan="3">Total</td>
+
+                            <td class="vmd-num">{{ money(gridDebit) }}</td>
+
+                            <td class="vmd-num">{{ money(gridCredit) }}</td>
+
+                            <td></td>
+
+                        </tr>
+
+                        <tr
+
+                            class="vmd-balance"
+
+                            [class.vmd-balance-ok]="balance === 0 && data.Debits.length > 0">
+
+                            <td colspan="3">Balance Remaining</td>
+
+                            <td
+
+                                colspan="2"
+
+                                class="vmd-num">
+
+                                {{ money(balance) }}
+
+                            </td>
+
+                            <td></td>
+
+                        </tr>
+
+                    </tbody>
+
+            </table>
+
+
+            @if (lookupError)
+            {
+                <div class="vmd-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ lookupError }}
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

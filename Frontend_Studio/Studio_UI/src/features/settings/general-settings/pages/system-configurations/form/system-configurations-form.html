@@ -190,6 +190,28 @@
 
                 </app-dropdown>
 
+
+                <!-- Value (optional : a number or short text the
+                     setting needs, e.g. Max Lines = 20) -->
+
+                <app-textbox
+
+                    label="Value"
+
+                    placeholder="Optional, e.g. 20"
+
+                    textCase="none"
+
+                    [maxLength]="100"
+
+                    [(value)]="entity.Value"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
             </app-form-section>
 
 

@@ -12,6 +12,9 @@ using MembershipPolicyEntity =
 using MembershipCardEntity =
     AppCore.Domain.Entities.MembershipManagement.MembershipSetup.MembershipCards;
 
+using MembershipEntity =
+    AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipStatus;
+
 using AppCore.Infrastructure.Persistence;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Domain.Common;
@@ -1020,7 +1023,7 @@ public class MembershipPoliciesRepository :
     //===========================================================
     // Delete (soft)
     //
-    // Blocking check for enrollments comes with Membership Status.
+    // Blocked (409) while any membership uses the policy.
     //===========================================================
 
     public async Task
@@ -1049,6 +1052,35 @@ public class MembershipPoliciesRepository :
         {
             throw new KeyNotFoundException(
                 "Membership Policy not found.");
+        }
+
+        // A policy used by memberships cannot be deleted (409)
+        string? usedBy =
+            await _context
+                .Set<MembershipEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.MembershipPolicyId ==
+                        entity.MembershipPolicyId
+                        &&
+                        !x.IsDeleted
+                )
+                .Select
+                (
+                    x =>
+                        x.MembershipNo
+                )
+                .FirstOrDefaultAsync();
+
+        if
+        (
+            usedBy != null
+        )
+        {
+            throw new InvalidOperationException(
+                $"Policy {entity.PolicyCode} is used by membership {usedBy}. Set it Inactive instead.");
         }
 
         MembershipCardEntity? card =

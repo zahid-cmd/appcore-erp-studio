@@ -58,6 +58,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
     private const int RemarksMaxLength =
         1000;
 
+    private const int ValueMaxLength =
+        100;
+
 
     //===========================================================
     // Private Fields
@@ -117,6 +120,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
 
                 IsEnabled =
                     x.IsEnabled,
+
+                Value =
+                    x.Value,
 
                 Remarks =
                     x.Remarks,
@@ -380,6 +386,29 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
 
 
     //===========================================================
+    // Validate Value (optional : number or short text)
+    //===========================================================
+
+    private static string
+        NormalizeValue
+        (
+            string? value
+        )
+    {
+        string clean =
+            (value ?? string.Empty).Trim();
+
+        if (clean.Length > ValueMaxLength)
+        {
+            throw new InvalidOperationException(
+                $"Value cannot be longer than {ValueMaxLength} characters.");
+        }
+
+        return clean;
+    }
+
+
+    //===========================================================
     // Ensure Unique Name (per module, active rows)
     //===========================================================
 
@@ -490,6 +519,10 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                 dto.ConfigurationName,
                 dto.Remarks);
 
+        string value =
+            NormalizeValue(
+                dto.Value);
+
         await EnsureUniqueNameAsync(
             module.Id,
             name,
@@ -519,6 +552,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                     IsEnabled =
                         dto.IsEnabled,
 
+                    Value =
+                        value,
+
                     Remarks =
                         remarks,
 
@@ -543,7 +579,8 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                 "Create",
                 "Configuration Created",
                 $"Configuration '{entity.ConfigurationName}' ({entity.ConfigurationCode}) created in {module.Name}" +
-                (entity.IsEnabled ? " as enabled." : " as disabled."),
+                (entity.IsEnabled ? " as enabled" : " as disabled") +
+                (string.IsNullOrEmpty(entity.Value) ? "." : $", value '{entity.Value}'."),
                 userId,
                 now);
 
@@ -608,11 +645,18 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                 dto.ConfigurationName,
                 dto.Remarks);
 
+        string value =
+            NormalizeValue(
+                dto.Value);
+
         await EnsureUniqueNameAsync(
             module.Id,
             name,
             module.Name,
             entity.SystemConfigurationId);
+
+        string oldValue =
+            entity.Value ?? string.Empty;
 
         DateTime now =
             DateTime.UtcNow;
@@ -622,6 +666,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
 
         entity.IsEnabled =
             dto.IsEnabled;
+
+        entity.Value =
+            value;
 
         entity.Remarks =
             remarks;
@@ -636,7 +683,8 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             entity,
             "Update",
             "Configuration Updated",
-            $"Configuration '{entity.ConfigurationName}' ({entity.ConfigurationCode}) updated.",
+            $"Configuration '{entity.ConfigurationName}' ({entity.ConfigurationCode}) updated" +
+            (oldValue == value ? "." : $"; value changed from '{oldValue}' to '{value}'."),
             userId,
             now);
 

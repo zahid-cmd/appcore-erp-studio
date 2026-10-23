@@ -54,4 +54,30 @@ export const accountsFinanceRoutes:
 
     // AUTO-END : MNU-004-001
 
+    // AUTO-BEGIN : MNU-004-002
+
+    //===========================================================
+    // Accounts Reconciliation
+    //===========================================================
+
+    {
+        path:'accounts-reconciliation',
+
+        data:
+        {
+            breadcrumb:'Accounts Reconciliation'
+        },
+
+        loadChildren:() =>
+            import(
+                '../accounts-reconciliation/routes/accounts-reconciliation.routes'
+            )
+            .then(
+                m =>
+                    m.mnu004002Routes
+            )
+    },
+
+    // AUTO-END : MNU-004-002
+
 ];

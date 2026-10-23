@@ -4,9 +4,10 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.AccountsFinance.VoucherManagement;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.AccountsFinance.VoucherManagement;
+using AppCore.Application.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
@@ -17,300 +18,281 @@ namespace AppCore.Api.Controllers.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
-// ReceiptVoucherController
+// Receipt Voucher Controller
+//
+//   GET    /                    list
+//   GET    /{id}                header + debits + credits
+//   POST   /                    create Draft (returns id + number)
+//   PUT    /                    update Draft
+//   DELETE /{id}                delete Draft
+//   PUT    /restore             restore last deleted Draft
+//   PUT    /{id}/approve        Draft → Approved
+//   PUT    /{id}/return-to-draft Approved → Draft
+//   PUT    /{id}/post           Approved → Posted
+//   PUT    /{id}/cancel         Posted → Cancelled (reason)
+//   GET    /history
+//
+// 400 : validation; 404 : not found; 409 : wrong status / blocked
 //===============================================================
 
 [ApiController]
 
 [Route("api/accounts-finance/voucher-management/receipt-voucher")]
 
-public class ReceiptVoucherController
-    : ControllerBase
+public class ReceiptVoucherController : ControllerBase
 {
     //===========================================================
-    // Repository
+    // Fields
     //===========================================================
 
     private readonly IReceiptVoucherRepository _repository;
+
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
+
+    private readonly ILogger<ReceiptVoucherController> _logger;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public ReceiptVoucherController
-    (
-        IReceiptVoucherRepository repository
-    )
+    public ReceiptVoucherController(
+        IReceiptVoucherRepository repository,
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<ReceiptVoucherController> logger)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
+
+        _logger = logger;
     }
 
 
     //===========================================================
-    // Get All
+    // Read
     //===========================================================
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<ReceiptVoucherDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
-
-
         return Ok(
-            entities
-        );
+            await _repository.GetAllAsync());
     }
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<ReceiptVoucherDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        ReceiptVoucherDto? item =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        return Ok(
-            entity
-        );
+        return item == null
+            ? NotFound()
+            : Ok(item);
     }
 
 
     //===========================================================
-    // Create
+    // Create / Update (Draft)
     //===========================================================
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateReceiptVoucherDto dto
-    )
+    public Task<IActionResult> Create(
+        CreateReceiptVoucherDto dto)
     {
-        var entity =
-            new ReceiptVoucher
+        return Run(
+            async () =>
+                Ok(
+                    await _repository.CreateAsync(
+                        dto,
+                        UserId)),
+            "Create Receipt Voucher",
+            badRequestOnInvalid: true);
+    }
+
+    [HttpPut]
+
+    public Task<IActionResult> Update(
+        UpdateReceiptVoucherDto dto)
+    {
+        return Run(
+            async () =>
             {
-                Name =
-                    dto.Name,
+                await _repository.UpdateAsync(
+                    dto,
+                    UserId);
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
-
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+                return NoContent();
+            },
+            "Update Receipt Voucher",
+            badRequestOnInvalid: true);
     }
 
 
     //===========================================================
-    // Update
-    //===========================================================
-
-    [HttpPut("{id:long}")]
-
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateReceiptVoucherDto dto
-    )
-    {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Delete
+    // Delete / Restore (Draft)
     //===========================================================
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        return Run(
+            async () =>
+            {
+                await _repository.DeleteAsync(
+                    id,
+                    UserId);
 
+                return NoContent();
+            },
+            "Delete Receipt Voucher");
+    }
 
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
+    [HttpPut("restore")]
 
-
-        await _repository
-            .DeleteAsync(
-                id
-            );
-
-
-        return NoContent();
+    public Task<IActionResult> Restore()
+    {
+        return Run(
+            async () =>
+                await _repository.RestoreAsync(UserId)
+                    ? NoContent()
+                    : NotFound("There are no deleted receipt vouchers available to restore."),
+            "Restore Receipt Voucher");
     }
 
 
     //===========================================================
-    // Restore
+    // Workflow
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("{id:long}/approve")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public Task<IActionResult> Approve(
+        long id)
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        return Run(
+            async () =>
+            {
+                await _repository.ApproveAsync(
+                    id,
+                    UserId);
 
+                return NoContent();
+            },
+            "Approve Receipt Voucher");
+    }
 
-        return NoContent();
+    [HttpPut("{id:long}/return-to-draft")]
+
+    public Task<IActionResult> ReturnToDraft(
+        long id)
+    {
+        return Run(
+            async () =>
+            {
+                await _repository.ReturnToDraftAsync(
+                    id,
+                    UserId);
+
+                return NoContent();
+            },
+            "Return Receipt Voucher To Draft");
+    }
+
+    [HttpPut("{id:long}/post")]
+
+    public Task<IActionResult> Post(
+        long id)
+    {
+        return Run(
+            async () =>
+            {
+                await _repository.PostAsync(
+                    id,
+                    UserId);
+
+                return NoContent();
+            },
+            "Post Receipt Voucher");
+    }
+
+    [HttpPut("{id:long}/cancel")]
+
+    public Task<IActionResult> Cancel(
+        long id,
+        CancelReceiptVoucherDto dto)
+    {
+        return Run(
+            async () =>
+            {
+                await _repository.CancelAsync(
+                    id,
+                    dto,
+                    UserId);
+
+                return NoContent();
+            },
+            "Cancel Receipt Voucher");
     }
 
 
     //===========================================================
-    // Get History
+    // History
     //===========================================================
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Accounts Finance",
+                "ReceiptVoucher"));
     }
 
 
     //===========================================================
-    // Get Entity History
+    // Helpers
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    // Until login identity is wired into the API
+    private static long UserId => 1;
 
-    public async Task<IActionResult> GetEntityHistory
+    // InvalidOperationException → 400 (create / update) or 409
+    private async Task<IActionResult> Run
     (
-        long id
+        Func<Task<IActionResult>> work,
+        string action,
+        bool badRequestOnInvalid = false
     )
     {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
+        try
+        {
+            return await work();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return badRequestOnInvalid
+                ? BadRequest(ex.Message)
+                : Conflict(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{Action} failed.", action);
 
-
-        return Ok(
-            history
-        );
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                $"{action} failed.");
+        }
     }
 }
